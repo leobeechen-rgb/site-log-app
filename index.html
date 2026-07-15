@@ -969,7 +969,7 @@ function HB_buildReceiptHTML(v){
   .rc-head{background:#083F6B;color:#fff;padding:6px 12px;}
   .rc-name{font-weight:900;font-size:15px;color:#F8D23D;letter-spacing:1px;}
   .rc-info{font-size:9px;color:#BFD9E8;margin-top:1px;}
-  .stamp{position:absolute;right:10px;bottom:8px;width:46px;height:auto;opacity:0.88;z-index:2;pointer-events:none;}
+  .stamp{position:absolute;right:8px;bottom:6px;width:68px;height:auto;opacity:0.88;z-index:2;pointer-events:none;}
   .rc-title{text-align:center;font-weight:900;font-size:14px;letter-spacing:6px;background:#F8D23D;color:#083F6B;padding:4px 0;}
   .rc-title span{display:block;font-size:8px;letter-spacing:2px;font-weight:700;margin-top:1px;}
   table.rc-table{width:100%;border-collapse:collapse;font-size:11px;}
@@ -1005,18 +1005,18 @@ function HB_buildVendorHTML(v){
   .toolbar button{border:none;border-radius:7px;padding:7px 14px;font-weight:700;font-size:12.5px;cursor:pointer;}
   .toolbar .back{background:none;color:#BFD9E8;border:1px solid #BFD9E8!important;}
   .toolbar .print{background:#F8D23D;color:#083F6B;}
-  .paper{position:relative;border:1.5px solid #083F6B;border-radius:8px;overflow:hidden;background:#fff;padding-bottom:18px;}
+  .paper{position:relative;border:1.5px solid #083F6B;border-radius:8px;overflow:hidden;background:#fff;padding-bottom:26px;}
   .head{background:#083F6B;color:#fff;padding:8px 14px;}
   .head-name{font-weight:900;font-size:15px;color:#F8D23D;letter-spacing:1px;}
   .head-info{font-size:9px;color:#BFD9E8;margin-top:2px;}
-  .stamp{position:absolute;right:16px;bottom:14px;width:64px;height:auto;opacity:0.88;z-index:2;pointer-events:none;}
+  .stamp{position:absolute;right:14px;bottom:10px;width:92px;height:auto;opacity:0.88;z-index:2;pointer-events:none;}
   h1{text-align:center;font-size:22px;letter-spacing:14px;margin:10px 0 12px;color:#083F6B;}
   .body-grid{display:flex;gap:14px;padding:0 16px 6px;}
   .col-left{flex:1.5;}
   .col-right{flex:1;background:#EAF2F8;border:1.5px solid #0B5691;border-radius:8px;padding:12px;text-align:center;display:flex;flex-direction:column;justify-content:center;gap:6px;}
   table.v{width:100%;border-collapse:collapse;margin-bottom:10px;font-size:12px;}
   table.v th,table.v td{border:1px solid #DDE3E1;padding:5px 8px;text-align:left;}
-  table.v th{width:88px;background:#EAF2F8;color:#083F6B;font-weight:700;}
+  table.v th{width:112px;background:#EAF2F8;color:#083F6B;font-weight:700;white-space:nowrap;}
   p{margin:6px 0;}
   .signrow{display:flex;align-items:baseline;gap:6px;margin:10px 0;}
   .flabel{white-space:nowrap;color:#083F6B;font-weight:700;font-size:11.5px;}
@@ -1028,7 +1028,7 @@ function HB_buildVendorHTML(v){
   .amt-label{font-size:11px;color:#0B5691;font-weight:700;letter-spacing:2px;}
   .amt-num{font-size:22px;font-weight:900;color:#083F6B;}
   .amt-words{font-size:11.5px;color:#152B33;}
-  .date{text-align:center;margin:6px 100px 0 16px;letter-spacing:2px;font-size:12px;}
+  .date{text-align:center;margin:6px 130px 0 16px;letter-spacing:2px;font-size:12px;}
 </style></head>
 <body>
 <div class="toolbar"><button class="back" onclick="window.close()">← 返回</button><button class="print" onclick="window.print()">列印 / 存 PDF</button></div>
@@ -1044,7 +1044,8 @@ function HB_buildVendorHTML(v){
         <tr><th>廠商／領款人</th><td>${e(v.vendorName)}</td></tr>
         <tr><th>工程地點</th><td>${e(v.siteLocation)}</td></tr>
       </table>
-      <p>茲收到赫柏空間設計陳奕蒨，工程款，新台幣<span class="funderline">${e(HB_toChineseMoney(v.amount))}</span>元整（NT$ ${e(HB_money(HB_num(v.amount)))}）。</p>
+      <p>茲收到赫柏空間設計陳奕蒨，工程款。</p>
+      <p>新台幣<span class="funderline">${e(HB_toChineseMoney(v.amount))}</span>元整（NT$ ${e(HB_money(HB_num(v.amount)))}）。</p>
       <div class="signrow"><span class="flabel">領款人簽章</span><span class="funderline"></span><span class="fnote">（請親筆簽名）</span></div>
       <div class="fields">
         <div class="field"><span class="flabel">身分證號碼</span><span class="funderline">${e(v.idNumber)}</span></div>
