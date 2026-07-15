@@ -267,7 +267,12 @@ function HerfulsinsContractForm({category:l,projects:t,accounts:e,defaultProject
   let submit=()=>{
     if(l==="case"&&!o){a();return}
     if(!c.designName||!c.partyAName)return;
-    i({...c,projectId:l==="case"?o:null});
+    i({...c,
+      areaPing:c.areaPing===""?null:HB_num(c.areaPing),
+      pricePerPing:c.pricePerPing===""?null:HB_num(c.pricePerPing),
+      totalPrice:c.totalPrice===""?null:HB_num(c.totalPrice),
+      contractDate:c.contractDate||null,
+      projectId:l==="case"?o:null});
   };
   return u.default.createElement("div",{style:{position:"fixed",inset:0,background:"rgba(8,63,107,0.55)",display:"flex",alignItems:"center",justifyContent:"center",padding:20,zIndex:65,overflowY:"auto"}},
     u.default.createElement("div",{className:"fade-in",style:{background:s.card,borderRadius:10,padding:20,width:"100%",maxWidth:420,maxHeight:"90vh",overflowY:"auto"}},
