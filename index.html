@@ -873,6 +873,13 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
     items.splice(idx+1,0,copy);
     return{...c,items};
   })}));
+  let applyParsedRows=(cid,parsed)=>{
+    i(p=>({...p,categories:p.categories.map(c=>{
+      if(c.id!==cid)return c;
+      let isEmpty=c.items.length===1&&!c.items[0].name&&!c.items[0].spec&&!HB_num(c.items[0].price);
+      return{...c,items:isEmpty?parsed:[...c.items,...parsed]};
+    })}));
+  };
   let importPaste=cid=>{
     let raw=(pasteText[cid]||"").trim();
     if(!raw)return;
@@ -881,12 +888,30 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
       let cols=(line.includes("\t")?line.split("\t"):line.split(",")).map(x=>(x||"").trim());
       return{id:HB_estUid(),name:cols[0]||"",spec:cols[1]||"",unit:cols[2]||"式",qty:cols[3]||"1",price:cols[4]||"",vendorPrice:cols[5]||"",note:cols[6]||""};
     });
-    i(p=>({...p,categories:p.categories.map(c=>{
-      if(c.id!==cid)return c;
-      let isEmpty=c.items.length===1&&!c.items[0].name&&!c.items[0].spec&&!HB_num(c.items[0].price);
-      return{...c,items:isEmpty?parsed:[...c.items,...parsed]};
-    })}));
+    applyParsedRows(cid,parsed);
     setPasteText(p=>({...p,[cid]:""})),setPasteOpen(p=>({...p,[cid]:!1})),e("已匯入 "+parsed.length+" 項");
+  };
+  let importFileRef=(0,u.useRef)(null);
+  let[importTargetCat,setImportTargetCat]=(0,u.useState)(null);
+  let openFileImport=cid=>{setImportTargetCat(cid),importFileRef.current&&importFileRef.current.click()};
+  let handleFileImport=async ev=>{
+    let file=ev.target.files&&ev.target.files[0];
+    ev.target.value="";
+    let cid=importTargetCat;
+    if(!file||!cid)return;
+    if(typeof window.XLSX==="undefined"){e("Excel 解析工具尚未載入，請重新整理頁面後再試");return}
+    try{
+      let buf=await file.arrayBuffer();
+      let wb=window.XLSX.read(buf,{type:"array"});
+      let sheet=wb.Sheets[wb.SheetNames[0]];
+      let rows=window.XLSX.utils.sheet_to_json(sheet,{header:1,defval:""});
+      rows=rows.filter(r=>Array.isArray(r)&&r.some(c=>String(c??"").trim()!==""));
+      if(rows.length&&["項目","品名","name"].includes(String(rows[0][0]).trim()))rows=rows.slice(1);
+      let parsed=rows.map(r=>({id:HB_estUid(),name:String(r[0]??"").trim(),spec:String(r[1]??"").trim(),unit:String(r[2]??"").trim()||"式",qty:String(r[3]??"1").trim()||"1",price:String(r[4]??"").trim(),vendorPrice:String(r[5]??"").trim(),note:String(r[6]??"").trim()}));
+      if(parsed.length===0){e("這個檔案裡沒有讀到任何品項資料");return}
+      applyParsedRows(cid,parsed);
+      e("已從 Excel 匯入 "+parsed.length+" 項")
+    }catch(err){e("匯入失敗："+(err.message||err))}
   };
   let grandTotal=HB_estGrandTotal(a.categories);
   let grandCost=HB_estGrandCost(a.categories);
@@ -907,6 +932,7 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
       u.default.createElement("h2",{style:{color:s.card,fontSize:16,margin:0}},t?"編輯估價單":"快速新增估價單"),
       u.default.createElement("div",{style:{width:15}})
     ),
+    u.default.createElement("input",{ref:importFileRef,type:"file",accept:".xlsx,.xls,.csv",hidden:!0,onChange:handleFileImport}),
     u.default.createElement("div",{style:{flex:1,overflowY:"auto",padding:"14px 14px 20px"}},
     u.default.createElement("div",{style:{maxWidth:640,margin:"0 auto"}},
       u.default.createElement("div",{style:{background:s.card,borderRadius:8,marginBottom:12,overflow:"hidden"}},
@@ -928,6 +954,7 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
         u.default.createElement("div",{style:{display:"flex",gap:6,marginBottom:7,alignItems:"center"}},
           u.default.createElement("input",{placeholder:"大項名稱（如：裝修工程）",value:cat.name,onChange:v=>setCat(cat.id,"name",v.target.value),style:{...inputStyle,flex:1,fontWeight:700}}),
           u.default.createElement("button",{onClick:()=>setPasteOpen(p=>({...p,[cat.id]:!p[cat.id]})),title:"從 Excel 貼上匯入多列",style:{border:"none",background:"none",color:s.oceanDark,cursor:"pointer",padding:"0 4px"}},u.default.createElement(E,{name:"clipboard-paste",size:16})),
+          u.default.createElement("button",{onClick:()=>openFileImport(cat.id),title:"上傳 Excel 檔案匯入",style:{border:"none",background:"none",color:s.oceanDark,cursor:"pointer",padding:"0 4px"}},u.default.createElement(E,{name:"upload",size:16})),
           u.default.createElement("button",{onClick:()=>removeCat(cat.id),style:{border:"none",background:"none",color:s.cane,cursor:"pointer",padding:"0 4px"}},u.default.createElement(E,{name:"trash",size:16}))
         ),
         u.default.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:5,marginBottom:9}},
