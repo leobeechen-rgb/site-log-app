@@ -15,9 +15,62 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#1F6E85">
 
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
   html, body { margin: 0; padding: 0; }
   * { box-sizing: border-box; }
+
+  /* ===== 全站字體美化：使用 Noto Sans TC，避免過粗字重，保留清晰度 ===== */
+  html, body, input, textarea, select, button {
+    font-family: "Noto Sans TC","PingFang TC","Microsoft JhengHei",-apple-system,BlinkMacSystemFont,sans-serif !important;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    letter-spacing: 0.015em;
+  }
+  /* 把過粗的字重（700/800/900 或 bold）柔化為中等字重，維持清晰可讀 */
+  [style*="font-weight: 900"], [style*="font-weight:900"],
+  [style*="font-weight: 800"], [style*="font-weight:800"],
+  [style*="font-weight: 700"], [style*="font-weight:700"],
+  [style*="font-weight: bold"], [style*="font-weight:bold"],
+  b, strong { font-weight: 600 !important; }
+  h1, h2, h3 { font-weight: 600 !important; letter-spacing: 0.01em; }
+
+  /* ===== 清透玻璃質感（Glassmorphism）背景 ===== */
+  html {
+    background: radial-gradient(1200px 800px at 8% 8%, rgba(151,212,231,0.55), transparent 60%),
+                radial-gradient(1000px 900px at 92% 15%, rgba(255,212,106,0.30), transparent 55%),
+                radial-gradient(1100px 900px at 30% 95%, rgba(76,140,58,0.18), transparent 55%),
+                radial-gradient(1200px 1000px at 85% 90%, rgba(43,152,186,0.28), transparent 55%),
+                linear-gradient(160deg, #EAF6FA 0%, #FBF8F2 45%, #FDF6E7 100%);
+    background-attachment: fixed;
+    min-height: 100%;
+  }
+  body { background: transparent !important; }
+
+  /* 讓卡片／面板（白色或淺藍底）呈現清透玻璃感 */
+  [style*="background-color: rgb(255, 255, 255)"],
+  [style*="background-color:#FFFFFF"], [style*="background-color: #FFFFFF"],
+  [style*="background: rgb(255, 255, 255)"] {
+    background-color: rgba(255,255,255,0.58) !important;
+    -webkit-backdrop-filter: blur(16px) saturate(150%);
+    backdrop-filter: blur(16px) saturate(150%);
+    border: 1px solid rgba(255,255,255,0.55) !important;
+  }
+  [style*="background-color: rgb(234, 246, 250)"],
+  [style*="background-color:#EAF6FA"], [style*="background-color: #EAF6FA"] {
+    background-color: rgba(234,246,250,0.55) !important;
+    -webkit-backdrop-filter: blur(16px) saturate(150%);
+    backdrop-filter: blur(16px) saturate(150%);
+  }
+  [style*="background-color: rgb(251, 248, 242)"],
+  [style*="background-color:#FBF8F2"], [style*="background-color: #FBF8F2"] {
+    background-color: rgba(251,248,242,0.5) !important;
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+  }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
