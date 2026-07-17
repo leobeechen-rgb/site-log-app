@@ -213,7 +213,7 @@
     padding:11px 10px; text-align:left; border-bottom:1px solid var(--navy-700);
     letter-spacing:.02em;
   }
-  tbody td{padding:11px 10px; border-bottom:1px solid var(--line); vertical-align:middle;}
+  tbody td{padding:7px 10px; border-bottom:1px solid var(--line); vertical-align:middle;}
   tbody tr:hover{background:rgba(255,255,255,.5);}
   tr.group-row td{
     background:rgba(151,212,231,.22); font-weight:500; color:var(--navy-900); font-size:12.5px;
@@ -241,10 +241,15 @@
   input.qty-input:focus, input.price-input:focus{
     background:var(--yellow-soft); border:1px solid #97D4E7; outline:none;
   }
+  input.qty-input, input.price-input{-moz-appearance:textfield;}
+  input.qty-input::-webkit-outer-spin-button, input.qty-input::-webkit-inner-spin-button,
+  input.price-input::-webkit-outer-spin-button, input.price-input::-webkit-inner-spin-button{
+    -webkit-appearance:none; margin:0;
+  }
   input.price-input{width:80px;}
   select.cat-select{
-    font-family:inherit; font-size:12px; padding:4px 6px; border:1px solid rgba(151,212,231,.7);
-    border-radius:5px; background:#fff; color:var(--navy-800); max-width:110px; margin-bottom:3px;
+    font-family:inherit; font-size:12px; padding:3px 5px; border:1px solid rgba(151,212,231,.7);
+    border-radius:5px; background:#fff; color:var(--navy-800); max-width:110px; margin-bottom:0;
   }
   input.unit-input{
     width:100%; padding:4px 6px; border:1px solid rgba(151,212,231,.7); border-radius:5px;
@@ -438,6 +443,32 @@
   .modal-actions{display:flex; gap:8px; flex-wrap:wrap;}
   .modal-actions .btn{flex:1;}
   .auth-error{color:var(--red); font-size:12px; margin-top:8px; min-height:14px;}
+
+  /* Sticky bottom summary — running total visible while browsing the library */
+  .sticky-summary-bar{
+    position:fixed; left:0; right:0; bottom:0; z-index:150;
+    background:var(--glass-bg-strong);
+    backdrop-filter:blur(20px) saturate(150%); -webkit-backdrop-filter:blur(20px) saturate(150%);
+    border-top:1px solid var(--glass-border); box-shadow:0 -8px 28px rgba(43,152,186,.12);
+    padding:10px 20px; display:none; cursor:pointer;
+  }
+  .sticky-summary-bar.visible{display:block;}
+  .sticky-summary-inner{
+    max-width:1180px; margin:0 auto; display:flex; align-items:center; justify-content:space-between;
+    gap:12px; flex-wrap:wrap;
+  }
+  .sticky-summary-label{font-size:12.5px; color:var(--ink-soft);}
+  .sticky-summary-count{font-size:12px; color:var(--navy-800); font-weight:500; margin-left:6px;}
+  .sticky-summary-val{
+    font-size:17px; font-weight:500; color:#fff;
+    background:linear-gradient(135deg, var(--yellow), var(--yellow2));
+    padding:5px 14px; border-radius:9px;
+  }
+  @media (max-width:640px){
+    .sticky-summary-bar{padding:8px 12px;}
+    .sticky-summary-val{font-size:15px; padding:4px 11px;}
+  }
+  @media print{ .sticky-summary-bar{display:none !important;} }
 </style>
 </head>
 <body>
@@ -591,6 +622,13 @@
 <div class="footnote">
   <div id="saveStatus" style="color:var(--navy-800); font-weight:500; margin-bottom:6px;"></div>
   本報價單有效期限為報價日起 14 天，實際施工項目與金額以現場丈量及最終簽訂合約為準。單價庫可點項目右側鉛筆圖示編輯；報價明細依「大項」（工程類別）自動分組並列出各大項小計。系統會自動將單價庫、已儲存報價單與目前編輯中的報價單存到「這台電腦、這個瀏覽器」，重新整理或關閉分頁後仍會保留；但不會同步到其他裝置或瀏覽器。若要在不同電腦間搬移資料，或做長期備份，請使用「匯出」存成 JSON 檔，之後用「匯入」載回。
+</div>
+
+<div class="sticky-summary-bar" id="stickySummaryBar">
+  <div class="sticky-summary-inner">
+    <div><span class="sticky-summary-label">目前報價</span><span class="sticky-summary-count" id="stickyCount"></span></div>
+    <div class="sticky-summary-val" id="stickyTotal">$0</div>
+  </div>
 </div>
 
 <script>
@@ -1188,9 +1226,9 @@ function renderQuote(){
       html += `<tr class="group-row"><td colspan="${colCount-1}"><span class="group-tag">大項</span>${esc(g.cat)}</td><td></td></tr>`;
       g.rows.forEach(r=>{
         no++;
-        const nameCell = `<div style="display:flex;flex-direction:column;gap:3px;">
+        const nameCell = `<div style="display:flex;flex-direction:column;gap:2px;">
                <select class="cat-select" data-id="${r.id}">${catOptionsHtml(r.cat)}</select>
-               <input class="name-input" data-id="${r.id}" value="${esc(r.name)}" placeholder="輸入細項（工項）名稱" style="width:100%;padding:5px 6px;border:1px solid var(--line);border-radius:5px;font-family:inherit;font-size:13px;">
+               <input class="name-input" data-id="${r.id}" value="${esc(r.name)}" placeholder="輸入細項（工項）名稱" style="width:100%;padding:4px 6px;border:1px solid var(--line);border-radius:5px;font-family:inherit;font-size:13px;">
              </div>`;
         const unitCell = `<input class="unit-input" data-id="${r.id}" value="${esc(r.unit)}" placeholder="單位">`;
 
@@ -1333,9 +1371,19 @@ function renderTotals(){
 
   document.getElementById('sumSubtotal').textContent = fmt(subtotal);
   document.getElementById('sumTotal').textContent = fmt(total);
+
+  const stickyBar = document.getElementById('stickySummaryBar');
+  if(stickyBar){
+    document.getElementById('stickyTotal').textContent = fmt(total);
+    document.getElementById('stickyCount').textContent = quoteRows.length + ' 項';
+    stickyBar.classList.toggle('visible', quoteRows.length > 0);
+  }
   return total;
 }
 
+document.getElementById('stickySummaryBar').addEventListener('click', ()=>{
+  document.querySelector('.quote-table-wrap').scrollIntoView({behavior:'smooth', block:'start'});
+});
 document.getElementById('discount').addEventListener('input', ()=>{ renderTotals(); saveToStorage(); });
 document.getElementById('taxRate').addEventListener('input', ()=>{ renderTotals(); saveToStorage(); });
 ['qNo','qDate','qClient','qPhone','qAddr'].forEach(id=>{
