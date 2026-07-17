@@ -63,7 +63,7 @@
     backdrop-filter:blur(22px) saturate(150%);
     -webkit-backdrop-filter:blur(22px) saturate(150%);
     color:var(--ink);
-    padding:14px 24px 16px;
+    padding:9px 24px 10px;
     position:relative;
     overflow:hidden;
     border-radius:0 0 16px 16px;
@@ -77,35 +77,35 @@
   .topbar-inner{
     max-width:1180px;margin:0 auto;
     display:flex;justify-content:space-between;align-items:center;
-    flex-wrap:wrap; gap:14px; position:relative; z-index:1;
+    flex-wrap:wrap; gap:10px; position:relative; z-index:1;
   }
   .brand-eyebrow{
     font-family:'Zen Kaku Gothic New',sans-serif;
-    font-size:10px; letter-spacing:.2em; text-transform:uppercase;
-    color:var(--navy-700); font-weight:500; margin-bottom:2px;
+    font-size:9px; letter-spacing:.2em; text-transform:uppercase;
+    color:var(--navy-700); font-weight:500; margin-bottom:1px;
   }
   .brand-title{
     font-family:var(--font-serif);
-    font-size:17px; font-weight:600; letter-spacing:.02em; margin:0;
-    color:var(--ink); line-height:1.25;
+    font-size:15px; font-weight:600; letter-spacing:.02em; margin:0;
+    color:var(--ink); line-height:1.2;
   }
-  .brand-sub{font-size:11px;color:var(--ink-soft);margin-top:2px; line-height:1.4;}
+  .brand-sub{font-size:10px;color:var(--ink-soft);margin-top:1px; line-height:1.3;}
   .quote-meta{
-    display:grid; grid-template-columns:repeat(3,minmax(130px,1fr)); gap:8px 12px;
+    display:grid; grid-template-columns:repeat(3,minmax(130px,1fr)); gap:5px 10px;
     background:rgba(255,255,255,.4);
-    padding:10px 14px; border-radius:12px;
+    padding:6px 12px; border-radius:10px;
     border:1px solid var(--glass-border);
     min-width:520px;
     backdrop-filter:blur(12px);
     -webkit-backdrop-filter:blur(12px);
   }
-  .quote-meta label{display:block;font-size:10.5px;color:var(--navy-800);margin-bottom:3px; white-space:nowrap; font-weight:500;}
+  .quote-meta label{display:block;font-size:9.5px;color:var(--navy-800);margin-bottom:2px; white-space:nowrap; font-weight:500;}
   .quote-meta input{
     width:100%; background:rgba(255,255,255,.8); border:1px solid rgba(151,212,231,.6);
-    border-radius:7px; padding:6px 9px; font-size:13px; color:var(--ink);
+    border-radius:6px; padding:4px 8px; font-size:12.5px; color:var(--ink);
     font-family:inherit;
   }
-  .quote-meta .cloud-badge{font-size:11px; padding:4px 11px; margin-top:6px;}
+  .quote-meta .cloud-badge{font-size:10.5px; padding:3px 10px; margin-top:3px;}
   @media (max-width:760px){
     .quote-meta{grid-template-columns:repeat(2,1fr); min-width:0;}
   }
@@ -196,6 +196,11 @@
   .lib-edit-form input{
     font-family:inherit; font-size:12px; padding:5px 6px; border:1px solid #97D4E7; border-radius:5px;
     background:#fff; width:100%;
+  }
+  .lib-edit-form input[type="number"]{-moz-appearance:textfield;}
+  .lib-edit-form input[type="number"]::-webkit-outer-spin-button,
+  .lib-edit-form input[type="number"]::-webkit-inner-spin-button{
+    -webkit-appearance:none; margin:0;
   }
   .lib-edit-form .frow-actions{display:flex; gap:6px; justify-content:flex-end; align-items:center;}
   .lib-edit-form button{
@@ -887,16 +892,19 @@ function renderCats(){
 // ---------- Library render (with inline edit) ----------
 function libEditFormHtml(item){
   const isNew = item === null;
-  const v = item || {cat:'', name:'', unit:'', price:0, note:'', vendor:activeVendor!=='全部'?activeVendor:''};
+  const v = item || {cat: activeCat!=='全部'?activeCat:'未分類', name:'', unit:'', price:0, note:'', vendor:activeVendor!=='全部'?activeVendor:''};
+  const catField = isNew
+    ? `<input type="hidden" id="ef-cat" value="${esc(v.cat)}">`
+    : `<div style="flex:1;"><span class="flabel">類別（大項）</span><input id="ef-cat" value="${esc(v.cat)}" placeholder="例：拆除工程"></div>`;
   return `
     <div class="lib-edit-form">
       <div class="frow">
-        <div style="flex:1;"><span class="flabel">類別（大項）</span><input id="ef-cat" value="${esc(v.cat)}" placeholder="例：拆除工程"></div>
-        <div style="flex:2;"><span class="flabel">項目名稱（細項）</span><input id="ef-name" value="${esc(v.name)}" placeholder="項目名稱"></div>
+        ${catField}
+        <div style="flex:2;"><span class="flabel">項目名稱（細項）${isNew ? `<span style="font-weight:400;color:var(--ink-soft);">（將加入「${esc(v.cat)}」）</span>` : ''}</span><input id="ef-name" value="${esc(v.name)}" placeholder="項目名稱"></div>
       </div>
       <div class="frow">
         <div style="width:80px;"><span class="flabel">單位</span><input id="ef-unit" value="${esc(v.unit)}" placeholder="坪"></div>
-        <div style="width:110px;"><span class="flabel">參考單價</span><input id="ef-price" type="number" value="${v.price}" min="0"></div>
+        <div style="width:110px;"><span class="flabel">參考單價</span><input id="ef-price" class="no-spin" type="number" value="${v.price}" min="0"></div>
         <div style="flex:1;"><span class="flabel">廠商</span><input id="ef-vendor" value="${esc(v.vendor||'')}" placeholder="選填"></div>
       </div>
       <div class="frow">
