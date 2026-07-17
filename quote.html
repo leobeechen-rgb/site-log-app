@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>快速報價系統</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiByeD0iMTQiIGZpbGw9IiMxRTdBOTYiLz48cmVjdCB4PSIxNSIgeT0iMTEiIHdpZHRoPSIyNyIgaGVpZ2h0PSIzNSIgcng9IjMiIGZpbGw9IiNmZmYiLz48cmVjdCB4PSIyMCIgeT0iMTkiIHdpZHRoPSIxNyIgaGVpZ2h0PSIzIiByeD0iMS41IiBmaWxsPSIjOTdENEU3Ii8+PHJlY3QgeD0iMjAiIHk9IjI2IiB3aWR0aD0iMTciIGhlaWdodD0iMyIgcng9IjEuNSIgZmlsbD0iIzk3RDRFNyIvPjxyZWN0IHg9IjIwIiB5PSIzMyIgd2lkdGg9IjExIiBoZWlnaHQ9IjMiIHJ4PSIxLjUiIGZpbGw9IiM5N0Q0RTciLz48Y2lyY2xlIGN4PSI0NSIgY3k9IjQzIiByPSIxMyIgZmlsbD0iI0Y4NzYzRiIvPjx0ZXh0IHg9IjQ1IiB5PSI0OCIgZm9udC1zaXplPSIxNSIgZm9udC13ZWlnaHQ9IjcwMCIgZmlsbD0iI2ZmZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsIj4kPC90ZXh0Pjwvc3ZnPgo=">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;600&family=Noto+Sans+TC:wght@400;500;600&family=Zen+Kaku+Gothic+New:wght@400;500&display=swap" rel="stylesheet">
+<!-- 雲端同步用（Supabase）：若尚未設定 supabaseConfig，這個檔案載入後不會有任何作用，系統仍可正常以本機模式運作 -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --navy-900:#1E7A96;
+    --navy-800:#2B98BA;
+    --navy-700:#97D4E7;
+    --paper:#F5F9FA;
+    --card:#FFFFFF;
+    --ink:#122A33;
+    --ink-soft:#6B8994;
+    --font-serif:'Noto Serif TC','Zen Kaku Gothic New',serif;
+    --font-sans:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+    --yellow:#F8763F;
+    --yellow2:#FFD46A;
+    --yellow-soft:#FFF3E2;
+    --line:rgba(151,212,231,.35);
+    --green:#1F8A55;
+    --red:#F8763F;
+    --radius:18px;
+    --glass-bg:rgba(255,255,255,.55);
+    --glass-bg-strong:rgba(255,255,255,.7);
+    --glass-border:rgba(255,255,255,.9);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--font-sans);
+    font-weight:400;
+    line-height:1.6;
+    letter-spacing:.01em;
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+    text-rendering:optimizeLegibility;
+    position:relative;
+    min-height:100vh;
+  }
+  body::before{
+    content:"";
+    position:fixed; inset:0; z-index:-1;
+    background:
+      radial-gradient(480px 480px at 8% 10%, rgba(151,212,231,.45), transparent 70%),
+      radial-gradient(420px 420px at 94% 6%, rgba(248,118,63,.20), transparent 70%),
+      radial-gradient(500px 500px at 88% 55%, rgba(255,212,106,.32), transparent 70%),
+      radial-gradient(440px 440px at 6% 88%, rgba(43,152,186,.22), transparent 70%),
+      var(--paper);
+    filter:blur(4px);
+  }
+  .topbar{
+    background:var(--glass-bg);
+    backdrop-filter:blur(22px) saturate(150%);
+    -webkit-backdrop-filter:blur(22px) saturate(150%);
+    color:var(--ink);
+    padding:22px 32px 24px;
+    position:relative;
+    overflow:hidden;
+    border-radius:0 0 22px 22px;
+    border-bottom:1px solid var(--glass-border);
+    box-shadow:0 8px 32px rgba(43,152,186,0.08);
+  }
+  .topbar-deco{
+    position:absolute; right:0; top:0; width:340px; height:100%;
+    pointer-events:none; z-index:0; opacity:.7;
+  }
+  .topbar-inner{
+    max-width:1180px;margin:0 auto;
+    display:flex;justify-content:space-between;align-items:center;
+    flex-wrap:wrap; gap:14px; position:relative; z-index:1;
+  }
+  .brand-eyebrow{
+    font-family:'Zen Kaku Gothic New',sans-serif;
+    font-size:11px; letter-spacing:.22em; text-transform:uppercase;
+    color:var(--navy-700); font-weight:500; margin-bottom:3px;
+  }
+  .brand-title{
+    font-family:var(--font-serif);
+    font-size:22px; font-weight:600; letter-spacing:.03em; margin:0;
+    color:var(--ink); line-height:1.25;
+  }
+  .brand-sub{font-size:12px;color:var(--ink-soft);margin-top:3px; line-height:1.4;}
+  .quote-meta{
+    display:grid; grid-template-columns:repeat(3,minmax(140px,1fr)); gap:12px 16px;
+    background:rgba(255,255,255,.4);
+    padding:16px 18px; border-radius:14px;
+    border:1px solid var(--glass-border);
+    min-width:560px;
+    backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(12px);
+  }
+  .quote-meta label{display:block;font-size:11.5px;color:var(--navy-800);margin-bottom:4px; white-space:nowrap; font-weight:500;}
+  .quote-meta input{
+    width:100%; background:rgba(255,255,255,.8); border:1px solid rgba(151,212,231,.6);
+    border-radius:7px; padding:8px 10px; font-size:13.5px; color:var(--ink);
+    font-family:inherit;
+  }
+  .quote-meta .cloud-badge{font-size:11.5px; padding:5px 12px; margin-top:8px;}
+  @media (max-width:760px){
+    .quote-meta{grid-template-columns:repeat(2,1fr); min-width:0;}
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding:28px 32px 70px;}
+  .grid{display:grid; grid-template-columns:320px 1fr; gap:24px;}
+  @media (max-width:900px){.grid{grid-template-columns:1fr;}}
+
+  .panel{
+    background:var(--glass-bg); border:1px solid var(--glass-border); border-radius:var(--radius);
+    overflow:hidden;
+    margin-bottom:24px;
+    box-shadow:0 8px 28px rgba(43,152,186,0.07);
+    backdrop-filter:blur(20px) saturate(150%);
+    -webkit-backdrop-filter:blur(20px) saturate(150%);
+  }
+  .panel-head{
+    background:rgba(151,212,231,.22); color:var(--ink); padding:14px 18px;
+    font-family:var(--font-serif);
+    font-weight:600; font-size:15px; display:flex; align-items:center; justify-content:space-between;
+    flex-wrap:wrap; gap:8px; border-bottom:1px solid var(--line);
+  }
+  .panel-head .count{font-size:12px; color:var(--navy-800); font-weight:400;}
+  .panel-head-actions{display:flex; gap:6px; flex-wrap:wrap;}
+  .head-btn{
+    font-family:inherit; font-size:12px; font-weight:500; padding:4px 9px;
+    border-radius:5px; border:1px solid var(--navy-700); background:#fff;
+    color:var(--navy-800); cursor:pointer;
+  }
+  .head-btn:hover{background:var(--navy-700); color:#fff;}
+
+  /* Library */
+  .lib-search{padding:14px; border-bottom:1px solid var(--line);}
+  .lib-search input{
+    width:100%; padding:9px 12px; border:1px solid var(--line); border-radius:8px;
+    font-family:inherit; font-size:13.5px;
+  }
+  .lib-cats{padding:10px 12px 8px; display:flex; flex-wrap:wrap; gap:7px;}
+  .cat-chip{
+    font-size:12px; padding:5px 11px; border-radius:999px; border:1px solid var(--line);
+    background:#fff; cursor:pointer; color:var(--ink-soft); font-weight:500;
+    transition:.15s;
+  }
+  .cat-chip.active{background:var(--navy-800); color:#fff; border-color:var(--navy-800);}
+  .lib-list{max-height:560px; overflow-y:auto; padding:8px 12px 16px;}
+  .lib-item{
+    padding:12px 12px; border-radius:10px; margin-bottom:8px;
+    border:1px solid rgba(151,212,231,.25); transition:.12s;
+  }
+  .lib-item:hover{background:var(--yellow-soft); border-color:#97D4E7;}
+  .lib-item-row{display:flex; align-items:flex-start; justify-content:space-between; gap:8px;}
+  .lib-item-main{flex:1; cursor:pointer;}
+  .lib-item-name{font-size:13.5px; font-weight:500;}
+  .lib-item-meta{font-size:12px; color:var(--ink-soft); margin-top:4px; display:flex; justify-content:space-between; gap:8px;}
+  .lib-item-price{color:var(--navy-800); font-weight:500; white-space:nowrap;}
+  .lib-edit-btn{
+    border:none; background:none; color:var(--ink-soft); cursor:pointer; font-size:13px;
+    padding:2px 5px; border-radius:4px; flex-shrink:0;
+  }
+  .lib-edit-btn:hover{background:#FFF1DC; color:var(--navy-800);}
+
+  .lib-edit-form{
+    padding:10px; border:1px solid #97D4E7; background:var(--yellow-soft); border-radius:8px; margin:0 0 10px;
+  }
+  .lib-edit-form .frow{display:flex; gap:6px; margin-bottom:6px;}
+  .lib-edit-form .flabel{font-size:12.5px; color:var(--ink-soft); margin-bottom:2px; display:block;}
+  .lib-edit-form input{
+    font-family:inherit; font-size:12px; padding:5px 6px; border:1px solid #97D4E7; border-radius:5px;
+    background:#fff; width:100%;
+  }
+  .lib-edit-form .frow-actions{display:flex; gap:6px; justify-content:flex-end; align-items:center;}
+  .lib-edit-form button{
+    font-family:inherit; font-size:12px; font-weight:500; padding:5px 12px; border-radius:5px; border:none; cursor:pointer;
+  }
+  .btn-save{background:var(--navy-800); color:#fff;}
+  .btn-cancel{background:#fff; color:var(--ink-soft); border:1px solid var(--line) !important;}
+  .btn-del-item{background:#fff; color:var(--red); border:1px solid var(--red) !important; margin-right:auto;}
+
+  /* Quote table */
+  .quote-table-wrap{padding:16px 18px 10px; overflow-x:auto;}
+  table{width:100%; border-collapse:collapse; font-size:13.5px; min-width:560px;}
+  thead th{
+    background:rgba(255,212,106,.28); color:var(--navy-900); font-weight:500; font-size:12.5px;
+    padding:11px 10px; text-align:left; border-bottom:1px solid var(--navy-700);
+    letter-spacing:.02em;
+  }
+  tbody td{padding:11px 10px; border-bottom:1px solid var(--line); vertical-align:middle;}
+  tbody tr:hover{background:rgba(255,255,255,.5);}
+  tr.group-row td{
+    background:rgba(151,212,231,.22); font-weight:500; color:var(--navy-900); font-size:12.5px;
+    border-bottom:none; padding-top:12px; padding-bottom:12px;
+  }
+  tr.group-row td:first-child{padding-left:8px;}
+  .group-tag{
+    display:inline-block; font-size:12px; font-weight:500; color:#fff; background:var(--navy-800);
+    padding:1px 7px; border-radius:5px; margin-right:8px; letter-spacing:.05em;
+  }
+  tr.group-subtotal-row td{
+    background:rgba(255,212,106,.18); font-weight:500; color:var(--navy-800); font-size:12px;
+    border-bottom:1px solid var(--line);
+  }
+  tr.item-row td:first-child{padding-left:22px; color:var(--ink-soft); font-size:12px;}
+  .row-cat{font-size:12px; color:var(--ink-soft);}
+  .row-name{font-weight:400;}
+  .row-note{font-size:12px; color:var(--ink-soft); margin-top:1px;}
+  input.qty-input, input.price-input{
+    width:64px; padding:4px 6px; border:1px solid transparent; border-bottom:1px solid rgba(151,212,231,.7);
+    background:transparent; border-radius:4px; font-family:inherit; font-size:13px; text-align:right;
+    transition:.15s;
+  }
+  input.qty-input:hover, input.price-input:hover,
+  input.qty-input:focus, input.price-input:focus{
+    background:var(--yellow-soft); border:1px solid #97D4E7; outline:none;
+  }
+  input.price-input{width:80px;}
+  select.cat-select{
+    font-family:inherit; font-size:12px; padding:4px 6px; border:1px solid rgba(151,212,231,.7);
+    border-radius:5px; background:#fff; color:var(--navy-800); max-width:110px; margin-bottom:3px;
+  }
+  input.unit-input{
+    width:100%; padding:4px 6px; border:1px solid rgba(151,212,231,.7); border-radius:5px;
+    background:#fff; font-family:inherit; font-size:13px; color:var(--ink);
+  }
+  input.unit-input:hover, input.unit-input:focus{
+    background:var(--yellow-soft); border-color:#97D4E7; outline:none;
+  }
+  .group-subtotal-inner{
+    display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px 16px;
+  }
+  .group-subtotal-label{white-space:nowrap;}
+  .lock-btn{
+    border:none; background:none; cursor:pointer; font-size:13px; padding:2px 5px;
+    border-radius:4px; color:var(--ink-soft); line-height:1;
+  }
+  .lock-btn:hover{background:rgba(151,212,231,.25);}
+  .lock-btn.is-locked{color:var(--yellow);}
+  .row-actions{display:flex; align-items:center; gap:2px; justify-content:flex-end;}
+  .price-hidden-cell{color:var(--ink-soft); font-size:12.5px;}
+  .add-subitem-link{
+    border:none; background:none; color:var(--navy-800); font-size:12px; font-weight:500;
+    cursor:pointer; padding:2px 6px; border-radius:4px;
+  }
+  .add-subitem-link:hover{background:rgba(255,255,255,.6); text-decoration:underline;}
+  .del-btn{
+    border:none; background:none; color:var(--red); cursor:pointer; font-size:15px;
+    padding:2px 5px; border-radius:4px; line-height:1;
+  }
+  .del-btn:hover{background:#FDE3D3;}
+  .subtotal-cell{font-weight:500; text-align:right; color:var(--navy-900);}
+  .empty-row td{text-align:center; color:var(--ink-soft); padding:34px 0; font-size:13px;}
+
+  .totals{
+    padding:18px 18px; border-top:1px solid var(--line); background:rgba(255,212,106,.14); backdrop-filter:blur(6px);
+  }
+  .totals-row{
+    display:flex; justify-content:flex-end; align-items:center; gap:14px;
+    padding:6px 0; font-size:13.5px;
+  }
+  .totals-row label{color:var(--ink-soft); min-width:110px; text-align:right;}
+  .totals-row input{
+    width:120px; padding:5px 8px; border:1px solid #97D4E7; background:var(--yellow-soft);
+    border-radius:5px; text-align:right; font-family:inherit; font-size:13px;
+  }
+  .totals-row .val{width:120px; text-align:right; font-weight:400;}
+  .totals-row.grand{
+    margin-top:8px; padding-top:14px; border-top:1px dashed var(--line);
+  }
+  .totals-row.grand label{font-size:15px; font-weight:500; color:var(--navy-900);}
+  .totals-row.grand .val{
+    font-size:20px; font-weight:500; color:#fff;
+    background:linear-gradient(135deg, var(--yellow), var(--yellow2));
+    padding:7px 16px; border-radius:10px; width:auto;
+    box-shadow:0 4px 14px rgba(248,118,63,.3);
+  }
+
+  .actions{display:flex; gap:12px; padding:16px 18px 22px; flex-wrap:wrap;}
+  button.btn{
+    font-family:inherit; font-weight:500; font-size:13.5px; padding:11px 20px;
+    border-radius:10px; cursor:pointer; border:1px solid transparent; transition:.15s;
+  }
+  .btn-primary{background:var(--navy-800); color:#fff; box-shadow:0 4px 14px rgba(43,152,186,.25);}
+  .btn-primary:hover{background:var(--navy-900);}
+  .btn-ghost{background:rgba(255,255,255,.6); color:var(--navy-800); border-color:var(--navy-700);}
+  .btn-ghost:hover{background:#fff;}
+  .btn-yellow{background:var(--yellow); color:#fff; box-shadow:0 4px 14px rgba(248,118,63,.25);}
+  .btn-yellow:hover{filter:brightness(0.96);}
+  .footnote{
+    max-width:1180px; margin:0 auto; padding:0 32px 40px; font-size:12.5px; color:var(--ink-soft);
+  }
+
+  /* Saved quotes panel */
+  .saved-list{padding:6px 16px 16px;}
+  .saved-empty{padding:24px 0; text-align:center; color:var(--ink-soft); font-size:13px;}
+  .saved-item{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:10px 12px; border:1px solid var(--line); border-radius:8px; margin-bottom:8px;
+    background:#fff;
+  }
+  .saved-item-info{flex:1;}
+  .saved-item-name{font-weight:500; font-size:13px;}
+  .saved-item-meta{font-size:12px; color:var(--ink-soft); margin-top:2px;}
+  .saved-item-total{font-weight:500; color:var(--navy-800); font-size:13px; margin-right:6px;}
+  .saved-item-actions{display:flex; gap:6px;}
+  .saved-item-actions button{
+    font-family:inherit; font-size:12px; font-weight:500; padding:5px 10px; border-radius:5px;
+    border:1px solid var(--navy-800); background:#fff; color:var(--navy-800); cursor:pointer;
+  }
+  .saved-item-actions button:hover{background:#FFF1DC;}
+  .saved-item-actions button.danger{border-color:var(--red); color:var(--red);}
+  .saved-item-actions button.danger:hover{background:#FDE3D3;}
+
+  /* Price visibility toggle */
+  .price-toggle-wrap{
+    display:flex; align-items:center; gap:8px; font-size:12px; color:var(--ink-soft);
+  }
+  .switch{
+    position:relative; display:inline-block; width:38px; height:21px; flex-shrink:0;
+  }
+  .switch input{opacity:0; width:0; height:0;}
+  .switch-slider{
+    position:absolute; cursor:pointer; inset:0; background:#D8E6EA;
+    transition:.2s; border-radius:999px;
+  }
+  .switch-slider::before{
+    content:""; position:absolute; height:15px; width:15px; left:3px; bottom:3px;
+    background:#fff; transition:.2s; border-radius:50%;
+    box-shadow:0 1px 3px rgba(0,0,0,.25);
+  }
+  .switch input:checked + .switch-slider{background:var(--navy-800);}
+  .switch input:checked + .switch-slider::before{transform:translateX(17px);}
+  .price-toggle-hint{font-size:11px; color:var(--ink-soft); margin-top:2px;}
+
+  /* Responsive refinements */
+  @media (max-width:640px){
+    .topbar{padding:20px 16px 18px; border-radius:0 0 20px 20px;}
+    .brand-title{font-size:24px;}
+    .quote-meta{grid-template-columns:1fr; min-width:0;}
+    .wrap{padding:18px 12px 60px;}
+    .grid{gap:14px;}
+    .panel-head{padding:11px 12px; font-size:13px;}
+    .quote-table-wrap{padding:10px 8px 6px;}
+    table{min-width:480px; font-size:12px;}
+    .totals{padding:12px;}
+    .totals-row{font-size:12.5px; flex-wrap:wrap; justify-content:space-between;}
+    .totals-row label{min-width:auto; text-align:left;}
+    .totals-row input,.totals-row .val{width:110px;}
+    .actions{padding:12px 12px 16px; gap:8px;}
+    .actions .btn{flex:1 1 auto; text-align:center; font-size:12.5px; padding:10px 12px;}
+    .footnote{padding:0 16px 30px; font-size:11.5px;}
+    .saved-item{flex-wrap:wrap;}
+  }
+
+  @media print{
+    .topbar-deco,.lib-search,.lib-cats,.actions,.grid > .panel:first-child,#savedPanel,.price-toggle-wrap,.cloud-badge,.lock-btn,.add-subitem-link,.del-btn{display:none;}
+    body{background:#fff; line-height:1.25; font-size:12px;}
+    .grid{grid-template-columns:1fr;}
+    .panel{border:none; box-shadow:none; backdrop-filter:none; margin-bottom:6px; break-inside:avoid;}
+    .topbar{padding:8px 0; border-radius:0; box-shadow:none; backdrop-filter:none;}
+    .brand-title{font-size:18px;}
+    .quote-meta{padding:6px 10px; background:transparent; border:1px solid var(--line);}
+    .quote-meta label{font-size:9px; margin-bottom:1px;}
+    .quote-meta input{padding:2px 4px; font-size:11px; border:none; border-bottom:1px solid var(--line); background:transparent;}
+    .wrap{padding:8px 0 20px;}
+    .panel-head{padding:6px 10px; font-size:12px;}
+    .quote-table-wrap{padding:4px 6px 2px;}
+    table{font-size:11px;}
+    thead th{padding:4px 6px; font-size:10.5px;}
+    tbody td{padding:3px 6px; line-height:1.2;}
+    tr.group-row td{padding-top:4px; padding-bottom:4px;}
+    .row-note{font-size:10px; margin-top:0;}
+    .cat-select{display:none;}
+    .name-input,.unit-input{border:none; background:transparent; padding:0; font-size:11px; color:var(--ink);}
+    .totals{padding:6px 10px;}
+    .totals-row{padding:1px 0; font-size:11px;}
+    .totals-row.grand{margin-top:2px; padding-top:6px;}
+    .totals-row.grand .val{font-size:15px; padding:3px 10px;}
+    .footnote{font-size:9.5px; padding:4px 0 10px; line-height:1.3;}
+  }
+
+  /* Cloud sync */
+  .cloud-badge{
+    display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:500;
+    color:var(--navy-800); background:rgba(255,255,255,.6); border:1px solid var(--glass-border);
+    padding:6px 12px; border-radius:999px; cursor:pointer; white-space:nowrap;
+    backdrop-filter:blur(10px); transition:.15s;
+  }
+  .cloud-badge:hover{background:#fff;}
+  .cloud-badge.is-synced{color:var(--green); border-color:rgba(31,138,85,.4);}
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(18,42,51,.45); z-index:200;
+    display:none; align-items:center; justify-content:center; padding:16px;
+    backdrop-filter:blur(2px);
+  }
+  .modal-box{
+    background:#fff; border-radius:var(--radius); max-width:380px; width:100%;
+    box-shadow:0 20px 60px rgba(0,0,0,.25); overflow:hidden;
+  }
+  .modal-head{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:14px 18px; font-family:var(--font-serif); font-weight:600; font-size:15px;
+    background:rgba(151,212,231,.22); border-bottom:1px solid var(--line);
+  }
+  .modal-head button{border:none; background:none; font-size:16px; cursor:pointer; color:var(--ink-soft);}
+  .modal-body{padding:18px;}
+  .modal-body p{font-size:12.5px; color:var(--ink-soft); margin:0 0 12px; line-height:1.6;}
+  .modal-body input{
+    width:100%; padding:9px 10px; border:1px solid var(--navy-700); border-radius:8px;
+    font-family:inherit; font-size:13px; margin-bottom:10px;
+  }
+  .modal-actions{display:flex; gap:8px; flex-wrap:wrap;}
+  .modal-actions .btn{flex:1;}
+  .auth-error{color:var(--red); font-size:12px; margin-top:8px; min-height:14px;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <svg class="topbar-deco" viewBox="0 0 300 180" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" preserveAspectRatio="xMaxYMin meet">
+    <ellipse cx="235" cy="60" rx="46" ry="52" fill="var(--red)" opacity=".16" transform="rotate(-12 235 60)"/>
+    <circle cx="150" cy="26" r="9" fill="var(--yellow)" opacity=".55"/>
+    <g fill="none" stroke="var(--navy-800)" stroke-width="2" stroke-linecap="round" opacity=".35">
+      <path d="M170 18 C205 8, 235 22, 262 12"/>
+      <path d="M188 18 C182 30, 176 34, 165 32"/>
+      <path d="M205 15 C201 27, 197 31, 187 30"/>
+      <path d="M222 13 C219 24, 215 28, 206 27"/>
+      <path d="M240 12 C238 21, 235 25, 227 24"/>
+    </g>
+    <rect x="262" y="70" width="5" height="16" rx="2.5" fill="var(--navy-700)" opacity=".4"/>
+    <rect x="272" y="66" width="5" height="24" rx="2.5" fill="var(--navy-700)" opacity=".4"/>
+    <rect x="282" y="74" width="5" height="12" rx="2.5" fill="var(--navy-700)" opacity=".4"/>
+  </svg>
+  <div class="topbar-inner">
+    <div>
+      <div class="brand-eyebrow">Interior Renovation · Quotation</div>
+      <h1 class="brand-title">快速報價系統</h1>
+      <div class="brand-sub">點選項目，自動試算工程報價</div>
+    </div>
+    <div class="quote-meta">
+      <div><label>報價單號</label><input id="qNo" value="Q2026-001"></div>
+      <div><label>報價日期</label><input id="qDate" type="date"></div>
+      <div><label>客戶姓名</label><input id="qClient" placeholder="王小姐"></div>
+      <div><label>聯絡電話</label><input id="qPhone" placeholder="09xx-xxx-xxx"></div>
+      <div style="grid-column:1/-1;"><label>工程地址</label><input id="qAddr" placeholder="台南市..."></div>
+      <div style="grid-column:1/-1;"><span class="cloud-badge" id="cloudBadge">☁️ 檢查雲端同步狀態…</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="authModalOverlay">
+  <div class="modal-box">
+    <div class="modal-head"><span>☁️ 雲端同步</span><button id="authModalClose" title="關閉">✕</button></div>
+    <div class="modal-body">
+      <div id="authNotConfigured" style="display:none;">
+        <p>雲端同步功能還沒設定。這個網頁本身不含後端伺服器，需要連接一個 Supabase 專案才能跨裝置同步資料（您已經有一個在跑工地紀錄本的 Supabase 專案，可以直接沿用）。設定步驟請參考聊天室中的說明，設定完成後這裡就會變成登入畫面。</p>
+        <p>在設定完成前，系統會持續以「本機自動儲存」模式運作，資料不會遺失，只是僅限這台裝置、這個瀏覽器可見。</p>
+      </div>
+      <div id="authLoggedOut">
+        <p>登入後，單價庫、已儲存報價單與目前編輯中的報價單會自動同步到雲端，之後在手機、平板或其他電腦用同一組帳號登入，就能取用同一份資料。</p>
+        <input id="authEmail" type="email" placeholder="Email" autocomplete="username">
+        <input id="authPassword" type="password" placeholder="密碼（至少 6 碼）" autocomplete="current-password">
+        <div class="modal-actions">
+          <button class="btn btn-primary" id="authLoginBtn">登入</button>
+          <button class="btn btn-ghost" id="authRegisterBtn">註冊新帳號</button>
+        </div>
+        <div class="auth-error" id="authError"></div>
+      </div>
+      <div id="authLoggedIn" style="display:none;">
+        <p>目前登入帳號：<strong id="authUserEmail"></strong></p>
+        <p id="syncStatusText" style="font-size:12px;color:var(--ink-soft);"></p>
+        <div class="modal-actions">
+          <button class="btn btn-primary" id="syncNowBtn">立即同步</button>
+          <button class="btn btn-ghost" id="authLogoutBtn">登出</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="grid">
+    <!-- Price library -->
+    <div class="panel">
+      <div class="panel-head">
+        <span>單價庫 <span class="count" id="libCount"></span></span>
+        <div class="panel-head-actions">
+          <button class="head-btn" id="addItemBtn">+ 新增項目</button>
+          <button class="head-btn" id="exportBtn">匯出</button>
+          <button class="head-btn" id="importBtn">匯入</button>
+          <input type="file" id="importFile" accept="application/json" style="display:none;">
+        </div>
+      </div>
+      <div class="lib-search"><input id="libSearch" placeholder="搜尋項目名稱..."></div>
+      <div class="lib-cats" id="libCats"></div>
+      <div class="lib-list" id="libList"></div>
+    </div>
+
+    <!-- Right column: quote builder + saved quotes -->
+    <div>
+      <div class="panel">
+        <div class="panel-head">
+          <span>報價明細</span>
+          <label class="price-toggle-wrap">
+            顯示單價明細
+            <span class="switch">
+              <input type="checkbox" id="showPriceToggle" checked>
+              <span class="switch-slider"></span>
+            </span>
+          </label>
+        </div>
+        <div style="padding:8px 16px 0;" class="price-toggle-hint" id="priceToggleHint">開啟：預設每個項目顯示單價與數量；仍可用列表中的🔓圖示逐項改為隱藏，避免逐項比價。</div>
+        <div class="quote-table-wrap">
+          <table>
+            <thead id="quoteHead">
+              <tr>
+                <th style="width:26px;">No.</th>
+                <th>項目</th>
+                <th style="width:52px;">單位</th>
+                <th style="width:96px;">單價</th>
+                <th style="width:78px;">數量</th>
+                <th style="width:100px; text-align:right;">小計</th>
+                <th style="width:30px;"></th>
+              </tr>
+            </thead>
+            <tbody id="quoteBody">
+              <tr class="empty-row"><td colspan="7">從左側單價庫點選項目，加入報價單</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="totals">
+          <div class="totals-row"><label>工程小計合計</label><div class="val" id="sumSubtotal">$0</div></div>
+          <div class="totals-row"><label>折扣金額</label><input id="discount" type="number" value="0" min="0"></div>
+          <div class="totals-row"><label>營業稅 (%)</label><input id="taxRate" type="number" value="5" min="0"></div>
+          <div class="totals-row grand"><label>總計金額</label><div class="val" id="sumTotal">$0</div></div>
+        </div>
+
+        <div class="actions">
+          <button class="btn btn-primary" onclick="window.print()">列印 / 匯出 PDF</button>
+          <button class="btn btn-yellow" id="addBlankRow">+ 新增自訂項目</button>
+          <button class="btn btn-yellow" id="saveQuoteBtn">💾 儲存目前報價單</button>
+          <button class="btn btn-ghost" id="clearAll">清空報價單</button>
+        </div>
+      </div>
+
+      <div class="panel" id="savedPanel">
+        <div class="panel-head">
+          <span>已儲存報價單 <span class="count" id="savedCount"></span></span>
+          <div class="panel-head-actions">
+            <button class="head-btn" id="exportSavedBtn">匯出全部</button>
+            <button class="head-btn" id="importSavedBtn">匯入</button>
+            <input type="file" id="importSavedFile" accept="application/json" style="display:none;">
+          </div>
+        </div>
+        <div class="saved-list" id="savedList"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="footnote">
+  <div id="saveStatus" style="color:var(--navy-800); font-weight:500; margin-bottom:6px;"></div>
+  本報價單有效期限為報價日起 14 天，實際施工項目與金額以現場丈量及最終簽訂合約為準。單價庫可點項目右側鉛筆圖示編輯；報價明細依「大項」（工程類別）自動分組並列出各大項小計。系統會自動將單價庫、已儲存報價單與目前編輯中的報價單存到「這台電腦、這個瀏覽器」，重新整理或關閉分頁後仍會保留；但不會同步到其他裝置或瀏覽器。若要在不同電腦間搬移資料，或做長期備份，請使用「匯出」存成 JSON 檔，之後用「匯入」載回。
+</div>
+
+<script>
+let PRICE_LIST = [{"cat": "拆除工程", "name": "隔間牆拆除", "unit": "坪", "price": 2500, "note": "含清運", "code": "P001"}, {"cat": "拆除工程", "name": "地磚拆除", "unit": "坪", "price": 1600, "note": "", "code": "P002"}, {"cat": "拆除工程", "name": "衛浴設備拆除", "unit": "間", "price": 7500, "note": "馬桶+洗手台+浴缸", "code": "P003"}, {"cat": "水電工程", "name": "配電迴路新增", "unit": "迴路", "price": 2800, "note": "含線材", "code": "P004"}, {"cat": "水電工程", "name": "配電插座新增", "unit": "只", "price": 2800, "note": "", "code": "P005"}, {"cat": "水電工程", "name": "給排水管線更新", "unit": "坪", "price": 3300, "note": "", "code": "P006"}, {"cat": "水電工程", "name": "插座/開關更換", "unit": "個", "price": 350, "note": "", "code": "P007"}, {"cat": "泥作工程", "name": "地坪打底", "unit": "坪", "price": 1800, "note": "", "code": "P008"}, {"cat": "泥作工程", "name": "磁磚舖貼(牆)", "unit": "坪", "price": 2200, "note": "材料另計", "code": "P009"}, {"cat": "泥作工程", "name": "磁磚舖貼(地)", "unit": "坪", "price": 2000, "note": "材料另計", "code": "P010"}, {"cat": "木作工程", "name": "木作矽酸鈣天花板封板(平釘)", "unit": "坪", "price": 4800, "note": "", "code": "P011"}, {"cat": "木作工程", "name": "系統櫃(訂製)", "unit": "尺", "price": 12000, "note": "含五金", "code": "P012"}, {"cat": "木作工程", "name": "SPC石塑木地板舖設", "unit": "坪", "price": 5500, "note": "", "code": "P013"}, {"cat": "油漆工程", "name": "矽酸鈣牆面/天花板批土油漆", "unit": "坪", "price": 2100, "note": "含批土兩底一度", "code": "P014"}, {"cat": "油漆工程", "name": "水泥牆面批土油漆", "unit": "坪", "price": 1200, "note": "含批土兩底一度", "code": "P015"}, {"cat": "油漆工程", "name": "天花板油漆", "unit": "坪", "price": 1200, "note": "", "code": "P016"}, {"cat": "衛浴工程", "name": "衛浴設備安裝(整組)", "unit": "式", "price": 48000, "note": "馬桶+洗手台+龍頭+蓮蓬頭+置物架+四方鏡", "code": "P017"}, {"cat": "衛浴工程", "name": "淋浴拉門安裝", "unit": "式", "price": 19800, "note": "", "code": "P018"}, {"cat": "燈具工程", "name": "崁燈安裝", "unit": "個", "price": 600, "note": "含燈具", "code": "P019"}, {"cat": "其他", "name": "垃圾清運", "unit": "車", "price": 14000, "note": "", "code": "P020"}, {"cat": "其他", "name": "保護工程(全室)", "unit": "坪", "price": 950, "note": "施工前防護", "code": "P021"}, {"cat": "外牆工程", "name": "外牆施工鷹架+防塵網", "unit": "式", "price": 98000, "note": "", "code": "P022"}, {"cat": "外牆工程", "name": "外牆正面石頭漆噴塗", "unit": "式", "price": 110000, "note": "", "code": "P023"}, {"cat": "外牆工程", "name": "後方防水漆", "unit": "式", "price": 40000, "note": "", "code": "P024"}, {"cat": "衛浴設備", "name": "抽風機", "unit": "台", "price": 0, "note": "CAESAR D610", "code": "P025"}, {"cat": "衛浴設備", "name": "馬桶(TOTO CW887CRTW)", "unit": "組", "price": 0, "note": "TOTO CW887CRTW", "code": "P026"}, {"cat": "衛浴設備", "name": "馬桶(CAESAR CF1394)", "unit": "組", "price": 0, "note": "CAESAR CF1394", "code": "P027"}, {"cat": "衛浴設備", "name": "馬桶(KOHTHER 28529TW-0)", "unit": "組", "price": 0, "note": "KOHTHER 28529TW-0", "code": "P028"}, {"cat": "衛浴設備", "name": "化妝鏡", "unit": "面", "price": 0, "note": "CAESAR M807-F-T", "code": "P029"}, {"cat": "衛浴設備", "name": "浴櫃W=60公分(CAESAR LF5357)", "unit": "組", "price": 0, "note": "CAESAR LF5357", "code": "P030"}, {"cat": "衛浴設備", "name": "浴櫃W=60公分(CAESAR LF5384)", "unit": "組", "price": 0, "note": "CAESAR LF5384", "code": "P031"}, {"cat": "衛浴設備", "name": "浴櫃W=160公分(木工訂製)", "unit": "式", "price": 0, "note": "木工訂製", "code": "P032"}, {"cat": "衛浴設備", "name": "浴櫃龍頭(CAESAR B520C)", "unit": "組", "price": 0, "note": "CAESAR B520C", "code": "P033"}, {"cat": "衛浴設備", "name": "浴櫃龍頭(KOHTHER 29546T-4-CP)", "unit": "組", "price": 0, "note": "KOHTHER 29546T-4-CP", "code": "P034"}, {"cat": "衛浴設備", "name": "淋浴龍頭(CAESAR S783C)", "unit": "組", "price": 0, "note": "CAESAR S783C", "code": "P035"}, {"cat": "衛浴設備", "name": "淋浴龍頭(CAESAR S788CW)", "unit": "組", "price": 0, "note": "CAESAR S788CW", "code": "P036"}, {"cat": "衛浴設備", "name": "沖洗器", "unit": "組", "price": 0, "note": "CAESAR BS310CWT", "code": "P037"}, {"cat": "衛浴設備", "name": "置物架", "unit": "組", "price": 0, "note": "CAESAR Q6309", "code": "P038"}, {"cat": "衛浴設備", "name": "暖風機", "unit": "台", "price": 0, "note": "KOHTHER 77315TW-G-MZ", "code": "P039"}, {"cat": "衛浴設備", "name": "鏡櫃", "unit": "組", "price": 0, "note": "KOHTHER 33694T-L-NA；60公分*1、30公分*2組合", "code": "P040"}, {"cat": "衛浴設備", "name": "毛巾架", "unit": "支", "price": 0, "note": "KOHTHER 29348T-A-0", "code": "P041"}, {"cat": "衛浴設備", "name": "浴缸", "unit": "組", "price": 0, "note": "KOHTHER MO-1051", "code": "P042"}, {"cat": "衛浴設備", "name": "浴缸龍頭(訂製款)", "unit": "組", "price": 0, "note": "KOHTHER 訂製款", "code": "P043"}];
+let nextSeq = PRICE_LIST.length + 1;
+
+let quoteRows = [];
+let rowSeq = 1;
+let showUnitPrice = true;
+let activeCat = '全部';
+let editingCode = null;   // code of item being edited, or '__new__'
+let savedQuotes = [];
+let savedSeq = 1;
+
+function fmt(n){
+  n = Math.round(n||0);
+  return '$' + n.toLocaleString('en-US');
+}
+function nextCode(){
+  return 'P' + String(nextSeq++).padStart(3,'0');
+}
+function esc(s){
+  return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// ---------- Persistence: local (always on) + cloud (optional, requires setup) ----------
+const STORAGE_KEY = 'quoteApp_data_v1';
+
+// To enable cross-device cloud sync: reuse your existing Supabase project (or create a new one at supabase.com).
+// Get these two values from Project Settings > API in your Supabase dashboard, then paste them below.
+// You also need to run the SQL in the "quoteApp cloud sync setup" comment (see chat) once, in the SQL Editor.
+const supabaseConfig = {
+  url: "https://rqndozhhvuimqjqtmeli.supabase.co",
+  anonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxbmRvemhodnVpbXFqcXRtZWxpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5Njc1ODIsImV4cCI6MjA5OTU0MzU4Mn0.meaGT1veRt9acHCl4Dcrpk9jxjNzrkFKWfs_96C6qLw"
+};
+const CLOUD_ENABLED = supabaseConfig.url !== "YOUR_SUPABASE_URL" && supabaseConfig.anonKey !== "YOUR_SUPABASE_ANON_KEY";
+
+let sb = null, currentUser = null, cloudSyncTimer = null;
+
+function buildSyncPayload(){
+  return {
+    priceList: PRICE_LIST,
+    nextSeq: nextSeq,
+    savedQuotes: savedQuotes,
+    savedSeq: savedSeq,
+    draft: {
+      meta: currentMeta(),
+      rows: quoteRows,
+      rowSeq: rowSeq
+    }
+  };
+}
+
+function applyLoadedData(data){
+  if(!data) return;
+  if(Array.isArray(data.priceList) && data.priceList.length){
+    PRICE_LIST = data.priceList;
+    nextSeq = data.nextSeq || (PRICE_LIST.length + 1);
+  }
+  if(Array.isArray(data.savedQuotes)){
+    savedQuotes = data.savedQuotes;
+    savedSeq = data.savedSeq || (savedQuotes.length ? Math.max(...savedQuotes.map(s=>s.id||0)) + 1 : 1);
+  }
+  if(data.draft){
+    const m = data.draft.meta || {};
+    document.getElementById('qNo').value = m.qNo || '';
+    if(m.qDate) document.getElementById('qDate').value = m.qDate;
+    document.getElementById('qClient').value = m.qClient || '';
+    document.getElementById('qPhone').value = m.qPhone || '';
+    document.getElementById('qAddr').value = m.qAddr || '';
+    document.getElementById('discount').value = m.discount || 0;
+    document.getElementById('taxRate').value = (m.taxRate===undefined?5:m.taxRate);
+    showUnitPrice = m.showUnitPrice !== false;
+    document.getElementById('showPriceToggle').checked = showUnitPrice;
+    quoteRows = Array.isArray(data.draft.rows) ? data.draft.rows : [];
+    rowSeq = data.draft.rowSeq || (quoteRows.length ? Math.max(...quoteRows.map(r=>r.id)) + 1 : 1);
+  }
+}
+
+function saveToStorage(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(buildSyncPayload()));
+    setSaveStatus(currentUser ? '已自動儲存（本機＋雲端排程中）' : '已自動儲存到本機');
+  }catch(e){
+    setSaveStatus('無法儲存（瀏覽器儲存空間受限或為無痕模式）');
+  }
+  scheduleCloudSync();
+}
+
+function setSaveStatus(text){
+  const el = document.getElementById('saveStatus');
+  if(el) el.textContent = text;
+}
+
+function loadFromStorage(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return false;
+    applyLoadedData(JSON.parse(raw));
+    return true;
+  }catch(e){
+    return false;
+  }
+}
+
+// ---------- Cloud sync (Supabase, optional) ----------
+function initCloudSync(){
+  const badge = document.getElementById('cloudBadge');
+  if(!CLOUD_ENABLED){
+    badge.textContent = '☁️ 尚未設定雲端同步（點我看設定方式）';
+    document.getElementById('authNotConfigured').style.display = 'block';
+    document.getElementById('authLoggedOut').style.display = 'none';
+    badge.addEventListener('click', ()=> document.getElementById('authModalOverlay').style.display = 'flex');
+    document.getElementById('authModalClose').addEventListener('click', ()=>{
+      document.getElementById('authModalOverlay').style.display = 'none';
+    });
+    return;
+  }
+  sb = window.supabase.createClient(supabaseConfig.url, supabaseConfig.anonKey);
+
+  badge.addEventListener('click', ()=> document.getElementById('authModalOverlay').style.display = 'flex');
+  document.getElementById('authModalClose').addEventListener('click', ()=>{
+    document.getElementById('authModalOverlay').style.display = 'none';
+  });
+
+  document.getElementById('authLoginBtn').addEventListener('click', async ()=>{
+    const email = document.getElementById('authEmail').value.trim();
+    const pw = document.getElementById('authPassword').value;
+    document.getElementById('authError').textContent = '';
+    const { error } = await sb.auth.signInWithPassword({ email, password: pw });
+    if(error){ document.getElementById('authError').textContent = translateAuthError(error); }
+    else{ document.getElementById('authModalOverlay').style.display = 'none'; }
+  });
+  document.getElementById('authRegisterBtn').addEventListener('click', async ()=>{
+    const email = document.getElementById('authEmail').value.trim();
+    const pw = document.getElementById('authPassword').value;
+    document.getElementById('authError').textContent = '';
+    const { error } = await sb.auth.signUp({ email, password: pw });
+    if(error){ document.getElementById('authError').textContent = translateAuthError(error); }
+    else{
+      document.getElementById('authError').style.color = 'var(--green)';
+      document.getElementById('authError').textContent = '註冊成功，請查看信箱完成驗證後再登入（若專案關閉了信箱驗證，會直接登入）。';
+    }
+  });
+  document.getElementById('authLogoutBtn').addEventListener('click', ()=> sb.auth.signOut());
+  document.getElementById('syncNowBtn').addEventListener('click', pushToCloud);
+
+  sb.auth.onAuthStateChange((event, session)=>{
+    currentUser = session ? session.user : null;
+    updateAuthUI();
+    if(currentUser) pullFromCloud();
+  });
+}
+
+function updateAuthUI(){
+  const badge = document.getElementById('cloudBadge');
+  if(currentUser){
+    badge.textContent = '☁️ 已登入雲端同步：' + currentUser.email;
+    badge.classList.add('is-synced');
+    document.getElementById('authLoggedOut').style.display = 'none';
+    document.getElementById('authLoggedIn').style.display = 'block';
+    document.getElementById('authUserEmail').textContent = currentUser.email;
+  } else {
+    badge.textContent = '☁️ 尚未登入（僅本機儲存，點我登入以跨裝置同步）';
+    badge.classList.remove('is-synced');
+    document.getElementById('authLoggedOut').style.display = 'block';
+    document.getElementById('authLoggedIn').style.display = 'none';
+  }
+}
+
+function translateAuthError(e){
+  const msg = e.message || '';
+  const map = {
+    'Invalid login credentials': 'Email 或密碼不正確',
+    'User already registered': '此 Email 已經註冊過，請直接登入',
+    'Password should be at least 6 characters': '密碼至少需要 6 碼',
+    'Unable to validate email address: invalid format': 'Email 格式不正確'
+  };
+  return map[msg] || ('發生錯誤：' + msg);
+}
+
+function scheduleCloudSync(){
+  if(!CLOUD_ENABLED || !currentUser) return;
+  clearTimeout(cloudSyncTimer);
+  cloudSyncTimer = setTimeout(pushToCloud, 1200);
+}
+
+async function pushToCloud(){
+  if(!CLOUD_ENABLED || !currentUser) return;
+  try{
+    const payload = buildSyncPayload();
+    const { error } = await sb.from('quote_app_data').upsert({
+      user_id: currentUser.id,
+      data: payload,
+      updated_at: new Date().toISOString()
+    });
+    if(error) throw error;
+    const el = document.getElementById('syncStatusText');
+    if(el) el.textContent = '已同步至雲端 · ' + new Date().toLocaleTimeString('zh-TW');
+    setSaveStatus('已自動儲存（本機＋雲端）');
+  }catch(e){
+    const el = document.getElementById('syncStatusText');
+    if(el) el.textContent = '雲端同步失敗：' + e.message;
+  }
+}
+
+async function pullFromCloud(){
+  if(!CLOUD_ENABLED || !currentUser) return;
+  try{
+    const { data, error } = await sb.from('quote_app_data').select('data').eq('user_id', currentUser.id).maybeSingle();
+    if(error) throw error;
+    if(data && data.data){
+      applyLoadedData(data.data);
+      renderCats();
+      renderLib();
+      renderQuote();
+      renderSaved();
+      setSaveStatus('已從雲端載入最新資料');
+    } else {
+      pushToCloud();
+    }
+  }catch(e){
+    setSaveStatus('雲端載入失敗：' + e.message);
+  }
+}
+
+// ---------- Category chips ----------
+function renderCats(){
+  const cats = ['全部', ...new Set(PRICE_LIST.map(i=>i.cat))];
+  document.getElementById('libCats').innerHTML = cats.map(c=>
+    `<span class="cat-chip ${c===activeCat?'active':''}" data-cat="${esc(c)}">${esc(c)}</span>`
+  ).join('');
+  document.querySelectorAll('.cat-chip').forEach(el=>{
+    el.addEventListener('click', ()=>{ activeCat = el.dataset.cat; renderCats(); renderLib(); });
+  });
+}
+
+// ---------- Library render (with inline edit) ----------
+function libEditFormHtml(item){
+  const isNew = item === null;
+  const v = item || {cat:'', name:'', unit:'', price:0, note:''};
+  return `
+    <div class="lib-edit-form">
+      <div class="frow">
+        <div style="flex:1;"><span class="flabel">類別（大項）</span><input id="ef-cat" value="${esc(v.cat)}" placeholder="例：拆除工程"></div>
+        <div style="flex:2;"><span class="flabel">項目名稱（細項）</span><input id="ef-name" value="${esc(v.name)}" placeholder="項目名稱"></div>
+      </div>
+      <div class="frow">
+        <div style="width:80px;"><span class="flabel">單位</span><input id="ef-unit" value="${esc(v.unit)}" placeholder="坪"></div>
+        <div style="width:110px;"><span class="flabel">參考單價</span><input id="ef-price" type="number" value="${v.price}" min="0"></div>
+        <div style="flex:1;"><span class="flabel">備註</span><input id="ef-note" value="${esc(v.note)}" placeholder="選填"></div>
+      </div>
+      <div class="frow-actions">
+        ${isNew ? '' : '<button class="btn-del-item" id="ef-delete">刪除此項目</button>'}
+        <button class="btn-cancel" id="ef-cancel">取消</button>
+        <button class="btn-save" id="ef-save">${isNew ? '新增' : '儲存'}</button>
+      </div>
+    </div>
+  `;
+}
+
+function renderLib(){
+  const q = document.getElementById('libSearch').value.trim().toLowerCase();
+  const filtered = PRICE_LIST.filter(i=>{
+    const catOk = activeCat==='全部' || i.cat===activeCat;
+    const qOk = !q || i.name.toLowerCase().includes(q);
+    return catOk && qOk;
+  });
+  document.getElementById('libCount').textContent = filtered.length + ' 項';
+
+  const listEl = document.getElementById('libList');
+  let html = '';
+
+  if(editingCode === '__new__'){
+    html += libEditFormHtml(null);
+  }
+
+  if(filtered.length === 0 && editingCode !== '__new__'){
+    html += '<div style="padding:20px;text-align:center;color:#999;font-size:13px;">找不到符合的項目</div>';
+  } else {
+    html += filtered.map(i=>{
+      if(editingCode === i.code){
+        return libEditFormHtml(i);
+      }
+      return `
+        <div class="lib-item">
+          <div class="lib-item-row">
+            <div class="lib-item-main" data-code="${esc(i.code)}">
+              <div class="lib-item-name">${esc(i.name)}</div>
+              <div class="lib-item-meta">
+                <span>${esc(i.cat)} · ${esc(i.note)||'—'}</span>
+                <span class="lib-item-price">${fmt(i.price)} / ${esc(i.unit)}</span>
+              </div>
+            </div>
+            <button class="lib-edit-btn" data-edit="${esc(i.code)}" title="編輯">✎</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  listEl.innerHTML = html;
+
+  listEl.querySelectorAll('.lib-item-main').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      const item = PRICE_LIST.find(p=>p.code===el.dataset.code);
+      addRow(item);
+    });
+  });
+  listEl.querySelectorAll('[data-edit]').forEach(el=>{
+    el.addEventListener('click', ()=>{ editingCode = el.dataset.edit; renderLib(); });
+  });
+
+  bindEditForm();
+  saveToStorage();
+}
+
+function bindEditForm(){
+  const saveBtn = document.getElementById('ef-save');
+  const cancelBtn = document.getElementById('ef-cancel');
+  const delBtn = document.getElementById('ef-delete');
+  if(!saveBtn) return;
+
+  cancelBtn.addEventListener('click', ()=>{ editingCode = null; renderLib(); });
+
+  saveBtn.addEventListener('click', ()=>{
+    const cat = document.getElementById('ef-cat').value.trim() || '未分類';
+    const name = document.getElementById('ef-name').value.trim();
+    const unit = document.getElementById('ef-unit').value.trim() || '式';
+    const price = parseFloat(document.getElementById('ef-price').value) || 0;
+    const note = document.getElementById('ef-note').value.trim();
+    if(!name){ alert('請輸入項目名稱'); return; }
+
+    if(editingCode === '__new__'){
+      PRICE_LIST.push({ cat, name, unit, price, note, code: nextCode() });
+    } else {
+      const item = PRICE_LIST.find(p=>p.code===editingCode);
+      Object.assign(item, { cat, name, unit, price, note });
+    }
+    editingCode = null;
+    renderCats();
+    renderLib();
+  });
+
+  if(delBtn){
+    delBtn.addEventListener('click', ()=>{
+      if(confirm('確定要刪除這個單價項目嗎？（不會影響已加入報價單的明細）')){
+        PRICE_LIST = PRICE_LIST.filter(p=>p.code!==editingCode);
+        editingCode = null;
+        renderCats();
+        renderLib();
+      }
+    });
+  }
+}
+
+document.getElementById('libSearch').addEventListener('input', renderLib);
+document.getElementById('addItemBtn').addEventListener('click', ()=>{
+  editingCode = '__new__';
+  renderLib();
+  document.getElementById('libList').scrollTop = 0;
+});
+
+// ---------- Export / Import price list ----------
+document.getElementById('exportBtn').addEventListener('click', ()=>{
+  downloadJson(PRICE_LIST, '單價庫_' + new Date().toISOString().slice(0,10) + '.json');
+});
+document.getElementById('importBtn').addEventListener('click', ()=>{
+  document.getElementById('importFile').click();
+});
+document.getElementById('importFile').addEventListener('change', (e)=>{
+  readJsonFile(e, (data)=>{
+    if(!Array.isArray(data)) throw new Error('格式錯誤');
+    PRICE_LIST = data.map(d=>({
+      cat: d.cat||'未分類', name: d.name||'', unit: d.unit||'式',
+      price: parseFloat(d.price)||0, note: d.note||'', code: d.code || nextCode()
+    }));
+    nextSeq = PRICE_LIST.length + 1;
+    activeCat = '全部';
+    editingCode = null;
+    renderCats();
+    renderLib();
+    alert('單價庫已匯入，共 ' + PRICE_LIST.length + ' 項');
+  }, '匯入失敗，請確認是本系統匯出的單價庫 JSON 檔');
+});
+
+function downloadJson(data, filename){
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+function readJsonFile(e, onData, errMsg){
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (evt)=>{
+    try{
+      const data = JSON.parse(evt.target.result);
+      onData(data);
+    }catch(err){
+      alert(errMsg || '匯入失敗，檔案格式不正確');
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+// ---------- Quote rows ----------
+function addRow(item){
+  quoteRows.push({
+    id: rowSeq++,
+    cat: item.cat,
+    name: item.name,
+    unit: item.unit,
+    price: item.price,
+    note: item.note,
+    qty: 1,
+    hidePrice: !showUnitPrice
+  });
+  renderQuote();
+}
+
+function addBlankRow(catPreset){
+  const cat = catPreset || (activeCat !== '全部' ? activeCat : (PRICE_LIST[0] ? PRICE_LIST[0].cat : '自訂項目'));
+  quoteRows.push({ id: rowSeq++, cat, name:'', unit:'式', price:0, note:'', qty:1, custom:true, hidePrice: !showUnitPrice });
+  renderQuote();
+}
+
+function removeRow(id){
+  quoteRows = quoteRows.filter(r=>r.id!==id);
+  renderQuote();
+}
+
+function catOptionsHtml(selected){
+  const set = new Set(PRICE_LIST.map(i=>i.cat));
+  quoteRows.forEach(r=> set.add(r.cat));
+  let html = Array.from(set).map(c=>`<option value="${esc(c)}" ${c===selected?'selected':''}>${esc(c)}</option>`).join('');
+  html += `<option value="__new__">➕ 新增大項…</option>`;
+  return html;
+}
+
+function groupRows(rows){
+  // Preserve first-appearance order of categories
+  const order = [];
+  const map = {};
+  rows.forEach(r=>{
+    const key = r.cat || '未分類';
+    if(!map[key]){ map[key]=[]; order.push(key); }
+    map[key].push(r);
+  });
+  return order.map(cat=>({ cat, rows: map[cat] }));
+}
+
+function renderQuote(){
+  const head = document.getElementById('quoteHead');
+  const body = document.getElementById('quoteBody');
+  const colCount = 7;
+
+  head.innerHTML = `
+    <tr>
+      <th style="width:26px;">No.</th>
+      <th>項目</th>
+      <th style="width:52px;">單位</th>
+      <th style="width:96px;">單價</th>
+      <th style="width:78px;">數量</th>
+      <th style="width:100px; text-align:right;">小計</th>
+      <th style="width:56px;">操作</th>
+    </tr>
+  `;
+
+  if(quoteRows.length===0){
+    body.innerHTML = `<tr class="empty-row"><td colspan="${colCount}">從左側單價庫點選項目，加入報價單</td></tr>`;
+  } else {
+    const groups = groupRows(quoteRows);
+    let no = 0;
+    let html = '';
+    groups.forEach(g=>{
+      const groupSubtotal = g.rows.reduce((s,r)=> s + r.price*r.qty, 0);
+      html += `<tr class="group-row"><td colspan="${colCount-1}"><span class="group-tag">大項</span>${esc(g.cat)}</td><td></td></tr>`;
+      g.rows.forEach(r=>{
+        no++;
+        const nameCell = `<div style="display:flex;flex-direction:column;gap:3px;">
+               <select class="cat-select" data-id="${r.id}">${catOptionsHtml(r.cat)}</select>
+               <input class="name-input" data-id="${r.id}" value="${esc(r.name)}" placeholder="輸入細項（工項）名稱" style="width:100%;padding:5px 6px;border:1px solid var(--line);border-radius:5px;font-family:inherit;font-size:13px;">
+             </div>`;
+        const unitCell = `<input class="unit-input" data-id="${r.id}" value="${esc(r.unit)}" placeholder="單位">`;
+
+        const opsCell = `
+          <div class="row-actions">
+            <button class="lock-btn ${r.hidePrice?'is-locked':''}" data-id="${r.id}" title="${r.hidePrice ? '目前隱藏此項單價，點擊改為顯示' : '目前顯示此項單價，點擊改為隱藏'}">${r.hidePrice?'🔒':'🔓'}</button>
+            <button class="del-btn" data-id="${r.id}" title="刪除">✕</button>
+          </div>`;
+
+        if(!r.hidePrice){
+          html += `
+            <tr class="item-row" data-id="${r.id}">
+              <td>${no}</td>
+              <td>${nameCell}</td>
+              <td>${unitCell}</td>
+              <td><input class="price-input" data-id="${r.id}" type="number" value="${r.price}" min="0"></td>
+              <td><input class="qty-input" data-id="${r.id}" type="number" value="${r.qty}" min="0" step="0.5"></td>
+              <td class="subtotal-cell">${fmt(r.price*r.qty)}</td>
+              <td>${opsCell}</td>
+            </tr>
+          `;
+        } else {
+          html += `
+            <tr class="item-row" data-id="${r.id}">
+              <td>${no}</td>
+              <td>${nameCell}</td>
+              <td>${unitCell}</td>
+              <td colspan="3" class="price-hidden-cell">1 式</td>
+              <td>${opsCell}</td>
+            </tr>
+          `;
+        }
+      });
+      html += `<tr class="group-subtotal-row" data-cat="${esc(g.cat)}">
+        <td colspan="${colCount}">
+          <div class="group-subtotal-inner">
+            <button class="add-subitem-link" data-cat="${esc(g.cat)}">+ 新增細項</button>
+            <span class="group-subtotal-label">「${esc(g.cat)}」大項小計：<span class="subtotal-cell" style="margin-left:4px;">${fmt(groupSubtotal)}</span></span>
+          </div>
+        </td>
+      </tr>`;
+    });
+    body.innerHTML = html;
+  }
+
+  body.querySelectorAll('.qty-input').forEach(el=>{
+    el.addEventListener('input', ()=>{
+      const row = quoteRows.find(r=>r.id==el.dataset.id);
+      row.qty = parseFloat(el.value)||0;
+      updateComputedCells();
+    });
+  });
+  body.querySelectorAll('.price-input').forEach(el=>{
+    el.addEventListener('input', ()=>{
+      const row = quoteRows.find(r=>r.id==el.dataset.id);
+      row.price = parseFloat(el.value)||0;
+      updateComputedCells();
+    });
+  });
+  body.querySelectorAll('.name-input').forEach(el=>{
+    el.addEventListener('input', ()=>{
+      const row = quoteRows.find(r=>r.id==el.dataset.id);
+      row.name = el.value;
+      saveToStorage();
+    });
+  });
+  body.querySelectorAll('.unit-input').forEach(el=>{
+    el.addEventListener('input', ()=>{
+      const row = quoteRows.find(r=>r.id==el.dataset.id);
+      row.unit = el.value;
+      saveToStorage();
+    });
+  });
+  body.querySelectorAll('.cat-select').forEach(el=>{
+    el.addEventListener('change', ()=>{
+      const row = quoteRows.find(r=>r.id==el.dataset.id);
+      if(el.value === '__new__'){
+        const name = prompt('請輸入新的大項（工程類別）名稱：');
+        if(name && name.trim()){ row.cat = name.trim(); }
+        renderQuote();
+        return;
+      }
+      row.cat = el.value;
+      renderQuote();
+    });
+  });
+  body.querySelectorAll('.lock-btn').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      const row = quoteRows.find(r=>r.id==el.dataset.id);
+      row.hidePrice = !row.hidePrice;
+      renderQuote();
+    });
+  });
+  body.querySelectorAll('.add-subitem-link').forEach(el=>{
+    el.addEventListener('click', ()=> addBlankRow(el.dataset.cat));
+  });
+  body.querySelectorAll('.del-btn').forEach(el=>{
+    el.addEventListener('click', ()=> removeRow(parseInt(el.dataset.id)));
+  });
+
+  renderTotals();
+  saveToStorage();
+}
+
+// Updates only the numbers affected by a qty/price edit (row subtotal, its group
+// subtotal, and the grand totals) without rebuilding the table — this is what
+// keeps the qty/price inputs from losing focus/cursor position while typing.
+function updateComputedCells(){
+  const groups = groupRows(quoteRows);
+  groups.forEach(g=>{
+    const groupSubtotal = g.rows.reduce((s,r)=> s + r.price*r.qty, 0);
+    g.rows.forEach(r=>{
+      const tr = document.querySelector(`tr.item-row[data-id="${r.id}"]`);
+      const cell = tr && tr.querySelector('.subtotal-cell');
+      if(cell) cell.textContent = fmt(r.price*r.qty);
+    });
+    const groupTr = document.querySelector(`tr.group-subtotal-row[data-cat="${CSS.escape(g.cat)}"]`);
+    const groupCell = groupTr && groupTr.querySelector('.subtotal-cell');
+    if(groupCell) groupCell.textContent = fmt(groupSubtotal);
+  });
+  renderTotals();
+  saveToStorage();
+}
+
+document.getElementById('showPriceToggle').addEventListener('change', (e)=>{
+  showUnitPrice = e.target.checked;
+  quoteRows.forEach(r=> r.hidePrice = !showUnitPrice);
+  document.getElementById('priceToggleHint').textContent = showUnitPrice
+    ? '開啟：預設每個項目顯示單價與數量；仍可用列表中的🔓圖示逐項改為隱藏。'
+    : '關閉：預設每個項目僅顯示「1 式」；仍可用列表中的🔒圖示逐項改為顯示，各大項小計與總價不受影響。';
+  renderQuote();
+});
+
+function renderTotals(){
+  const subtotal = quoteRows.reduce((s,r)=> s + r.price*r.qty, 0);
+  const discount = parseFloat(document.getElementById('discount').value)||0;
+  const taxRate = (parseFloat(document.getElementById('taxRate').value)||0)/100;
+  const tax = Math.max(subtotal-discount,0) * taxRate;
+  const total = subtotal - discount + tax;
+
+  document.getElementById('sumSubtotal').textContent = fmt(subtotal);
+  document.getElementById('sumTotal').textContent = fmt(total);
+  return total;
+}
+
+document.getElementById('discount').addEventListener('input', ()=>{ renderTotals(); saveToStorage(); });
+document.getElementById('taxRate').addEventListener('input', ()=>{ renderTotals(); saveToStorage(); });
+['qNo','qDate','qClient','qPhone','qAddr'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', saveToStorage);
+});
+document.getElementById('addBlankRow').addEventListener('click', ()=> addBlankRow());
+document.getElementById('clearAll').addEventListener('click', ()=>{
+  if(confirm('確定要清空目前的報價明細嗎？')){ quoteRows = []; renderQuote(); }
+});
+
+// ---------- Save / load quotations ----------
+function currentMeta(){
+  return {
+    qNo: document.getElementById('qNo').value,
+    qDate: document.getElementById('qDate').value,
+    qClient: document.getElementById('qClient').value,
+    qPhone: document.getElementById('qPhone').value,
+    qAddr: document.getElementById('qAddr').value,
+    discount: document.getElementById('discount').value,
+    taxRate: document.getElementById('taxRate').value,
+    showUnitPrice: showUnitPrice
+  };
+}
+
+document.getElementById('saveQuoteBtn').addEventListener('click', ()=>{
+  if(quoteRows.length===0){ alert('目前報價單還沒有任何項目'); return; }
+  const meta = currentMeta();
+  const defaultName = (meta.qClient ? meta.qClient + ' - ' : '') + (meta.qNo || ('報價單' + savedSeq));
+  const name = prompt('請輸入這份報價單的名稱：', defaultName);
+  if(name === null) return;
+  savedQuotes.push({
+    id: savedSeq++,
+    name: name || defaultName,
+    savedAt: new Date().toISOString(),
+    meta,
+    rows: JSON.parse(JSON.stringify(quoteRows)),
+    total: renderTotals()
+  });
+  renderSaved();
+  alert('已儲存「' + (name || defaultName) + '」');
+});
+
+function loadSavedQuote(id){
+  const sq = savedQuotes.find(s=>s.id===id);
+  if(!sq) return;
+  if(quoteRows.length>0 && !confirm('載入會覆蓋目前正在編輯的報價單，確定要繼續嗎？')) return;
+  document.getElementById('qNo').value = sq.meta.qNo || '';
+  document.getElementById('qDate').value = sq.meta.qDate || '';
+  document.getElementById('qClient').value = sq.meta.qClient || '';
+  document.getElementById('qPhone').value = sq.meta.qPhone || '';
+  document.getElementById('qAddr').value = sq.meta.qAddr || '';
+  document.getElementById('discount').value = sq.meta.discount || 0;
+  document.getElementById('taxRate').value = sq.meta.taxRate || 0;
+  showUnitPrice = sq.meta.showUnitPrice !== false;
+  document.getElementById('showPriceToggle').checked = showUnitPrice;
+  document.getElementById('priceToggleHint').textContent = showUnitPrice
+    ? '開啟：預設每個項目顯示單價與數量；仍可用列表中的🔓圖示逐項改為隱藏。'
+    : '關閉：預設每個項目僅顯示「1 式」；仍可用列表中的🔒圖示逐項改為顯示，各大項小計與總價不受影響。';
+  quoteRows = JSON.parse(JSON.stringify(sq.rows));
+  rowSeq = Math.max(0, ...quoteRows.map(r=>r.id)) + 1;
+  renderQuote();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function deleteSavedQuote(id){
+  if(!confirm('確定要刪除這份已儲存的報價單嗎？此動作無法復原。')) return;
+  savedQuotes = savedQuotes.filter(s=>s.id!==id);
+  renderSaved();
+}
+
+function renderSaved(){
+  document.getElementById('savedCount').textContent = savedQuotes.length + ' 份';
+  const el = document.getElementById('savedList');
+  if(savedQuotes.length===0){
+    el.innerHTML = '<div class="saved-empty">尚未儲存任何報價單，編輯完成後點上方「💾 儲存目前報價單」即可留存紀錄</div>';
+    return;
+  }
+  el.innerHTML = savedQuotes.slice().reverse().map(sq=>`
+    <div class="saved-item">
+      <div class="saved-item-info">
+        <div class="saved-item-name">${esc(sq.name)}</div>
+        <div class="saved-item-meta">${esc(sq.meta.qClient||'—')} · ${sq.rows.length} 項 · 儲存於 ${new Date(sq.savedAt).toLocaleString('zh-TW')}</div>
+      </div>
+      <div class="saved-item-total">${fmt(sq.total)}</div>
+      <div class="saved-item-actions">
+        <button data-load="${sq.id}">載入</button>
+        <button class="danger" data-del="${sq.id}">刪除</button>
+      </div>
+    </div>
+  `).join('');
+  el.querySelectorAll('[data-load]').forEach(b=> b.addEventListener('click', ()=> loadSavedQuote(parseInt(b.dataset.load))));
+  el.querySelectorAll('[data-del]').forEach(b=> b.addEventListener('click', ()=> deleteSavedQuote(parseInt(b.dataset.del))));
+  saveToStorage();
+}
+
+document.getElementById('exportSavedBtn').addEventListener('click', ()=>{
+  if(savedQuotes.length===0){ alert('目前沒有已儲存的報價單可匯出'); return; }
+  downloadJson(savedQuotes, '已儲存報價單_' + new Date().toISOString().slice(0,10) + '.json');
+});
+document.getElementById('importSavedBtn').addEventListener('click', ()=>{
+  document.getElementById('importSavedFile').click();
+});
+document.getElementById('importSavedFile').addEventListener('change', (e)=>{
+  readJsonFile(e, (data)=>{
+    if(!Array.isArray(data)) throw new Error('格式錯誤');
+    savedQuotes = data;
+    savedSeq = Math.max(0, ...savedQuotes.map(s=>s.id||0)) + 1;
+    renderSaved();
+    alert('已匯入 ' + savedQuotes.length + ' 份報價單紀錄');
+  }, '匯入失敗，請確認是本系統匯出的報價單 JSON 檔');
+});
+
+// init: restore from this browser's local storage first (instant, offline-friendly)
+const restored = loadFromStorage();
+if(!document.getElementById('qDate').value){
+  document.getElementById('qDate').valueAsDate = new Date();
+}
+
+renderCats();
+renderLib();
+renderQuote();
+renderSaved();
+setSaveStatus(restored ? '已載入本機儲存的報價資料' : '尚未儲存任何資料');
+
+// then set up cloud sync (if configured) — will overwrite with cloud data once logged-in state resolves
+initCloudSync();
+</script>
+</body>
+</html>
