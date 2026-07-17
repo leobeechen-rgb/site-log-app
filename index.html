@@ -1109,7 +1109,8 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
           )
         ),
         u.default.createElement("button",{onClick:()=>addItem(cat.id,!0),style:{border:`1px dashed ${s.line}`,background:"none",borderRadius:7,padding:"7px 0",width:"100%",fontSize:12.5,color:s.oceanDark,cursor:"pointer",marginBottom:6}},"+ 新增項目（於單價按 Enter 可快速新增下一項）"),
-        u.default.createElement("p",{style:{textAlign:"right",fontSize:12.5,fontWeight:700,color:s.oceanDark,margin:0}},(cat.name||"本項")+" 小計：NT$ ",HB_money(HB_estCatSubtotal(cat)))
+        u.default.createElement("p",{style:{textAlign:"right",fontSize:12.5,fontWeight:700,color:s.oceanDark,margin:0}},(cat.name||"本項")+" 小計：NT$ ",HB_money(HB_estCatSubtotal(cat))),
+        HB_estCatCost(cat)>0&&u.default.createElement("p",{style:{textAlign:"right",fontSize:11,fontWeight:600,color:s.tree,margin:"3px 0 0"}},(cat.name||"本項")+" 淨利：NT$ ",HB_money(HB_estCatSubtotal(cat)-HB_estCatCost(cat)))
       )),
       u.default.createElement("button",{onClick:()=>addCat(""),style:{border:`1px solid ${s.line}`,background:"none",borderRadius:9,padding:"10px 0",width:"100%",fontSize:13,fontWeight:700,color:s.oceanDark,cursor:"pointer",marginBottom:14}},"+ 新增大項分類"),
       u.default.createElement("textarea",{placeholder:"付款/訂金條件備註",value:a.depositNote,onChange:v=>set("depositNote",v.target.value),rows:2,style:{...inputStyle,resize:"vertical"}})
