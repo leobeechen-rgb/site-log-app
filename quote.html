@@ -9,6 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;600&family=Noto+Sans+TC:wght@400;500;600&family=Zen+Kaku+Gothic+New:wght@400;500&display=swap" rel="stylesheet">
 <!-- 雲端同步用（Supabase）：若尚未設定 supabaseConfig，這個檔案載入後不會有任何作用，系統仍可正常以本機模式運作 -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
   :root{
     --navy-900:#1E7A96;
@@ -108,9 +109,24 @@
   @media (max-width:760px){
     .quote-meta{grid-template-columns:repeat(2,1fr); min-width:0;}
   }
-  .wrap{max-width:1180px;margin:0 auto;padding:28px 32px 70px;}
-  .grid{display:grid; grid-template-columns:320px 1fr; gap:24px;}
-  @media (max-width:900px){.grid{grid-template-columns:1fr;}}
+  .wrap{max-width:1180px;margin:0 auto;padding:20px 32px 70px;}
+  .tabbar{
+    display:none; gap:6px; margin-bottom:14px; background:var(--glass-bg);
+    border:1px solid var(--glass-border); border-radius:12px; padding:5px;
+    backdrop-filter:blur(20px) saturate(150%); -webkit-backdrop-filter:blur(20px) saturate(150%);
+  }
+  .tab-btn{
+    flex:1; font-family:inherit; font-size:13px; font-weight:500; padding:9px 6px;
+    border-radius:8px; border:none; background:transparent; color:var(--ink-soft); cursor:pointer;
+  }
+  .tab-btn.active{background:var(--navy-800); color:#fff;}
+  .grid{display:grid; grid-template-columns:340px 1fr; gap:24px; align-items:start;}
+  @media screen and (max-width:900px){
+    .grid{grid-template-columns:1fr;}
+    .tabbar{display:flex;}
+    .tab-pane{display:none;}
+    .tab-pane.active{display:block;}
+  }
 
   .panel{
     background:var(--glass-bg); border:1px solid var(--glass-border); border-radius:var(--radius);
@@ -136,34 +152,47 @@
   .head-btn:hover{background:var(--navy-700); color:#fff;}
 
   /* Library */
-  .lib-search{padding:14px; border-bottom:1px solid var(--line);}
+  .lib-search{padding:12px 14px 8px; display:flex; gap:8px;}
   .lib-search input{
-    width:100%; padding:9px 12px; border:1px solid var(--line); border-radius:8px;
+    flex:1; padding:9px 12px; border:1px solid var(--line); border-radius:8px;
     font-family:inherit; font-size:13.5px;
   }
-  .lib-cats{padding:10px 12px 8px; display:flex; flex-wrap:wrap; gap:7px;}
+  .lib-filters{padding:0 12px 10px; display:flex; flex-direction:column; gap:8px;}
+  .lib-vendor-select{
+    width:100%; font-family:inherit; font-size:12.5px; padding:7px 9px; border:1px solid var(--line);
+    border-radius:7px; background:#fff; color:var(--navy-900); font-weight:500;
+  }
+  .lib-cats{
+    display:flex; gap:6px; overflow-x:auto; padding-bottom:2px; scrollbar-width:thin;
+  }
   .cat-chip{
     font-size:12px; padding:5px 11px; border-radius:999px; border:1px solid var(--line);
     background:#fff; cursor:pointer; color:var(--ink-soft); font-weight:500;
-    transition:.15s;
+    transition:.15s; white-space:nowrap; flex-shrink:0;
   }
   .cat-chip.active{background:var(--navy-800); color:#fff; border-color:var(--navy-800);}
-  .lib-list{max-height:560px; overflow-y:auto; padding:8px 12px 16px;}
+  .lib-list{max-height:640px; overflow-y:auto; padding:2px 6px 12px;}
   .lib-item{
-    padding:12px 12px; border-radius:10px; margin-bottom:8px;
-    border:1px solid rgba(151,212,231,.25); transition:.12s;
+    padding:9px 10px; border-radius:8px; border-bottom:1px solid var(--line);
   }
-  .lib-item:hover{background:var(--yellow-soft); border-color:#97D4E7;}
-  .lib-item-row{display:flex; align-items:flex-start; justify-content:space-between; gap:8px;}
-  .lib-item-main{flex:1; cursor:pointer;}
-  .lib-item-name{font-size:13.5px; font-weight:500;}
-  .lib-item-meta{font-size:12px; color:var(--ink-soft); margin-top:4px; display:flex; justify-content:space-between; gap:8px;}
-  .lib-item-price{color:var(--navy-800); font-weight:500; white-space:nowrap;}
+  .lib-item:hover{background:var(--yellow-soft);}
+  .lib-item-row{display:flex; align-items:center; justify-content:space-between; gap:10px;}
+  .lib-item-main{flex:1; min-width:0; cursor:pointer;}
+  .lib-item-name{font-size:13.5px; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .lib-item-meta{font-size:11.5px; color:var(--ink-soft); margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .lib-item-vendor{color:var(--navy-800);}
+  .lib-item-right{display:flex; align-items:center; gap:4px; flex-shrink:0;}
+  .lib-item-price{color:var(--navy-800); font-weight:600; white-space:nowrap; font-size:13px; text-align:right;}
+  .lib-item-unit{color:var(--ink-soft); font-size:11px; text-align:right;}
   .lib-edit-btn{
     border:none; background:none; color:var(--ink-soft); cursor:pointer; font-size:13px;
-    padding:2px 5px; border-radius:4px; flex-shrink:0;
+    padding:4px 6px; border-radius:4px; flex-shrink:0;
   }
   .lib-edit-btn:hover{background:#FFF1DC; color:var(--navy-800);}
+  .lib-group-head{
+    font-size:11.5px; font-weight:600; color:var(--navy-800); padding:10px 10px 4px;
+    text-transform:uppercase; letter-spacing:.04em;
+  }
 
   .lib-edit-form{
     padding:10px; border:1px solid #97D4E7; background:var(--yellow-soft); border-radius:8px; margin:0 0 10px;
@@ -357,7 +386,7 @@
   }
 
   @media print{
-    .topbar-deco,.lib-search,.lib-cats,.actions,.grid > .panel:first-child,#savedPanel,.price-toggle-wrap,.cloud-badge,.lock-btn,.add-subitem-link,.del-btn{display:none;}
+    .topbar-deco,.lib-search,.lib-cats,.lib-filters,.tabbar,.actions,.grid > .panel:first-child,#savedPanel,.price-toggle-wrap,.cloud-badge,.lock-btn,.add-subitem-link,.del-btn{display:none;}
     body{background:#fff; line-height:1.25; font-size:12px;}
     .grid{grid-template-columns:1fr;}
     .panel{border:none; box-shadow:none; backdrop-filter:none; margin-bottom:6px; break-inside:avoid;}
@@ -483,25 +512,35 @@
 </div>
 
 <div class="wrap">
+  <div class="tabbar" id="tabbar">
+    <button class="tab-btn active" data-tab="lib">單價庫</button>
+    <button class="tab-btn" data-tab="quote">報價明細</button>
+    <button class="tab-btn" data-tab="saved">已儲存</button>
+  </div>
   <div class="grid">
     <!-- Price library -->
-    <div class="panel">
+    <div class="panel tab-pane active" id="tabPaneLib">
       <div class="panel-head">
         <span>單價庫 <span class="count" id="libCount"></span></span>
         <div class="panel-head-actions">
+          <button class="head-btn" id="importExcelBtn">匯入 Excel</button>
+          <input type="file" id="importExcelFile" accept=".xlsx,.xls,.csv" style="display:none;">
           <button class="head-btn" id="addItemBtn">+ 新增項目</button>
-          <button class="head-btn" id="exportBtn">匯出</button>
-          <button class="head-btn" id="importBtn">匯入</button>
+          <button class="head-btn" id="exportBtn">備份匯出</button>
+          <button class="head-btn" id="importBtn">備份匯入</button>
           <input type="file" id="importFile" accept="application/json" style="display:none;">
         </div>
       </div>
       <div class="lib-search"><input id="libSearch" placeholder="搜尋項目名稱..."></div>
-      <div class="lib-cats" id="libCats"></div>
+      <div class="lib-filters">
+        <select class="lib-vendor-select" id="libVendorFilter"></select>
+        <div class="lib-cats" id="libCats"></div>
+      </div>
       <div class="lib-list" id="libList"></div>
     </div>
 
     <!-- Right column: quote builder + saved quotes -->
-    <div>
+    <div class="tab-pane" id="tabPaneRight">
       <div class="panel">
         <div class="panel-head">
           <span>報價明細</span>
@@ -548,7 +587,7 @@
         </div>
       </div>
 
-      <div class="panel" id="savedPanel">
+      <div class="panel tab-pane" id="savedPanel" data-tab-pane="saved">
         <div class="panel-head">
           <span>已儲存報價單 <span class="count" id="savedCount"></span></span>
           <div class="panel-head-actions">
@@ -576,6 +615,7 @@ let quoteRows = [];
 let rowSeq = 1;
 let showUnitPrice = true;
 let activeCat = '全部';
+let activeVendor = '全部';
 let editingCode = null;   // code of item being edited, or '__new__'
 let savedQuotes = [];
 let savedSeq = 1;
@@ -779,6 +819,7 @@ async function pullFromCloud(){
     if(error) throw error;
     if(data && data.data){
       applyLoadedData(data.data);
+      renderVendors();
       renderCats();
       renderLib();
       renderQuote();
@@ -792,9 +833,25 @@ async function pullFromCloud(){
   }
 }
 
-// ---------- Category chips ----------
+// ---------- Vendor + category filters ----------
+function renderVendors(){
+  const vendors = [...new Set(PRICE_LIST.map(i=>i.vendor).filter(Boolean))].sort();
+  const sel = document.getElementById('libVendorFilter');
+  const cur = activeVendor;
+  sel.innerHTML = ['<option value="全部">全部廠商</option>']
+    .concat(vendors.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`))
+    .join('');
+  sel.value = vendors.includes(cur) || cur==='全部' ? cur : '全部';
+  activeVendor = sel.value;
+}
+document.getElementById('libVendorFilter').addEventListener('change', (e)=>{
+  activeVendor = e.target.value; renderLib();
+});
+
 function renderCats(){
-  const cats = ['全部', ...new Set(PRICE_LIST.map(i=>i.cat))];
+  const scoped = activeVendor==='全部' ? PRICE_LIST : PRICE_LIST.filter(i=>i.vendor===activeVendor);
+  const cats = ['全部', ...new Set(scoped.map(i=>i.cat))];
+  if(!cats.includes(activeCat)) activeCat = '全部';
   document.getElementById('libCats').innerHTML = cats.map(c=>
     `<span class="cat-chip ${c===activeCat?'active':''}" data-cat="${esc(c)}">${esc(c)}</span>`
   ).join('');
@@ -806,7 +863,7 @@ function renderCats(){
 // ---------- Library render (with inline edit) ----------
 function libEditFormHtml(item){
   const isNew = item === null;
-  const v = item || {cat:'', name:'', unit:'', price:0, note:''};
+  const v = item || {cat:'', name:'', unit:'', price:0, note:'', vendor:activeVendor!=='全部'?activeVendor:''};
   return `
     <div class="lib-edit-form">
       <div class="frow">
@@ -816,6 +873,9 @@ function libEditFormHtml(item){
       <div class="frow">
         <div style="width:80px;"><span class="flabel">單位</span><input id="ef-unit" value="${esc(v.unit)}" placeholder="坪"></div>
         <div style="width:110px;"><span class="flabel">參考單價</span><input id="ef-price" type="number" value="${v.price}" min="0"></div>
+        <div style="flex:1;"><span class="flabel">廠商</span><input id="ef-vendor" value="${esc(v.vendor||'')}" placeholder="選填"></div>
+      </div>
+      <div class="frow">
         <div style="flex:1;"><span class="flabel">備註</span><input id="ef-note" value="${esc(v.note)}" placeholder="選填"></div>
       </div>
       <div class="frow-actions">
@@ -831,8 +891,9 @@ function renderLib(){
   const q = document.getElementById('libSearch').value.trim().toLowerCase();
   const filtered = PRICE_LIST.filter(i=>{
     const catOk = activeCat==='全部' || i.cat===activeCat;
-    const qOk = !q || i.name.toLowerCase().includes(q);
-    return catOk && qOk;
+    const vendorOk = activeVendor==='全部' || i.vendor===activeVendor;
+    const qOk = !q || i.name.toLowerCase().includes(q) || (i.vendor||'').toLowerCase().includes(q);
+    return catOk && vendorOk && qOk;
   });
   document.getElementById('libCount').textContent = filtered.length + ' 項';
 
@@ -846,25 +907,34 @@ function renderLib(){
   if(filtered.length === 0 && editingCode !== '__new__'){
     html += '<div style="padding:20px;text-align:center;color:#999;font-size:13px;">找不到符合的項目</div>';
   } else {
-    html += filtered.map(i=>{
-      if(editingCode === i.code){
-        return libEditFormHtml(i);
+    let lastCat = null;
+    filtered.forEach(i=>{
+      if(i.cat !== lastCat){
+        html += `<div class="lib-group-head">${esc(i.cat)}</div>`;
+        lastCat = i.cat;
       }
-      return `
+      if(editingCode === i.code){
+        html += libEditFormHtml(i);
+        return;
+      }
+      html += `
         <div class="lib-item">
           <div class="lib-item-row">
             <div class="lib-item-main" data-code="${esc(i.code)}">
               <div class="lib-item-name">${esc(i.name)}</div>
-              <div class="lib-item-meta">
-                <span>${esc(i.cat)} · ${esc(i.note)||'—'}</span>
-                <span class="lib-item-price">${fmt(i.price)} / ${esc(i.unit)}</span>
-              </div>
+              <div class="lib-item-meta">${i.vendor ? `<span class="lib-item-vendor">${esc(i.vendor)}</span> · ` : ''}${esc(i.note)||'—'}</div>
             </div>
-            <button class="lib-edit-btn" data-edit="${esc(i.code)}" title="編輯">✎</button>
+            <div class="lib-item-right">
+              <div>
+                <div class="lib-item-price">${fmt(i.price)}</div>
+                <div class="lib-item-unit">/${esc(i.unit)}</div>
+              </div>
+              <button class="lib-edit-btn" data-edit="${esc(i.code)}" title="編輯">✎</button>
+            </div>
           </div>
         </div>
       `;
-    }).join('');
+    });
   }
 
   listEl.innerHTML = html;
@@ -896,16 +966,18 @@ function bindEditForm(){
     const name = document.getElementById('ef-name').value.trim();
     const unit = document.getElementById('ef-unit').value.trim() || '式';
     const price = parseFloat(document.getElementById('ef-price').value) || 0;
+    const vendor = document.getElementById('ef-vendor').value.trim();
     const note = document.getElementById('ef-note').value.trim();
     if(!name){ alert('請輸入項目名稱'); return; }
 
     if(editingCode === '__new__'){
-      PRICE_LIST.push({ cat, name, unit, price, note, code: nextCode() });
+      PRICE_LIST.push({ cat, name, unit, price, note, vendor, code: nextCode() });
     } else {
       const item = PRICE_LIST.find(p=>p.code===editingCode);
-      Object.assign(item, { cat, name, unit, price, note });
+      Object.assign(item, { cat, name, unit, price, note, vendor });
     }
     editingCode = null;
+    renderVendors();
     renderCats();
     renderLib();
   });
@@ -915,6 +987,7 @@ function bindEditForm(){
       if(confirm('確定要刪除這個單價項目嗎？（不會影響已加入報價單的明細）')){
         PRICE_LIST = PRICE_LIST.filter(p=>p.code!==editingCode);
         editingCode = null;
+        renderVendors();
         renderCats();
         renderLib();
       }
@@ -929,7 +1002,7 @@ document.getElementById('addItemBtn').addEventListener('click', ()=>{
   document.getElementById('libList').scrollTop = 0;
 });
 
-// ---------- Export / Import price list ----------
+// ---------- Export / Import price list (JSON backup) ----------
 document.getElementById('exportBtn').addEventListener('click', ()=>{
   downloadJson(PRICE_LIST, '單價庫_' + new Date().toISOString().slice(0,10) + '.json');
 });
@@ -941,16 +1014,105 @@ document.getElementById('importFile').addEventListener('change', (e)=>{
     if(!Array.isArray(data)) throw new Error('格式錯誤');
     PRICE_LIST = data.map(d=>({
       cat: d.cat||'未分類', name: d.name||'', unit: d.unit||'式',
-      price: parseFloat(d.price)||0, note: d.note||'', code: d.code || nextCode()
+      price: parseFloat(d.price)||0, note: d.note||'', vendor: d.vendor||'', code: d.code || nextCode()
     }));
     nextSeq = PRICE_LIST.length + 1;
-    activeCat = '全部';
+    activeCat = '全部'; activeVendor = '全部';
     editingCode = null;
+    renderVendors();
     renderCats();
     renderLib();
     alert('單價庫已匯入，共 ' + PRICE_LIST.length + ' 項');
   }, '匯入失敗，請確認是本系統匯出的單價庫 JSON 檔');
 });
+
+// ---------- Excel import (per-vendor price sheet) ----------
+const EXCEL_HEADER_MAP = {
+  cat: ['工程類別','類別','分類','category'],
+  name: ['項目名稱','項目','名稱','name'],
+  unit: ['單位','unit'],
+  price: ['參考單價','單價','price'],
+  note: ['備註','note']
+};
+function excelMatchCol(headerRow, keys){
+  return headerRow.findIndex(h => keys.some(k => String(h ?? '').trim() === k));
+}
+document.getElementById('importExcelBtn').addEventListener('click', ()=>{
+  if(typeof XLSX === 'undefined'){ alert('Excel 解析工具尚未載入，請確認網路連線後重新整理頁面'); return; }
+  const vendor = prompt('這份 Excel 是哪一個廠商的單價表？請輸入廠商名稱：', '');
+  if(vendor === null) return;
+  const vendorName = vendor.trim();
+  if(!vendorName){ alert('請輸入廠商名稱，才能區分不同廠商的單價'); return; }
+  pendingImportVendor = vendorName;
+  document.getElementById('importExcelFile').click();
+});
+let pendingImportVendor = null;
+document.getElementById('importExcelFile').addEventListener('change', (e)=>{
+  const file = e.target.files && e.target.files[0];
+  e.target.value = '';
+  if(!file || !pendingImportVendor) return;
+  const vendorName = pendingImportVendor;
+  pendingImportVendor = null;
+  const reader = new FileReader();
+  reader.onerror = ()=> alert('讀取檔案失敗');
+  reader.onload = (ev)=>{
+    try{
+      const wb = XLSX.read(ev.target.result, {type:'array'});
+      const sheet = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(sheet, {header:1, defval:''});
+      const headerIdx = rows.findIndex(r => excelMatchCol(r, EXCEL_HEADER_MAP.name)!==-1 && excelMatchCol(r, EXCEL_HEADER_MAP.price)!==-1);
+      if(headerIdx === -1){ alert('找不到標題列，請確認欄位包含「項目名稱」與「參考單價／單價」'); return; }
+      const header = rows[headerIdx];
+      const col = {};
+      Object.keys(EXCEL_HEADER_MAP).forEach(k => col[k] = excelMatchCol(header, EXCEL_HEADER_MAP[k]));
+      const dataRows = rows.slice(headerIdx+1).filter(r => r.some(c => String(c ?? '').trim() !== ''));
+      const parsed = dataRows.map(r => ({
+        cat: col.cat!==-1 ? String(r[col.cat]??'').trim() || '未分類' : '未分類',
+        name: col.name!==-1 ? String(r[col.name]??'').trim() : '',
+        unit: col.unit!==-1 ? String(r[col.unit]??'').trim() || '式' : '式',
+        price: col.price!==-1 ? (parseFloat(r[col.price]) || 0) : 0,
+        note: col.note!==-1 ? String(r[col.note]??'').trim() : '',
+        vendor: vendorName,
+        code: nextCode()
+      })).filter(r => r.name);
+      if(!parsed.length){ alert('這個檔案裡沒有讀到任何項目資料'); return; }
+      const replaceOld = PRICE_LIST.some(p => p.vendor === vendorName) &&
+        confirm(`單價庫裡已經有「${vendorName}」的項目。要先移除舊項目再匯入這份新的嗎？\n\n確定＝取代舊項目\n取消＝保留舊項目，把新項目加進去`);
+      if(replaceOld){
+        PRICE_LIST = PRICE_LIST.filter(p => p.vendor !== vendorName);
+      }
+      PRICE_LIST = PRICE_LIST.concat(parsed);
+      nextSeq = PRICE_LIST.length + 1;
+      activeVendor = vendorName;
+      activeCat = '全部';
+      renderVendors();
+      document.getElementById('libVendorFilter').value = vendorName;
+      activeVendor = vendorName;
+      renderCats();
+      renderLib();
+      alert(`已匯入「${vendorName}」共 ${parsed.length} 筆項目`);
+    }catch(err){
+      alert('匯入失敗：' + err.message);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+});
+
+// ---------- Mobile tab switcher ----------
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    const target = btn.dataset.tab;
+    document.getElementById('tabPaneLib').classList.toggle('active', target==='lib');
+    document.getElementById('tabPaneRight').classList.toggle('active', target==='quote' || target==='saved');
+    document.querySelectorAll('#tabPaneRight > .panel').forEach(p=>{
+      const paneTab = p.id==='savedPanel' ? 'saved' : 'quote';
+      p.style.display = (target==='lib') ? 'none' : (paneTab===target ? '' : 'none');
+    });
+  });
+});
+
 
 function downloadJson(data, filename){
   const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
@@ -1317,6 +1479,7 @@ if(!document.getElementById('qDate').value){
   document.getElementById('qDate').valueAsDate = new Date();
 }
 
+renderVendors();
 renderCats();
 renderLib();
 renderQuote();
