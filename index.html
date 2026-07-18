@@ -1620,6 +1620,7 @@ function HbVendorQuoteHub({onBack,notify}){
   let[showTextNote,setShowTextNote]=(0,u.useState)(false);
   let[uploading,setUploading]=(0,u.useState)(false);
   let[zipping,setZipping]=(0,u.useState)(false);
+  let[selectedProjects,setSelectedProjects]=(0,u.useState)(null);
   let fileInputRef=(0,u.useRef)(null);
 
   let load=async()=>{
@@ -1696,6 +1697,7 @@ function HbVendorQuoteHub({onBack,notify}){
   };
 
   let projName=pid=>{let p=projects.find(x=>x.id===pid);return p?p.name:"未指定案件"};
+  let isProjSelected=key=>selectedProjects===null?true:selectedProjects.has(key);
 
   let downloadAllZip=async()=>{
     if(typeof window.JSZip==="undefined"){notify("打包工具尚未載入，請重新整理頁面後再試");return}
@@ -1704,7 +1706,7 @@ function HbVendorQuoteHub({onBack,notify}){
       let zip=new window.JSZip();
       let safe=v=>String(v||"未命名").replace(/[\\/:*?"<>|]/g,"_");
       let any=false;
-      for(let folder of folders){
+      for(let folder of folders.filter(f=>isProjSelected(f.projectId||"__none__"))){
         let inFolder=files.filter(f=>f.folderId===folder.id&&f.kind!=="text");
         for(let f of inFolder){
           try{
@@ -1730,7 +1732,7 @@ function HbVendorQuoteHub({onBack,notify}){
   let exportPdf=()=>{
     let esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
     let byProject=new Map();
-    for(let folder of folders){
+    for(let folder of folders.filter(f=>isProjSelected(f.projectId||"__none__"))){
       let key=folder.projectId||"__none__";
       if(!byProject.has(key))byProject.set(key,[]);
       byProject.get(key).push(folder);
@@ -1764,8 +1766,8 @@ function HbVendorQuoteHub({onBack,notify}){
       .count{font-size:11px;color:#777;font-weight:normal}
       .items{display:flex;flex-wrap:wrap;gap:10px}
       .item{font-size:11.5px}
-      .img-item{width:120px}
-      .img-item img{width:120px;height:120px;object-fit:cover;border-radius:4px;border:1px solid #ddd;display:block}
+      .img-item{width:260px}
+      .img-item img{width:260px;max-height:340px;object-fit:contain;border-radius:4px;border:1px solid #ddd;display:block;background:#fafafa}
       .img-item .cap{color:#555;margin-top:3px;line-height:1.4;word-break:break-all}
       .file-item,.text-item{width:100%;border-bottom:1px solid #eee;padding:6px 0}
       .text-item .txt{white-space:pre-wrap}
@@ -1859,7 +1861,10 @@ function HbVendorQuoteHub({onBack,notify}){
               folders.length===0
                 ? u.default.createElement(He,{icon:"folder-plus",text:"尚未建立任何廠商資料夾"})
                 : grouped.map(group=>u.default.createElement("div",{key:group.key,style:{marginBottom:20}},
-                    u.default.createElement("div",{style:{fontSize:12.5,fontWeight:700,color:s.oceanDark,marginBottom:8}},group.label),
+                    u.default.createElement("label",{style:{display:"flex",alignItems:"center",gap:6,fontSize:12.5,fontWeight:700,color:s.oceanDark,marginBottom:8,cursor:"pointer"}},
+                      u.default.createElement("input",{type:"checkbox",checked:isProjSelected(group.key),onChange:e=>setSelectedProjects(prev=>{let base=prev===null?new Set(grouped.map(g=>g.key)):new Set(prev);e.target.checked?base.add(group.key):base.delete(group.key);return base}),style:{width:15,height:15,accentColor:s.ocean}}),
+                      group.label
+                    ),
                     u.default.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(2, 1fr)",gap:16}},
                       group.list.map(folder=>{
                         let count=files.filter(f=>f.folderId===folder.id).length;
