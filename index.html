@@ -22,6 +22,9 @@
   html, body { margin: 0; padding: 0; }
   * { box-sizing: border-box; }
 
+  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  .animate-spin { animation: spin 0.8s linear infinite; transform-origin: center; transform-box: fill-box; }
+
   /* ===== 全站字體美化：使用 Noto Sans TC，避免過粗字重，保留清晰度 ===== */
   html, body, input, textarea, select, button {
     font-family: "Noto Sans TC","PingFang TC","Microsoft JhengHei",-apple-system,BlinkMacSystemFont,sans-serif !important;
