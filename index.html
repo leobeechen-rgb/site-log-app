@@ -943,6 +943,27 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
   let addCat=name=>i(p=>({...p,categories:[...p.categories,HB_newEstCategory(name||"")]}));
   let removeCat=cid=>i(p=>({...p,categories:p.categories.filter(c=>c.id!==cid)}));
   let setItem=(cid,iid,k,v)=>i(p=>({...p,categories:p.categories.map(c=>c.id!==cid?c:{...c,items:c.items.map(it=>it.id===iid?{...it,[k]:v}:it)})}));
+  let vendorFileRef=(0,u.useRef)(null);
+  let pendingVendorUploadRef=(0,u.useRef)(null);
+  let[uploadingVendorId,setUploadingVendorId]=(0,u.useState)(null);
+  let openVendorFilePicker=(cid,iid)=>{pendingVendorUploadRef.current={cid,iid};vendorFileRef.current&&vendorFileRef.current.click()};
+  let handleVendorFile=async ev=>{
+    let file=ev.target.files&&ev.target.files[0];
+    ev.target.value="";
+    let target=pendingVendorUploadRef.current;
+    if(!file||!target)return;
+    setUploadingVendorId(target.iid);
+    try{
+      let ext=(file.name.split(".").pop()||"dat").toLowerCase();
+      let path=`estimates/vendor-quotes/${target.iid}_${Be()}.${ext}`;
+      let url=await qe("sitelog-quotes",path,file,file.type||"application/octet-stream");
+      setItem(target.cid,target.iid,"vendorQuoteUrl",url);
+      setItem(target.cid,target.iid,"vendorQuoteName",file.name);
+      e("廠商報價單已上傳")
+    }catch(err){e("上傳失敗："+(err.message||err))}
+    finally{setUploadingVendorId(null)}
+  };
+  let removeVendorFile=(cid,iid)=>{setItem(cid,iid,"vendorQuoteUrl",""),setItem(cid,iid,"vendorQuoteName","")};
   let addItem=(cid,focusAfter)=>{
     let ni=HB_newEstItem();
     i(p=>({...p,categories:p.categories.map(c=>c.id===cid?{...c,items:[...c.items,ni]}:c)}));
@@ -1031,6 +1052,7 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
       u.default.createElement("div",{style:{width:15}})
     ),
     u.default.createElement("input",{ref:importFileRef,type:"file",accept:".xlsx,.xls,.csv",hidden:!0,onChange:handleFileImport}),
+    u.default.createElement("input",{ref:vendorFileRef,type:"file",accept:"image/*,.pdf,.doc,.docx,.xls,.xlsx",hidden:!0,onChange:handleVendorFile}),
     u.default.createElement("div",{style:{flex:1,overflowY:"auto",padding:"14px 14px 20px"}},
     u.default.createElement("div",{style:{maxWidth:960,margin:"0 auto"}},
       u.default.createElement("div",{style:{background:s.card,borderRadius:8,marginBottom:12,overflow:"hidden"}},
@@ -1095,7 +1117,7 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
                   u.default.createElement("td",{style:tdStyle},u.default.createElement("input",{type:"number",inputMode:"decimal",placeholder:"單價",value:it.price,onChange:v=>setItem(cat.id,it.id,"price",v.target.value),onKeyDown:v=>{if(v.key==="Enter"){v.preventDefault();idx===cat.items.length-1?addItem(cat.id,!0):(refs["name_"+cat.items[idx+1].id]&&refs["name_"+cat.items[idx+1].id].focus())}},style:{...cellInputStyle,textAlign:"right"}})),
                   u.default.createElement("td",{style:{...tdStyle,textAlign:"right",whiteSpace:"nowrap",paddingRight:6,color:s.oceanDark,fontWeight:600}},HB_money(HB_num(it.qty)*HB_num(it.price))),
                   u.default.createElement("td",{style:tdStyle},u.default.createElement("input",{placeholder:"備註",value:it.note,onChange:v=>setItem(cat.id,it.id,"note",v.target.value),style:cellInputStyle})),
-                  u.default.createElement("td",{style:{...tdStyle,borderLeft:`2px solid ${s.lemon}`}},u.default.createElement("input",{type:"number",inputMode:"decimal",placeholder:"成本",value:it.vendorPrice,onChange:v=>setItem(cat.id,it.id,"vendorPrice",v.target.value),style:{...cellInputStyle,textAlign:"right",background:"#FFFBEF"}})),
+                  u.default.createElement("td",{style:{...tdStyle,borderLeft:`2px solid ${s.lemon}`}},u.default.createElement("div",{style:{display:"flex",alignItems:"center",gap:2}},u.default.createElement("input",{type:"number",inputMode:"decimal",placeholder:"成本",value:it.vendorPrice,onChange:v=>setItem(cat.id,it.id,"vendorPrice",v.target.value),style:{...cellInputStyle,textAlign:"right",background:"#FFFBEF",flex:1,minWidth:0}}),it.vendorQuoteUrl?u.default.createElement(u.default.Fragment,null,u.default.createElement("button",{type:"button",onClick:()=>window.open(it.vendorQuoteUrl,"_blank"),title:it.vendorQuoteName||"查看廠商報價單",style:{border:"none",background:"none",color:s.tree,cursor:"pointer",padding:"0 1px",display:"flex",flexShrink:0}},u.default.createElement(E,{name:"paperclip",size:12})),u.default.createElement("button",{type:"button",onClick:()=>removeVendorFile(cat.id,it.id),title:"移除附件",style:{border:"none",background:"none",color:s.cane,cursor:"pointer",padding:"0 1px",display:"flex",flexShrink:0}},u.default.createElement(E,{name:"x",size:10}))):u.default.createElement("button",{type:"button",onClick:()=>openVendorFilePicker(cat.id,it.id),disabled:uploadingVendorId===it.id,title:"上傳廠商報價單",style:{border:"none",background:"none",color:s.inkSoft,cursor:"pointer",padding:"0 1px",display:"flex",flexShrink:0}},uploadingVendorId===it.id?u.default.createElement(E,{name:"loader",size:12,className:"animate-spin"}):u.default.createElement(E,{name:"paperclip",size:12})))),
                   u.default.createElement("td",{style:{...tdStyle,textAlign:"right",whiteSpace:"nowrap",paddingRight:6,color:it.vendorPrice===""?s.inkSoft:rowProfit>=0?s.tree:s.cane,fontSize:11.5}},it.vendorPrice===""?"—":HB_money(rowProfit)),
                   u.default.createElement("td",{style:{...tdStyle,textAlign:"center",whiteSpace:"nowrap"}},
                     u.default.createElement("button",{onClick:()=>moveItem(cat.id,it.id,-1),disabled:idx===0,title:"上移",style:{border:"none",background:"none",color:idx===0?s.line:s.oceanDark,cursor:idx===0?"default":"pointer",padding:"0 2px"}},u.default.createElement(E,{name:"chevron-up",size:13})),
