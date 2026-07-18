@@ -199,7 +199,7 @@
   }
   .lib-edit-form .frow{display:flex; gap:6px; margin-bottom:6px;}
   .lib-edit-form .flabel{font-size:12.5px; color:var(--ink-soft); margin-bottom:2px; display:block;}
-  .lib-edit-form input{
+  .lib-edit-form input, .lib-edit-form select{
     font-family:inherit; font-size:12px; padding:5px 6px; border:1px solid #97D4E7; border-radius:5px;
     background:#fff; width:100%;
   }
@@ -859,12 +859,12 @@ function libEditFormHtml(item){
   return `
     <div class="lib-edit-form">
       <div class="frow">
-        <div style="flex:1;"><span class="flabel">類別（大項）</span><input id="ef-cat" value="${esc(v.cat)}" placeholder="例：拆除工程"></div>
+        <div style="flex:1;"><span class="flabel">類別（大項）</span><select id="ef-cat">${catOptionsHtml(v.cat)}</select></div>
         <div style="flex:2;"><span class="flabel">項目名稱（細項）</span><input id="ef-name" value="${esc(v.name)}" placeholder="項目名稱"></div>
       </div>
       <div class="frow">
         <div style="width:80px;"><span class="flabel">單位</span><input id="ef-unit" value="${esc(v.unit)}" placeholder="坪"></div>
-        <div style="width:110px;"><span class="flabel">參考單價</span><input id="ef-price" type="number" value="${v.price}" min="0"></div>
+        <div style="width:110px;"><span class="flabel">參考單價</span><input id="ef-price" type="text" inputmode="decimal" value="${v.price}"></div>
         <div style="flex:1;"><span class="flabel">廠商</span><input id="ef-vendor" value="${esc(v.vendor||'')}" placeholder="選填"></div>
       </div>
       <div class="frow">
@@ -952,6 +952,24 @@ function bindEditForm(){
   if(!saveBtn) return;
 
   cancelBtn.addEventListener('click', ()=>{ editingCode = null; renderLib(); });
+
+  const catSel = document.getElementById('ef-cat');
+  if(catSel){
+    catSel.addEventListener('change', ()=>{
+      if(catSel.value === '__new__'){
+        const name = prompt('請輸入新的大項（工程類別）名稱：');
+        if(name && name.trim()){
+          const opt = document.createElement('option');
+          opt.value = name.trim();
+          opt.textContent = name.trim();
+          catSel.insertBefore(opt, catSel.querySelector('option[value="__new__"]'));
+          catSel.value = name.trim();
+        } else {
+          catSel.selectedIndex = 0;
+        }
+      }
+    });
+  }
 
   saveBtn.addEventListener('click', ()=>{
     const cat = document.getElementById('ef-cat').value.trim() || '未分類';
@@ -1212,8 +1230,8 @@ function renderQuote(){
               <td>${no}</td>
               <td>${nameCell}</td>
               <td>${unitCell}</td>
-              <td><input class="price-input" data-id="${r.id}" type="number" value="${r.price}" min="0"></td>
-              <td><input class="qty-input" data-id="${r.id}" type="number" value="${r.qty}" min="0" step="0.5"></td>
+              <td><input class="price-input" data-id="${r.id}" type="text" inputmode="decimal" value="${r.price}"></td>
+              <td><input class="qty-input" data-id="${r.id}" type="text" inputmode="decimal" value="${r.qty}"></td>
               <td class="subtotal-cell">${fmt(r.price*r.qty)}</td>
               <td>${opsCell}</td>
             </tr>
