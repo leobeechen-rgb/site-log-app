@@ -1695,6 +1695,8 @@ function HbVendorQuoteHub({onBack,notify}){
     setFiles(fs=>fs.filter(x=>x.id!==id));
   };
 
+  let projName=pid=>{let p=projects.find(x=>x.id===pid);return p?p.name:"未指定案件"};
+
   let downloadAllZip=async()=>{
     if(typeof window.JSZip==="undefined"){notify("打包工具尚未載入，請重新整理頁面後再試");return}
     setZipping(true);
@@ -1709,7 +1711,7 @@ function HbVendorQuoteHub({onBack,notify}){
             let res=await fetch(f.url);
             if(!res.ok)continue;
             let blob=await res.blob();
-            zip.file(`${safe(folder.name)}/${f.name}`,blob);
+            zip.file(`${safe(projName(folder.projectId))}/${safe(folder.name)}/${f.name}`,blob);
             any=true;
           }catch{}
         }
@@ -1727,30 +1729,53 @@ function HbVendorQuoteHub({onBack,notify}){
 
   let exportPdf=()=>{
     let esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-    let projName=pid=>{let p=projects.find(x=>x.id===pid);return p?p.name:"未指定案件"};
-    let rows=folders.map(folder=>{
+    let byProject=new Map();
+    for(let folder of folders){
+      let key=folder.projectId||"__none__";
+      if(!byProject.has(key))byProject.set(key,[]);
+      byProject.get(key).push(folder);
+    }
+    let projectKeys=[...byProject.keys()].sort((a,b)=>a==="__none__"?1:b==="__none__"?-1:0);
+    let folderBlock=folder=>{
       let inFolder=files.filter(f=>f.folderId===folder.id);
-      let list=inFolder.length===0
-        ? `<p class="empty">尚無內容</p>`
-        : `<table><tr><th>項目</th><th>大小</th><th>日期</th></tr>${inFolder.map(f=>f.kind==="text"?`<tr><td>${esc(f.textContent)}</td><td></td><td>${esc(Tl(f.uploadedAt))}</td></tr>`:`<tr><td>${esc(f.name)}</td><td>${f.size?(f.size/1024).toFixed(0)+" KB":""}</td><td>${esc(Tl(f.uploadedAt))}</td></tr>`).join("")}</table>`;
-      return `<section><h2>${esc(folder.name)}<span class="count">${esc(projName(folder.projectId))} · ${inFolder.length} 筆</span></h2>${list}</section>`;
+      if(inFolder.length===0)return `<div class="vendor"><h3>${esc(folder.name)}</h3><p class="empty">尚無內容</p></div>`;
+      let items=inFolder.map(f=>{
+        if(f.kind==="text")return `<div class="item text-item"><div class="txt">${esc(f.textContent)}</div><div class="date">${esc(Tl(f.uploadedAt))}</div></div>`;
+        let isImg=(f.mime||"").startsWith("image/");
+        if(isImg)return `<div class="item img-item"><img src="${esc(f.url)}" /><div class="cap">${esc(f.name)}<br/>${esc(Tl(f.uploadedAt))}</div></div>`;
+        return `<div class="item file-item"><div class="fname">${esc(f.name)}</div><div class="date">${f.size?(f.size/1024).toFixed(0)+" KB · ":""}${esc(Tl(f.uploadedAt))}</div></div>`;
+      }).join("");
+      return `<div class="vendor"><h3>${esc(folder.name)}<span class="count">${inFolder.length} 筆</span></h3><div class="items">${items}</div></div>`;
+    };
+    let sections=projectKeys.map(key=>{
+      let list=byProject.get(key);
+      let label=key==="__none__"?"未指定案件":projName(key);
+      return `<section><h2>${esc(label)}</h2>${list.map(folderBlock).join("")}</section>`;
     }).join("");
     let html=`<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8" /><title>廠商報價單清單</title><style>
       @page{size:A4;margin:16mm 14mm}
       body{font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;color:#1A1A1A;max-width:720px;margin:0 auto;padding:24px}
       h1{font-size:20px;margin-bottom:4px}
       .meta{font-size:12px;color:#777;margin-bottom:20px}
-      section{margin-bottom:20px}
-      h2{font-size:15px;border-bottom:2px solid #2B98BA;padding-bottom:4px;display:flex;justify-content:space-between}
-      .count{font-size:12px;color:#777;font-weight:normal}
-      table{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px}
-      td,th{border-bottom:1px solid #eee;padding:4px 6px;text-align:left}
+      section{margin-bottom:26px}
+      h2{font-size:16px;background:#2B98BA;color:#fff;padding:6px 10px;border-radius:4px;margin-bottom:10px}
+      .vendor{margin-bottom:16px;break-inside:avoid}
+      h3{font-size:13.5px;border-bottom:1.5px solid #2B98BA;padding-bottom:4px;margin:0 0 8px;display:flex;justify-content:space-between}
+      .count{font-size:11px;color:#777;font-weight:normal}
+      .items{display:flex;flex-wrap:wrap;gap:10px}
+      .item{font-size:11.5px}
+      .img-item{width:120px}
+      .img-item img{width:120px;height:120px;object-fit:cover;border-radius:4px;border:1px solid #ddd;display:block}
+      .img-item .cap{color:#555;margin-top:3px;line-height:1.4;word-break:break-all}
+      .file-item,.text-item{width:100%;border-bottom:1px solid #eee;padding:6px 0}
+      .text-item .txt{white-space:pre-wrap}
+      .date{color:#888;font-size:10.5px;margin-top:2px}
       .empty{font-size:12px;color:#999}
       @media print{ .noprint{display:none} }
     </style></head><body>
       <h1>廠商報價單清單</h1>
       <div class="meta">匯出時間：${esc(new Date().toLocaleString("zh-TW"))}</div>
-      ${rows||'<p class="empty">尚未建立任何廠商資料夾</p>'}
+      ${sections||'<p class="empty">尚未建立任何廠商資料夾</p>'}
       <button class="noprint" onclick="window.print()" style="margin-top:20px;padding:8px 16px">列印 / 存 PDF</button>
     </body></html>`;
     let win=window.open("","_blank");
