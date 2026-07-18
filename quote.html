@@ -33,8 +33,11 @@
     --glass-border:rgba(255,255,255,.9);
   }
   *{box-sizing:border-box;}
+  html{overflow-x:hidden; width:100%;}
   body{
     margin:0;
+    overflow-x:hidden;
+    max-width:100vw;
     background:var(--paper);
     color:var(--ink);
     font-family:var(--font-sans);
@@ -63,7 +66,7 @@
     backdrop-filter:blur(22px) saturate(150%);
     -webkit-backdrop-filter:blur(22px) saturate(150%);
     color:var(--ink);
-    padding:9px 24px 10px;
+    padding:14px 24px 16px;
     position:relative;
     overflow:hidden;
     border-radius:0 0 16px 16px;
@@ -77,35 +80,35 @@
   .topbar-inner{
     max-width:1180px;margin:0 auto;
     display:flex;justify-content:space-between;align-items:center;
-    flex-wrap:wrap; gap:10px; position:relative; z-index:1;
+    flex-wrap:wrap; gap:14px; position:relative; z-index:1;
   }
   .brand-eyebrow{
     font-family:'Zen Kaku Gothic New',sans-serif;
-    font-size:9px; letter-spacing:.2em; text-transform:uppercase;
-    color:var(--navy-700); font-weight:500; margin-bottom:1px;
+    font-size:10px; letter-spacing:.2em; text-transform:uppercase;
+    color:var(--navy-700); font-weight:500; margin-bottom:2px;
   }
   .brand-title{
     font-family:var(--font-serif);
-    font-size:15px; font-weight:600; letter-spacing:.02em; margin:0;
-    color:var(--ink); line-height:1.2;
+    font-size:17px; font-weight:600; letter-spacing:.02em; margin:0;
+    color:var(--ink); line-height:1.25;
   }
-  .brand-sub{font-size:10px;color:var(--ink-soft);margin-top:1px; line-height:1.3;}
+  .brand-sub{font-size:11px;color:var(--ink-soft);margin-top:2px; line-height:1.4;}
   .quote-meta{
-    display:grid; grid-template-columns:repeat(3,minmax(130px,1fr)); gap:5px 10px;
+    display:grid; grid-template-columns:repeat(3,minmax(130px,1fr)); gap:8px 12px;
     background:rgba(255,255,255,.4);
-    padding:6px 12px; border-radius:10px;
+    padding:10px 14px; border-radius:12px;
     border:1px solid var(--glass-border);
     min-width:520px;
     backdrop-filter:blur(12px);
     -webkit-backdrop-filter:blur(12px);
   }
-  .quote-meta label{display:block;font-size:9.5px;color:var(--navy-800);margin-bottom:2px; white-space:nowrap; font-weight:500;}
+  .quote-meta label{display:block;font-size:10.5px;color:var(--navy-800);margin-bottom:3px; white-space:nowrap; font-weight:500;}
   .quote-meta input{
     width:100%; background:rgba(255,255,255,.8); border:1px solid rgba(151,212,231,.6);
-    border-radius:6px; padding:4px 8px; font-size:12.5px; color:var(--ink);
+    border-radius:7px; padding:6px 9px; font-size:13px; color:var(--ink);
     font-family:inherit;
   }
-  .quote-meta .cloud-badge{font-size:10.5px; padding:3px 10px; margin-top:3px;}
+  .quote-meta .cloud-badge{font-size:11px; padding:4px 11px; margin-top:6px;}
   @media (max-width:760px){
     .quote-meta{grid-template-columns:repeat(2,1fr); min-width:0;}
   }
@@ -186,6 +189,9 @@
   .lib-edit-form{grid-column:1/-1;}
   @media (max-width:640px){
     .lib-list{grid-template-columns:1fr;}
+    .lib-search-row{flex-direction:column; align-items:stretch;}
+    .lib-search{min-width:0;}
+    .lib-vendor-select{width:100%;}
   }
 
   .lib-edit-form{
@@ -197,11 +203,6 @@
     font-family:inherit; font-size:12px; padding:5px 6px; border:1px solid #97D4E7; border-radius:5px;
     background:#fff; width:100%;
   }
-  .lib-edit-form input[type="number"]{-moz-appearance:textfield;}
-  .lib-edit-form input[type="number"]::-webkit-outer-spin-button,
-  .lib-edit-form input[type="number"]::-webkit-inner-spin-button{
-    -webkit-appearance:none; margin:0;
-  }
   .lib-edit-form .frow-actions{display:flex; gap:6px; justify-content:flex-end; align-items:center;}
   .lib-edit-form button{
     font-family:inherit; font-size:12px; font-weight:500; padding:5px 12px; border-radius:5px; border:none; cursor:pointer;
@@ -211,14 +212,14 @@
   .btn-del-item{background:#fff; color:var(--red); border:1px solid var(--red) !important; margin-right:auto;}
 
   /* Quote table */
-  .quote-table-wrap{padding:16px 18px 10px; overflow-x:auto;}
+  .quote-table-wrap{padding:16px 18px 10px; overflow-x:auto; max-width:100%; -webkit-overflow-scrolling:touch;}
   table{width:100%; border-collapse:collapse; font-size:13.5px; min-width:560px;}
   thead th{
     background:rgba(255,212,106,.28); color:var(--navy-900); font-weight:500; font-size:12.5px;
     padding:11px 10px; text-align:left; border-bottom:1px solid var(--navy-700);
     letter-spacing:.02em;
   }
-  tbody td{padding:7px 10px; border-bottom:1px solid var(--line); vertical-align:middle;}
+  tbody td{padding:11px 10px; border-bottom:1px solid var(--line); vertical-align:middle;}
   tbody tr:hover{background:rgba(255,255,255,.5);}
   tr.group-row td{
     background:rgba(151,212,231,.22); font-weight:500; color:var(--navy-900); font-size:12.5px;
@@ -246,15 +247,10 @@
   input.qty-input:focus, input.price-input:focus{
     background:var(--yellow-soft); border:1px solid #97D4E7; outline:none;
   }
-  input.qty-input, input.price-input{-moz-appearance:textfield;}
-  input.qty-input::-webkit-outer-spin-button, input.qty-input::-webkit-inner-spin-button,
-  input.price-input::-webkit-outer-spin-button, input.price-input::-webkit-inner-spin-button{
-    -webkit-appearance:none; margin:0;
-  }
   input.price-input{width:80px;}
   select.cat-select{
-    font-family:inherit; font-size:12px; padding:3px 5px; border:1px solid rgba(151,212,231,.7);
-    border-radius:5px; background:#fff; color:var(--navy-800); max-width:110px; margin-bottom:0;
+    font-family:inherit; font-size:12px; padding:4px 6px; border:1px solid rgba(151,212,231,.7);
+    border-radius:5px; background:#fff; color:var(--navy-800); max-width:110px; margin-bottom:3px;
   }
   input.unit-input{
     width:100%; padding:4px 6px; border:1px solid rgba(151,212,231,.7); border-radius:5px;
@@ -448,32 +444,6 @@
   .modal-actions{display:flex; gap:8px; flex-wrap:wrap;}
   .modal-actions .btn{flex:1;}
   .auth-error{color:var(--red); font-size:12px; margin-top:8px; min-height:14px;}
-
-  /* Sticky bottom summary — running total visible while browsing the library */
-  .sticky-summary-bar{
-    position:fixed; left:0; right:0; bottom:0; z-index:150;
-    background:var(--glass-bg-strong);
-    backdrop-filter:blur(20px) saturate(150%); -webkit-backdrop-filter:blur(20px) saturate(150%);
-    border-top:1px solid var(--glass-border); box-shadow:0 -8px 28px rgba(43,152,186,.12);
-    padding:10px 20px; display:none; cursor:pointer;
-  }
-  .sticky-summary-bar.visible{display:block;}
-  .sticky-summary-inner{
-    max-width:1180px; margin:0 auto; display:flex; align-items:center; justify-content:space-between;
-    gap:12px; flex-wrap:wrap;
-  }
-  .sticky-summary-label{font-size:12.5px; color:var(--ink-soft);}
-  .sticky-summary-count{font-size:12px; color:var(--navy-800); font-weight:500; margin-left:6px;}
-  .sticky-summary-val{
-    font-size:17px; font-weight:500; color:#fff;
-    background:linear-gradient(135deg, var(--yellow), var(--yellow2));
-    padding:5px 14px; border-radius:9px;
-  }
-  @media (max-width:640px){
-    .sticky-summary-bar{padding:8px 12px;}
-    .sticky-summary-val{font-size:15px; padding:4px 11px;}
-  }
-  @media print{ .sticky-summary-bar{display:none !important;} }
 </style>
 </head>
 <body>
@@ -627,13 +597,6 @@
 <div class="footnote">
   <div id="saveStatus" style="color:var(--navy-800); font-weight:500; margin-bottom:6px;"></div>
   本報價單有效期限為報價日起 14 天，實際施工項目與金額以現場丈量及最終簽訂合約為準。單價庫可點項目右側鉛筆圖示編輯；報價明細依「大項」（工程類別）自動分組並列出各大項小計。系統會自動將單價庫、已儲存報價單與目前編輯中的報價單存到「這台電腦、這個瀏覽器」，重新整理或關閉分頁後仍會保留；但不會同步到其他裝置或瀏覽器。若要在不同電腦間搬移資料，或做長期備份，請使用「匯出」存成 JSON 檔，之後用「匯入」載回。
-</div>
-
-<div class="sticky-summary-bar" id="stickySummaryBar">
-  <div class="sticky-summary-inner">
-    <div><span class="sticky-summary-label">目前報價</span><span class="sticky-summary-count" id="stickyCount"></span></div>
-    <div class="sticky-summary-val" id="stickyTotal">$0</div>
-  </div>
 </div>
 
 <script>
@@ -892,19 +855,16 @@ function renderCats(){
 // ---------- Library render (with inline edit) ----------
 function libEditFormHtml(item){
   const isNew = item === null;
-  const v = item || {cat: activeCat!=='全部'?activeCat:'未分類', name:'', unit:'', price:0, note:'', vendor:activeVendor!=='全部'?activeVendor:''};
-  const catField = isNew
-    ? `<input type="hidden" id="ef-cat" value="${esc(v.cat)}">`
-    : `<div style="flex:1;"><span class="flabel">類別（大項）</span><input id="ef-cat" value="${esc(v.cat)}" placeholder="例：拆除工程"></div>`;
+  const v = item || {cat:'', name:'', unit:'', price:0, note:'', vendor:activeVendor!=='全部'?activeVendor:''};
   return `
     <div class="lib-edit-form">
       <div class="frow">
-        ${catField}
-        <div style="flex:2;"><span class="flabel">項目名稱（細項）${isNew ? `<span style="font-weight:400;color:var(--ink-soft);">（將加入「${esc(v.cat)}」）</span>` : ''}</span><input id="ef-name" value="${esc(v.name)}" placeholder="項目名稱"></div>
+        <div style="flex:1;"><span class="flabel">類別（大項）</span><input id="ef-cat" value="${esc(v.cat)}" placeholder="例：拆除工程"></div>
+        <div style="flex:2;"><span class="flabel">項目名稱（細項）</span><input id="ef-name" value="${esc(v.name)}" placeholder="項目名稱"></div>
       </div>
       <div class="frow">
         <div style="width:80px;"><span class="flabel">單位</span><input id="ef-unit" value="${esc(v.unit)}" placeholder="坪"></div>
-        <div style="width:110px;"><span class="flabel">參考單價</span><input id="ef-price" class="no-spin" type="number" value="${v.price}" min="0"></div>
+        <div style="width:110px;"><span class="flabel">參考單價</span><input id="ef-price" type="number" value="${v.price}" min="0"></div>
         <div style="flex:1;"><span class="flabel">廠商</span><input id="ef-vendor" value="${esc(v.vendor||'')}" placeholder="選填"></div>
       </div>
       <div class="frow">
@@ -1234,9 +1194,9 @@ function renderQuote(){
       html += `<tr class="group-row"><td colspan="${colCount-1}"><span class="group-tag">大項</span>${esc(g.cat)}</td><td></td></tr>`;
       g.rows.forEach(r=>{
         no++;
-        const nameCell = `<div style="display:flex;flex-direction:column;gap:2px;">
+        const nameCell = `<div style="display:flex;flex-direction:column;gap:3px;">
                <select class="cat-select" data-id="${r.id}">${catOptionsHtml(r.cat)}</select>
-               <input class="name-input" data-id="${r.id}" value="${esc(r.name)}" placeholder="輸入細項（工項）名稱" style="width:100%;padding:4px 6px;border:1px solid var(--line);border-radius:5px;font-family:inherit;font-size:13px;">
+               <input class="name-input" data-id="${r.id}" value="${esc(r.name)}" placeholder="輸入細項（工項）名稱" style="width:100%;padding:5px 6px;border:1px solid var(--line);border-radius:5px;font-family:inherit;font-size:13px;">
              </div>`;
         const unitCell = `<input class="unit-input" data-id="${r.id}" value="${esc(r.unit)}" placeholder="單位">`;
 
@@ -1379,19 +1339,9 @@ function renderTotals(){
 
   document.getElementById('sumSubtotal').textContent = fmt(subtotal);
   document.getElementById('sumTotal').textContent = fmt(total);
-
-  const stickyBar = document.getElementById('stickySummaryBar');
-  if(stickyBar){
-    document.getElementById('stickyTotal').textContent = fmt(total);
-    document.getElementById('stickyCount').textContent = quoteRows.length + ' 項';
-    stickyBar.classList.toggle('visible', quoteRows.length > 0);
-  }
   return total;
 }
 
-document.getElementById('stickySummaryBar').addEventListener('click', ()=>{
-  document.querySelector('.quote-table-wrap').scrollIntoView({behavior:'smooth', block:'start'});
-});
 document.getElementById('discount').addEventListener('input', ()=>{ renderTotals(); saveToStorage(); });
 document.getElementById('taxRate').addEventListener('input', ()=>{ renderTotals(); saveToStorage(); });
 ['qNo','qDate','qClient','qPhone','qAddr'].forEach(id=>{
