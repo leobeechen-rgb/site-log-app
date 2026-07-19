@@ -855,7 +855,7 @@ function renderCats(){
 // ---------- Library render (with inline edit) ----------
 function libEditFormHtml(item){
   const isNew = item === null;
-  const v = item || {cat:'', name:'', unit:'', price:0, note:'', vendor:activeVendor!=='全部'?activeVendor:''};
+  const v = item || {cat:activeCat!=='全部'?activeCat:'', name:'', unit:'', price:0, note:'', vendor:activeVendor!=='全部'?activeVendor:''};
   return `
     <div class="lib-edit-form">
       <div class="frow">
@@ -864,7 +864,7 @@ function libEditFormHtml(item){
       </div>
       <div class="frow">
         <div style="width:80px;"><span class="flabel">單位</span><input id="ef-unit" value="${esc(v.unit)}" placeholder="坪"></div>
-        <div style="width:110px;"><span class="flabel">參考單價</span><input id="ef-price" type="text" inputmode="decimal" value="${v.price}"></div>
+        <div style="width:110px;"><span class="flabel">參考單價</span><input id="ef-price" type="text" inputmode="decimal" value="${v.price || ''}"></div>
         <div style="flex:1;"><span class="flabel">廠商</span><input id="ef-vendor" value="${esc(v.vendor||'')}" placeholder="選填"></div>
       </div>
       <div class="frow">
