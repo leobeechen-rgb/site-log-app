@@ -889,6 +889,14 @@ function renderLib(){
   });
   document.getElementById('libCount').textContent = filtered.length + ' 項';
 
+  // Group same-category items together regardless of where they sit in the
+  // underlying list (e.g. newly-added items appended at the end) — sort by
+  // each category's first-appearance order, keeping items within a category
+  // in their original relative order.
+  const catOrder = [];
+  PRICE_LIST.forEach(i=>{ if(!catOrder.includes(i.cat)) catOrder.push(i.cat); });
+  const grouped = filtered.slice().sort((a,b)=> catOrder.indexOf(a.cat) - catOrder.indexOf(b.cat));
+
   const listEl = document.getElementById('libList');
   let html = '';
 
@@ -900,7 +908,7 @@ function renderLib(){
     html += '<div style="padding:20px;text-align:center;color:#999;font-size:13px;">找不到符合的項目</div>';
   } else {
     let lastCat = null;
-    filtered.forEach(i=>{
+    grouped.forEach(i=>{
       if(i.cat !== lastCat){
         html += `<div class="lib-group-head">${esc(i.cat)}</div>`;
         lastCat = i.cat;
