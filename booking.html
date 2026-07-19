@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>赫柏空間設計｜預約諮詢</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --navy:#173A4A;
+    --navy-deep:#0F2733;
+    --lemon:#FFD46A;
+    --lemon-deep:#F0B93A;
+    --paper:#FAF8F3;
+    --ink:#1E2A32;
+    --mute:#7C8A93;
+    --line:#E4E0D6;
+    --ok:#4C8B6B;
+    --full:#C9603F;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Noto Sans TC',sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .disp{font-family:'Space Grotesk','Noto Sans TC',sans-serif;}
+
+  /* ---- Shell ---- */
+  #root{max-width:480px;margin:0 auto;min-height:100vh;background:var(--paper);position:relative;box-shadow:0 0 40px rgba(15,39,51,0.06);}
+
+  /* ---- Header ---- */
+  header{
+    background:var(--navy);
+    background-image:radial-gradient(circle at 85% -10%, rgba(255,212,106,0.18), transparent 55%);
+    color:#fff;
+    padding:28px 24px 22px;
+    position:relative;
+  }
+  .eyebrow{
+    font-size:12px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--lemon);font-weight:700;margin:0 0 6px;
+  }
+  header h1{
+    margin:0;font-size:26px;line-height:1.3;font-weight:900;
+  }
+  header p{margin:8px 0 0;color:rgba(255,255,255,.72);font-size:13.5px;line-height:1.6;}
+
+  /* ---- Progress ---- */
+  .progress{display:flex;gap:6px;padding:16px 24px 0;background:var(--navy);}
+  .progress i{flex:1;height:3px;border-radius:2px;background:rgba(255,255,255,.18);}
+  .progress i.on{background:var(--lemon);}
+
+  /* ---- Steps ---- */
+  .step{padding:22px 24px 100px;display:none;}
+  .step.active{display:block;}
+  .step-label{
+    font-size:12px;font-weight:700;letter-spacing:.08em;color:var(--navy);
+    text-transform:uppercase;margin:0 0 4px;
+  }
+  .step-title{font-size:19px;font-weight:900;margin:0 0 18px;}
+
+  /* ---- Service cards ---- */
+  .svc{
+    display:flex;align-items:center;gap:14px;
+    border:1.5px solid var(--line);border-radius:14px;
+    padding:16px;margin-bottom:12px;cursor:pointer;
+    background:#fff;transition:.15s;
+  }
+  .svc:active{transform:scale(.98);}
+  .svc.sel{border-color:var(--navy);background:#fff;box-shadow:0 0 0 3px rgba(23,58,74,0.08);}
+  .svc .ic{
+    width:44px;height:44px;border-radius:11px;background:var(--paper);
+    display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;
+    border:1px solid var(--line);
+  }
+  .svc.sel .ic{background:var(--navy);}
+  .svc h3{margin:0 0 3px;font-size:15px;}
+  .svc p{margin:0;font-size:12.5px;color:var(--mute);line-height:1.5;}
+
+  /* ---- Calendar ---- */
+  .cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+  .cal-nav button{
+    width:32px;height:32px;border-radius:9px;border:1px solid var(--line);
+    background:#fff;font-size:15px;cursor:pointer;color:var(--navy);
+  }
+  .cal-nav .ym{font-weight:700;font-size:15px;}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:22px;}
+  .cal-grid .dow{text-align:center;font-size:11px;color:var(--mute);padding-bottom:6px;font-weight:700;}
+  .cal-day{
+    aspect-ratio:1;border-radius:10px;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:3px;font-size:13px;
+    cursor:pointer;border:1.5px solid transparent;position:relative;color:var(--ink);
+  }
+  .cal-day.empty{visibility:hidden;}
+  .cal-day.closed{color:#C7CDD1;cursor:default;}
+  .cal-day.open:hover{background:#fff;border-color:var(--line);}
+  .cal-day.sel{background:var(--navy);color:#fff;border-color:var(--navy);}
+  .cal-day .dot{width:5px;height:5px;border-radius:50%;background:var(--ok);}
+  .cal-day.busy .dot{background:var(--lemon-deep);}
+  .cal-day.full .dot{background:var(--full);}
+  .cal-day.sel .dot{background:#fff;}
+  .cal-legend{display:flex;gap:14px;font-size:11.5px;color:var(--mute);margin:-10px 0 20px;flex-wrap:wrap;}
+  .cal-legend span{display:inline-flex;align-items:center;gap:5px;}
+  .cal-legend i{width:6px;height:6px;border-radius:50%;display:inline-block;}
+
+  .slot-label{font-size:13px;font-weight:700;margin:0 0 10px;color:var(--navy);}
+  .slots{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .slot{
+    border:1.5px solid var(--line);border-radius:10px;padding:12px 8px;
+    text-align:center;font-size:13.5px;font-weight:600;cursor:pointer;background:#fff;
+  }
+  .slot.taken{color:#C7CDD1;border-style:dashed;cursor:not-allowed;text-decoration:line-through;}
+  .slot.sel{background:var(--navy);color:#fff;border-color:var(--navy);}
+  .empty-note{font-size:13px;color:var(--mute);text-align:center;padding:30px 0;}
+
+  /* ---- Form ---- */
+  .field{margin-bottom:14px;}
+  .field label{display:block;font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:6px;}
+  .field input,.field textarea{
+    width:100%;border:1.5px solid var(--line);border-radius:10px;
+    padding:11px 12px;font-size:14.5px;font-family:inherit;background:#fff;color:var(--ink);
+  }
+  .field input:focus,.field textarea:focus{outline:none;border-color:var(--navy);}
+  .field textarea{resize:vertical;min-height:70px;}
+  .field .hint{font-size:11.5px;color:var(--mute);margin-top:5px;}
+  .summary-box{
+    background:#fff;border:1.5px solid var(--line);border-radius:12px;
+    padding:14px 16px;margin-bottom:20px;font-size:13px;line-height:2;
+  }
+  .summary-box b{color:var(--navy);}
+
+  /* ---- Confirm screen ---- */
+  .done{padding:60px 30px 40px;text-align:center;}
+  .done .badge{
+    width:64px;height:64px;border-radius:50%;background:var(--navy);
+    color:var(--lemon);display:flex;align-items:center;justify-content:center;
+    font-size:30px;margin:0 auto 20px;
+  }
+  .done h2{font-size:20px;margin:0 0 8px;}
+  .done p{color:var(--mute);font-size:13.5px;margin:0 0 26px;}
+  .done .ticket{
+    background:#fff;border:1.5px dashed var(--line);border-radius:14px;
+    padding:18px;text-align:left;font-size:13.5px;line-height:2;margin-bottom:24px;
+  }
+  .done .ticket b{color:var(--navy);}
+
+  /* ---- Footer bar ---- */
+  .barfoot{
+    position:sticky;bottom:0;left:0;right:0;
+    background:linear-gradient(180deg,transparent,var(--paper) 22%);
+    padding:18px 24px 22px;
+  }
+  .btn{
+    width:100%;padding:15px;border-radius:12px;border:none;
+    background:var(--navy);color:#fff;font-size:15px;font-weight:700;
+    cursor:pointer;font-family:inherit;
+  }
+  .btn:disabled{background:#D6DADD;color:#9AA3A9;cursor:not-allowed;}
+  .btn.ghost{background:transparent;color:var(--navy);border:1.5px solid var(--line);margin-top:8px;}
+</style>
+</head>
+<body>
+
+<div id="root">
+
+  <header>
+    <p class="eyebrow">HERFULSINS INTERIOR DESIGN</p>
+    <h1 class="disp">預約設計諮詢</h1>
+    <p>選擇方便的時段，讓我們為你的空間開始第一步討論。</p>
+  </header>
+
+  <div class="progress" id="progress"></div>
+
+  <!-- STEP 1: 服務類型 -->
+  <div class="step active" data-step="1">
+    <p class="step-label">Step 1</p>
+    <h2 class="step-title">選擇諮詢方式</h2>
+
+    <div class="svc" data-svc="到店諮詢">
+      <div class="ic">🏢</div>
+      <div><h3>到店諮詢</h3><p>親自到工作室，與設計師面對面討論需求與風格。</p></div>
+    </div>
+    <div class="svc" data-svc="到府勘查">
+      <div class="ic">🏠</div>
+      <div><h3>到府勘查</h3><p>設計師到府現場測量與勘查，建議先備妥屋況資訊。</p></div>
+    </div>
+  </div>
+
+  <!-- STEP 2: 日期時段 -->
+  <div class="step" data-step="2">
+    <p class="step-label">Step 2</p>
+    <h2 class="step-title">選擇日期與時段</h2>
+
+    <div class="cal-nav">
+      <button id="prevM">‹</button>
+      <div class="ym disp" id="calYM"></div>
+      <button id="nextM">›</button>
+    </div>
+    <div class="cal-grid" id="calGrid"></div>
+    <div class="cal-legend">
+      <span><i style="background:var(--ok)"></i>時段充裕</span>
+      <span><i style="background:var(--lemon-deep)"></i>剩少數時段</span>
+      <span><i style="background:var(--full)"></i>已額滿</span>
+    </div>
+
+    <p class="slot-label" id="slotLabel">請先選擇日期</p>
+    <div class="slots" id="slotList"></div>
+  </div>
+
+  <!-- STEP 3: 資料表單 -->
+  <div class="step" data-step="3">
+    <p class="step-label">Step 3</p>
+    <h2 class="step-title">留下您的聯絡資訊</h2>
+
+    <div class="summary-box" id="bookSummary"></div>
+
+    <div class="field">
+      <label>姓名 *</label>
+      <input type="text" id="fName" placeholder="請輸入您的姓名">
+    </div>
+    <div class="field">
+      <label>聯絡電話 *</label>
+      <input type="tel" id="fPhone" placeholder="請輸入手機號碼">
+    </div>
+    <div class="field">
+      <label>Email</label>
+      <input type="email" id="fEmail" placeholder="選填，方便寄送確認信">
+    </div>
+    <div class="field" id="fAddrWrap">
+      <label>現場地址 *</label>
+      <input type="text" id="fAddr" placeholder="到府勘查請填寫地址">
+    </div>
+    <div class="field">
+      <label>需求簡述</label>
+      <textarea id="fNote" placeholder="例如：坪數、格局、想討論的風格方向等（選填）"></textarea>
+      <p class="hint">越詳細，設計師越能事先準備，諮詢更有效率。</p>
+    </div>
+  </div>
+
+  <!-- STEP 4: 完成 -->
+  <div class="step" data-step="4">
+    <div class="done">
+      <div class="badge">✓</div>
+      <h2 class="disp">預約已送出</h2>
+      <p>我們已收到您的預約，將盡快與您確認。</p>
+      <div class="ticket" id="ticket"></div>
+      <button class="btn ghost" onclick="location.reload()">再預約一筆</button>
+    </div>
+  </div>
+
+  <div class="barfoot" id="barfoot"></div>
+</div>
+
+<script>
+/* ================== Supabase 設定 ================== */
+// TODO: 換成實際的 Supabase 專案 URL 與 anon key（跟 site-log-app 共用同一專案即可）
+const SUPABASE_URL = "https://rqndozhhvuimqjqtmeli.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxbmRvemhodnVpbXFqcXRtZWxpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5Njc1ODIsImV4cCI6MjA5OTU0MzU4Mn0.meaGT1veRt9acHCl4Dcrpk9jxjNzrkFKWfs_96C6qLw";
+// TODO: 換成實際部署的 Edge Function 網址（負責發送 LINE 通知）
+const LINE_NOTIFY_FUNCTION_URL = "https://rqndozhhvuimqjqtmeli.supabase.co/functions/v1/send-booking-line-notify";
+
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const ALL_SLOTS = ["10:00","11:30","14:00","15:30","17:00"];
+
+// 每月已載入的資料快取："2026-07" -> { "2026-07-22": ["10:00","14:00"] }
+const bookedCache = {};
+const closedCache = {}; // "2026-07" -> Set of "2026-07-06"
+function fmtKey(d){ return d.toISOString().slice(0,10); }
+function monthKey(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; }
+
+// 載入某個月份的預約狀況與臨時公休日（月初/月底往前後各多抓幾天，避免跨月週次露白）
+async function loadMonthData(y, m){
+  const mk = `${y}-${String(m+1).padStart(2,'0')}`;
+  if(bookedCache[mk]) return; // 已快取過
+
+  const rangeStart = new Date(y, m, 1);
+  const rangeEnd = new Date(y, m+1, 0);
+  const startStr = fmtKey(rangeStart);
+  const endStr = fmtKey(rangeEnd);
+
+  bookedCache[mk] = {};
+  closedCache[mk] = new Set();
+
+  try{
+    const { data: bookings, error: e1 } = await sb
+      .from('sitelog_bookings')
+      .select('date,time')
+      .gte('date', startStr)
+      .lte('date', endStr)
+      .in('status', ['pending','confirmed']);
+    if(e1) throw e1;
+    (bookings||[]).forEach(b=>{
+      if(!bookedCache[mk][b.date]) bookedCache[mk][b.date] = [];
+      bookedCache[mk][b.date].push(b.time);
+    });
+
+    const { data: closed, error: e2 } = await sb
+      .from('sitelog_booking_closed_dates')
+      .select('date')
+      .gte('date', startStr)
+      .lte('date', endStr);
+    if(e2) throw e2;
+    (closed||[]).forEach(c=> closedCache[mk].add(c.date));
+  }catch(err){
+    console.error('載入預約資料失敗', err);
+  }
+}
+
+/* ================== State ================== */
+let state = { svc:null, date:null, time:null };
+let calMonth = new Date(); calMonth.setDate(1);
+
+const steps = [1,2,3,4];
+function goStep(n){
+  document.querySelectorAll('.step').forEach(el=>{
+    el.classList.toggle('active', +el.dataset.step===n);
+  });
+  renderProgress(n);
+  renderFooter(n);
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function renderProgress(n){
+  const p = document.getElementById('progress');
+  p.innerHTML = steps.map(s=>`<i class="${s<=n?'on':''}"></i>`).join('');
+}
+
+/* ---- Step 1: service ---- */
+document.querySelectorAll('.svc').forEach(el=>{
+  el.addEventListener('click',()=>{
+    document.querySelectorAll('.svc').forEach(x=>x.classList.remove('sel'));
+    el.classList.add('sel');
+    state.svc = el.dataset.svc;
+    renderFooter(1);
+  });
+});
+
+/* ---- Step 2: calendar ---- */
+const DOWS = ['日','一','二','三','四','五','六'];
+async function renderCalendar(){
+  document.getElementById('calYM').textContent = `${calMonth.getFullYear()}年 ${calMonth.getMonth()+1}月`;
+  const grid = document.getElementById('calGrid');
+  grid.innerHTML = DOWS.map(d=>`<div class="dow">${d}</div>`).join('') +
+    `<div style="grid-column:1/-1;text-align:center;padding:30px 0;color:var(--mute);font-size:13px">載入時段中…</div>`;
+
+  await loadMonthData(calMonth.getFullYear(), calMonth.getMonth());
+  const mk = monthKey(calMonth);
+  const monthBooked = bookedCache[mk] || {};
+  const monthClosed = closedCache[mk] || new Set();
+
+  grid.innerHTML = DOWS.map(d=>`<div class="dow">${d}</div>`).join('');
+
+  const firstDow = calMonth.getDay();
+  const daysInMonth = new Date(calMonth.getFullYear(), calMonth.getMonth()+1, 0).getDate();
+  const today0 = new Date(); today0.setHours(0,0,0,0);
+
+  for(let i=0;i<firstDow;i++) grid.innerHTML += `<div class="cal-day empty"></div>`;
+
+  for(let day=1; day<=daysInMonth; day++){
+    const d = new Date(calMonth.getFullYear(), calMonth.getMonth(), day);
+    const key = fmtKey(d);
+    const isPast = d < today0;
+    const isSunday = d.getDay()===0; // 固定公休：週日
+    const isClosed = monthClosed.has(key); // 臨時公休（sitelog_booking_closed_dates）
+    const closed = isPast || isSunday || isClosed;
+
+    let cls = 'cal-day';
+    let dotHtml = '';
+    if(closed){
+      cls += ' closed';
+    } else {
+      cls += ' open';
+      const taken = (monthBooked[key]||[]).length;
+      const remain = ALL_SLOTS.length - taken;
+      if(remain<=0) { cls+=' full'; }
+      else if(remain<=2){ cls+=' busy'; }
+      dotHtml = `<span class="dot"></span>`;
+    }
+    if(state.date===key) cls += ' sel';
+
+    const cell = document.createElement('div');
+    cell.className = cls;
+    cell.innerHTML = `<span>${day}</span>${dotHtml}`;
+    if(!closed){
+      cell.addEventListener('click', ()=>{
+        state.date = key; state.time = null;
+        renderCalendar(); renderSlots(); renderFooter(2);
+      });
+    }
+    grid.appendChild(cell);
+  }
+}
+document.getElementById('prevM').onclick = ()=>{ calMonth.setMonth(calMonth.getMonth()-1); renderCalendar(); };
+document.getElementById('nextM').onclick = ()=>{ calMonth.setMonth(calMonth.getMonth()+1); renderCalendar(); };
+
+function renderSlots(){
+  const label = document.getElementById('slotLabel');
+  const list = document.getElementById('slotList');
+  if(!state.date){ label.textContent='請先選擇日期'; list.innerHTML=''; return; }
+
+  const d = new Date(state.date);
+  label.textContent = `${d.getMonth()+1}月${d.getDate()}日（${DOWS[d.getDay()]}）可預約時段`;
+
+  const mk = monthKey(new Date(state.date));
+  const taken = (bookedCache[mk] && bookedCache[mk][state.date]) || [];
+  if(taken.length === ALL_SLOTS.length){
+    list.innerHTML = `<div class="empty-note" style="grid-column:1/-1">這天時段已全部額滿，請選擇其他日期</div>`;
+    return;
+  }
+  list.innerHTML = ALL_SLOTS.map(t=>{
+    const isTaken = taken.includes(t);
+    const isSel = state.time===t;
+    return `<div class="slot ${isTaken?'taken':''} ${isSel?'sel':''}" data-t="${t}">${t}</div>`;
+  }).join('');
+  list.querySelectorAll('.slot:not(.taken)').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      state.time = el.dataset.t;
+      renderSlots(); renderFooter(2);
+    });
+  });
+}
+
+/* ---- Step 3: form ---- */
+function renderSummary(){
+  document.getElementById('bookSummary').innerHTML =
+    `<b>諮詢方式：</b>${state.svc}<br><b>日期時段：</b>${state.date} ${state.time}`;
+  document.getElementById('fAddrWrap').style.display = (state.svc==='到府勘查') ? 'block' : 'none';
+}
+
+/* ---- Step 4: done ---- */
+function renderTicket(){
+  const name = document.getElementById('fName').value.trim();
+  const phone = document.getElementById('fPhone').value.trim();
+  document.getElementById('ticket').innerHTML =
+    `<b>姓名：</b>${name}<br><b>電話：</b>${phone}<br><b>方式：</b>${state.svc}<br><b>時間：</b>${state.date} ${state.time}`;
+}
+
+/* ---- Footer / navigation buttons ---- */
+function renderFooter(n){
+  const bar = document.getElementById('barfoot');
+  if(n===1){
+    bar.innerHTML = `<button class="btn" id="nextBtn" ${state.svc?'':'disabled'}>下一步</button>`;
+    document.getElementById('nextBtn').onclick = ()=>{ if(state.svc) goStep(2); };
+  } else if(n===2){
+    const ok = state.date && state.time;
+    bar.innerHTML = `<button class="btn" id="nextBtn" ${ok?'':'disabled'}>下一步</button>
+      <button class="btn ghost" id="backBtn">上一步</button>`;
+    document.getElementById('nextBtn').onclick = ()=>{ if(ok){ renderSummary(); goStep(3);} };
+    document.getElementById('backBtn').onclick = ()=> goStep(1);
+  } else if(n===3){
+    bar.innerHTML = `<button class="btn" id="submitBtn">確認送出預約</button>
+      <button class="btn ghost" id="backBtn">上一步</button>`;
+    document.getElementById('submitBtn').onclick = submitBooking;
+    document.getElementById('backBtn').onclick = ()=> goStep(2);
+  } else {
+    bar.innerHTML = '';
+  }
+}
+
+async function submitBooking(){
+  const name = document.getElementById('fName').value.trim();
+  const phone = document.getElementById('fPhone').value.trim();
+  const email = document.getElementById('fEmail').value.trim();
+  const addr = document.getElementById('fAddr').value.trim();
+  const note = document.getElementById('fNote').value.trim();
+  if(!name || !phone){ alert('請填寫姓名與聯絡電話'); return; }
+  if(state.svc==='到府勘查' && !addr){ alert('到府勘查請填寫地址'); return; }
+
+  const submitBtn = document.getElementById('submitBtn');
+  submitBtn.disabled = true;
+  submitBtn.textContent = '送出中…';
+
+  try{
+    // 送出前重新確認一次時段是否已被搶走（避免兩人同時預約同一時段）
+    const { data: clash, error: checkErr } = await sb
+      .from('sitelog_bookings')
+      .select('id')
+      .eq('date', state.date)
+      .eq('time', state.time)
+      .in('status', ['pending','confirmed'])
+      .limit(1);
+    if(checkErr) throw checkErr;
+    if(clash && clash.length){
+      alert('抱歉，這個時段剛被其他人預約走了，請重新選擇時段');
+      state.time = null;
+      goStep(2);
+      renderCalendar(); renderSlots(); renderFooter(2);
+      return;
+    }
+
+    const { data: inserted, error: insertErr } = await sb
+      .from('sitelog_bookings')
+      .insert({
+        date: state.date,
+        time: state.time,
+        service_type: state.svc,
+        name, phone,
+        email: email || null,
+        address: addr || null,
+        note: note || null,
+        status: 'pending'
+      })
+      .select()
+      .single();
+    if(insertErr) throw insertErr;
+
+    // 通知 LINE（失敗不影響預約成立，只記錄錯誤）
+    fetch(LINE_NOTIFY_FUNCTION_URL, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ booking_id: inserted.id })
+    }).catch(err => console.error('LINE 通知發送失敗', err));
+
+    // 更新本地快取，避免同一頁面內重複選到剛預約的時段
+    const mk = monthKey(new Date(state.date));
+    if(!bookedCache[mk]) bookedCache[mk] = {};
+    if(!bookedCache[mk][state.date]) bookedCache[mk][state.date] = [];
+    bookedCache[mk][state.date].push(state.time);
+
+    renderTicket();
+    goStep(4);
+  }catch(err){
+    console.error('預約送出失敗', err);
+    alert('預約送出失敗，請稍後再試一次');
+  }finally{
+    submitBtn.disabled = false;
+    submitBtn.textContent = '確認送出預約';
+  }
+}
+
+/* ---- init ---- */
+renderCalendar().then(renderSlots);
+goStep(1);
+</script>
+
+</body>
+</html>
