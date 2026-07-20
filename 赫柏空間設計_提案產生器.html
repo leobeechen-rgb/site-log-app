@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>赫柏空間設計｜提案簡報產生器</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pptxgenjs/3.12.0/pptxgen.bundle.js"></script>
+<style>
+  :root{
+    --ink:#132B22;
+    --ink-soft:#1B3B2E;
+    --gold:#B08D3F;
+    --gold-light:#D9C68A;
+    --ivory:#FAF8F3;
+    --card:#F2F0E7;
+    --line:#E1DCC9;
+    --text-dark:#1F2A24;
+    --text-muted:#7A7362;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--ivory);
+    color:var(--text-dark);
+    font-family:"Noto Sans TC", sans-serif;
+    padding-bottom:80px;
+  }
+  header{
+    background:var(--ink);
+    color:var(--ivory);
+    padding:48px 32px 40px;
+    position:relative;
+    overflow:hidden;
+  }
+  header::after{
+    content:"";
+    position:absolute;
+    right:-60px; top:-60px;
+    width:220px; height:220px;
+    border:1px solid var(--gold);
+    border-radius:50%;
+    opacity:0.35;
+  }
+  header .eyebrow{
+    color:var(--gold-light);
+    letter-spacing:4px;
+    font-size:12px;
+    font-weight:500;
+    margin-bottom:10px;
+  }
+  header h1{
+    font-family:"Noto Serif TC", serif;
+    font-size:32px;
+    margin:0 0 8px;
+    font-weight:700;
+  }
+  header p{
+    margin:0;
+    color:#C9C2AE;
+    font-size:14px;
+    max-width:520px;
+    line-height:1.7;
+  }
+  main{
+    max-width:920px;
+    margin:0 auto;
+    padding:32px 24px 0;
+  }
+  .section{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:4px;
+    margin-bottom:24px;
+    overflow:hidden;
+  }
+  .section-head{
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+    padding:20px 24px;
+    border-bottom:1px solid var(--line);
+    background:var(--card);
+  }
+  .section-head .num{
+    font-family:"Noto Serif TC", serif;
+    color:var(--gold);
+    font-size:13px;
+    font-weight:700;
+    letter-spacing:1px;
+  }
+  .section-head h2{
+    font-family:"Noto Serif TC", serif;
+    font-size:19px;
+    margin:0;
+    color:var(--ink);
+  }
+  .section-body{
+    padding:22px 24px 26px;
+    display:grid;
+    gap:16px;
+  }
+  .row{
+    display:grid;
+    gap:16px;
+    grid-template-columns:repeat(auto-fit, minmax(220px,1fr));
+  }
+  label{
+    display:block;
+    font-size:12.5px;
+    color:var(--text-muted);
+    margin-bottom:6px;
+    font-weight:500;
+  }
+  input[type=text], input[type=date], textarea{
+    width:100%;
+    padding:10px 12px;
+    border:1px solid var(--line);
+    border-radius:3px;
+    font-family:"Noto Sans TC", sans-serif;
+    font-size:14px;
+    color:var(--text-dark);
+    background:#fff;
+    resize:vertical;
+  }
+  input:focus, textarea:focus{
+    outline:none;
+    border-color:var(--gold);
+  }
+  .field{ min-width:0; }
+  .fileinput{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    border:1px dashed var(--line);
+    padding:10px 12px;
+    border-radius:3px;
+    background:var(--card);
+  }
+  .fileinput input[type=file]{
+    font-size:12.5px;
+    max-width:100%;
+  }
+  .thumb{
+    width:38px; height:38px;
+    object-fit:cover;
+    border-radius:2px;
+    border:1px solid var(--line);
+    display:none;
+    flex-shrink:0;
+  }
+  .subgrid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(240px,1fr));
+    gap:14px;
+  }
+  .subcard{
+    border:1px solid var(--line);
+    border-radius:3px;
+    padding:14px;
+    background:var(--card);
+  }
+  .subcard h3{
+    margin:0 0 10px;
+    font-size:13.5px;
+    color:var(--ink);
+  }
+  table.budget{
+    width:100%;
+    border-collapse:collapse;
+    font-size:13px;
+  }
+  table.budget th{
+    text-align:left;
+    font-size:11.5px;
+    color:var(--text-muted);
+    padding:4px 6px;
+    font-weight:500;
+  }
+  table.budget td{
+    padding:4px;
+  }
+  table.budget input{
+    padding:7px 8px;
+    font-size:13px;
+  }
+  .timeline-row{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    align-items:center;
+    margin-bottom:8px;
+  }
+  .stage-num{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:22px;height:22px;
+    background:var(--gold);
+    color:#fff;
+    border-radius:50%;
+    font-size:11px;
+    margin-right:8px;
+    flex-shrink:0;
+  }
+  .stage-row{ display:flex; align-items:center; gap:8px; }
+  .hint{
+    font-size:12px;
+    color:var(--text-muted);
+    line-height:1.6;
+  }
+  .actionbar{
+    position:sticky;
+    bottom:0;
+    background:linear-gradient(180deg, rgba(250,248,243,0) 0%, var(--ivory) 30%);
+    padding:24px;
+    text-align:center;
+    max-width:920px;
+    margin:0 auto;
+  }
+  #generateBtn{
+    background:var(--ink);
+    color:var(--ivory);
+    border:1px solid var(--gold);
+    padding:16px 40px;
+    font-size:15px;
+    font-family:"Noto Sans TC", sans-serif;
+    font-weight:700;
+    letter-spacing:1px;
+    border-radius:3px;
+    cursor:pointer;
+    transition:background .2s ease;
+  }
+  #generateBtn:hover{ background:var(--ink-soft); }
+  #generateBtn:disabled{ opacity:0.6; cursor:progress; }
+  #status{
+    margin-top:12px;
+    font-size:13px;
+    color:var(--text-muted);
+    min-height:18px;
+  }
+  .ai-block{
+    border:1px solid var(--gold-light);
+    background:#FDFBF5;
+    border-radius:3px;
+    padding:14px;
+  }
+  .secondary-btn{
+    background:#fff;
+    color:var(--ink);
+    border:1px solid var(--gold);
+    padding:9px 16px;
+    font-size:13px;
+    font-family:"Noto Sans TC", sans-serif;
+    font-weight:700;
+    border-radius:3px;
+    cursor:pointer;
+  }
+  .secondary-btn:hover{ background:var(--card); }
+  .secondary-btn:disabled{ opacity:0.5; cursor:progress; }
+  .text-btn{
+    background:none;
+    border:none;
+    color:var(--text-muted);
+    text-decoration:underline;
+    font-size:12px;
+    cursor:pointer;
+    padding:0;
+    margin-top:4px;
+  }
+  .swatch-row{ display:flex; gap:8px; }
+  .swatch{
+    width:32px; height:32px;
+    border-radius:50%;
+    border:1px solid var(--line);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">HERFULSINS INTERIOR DESIGN — PROPOSAL GENERATOR</div>
+  <h1>提案簡報產生器</h1>
+  <p>填入客戶資料並上傳圖片，即可直接產出套版好的赫柏空間設計提案 PPT，格式與風格已固定，無需再手動排版。</p>
+</header>
+
+<main>
+
+  <!-- 封面 -->
+  <div class="section">
+    <div class="section-head"><span class="num">01</span><h2>封面</h2></div>
+    <div class="section-body">
+      <div class="row">
+        <div class="field"><label>客戶名稱／案場名稱</label><input type="text" id="c_project" placeholder="例：陳公館 / 某某咖啡廳"></div>
+        <div class="field"><label>提案日期</label><input type="date" id="c_date"></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>案場地址</label><input type="text" id="c_address" placeholder="填入地址"></div>
+        <div class="field"><label>坪數規模</label><input type="text" id="c_size" placeholder="例：35坪"></div>
+      </div>
+      <div class="field">
+        <label>封面代表圖（建議直式）</label>
+        <div class="fileinput"><input type="file" accept="image/*" id="img_cover"><img class="thumb" id="thumb_cover"></div>
+      </div>
+      <div class="field ai-block">
+        <label>AI 風格分析（依封面照片氛圍自動調整 PPT 配色）</label>
+        <button type="button" id="analyzeBtn" class="secondary-btn">🤖 分析照片氛圍並套用配色</button>
+        <div id="analyzeStatus" class="hint" style="margin-top:8px;"></div>
+        <div id="paletteSwatch" style="display:none; margin-top:10px;">
+          <div class="swatch-row" id="swatchRow"></div>
+          <div class="hint" id="moodText" style="margin-top:6px;"></div>
+          <button type="button" id="resetPaletteBtn" class="text-btn">還原為預設配色（墨綠＋霧金）</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 公司介紹 -->
+  <div class="section">
+    <div class="section-head"><span class="num">02</span><h2>公司介紹</h2></div>
+    <div class="section-body">
+      <div class="row">
+        <div class="field"><label>設計理念</label><textarea id="a_philosophy" rows="2" placeholder="品牌設計理念與核心主張"></textarea></div>
+        <div class="field"><label>服務項目</label><textarea id="a_services" rows="2" placeholder="住宅設計、商業空間、工班統包..."></textarea></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>團隊經驗</label><textarea id="a_experience" rows="2" placeholder="成立年份、累積案量、代表案型"></textarea></div>
+        <div class="field"><label>設計特色</label><textarea id="a_feature" rows="2" placeholder="材料運用、風格語彙、施工品質管理"></textarea></div>
+      </div>
+      <div class="field">
+        <label>團隊／作品實景照</label>
+        <div class="fileinput"><input type="file" accept="image/*" id="img_about"><img class="thumb" id="thumb_about"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 需求分析 -->
+  <div class="section">
+    <div class="section-head"><span class="num">03</span><h2>需求分析</h2></div>
+    <div class="section-body">
+      <div class="row">
+        <div class="field"><label>預算範圍</label><input type="text" id="n_budget" placeholder="例：150-180萬"></div>
+        <div class="field"><label>工期預估</label><input type="text" id="n_duration" placeholder="例：約3個月"></div>
+        <div class="field"><label>格局現況</label><input type="text" id="n_condition" placeholder="例：屋齡15年，三房兩廳"></div>
+      </div>
+      <div class="field">
+        <label>業主需求重點（每行一項，共4項）</label>
+        <textarea id="n_needs" rows="4" placeholder="收納機能最大化&#10;採光與通風調整&#10;風格喜好與參考案例&#10;特殊機能空間需求"></textarea>
+      </div>
+      <div class="field">
+        <label>現況照片／屋況參考</label>
+        <div class="fileinput"><input type="file" accept="image/*" id="img_condition"><img class="thumb" id="thumb_condition"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 平面配置 -->
+  <div class="section">
+    <div class="section-head"><span class="num">04</span><h2>平面配置</h2></div>
+    <div class="section-body">
+      <div class="field">
+        <label>設計說明（每行一項，共4項）</label>
+        <textarea id="p_notes" rows="4" placeholder="動線規劃邏輯，如公私領域分區方式&#10;格局調整重點與原因&#10;機能配置，如收納、家電、管線&#10;採光通風或特殊工法考量"></textarea>
+      </div>
+      <div class="field">
+        <label>平面配置圖</label>
+        <div class="fileinput"><input type="file" accept="image/*" id="img_floorplan"><img class="thumb" id="thumb_floorplan"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 材料建議 -->
+  <div class="section">
+    <div class="section-head"><span class="num">05</span><h2>材料建議</h2></div>
+    <div class="section-body">
+      <div class="subgrid" id="materials-grid"></div>
+    </div>
+  </div>
+
+  <!-- 效果圖 -->
+  <div class="section">
+    <div class="section-head"><span class="num">06</span><h2>效果圖</h2></div>
+    <div class="section-body">
+      <div class="field">
+        <label>主視覺效果圖</label>
+        <div class="fileinput"><input type="file" accept="image/*" id="img_render_main"><img class="thumb" id="thumb_render_main"></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>次要空間效果圖 A</label><div class="fileinput"><input type="file" accept="image/*" id="img_render_a"><img class="thumb" id="thumb_render_a"></div></div>
+        <div class="field"><label>次要空間效果圖 B</label><div class="fileinput"><input type="file" accept="image/*" id="img_render_b"><img class="thumb" id="thumb_render_b"></div></div>
+        <div class="field"><label>次要空間效果圖 C</label><div class="fileinput"><input type="file" accept="image/*" id="img_render_c"><img class="thumb" id="thumb_render_c"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 預算時程 -->
+  <div class="section">
+    <div class="section-head"><span class="num">07</span><h2>預算時程</h2></div>
+    <div class="section-body">
+      <div>
+        <label>工程預算明細</label>
+        <table class="budget" id="budget-table"></table>
+      </div>
+      <div>
+        <label>工程時程</label>
+        <div id="timeline-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 聯絡資訊 -->
+  <div class="section">
+    <div class="section-head"><span class="num">08</span><h2>聯絡資訊</h2></div>
+    <div class="section-body">
+      <div class="row">
+        <div class="field"><label>聯絡電話</label><input type="text" id="k_phone" placeholder="填入電話"></div>
+        <div class="field"><label>電子信箱</label><input type="text" id="k_email" placeholder="填入 Email"></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>官方網站／社群</label><input type="text" id="k_web" placeholder="填入網址或帳號"></div>
+        <div class="field"><label>工作室地址</label><input type="text" id="k_studio" placeholder="填入地址"></div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<div class="actionbar">
+  <button id="generateBtn">產生提案 PPT</button>
+  <div id="status"></div>
+</div>
+
+<script>
+// ---------- palette (matches the fixed brand template; AI analysis may override) ----------
+const DEFAULT_PALETTE = {
+  CHARCOAL: "132B22",
+  CHARCOAL_SOFT: "24463A",
+  ACCENT: "B08D3F",
+  ACCENT_LIGHT: "D9C68A",
+};
+let CHARCOAL = DEFAULT_PALETTE.CHARCOAL;
+let CHARCOAL_SOFT = DEFAULT_PALETTE.CHARCOAL_SOFT;
+let ACCENT = DEFAULT_PALETTE.ACCENT;
+let ACCENT_LIGHT = DEFAULT_PALETTE.ACCENT_LIGHT;
+// these stay fixed regardless of AI analysis — light-mode base tones
+const WHITE = "FAF8F3";
+const GREY_BG = "F2F0E7";
+const GREY_LINE = "E1DCC9";
+const PLACEHOLDER_BG = "E7E2D2";
+const PLACEHOLDER_TEXT = "938C72";
+const FONT = "Noto Sans TC";
+
+// ---------- dynamic sections: materials, budget rows, timeline ----------
+const materialDefaults = ["地坪材質", "壁面材質", "天花／照明", "櫃體五金"];
+const materialsGrid = document.getElementById("materials-grid");
+materialDefaults.forEach((name, i) => {
+  const div = document.createElement("div");
+  div.className = "subcard";
+  div.innerHTML = `
+    <h3>材質 ${i+1}</h3>
+    <label>項目名稱</label>
+    <input type="text" id="mat_name_${i}" value="${name}" style="margin-bottom:8px;">
+    <label>建議材料／品牌／特性說明</label>
+    <textarea id="mat_desc_${i}" rows="2" placeholder="填入建議材料名稱／品牌／特性說明" style="margin-bottom:8px;"></textarea>
+    <label>材質參考圖</label>
+    <div class="fileinput"><input type="file" accept="image/*" id="img_mat_${i}"><img class="thumb" id="thumb_mat_${i}"></div>
+  `;
+  materialsGrid.appendChild(div);
+});
+
+const budgetDefaults = [
+  ["拆除工程",""], ["水電工程",""], ["泥作工程",""],
+  ["木作工程",""], ["油漆工程",""], ["系統／家具家電",""]
+];
+const budgetTable = document.getElementById("budget-table");
+budgetTable.innerHTML = `<tr><th style="width:24%">項目</th><th style="width:46%">說明</th><th style="width:30%">預估金額</th></tr>`;
+budgetDefaults.forEach((row, i) => {
+  const tr = document.createElement("tr");
+  tr.innerHTML = `
+    <td><input type="text" id="b_item_${i}" value="${row[0]}"></td>
+    <td><input type="text" id="b_desc_${i}" placeholder="說明範圍"></td>
+    <td><input type="text" id="b_amt_${i}" placeholder="金額"></td>
+  `;
+  budgetTable.appendChild(tr);
+});
+const totalTr = document.createElement("tr");
+totalTr.innerHTML = `
+  <td><input type="text" value="總計" disabled style="font-weight:700;"></td>
+  <td></td>
+  <td><input type="text" id="b_total" placeholder="總金額"></td>
+`;
+budgetTable.appendChild(totalTr);
+
+const stageDefaults = ["設計定案","工程發包","拆除／水電","泥作／木作","油漆／完工","驗收交屋"];
+const timelineList = document.getElementById("timeline-list");
+stageDefaults.forEach((st, i) => {
+  const row = document.createElement("div");
+  row.className = "timeline-row";
+  row.innerHTML = `
+    <div class="stage-row"><span class="stage-num">${i+1}</span><input type="text" id="stage_name_${i}" value="${st}"></div>
+    <input type="text" id="stage_time_${i}" placeholder="預估時間／週數">
+  `;
+  timelineList.appendChild(row);
+});
+
+// ---------- image upload -> dataURL ----------
+const images = {};
+document.querySelectorAll('input[type=file]').forEach(inp => {
+  inp.addEventListener('change', () => {
+    const file = inp.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      images[inp.id] = e.target.result;
+      const thumb = document.getElementById('thumb_' + inp.id.replace('img_',''));
+      if (thumb) { thumb.src = e.target.result; thumb.style.display = 'block'; }
+    };
+    reader.readAsDataURL(file);
+  });
+});
+
+function val(id, fallback) {
+  const el = document.getElementById(id);
+  if (!el) return fallback || "";
+  const v = el.value.trim();
+  return v || (fallback || "");
+}
+
+function placeholderBox(slide, x, y, w, h, label, imgKey) {
+  if (images[imgKey]) {
+    slide.addImage({ data: images[imgKey], x, y, w, h, sizing: { type: "cover", w, h } });
+    slide.addShape("rect", { x, y, w, h, fill: { type: "none" }, line: { color: GREY_LINE, width: 1 } });
+  } else {
+    slide.addShape("rect", { x, y, w, h, fill: { color: PLACEHOLDER_BG }, line: { color: GREY_LINE, width: 1 } });
+    slide.addText(label, { x, y, w, h, align: "center", valign: "middle", fontFace: FONT, fontSize: 12, color: PLACEHOLDER_TEXT, italic: true });
+  }
+}
+
+function footer(slide, pageLabel) {
+  slide.addText("赫柏空間設計 HERFULSINS INTERIOR DESIGN", { x: 0.5, y: 7.15, w: 8, h: 0.3, fontFace: FONT, fontSize: 9, color: "9C9074" });
+  slide.addText(pageLabel, { x: 12.0, y: 7.15, w: 0.9, h: 0.3, align: "right", fontFace: FONT, fontSize: 9, color: "9C9074" });
+}
+
+function bulletsFromTextarea(id, fallback) {
+  const raw = document.getElementById(id).value.trim();
+  const lines = (raw ? raw.split("\n") : fallback).map(l => l.trim()).filter(Boolean);
+  return lines.map((l, i) => ({ text: `[${l}]`.startsWith("[") ? l : l, options: { bullet: true, breakLine: i < lines.length - 1 } }));
+}
+
+function dataUrlToParts(dataUrl) {
+  const match = dataUrl.match(/^data:(.+?);base64,(.+)$/);
+  if (!match) return null;
+  return { mediaType: match[1], base64: match[2] };
+}
+
+function renderPalette(mood) {
+  const swatchRow = document.getElementById('swatchRow');
+  swatchRow.innerHTML = '';
+  [CHARCOAL, ACCENT, ACCENT_LIGHT].forEach(hex => {
+    const d = document.createElement('div');
+    d.className = 'swatch';
+    d.style.background = '#' + hex;
+    swatchRow.appendChild(d);
+  });
+  document.getElementById('moodText').textContent = mood ? ('風格判讀：' + mood) : '';
+  document.getElementById('paletteSwatch').style.display = 'block';
+}
+
+async function analyzeStyle() {
+  const btn = document.getElementById('analyzeBtn');
+  const status = document.getElementById('analyzeStatus');
+  const coverImg = images['img_cover'];
+  if (!coverImg) {
+    status.textContent = '請先上傳封面代表圖，才能分析照片氛圍。';
+    return;
+  }
+  const parts = dataUrlToParts(coverImg);
+  if (!parts) {
+    status.textContent = '圖片格式讀取失敗，請重新上傳。';
+    return;
+  }
+  btn.disabled = true;
+  status.textContent = 'AI 分析中，請稍候...';
+
+  try {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6",
+        max_tokens: 500,
+        messages: [{
+          role: "user",
+          content: [
+            { type: "image", source: { type: "base64", media_type: parts.mediaType, data: parts.base64 } },
+            {
+              type: "text",
+              text: "你是室內設計提案簡報的美術指導。請分析這張空間／室內設計照片的氛圍與色調，並為一份提案簡報建議一組搭配色票。" +
+                "簡報基底是米白/象牙色背景，你要建議的是「深色主色」與「金屬感強調色」兩種顏色，讓風格呼應照片氛圍。" +
+                "務必只回傳一個 JSON 物件，不要有任何其他文字、不要 markdown code fence，格式如下：" +
+                '{"charcoal":"6碼hex不含#，需夠深，適合當深色背景搭配白色文字","charcoalSoft":"6碼hex，比charcoal稍淺，用於淺底本文文字，需與米白背景有足夠對比","accent":"6碼hex，強調色，需與米白背景有明顯對比","accentLight":"6碼hex，強調色的淺色版本，用於深色背景上的文字","mood":"用不超過20個字描述這張照片的氛圍與風格關鍵字，繁體中文"}'
+            }
+          ]
+        }]
+      })
+    });
+    const data = await response.json();
+    const textBlock = (data.content || []).filter(c => c.type === "text").map(c => c.text).join("\n").trim();
+    const cleaned = textBlock.replace(/```json|```/g, "").trim();
+    const palette = JSON.parse(cleaned);
+
+    const hexRe = /^[0-9A-Fa-f]{6}$/;
+    if (![palette.charcoal, palette.charcoalSoft, palette.accent, palette.accentLight].every(h => hexRe.test(h))) {
+      throw new Error("AI 回傳的色票格式不正確");
+    }
+
+    CHARCOAL = palette.charcoal;
+    CHARCOAL_SOFT = palette.charcoalSoft;
+    ACCENT = palette.accent;
+    ACCENT_LIGHT = palette.accentLight;
+
+    renderPalette(palette.mood);
+    status.textContent = '分析完成，配色已套用（產生 PPT 時會使用這組顏色）。';
+  } catch (err) {
+    console.error(err);
+    status.textContent = 'AI 分析失敗：' + err.message + '（將沿用預設墨綠＋霧金配色）';
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+document.getElementById('analyzeBtn').addEventListener('click', analyzeStyle);
+document.getElementById('resetPaletteBtn').addEventListener('click', () => {
+  CHARCOAL = DEFAULT_PALETTE.CHARCOAL;
+  CHARCOAL_SOFT = DEFAULT_PALETTE.CHARCOAL_SOFT;
+  ACCENT = DEFAULT_PALETTE.ACCENT;
+  ACCENT_LIGHT = DEFAULT_PALETTE.ACCENT_LIGHT;
+  document.getElementById('paletteSwatch').style.display = 'none';
+  document.getElementById('analyzeStatus').textContent = '已還原為預設配色。';
+});
+
+async function generate() {
+  const btn = document.getElementById('generateBtn');
+  const status = document.getElementById('status');
+  btn.disabled = true;
+  status.textContent = "產生中，請稍候...";
+
+  try {
+    const pres = new PptxGenJS();
+    pres.layout = "LAYOUT_WIDE";
+
+    const projectName = val("c_project", "[客戶名稱 / 案場名稱]");
+    const dateVal = document.getElementById("c_date").value;
+    const dateStr = dateVal ? dateVal.replaceAll("-", ".") : "[YYYY.MM.DD]";
+
+    // ---- Slide 1: 封面 ----
+    {
+      const s = pres.addSlide();
+      s.background = { color: CHARCOAL };
+      s.addShape("rect", { x: 0, y: 0, w: 4.6, h: 7.5, fill: { color: "0D2119" }, line: { type: "none" } });
+      s.addShape("rect", { x: 4.55, y: 0, w: 0.05, h: 7.5, fill: { color: ACCENT }, line: { type: "none" } });
+      placeholderBox(s, 0.6, 1.6, 3.4, 4.3, "空間 / 效果圖\n（建議置入案場代表圖）", "img_cover");
+      s.addText("空間設計提案", { x: 5.2, y: 2.5, w: 7.4, h: 0.9, fontFace: FONT, fontSize: 40, bold: true, color: WHITE });
+      s.addText(projectName, { x: 5.2, y: 3.35, w: 7.4, h: 0.5, fontFace: FONT, fontSize: 20, color: ACCENT_LIGHT });
+      s.addText("PROPOSAL", { x: 5.2, y: 1.7, w: 7.4, h: 0.4, fontFace: FONT, fontSize: 14, color: "CBB876", charSpacing: 4 });
+      s.addShape("line", { x: 5.2, y: 4.05, w: 2.0, h: 0, line: { color: ACCENT, width: 1.5 } });
+      s.addText([
+        { text: "案場地址：", options: { bold: true, color: ACCENT_LIGHT } },
+        { text: val("c_address", "[填入地址]") + "\n", options: { color: "E7D9AC" } },
+        { text: "坪數規模：", options: { bold: true, color: ACCENT_LIGHT } },
+        { text: val("c_size", "[填入坪數]") + "\n", options: { color: "E7D9AC" } },
+        { text: "提案日期：", options: { bold: true, color: ACCENT_LIGHT } },
+        { text: dateStr, options: { color: "E7D9AC" } },
+      ], { x: 5.2, y: 4.4, w: 7.0, h: 1.3, fontFace: FONT, fontSize: 13, lineSpacing: 26 });
+      s.addText("赫柏空間設計", { x: 5.2, y: 6.6, w: 5, h: 0.4, fontFace: FONT, fontSize: 14, bold: true, color: WHITE });
+      s.addText("HERFULSINS INTERIOR DESIGN", { x: 5.2, y: 6.95, w: 5, h: 0.3, fontFace: FONT, fontSize: 9, color: "CBB876", charSpacing: 2 });
+    }
+
+    // ---- Slide 2: 公司介紹 ----
+    {
+      const s = pres.addSlide();
+      s.background = { color: WHITE };
+      s.addText("公司介紹", { x: 0.7, y: 0.55, w: 6, h: 0.6, fontFace: FONT, fontSize: 28, bold: true, color: CHARCOAL });
+      s.addText("ABOUT US", { x: 0.7, y: 1.1, w: 6, h: 0.3, fontFace: FONT, fontSize: 11, color: ACCENT, charSpacing: 3 });
+      placeholderBox(s, 7.6, 0.55, 5.1, 6.4, "團隊 / 作品實景照", "img_about");
+      const items = [
+        ["設計理念", val("a_philosophy", "[填入品牌設計理念與核心主張]")],
+        ["服務項目", val("a_services", "[填入服務項目]")],
+        ["團隊經驗", val("a_experience", "[填入團隊經驗]")],
+        ["設計特色", val("a_feature", "[填入設計特色]")],
+      ];
+      let y = 2.0;
+      items.forEach(([t, d]) => {
+        s.addShape("ellipse", { x: 0.7, y: y + 0.06, w: 0.12, h: 0.12, fill: { color: ACCENT }, line: { type: "none" } });
+        s.addText(t, { x: 1.0, y, w: 5.8, h: 0.4, fontFace: FONT, fontSize: 16, bold: true, color: CHARCOAL });
+        s.addText(d, { x: 1.0, y: y + 0.42, w: 6.2, h: 0.85, fontFace: FONT, fontSize: 11.5, color: CHARCOAL_SOFT, lineSpacingMultiple: 1.25 });
+        y += 1.35;
+      });
+      footer(s, "02");
+    }
+
+    // ---- Slide 3: 需求分析 ----
+    {
+      const s = pres.addSlide();
+      s.background = { color: WHITE };
+      s.addText("需求分析", { x: 0.7, y: 0.55, w: 6, h: 0.6, fontFace: FONT, fontSize: 28, bold: true, color: CHARCOAL });
+      s.addText("CLIENT BRIEF", { x: 0.7, y: 1.1, w: 6, h: 0.3, fontFace: FONT, fontSize: 11, color: ACCENT, charSpacing: 3 });
+      const cards = [
+        ["空間坪數", val("c_size", "[填入坪數]")],
+        ["預算範圍", val("n_budget", "[填入預算區間]")],
+        ["工期預估", val("n_duration", "[填入預估工期]")],
+        ["格局現況", val("n_condition", "[填入格局／屋齡／現況]")],
+      ];
+      const cardW = 2.9, gap = 0.25, startX = 0.7, cardY = 1.75;
+      cards.forEach(([label, value], i) => {
+        const x = startX + i * (cardW + gap);
+        s.addShape("rect", { x, y: cardY, w: cardW, h: 1.3, fill: { color: GREY_BG }, line: { type: "none" } });
+        s.addText(label, { x: x + 0.2, y: cardY + 0.15, w: cardW - 0.4, h: 0.35, fontFace: FONT, fontSize: 11, color: ACCENT, bold: true });
+        s.addText(value, { x: x + 0.2, y: cardY + 0.5, w: cardW - 0.4, h: 0.65, fontFace: FONT, fontSize: 13, color: CHARCOAL, bold: true });
+      });
+      s.addText("業主需求重點", { x: 0.7, y: 3.5, w: 6, h: 0.4, fontFace: FONT, fontSize: 16, bold: true, color: CHARCOAL });
+      const needBullets = bulletsFromTextarea("n_needs", ["需求一：例如收納機能最大化", "需求二：例如採光與通風調整", "需求三：例如風格喜好與參考案例", "需求四：例如特殊機能空間"]);
+      s.addText(needBullets, { x: 0.7, y: 3.95, w: 6.1, h: 2.4, fontFace: FONT, fontSize: 12.5, color: CHARCOAL_SOFT, paraSpaceAfter: 10 });
+      placeholderBox(s, 7.6, 3.5, 5.1, 2.85, "現況照片 / 屋況參考", "img_condition");
+      footer(s, "03");
+    }
+
+    // ---- Slide 4: 平面配置 ----
+    {
+      const s = pres.addSlide();
+      s.background = { color: WHITE };
+      s.addText("平面配置", { x: 0.7, y: 0.55, w: 6, h: 0.6, fontFace: FONT, fontSize: 28, bold: true, color: CHARCOAL });
+      s.addText("FLOOR PLAN", { x: 0.7, y: 1.1, w: 6, h: 0.3, fontFace: FONT, fontSize: 11, color: ACCENT, charSpacing: 3 });
+      placeholderBox(s, 0.7, 1.7, 7.5, 5.3, "平面配置圖\n（原始格局 / 規劃後平面圖）", "img_floorplan");
+      s.addText("設計說明", { x: 8.5, y: 1.7, w: 4.2, h: 0.4, fontFace: FONT, fontSize: 16, bold: true, color: CHARCOAL });
+      const planBullets = bulletsFromTextarea("p_notes", ["說明動線規劃邏輯", "說明格局調整重點與原因", "說明機能配置", "說明採光通風或特殊工法考量"]);
+      s.addText(planBullets, { x: 8.5, y: 2.2, w: 4.2, h: 3.5, fontFace: FONT, fontSize: 11.5, color: CHARCOAL_SOFT, paraSpaceAfter: 12 });
+      footer(s, "04");
+    }
+
+    // ---- Slide 5: 材料建議 ----
+    {
+      const s = pres.addSlide();
+      s.background = { color: WHITE };
+      s.addText("材料建議", { x: 0.7, y: 0.55, w: 6, h: 0.6, fontFace: FONT, fontSize: 28, bold: true, color: CHARCOAL });
+      s.addText("MATERIALS", { x: 0.7, y: 1.1, w: 6, h: 0.3, fontFace: FONT, fontSize: 11, color: ACCENT, charSpacing: 3 });
+      const w = 2.85, gap = 0.22, x0 = 0.7, y0 = 1.75;
+      for (let i = 0; i < 4; i++) {
+        const x = x0 + i * (w + gap);
+        placeholderBox(s, x, y0, w, 2.1, "材質參考圖", "img_mat_" + i);
+        s.addText(val("mat_name_" + i, materialDefaults[i]), { x, y: y0 + 2.2, w, h: 0.35, fontFace: FONT, fontSize: 13, bold: true, color: CHARCOAL });
+        s.addText(val("mat_desc_" + i, "[填入建議材料名稱／品牌／特性說明]"), { x, y: y0 + 2.55, w, h: 0.75, fontFace: FONT, fontSize: 10, color: CHARCOAL_SOFT, lineSpacingMultiple: 1.2 });
+      }
+      footer(s, "05");
+    }
+
+    // ---- Slide 6: 效果圖 ----
+    {
+      const s = pres.addSlide();
+      s.background = { color: CHARCOAL };
+      s.addText("效果圖", { x: 0.7, y: 0.5, w: 6, h: 0.6, fontFace: FONT, fontSize: 28, bold: true, color: WHITE });
+      s.addText("RENDERING", { x: 0.7, y: 1.05, w: 6, h: 0.3, fontFace: FONT, fontSize: 11, color: ACCENT_LIGHT, charSpacing: 3 });
+      placeholderBox(s, 0.7, 1.65, 7.6, 5.35, "主視覺效果圖\n（客廳 / 主要空間）", "img_render_main");
+      const smallY = [1.65, 3.65];
+      const smallKeys = ["img_render_a", "img_render_b"];
+      const labels = ["次要空間效果圖 A", "次要空間效果圖 B"];
+      smallY.forEach((y, i) => placeholderBox(s, 8.5, y, 4.15, 1.9, labels[i], smallKeys[i]));
+      placeholderBox(s, 8.5, 5.65, 4.15, 1.35, "次要空間效果圖 C", "img_render_c");
+      footer(s, "06");
+    }
+
+    // ---- Slide 7: 預算時程 ----
+    {
+      const s = pres.addSlide();
+      s.background = { color: WHITE };
+      s.addText("預算時程", { x: 0.7, y: 0.55, w: 6, h: 0.6, fontFace: FONT, fontSize: 28, bold: true, color: CHARCOAL });
+      s.addText("BUDGET & TIMELINE", { x: 0.7, y: 1.1, w: 6, h: 0.3, fontFace: FONT, fontSize: 11, color: ACCENT, charSpacing: 3 });
+
+      const rows = [
+        [{ text: "項目", options: { bold: true, color: WHITE, fill: { color: CHARCOAL } } },
+         { text: "說明", options: { bold: true, color: WHITE, fill: { color: CHARCOAL } } },
+         { text: "預估金額", options: { bold: true, color: WHITE, fill: { color: CHARCOAL } } }],
+      ];
+      for (let i = 0; i < 6; i++) {
+        rows.push([
+          val("b_item_" + i, budgetDefaults[i][0]),
+          val("b_desc_" + i, "[說明範圍]"),
+          val("b_amt_" + i, "[金額]"),
+        ]);
+      }
+      rows.push([{ text: "總計", options: { bold: true } }, "", { text: val("b_total", "[總金額]"), options: { bold: true, color: ACCENT } }]);
+
+      s.addTable(rows, {
+        x: 0.7, y: 1.75, w: 7.5, h: 4.7,
+        fontFace: FONT, fontSize: 11, color: CHARCOAL_SOFT,
+        border: { type: "solid", color: GREY_LINE, pt: 0.75 },
+        autoPage: false,
+        colW: [2.2, 3.3, 2.0],
+        rowH: [0.45, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6],
+      });
+
+      s.addText("工程時程", { x: 8.5, y: 1.75, w: 4.2, h: 0.4, fontFace: FONT, fontSize: 16, bold: true, color: CHARCOAL });
+      let ty = 2.35;
+      for (let i = 0; i < 6; i++) {
+        s.addShape("ellipse", { x: 8.5, y: ty, w: 0.22, h: 0.22, fill: { color: ACCENT }, line: { type: "none" } });
+        if (i < 5) s.addShape("line", { x: 8.61, y: ty + 0.22, w: 0, h: 0.55, line: { color: GREY_LINE, width: 1.5 } });
+        s.addText(val("stage_name_" + i, stageDefaults[i]), { x: 8.9, y: ty - 0.07, w: 3.7, h: 0.35, fontFace: FONT, fontSize: 12, color: CHARCOAL, bold: true });
+        s.addText(val("stage_time_" + i, "[預估時間 / 週數]"), { x: 8.9, y: ty + 0.22, w: 3.7, h: 0.3, fontFace: FONT, fontSize: 9.5, color: PLACEHOLDER_TEXT });
+        ty += 0.77;
+      }
+      footer(s, "07");
+    }
+
+    // ---- Slide 8: 聯絡資訊 ----
+    {
+      const s = pres.addSlide();
+      s.background = { color: CHARCOAL };
+      s.addShape("rect", { x: 0, y: 0, w: 13.33, h: 0.06, fill: { color: ACCENT }, line: { type: "none" } });
+      s.addText("感謝您撥冗閱覽提案", { x: 0.9, y: 2.5, w: 8, h: 0.7, fontFace: FONT, fontSize: 30, bold: true, color: WHITE });
+      s.addText("期待與您攜手打造理想空間", { x: 0.9, y: 3.15, w: 8, h: 0.5, fontFace: FONT, fontSize: 15, color: ACCENT_LIGHT });
+      s.addText([
+        { text: "赫柏空間設計 HERFULSINS INTERIOR DESIGN\n", options: { bold: true, fontSize: 14, color: WHITE } },
+        { text: "聯絡電話：" + val("k_phone", "[填入電話]") + "\n", options: { fontSize: 12, color: "E7D9AC" } },
+        { text: "電子信箱：" + val("k_email", "[填入 Email]") + "\n", options: { fontSize: 12, color: "E7D9AC" } },
+        { text: "官方網站／社群：" + val("k_web", "[填入網址或帳號]") + "\n", options: { fontSize: 12, color: "E7D9AC" } },
+        { text: "工作室地址：" + val("k_studio", "[填入地址]"), options: { fontSize: 12, color: "E7D9AC" } },
+      ], { x: 0.9, y: 4.3, w: 8, h: 2.2, fontFace: FONT, lineSpacing: 24 });
+      footer(s, "08");
+    }
+
+    const fileName = `${projectName.replace(/[\\/:*?"<>|]/g, "").trim() || "赫柏空間設計提案"}.pptx`;
+    await pres.writeFile({ fileName });
+    status.textContent = "已產生完成，請查看瀏覽器下載項目。";
+  } catch (err) {
+    console.error(err);
+    status.textContent = "產生時發生錯誤：" + err.message;
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+document.getElementById('generateBtn').addEventListener('click', generate);
+</script>
+</body>
+</html>
