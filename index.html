@@ -148,13 +148,13 @@ function HbMarketingPhotoHub({onBack,notify}){
   let[loading,setLoading]=(0,u.useState)(true);
   let[uploading,setUploading]=(0,u.useState)(false);
   let[customTags,setCustomTags]=(0,u.useState)(HB_loadCustomTags);
-  let[activeFilters,setActiveFilters]=(0,u.useState)(()=>new Set());
+  let[filterTag,setFilterTagState]=(0,u.useState)("");
   let[search,setSearch]=(0,u.useState)("");
   let[selected,setSelected]=(0,u.useState)(()=>new Set());
   let[zipping,setZipping]=(0,u.useState)(false);
   let[pendingTag,setPendingTag]=(0,u.useState)("");
   let[showAddTag,setShowAddTag]=(0,u.useState)(false);
-  let[pickerTags,setPickerTags]=(0,u.useState)(()=>new Set());
+  let[pickerTag,setPickerTag]=(0,u.useState)("");
   let fileInputRef=(0,u.useRef)(null);
 
   let allTagOptions=[...HB_PHOTO_TAG_PRESETS,...customTags.filter(x=>!HB_PHOTO_TAG_PRESETS.includes(x))];
@@ -176,7 +176,7 @@ function HbMarketingPhotoHub({onBack,notify}){
       setCustomTags(next);
       HB_saveCustomTags(next);
     }
-    setPickerTags(p=>{let n=new Set(p);n.add(t);return n});
+    setPickerTag(t);
     setPendingTag("");
     setShowAddTag(false);
   };
@@ -187,7 +187,7 @@ function HbMarketingPhotoHub({onBack,notify}){
     setUploading(true);
     try{
       let added=[];
-      let tagsArr=Array.from(pickerTags);
+      let tagsArr=pickerTag?[pickerTag]:[];
       for(let file of picked){
         if(file.size>20*1024*1024){notify(`${file.name} 檔案過大（上限 20MB），略過`);continue}
         if(!(file.type||"").startsWith("image/")){notify(`${file.name} 不是圖片，略過`);continue}
@@ -213,16 +213,15 @@ function HbMarketingPhotoHub({onBack,notify}){
     setSelected(sset=>{let n=new Set(sset);n.delete(p.id);return n});
   };
 
-  let toggleTagFilter=tag=>setActiveFilters(f=>{let n=new Set(f);n.has(tag)?n.delete(tag):n.add(tag);return n});
+  let setFilterTag=tag=>setFilterTagState(p=>p===tag?"":tag);
   let toggleSelect=id=>setSelected(sset=>{let n=new Set(sset);n.has(id)?n.delete(id):n.add(id);return n});
-  let togglePicker=tag=>setPickerTags(p=>{let n=new Set(p);n.has(tag)?n.delete(tag):n.add(tag);return n});
+  let togglePicker=tag=>setPickerTag(p=>p===tag?"":tag);
 
   let filtered=photos.filter(p=>{
     if(search.trim()&&!p.tags.some(t=>t.includes(search.trim()))&&!(p.note||"").includes(search.trim()))return false;
     return true;
   });
   let photosByTag=tag=>filtered.filter(p=>p.tags.includes(tag));
-  let unclassifiedPhotos=filtered.filter(p=>!p.tags.some(t=>allTagOptions.includes(t)));
 
   let downloadSelected=async()=>{
     if(typeof window.JSZip==="undefined"){notify("打包工具尚未載入，請重新整理頁面後再試");return}
@@ -244,6 +243,21 @@ function HbMarketingPhotoHub({onBack,notify}){
     finally{setZipping(false)}
   };
 
+  let downloadSinglePhoto=async p=>{
+    try{
+      let res=await fetch(p.url);
+      if(!res.ok){notify("下載失敗");return}
+      let blob=await res.blob();
+      let a=document.createElement("a");
+      a.href=URL.createObjectURL(blob);
+      a.download=`${p.tags[0]||"照片"}_${p.id}.jpg`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+    }catch(err){notify("下載失敗："+(err.message||err))}
+  };
+
   return u.default.createElement("div",{style:{background:MP.cream,minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:MP.ink,paddingBottom:40}},
     u.default.createElement("div",{style:{background:MP.oliveDark,padding:"20px 16px"}},
       u.default.createElement("button",{onClick:onBack,style:{background:"none",border:"none",color:MP.cream,display:"flex",alignItems:"center",gap:6,cursor:"pointer",padding:0,marginBottom:10}},u.default.createElement(E,{name:"arrow-left",size:18}),"返回"),
@@ -253,7 +267,7 @@ function HbMarketingPhotoHub({onBack,notify}){
       u.default.createElement("div",{style:{background:MP.card,borderRadius:10,padding:14,marginBottom:14,border:`1px solid ${MP.line}`}},
         u.default.createElement("div",{style:{fontSize:13,fontWeight:700,color:MP.oliveDark,marginBottom:8}},"上傳前先選擇空間標籤"),
         u.default.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:6,marginBottom:10}},
-          allTagOptions.map(tag=>u.default.createElement("button",{key:tag,onClick:()=>togglePicker(tag),style:{border:`1px solid ${pickerTags.has(tag)?MP.olive:MP.line}`,background:pickerTags.has(tag)?MP.olive:"#fff",color:pickerTags.has(tag)?MP.cream:MP.ink,borderRadius:16,padding:"5px 12px",fontSize:12.5,cursor:"pointer"}},tag)),
+          allTagOptions.map(tag=>u.default.createElement("button",{key:tag,onClick:()=>togglePicker(tag),style:{border:`1px solid ${pickerTag===tag?MP.olive:MP.line}`,background:pickerTag===tag?MP.olive:"#fff",color:pickerTag===tag?MP.cream:MP.ink,borderRadius:16,padding:"5px 12px",fontSize:12.5,cursor:"pointer"}},tag)),
           showAddTag?u.default.createElement("div",{style:{display:"flex",gap:4,alignItems:"center"}},
             u.default.createElement("input",{value:pendingTag,onChange:e=>setPendingTag(e.target.value),placeholder:"新標籤",style:{border:`1px solid ${MP.line}`,borderRadius:16,padding:"4px 10px",fontSize:12.5,width:80}}),
             u.default.createElement("button",{onClick:()=>addCustomTag(pendingTag),style:{background:MP.olive,color:MP.cream,border:"none",borderRadius:16,padding:"5px 10px",fontSize:12,cursor:"pointer"}},"加入")
@@ -267,39 +281,25 @@ function HbMarketingPhotoHub({onBack,notify}){
         u.default.createElement("div",{style:{fontSize:12.5,color:MP.inkSoft}},`共 ${filtered.length} 張${selected.size?`，已選 ${selected.size} 張`:""}`),
         u.default.createElement("button",{onClick:downloadSelected,disabled:zipping,style:{display:"flex",alignItems:"center",gap:6,background:"none",border:`1px solid ${MP.olive}`,color:MP.oliveDark,borderRadius:8,padding:"6px 12px",fontSize:12.5,cursor:"pointer",opacity:zipping?.6:1}},zipping?u.default.createElement(E,{name:"loader",size:14,className:"animate-spin"}):u.default.createElement(E,{name:"download",size:14}),zipping?"打包中...":"下載選取/全部")
       ),
+      u.default.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:6,marginBottom:16}},
+        allTagOptions.map(tag=>u.default.createElement("button",{key:tag,onClick:()=>setFilterTag(tag),style:{border:`1px solid ${filterTag===tag?MP.olive:MP.line}`,background:filterTag===tag?MP.olive:"#fff",color:filterTag===tag?MP.cream:MP.ink,borderRadius:16,padding:"6px 13px",fontSize:12.5,cursor:"pointer"}},tag,` (${photosByTag(tag).length})`))
+      ),
       loading?u.default.createElement("div",{style:{textAlign:"center",padding:40}},u.default.createElement(E,{name:"loader",className:"animate-spin",size:24,color:MP.olive})):
-      filtered.length===0?u.default.createElement(He,{icon:"image",text:"目前沒有符合條件的照片"}):
-      u.default.createElement(u.default.Fragment,null,
-        allTagOptions.map(tag=>{
-          let list=photosByTag(tag);
-          return u.default.createElement("div",{key:tag,style:{marginBottom:22}},
-            u.default.createElement("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:8}},
-              u.default.createElement("div",{style:{fontSize:14,fontWeight:700,color:MP.oliveDark}},tag),
-              u.default.createElement("div",{style:{fontSize:11.5,color:MP.inkSoft}},`(${list.length})`)
+      !filterTag?u.default.createElement(He,{icon:"image",text:"請點選上方空間，查看該空間的照片"}):
+      (()=>{
+        let list=photosByTag(filterTag);
+        return list.length===0?u.default.createElement(He,{icon:"image",text:"此空間尚無照片"}):
+        u.default.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(110px,1fr))",gap:8}},
+          list.map(p=>u.default.createElement("div",{key:p.id,style:{position:"relative",borderRadius:8,overflow:"hidden",border:`2px solid ${selected.has(p.id)?MP.olive:"transparent"}`,cursor:"pointer"}},
+            u.default.createElement("img",{src:p.url,onClick:()=>toggleSelect(p.id),style:{width:"100%",height:110,objectFit:"cover",display:"block"}}),
+            u.default.createElement("div",{style:{position:"absolute",top:4,right:4,display:"flex",gap:4}},
+              u.default.createElement("button",{onClick:()=>downloadSinglePhoto(p),style:{background:"rgba(0,0,0,0.5)",border:"none",borderRadius:6,padding:4,cursor:"pointer",display:"flex"}},u.default.createElement(E,{name:"download",size:13,color:"#fff"})),
+              u.default.createElement("button",{onClick:()=>deletePhoto(p),style:{background:"rgba(0,0,0,0.5)",border:"none",borderRadius:6,padding:4,cursor:"pointer",display:"flex"}},u.default.createElement(E,{name:"trash",size:13,color:"#fff"}))
             ),
-            list.length===0?u.default.createElement("div",{style:{fontSize:12,color:MP.inkSoft,padding:"6px 2px"}},"尚無照片"):
-            u.default.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(110px,1fr))",gap:8}},
-              list.map(p=>u.default.createElement("div",{key:p.id,style:{position:"relative",borderRadius:8,overflow:"hidden",border:`2px solid ${selected.has(p.id)?MP.olive:"transparent"}`,cursor:"pointer"}},
-                u.default.createElement("img",{src:p.url,onClick:()=>toggleSelect(p.id),style:{width:"100%",height:110,objectFit:"cover",display:"block"}}),
-                u.default.createElement("button",{onClick:()=>deletePhoto(p),style:{position:"absolute",top:4,right:4,background:"rgba(0,0,0,0.5)",border:"none",borderRadius:6,padding:4,cursor:"pointer",display:"flex"}},u.default.createElement(E,{name:"trash",size:13,color:"#fff"})),
-                p.tags.length>0&&u.default.createElement("div",{style:{position:"absolute",bottom:0,left:0,right:0,background:"rgba(0,0,0,0.55)",padding:"3px 6px"}},u.default.createElement("div",{style:{fontSize:9.5,color:"#fff",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},p.tags.join("、")))
-              ))
-            )
-          );
-        }),
-        unclassifiedPhotos.length>0&&u.default.createElement("div",{style:{marginBottom:22}},
-          u.default.createElement("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:8}},
-            u.default.createElement("div",{style:{fontSize:14,fontWeight:700,color:MP.oliveDark}},"未分類"),
-            u.default.createElement("div",{style:{fontSize:11.5,color:MP.inkSoft}},`(${unclassifiedPhotos.length})`)
-          ),
-          u.default.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(110px,1fr))",gap:8}},
-            unclassifiedPhotos.map(p=>u.default.createElement("div",{key:p.id,style:{position:"relative",borderRadius:8,overflow:"hidden",border:`2px solid ${selected.has(p.id)?MP.olive:"transparent"}`,cursor:"pointer"}},
-              u.default.createElement("img",{src:p.url,onClick:()=>toggleSelect(p.id),style:{width:"100%",height:110,objectFit:"cover",display:"block"}}),
-              u.default.createElement("button",{onClick:()=>deletePhoto(p),style:{position:"absolute",top:4,right:4,background:"rgba(0,0,0,0.5)",border:"none",borderRadius:6,padding:4,cursor:"pointer",display:"flex"}},u.default.createElement(E,{name:"trash",size:13,color:"#fff"}))
-            ))
-          )
-        )
-      )
+            p.tags.length>0&&u.default.createElement("div",{style:{position:"absolute",bottom:0,left:0,right:0,background:"rgba(0,0,0,0.55)",padding:"3px 6px"}},u.default.createElement("div",{style:{fontSize:9.5,color:"#fff",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},p.tags.join("、")))
+          ))
+        );
+      })()
     )
   );
 }
