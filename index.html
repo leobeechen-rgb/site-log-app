@@ -137,13 +137,13 @@ async function r2Upload(key,blob,contentType){
   return `${R2_CONFIG.publicUrl}/${key.split("/").map(encodeURIComponent).join("/")}`;
 }
 async function r2DeleteObj(key){try{await r2Request("DELETE",key,null,null)}catch{}}
-var HB_PHOTO_TAG_PRESETS=["現代","日式","北歐","工業風","美式鄉村","中式","侘寂","奶油風","木質","石材","磁磚","金屬","布藝","玻璃"];
+var HB_PHOTO_TAG_PRESETS=["客廳電視牆","玄關","廚房餐邊櫃","主臥室","書房","起居室"];
 
 function HB_loadCustomTags(){try{return JSON.parse(localStorage.getItem("hb_marketing_tag_presets")||"[]")}catch{return[]}}
 function HB_saveCustomTags(arr){try{localStorage.setItem("hb_marketing_tag_presets",JSON.stringify(arr))}catch{}}
 
 function HbMarketingPhotoHub({onBack,notify}){
-  let MP={cream:"#EEE5DA",card:"#F7F3EA",olive:"#1C1B18",oliveDark:"#1C1B18",oliveSoft:"#41101B",line:"#DDD2BA",ink:"#1C1B18",inkSoft:"#8A7F6E"};
+  let MP={cream:"#EDEDED",card:"#F7F7F7",olive:"#82796A",oliveDark:"#1C1B18",oliveSoft:"#5C5347",line:"#D8D3CC",ink:"#1C1B18",inkSoft:"#82796A"};
   let[photos,setPhotos]=(0,u.useState)([]);
   let[loading,setLoading]=(0,u.useState)(true);
   let[uploading,setUploading]=(0,u.useState)(false);
@@ -244,13 +244,13 @@ function HbMarketingPhotoHub({onBack,notify}){
   };
 
   return u.default.createElement("div",{style:{background:MP.cream,minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:MP.ink,paddingBottom:40}},
-    u.default.createElement("div",{style:{background:MP.olive,padding:"20px 16px"}},
+    u.default.createElement("div",{style:{background:MP.oliveDark,padding:"20px 16px"}},
       u.default.createElement("button",{onClick:onBack,style:{background:"none",border:"none",color:MP.cream,display:"flex",alignItems:"center",gap:6,cursor:"pointer",padding:0,marginBottom:10}},u.default.createElement(E,{name:"arrow-left",size:18}),"返回"),
       u.default.createElement("h2",{style:{color:MP.cream,fontSize:20,fontWeight:800,margin:0}},"行銷照片庫")
     ),
     u.default.createElement("div",{style:{padding:16}},
       u.default.createElement("div",{style:{background:MP.card,borderRadius:10,padding:14,marginBottom:14,border:`1px solid ${MP.line}`}},
-        u.default.createElement("div",{style:{fontSize:13,fontWeight:700,color:MP.oliveDark,marginBottom:8}},"上傳前先選擇風格／材質標籤"),
+        u.default.createElement("div",{style:{fontSize:13,fontWeight:700,color:MP.oliveDark,marginBottom:8}},"上傳前先選擇空間標籤"),
         u.default.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:6,marginBottom:10}},
           allTagOptions.map(tag=>u.default.createElement("button",{key:tag,onClick:()=>togglePicker(tag),style:{border:`1px solid ${pickerTags.has(tag)?MP.olive:MP.line}`,background:pickerTags.has(tag)?MP.olive:"#fff",color:pickerTags.has(tag)?MP.cream:MP.ink,borderRadius:16,padding:"5px 12px",fontSize:12.5,cursor:"pointer"}},tag)),
           showAddTag?u.default.createElement("div",{style:{display:"flex",gap:4,alignItems:"center"}},
