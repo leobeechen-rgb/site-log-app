@@ -2068,29 +2068,39 @@ function HbVendorQuoteHub({onBack,notify}){
     }).join("");
     let html=`<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8" /><title>廠商報價單清單</title><style>
       @page{size:A4;margin:16mm 14mm}
+      *{box-sizing:border-box}
       body{font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;color:#1A1A1A;max-width:720px;margin:0 auto;padding:24px}
-      h1{font-size:20px;margin-bottom:4px}
-      .meta{font-size:12px;color:#777;margin-bottom:20px}
+      .header{border-bottom:3px solid #1C1B18;padding-bottom:14px;margin-bottom:20px}
+      .eyebrow{font-size:12px;letter-spacing:2px;color:#1C1B18;font-weight:700}
+      h1{font-size:22px;margin:6px 0 2px}
+      .meta{font-size:12px;color:#777;margin:6px 0 0}
       section{margin-bottom:26px}
-      h2{font-size:16px;background:#1C1B18;color:#fff;padding:6px 10px;border-radius:4px;margin-bottom:10px}
+      h2{font-size:16px;background:#1C1B18;color:#EEE5DA;padding:6px 10px;border-radius:4px;margin-bottom:10px}
       .vendor{margin-bottom:16px;break-inside:avoid}
-      h3{font-size:13.5px;border-bottom:1.5px solid #1C1B18;padding-bottom:4px;margin:0 0 8px;display:flex;justify-content:space-between}
+      h3{font-size:13.5px;border-left:4px solid #41101B;padding-left:10px;margin:0 0 8px;display:flex;justify-content:space-between}
       .count{font-size:11px;color:#777;font-weight:normal}
       .items{display:flex;flex-wrap:wrap;gap:10px}
       .item{font-size:11.5px}
       .img-item{width:260px}
-      .img-item img{width:260px;max-height:340px;object-fit:contain;border-radius:4px;border:1px solid #ddd;display:block;background:#fafafa}
+      .img-item img{width:260px;max-height:340px;object-fit:contain;border-radius:4px;border:1px solid #E2E2E2;display:block;background:#F7F7F7}
       .img-item .cap{color:#555;margin-top:3px;line-height:1.4;word-break:break-all}
-      .file-item,.text-item{width:100%;border-bottom:1px solid #eee;padding:6px 0}
+      .file-item,.text-item{width:100%;border-bottom:1px solid #EDE7DA;padding:6px 0}
       .text-item .txt{white-space:pre-wrap}
       .date{color:#888;font-size:10.5px;margin-top:2px}
       .empty{font-size:12px;color:#999}
-      @media print{ .noprint{display:none} }
+      .footer{font-size:11px;color:#999;margin-top:30px;text-align:center}
+      @media print{ .toolbar{display:none!important} body{padding:0} }
+      .toolbar{position:sticky;top:0;background:#1C1B18;padding:12px 16px;display:flex;justify-content:flex-end;margin:-24px -24px 24px}
+      .toolbar button{background:#41101B;color:#EEE5DA;border:none;border-radius:7px;padding:8px 16px;font-weight:700;font-size:13px;cursor:pointer}
     </style></head><body>
-      <h1>廠商報價單清單</h1>
-      <div class="meta">匯出時間：${esc(new Date().toLocaleString("zh-TW"))}</div>
+      <div class="toolbar"><button onclick="window.print()">列印 / 存 PDF</button></div>
+      <div class="header">
+        <div class="eyebrow">赫柏空間設計 · 廠商報價單清單</div>
+        <h1>廠商報價單清單</h1>
+        <p class="meta">匯出時間：${esc(new Date().toLocaleString("zh-TW"))}</p>
+      </div>
       ${sections||'<p class="empty">尚未建立任何廠商資料夾</p>'}
-      <button class="noprint" onclick="window.print()" style="margin-top:20px;padding:8px 16px">列印 / 存 PDF</button>
+      <p class="footer">本清單由赫柏空間設計工地紀錄本產生，僅供案件進度參考</p>
     </body></html>`;
     let win=window.open("","_blank");
     if(!win){notify("請允許彈出視窗以匯出 PDF");return}
@@ -2559,7 +2569,7 @@ u.default.createElement("button",{disabled:!msg.trim()||busy,onClick:send,style:
   .card { float: left; width: 48%; margin-bottom: 14px; break-inside: avoid; border: 1px solid #E2E2E2; border-radius: 6px; overflow: hidden; }
   .card:nth-child(odd) { margin-right: 4%; }
   .card img { width: 100%; display: block; max-height: 160px; object-fit: cover; }
-  .filebox { height: 90px; display: flex; align-items: center; justify-content: center; background: #EEF2F5; color: #1C1B18; font-weight: 700; font-size: 13px; letter-spacing: 1px; }
+  .filebox { height: 90px; display: flex; align-items: center; justify-content: center; background: #EDE7DA; color: #1C1B18; font-weight: 700; font-size: 13px; letter-spacing: 1px; }
   .card-body { padding: 6px 10px; }
   .fname { font-size: 12.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .date { font-size: 11px; color: #888; margin-top: 2px; }
