@@ -266,7 +266,15 @@ const LINE_NOTIFY_FUNCTION_URL = "https://rqndozhhvuimqjqtmeli.supabase.co/funct
 
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-const ALL_SLOTS = ["10:00","11:30","14:00","15:30","17:00"];
+let ALL_SLOTS = ["10:00","11:30","14:00","15:30","17:00"]; // 預設時段（若資料庫尚未設定或載入失敗時使用）
+async function loadSlots(){
+  try{
+    const { data, error } = await sb.from('sitelog_booking_time_options').select('time').order('time', { ascending: true });
+    if(!error && data && data.length) ALL_SLOTS = data.map(d => d.time);
+  }catch(err){
+    console.error('載入可預約時段失敗，使用預設時段', err);
+  }
+}
 
 // 每月已載入的資料快取："2026-07" -> { "2026-07-22": ["10:00","14:00"] }
 const bookedCache = {};
@@ -534,7 +542,7 @@ async function submitBooking(){
 }
 
 /* ---- init ---- */
-renderCalendar().then(renderSlots);
+loadSlots().then(()=>renderCalendar().then(renderSlots));
 goStep(1);
 </script>
 
