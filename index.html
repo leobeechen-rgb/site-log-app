@@ -2544,6 +2544,19 @@ function HbBookingsHub({onBack:l,notify:g}){
         ),
         selectedCalDate&&u.default.createElement("button",{onClick:()=>setSelectedCalDate(null),style:{marginTop:8,fontSize:12,color:s.ocean,background:"none",border:"none",cursor:"pointer",padding:0}},"清除「"+selectedCalDate+"」篩選，顯示全部預約")
       ),
+      selectedCalDate&&u.default.createElement("div",{style:{background:s.card,border:`1px solid ${s.line}`,borderRadius:8,padding:"12px 14px",marginBottom:16}},
+        u.default.createElement("div",{style:{fontSize:12.5,fontWeight:700,color:s.oceanDark,marginBottom:8}},selectedCalDate+" 各時段狀態"),
+        slotsForDate(selectedCalDate).length===0?u.default.createElement("div",{style:{fontSize:12.5,color:s.inkSoft}},"這天沒有開放任何時段"):
+        u.default.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:8}},
+          slotsForDate(selectedCalDate).map(tt=>{
+            let taken=list.some(b=>b.date===selectedCalDate&&b.time===tt&&(b.status==="pending"||b.status==="confirmed"));
+            return u.default.createElement("div",{key:tt,style:{display:"flex",alignItems:"center",gap:6,border:`1px solid ${taken?s.danger:s.tree}`,borderRadius:20,padding:"6px 12px",fontSize:12.5,fontWeight:700,color:taken?s.danger:s.tree,background:taken?"rgba(139,18,32,0.06)":"rgba(90,99,85,0.06)"}},
+              u.default.createElement("span",{style:{width:6,height:6,borderRadius:"50%",background:taken?s.danger:s.tree}}),
+              tt,taken?"（已預約）":"（可預約）"
+            );
+          })
+        )
+      ),
       loading?u.default.createElement("div",{style:{textAlign:"center",padding:30}},u.default.createElement(E,{name:"loader",className:"animate-spin",size:22,color:s.ocean})):
       u.default.createElement(u.default.Fragment,null,
         list.filter(b=>b.status!=="cancelled"&&(!selectedCalDate||b.date===selectedCalDate)).length===0?u.default.createElement("div",{style:{textAlign:"center",padding:30,color:s.inkSoft,fontSize:13}},"目前還沒有任何預約"):
