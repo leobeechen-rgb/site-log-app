@@ -2400,14 +2400,16 @@ function HbBookingsHub({onBack:l,notify:g}){
       [weekSlots,setWeekSlots]=(0,u.useState)({0:[],1:[],2:[],3:[],4:[],5:[],6:[]}),
       [activeWeekday,setActiveWeekday]=(0,u.useState)(new Date().getDay()),
       [calMonth,setCalMonth]=(0,u.useState)(()=>{let d=new Date();d.setDate(1);return d}),
-      [selectedCalDate,setSelectedCalDate]=(0,u.useState)(null);
+      [selectedCalDate,setSelectedCalDate]=(0,u.useState)(null),
+      [overrides,setOverrides]=(0,u.useState)([]);
 
   let load=async()=>{
     setLoading(true);
-    let[{data:b,error:e1},{data:c,error:e2},{data:sl,error:e3}]=await Promise.all([
+    let[{data:b,error:e1},{data:c,error:e2},{data:sl,error:e3},{data:ov,error:e4}]=await Promise.all([
       q.from("sitelog_bookings").select("*").order("date",{ascending:true}).order("time",{ascending:true}),
       q.from("sitelog_booking_closed_dates").select("*").order("date",{ascending:true}),
-      q.from("sitelog_booking_weekday_slots").select("*").order("time",{ascending:true})
+      q.from("sitelog_booking_weekday_slots").select("*").order("time",{ascending:true}),
+      q.from("sitelog_booking_slot_overrides").select("*")
     ]);
     if(!e1)setList(b||[]);
     if(!e2)setClosed(c||[]);
@@ -2416,9 +2418,23 @@ function HbBookingsHub({onBack:l,notify:g}){
       (sl||[]).forEach(r=>{if(grouped[r.weekday])grouped[r.weekday].push(r);else grouped[r.weekday]=[r]});
       setWeekSlots(grouped);
     }
+    if(!e4)setOverrides(ov||[]);
     setLoading(false);
   };
   (0,u.useEffect)(()=>{load()},[]);
+
+  let toggleSlotBlock=async(dateStr,timeStr)=>{
+    let existing=overrides.find(o=>o.date===dateStr&&o.time===timeStr);
+    if(existing){
+      let{error}=await q.from("sitelog_booking_slot_overrides").delete().eq("id",existing.id);
+      if(error){g("解除封鎖失敗："+error.message);return}
+      g("已重新開放這個時段");load();
+    }else{
+      let{error}=await q.from("sitelog_booking_slot_overrides").insert({date:dateStr,time:timeStr});
+      if(error){g("設為已滿額失敗："+error.message);return}
+      g("已將這個時段設為已滿額");load();
+    }
+  };
 
   let startEdit=b=>{setEditingId(b.id);setEditDate(b.date);setEditTime(b.time)};
   let cancelEdit=()=>{setEditingId(null)};
@@ -2524,7 +2540,7 @@ function HbBookingsHub({onBack:l,notify:g}){
             for(let day=1;day<=daysInMonth;day++){
               let dkey=y+"-"+String(mo+1).padStart(2,"0")+"-"+String(day).padStart(2,"0");
               let daySlotsArr=slotsForDate(dkey);
-              let taken=list.filter(b=>b.date===dkey&&(b.status==="pending"||b.status==="confirmed")).length;
+              let taken=list.filter(b=>b.date===dkey&&(b.status==="pending"||b.status==="confirmed")).length+overrides.filter(o=>o.date===dkey).length;
               let remain=daySlotsArr.length-taken;
               let isClosedDay=daySlotsArr.length===0||closed.some(c=>c.date===dkey);
               let dotColor=isClosedDay?null:remain<=0?s.danger:remain<=2?"#C98A2E":s.tree;
@@ -2545,14 +2561,19 @@ function HbBookingsHub({onBack:l,notify:g}){
         selectedCalDate&&u.default.createElement("button",{onClick:()=>setSelectedCalDate(null),style:{marginTop:8,fontSize:12,color:s.ocean,background:"none",border:"none",cursor:"pointer",padding:0}},"清除「"+selectedCalDate+"」篩選，顯示全部預約")
       ),
       selectedCalDate&&u.default.createElement("div",{style:{background:s.card,border:`1px solid ${s.line}`,borderRadius:8,padding:"12px 14px",marginBottom:16}},
-        u.default.createElement("div",{style:{fontSize:12.5,fontWeight:700,color:s.oceanDark,marginBottom:8}},selectedCalDate+" 各時段狀態"),
+        u.default.createElement("div",{style:{fontSize:12.5,fontWeight:700,color:s.oceanDark,marginBottom:2}},selectedCalDate+" 各時段狀態"),
+        u.default.createElement("p",{style:{fontSize:11.5,color:s.inkSoft,margin:"0 0 8px"}},"點「可預約」可以手動設為已滿額（不接受這個時段）；點「已滿額（手動）」可以重新開放。已經有客戶預約的時段無法在這裡取消，請至下方列表操作"),
         slotsForDate(selectedCalDate).length===0?u.default.createElement("div",{style:{fontSize:12.5,color:s.inkSoft}},"這天沒有開放任何時段"):
         u.default.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:8}},
           slotsForDate(selectedCalDate).map(tt=>{
-            let taken=list.some(b=>b.date===selectedCalDate&&b.time===tt&&(b.status==="pending"||b.status==="confirmed"));
-            return u.default.createElement("div",{key:tt,style:{display:"flex",alignItems:"center",gap:6,border:`1px solid ${taken?s.danger:s.tree}`,borderRadius:20,padding:"6px 12px",fontSize:12.5,fontWeight:700,color:taken?s.danger:s.tree,background:taken?"rgba(139,18,32,0.06)":"rgba(90,99,85,0.06)"}},
+            let bookedByClient=list.some(b=>b.date===selectedCalDate&&b.time===tt&&(b.status==="pending"||b.status==="confirmed"));
+            let blockedManually=overrides.some(o=>o.date===selectedCalDate&&o.time===tt);
+            let taken=bookedByClient||blockedManually;
+            let label=bookedByClient?"（已預約）":blockedManually?"（已滿額・手動）":"（可預約）";
+            let clickable=!bookedByClient;
+            return u.default.createElement("div",{key:tt,onClick:()=>clickable&&toggleSlotBlock(selectedCalDate,tt),style:{display:"flex",alignItems:"center",gap:6,border:`1px solid ${taken?s.danger:s.tree}`,borderRadius:20,padding:"6px 12px",fontSize:12.5,fontWeight:700,color:taken?s.danger:s.tree,background:taken?"rgba(139,18,32,0.06)":"rgba(90,99,85,0.06)",cursor:clickable?"pointer":"default",opacity:clickable?1:.85}},
               u.default.createElement("span",{style:{width:6,height:6,borderRadius:"50%",background:taken?s.danger:s.tree}}),
-              tt,taken?"（已預約）":"（可預約）"
+              tt,label
             );
           })
         )

@@ -325,6 +325,17 @@ async function loadMonthData(y, m){
       .lte('date', endStr);
     if(e2) throw e2;
     (closed||[]).forEach(c=> closedCache[mk].add(c.date));
+
+    const { data: overrides, error: e3 } = await sb
+      .from('sitelog_booking_slot_overrides')
+      .select('date,time')
+      .gte('date', startStr)
+      .lte('date', endStr);
+    if(e3) throw e3;
+    (overrides||[]).forEach(o=>{
+      if(!bookedCache[mk][o.date]) bookedCache[mk][o.date] = [];
+      if(!bookedCache[mk][o.date].includes(o.time)) bookedCache[mk][o.date].push(o.time);
+    });
   }catch(err){
     console.error('載入預約資料失敗', err);
   }
@@ -495,7 +506,7 @@ async function submitBooking(){
   submitBtn.textContent = '送出中…';
 
   try{
-    // 送出前重新確認一次時段是否已被搶走（避免兩人同時預約同一時段）
+    // 送出前重新確認一次時段是否已被搶走（避免兩人同時預約同一時段），或已被管理員手動設為已滿額
     const { data: clash, error: checkErr } = await sb
       .from('sitelog_bookings')
       .select('id')
@@ -504,7 +515,14 @@ async function submitBooking(){
       .in('status', ['pending','confirmed'])
       .limit(1);
     if(checkErr) throw checkErr;
-    if(clash && clash.length){
+    const { data: overrideClash, error: overrideErr } = await sb
+      .from('sitelog_booking_slot_overrides')
+      .select('id')
+      .eq('date', state.date)
+      .eq('time', state.time)
+      .limit(1);
+    if(overrideErr) throw overrideErr;
+    if((clash && clash.length) || (overrideClash && overrideClash.length)){
       alert('抱歉，這個時段剛被其他人預約走了，請重新選擇時段');
       state.time = null;
       goStep(2);
