@@ -22,7 +22,7 @@
     --ok:#4C8B6B;
     --full:#C9603F;
   }
-  *{box-sizing:border-box;}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   body{
     margin:0;
     background:var(--paper);
@@ -31,6 +31,7 @@
     -webkit-font-smoothing:antialiased;
   }
   .disp{font-family:'Space Grotesk','Noto Sans TC',sans-serif;}
+  .cal-day,.svc,.slot,button{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;}
 
   /* ---- Shell ---- */
   #root{max-width:480px;margin:0 auto;min-height:100vh;background:var(--paper);position:relative;box-shadow:0 0 40px rgba(15,39,51,0.06);}
@@ -100,7 +101,7 @@
   }
   .cal-day.empty{visibility:hidden;}
   .cal-day.closed{color:#C7CDD1;cursor:default;}
-  .cal-day.open:hover{background:#fff;border-color:var(--line);}
+  @media (hover:hover) and (pointer:fine){ .cal-day.open:hover{background:#fff;border-color:var(--line);} }
   .cal-day.sel{background:var(--navy);color:#fff;border-color:var(--navy);}
   .cal-day .dot{width:5px;height:5px;border-radius:50%;background:var(--ok);}
   .cal-day.busy .dot{background:var(--lemon-deep);}
