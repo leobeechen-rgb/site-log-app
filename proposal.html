@@ -837,7 +837,8 @@ async function selectMarketingPhoto(photo, targetKey, thumbId, close, status) {
     close();
   } catch (err) {
     console.error(err);
-    status.textContent = '匯入失敗：' + (err.message || err);
+    const isCors = err && (err.message === 'Failed to fetch' || err.name === 'TypeError');
+    status.textContent = '匯入失敗：' + (isCors ? '圖片下載被瀏覽器封鎖（跨網域 CORS 設定問題），請聯絡網站管理員設定圖床的 CORS 允許來源' : (err.message || err));
   }
 }
 
