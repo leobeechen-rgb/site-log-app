@@ -290,7 +290,7 @@ function HbMarketingPhotoHub({onBack,notify}){
       let zip=new window.JSZip();
       let i=0;
       for(let p of list){
-        try{let res=await fetch(p.url);if(!res.ok)continue;let blob=await res.blob();i++;zip.file(`photo_${String(i).padStart(3,"0")}.jpg`,blob)}catch{}
+        try{let res=await fetch(p.url,{cache:"no-store"});if(!res.ok)continue;let blob=await res.blob();i++;zip.file(`photo_${String(i).padStart(3,"0")}.jpg`,blob)}catch{}
       }
       let content=await zip.generateAsync({type:"blob"});
       let a=document.createElement("a");
@@ -303,7 +303,7 @@ function HbMarketingPhotoHub({onBack,notify}){
 
   let downloadSinglePhoto=async p=>{
     try{
-      let res=await fetch(p.url);
+      let res=await fetch(p.url,{cache:"no-store"});
       if(!res.ok){notify("下載失敗");return}
       let blob=await res.blob();
       let a=document.createElement("a");

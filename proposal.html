@@ -821,7 +821,7 @@ async function openMarketingPhotoPicker(targetKey, thumbId, btn) {
 async function selectMarketingPhoto(photo, targetKey, thumbId, close, status) {
   status.textContent = '匯入中...';
   try {
-    const res = await fetch(photo.url);
+    const res = await fetch(photo.url, { cache: 'no-store' });
     if (!res.ok) throw new Error('圖片下載失敗');
     const blob = await res.blob();
     const dataUrl = await new Promise((resolve, reject) => {
