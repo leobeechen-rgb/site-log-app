@@ -4,18 +4,19 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>赫柏空間設計｜預約諮詢</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2064%2064%22%3E%0A%3Crect%20width%3D%2264%22%20height%3D%2264%22%20rx%3D%2214%22%20fill%3D%22%23173A4A%22/%3E%0A%3Ctext%20x%3D%2232%22%20y%3D%2244%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-weight%3D%22900%22%20font-size%3D%2234%22%20fill%3D%22%23FFD46A%22%20text-anchor%3D%22middle%22%3EH%3C/text%3E%0A%3C/svg%3E" />
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2064%2064%22%3E%0A%3Crect%20width%3D%2264%22%20height%3D%2264%22%20rx%3D%2214%22%20fill%3D%22%23F2D965%22/%3E%0A%3Ctext%20x%3D%2232%22%20y%3D%2244%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-weight%3D%22900%22%20font-size%3D%2234%22%20fill%3D%22%233E4C7A%22%20text-anchor%3D%22middle%22%3EH%3C/text%3E%0A%3C/svg%3E" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&family=Space+Grotesk:wght@300;500;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root{
-    --navy:#173A4A;
-    --navy-deep:#0F2733;
+    --navy:#929FC1;
+    --navy-deep:#7885B0;
+    --banner:#F2D965;
     --lemon:#FFD46A;
     --lemon-deep:#F0B93A;
-    --paper:#FAF8F3;
-    --ink:#1E2A32;
+    --paper:#FEFEF2;
+    --ink:#3E4C7A;
     --mute:#7C8A93;
     --line:#E4E0D6;
     --ok:#4C8B6B;
@@ -36,34 +37,34 @@
 
   /* ---- Header ---- */
   header{
-    background:var(--navy);
-    background-image:radial-gradient(circle at 85% -10%, rgba(255,212,106,0.18), transparent 55%);
-    color:#fff;
+    background:var(--banner);
+    background-image:radial-gradient(circle at 85% -10%, rgba(255,255,255,0.35), transparent 55%);
+    color:var(--ink);
     padding:28px 24px 22px;
     position:relative;
   }
   .eyebrow{
     font-size:12px;letter-spacing:.14em;text-transform:uppercase;
-    color:var(--lemon);font-weight:700;margin:0 0 6px;
+    color:var(--ink);font-weight:400;margin:0 0 6px;
   }
   header h1{
-    margin:0;font-size:26px;line-height:1.3;font-weight:900;
+    margin:0;font-size:26px;line-height:1.3;font-weight:300;
   }
-  header p{margin:8px 0 0;color:rgba(255,255,255,.72);font-size:13.5px;line-height:1.6;}
+  header p{margin:8px 0 0;color:rgba(62,76,122,.75);font-size:13.5px;line-height:1.6;}
 
   /* ---- Progress ---- */
-  .progress{display:flex;gap:6px;padding:16px 24px 0;background:var(--navy);}
-  .progress i{flex:1;height:3px;border-radius:2px;background:rgba(255,255,255,.18);}
-  .progress i.on{background:var(--lemon);}
+  .progress{display:flex;gap:6px;padding:16px 24px 0;background:var(--banner);}
+  .progress i{flex:1;height:3px;border-radius:2px;background:rgba(62,76,122,.18);}
+  .progress i.on{background:var(--ink);}
 
   /* ---- Steps ---- */
   .step{padding:22px 24px 100px;display:none;}
   .step.active{display:block;}
   .step-label{
-    font-size:12px;font-weight:700;letter-spacing:.08em;color:var(--navy);
+    font-size:12px;font-weight:400;letter-spacing:.08em;color:var(--navy);
     text-transform:uppercase;margin:0 0 4px;
   }
-  .step-title{font-size:19px;font-weight:900;margin:0 0 18px;}
+  .step-title{font-size:19px;font-weight:300;margin:0 0 18px;}
 
   /* ---- Service cards ---- */
   .svc{
@@ -73,14 +74,14 @@
     background:#fff;transition:.15s;
   }
   .svc:active{transform:scale(.98);}
-  .svc.sel{border-color:var(--navy);background:#fff;box-shadow:0 0 0 3px rgba(23,58,74,0.08);}
+  .svc.sel{border-color:var(--navy);background:#fff;box-shadow:0 0 0 3px rgba(146,159,193,0.18);}
   .svc .ic{
     width:44px;height:44px;border-radius:11px;background:var(--paper);
     display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;
     border:1px solid var(--line);
   }
   .svc.sel .ic{background:var(--navy);}
-  .svc h3{margin:0 0 3px;font-size:15px;}
+  .svc h3{margin:0 0 3px;font-size:15px;font-weight:400;}
   .svc p{margin:0;font-size:12.5px;color:var(--mute);line-height:1.5;}
 
   /* ---- Calendar ---- */
@@ -89,9 +90,9 @@
     width:32px;height:32px;border-radius:9px;border:1px solid var(--line);
     background:#fff;font-size:15px;cursor:pointer;color:var(--navy);
   }
-  .cal-nav .ym{font-weight:700;font-size:15px;}
+  .cal-nav .ym{font-weight:400;font-size:15px;}
   .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:22px;}
-  .cal-grid .dow{text-align:center;font-size:11px;color:var(--mute);padding-bottom:6px;font-weight:700;}
+  .cal-grid .dow{text-align:center;font-size:11px;color:var(--mute);padding-bottom:6px;font-weight:400;}
   .cal-day{
     aspect-ratio:1;border-radius:10px;display:flex;flex-direction:column;
     align-items:center;justify-content:center;gap:3px;font-size:13px;
@@ -109,11 +110,11 @@
   .cal-legend span{display:inline-flex;align-items:center;gap:5px;}
   .cal-legend i{width:6px;height:6px;border-radius:50%;display:inline-block;}
 
-  .slot-label{font-size:13px;font-weight:700;margin:0 0 10px;color:var(--navy);}
+  .slot-label{font-size:13px;font-weight:400;margin:0 0 10px;color:var(--navy);}
   .slots{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
   .slot{
     border:1.5px solid var(--line);border-radius:10px;padding:12px 8px;
-    text-align:center;font-size:13.5px;font-weight:600;cursor:pointer;background:#fff;
+    text-align:center;font-size:13.5px;font-weight:400;cursor:pointer;background:#fff;
   }
   .slot.taken{color:#C7CDD1;border-style:dashed;cursor:not-allowed;text-decoration:line-through;}
   .slot.sel{background:var(--navy);color:#fff;border-color:var(--navy);}
@@ -121,7 +122,7 @@
 
   /* ---- Form ---- */
   .field{margin-bottom:14px;}
-  .field label{display:block;font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:6px;}
+  .field label{display:block;font-size:12.5px;font-weight:400;color:var(--navy);margin-bottom:6px;}
   .field input,.field textarea{
     width:100%;border:1.5px solid var(--line);border-radius:10px;
     padding:11px 12px;font-size:14.5px;font-family:inherit;background:#fff;color:var(--ink);
@@ -133,7 +134,7 @@
     background:#fff;border:1.5px solid var(--line);border-radius:12px;
     padding:14px 16px;margin-bottom:20px;font-size:13px;line-height:2;
   }
-  .summary-box b{color:var(--navy);}
+  .summary-box b{color:var(--navy);font-weight:400;}
 
   /* ---- Confirm screen ---- */
   .done{padding:60px 30px 40px;text-align:center;}
@@ -142,13 +143,13 @@
     color:var(--lemon);display:flex;align-items:center;justify-content:center;
     font-size:30px;margin:0 auto 20px;
   }
-  .done h2{font-size:20px;margin:0 0 8px;}
+  .done h2{font-size:20px;margin:0 0 8px;font-weight:300;}
   .done p{color:var(--mute);font-size:13.5px;margin:0 0 26px;}
   .done .ticket{
     background:#fff;border:1.5px dashed var(--line);border-radius:14px;
     padding:18px;text-align:left;font-size:13.5px;line-height:2;margin-bottom:24px;
   }
-  .done .ticket b{color:var(--navy);}
+  .done .ticket b{color:var(--navy);font-weight:400;}
 
   /* ---- Footer bar ---- */
   .barfoot{
@@ -158,7 +159,7 @@
   }
   .btn{
     width:100%;padding:15px;border-radius:12px;border:none;
-    background:var(--navy);color:#fff;font-size:15px;font-weight:700;
+    background:var(--navy);color:#fff;font-size:15px;font-weight:400;
     cursor:pointer;font-family:inherit;
   }
   .btn:disabled{background:#D6DADD;color:#9AA3A9;cursor:not-allowed;}
@@ -280,7 +281,7 @@ async function loadSlots(){
 // 每月已載入的資料快取："2026-07" -> { "2026-07-22": ["10:00","14:00"] }
 const bookedCache = {};
 const closedCache = {}; // "2026-07" -> Set of "2026-07-06"
-function fmtKey(d){ return d.toISOString().slice(0,10); }
+function fmtKey(d){ const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0'); return `${y}-${m}-${dd}`; }
 function monthKey(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; }
 
 // 載入某個月份的預約狀況與臨時公休日（月初/月底往前後各多抓幾天，避免跨月週次露白）
