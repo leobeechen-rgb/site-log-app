@@ -212,6 +212,7 @@
 
     <p class="slot-label" id="slotLabel">請先選擇日期</p>
     <div class="slots" id="slotList"></div>
+    <p style="font-size:11.5px;color:var(--mute);text-align:center;margin:14px 0 0;line-height:1.6;">※若有想預約的時段，也可以 LINE 上跟設計師討論，另外手動幫您預約</p>
   </div>
 
   <!-- STEP 3: 資料表單 -->
@@ -268,11 +269,17 @@ const LINE_NOTIFY_FUNCTION_URL = "https://rqndozhhvuimqjqtmeli.supabase.co/funct
 
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-let ALL_SLOTS = ["10:00","11:30","14:00","15:30","17:00"]; // 預設時段（若資料庫尚未設定或載入失敗時使用）
+let WEEKDAY_SLOTS = {0:[],1:["10:00","11:30","14:00","15:30","17:00"],2:["10:00","11:30","14:00","15:30","17:00"],3:["10:00","11:30","14:00","15:30","17:00"],4:["10:00","11:30","14:00","15:30","17:00"],5:["10:00","11:30","14:00","15:30","17:00"],6:["10:00","11:30","14:00","15:30","17:00"]}; // 預設時段（若資料庫尚未設定或載入失敗時使用，星期日預設不開放）
+function localDateFromKey(k){ const [y,m,dd]=k.split('-').map(Number); return new Date(y,m-1,dd); }
 async function loadSlots(){
   try{
-    const { data, error } = await sb.from('sitelog_booking_time_options').select('time').order('time', { ascending: true });
-    if(!error && data && data.length) ALL_SLOTS = data.map(d => d.time);
+    const { data, error } = await sb.from('sitelog_booking_weekday_slots').select('weekday,time');
+    if(!error && data){
+      const grouped = {0:[],1:[],2:[],3:[],4:[],5:[],6:[]};
+      data.forEach(r => grouped[r.weekday].push(r.time));
+      for(const k in grouped) grouped[k].sort();
+      if(data.length) WEEKDAY_SLOTS = grouped;
+    }
   }catch(err){
     console.error('載入可預約時段失敗，使用預設時段', err);
   }
@@ -375,9 +382,9 @@ async function renderCalendar(){
     const d = new Date(calMonth.getFullYear(), calMonth.getMonth(), day);
     const key = fmtKey(d);
     const isPast = d < today0;
-    const isSunday = d.getDay()===0; // 固定公休：週日
+    const daySlots = WEEKDAY_SLOTS[d.getDay()] || [];
     const isClosed = monthClosed.has(key); // 臨時公休（sitelog_booking_closed_dates）
-    const closed = isPast || isSunday || isClosed;
+    const closed = isPast || isClosed || daySlots.length===0;
 
     let cls = 'cal-day';
     let dotHtml = '';
@@ -386,7 +393,7 @@ async function renderCalendar(){
     } else {
       cls += ' open';
       const taken = (monthBooked[key]||[]).length;
-      const remain = ALL_SLOTS.length - taken;
+      const remain = daySlots.length - taken;
       if(remain<=0) { cls+=' full'; }
       else if(remain<=2){ cls+=' busy'; }
       dotHtml = `<span class="dot"></span>`;
@@ -413,16 +420,17 @@ function renderSlots(){
   const list = document.getElementById('slotList');
   if(!state.date){ label.textContent='請先選擇日期'; list.innerHTML=''; return; }
 
-  const d = new Date(state.date);
+  const d = localDateFromKey(state.date);
   label.textContent = `${d.getMonth()+1}月${d.getDate()}日（${DOWS[d.getDay()]}）可預約時段`;
 
-  const mk = monthKey(new Date(state.date));
+  const daySlots = WEEKDAY_SLOTS[d.getDay()] || [];
+  const mk = monthKey(d);
   const taken = (bookedCache[mk] && bookedCache[mk][state.date]) || [];
-  if(taken.length === ALL_SLOTS.length){
+  if(daySlots.length === 0 || taken.length === daySlots.length){
     list.innerHTML = `<div class="empty-note" style="grid-column:1/-1">這天時段已全部額滿，請選擇其他日期</div>`;
     return;
   }
-  list.innerHTML = ALL_SLOTS.map(t=>{
+  list.innerHTML = daySlots.map(t=>{
     const isTaken = taken.includes(t);
     const isSel = state.time===t;
     return `<div class="slot ${isTaken?'taken':''} ${isSel?'sel':''}" data-t="${t}">${t}</div>`;
@@ -527,7 +535,7 @@ async function submitBooking(){
     }).catch(err => console.error('LINE 通知發送失敗', err));
 
     // 更新本地快取，避免同一頁面內重複選到剛預約的時段
-    const mk = monthKey(new Date(state.date));
+    const mk = monthKey(localDateFromKey(state.date));
     if(!bookedCache[mk]) bookedCache[mk] = {};
     if(!bookedCache[mk][state.date]) bookedCache[mk][state.date] = [];
     bookedCache[mk][state.date].push(state.time);
