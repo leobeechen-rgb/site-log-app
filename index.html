@@ -1883,20 +1883,29 @@ function HbLanding({onCase:l,onCompany:t,onManageStaff:e,onLogout:n,onQuickQuote
       .hb-breathe-a { animation: hbBreatheA 3.8s ease-in-out infinite; transform-origin:center; }
       .hb-breathe-b { animation: hbBreatheB 4.6s ease-in-out infinite; animation-delay:1s; transform-origin:center; }
     `),
-    u.default.createElement("div",{style:{padding:"32px 20px 8px",position:"relative"}},
-      u.default.createElement("div",{style:{position:"absolute",top:28,right:20,display:"flex",alignItems:"center",gap:16}},
+    u.default.createElement("div",{style:{padding:"32px 20px 18px",position:"relative",overflow:"hidden"}},
+      u.default.createElement("div",{style:{position:"absolute",top:-60,left:-40,width:180,height:180,borderRadius:"50%",background:s.ocean,opacity:.28,filter:"blur(40px)",pointerEvents:"none"}}),
+      u.default.createElement("div",{style:{position:"absolute",top:-20,right:-50,width:150,height:150,borderRadius:"50%",background:s.tree,opacity:.24,filter:"blur(36px)",pointerEvents:"none"}}),
+      u.default.createElement("div",{style:{position:"absolute",top:60,left:"38%",width:120,height:120,borderRadius:"50%",background:"#C79999",opacity:.22,filter:"blur(34px)",pointerEvents:"none"}}),
+      u.default.createElement("div",{style:{position:"absolute",top:28,right:20,display:"flex",alignItems:"center",gap:16,zIndex:2}},
         u.default.createElement("button",{onClick:e,title:"\u5e33\u865f\u7ba1\u7406",style:{background:"none",border:"none",color:s.inkSoft,cursor:"pointer",display:"flex",padding:0}},u.default.createElement(E,{name:"user",size:17})),
         u.default.createElement("button",{onClick:n,title:"\u767b\u51fa",style:{background:"none",border:"none",color:s.inkSoft,cursor:"pointer",display:"flex",padding:0}},u.default.createElement(E,{name:"log-out",size:17}))
       ),
-      u.default.createElement("svg",{viewBox:"0 0 280 64",style:{width:220,height:52,display:"block",marginBottom:4}},
+      u.default.createElement("div",{style:{position:"relative",zIndex:2,display:"inline-flex",alignItems:"center",gap:6,background:"rgba(255,255,255,0.38)",backdropFilter:"blur(14px)",WebkitBackdropFilter:"blur(14px)",border:"1px solid rgba(255,255,255,0.55)",borderRadius:999,padding:"6px 14px 6px 10px",marginBottom:16,boxShadow:"0 4px 16px rgba(140,111,82,0.10)"}},
+        u.default.createElement("span",{style:{width:6,height:6,borderRadius:"50%",background:s.tree,display:"inline-block"}}),
+        u.default.createElement("span",{style:{fontSize:11.5,color:s.ink,fontWeight:400,letterSpacing:.3}},"\u6b61\u8fce\u56de\u4f86\uff0c\u4eca\u5929\u4e5f\u8981\u597d\u597d\u7167\u9867\u6bcf\u500b\u5de5\u5730")
+      ),
+      u.default.createElement("svg",{viewBox:"0 0 280 64",style:{width:220,height:52,display:"block",marginBottom:4,position:"relative",zIndex:2}},
         u.default.createElement("path",{d:"M12,48 C34,10 84,10 70,42 C58,70 118,74 134,38 C146,10 200,4 232,22",
           fill:"none",stroke:s.ocean,strokeWidth:1.2,strokeLinecap:"round",opacity:.75}),
         u.default.createElement("circle",{className:"hb-breathe-a",cx:12,cy:48,r:4,fill:s.ocean}),
         u.default.createElement("circle",{className:"hb-breathe-b",cx:134,cy:38,r:3,fill:s.tree})
       ),
-      u.default.createElement("div",{className:"mono",style:{color:s.ocean,fontSize:11,letterSpacing:2,marginBottom:6,fontWeight:400}},"HERFULSINS INTERIOR DESIGN"),
-      u.default.createElement("h1",{style:{color:s.ink,fontSize:25,fontWeight:300,margin:0}},"\u8d6b\u67cf\u7a7a\u9593\u8a2d\u8a08"),
-      u.default.createElement("p",{style:{color:s.inkSoft,fontSize:13,marginTop:6,fontWeight:300}},"\u5de5\u5730\u7d00\u9304\u672c \xb7 \u8acb\u9078\u64c7\u8981\u7ba1\u7406\u7684\u8cc7\u6599\u5eab")
+      u.default.createElement("div",{style:{position:"relative",zIndex:2}},
+        u.default.createElement("div",{className:"mono",style:{color:s.ocean,fontSize:11,letterSpacing:2,marginBottom:6,fontWeight:400}},"HERFULSINS INTERIOR DESIGN"),
+        u.default.createElement("h1",{style:{color:s.ink,fontSize:25,fontWeight:300,margin:0}},"\u8d6b\u67cf\u7a7a\u9593\u8a2d\u8a08"),
+        u.default.createElement("p",{style:{color:s.inkSoft,fontSize:13,marginTop:6,fontWeight:300}},"\u5de5\u5730\u7d00\u9304\u672c \xb7 \u8acb\u9078\u64c7\u8981\u7ba1\u7406\u7684\u8cc7\u6599\u5eab")
+      )
     ),
     u.default.createElement("div",{style:{padding:"18px 16px 100px",display:"flex",flexDirection:"column",gap:14}},
       u.default.createElement(HbLandingCard,{icon:"clipboard-list",title:"\u6848\u4ef6\u8cc7\u6599\u5eab",desc:"\u7ba1\u7406\u9032\u884c\u4e2d\u7684\u7a7a\u9593\u8a2d\u8a08\u8207\u5de5\u7a0b\u5c08\u6848\uff1a\u65bd\u5de5\u7167\u7247\u3001\u6750\u6599\u9001\u9054\u3001\u5c08\u6848\u6a94\u6848\u3001\u8a2d\u5099\u8cc7\u6599",onClick:l}),
