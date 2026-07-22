@@ -23,12 +23,15 @@
     --full:#C9603F;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html{overflow-x:hidden;}
   body{
     margin:0;
     background:var(--paper);
     color:var(--ink);
     font-family:'Noto Sans TC',sans-serif;
     -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+    width:100%;
   }
   .disp{font-family:'Space Grotesk','Noto Sans TC',sans-serif;}
   .cal-day,.svc,.slot,button{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;}
@@ -59,10 +62,10 @@
   }
   .step-dark h1 .apos{display:inline;font-size:0.42em;vertical-align:0.62em;}
   .step-dark h1 span{display:block;line-height:0.88;letter-spacing:-0.01em;}
-  .step-dark h1 .l1{font-size:146px;text-align:left;}
-  .step-dark h1 .l2{font-size:126px;text-align:right;}
-  .step-dark h1 .l3{font-size:86px;text-align:left;padding-left:10%;}
-  .step-dark h1 .l4{font-size:176px;text-align:right;}
+  .step-dark h1 .l1{font-size:156px;text-align:left;}
+  .step-dark h1 .l2{font-size:136px;text-align:right;}
+  .step-dark h1 .l3{font-size:96px;text-align:left;padding-left:10%;}
+  .step-dark h1 .l4{font-size:186px;text-align:right;}
   .step-dark .hero-sub{margin:14px 0 0;color:rgba(254,254,242,.68);font-size:13px;line-height:1.6;flex-shrink:0;}
 
   /* ---- Progress ---- */
@@ -88,7 +91,7 @@
   /* ---- Step 1: bordered frame continuation of header ---- */
   .step-dark{
     background:var(--ink);
-    height:612px;
+    height:628px;
     padding:20px 24px;
     display:flex;
     flex-direction:column;
