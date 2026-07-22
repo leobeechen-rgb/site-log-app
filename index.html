@@ -1884,8 +1884,12 @@ function HbLanding({onCase:l,onCompany:t,onManageStaff:e,onLogout:n,onQuickQuote
     u.default.createElement("style",null,`
       @keyframes hbBreatheA { 0%,100%{transform:scale(1);opacity:.7} 50%{transform:scale(1.3);opacity:1} }
       @keyframes hbBreatheB { 0%,100%{transform:scale(1);opacity:.7} 50%{transform:scale(1.3);opacity:1} }
+      @keyframes hbArchFloat { 0%,100%{transform:translateY(0) rotate(0deg)} 50%{transform:translateY(-10px) rotate(3deg)} }
+      @keyframes hbArchFloat2 { 0%,100%{transform:translateY(0) rotate(0deg)} 50%{transform:translateY(8px) rotate(-4deg)} }
       .hb-breathe-a { animation: hbBreatheA 3.8s ease-in-out infinite; transform-origin:center; }
       .hb-breathe-b { animation: hbBreatheB 4.6s ease-in-out infinite; animation-delay:1s; transform-origin:center; }
+      .hb-arch { animation: hbArchFloat 7s ease-in-out infinite; }
+      .hb-arch2 { animation: hbArchFloat2 8.5s ease-in-out infinite; animation-delay:.6s; }
     `),
     u.default.createElement("div",{style:{padding:"32px 20px 18px",position:"relative",overflow:"hidden",zIndex:1}},
       u.default.createElement("div",{style:{position:"absolute",top:-60,left:-40,width:180,height:180,borderRadius:"50%",background:s.ocean,opacity:.28,filter:"blur(40px)",pointerEvents:"none"}}),
@@ -1899,9 +1903,13 @@ function HbLanding({onCase:l,onCompany:t,onManageStaff:e,onLogout:n,onQuickQuote
         u.default.createElement("span",{style:{width:6,height:6,borderRadius:"50%",background:s.tree,display:"inline-block"}}),
         u.default.createElement("span",{style:{fontSize:11.5,color:s.ink,fontWeight:400,letterSpacing:.3}},"\u6b61\u8fce\u56de\u4f86\uff0c\u4eca\u5929\u4e5f\u8981\u597d\u597d\u7167\u9867\u6bcf\u500b\u5de5\u5730")
       ),
-      u.default.createElement("svg",{viewBox:"0 0 280 64",style:{width:220,height:52,display:"block",marginBottom:4,position:"relative",zIndex:2}},
+      u.default.createElement("div",{className:"hb-arch",style:{position:"absolute",top:-90,right:-50,width:220,height:220,borderRadius:"50%",background:"linear-gradient(160deg, rgba(185,136,104,0.24), rgba(143,166,140,0.20))",border:"1px solid rgba(255,255,255,0.4)"}}),
+      u.default.createElement("div",{className:"hb-arch2",style:{position:"absolute",top:20,left:-60,width:140,height:140,borderRadius:"50%",background:"linear-gradient(160deg, rgba(199,153,153,0.22), rgba(205,187,160,0.2))"}}),
+      u.default.createElement("svg",{viewBox:"0 0 280 100",style:{width:220,height:78,display:"block",marginBottom:4,position:"relative",zIndex:2}},
         u.default.createElement("path",{d:"M12,48 C34,10 84,10 70,42 C58,70 118,74 134,38 C146,10 200,4 232,22",
           fill:"none",stroke:s.ocean,strokeWidth:1.2,strokeLinecap:"round",opacity:.75}),
+        u.default.createElement("circle",{cx:96,cy:56,r:30,fill:"none",stroke:"#C79999",strokeWidth:1,opacity:.55}),
+        u.default.createElement("circle",{cx:126,cy:72,r:24,fill:"none",stroke:s.tree,strokeWidth:1,opacity:.5}),
         u.default.createElement("circle",{className:"hb-breathe-a",cx:12,cy:48,r:4,fill:s.ocean}),
         u.default.createElement("circle",{className:"hb-breathe-b",cx:134,cy:38,r:3,fill:s.tree})
       ),
@@ -3066,8 +3074,9 @@ function SSOForm({onStaff:l,onOwner:t}){
     key,onClick:()=>setTab(key),
     style:{cursor:"pointer",paddingBottom:5,fontSize:13.5,fontWeight:300,letterSpacing:"0.03em",color:tab===key?"#B98868":s.inkSoft,borderBottom:tab===key?"2px solid #B98868":"2px solid transparent",transition:"color .2s ease, border-color .2s ease",userSelect:"none"}
   },label);
-  let dotField=(value,onChange,onEnter,autoFocus)=>u.default.createElement("div",{className:"sso-dotwrap",style:{position:"relative",borderBottom:`1px solid ${s.line}`,padding:"6px 2px",marginBottom:14,minHeight:18,display:"flex",alignItems:"center",gap:8}},
+  let dotField=(value,onChange,onEnter,autoFocus)=>u.default.createElement("div",{className:"sso-dotwrap",style:{position:"relative",borderBottom:`1px solid ${s.line}`,padding:"6px 2px",marginBottom:10,minHeight:18,display:"flex",alignItems:"center",gap:8}},
     Array.from({length:value.length}).map((_,idx)=>u.default.createElement("span",{key:idx,style:{width:6,height:6,borderRadius:"50%",background:s.ink,display:"inline-block",flexShrink:0}})),
+    u.default.createElement("span",{className:"sso-caret",style:{width:1,height:15,background:"#B98868",display:"inline-block",flexShrink:0}}),
     u.default.createElement("input",{type:"password",value,onChange,onKeyDown:d=>d.key==="Enter"&&onEnter(),autoFocus,autoCapitalize:"off",autoCorrect:"off",spellCheck:!1,style:{position:"absolute",inset:0,opacity:0,border:"none",background:"transparent",width:"100%",height:"100%",cursor:"text",fontSize:16}})
   );
   return u.default.createElement("div",{style:{background:"#F4F1EA",minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Noto Sans TC', sans-serif",padding:"36px 26px"}},
@@ -3078,6 +3087,8 @@ function SSOForm({onStaff:l,onOwner:t}){
       .sso-breathe-b { animation: ssoBreathe 4.4s ease-in-out infinite; animation-delay:1.1s; transform-origin:center; }
       .sso-dotwrap { transition:border-color .2s ease; }
       .sso-dotwrap:focus-within { border-bottom-color:#B98868; }
+      .sso-caret { animation: ssoCaretBlink 1s steps(1) infinite; }
+      @keyframes ssoCaretBlink { 0%,50%{opacity:1} 51%,100%{opacity:0} }
     `),
     u.default.createElement("div",{style:{width:"100%",maxWidth:360}},
 
@@ -3099,14 +3110,14 @@ function SSOForm({onStaff:l,onOwner:t}){
 
       u.default.createElement("div",{style:{minHeight:198}},
         tab==="staff"?u.default.createElement(u.default.Fragment,null,
-          u.default.createElement("label",{style:{fontSize:10.5,fontWeight:300,letterSpacing:"0.08em",color:s.inkSoft,display:"block",marginBottom:4}},"\u5e33\u865f"),
+          u.default.createElement("label",{style:{fontSize:10.5,fontWeight:300,letterSpacing:"0.08em",color:s.inkSoft,display:"block",marginBottom:3}},"\u5e33\u865f"),
           u.default.createElement("input",{value:su,onChange:d=>setSu(d.target.value),onKeyDown:d=>d.key==="Enter"&&doStaff(),style:ssoLine,autoFocus:!0,autoCapitalize:"off",autoCorrect:"off",spellCheck:!1,inputMode:"text"}),
-          u.default.createElement("label",{style:{fontSize:10.5,fontWeight:300,letterSpacing:"0.08em",color:s.inkSoft,display:"block",marginBottom:4}},"\u5bc6\u78bc"),
+          u.default.createElement("label",{style:{fontSize:10.5,fontWeight:300,letterSpacing:"0.08em",color:s.inkSoft,display:"block",marginBottom:3}},"\u5bc6\u78bc"),
           dotField(sp,d=>setSp(d.target.value),doStaff,!1),
           se&&u.default.createElement("p",{style:{color:s.danger,fontSize:12,margin:"0 0 12px"}},se),
           u.default.createElement("button",{onClick:doStaff,disabled:!su.trim()||!sp.trim()||sb,style:{...ssoBtn,marginTop:6,opacity:su.trim()&&sp.trim()&&!sb?1:.45}},sb?u.default.createElement(E,{name:"loader",size:15,className:"animate-spin"}):null," \u767b\u5165")
         ):u.default.createElement(u.default.Fragment,null,
-          u.default.createElement("label",{style:{fontSize:10.5,fontWeight:300,letterSpacing:"0.08em",color:s.inkSoft,display:"block",marginBottom:4}},"\u8acb\u8f38\u5165\u6848\u4ef6\u5bc6\u78bc"),
+          u.default.createElement("label",{style:{fontSize:10.5,fontWeight:300,letterSpacing:"0.08em",color:s.inkSoft,display:"block",marginBottom:3}},"\u8acb\u8f38\u5165\u6848\u4ef6\u5bc6\u78bc"),
           dotField(op,d=>setOp(d.target.value),doOwner,!0),
           oe&&u.default.createElement("p",{style:{color:s.danger,fontSize:12,margin:"0 0 12px"}},oe),
           u.default.createElement("button",{onClick:doOwner,disabled:!op.trim()||ob,style:{...ssoBtn,marginTop:6,opacity:op.trim()&&!ob?1:.45}},ob?u.default.createElement(E,{name:"loader",size:15,className:"animate-spin"}):null," \u9032\u5165\u6848\u4ef6")
@@ -3128,6 +3139,8 @@ function Ky({onBack:l}){let[t,e]=(0,u.useState)([]),[n,a]=(0,u.useState)(!0),[i,
       .sso-breathe-a { animation: ssoBreathe 3.6s ease-in-out infinite; transform-origin:center; }
       .sso-dotwrap { transition:border-color .2s ease; }
       .sso-dotwrap:focus-within { border-bottom-color:#B98868; }
+      .sso-caret { animation: ssoCaretBlink 1s steps(1) infinite; }
+      @keyframes ssoCaretBlink { 0%,50%{opacity:1} 51%,100%{opacity:0} }
     `),
     u.default.createElement("div",{style:{width:"100%",maxWidth:360}},
       u.default.createElement("svg",{viewBox:"0 0 300 66",style:{width:"100%",height:56,display:"block",marginBottom:2}},
@@ -3137,9 +3150,10 @@ function Ky({onBack:l}){let[t,e]=(0,u.useState)([]),[n,a]=(0,u.useState)(!0),[i,
       ),
       u.default.createElement("div",{style:{fontSize:10.5,letterSpacing:"0.2em",color:"#B98868",fontWeight:300,marginBottom:10}},"\u696d\u4e3b\u5c08\u5c6c\u5165\u53e3"),
       u.default.createElement("h1",{style:{color:s.ink,fontSize:24,margin:"0 0 28px",lineHeight:1.2}},"\u8d6b\u67cf\u7a7a\u9593\u8a2d\u8a08"),
-      u.default.createElement("label",{style:{fontSize:10.5,fontWeight:300,letterSpacing:"0.08em",color:s.inkSoft,display:"block",marginBottom:4}},"\u8ACB\u8F38\u5165\u6848\u4EF6\u5BC6\u78BC"),
-      u.default.createElement("div",{className:"sso-dotwrap",style:{position:"relative",borderBottom:`1px solid ${s.line}`,padding:"6px 2px",marginBottom:12,minHeight:18,display:"flex",alignItems:"center",gap:8}},
+      u.default.createElement("label",{style:{fontSize:10.5,fontWeight:300,letterSpacing:"0.08em",color:s.inkSoft,display:"block",marginBottom:3}},"\u8ACB\u8F38\u5165\u6848\u4EF6\u5BC6\u78BC"),
+      u.default.createElement("div",{className:"sso-dotwrap",style:{position:"relative",borderBottom:`1px solid ${s.line}`,padding:"6px 2px",marginBottom:10,minHeight:18,display:"flex",alignItems:"center",gap:8}},
         Array.from({length:e.length}).map((_,idx)=>u.default.createElement("span",{key:idx,style:{width:6,height:6,borderRadius:"50%",background:s.ink,display:"inline-block",flexShrink:0}})),
+        u.default.createElement("span",{className:"sso-caret",style:{width:1,height:15,background:"#B98868",display:"inline-block",flexShrink:0}}),
         u.default.createElement("input",{type:"password",value:e,onChange:d=>n(d.target.value),onKeyDown:d=>d.key==="Enter"&&r(),autoFocus:!0,autoCapitalize:"off",autoCorrect:"off",spellCheck:!1,style:{position:"absolute",inset:0,opacity:0,border:"none",background:"transparent",width:"100%",height:"100%",cursor:"text",fontSize:16}})
       ),
       a&&u.default.createElement("p",{style:{color:s.danger,fontSize:12,margin:"0 0 12px"}},a),
