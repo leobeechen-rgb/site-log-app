@@ -669,25 +669,25 @@ function HB_buildContractHTML(v){
 <style>
   @page { size: A4; margin: 18mm 16mm; }
   * { box-sizing: border-box; }
-  body { font-family: "Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif; color:#1A1A1A; max-width:760px; margin:0 auto; padding:24px; line-height:1.75; font-size:13.5px; }
-  .brand { text-align:center; color:#E6A212; font-weight:700; font-size:13px; letter-spacing:1px; margin-bottom:2px; }
-  h1 { font-size:22px; text-align:center; margin:0 0 18px; color:#1C1B18; }
-  h2 { font-size:15px; border-bottom:3px solid #41101B; padding-bottom:6px; margin:24px 0 10px; color:#1C1B18; }
+  body { font-family: "Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif; color:#2B2620; background:#F4F1EA; max-width:760px; margin:0 auto; padding:24px; line-height:1.75; font-size:13.5px; }
+  .brand { text-align:center; color:#B98868; font-weight:700; font-size:13px; letter-spacing:1px; margin-bottom:2px; }
+  h1 { font-size:22px; text-align:center; margin:0 0 18px; color:#2B2620; }
+  h2 { font-size:15px; border-bottom:3px solid #B98868; padding-bottom:6px; margin:24px 0 10px; color:#2B2620; }
   p { margin:6px 0; }
   .blank { text-decoration:underline; padding:0 4px; }
-  .quote { color:#E6A212; font-style:italic; font-weight:700; }
-  table { width:100%; border-collapse:collapse; margin:10px 0; font-size:12.5px; }
-  table.pay th, table.pay td, table.stage th, table.stage td { border:1px solid #999; padding:6px 8px; text-align:left; }
+  .quote { color:#B98868; font-style:italic; font-weight:700; }
+  table { width:100%; border-collapse:collapse; margin:10px 0; font-size:12.5px; background:#fff; }
+  table.pay th, table.pay td, table.stage th, table.stage td { border:1px solid #D9CEBE; padding:6px 8px; text-align:left; }
   table.pay .c { text-align:center; }
-  table.pay th, table.stage th { background:#1C1B18; color:#fff; }
-  table.sign td { border:1px solid #ccc; padding:14px 12px; width:50%; vertical-align:top; }
-  .accbox { background:#E5DCC8; border:1px solid #EDE7DA; border-radius:8px; padding:14px 16px; margin-top:10px; }
-  .footer { font-size:11px; color:#999; margin-top:30px; text-align:center; }
-  @media print { .toolbar{display:none!important;} body{padding:0;} }
-  .toolbar { position:sticky; top:0; background:rgba(28,27,24,0.85);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px); padding:12px 16px; display:flex; justify-content:space-between; align-items:center; margin:-24px -24px 24px; }
+  table.pay th, table.stage th { background:#2B2620; color:#fff; }
+  table.sign td { border:1px solid #D9CEBE; padding:14px 12px; width:50%; vertical-align:top; }
+  .accbox { background:#EFE6D6; border:1px solid #E3DACB; border-radius:8px; padding:14px 16px; margin-top:10px; }
+  .footer { font-size:11px; color:#8C8275; margin-top:30px; text-align:center; }
+  @media print { .toolbar{display:none!important;} body{padding:0;background:#fff;} }
+  .toolbar { position:sticky; top:0; background:rgba(43,38,32,0.88);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px); padding:12px 16px; display:flex; justify-content:space-between; align-items:center; margin:-24px -24px 24px; }
   .toolbar button { border:none; border-radius:7px; padding:8px 16px; font-weight:700; font-size:13px; cursor:pointer; }
-  .toolbar .back { background:none; color:#C7B8A0; border:1px solid #C7B8A0 !important; }
-  .toolbar .print { background:#41101B; color:#EEE5DA; }
+  .toolbar .back { background:none; color:#E9DFCE; border:1px solid #E9DFCE !important; }
+  .toolbar .print { background:#B98868; color:#FBF8F2; }
 </style>
 </head>
 <body>
@@ -826,23 +826,23 @@ function HB_buildEngContractHTML(v){
 <style>
   @page { size: A4; margin: 18mm 16mm; }
   * { box-sizing: border-box; }
-  body { font-family: "Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif; color:#1A1A1A; max-width:760px; margin:0 auto; padding:24px; line-height:1.75; font-size:13.5px; }
-  .brand { text-align:center; color:#E6A212; font-weight:700; font-size:13px; letter-spacing:1px; margin-bottom:2px; }
-  h1 { font-size:22px; text-align:center; margin:0 0 18px; color:#1C1B18; }
-  h2 { font-size:15px; border-bottom:3px solid #41101B; padding-bottom:6px; margin:24px 0 10px; color:#1C1B18; }
+  body { font-family: "Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif; color:#2B2620; background:#F4F1EA; max-width:760px; margin:0 auto; padding:24px; line-height:1.75; font-size:13.5px; }
+  .brand { text-align:center; color:#B98868; font-weight:700; font-size:13px; letter-spacing:1px; margin-bottom:2px; }
+  h1 { font-size:22px; text-align:center; margin:0 0 18px; color:#2B2620; }
+  h2 { font-size:15px; border-bottom:3px solid #B98868; padding-bottom:6px; margin:24px 0 10px; color:#2B2620; }
   p { margin:6px 0; }
   .blank { text-decoration:underline; padding:0 4px; }
-  table { width:100%; border-collapse:collapse; margin:10px 0; font-size:12.5px; }
-  table.pay th, table.pay td { border:1px solid #999; padding:6px 8px; text-align:left; }
-  table.pay th { background:#1C1B18; color:#fff; }
-  table.sign td { border:1px solid #ccc; padding:14px 12px; width:50%; vertical-align:top; }
-  .accbox { background:#E5DCC8; border:1px solid #EDE7DA; border-radius:8px; padding:14px 16px; margin-top:10px; }
-  .footer { font-size:11px; color:#999; margin-top:30px; text-align:center; }
-  @media print { .toolbar{display:none!important;} body{padding:0;} }
-  .toolbar { position:sticky; top:0; background:rgba(28,27,24,0.85);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px); padding:12px 16px; display:flex; justify-content:space-between; align-items:center; margin:-24px -24px 24px; }
+  table { width:100%; border-collapse:collapse; margin:10px 0; font-size:12.5px; background:#fff; }
+  table.pay th, table.pay td { border:1px solid #D9CEBE; padding:6px 8px; text-align:left; }
+  table.pay th { background:#2B2620; color:#fff; }
+  table.sign td { border:1px solid #D9CEBE; padding:14px 12px; width:50%; vertical-align:top; }
+  .accbox { background:#EFE6D6; border:1px solid #E3DACB; border-radius:8px; padding:14px 16px; margin-top:10px; }
+  .footer { font-size:11px; color:#8C8275; margin-top:30px; text-align:center; }
+  @media print { .toolbar{display:none!important;} body{padding:0;background:#fff;} }
+  .toolbar { position:sticky; top:0; background:rgba(43,38,32,0.88);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px); padding:12px 16px; display:flex; justify-content:space-between; align-items:center; margin:-24px -24px 24px; }
   .toolbar button { border:none; border-radius:7px; padding:8px 16px; font-weight:700; font-size:13px; cursor:pointer; }
-  .toolbar .back { background:none; color:#C7B8A0; border:1px solid #C7B8A0 !important; }
-  .toolbar .print { background:#41101B; color:#EEE5DA; }
+  .toolbar .back { background:none; color:#E9DFCE; border:1px solid #E9DFCE !important; }
+  .toolbar .print { background:#B98868; color:#FBF8F2; }
 </style>
 </head>
 <body>
