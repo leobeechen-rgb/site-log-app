@@ -1592,17 +1592,23 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
     }catch(err){e("推送失敗："+(err&&err.result&&err.result.error&&err.result.error.message||err.message||err))}
     finally{setSheetBusy(null)}
   };
-  let pullFromSheet=async()=>{
-    if(!a.engName){e("請先輸入工程名稱");return}
+  let[pickerFiles,setPickerFiles]=(0,u.useState)(null);
+  let openSheetPicker=async()=>{
     setSheetBusy("pull");
     try{
       await HB_ensureGoogleReady();
-      let id=sheetId;
-      if(!id){
-        id=await HB_findSheetByTitle(a.engName+" 估價單");
-        if(!id){e("找不到對應的 Google 試算表，請先按「推送到 Google 試算表」建立");setSheetBusy(null);return}
-        setSheetId(id)
-      }
+      let listRes=await window.gapi.client.drive.files.list({q:"mimeType='application/vnd.google-apps.spreadsheet' and trashed=false",fields:"files(id,name,modifiedTime)",orderBy:"modifiedTime desc",pageSize:20});
+      let files=listRes.result.files||[];
+      if(files.length===0){e("目前沒有可選擇的 Google 試算表，請先按「推送到 Google 試算表」建立一份");setSheetBusy(null);return}
+      setSheetBusy(null);
+      setPickerFiles(files)
+    }catch(err){e("讀取試算表清單失敗："+(err&&err.result&&err.result.error&&err.result.error.message||err.message||err));setSheetBusy(null)}
+  };
+  let doPull=async id=>{
+    setPickerFiles(null);
+    setSheetId(id);
+    setSheetBusy("pull");
+    try{
       let meta=await window.gapi.client.sheets.spreadsheets.get({spreadsheetId:id});
       let titles=meta.result.sheets.map(sh=>sh.properties.title);
       let newCats=[...a.categories];
@@ -1846,13 +1852,23 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
       ),
       u.default.createElement("div",{style:{display:"flex",gap:7,marginBottom:7}},
         u.default.createElement("button",{onClick:pushToSheet,disabled:!!sheetBusy,style:{flex:1,border:"1px solid rgba(255,255,255,0.4)",background:"none",borderRadius:9,padding:"9px 0",fontSize:12,color:"#fff",cursor:"pointer",opacity:sheetBusy?.6:1}},sheetBusy==="push"?"推送中…":(sheetId?"↑ 更新 Google 試算表":"↑ 推送到 Google 試算表")),
-        u.default.createElement("button",{onClick:pullFromSheet,disabled:!!sheetBusy,style:{flex:1,border:"1px solid rgba(255,255,255,0.4)",background:"none",borderRadius:9,padding:"9px 0",fontSize:12,color:"#fff",cursor:"pointer",opacity:sheetBusy?.6:1}},sheetBusy==="pull"?"載入中…":"↓ 從試算表載入")
+        u.default.createElement("button",{onClick:openSheetPicker,disabled:!!sheetBusy,style:{flex:1,border:"1px solid rgba(255,255,255,0.4)",background:"none",borderRadius:9,padding:"9px 0",fontSize:12,color:"#fff",cursor:"pointer",opacity:sheetBusy?.6:1}},sheetBusy==="pull"?"載入中…":"↓ 從試算表載入")
       ),
       u.default.createElement("div",{style:{display:"flex",gap:7,marginTop:grandCost>0?0:8}},
         u.default.createElement("button",{onClick:save,disabled:o,style:{flex:2,background:s.lemon,color:s.oceanDark,border:"none",borderRadius:9,padding:"11px 0",fontWeight:300,fontSize:13.5,cursor:"pointer",opacity:o?.6:1}},o?"儲存中…":"儲存估價單"),
         u.default.createElement("button",{onClick:()=>HB_openEstimatePrint(a),style:{flex:1,border:"1px solid rgba(255,255,255,0.4)",background:"none",borderRadius:9,padding:"10px 0",fontSize:12.5,color:"#fff",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:5}},u.default.createElement(E,{name:"printer",size:14}),"PDF"),
         u.default.createElement("button",{onClick:()=>HB_generateEstimateExcel(a),style:{flex:1,border:"1px solid rgba(255,255,255,0.4)",background:"none",borderRadius:9,padding:"10px 0",fontSize:12.5,color:"#fff",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:5}},u.default.createElement(E,{name:"file-output",size:14}),"Excel")
       )
+      )
+    ),
+    pickerFiles&&u.default.createElement("div",{style:{position:"fixed",inset:0,background:"rgba(28,27,24,0.6)",display:"flex",alignItems:"center",justifyContent:"center",padding:20,zIndex:80}},
+      u.default.createElement("div",{style:{background:s.card,borderRadius:10,padding:20,width:"100%",maxWidth:380,maxHeight:"70vh",overflowY:"auto"}},
+        u.default.createElement("h3",{style:{margin:"0 0 4px",fontSize:16,fontWeight:400,color:s.oceanDark}},"選擇要載入的 Google 試算表"),
+        u.default.createElement("p",{style:{fontSize:12,color:s.inkSoft,margin:"0 0 14px"}},"只會列出這個 App 建立過、你有存取權的試算表"),
+        u.default.createElement("div",{style:{display:"flex",flexDirection:"column",gap:8,marginBottom:16}},
+          pickerFiles.map(fobj=>u.default.createElement("button",{key:fobj.id,onClick:()=>doPull(fobj.id),style:{textAlign:"left",border:`1px solid ${s.line}`,borderRadius:8,padding:"9px 12px",background:"none",cursor:"pointer",fontSize:13}},fobj.name))
+        ),
+        u.default.createElement("button",{onClick:()=>setPickerFiles(null),style:{...ll,width:"100%"}},"取消")
       )
     )
   )
