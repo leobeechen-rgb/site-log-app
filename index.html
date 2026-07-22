@@ -1914,13 +1914,7 @@ function HbLanding({onCase:l,onCompany:t,onManageStaff:e,onLogout:n,onQuickQuote
       )
     ),
 
-    u.default.createElement("div",{className:"hb-scroll",style:{display:"flex",gap:14,padding:"20px 20px 6px",overflowX:"auto",position:"relative",zIndex:1}},
-      u.default.createElement(HbArchCard,{icon:"clipboard-list",title:"\u6848\u4ef6\u8cc7\u6599\u5eab",tint:"linear-gradient(160deg,#B98868,#9C7657)",onClick:l}),
-      u.default.createElement(HbArchCard,{icon:"folder",title:"\u516c\u53f8\u8cc7\u6599\u5eab",tint:"linear-gradient(160deg,#8FA68C,#728C6F)",onClick:t}),
-      u.default.createElement(HbArchCard,{icon:"image",title:"\u884c\u92b7\u7167\u7247\u5eab",tint:"linear-gradient(160deg,#C79999,#B07E7E)",onClick:mp})
-    ),
-
-    u.default.createElement("div",{style:{position:"relative",padding:"36px 20px",zIndex:1,textAlign:"center",overflow:"visible"}},
+    u.default.createElement("div",{style:{position:"relative",padding:"20px 20px 10px",zIndex:1,textAlign:"center",overflow:"visible"}},
       u.default.createElement("div",{className:"hb-arch",style:{position:"absolute",top:-10,left:"8%",width:120,height:120,borderRadius:"50%",background:"linear-gradient(160deg, rgba(185,136,104,0.22), rgba(143,166,140,0.18))",pointerEvents:"none"}}),
       u.default.createElement("div",{className:"hb-arch2",style:{position:"absolute",bottom:-14,right:"10%",width:90,height:90,borderRadius:"50%",background:"linear-gradient(160deg, rgba(199,153,153,0.2), rgba(205,187,160,0.18))",pointerEvents:"none"}}),
       u.default.createElement("div",{style:{background:"rgba(255,255,255,0.32)",backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)",border:"1px solid rgba(255,255,255,0.55)",borderRadius:60,padding:"36px 24px",position:"relative"}},
@@ -1934,28 +1928,34 @@ function HbLanding({onCase:l,onCompany:t,onManageStaff:e,onLogout:n,onQuickQuote
           u.default.createElement("circle",{className:"hb-breathe-b",cx:134,cy:12,r:2.6,fill:s.tree})
         ),
         u.default.createElement("div",{className:"mono",style:{color:s.ocean,fontSize:11,letterSpacing:2,marginBottom:8,fontWeight:400}},"HERFULSINS INTERIOR DESIGN"),
-        u.default.createElement("h1",{style:{color:s.ink,fontSize:26,fontWeight:300,margin:0}},"\u8d6b\u67cf\u7a7a\u9593\u8a2d\u8a08"),
-        u.default.createElement("p",{style:{color:s.inkSoft,fontSize:13,marginTop:6,fontWeight:300}},"\u5de5\u5730\u7d00\u9304\u672c \xb7 \u8acb\u9078\u64c7\u8981\u7ba1\u7406\u7684\u8cc7\u6599\u5eab")
+        u.default.createElement("h1",{style:{color:s.ink,fontSize:26,fontWeight:300,margin:0}},"赫柏空間設計"),
+        u.default.createElement("p",{style:{color:s.inkSoft,fontSize:13,marginTop:6,fontWeight:300}},"工地紀錄本 · 請選擇要管理的資料庫")
       )
     ),
 
-    u.default.createElement("div",{style:{padding:"4px 20px 8px",position:"relative",zIndex:1}},
-      u.default.createElement("div",{style:{fontSize:12.5,fontWeight:400,color:s.inkSoft,letterSpacing:1,marginBottom:2}},"\u5916\u90e8\u9078\u55ae"),
-      u.default.createElement("svg",{viewBox:"0 0 90 14",style:{width:70,height:11,display:"block"}},
+    u.default.createElement("div",{style:{maxWidth:480,margin:"0 auto",padding:"0 20px 100px",position:"relative",zIndex:1}},
+
+      u.default.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12,paddingTop:6}},
+        u.default.createElement(HbCompanyGridCard,{icon:"clipboard-list",title:"案件資料庫",desc:"管理進行中的空間設計與工程專案：施工照片、材料送達、專案檔案、設備資料",onClick:l}),
+        u.default.createElement(HbCompanyGridCard,{icon:"folder",title:"公司資料庫",desc:"公司營運、行政與制式合約：設計合約、工程報價單",onClick:t}),
+        u.default.createElement(HbCompanyGridCard,{icon:"image",title:"行銷照片庫",desc:"跨案件的行銷／提案用照片庫",onClick:mp})
+      ),
+
+      u.default.createElement("div",{style:{fontSize:12.5,fontWeight:400,color:s.inkSoft,letterSpacing:1,margin:"18px 0 8px"}},"外部選單"),
+      u.default.createElement("svg",{viewBox:"0 0 90 14",style:{width:70,height:11,display:"block",marginBottom:8}},
         u.default.createElement("path",{d:"M2,8 C18,-2 26,16 42,6 C58,-4 66,14 88,4",fill:"none",stroke:s.ocean,strokeWidth:1,opacity:.55})
-      )
-    ),
-    u.default.createElement("div",{className:"hb-scroll",style:{display:"flex",gap:14,padding:"10px 20px 20px",overflowX:"auto",position:"relative",zIndex:1}},
-      u.default.createElement(HbArchCard,{icon:"zap",title:"\u5feb\u901f\u5831\u50f9\u7cfb\u7d71",tint:"linear-gradient(160deg,#CDBBA0,#B29C7C)",onClick:qq}),
-      u.default.createElement(HbArchCard,{icon:"users",title:"\u5ba2\u6236\u9810\u7d04\u9801\u9762",tint:"linear-gradient(160deg,#8FA68C,#6E8A6A)",onClick:ob}),
-      u.default.createElement(HbArchCard,{icon:"calendar",title:"\u9810\u7d04\u7ba1\u7406",tint:"linear-gradient(160deg,#B98868,#8C6F52)",onClick:bk}),
-      u.default.createElement(HbArchCard,{icon:"presentation",title:"\u63d0\u6848\u7c21\u5831",tint:"linear-gradient(160deg,#C79999,#A67979)",onClick:pg})
-    ),
+      ),
 
-    u.default.createElement("div",{style:{padding:"6px 20px 100px",position:"relative",zIndex:1}},
-      u.default.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginTop:10}},
-        u.default.createElement("button",{onClick:()=>HB_copyBookingLink(),style:{display:"flex",alignItems:"center",justifyContent:"center",gap:8,background:"rgba(255,255,255,0.34)",backdropFilter:"blur(14px)",WebkitBackdropFilter:"blur(14px)",border:"1px solid rgba(255,255,255,0.55)",borderRadius:24,padding:"12px 0",fontSize:13,fontWeight:400,color:s.oceanDark,cursor:"pointer"}},u.default.createElement(E,{name:"copy",size:15}),"\u8907\u88fd\u9810\u7d04\u7db2\u5740"),
-        u.default.createElement("button",{onClick:()=>HB_shareBookingLinkToLine(),style:{display:"flex",alignItems:"center",justifyContent:"center",gap:8,background:"rgba(255,255,255,0.34)",backdropFilter:"blur(14px)",WebkitBackdropFilter:"blur(14px)",border:"1px solid rgba(255,255,255,0.55)",borderRadius:24,padding:"12px 0",fontSize:13,fontWeight:400,color:s.oceanDark,cursor:"pointer"}},u.default.createElement(E,{name:"share",size:15}),"\u5206\u4eab\u5230 LINE")
+      u.default.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}},
+        u.default.createElement(HbCompanyGridCard,{icon:"zap",title:"快速報價系統",desc:"獨立單價庫＋報價單產生工具，於新視窗開啟",onClick:qq}),
+        u.default.createElement(HbCompanyGridCard,{icon:"users",title:"客戶預約頁面",desc:"開啟客戶線上預約諮詢頁面",onClick:ob}),
+        u.default.createElement(HbCompanyGridCard,{icon:"calendar",title:"預約管理",desc:"查看客戶預約、修改時段、設定公休日",onClick:bk}),
+        u.default.createElement(HbCompanyGridCard,{icon:"presentation",title:"提案簡報",desc:"提案簡報用PPT產生器，於新視窗開啟",onClick:pg})
+      ),
+
+      u.default.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginTop:14}},
+        u.default.createElement("button",{onClick:()=>HB_copyBookingLink(),style:{display:"flex",alignItems:"center",justifyContent:"center",gap:8,background:"rgba(255,255,255,0.34)",backdropFilter:"blur(14px)",WebkitBackdropFilter:"blur(14px)",border:"1px solid rgba(255,255,255,0.55)",borderRadius:24,padding:"12px 0",fontSize:13,fontWeight:400,color:s.oceanDark,cursor:"pointer"}},u.default.createElement(E,{name:"copy",size:15}),"複製預約網址"),
+        u.default.createElement("button",{onClick:()=>HB_shareBookingLinkToLine(),style:{display:"flex",alignItems:"center",justifyContent:"center",gap:8,background:"rgba(255,255,255,0.34)",backdropFilter:"blur(14px)",WebkitBackdropFilter:"blur(14px)",border:"1px solid rgba(255,255,255,0.55)",borderRadius:24,padding:"12px 0",fontSize:13,fontWeight:400,color:s.oceanDark,cursor:"pointer"}},u.default.createElement(E,{name:"share",size:15}),"分享到 LINE")
       )
     )
   );
