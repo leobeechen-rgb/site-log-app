@@ -1580,11 +1580,11 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
         let requests=a.categories.filter(c=>!existingTitles.includes((c.name||"未命名").slice(0,90))).map(c=>({addSheet:{properties:{title:(c.name||"未命名").slice(0,90)}}}));
         if(requests.length)await window.gapi.client.sheets.spreadsheets.batchUpdate({spreadsheetId:id,resource:{requests}})
       }
-      let header=["項目","規格","單位","數量","單價","廠商單價","備註"];
+      let header=["項目","規格","單位","數量","單價","複價","備註","廠商單價","淨利"];
       for(let c of a.categories){
         let name=(c.name||"未命名").slice(0,90);
         await window.gapi.client.sheets.spreadsheets.values.clear({spreadsheetId:id,range:`'${name}'!A1:Z1000`});
-        let rows=[header,...c.items.map(it=>[it.name||"",it.spec||"",it.unit||"",it.qty||"",it.price||"",it.vendorPrice||"",it.note||""])];
+        let rows=[header,...c.items.map((it,idx)=>{let r=idx+2;return[it.name||"",it.spec||"",it.unit||"",it.qty||"",it.price||"",`=D${r}*E${r}`,it.note||"",it.vendorPrice||"",`=D${r}*(E${r}-H${r})`]})];
         await window.gapi.client.sheets.spreadsheets.values.update({spreadsheetId:id,range:`'${name}'!A1`,valueInputOption:"USER_ENTERED",resource:{values:rows}})
       }
       e("已推送到 Google 試算表");
@@ -1607,11 +1607,11 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
       let titles=meta.result.sheets.map(sh=>sh.properties.title);
       let newCats=[...a.categories];
       for(let title of titles){
-        let valuesRes=await window.gapi.client.sheets.spreadsheets.values.get({spreadsheetId:id,range:`'${title}'!A1:G1000`});
+        let valuesRes=await window.gapi.client.sheets.spreadsheets.values.get({spreadsheetId:id,range:`'${title}'!A1:I1000`});
         let rows=valuesRes.result.values||[];
         if(rows.length&&["項目","品名","name"].includes((rows[0][0]||"").toString().trim()))rows=rows.slice(1);
         rows=rows.filter(r=>r&&r.some(v=>(v??"").toString().trim()!==""));
-        let items=rows.map(r=>({id:HB_estUid(),name:(r[0]||"").toString(),spec:(r[1]||"").toString(),unit:(r[2]||"").toString()||"式",qty:(r[3]||"1").toString()||"1",price:(r[4]||"").toString(),vendorPrice:(r[5]||"").toString(),note:(r[6]||"").toString()}));
+        let items=rows.map(r=>({id:HB_estUid(),name:(r[0]||"").toString(),spec:(r[1]||"").toString(),unit:(r[2]||"").toString()||"式",qty:(r[3]||"1").toString()||"1",price:(r[4]||"").toString(),note:(r[6]||"").toString(),vendorPrice:(r[7]||"").toString()}));
         let idx=newCats.findIndex(c=>(c.name||"未命名")===title);
         if(idx!==-1)newCats[idx]={...newCats[idx],items};
         else newCats.push({...HB_newEstCategory(title),items})
