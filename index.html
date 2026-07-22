@@ -92,6 +92,8 @@
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://apis.google.com/js/api.js"></script>
 </head>
 <body>
 <div id="root"></div>
@@ -1130,6 +1132,59 @@ function HB_estGrandTotal(categories){return(categories||[]).reduce((sum,c)=>sum
 function HB_estCatCost(cat){return(cat.items||[]).reduce((sum,it)=>sum+HB_num(it.qty)*HB_num(it.vendorPrice),0)}
 function HB_estGrandCost(categories){return(categories||[]).reduce((sum,c)=>sum+HB_estCatCost(c),0)}
 
+let HB_GOOGLE_CLIENT_ID="215245919078-9jr65r3fl0ih29savivm6mc3guoj15s1.apps.googleusercontent.com";
+let HB_GOOGLE_SCOPES="https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.file";
+let HB_gTokenClient=null;
+let HB_gAccessToken=null;
+function HB_ensureGapiLoaded(){
+  return new Promise((resolve,reject)=>{
+    if(window.gapi&&window.gapi.client&&window.gapi.client.sheets&&window.gapi.client.drive)return resolve();
+    if(!window.gapi)return reject(new Error("Google API 尚未載入完成，請稍後再試或重新整理頁面"));
+    window.gapi.load("client",async()=>{
+      try{
+        await window.gapi.client.init({});
+        await window.gapi.client.load("https://sheets.googleapis.com/$discovery/rest?version=v4");
+        await window.gapi.client.load("https://www.googleapis.com/discovery/v1/apis/drive/v3/rest");
+        resolve()
+      }catch(err){reject(err)}
+    })
+  })
+}
+function HB_googleAuth(){
+  return new Promise((resolve,reject)=>{
+    if(!window.google||!window.google.accounts||!window.google.accounts.oauth2)return reject(new Error("Google 登入元件尚未載入完成，請稍後再試或重新整理頁面"));
+    if(!HB_gTokenClient){
+      HB_gTokenClient=window.google.accounts.oauth2.initTokenClient({client_id:HB_GOOGLE_CLIENT_ID,scope:HB_GOOGLE_SCOPES,callback:()=>{}})
+    }
+    HB_gTokenClient.callback=resp=>{
+      if(resp.error)return reject(resp);
+      HB_gAccessToken=resp.access_token;
+      window.gapi.client.setToken({access_token:resp.access_token});
+      resolve(resp.access_token)
+    };
+    HB_gTokenClient.requestAccessToken({prompt:HB_gAccessToken?"":"consent"})
+  })
+}
+async function HB_ensureGoogleReady(){
+  await HB_ensureGapiLoaded();
+  if(!HB_gAccessToken)await HB_googleAuth();
+  else window.gapi.client.setToken({access_token:HB_gAccessToken})
+}
+async function HB_findOrCreateSheet(title,categoryNames){
+  let q=`name='${title.replace(/'/g,"\\'")}' and mimeType='application/vnd.google-apps.spreadsheet' and trashed=false`;
+  let listRes=await window.gapi.client.drive.files.list({q,fields:"files(id,name)",pageSize:5});
+  let found=listRes.result.files&&listRes.result.files[0];
+  if(found)return found.id;
+  let createRes=await window.gapi.client.sheets.spreadsheets.create({properties:{title},sheets:categoryNames.map(nm=>({properties:{title:nm}}))});
+  return createRes.result.spreadsheetId
+}
+async function HB_findSheetByTitle(title){
+  let q=`name='${title.replace(/'/g,"\\'")}' and mimeType='application/vnd.google-apps.spreadsheet' and trashed=false`;
+  let listRes=await window.gapi.client.drive.files.list({q,fields:"files(id,name)",pageSize:5});
+  let found=listRes.result.files&&listRes.result.files[0];
+  return found?found.id:null
+}
+
 function HB_buildEstimateHTML(v){
   let e=HB_esc;
   let total=HB_estGrandTotal(v.categories);
@@ -1507,6 +1562,65 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
     if(res.error){e("儲存失敗："+res.error.message);return}
     e("已儲存估價單"),n()
   };
+  let[sheetId,setSheetId]=(0,u.useState)(null);
+  let[sheetBusy,setSheetBusy]=(0,u.useState)(null);
+  let pushToSheet=async()=>{
+    if(!a.engName){e("請先輸入工程名稱");return}
+    setSheetBusy("push");
+    try{
+      await HB_ensureGoogleReady();
+      let title=a.engName+" 估價單";
+      let id=sheetId;
+      if(!id){
+        id=await HB_findOrCreateSheet(title,a.categories.map(c=>(c.name||"未命名").slice(0,90)));
+        setSheetId(id)
+      }else{
+        let meta=await window.gapi.client.sheets.spreadsheets.get({spreadsheetId:id});
+        let existingTitles=meta.result.sheets.map(sh=>sh.properties.title);
+        let requests=a.categories.filter(c=>!existingTitles.includes((c.name||"未命名").slice(0,90))).map(c=>({addSheet:{properties:{title:(c.name||"未命名").slice(0,90)}}}));
+        if(requests.length)await window.gapi.client.sheets.spreadsheets.batchUpdate({spreadsheetId:id,resource:{requests}})
+      }
+      let header=["項目","規格","單位","數量","單價","廠商單價","備註"];
+      for(let c of a.categories){
+        let name=(c.name||"未命名").slice(0,90);
+        await window.gapi.client.sheets.spreadsheets.values.clear({spreadsheetId:id,range:`'${name}'!A1:Z1000`});
+        let rows=[header,...c.items.map(it=>[it.name||"",it.spec||"",it.unit||"",it.qty||"",it.price||"",it.vendorPrice||"",it.note||""])];
+        await window.gapi.client.sheets.spreadsheets.values.update({spreadsheetId:id,range:`'${name}'!A1`,valueInputOption:"USER_ENTERED",resource:{values:rows}})
+      }
+      e("已推送到 Google 試算表");
+      window.open(`https://docs.google.com/spreadsheets/d/${id}/edit`,"_blank")
+    }catch(err){e("推送失敗："+(err&&err.result&&err.result.error&&err.result.error.message||err.message||err))}
+    finally{setSheetBusy(null)}
+  };
+  let pullFromSheet=async()=>{
+    if(!a.engName){e("請先輸入工程名稱");return}
+    setSheetBusy("pull");
+    try{
+      await HB_ensureGoogleReady();
+      let id=sheetId;
+      if(!id){
+        id=await HB_findSheetByTitle(a.engName+" 估價單");
+        if(!id){e("找不到對應的 Google 試算表，請先按「推送到 Google 試算表」建立");setSheetBusy(null);return}
+        setSheetId(id)
+      }
+      let meta=await window.gapi.client.sheets.spreadsheets.get({spreadsheetId:id});
+      let titles=meta.result.sheets.map(sh=>sh.properties.title);
+      let newCats=[...a.categories];
+      for(let title of titles){
+        let valuesRes=await window.gapi.client.sheets.spreadsheets.values.get({spreadsheetId:id,range:`'${title}'!A1:G1000`});
+        let rows=valuesRes.result.values||[];
+        if(rows.length&&["項目","品名","name"].includes((rows[0][0]||"").toString().trim()))rows=rows.slice(1);
+        rows=rows.filter(r=>r&&r.some(v=>(v??"").toString().trim()!==""));
+        let items=rows.map(r=>({id:HB_estUid(),name:(r[0]||"").toString(),spec:(r[1]||"").toString(),unit:(r[2]||"").toString()||"式",qty:(r[3]||"1").toString()||"1",price:(r[4]||"").toString(),vendorPrice:(r[5]||"").toString(),note:(r[6]||"").toString()}));
+        let idx=newCats.findIndex(c=>(c.name||"未命名")===title);
+        if(idx!==-1)newCats[idx]={...newCats[idx],items};
+        else newCats.push({...HB_newEstCategory(title),items})
+      }
+      i(p=>({...p,categories:newCats}));
+      e("已從 Google 試算表載入")
+    }catch(err){e("載入失敗："+(err&&err.result&&err.result.error&&err.result.error.message||err.message||err))}
+    finally{setSheetBusy(null)}
+  };
   let inputStyle={width:"100%",padding:"7px 9px",borderRadius:6,border:`1px solid ${s.line}`,fontSize:13,boxSizing:"border-box",fontFamily:"inherit"};
   let thStyle={border:`1px solid ${s.line}`,background:s.cardAlt,color:s.oceanDark,fontWeight:400,fontSize:11,padding:"5px 4px",whiteSpace:"nowrap"};
   let tdStyle={border:`1px solid ${s.line}`,padding:"2px 3px",verticalAlign:"top"};
@@ -1729,6 +1843,10 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
       grandCost>0&&u.default.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:7}},
         u.default.createElement("span",{style:{color:"#8FB8C9",fontSize:10.5}},"預估淨利（僅您可見，不會出現在PDF/Excel）"),
         u.default.createElement("span",{style:{color:"#C7B8A0",fontWeight:400,fontSize:12.5}},"NT$ ",HB_money(grandProfit))
+      ),
+      u.default.createElement("div",{style:{display:"flex",gap:7,marginBottom:7}},
+        u.default.createElement("button",{onClick:pushToSheet,disabled:!!sheetBusy,style:{flex:1,border:"1px solid rgba(255,255,255,0.4)",background:"none",borderRadius:9,padding:"9px 0",fontSize:12,color:"#fff",cursor:"pointer",opacity:sheetBusy?.6:1}},sheetBusy==="push"?"推送中…":(sheetId?"↑ 更新 Google 試算表":"↑ 推送到 Google 試算表")),
+        u.default.createElement("button",{onClick:pullFromSheet,disabled:!!sheetBusy,style:{flex:1,border:"1px solid rgba(255,255,255,0.4)",background:"none",borderRadius:9,padding:"9px 0",fontSize:12,color:"#fff",cursor:"pointer",opacity:sheetBusy?.6:1}},sheetBusy==="pull"?"載入中…":"↓ 從試算表載入")
       ),
       u.default.createElement("div",{style:{display:"flex",gap:7,marginTop:grandCost>0?0:8}},
         u.default.createElement("button",{onClick:save,disabled:o,style:{flex:2,background:s.lemon,color:s.oceanDark,border:"none",borderRadius:9,padding:"11px 0",fontWeight:300,fontSize:13.5,cursor:"pointer",opacity:o?.6:1}},o?"儲存中…":"儲存估價單"),
