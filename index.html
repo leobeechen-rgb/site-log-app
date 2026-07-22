@@ -67,13 +67,15 @@
   html, body {
     background-color: #F7F4D5 !important;
     background-image:
-      radial-gradient(120% 90% at 12% -5%, rgba(247,244,213,0.9) 0%, rgba(247,244,213,0) 55%),
-      radial-gradient(110% 100% at 90% 8%, rgba(215,224,196,0.85) 0%, rgba(215,224,196,0) 55%),
-      radial-gradient(140% 120% at 22% 55%, rgba(199,219,219,0.8) 0%, rgba(199,219,219,0) 60%),
-      radial-gradient(130% 120% at 88% 95%, rgba(211,150,140,0.35) 0%, rgba(211,150,140,0) 60%),
+      url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%27500%27%20height%3D%27500%27%3E%0A%3Cfilter%20id%3D%27mb%27%3E%0A%3CfeTurbulence%20type%3D%27fractalNoise%27%20baseFrequency%3D%270.006%200.045%27%20numOctaves%3D%274%27%20seed%3D%2724%27%20result%3D%27n%27/%3E%0A%3CfeColorMatrix%20in%3D%27n%27%20type%3D%27matrix%27%20values%3D%270%200%200%200%200.514%20%200%200%200%200%200.600%20%200%200%200%200%200.345%20%200.34%200.34%200.34%200%200%27%20result%3D%27c%27/%3E%0A%3CfeComponentTransfer%20in%3D%27c%27%20result%3D%27c2%27%3E%3CfeFuncA%20type%3D%27gamma%27%20amplitude%3D%271%27%20exponent%3D%273%27%20offset%3D%270%27/%3E%3C/feComponentTransfer%3E%0A%3C/filter%3E%0A%3Crect%20width%3D%27500%27%20height%3D%27500%27%20filter%3D%27url%28%23mb%29%27/%3E%0A%3C/svg%3E"),
+      radial-gradient(120% 90% at 12% -5%, rgba(247,244,213,0.92) 0%, rgba(247,244,213,0) 55%),
+      radial-gradient(110% 100% at 90% 8%, rgba(215,224,196,0.7) 0%, rgba(215,224,196,0) 55%),
+      radial-gradient(140% 120% at 22% 55%, rgba(199,219,219,0.6) 0%, rgba(199,219,219,0) 60%),
+      radial-gradient(130% 120% at 88% 95%, rgba(211,150,140,0.3) 0%, rgba(211,150,140,0) 60%),
       linear-gradient(160deg, #FFFFFF 0%, #FBFAEA 45%, #F3EFD3 100%) !important;
+    background-size: 480px 480px, auto, auto, auto, auto, auto !important;
     background-attachment: fixed !important;
-    background-repeat: no-repeat !important;
+    background-repeat: repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat !important;
     min-height: 100%;
   }
   #root {
