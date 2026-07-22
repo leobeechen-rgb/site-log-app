@@ -1914,36 +1914,31 @@ function HbLanding({onCase:l,onCompany:t,onManageStaff:e,onLogout:n,onQuickQuote
       )
     ),
 
-    u.default.createElement("div",{style:{position:"relative",padding:"20px 20px 10px",zIndex:1,textAlign:"center",overflow:"visible"}},
-      u.default.createElement("div",{className:"hb-arch",style:{position:"absolute",top:-10,left:"8%",width:120,height:120,borderRadius:"50%",background:"linear-gradient(160deg, rgba(185,136,104,0.22), rgba(143,166,140,0.18))",pointerEvents:"none"}}),
-      u.default.createElement("div",{className:"hb-arch2",style:{position:"absolute",bottom:-14,right:"10%",width:90,height:90,borderRadius:"50%",background:"linear-gradient(160deg, rgba(199,153,153,0.2), rgba(205,187,160,0.18))",pointerEvents:"none"}}),
-      u.default.createElement("div",{style:{background:"rgba(255,255,255,0.32)",backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)",border:"1px solid rgba(255,255,255,0.55)",borderRadius:60,padding:"36px 24px",position:"relative"}},
-        u.default.createElement("svg",{className:"hb-star",viewBox:"0 0 24 24",style:{position:"absolute",top:-10,right:18,width:26,height:26}},
-          u.default.createElement("path",{d:"M12 0 L14 9 L24 12 L14 15 L12 24 L10 15 L0 12 L10 9 Z",fill:"#B98868",opacity:.85})
-        ),
-        u.default.createElement("svg",{viewBox:"0 0 200 40",style:{width:150,height:30,display:"block",margin:"0 auto 10px"}},
-          u.default.createElement("path",{d:"M6,20 C30,2 46,38 70,16 C94,-6 110,30 134,12 C150,0 166,20 194,10",
-            fill:"none",stroke:s.ocean,strokeWidth:1.1,strokeLinecap:"round",opacity:.7}),
-          u.default.createElement("circle",{className:"hb-breathe-a",cx:6,cy:20,r:3.5,fill:s.ocean}),
-          u.default.createElement("circle",{className:"hb-breathe-b",cx:134,cy:12,r:2.6,fill:s.tree})
-        ),
-        u.default.createElement("div",{className:"mono",style:{color:s.ocean,fontSize:11,letterSpacing:2,marginBottom:8,fontWeight:400}},"HERFULSINS INTERIOR DESIGN"),
-        u.default.createElement("h1",{style:{color:s.ink,fontSize:26,fontWeight:300,margin:0}},"赫柏空間設計"),
-        u.default.createElement("p",{style:{color:s.inkSoft,fontSize:13,marginTop:6,fontWeight:300}},"工地紀錄本 · 請選擇要管理的資料庫")
-      )
-    ),
+    u.default.createElement("div",{style:{maxWidth:480,margin:"0 auto",padding:"20px 20px 100px",position:"relative",zIndex:1}},
 
-    u.default.createElement("div",{style:{maxWidth:480,margin:"0 auto",padding:"0 20px 100px",position:"relative",zIndex:1}},
-
-      u.default.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12,paddingTop:6}},
+      u.default.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12}},
         u.default.createElement(HbCompanyGridCard,{icon:"clipboard-list",title:"案件資料庫",desc:"管理進行中的空間設計與工程專案：施工照片、材料送達、專案檔案、設備資料",onClick:l}),
         u.default.createElement(HbCompanyGridCard,{icon:"folder",title:"公司資料庫",desc:"公司營運、行政與制式合約：設計合約、工程報價單",onClick:t}),
         u.default.createElement(HbCompanyGridCard,{icon:"image",title:"行銷照片庫",desc:"跨案件的行銷／提案用照片庫",onClick:mp})
       ),
 
-      u.default.createElement("div",{style:{fontSize:12.5,fontWeight:400,color:s.inkSoft,letterSpacing:1,margin:"18px 0 8px"}},"外部選單"),
-      u.default.createElement("svg",{viewBox:"0 0 90 14",style:{width:70,height:11,display:"block",marginBottom:8}},
-        u.default.createElement("path",{d:"M2,8 C18,-2 26,16 42,6 C58,-4 66,14 88,4",fill:"none",stroke:s.ocean,strokeWidth:1,opacity:.55})
+      u.default.createElement("div",{style:{position:"relative",padding:"28px 0",textAlign:"center",overflow:"visible"}},
+        u.default.createElement("div",{className:"hb-arch",style:{position:"absolute",top:-6,left:"2%",width:120,height:120,borderRadius:"50%",background:"linear-gradient(160deg, rgba(185,136,104,0.22), rgba(143,166,140,0.18))",pointerEvents:"none"}}),
+        u.default.createElement("div",{className:"hb-arch2",style:{position:"absolute",bottom:-10,right:"4%",width:90,height:90,borderRadius:"50%",background:"linear-gradient(160deg, rgba(199,153,153,0.2), rgba(205,187,160,0.18))",pointerEvents:"none"}}),
+        u.default.createElement("div",{style:{background:"rgba(255,255,255,0.32)",backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)",border:"1px solid rgba(255,255,255,0.55)",borderRadius:60,padding:"36px 24px",position:"relative"}},
+          u.default.createElement("svg",{className:"hb-star",viewBox:"0 0 24 24",style:{position:"absolute",top:-10,right:18,width:26,height:26}},
+            u.default.createElement("path",{d:"M12 0 L14 9 L24 12 L14 15 L12 24 L10 15 L0 12 L10 9 Z",fill:"#B98868",opacity:.85})
+          ),
+          u.default.createElement("svg",{viewBox:"0 0 200 40",style:{width:150,height:30,display:"block",margin:"0 auto 10px"}},
+            u.default.createElement("path",{d:"M6,20 C30,2 46,38 70,16 C94,-6 110,30 134,12 C150,0 166,20 194,10",
+              fill:"none",stroke:s.ocean,strokeWidth:1.1,strokeLinecap:"round",opacity:.7}),
+            u.default.createElement("circle",{className:"hb-breathe-a",cx:6,cy:20,r:3.5,fill:s.ocean}),
+            u.default.createElement("circle",{className:"hb-breathe-b",cx:134,cy:12,r:2.6,fill:s.tree})
+          ),
+          u.default.createElement("div",{className:"mono",style:{color:s.ocean,fontSize:11,letterSpacing:2,marginBottom:8,fontWeight:400}},"HERFULSINS INTERIOR DESIGN"),
+          u.default.createElement("h1",{style:{color:s.ink,fontSize:26,fontWeight:300,margin:0}},"赫柏空間設計"),
+          u.default.createElement("p",{style:{color:s.inkSoft,fontSize:13,marginTop:6,fontWeight:300}},"工地紀錄本 · 請選擇要管理的資料庫")
+        )
       ),
 
       u.default.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}},
