@@ -2078,25 +2078,26 @@ function HB_buildReceiptHTML(v){
 <style>
   @page{size:A4 portrait;margin:10mm;}
   *{box-sizing:border-box;}
-  body{font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;color:#3A362E;margin:0;padding:16px;background:#EEE5DA;}
-  @media print{.toolbar{display:none!important;}body{padding:0;background:#fff;}}
-  .toolbar{position:sticky;top:0;background:rgba(28,27,24,0.85);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);padding:12px 16px;display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;border-radius:8px;}
+  body{font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;color:#2B2620;margin:0;padding:16px;background:#F4F1EA;}
+  @media screen{body{max-width:860px;margin:0 auto;}}
+  @media print{.toolbar{display:none!important;}body{padding:0;background:#fff;max-width:none;}}
+  .toolbar{position:sticky;top:0;background:rgba(43,38,32,0.88);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);padding:12px 16px;display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;border-radius:8px;}
   .toolbar button{border:none;border-radius:7px;padding:8px 16px;font-weight:700;font-size:13px;cursor:pointer;}
-  .toolbar .back{background:none;color:#C7B8A0;border:1px solid #C7B8A0!important;}
-  .toolbar .print{background:#41101B;color:#EEE5DA;}
+  .toolbar .back{background:none;color:#E9DFCE;border:1px solid #E9DFCE!important;}
+  .toolbar .print{background:#B98868;color:#FBF8F2;}
   .stack{display:flex;flex-direction:column;gap:6mm;}
-  .rc{position:relative;border:1.5px solid #1C1B18;border-radius:6px;overflow:hidden;font-size:11px;display:flex;flex-direction:column;background:#fff;break-inside:avoid;page-break-inside:avoid;}
+  .rc{position:relative;border:1.5px solid #2B2620;border-radius:6px;overflow:hidden;font-size:11px;display:flex;flex-direction:column;background:#fff;break-inside:avoid;page-break-inside:avoid;}
   .rc:nth-of-type(3n){page-break-after:always;break-after:page;}
-  .rc-head{background:#1C1B18;color:#fff;padding:6px 12px;}
-  .rc-name{font-weight:900;font-size:15px;color:#41101B;letter-spacing:1px;}
-  .rc-info{font-size:9px;color:#C7B8A0;margin-top:1px;}
+  .rc-head{background:#2B2620;color:#fff;padding:6px 12px;}
+  .rc-name{font-weight:900;font-size:15px;color:#CDA57E;letter-spacing:1px;}
+  .rc-info{font-size:9px;color:#E9DFCE;margin-top:1px;}
   .stamp{position:absolute;right:12px;bottom:8px;width:160px;height:auto;opacity:0.88;z-index:2;pointer-events:none;}
-  .rc-title{text-align:center;font-weight:900;font-size:14px;letter-spacing:6px;background:#41101B;color:#EEE5DA;padding:4px 0;}
+  .rc-title{text-align:center;font-weight:900;font-size:14px;letter-spacing:6px;background:#B98868;color:#FBF8F2;padding:4px 0;}
   .rc-title span{display:block;font-size:8px;letter-spacing:2px;font-weight:700;margin-top:1px;}
   table.rc-table{width:100%;border-collapse:collapse;font-size:11px;}
-  table.rc-table th,table.rc-table td{border:1px solid #EDE7DA;padding:4px 8px;text-align:left;}
-  table.rc-table th{width:78px;background:#E5DCC8;color:#1C1B18;white-space:nowrap;font-weight:700;}
-  table.rc-table td.amt{font-weight:700;color:#1C1B18;}
+  table.rc-table th,table.rc-table td{border:1px solid #E3DACB;padding:4px 8px;text-align:left;}
+  table.rc-table th{width:78px;background:#EFE6D6;color:#2B2620;white-space:nowrap;font-weight:700;}
+  table.rc-table td.amt{font-weight:700;color:#2B2620;}
 </style></head>
 <body>
 <div class="toolbar"><button class="back" onclick="window.close()" title="返回">←</button><button class="print" onclick="window.print()">列印 / 存 PDF</button></div>
@@ -2120,35 +2121,36 @@ function HB_buildVendorHTML(v){
 <style>
   @page{size:A5 landscape;margin:12mm;}
   *{box-sizing:border-box;}
-  body{font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;color:#3A362E;margin:0;padding:16px;line-height:1.7;font-size:12.5px;background:#EEE5DA;}
-  @media print{.toolbar{display:none!important;}body{padding:0;background:#fff;}}
-  .toolbar{position:sticky;top:0;background:rgba(28,27,24,0.85);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);padding:10px 14px;display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;border-radius:8px;}
+  body{font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;color:#2B2620;margin:0;padding:16px;line-height:1.7;font-size:12.5px;background:#F4F1EA;}
+  @media screen{body{max-width:720px;margin:0 auto;}}
+  @media print{.toolbar{display:none!important;}body{padding:0;background:#fff;max-width:none;}}
+  .toolbar{position:sticky;top:0;background:rgba(43,38,32,0.88);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);padding:10px 14px;display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;border-radius:8px;}
   .toolbar button{border:none;border-radius:7px;padding:7px 14px;font-weight:700;font-size:12.5px;cursor:pointer;}
-  .toolbar .back{background:none;color:#C7B8A0;border:1px solid #C7B8A0!important;}
-  .toolbar .print{background:#41101B;color:#EEE5DA;}
-  .paper{position:relative;border:1.5px solid #1C1B18;border-radius:8px;overflow:hidden;background:#fff;padding-bottom:26px;}
-  .head{background:#1C1B18;color:#fff;padding:8px 14px;}
-  .head-name{font-weight:900;font-size:15px;color:#41101B;letter-spacing:1px;}
-  .head-info{font-size:9px;color:#C7B8A0;margin-top:2px;}
+  .toolbar .back{background:none;color:#E9DFCE;border:1px solid #E9DFCE!important;}
+  .toolbar .print{background:#B98868;color:#FBF8F2;}
+  .paper{position:relative;border:1.5px solid #2B2620;border-radius:8px;overflow:hidden;background:#fff;padding-bottom:26px;}
+  .head{background:#2B2620;color:#fff;padding:8px 14px;}
+  .head-name{font-weight:900;font-size:15px;color:#CDA57E;letter-spacing:1px;}
+  .head-info{font-size:9px;color:#E9DFCE;margin-top:2px;}
   .stamp{position:absolute;right:14px;bottom:10px;width:92px;height:auto;opacity:0.88;z-index:2;pointer-events:none;}
-  h1{text-align:center;font-size:22px;letter-spacing:14px;margin:10px 0 12px;color:#1C1B18;}
+  h1{text-align:center;font-size:22px;letter-spacing:14px;margin:10px 0 12px;color:#2B2620;}
   .body-grid{display:flex;gap:14px;padding:0 16px 6px;}
   .col-left{flex:1.5;}
-  .col-right{flex:1;background:#E5DCC8;border:1.5px solid #1C1B18;border-radius:8px;padding:12px;text-align:center;display:flex;flex-direction:column;justify-content:center;gap:6px;}
+  .col-right{flex:1;background:#EFE6D6;border:1.5px solid #2B2620;border-radius:8px;padding:12px;text-align:center;display:flex;flex-direction:column;justify-content:center;gap:6px;}
   table.v{width:100%;border-collapse:collapse;margin-bottom:10px;font-size:12px;}
-  table.v th,table.v td{border:1px solid #EDE7DA;padding:5px 8px;text-align:left;}
-  table.v th{width:112px;background:#E5DCC8;color:#1C1B18;font-weight:700;white-space:nowrap;}
+  table.v th,table.v td{border:1px solid #E3DACB;padding:5px 8px;text-align:left;}
+  table.v th{width:112px;background:#EFE6D6;color:#2B2620;font-weight:700;white-space:nowrap;}
   p{margin:6px 0;}
   .signrow{display:flex;align-items:baseline;gap:6px;margin:10px 0;}
-  .flabel{white-space:nowrap;color:#1C1B18;font-weight:700;font-size:11.5px;}
-  .funderline{flex:1;display:inline-block;border-bottom:1px solid #1C1B18;min-height:16px;padding:0 4px;}
-  .fnote{font-size:10px;color:#8A8578;white-space:nowrap;}
+  .flabel{white-space:nowrap;color:#2B2620;font-weight:700;font-size:11.5px;}
+  .funderline{flex:1;display:inline-block;border-bottom:1px solid #2B2620;min-height:16px;padding:0 4px;}
+  .fnote{font-size:10px;color:#8C8275;white-space:nowrap;}
   .fields{display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;margin:8px 0 4px;}
   .field{display:flex;align-items:baseline;gap:6px;}
   .field.wide{grid-column:1/-1;}
-  .amt-label{font-size:11px;color:#1C1B18;font-weight:700;letter-spacing:2px;}
-  .amt-num{font-size:22px;font-weight:900;color:#1C1B18;}
-  .amt-words{font-size:11.5px;color:#3A362E;}
+  .amt-label{font-size:11px;color:#2B2620;font-weight:700;letter-spacing:2px;}
+  .amt-num{font-size:22px;font-weight:900;color:#2B2620;}
+  .amt-words{font-size:11.5px;color:#2B2620;}
   .date{text-align:center;margin:6px 130px 0 16px;letter-spacing:2px;font-size:12px;}
 </style></head>
 <body>
