@@ -1874,6 +1874,13 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
   )
 }
 
+function HbArchCard({icon:l,title:t,tint:e,onClick:n}){return u.default.createElement("div",{onClick:n,style:{cursor:"pointer",width:112,flexShrink:0,textAlign:"left"}},
+  u.default.createElement("div",{style:{height:96,borderRadius:"56px 56px 14px 14px",background:e,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 8px 20px -8px rgba(140,111,82,0.22)"}},
+    u.default.createElement(E,{name:l,size:24,color:"#fff"})
+  ),
+  u.default.createElement("div",{style:{marginTop:10,fontSize:12.5,fontWeight:400,color:s.ink,lineHeight:1.35,minHeight:32}},t),
+  u.default.createElement("div",{style:{marginTop:6,display:"inline-flex",border:`1px solid ${s.line}`,borderRadius:999,padding:"4px 12px",fontSize:10.5,color:s.inkSoft}},"\u958b\u555f")
+)}
 function HbLandingCard({icon:l,title:t,desc:e,onClick:n}){return u.default.createElement("div",{onClick:n,style:{background:"rgba(255,255,255,0.34)",backdropFilter:"blur(18px)",WebkitBackdropFilter:"blur(18px)",borderRadius:22,padding:"20px 20px",display:"flex",gap:16,alignItems:"flex-start",cursor:"pointer",border:"1px solid rgba(255,255,255,0.55)",boxShadow:"0 8px 24px -8px rgba(140,111,82,0.18)"}},u.default.createElement("div",{style:{width:46,height:46,borderRadius:"50% 50% 12px 12px",background:"rgba(255,255,255,0.5)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},u.default.createElement(E,{name:l,size:21,color:s.ocean})),u.default.createElement("div",{style:{flex:1}},u.default.createElement("div",{style:{fontSize:16,fontWeight:300,color:s.oceanDark}},t),u.default.createElement("div",{style:{fontSize:12.5,color:s.inkSoft,marginTop:4,lineHeight:1.5}},e)),u.default.createElement(E,{name:"arrow-left",size:16,color:s.inkSoft,style:{transform:"scaleX(-1)",marginTop:4}}))}
 function HbLanding({onCase:l,onCompany:t,onManageStaff:e,onLogout:n,onQuickQuote:qq,onProposal:pg,onMarketingPhotos:mp,onBookings:bk,onOpenBooking:ob}){
   return u.default.createElement("div",{style:{background:s.paper,minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink,position:"relative"}},
@@ -1892,52 +1899,60 @@ function HbLanding({onCase:l,onCompany:t,onManageStaff:e,onLogout:n,onQuickQuote
       .hb-arch { animation: hbArchFloat 7s ease-in-out infinite; }
       .hb-arch2 { animation: hbArchFloat2 8.5s ease-in-out infinite; animation-delay:.6s; }
       .hb-star { animation: hbTwinkle 3.2s ease-in-out infinite; transform-origin:center; }
+      .hb-scroll::-webkit-scrollbar { display:none; }
+      .hb-scroll { scrollbar-width:none; }
     `),
-    u.default.createElement("div",{style:{padding:"32px 20px 18px",position:"relative",overflow:"hidden",zIndex:1}},
-      u.default.createElement("div",{style:{position:"absolute",top:-60,left:-40,width:180,height:180,borderRadius:"50%",background:s.ocean,opacity:.28,filter:"blur(40px)",pointerEvents:"none"}}),
-      u.default.createElement("div",{style:{position:"absolute",top:-20,right:-50,width:150,height:150,borderRadius:"50%",background:s.tree,opacity:.24,filter:"blur(36px)",pointerEvents:"none"}}),
-      u.default.createElement("div",{style:{position:"absolute",top:60,left:"38%",width:120,height:120,borderRadius:"50%",background:"#C79999",opacity:.22,filter:"blur(34px)",pointerEvents:"none"}}),
-      u.default.createElement("div",{style:{position:"absolute",top:28,right:20,display:"flex",alignItems:"center",gap:16,zIndex:2}},
-        u.default.createElement("button",{onClick:e,title:"\u5e33\u865f\u7ba1\u7406",style:{background:"none",border:"none",color:s.inkSoft,cursor:"pointer",display:"flex",padding:0}},u.default.createElement(E,{name:"user",size:17})),
-        u.default.createElement("button",{onClick:n,title:"\u767b\u51fa",style:{background:"none",border:"none",color:s.inkSoft,cursor:"pointer",display:"flex",padding:0}},u.default.createElement(E,{name:"log-out",size:17}))
-      ),
-      u.default.createElement("div",{style:{position:"relative",zIndex:2,display:"inline-flex",alignItems:"center",gap:6,background:"rgba(255,255,255,0.38)",backdropFilter:"blur(14px)",WebkitBackdropFilter:"blur(14px)",border:"1px solid rgba(255,255,255,0.55)",borderRadius:999,padding:"6px 14px 6px 10px",marginBottom:16,boxShadow:"0 4px 16px rgba(140,111,82,0.10)"}},
+
+    u.default.createElement("div",{style:{padding:"24px 20px 4px",position:"relative",zIndex:1,display:"flex",justifyContent:"space-between",alignItems:"center"}},
+      u.default.createElement("div",{style:{display:"inline-flex",alignItems:"center",gap:6,background:"rgba(255,255,255,0.38)",backdropFilter:"blur(14px)",WebkitBackdropFilter:"blur(14px)",border:"1px solid rgba(255,255,255,0.55)",borderRadius:999,padding:"6px 14px 6px 10px",boxShadow:"0 4px 16px rgba(140,111,82,0.10)"}},
         u.default.createElement("span",{style:{width:6,height:6,borderRadius:"50%",background:s.tree,display:"inline-block"}}),
         u.default.createElement("span",{style:{fontSize:11.5,color:s.ink,fontWeight:400,letterSpacing:.3}},"\u6b61\u8fce\u56de\u4f86\uff0c\u4eca\u5929\u4e5f\u8981\u597d\u597d\u7167\u9867\u6bcf\u500b\u5de5\u5730")
       ),
-      u.default.createElement("div",{className:"hb-arch",style:{position:"absolute",top:-90,right:-50,width:220,height:220,borderRadius:"50%",background:"linear-gradient(160deg, rgba(185,136,104,0.24), rgba(143,166,140,0.20))",border:"1px solid rgba(255,255,255,0.4)"}}),
-      u.default.createElement("div",{className:"hb-arch2",style:{position:"absolute",top:20,left:-60,width:140,height:140,borderRadius:"50%",background:"linear-gradient(160deg, rgba(199,153,153,0.22), rgba(205,187,160,0.2))"}}),
-      u.default.createElement("svg",{className:"hb-star",viewBox:"0 0 24 24",style:{position:"absolute",top:6,right:56,width:22,height:22,zIndex:2}},
-        u.default.createElement("path",{d:"M12 0 L14 9 L24 12 L14 15 L12 24 L10 15 L0 12 L10 9 Z",fill:"#B98868",opacity:.75})
-      ),
-      u.default.createElement("svg",{viewBox:"0 0 280 100",style:{width:220,height:78,display:"block",marginBottom:4,position:"relative",zIndex:2}},
-        u.default.createElement("path",{d:"M12,48 C34,10 84,10 70,42 C58,70 118,74 134,38 C146,10 200,4 232,22",
-          fill:"none",stroke:s.ocean,strokeWidth:1.2,strokeLinecap:"round",opacity:.75}),
-        u.default.createElement("circle",{cx:96,cy:56,r:30,fill:"none",stroke:"#C79999",strokeWidth:1,opacity:.55}),
-        u.default.createElement("circle",{cx:126,cy:72,r:24,fill:"none",stroke:s.tree,strokeWidth:1,opacity:.5}),
-        u.default.createElement("circle",{className:"hb-breathe-a",cx:12,cy:48,r:4,fill:s.ocean}),
-        u.default.createElement("circle",{className:"hb-breathe-b",cx:134,cy:38,r:3,fill:s.tree})
-      ),
-      u.default.createElement("div",{style:{position:"relative",zIndex:2}},
-        u.default.createElement("div",{className:"mono",style:{color:s.ocean,fontSize:11,letterSpacing:2,marginBottom:6,fontWeight:400}},"HERFULSINS INTERIOR DESIGN"),
-        u.default.createElement("h1",{style:{color:s.ink,fontSize:25,fontWeight:300,margin:0}},"\u8d6b\u67cf\u7a7a\u9593\u8a2d\u8a08"),
+      u.default.createElement("div",{style:{display:"flex",alignItems:"center",gap:16}},
+        u.default.createElement("button",{onClick:e,title:"\u5e33\u865f\u7ba1\u7406",style:{background:"none",border:"none",color:s.inkSoft,cursor:"pointer",display:"flex",padding:0}},u.default.createElement(E,{name:"user",size:17})),
+        u.default.createElement("button",{onClick:n,title:"\u767b\u51fa",style:{background:"none",border:"none",color:s.inkSoft,cursor:"pointer",display:"flex",padding:0}},u.default.createElement(E,{name:"log-out",size:17}))
+      )
+    ),
+
+    u.default.createElement("div",{className:"hb-scroll",style:{display:"flex",gap:14,padding:"20px 20px 6px",overflowX:"auto",position:"relative",zIndex:1}},
+      u.default.createElement(HbArchCard,{icon:"clipboard-list",title:"\u6848\u4ef6\u8cc7\u6599\u5eab",tint:"linear-gradient(160deg,#B98868,#9C7657)",onClick:l}),
+      u.default.createElement(HbArchCard,{icon:"folder",title:"\u516c\u53f8\u8cc7\u6599\u5eab",tint:"linear-gradient(160deg,#8FA68C,#728C6F)",onClick:t}),
+      u.default.createElement(HbArchCard,{icon:"image",title:"\u884c\u92b7\u7167\u7247\u5eab",tint:"linear-gradient(160deg,#C79999,#B07E7E)",onClick:mp})
+    ),
+
+    u.default.createElement("div",{style:{position:"relative",padding:"36px 20px",zIndex:1,textAlign:"center",overflow:"visible"}},
+      u.default.createElement("div",{className:"hb-arch",style:{position:"absolute",top:-10,left:"8%",width:120,height:120,borderRadius:"50%",background:"linear-gradient(160deg, rgba(185,136,104,0.22), rgba(143,166,140,0.18))",pointerEvents:"none"}}),
+      u.default.createElement("div",{className:"hb-arch2",style:{position:"absolute",bottom:-14,right:"10%",width:90,height:90,borderRadius:"50%",background:"linear-gradient(160deg, rgba(199,153,153,0.2), rgba(205,187,160,0.18))",pointerEvents:"none"}}),
+      u.default.createElement("div",{style:{background:"rgba(255,255,255,0.32)",backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)",border:"1px solid rgba(255,255,255,0.55)",borderRadius:60,padding:"36px 24px",position:"relative"}},
+        u.default.createElement("svg",{className:"hb-star",viewBox:"0 0 24 24",style:{position:"absolute",top:-10,right:18,width:26,height:26}},
+          u.default.createElement("path",{d:"M12 0 L14 9 L24 12 L14 15 L12 24 L10 15 L0 12 L10 9 Z",fill:"#B98868",opacity:.85})
+        ),
+        u.default.createElement("svg",{viewBox:"0 0 200 40",style:{width:150,height:30,display:"block",margin:"0 auto 10px"}},
+          u.default.createElement("path",{d:"M6,20 C30,2 46,38 70,16 C94,-6 110,30 134,12 C150,0 166,20 194,10",
+            fill:"none",stroke:s.ocean,strokeWidth:1.1,strokeLinecap:"round",opacity:.7}),
+          u.default.createElement("circle",{className:"hb-breathe-a",cx:6,cy:20,r:3.5,fill:s.ocean}),
+          u.default.createElement("circle",{className:"hb-breathe-b",cx:134,cy:12,r:2.6,fill:s.tree})
+        ),
+        u.default.createElement("div",{className:"mono",style:{color:s.ocean,fontSize:11,letterSpacing:2,marginBottom:8,fontWeight:400}},"HERFULSINS INTERIOR DESIGN"),
+        u.default.createElement("h1",{style:{color:s.ink,fontSize:26,fontWeight:300,margin:0}},"\u8d6b\u67cf\u7a7a\u9593\u8a2d\u8a08"),
         u.default.createElement("p",{style:{color:s.inkSoft,fontSize:13,marginTop:6,fontWeight:300}},"\u5de5\u5730\u7d00\u9304\u672c \xb7 \u8acb\u9078\u64c7\u8981\u7ba1\u7406\u7684\u8cc7\u6599\u5eab")
       )
     ),
-    u.default.createElement("div",{style:{padding:"18px 16px 100px",display:"flex",flexDirection:"column",gap:14,position:"relative",zIndex:1}},
-      u.default.createElement(HbLandingCard,{icon:"clipboard-list",title:"\u6848\u4ef6\u8cc7\u6599\u5eab",desc:"\u7ba1\u7406\u9032\u884c\u4e2d\u7684\u7a7a\u9593\u8a2d\u8a08\u8207\u5de5\u7a0b\u5c08\u6848\uff1a\u65bd\u5de5\u7167\u7247\u3001\u6750\u6599\u9001\u9054\u3001\u5c08\u6848\u6a94\u6848\u3001\u8a2d\u5099\u8cc7\u6599",onClick:l}),
-      u.default.createElement(HbLandingCard,{icon:"folder",title:"\u516c\u53f8\u8cc7\u6599\u5eab",desc:"\u516c\u53f8\u71df\u904b\u3001\u884c\u653f\u8207\u5236\u5f0f\u5408\u7d04\uff1a\u8a2d\u8a08\u5408\u7d04\u3001\u5de5\u7a0b\u5831\u50f9\u55ae",onClick:t}),
-      u.default.createElement("div",{style:{marginTop:6,marginBottom:2,fontSize:12.5,fontWeight:400,color:s.inkSoft,letterSpacing:1}},"\u5916\u90e8\u9078\u55ae"),
-      u.default.createElement("svg",{viewBox:"0 0 90 14",style:{width:70,height:11,display:"block",marginBottom:10}},
+
+    u.default.createElement("div",{style:{padding:"4px 20px 8px",position:"relative",zIndex:1}},
+      u.default.createElement("div",{style:{fontSize:12.5,fontWeight:400,color:s.inkSoft,letterSpacing:1,marginBottom:2}},"\u5916\u90e8\u9078\u55ae"),
+      u.default.createElement("svg",{viewBox:"0 0 90 14",style:{width:70,height:11,display:"block"}},
         u.default.createElement("path",{d:"M2,8 C18,-2 26,16 42,6 C58,-4 66,14 88,4",fill:"none",stroke:s.ocean,strokeWidth:1,opacity:.55})
-      ),
-      u.default.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}},
-        u.default.createElement(HbCompanyGridCard,{icon:"zap",title:"\u5feb\u901f\u5831\u50f9\u7cfb\u7d71",desc:"\u7368\u7acb\u55ae\u50f9\u5eab\uff0b\u5831\u50f9\u55ae\u7522\u751f\u5de5\u5177\uff0c\u65bc\u65b0\u8996\u7a97\u958b\u555f",onClick:qq}),
-        u.default.createElement(HbCompanyGridCard,{icon:"users",title:"\u5ba2\u6236\u9810\u7d04\u9801\u9762",desc:"\u958b\u555f\u5ba2\u6236\u7dda\u4e0a\u9810\u7d04\u8af8\u8a62\u9801\u9762",onClick:ob}),
-        u.default.createElement(HbCompanyGridCard,{icon:"calendar",title:"\u9810\u7d04\u7ba1\u7406",desc:"\u67e5\u770b\u5ba2\u6236\u9810\u7d04\u3001\u4fee\u6539\u6642\u6bb5\u3001\u8a2d\u5b9a\u516c\u4f11\u65e5",onClick:bk}),
-        u.default.createElement(HbCompanyGridCard,{icon:"image",title:"\u884c\u92b7\u7167\u7247\u5eab",desc:"\u8de8\u6848\u4ef6\u7684\u884c\u92b7\uff0f\u63d0\u6848\u7528\u7167\u7247\u5eab",onClick:mp}),
-        u.default.createElement(HbCompanyGridCard,{icon:"presentation",title:"\u63d0\u6848\u7c21\u5831",desc:"\u63d0\u6848PPT\u7522\u751f\u5668\uff0c\u65bc\u65b0\u8996\u7a97\u958b\u555f",onClick:pg})
-      ),
+      )
+    ),
+    u.default.createElement("div",{className:"hb-scroll",style:{display:"flex",gap:14,padding:"10px 20px 20px",overflowX:"auto",position:"relative",zIndex:1}},
+      u.default.createElement(HbArchCard,{icon:"zap",title:"\u5feb\u901f\u5831\u50f9\u7cfb\u7d71",tint:"linear-gradient(160deg,#CDBBA0,#B29C7C)",onClick:qq}),
+      u.default.createElement(HbArchCard,{icon:"users",title:"\u5ba2\u6236\u9810\u7d04\u9801\u9762",tint:"linear-gradient(160deg,#8FA68C,#6E8A6A)",onClick:ob}),
+      u.default.createElement(HbArchCard,{icon:"calendar",title:"\u9810\u7d04\u7ba1\u7406",tint:"linear-gradient(160deg,#B98868,#8C6F52)",onClick:bk}),
+      u.default.createElement(HbArchCard,{icon:"presentation",title:"\u63d0\u6848\u7c21\u5831",tint:"linear-gradient(160deg,#C79999,#A67979)",onClick:pg})
+    ),
+
+    u.default.createElement("div",{style:{padding:"6px 20px 100px",position:"relative",zIndex:1}},
       u.default.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginTop:10}},
         u.default.createElement("button",{onClick:()=>HB_copyBookingLink(),style:{display:"flex",alignItems:"center",justifyContent:"center",gap:8,background:"rgba(255,255,255,0.34)",backdropFilter:"blur(14px)",WebkitBackdropFilter:"blur(14px)",border:"1px solid rgba(255,255,255,0.55)",borderRadius:24,padding:"12px 0",fontSize:13,fontWeight:400,color:s.oceanDark,cursor:"pointer"}},u.default.createElement(E,{name:"copy",size:15}),"\u8907\u88fd\u9810\u7d04\u7db2\u5740"),
         u.default.createElement("button",{onClick:()=>HB_shareBookingLinkToLine(),style:{display:"flex",alignItems:"center",justifyContent:"center",gap:8,background:"rgba(255,255,255,0.34)",backdropFilter:"blur(14px)",WebkitBackdropFilter:"blur(14px)",border:"1px solid rgba(255,255,255,0.55)",borderRadius:24,padding:"12px 0",fontSize:13,fontWeight:400,color:s.oceanDark,cursor:"pointer"}},u.default.createElement(E,{name:"share",size:15}),"\u5206\u4eab\u5230 LINE")
