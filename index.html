@@ -3011,10 +3011,11 @@ function HbBookingsHub({onBack:l,notify:g}){
             editingId===b.id?
               u.default.createElement("div",{style:{marginTop:10,paddingTop:10,borderTop:`1px solid ${s.line}`,display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}},
                 u.default.createElement("input",{type:"date",value:editDate,onChange:x=>setEditDate(x.target.value),style:{...el,width:"auto",marginBottom:0}}),
-                u.default.createElement("select",{value:editTime,onChange:x=>setEditTime(x.target.value),style:{...el,width:"auto",marginBottom:0}},
-                  u.default.createElement("option",{value:""},"選擇時段"),
+                u.default.createElement("select",{value:slotsForDate(editDate).includes(editTime)?editTime:"",onChange:x=>setEditTime(x.target.value),style:{...el,width:"auto",marginBottom:0}},
+                  u.default.createElement("option",{value:""},"選擇固定時段"),
                   slotsForDate(editDate).map(tt=>u.default.createElement("option",{key:tt,value:tt},tt))
                 ),
+                u.default.createElement("input",{type:"time",value:editTime,onChange:x=>setEditTime(x.target.value),style:{...el,width:"auto",marginBottom:0},title:"或自行輸入任意時間"}),
                 u.default.createElement("button",{onClick:()=>saveEdit(b.id),disabled:savingEdit,style:{...Dl,padding:"9px 14px"}},"儲存"),
                 u.default.createElement("button",{onClick:cancelEdit,style:{...ll,padding:"9px 14px"}},"取消")
               ):
