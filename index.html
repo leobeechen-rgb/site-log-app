@@ -2810,15 +2810,29 @@ function HbBookingsHub({onBack:l,notify:g}){
       [activeWeekday,setActiveWeekday]=(0,u.useState)(new Date().getDay()),
       [calMonth,setCalMonth]=(0,u.useState)(()=>{let d=new Date();d.setDate(1);return d}),
       [selectedCalDate,setSelectedCalDate]=(0,u.useState)(null),
-      [overrides,setOverrides]=(0,u.useState)([]);
+      [overrides,setOverrides]=(0,u.useState)([]),
+      [schedule,setSchedule]=(0,u.useState)([]),
+      [showAddSchedule,setShowAddSchedule]=(0,u.useState)(false),
+      [savingSchedule,setSavingSchedule]=(0,u.useState)(false),
+      [scType,setScType]=(0,u.useState)("site"),
+      [scTitle,setScTitle]=(0,u.useState)(""),
+      [scProject,setScProject]=(0,u.useState)(""),
+      [scStartDate,setScStartDate]=(0,u.useState)(""),
+      [scEndDate,setScEndDate]=(0,u.useState)(""),
+      [scAllDay,setScAllDay]=(0,u.useState)(true),
+      [scTime,setScTime]=(0,u.useState)(""),
+      [scLocation,setScLocation]=(0,u.useState)(""),
+      [scAssignee,setScAssignee]=(0,u.useState)(""),
+      [scNote,setScNote]=(0,u.useState)("");
 
   let load=async()=>{
     setLoading(true);
-    let[{data:b,error:e1},{data:c,error:e2},{data:sl,error:e3},{data:ov,error:e4}]=await Promise.all([
+    let[{data:b,error:e1},{data:c,error:e2},{data:sl,error:e3},{data:ov,error:e4},{data:se,error:e5}]=await Promise.all([
       q.from("sitelog_bookings").select("*").order("date",{ascending:true}).order("time",{ascending:true}),
       q.from("sitelog_booking_closed_dates").select("*").order("date",{ascending:true}),
       q.from("sitelog_booking_weekday_slots").select("*").order("time",{ascending:true}),
-      q.from("sitelog_booking_slot_overrides").select("*")
+      q.from("sitelog_booking_slot_overrides").select("*"),
+      q.from("sitelog_schedule_events").select("*").order("start_date",{ascending:true})
     ]);
     if(!e1)setList(b||[]);
     if(!e2)setClosed(c||[]);
@@ -2828,6 +2842,7 @@ function HbBookingsHub({onBack:l,notify:g}){
       setWeekSlots(grouped);
     }
     if(!e4)setOverrides(ov||[]);
+    if(!e5)setSchedule(se||[]);
     setLoading(false);
   };
   (0,u.useEffect)(()=>{load()},[]);
@@ -2899,6 +2914,31 @@ function HbBookingsHub({onBack:l,notify:g}){
     g("已移除公休日");load();
   };
 
+  let addSchedule=async()=>{
+    if(!scTitle.trim()){g("請輸入標題");return}
+    if(!scStartDate){g("請選擇開始日期");return}
+    let endDate=scEndDate||scStartDate;
+    if(endDate<scStartDate){g("結束日期不能早於開始日期");return}
+    setSavingSchedule(true);
+    let{error}=await q.from("sitelog_schedule_events").insert({
+      type:scType,title:scTitle.trim(),project_name:scProject.trim()||null,
+      start_date:scStartDate,end_date:endDate,all_day:scAllDay,
+      time:scAllDay?null:(scTime||null),location:scLocation.trim()||null,
+      assignee:scAssignee.trim()||null,note:scNote.trim()||null,status:"confirmed"
+    });
+    setSavingSchedule(false);
+    if(error){g("新增失敗："+error.message);return}
+    setShowAddSchedule(false);setScType("site");setScTitle("");setScProject("");setScStartDate("");setScEndDate("");setScAllDay(true);setScTime("");setScLocation("");setScAssignee("");setScNote("");
+    g("已新增行程");load();
+  };
+
+  let cancelSchedule=async id=>{
+    if(!window.confirm("確定要刪除這筆行程嗎？"))return;
+    let{error}=await q.from("sitelog_schedule_events").delete().eq("id",id);
+    if(error){g("刪除失敗："+error.message);return}
+    g("已刪除行程");load();
+  };
+
   let addSlot=async()=>{
     if(!newSlotTime){g("請選擇時段時間");return}
     let{error}=await q.from("sitelog_booking_weekday_slots").insert({weekday:activeWeekday,time:newSlotTime});
@@ -2928,6 +2968,7 @@ function HbBookingsHub({onBack:l,notify:g}){
   let effSlots=(weekSlots[activeWeekday]||[]).map(x=>x.time);
 
   let statusLabel={pending:"待確認",confirmed:"已確認",cancelled:"已取消",completed:"已完成"};
+  let scheduleTypeLabel={consult:"諮詢預約",site:"工地行程",other:"其他"};
 
   return u.default.createElement("div",{style:{background:s.paper,minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},
     u.default.createElement("div",{style:{background:"rgba(255,255,255,0.55)",backdropFilter:"blur(14px)",WebkitBackdropFilter:"blur(14px)",padding:"20px 16px",borderBottom:`1px solid ${s.line}`}},
@@ -2935,7 +2976,8 @@ function HbBookingsHub({onBack:l,notify:g}){
       u.default.createElement("h2",{style:{color:s.ink,fontSize:20,fontWeight:300,margin:0}},"預約管理")
     ),
     u.default.createElement("div",{style:{padding:16}},
-      u.default.createElement("button",{onClick:()=>setShowAddBooking(true),style:{...Dl,width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:8,marginBottom:16}},u.default.createElement(E,{name:"users",size:16})," 新增預約（與客戶見面）"),
+      u.default.createElement("button",{onClick:()=>setShowAddBooking(true),style:{...Dl,width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:8,marginBottom:10}},u.default.createElement(E,{name:"users",size:16})," 新增預約（與客戶見面）"),
+      u.default.createElement("button",{onClick:()=>setShowAddSchedule(true),style:{...ll,width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:8,marginBottom:16}},u.default.createElement(E,{name:"calendar",size:16})," 新增行程（工地／其他）"),
       !loading&&u.default.createElement("div",{style:{background:s.card,border:`1px solid ${s.line}`,borderRadius:8,padding:"12px 14px",marginBottom:16}},
         u.default.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}},
           u.default.createElement("button",{onClick:()=>setCalMonth(m=>{let d=new Date(m);d.setMonth(d.getMonth()-1);return d}),style:{...at}},u.default.createElement(E,{name:"chevron-up",size:16,style:{transform:"rotate(-90deg)"}})),
@@ -3029,6 +3071,30 @@ function HbBookingsHub({onBack:l,notify:g}){
               )
           ))
         ),
+        schedule.filter(sc=>sc.status!=="cancelled"&&(!selectedCalDate||(sc.start_date<=selectedCalDate&&sc.end_date>=selectedCalDate))).length>0&&u.default.createElement("div",{style:{borderTop:`1px solid ${s.line}`,paddingTop:20,marginBottom:8}},
+          u.default.createElement("h3",{style:{fontSize:15,fontWeight:300,margin:"0 0 12px",color:s.oceanDark}},"行程"),
+          u.default.createElement("div",{style:{display:"flex",flexDirection:"column",gap:10}},
+            schedule.filter(sc=>sc.status!=="cancelled"&&(!selectedCalDate||(sc.start_date<=selectedCalDate&&sc.end_date>=selectedCalDate))).map(sc=>u.default.createElement("div",{key:sc.id,style:{background:s.card,border:`1px solid ${s.line}`,borderRadius:8,padding:"12px 14px"}},
+              u.default.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:10}},
+                u.default.createElement("div",null,
+                  u.default.createElement("div",{style:{fontSize:14,fontWeight:400}},sc.title),
+                  u.default.createElement("div",{style:{fontSize:12.5,color:s.inkSoft,marginTop:2}},
+                    scheduleTypeLabel[sc.type]||sc.type,
+                    sc.project_name?(" · "+sc.project_name):"",
+                    sc.location?(" · "+sc.location):""
+                  ),
+                  sc.assignee?u.default.createElement("div",{style:{fontSize:12,color:s.inkSoft,marginTop:2}},"負責人："+sc.assignee):null,
+                  sc.note?u.default.createElement("div",{style:{fontSize:12,color:s.inkSoft,marginTop:4}},sc.note):null
+                ),
+                u.default.createElement("button",{onClick:()=>cancelSchedule(sc.id),style:{...at,color:s.danger}},u.default.createElement(E,{name:"x",size:16}))
+              ),
+              u.default.createElement("div",{style:{marginTop:10,paddingTop:10,borderTop:`1px solid ${s.line}`,fontSize:14,fontWeight:400,color:s.oceanDark}},
+                sc.start_date===sc.end_date?Tl(sc.start_date):(Tl(sc.start_date)+" ～ "+Tl(sc.end_date)),
+                sc.all_day?"（全天）":(sc.time?"　"+sc.time:"")
+              )
+            ))
+          )
+        ),
         u.default.createElement("div",{style:{borderTop:`1px solid ${s.line}`,paddingTop:20}},
           u.default.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}},
             u.default.createElement("h3",{style:{fontSize:15,fontWeight:300,margin:0,color:s.oceanDark}},"公休日管理"),
@@ -3108,6 +3174,43 @@ function HbBookingsHub({onBack:l,notify:g}){
         u.default.createElement("div",{style:{display:"flex",gap:8,marginTop:6}},
           u.default.createElement("button",{onClick:addBooking,disabled:savingBooking,style:{...Dl,flex:1}},savingBooking?"送出中…":"新增"),
           u.default.createElement("button",{onClick:()=>setShowAddBooking(false),style:{...ll,flex:1}},"取消")
+        )
+      )
+    ),
+    showAddSchedule&&u.default.createElement("div",{style:{position:"fixed",inset:0,background:"rgba(43,38,32,0.45)",display:"flex",alignItems:"center",justifyContent:"center",padding:20,zIndex:55,overflowY:"auto"}},
+      u.default.createElement("div",{className:"fade-in",style:{background:s.card,borderRadius:10,padding:22,width:"100%",maxWidth:360,maxHeight:"88vh",overflowY:"auto"}},
+        u.default.createElement("h3",{style:{margin:"0 0 14px",fontSize:17,fontWeight:400,color:s.oceanDark}},"新增行程"),
+        u.default.createElement("label",{style:{fontSize:12.5,color:s.inkSoft}},"行程類型"),
+        u.default.createElement("select",{value:scType,onChange:x=>setScType(x.target.value),style:el},
+          u.default.createElement("option",{value:"site"},"工地行程"),
+          u.default.createElement("option",{value:"consult"},"諮詢預約"),
+          u.default.createElement("option",{value:"other"},"其他")
+        ),
+        u.default.createElement("label",{style:{fontSize:12.5,color:s.inkSoft}},"標題"),
+        u.default.createElement("input",{type:"text",value:scTitle,onChange:x=>setScTitle(x.target.value),placeholder:"例如：陳宅－水電進場",style:el}),
+        u.default.createElement("label",{style:{fontSize:12.5,color:s.inkSoft}},"關聯案件（選填）"),
+        u.default.createElement("input",{type:"text",value:scProject,onChange:x=>setScProject(x.target.value),placeholder:"案件名稱",style:el}),
+        u.default.createElement("label",{style:{fontSize:12.5,color:s.inkSoft}},"開始日期"),
+        u.default.createElement("input",{type:"date",value:scStartDate,onChange:x=>{let v=x.target.value;setScStartDate(v);if(!scEndDate||scEndDate<v)setScEndDate(v)},style:el}),
+        u.default.createElement("label",{style:{fontSize:12.5,color:s.inkSoft}},"結束日期（單日可留空，自動同開始日期）"),
+        u.default.createElement("input",{type:"date",value:scEndDate,onChange:x=>setScEndDate(x.target.value),style:el}),
+        u.default.createElement("label",{style:{display:"flex",alignItems:"center",gap:8,fontSize:13,color:s.ink,marginBottom:12,cursor:"pointer"}},
+          u.default.createElement("input",{type:"checkbox",checked:scAllDay,onChange:x=>setScAllDay(x.target.checked),style:{width:16,height:16,accentColor:s.ocean}}),
+          "全天（不指定時段）"
+        ),
+        !scAllDay&&u.default.createElement(u.default.Fragment,null,
+          u.default.createElement("label",{style:{fontSize:12.5,color:s.inkSoft}},"時段"),
+          u.default.createElement("input",{type:"time",value:scTime,onChange:x=>setScTime(x.target.value),style:el})
+        ),
+        u.default.createElement("label",{style:{fontSize:12.5,color:s.inkSoft}},"地點（選填）"),
+        u.default.createElement("input",{type:"text",value:scLocation,onChange:x=>setScLocation(x.target.value),style:el}),
+        u.default.createElement("label",{style:{fontSize:12.5,color:s.inkSoft}},"負責人／工班（選填）"),
+        u.default.createElement("input",{type:"text",value:scAssignee,onChange:x=>setScAssignee(x.target.value),style:el}),
+        u.default.createElement("label",{style:{fontSize:12.5,color:s.inkSoft}},"備註（選填）"),
+        u.default.createElement("textarea",{value:scNote,onChange:x=>setScNote(x.target.value),style:{...el,minHeight:60,resize:"vertical"}}),
+        u.default.createElement("div",{style:{display:"flex",gap:8,marginTop:6}},
+          u.default.createElement("button",{onClick:addSchedule,disabled:savingSchedule,style:{...Dl,flex:1}},savingSchedule?"送出中…":"新增"),
+          u.default.createElement("button",{onClick:()=>setShowAddSchedule(false),style:{...ll,flex:1}},"取消")
         )
       )
     )
