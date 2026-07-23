@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>設計服務價目表｜赫柏空間設計</title>
+<style>
+  :root{
+    --cream:#EFE7DA;
+    --ink:#2B241E;
+    --olive:#4B4C31;
+    --olive-soft:#5E5F3E;
+    --rust:#A85A28;
+    --rust-soft:#C1703A;
+    --tan:#C69355;
+    --tan-soft:#D6AC72;
+    --muted:#8C8370;
+    --card-bg:#FBF7EF;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:"Noto Serif TC","Noto Sans TC","PingFang TC","Microsoft JhengHei",serif;
+    background:var(--cream);
+    color:var(--ink);
+    line-height:1.7;
+  }
+  .placeholder-banner{
+    background:var(--tan);
+    color:#2B241E;
+    text-align:center;
+    font-size:14px;
+    font-weight:700;
+    padding:10px 16px;
+    letter-spacing:0.02em;
+  }
+  header{
+    background:var(--olive);
+    color:#F3EFE2;
+    padding:64px 24px 84px;
+    text-align:center;
+  }
+  header .brand{
+    font-size:15px;
+    letter-spacing:0.28em;
+    color:var(--tan-soft);
+    font-weight:700;
+    margin-bottom:14px;
+  }
+  header h1{
+    font-size:clamp(30px,5vw,44px);
+    margin:0 0 14px;
+    font-weight:900;
+    letter-spacing:0.04em;
+  }
+  header p{
+    max-width:520px;
+    margin:0 auto;
+    color:#D9D4C2;
+    font-size:15px;
+  }
+  main{
+    max-width:1040px;
+    margin:-48px auto 0;
+    padding:0 20px 80px;
+  }
+
+  .cards{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:22px;
+    margin-bottom:40px;
+  }
+  @media (max-width:860px){
+    .cards{ grid-template-columns:1fr; }
+  }
+  .card{
+    background:var(--card-bg);
+    border-radius:18px;
+    padding:34px 28px;
+    box-shadow:0 18px 40px -28px rgba(43,36,30,0.35);
+    border:1px solid rgba(43,36,30,0.08);
+    display:flex;
+    flex-direction:column;
+  }
+  .card h3{
+    font-size:18px;
+    font-weight:900;
+    margin:0 0 18px;
+    padding-left:12px;
+  }
+  .card.c-olive h3{ color:var(--olive); border-left:4px solid var(--olive); }
+  .card.c-rust h3{ color:var(--rust); border-left:4px solid var(--rust); }
+  .card.c-tan h3{ color:#8A6A38; border-left:4px solid var(--tan); }
+
+  .card .desc{
+    font-size:13.5px;
+    color:var(--muted);
+    margin-bottom:18px;
+  }
+  .price-list{
+    list-style:none;
+    margin:0 0 18px;
+    padding:0;
+    flex-grow:1;
+  }
+  .price-list li{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    gap:12px;
+    padding:11px 0;
+    border-bottom:1px dashed rgba(43,36,30,0.15);
+    font-size:14.5px;
+  }
+  .price-list li:last-child{ border-bottom:none; }
+  .price-list .item-name{ color:var(--ink); }
+  .price-list .item-price{
+    font-weight:900;
+    white-space:nowrap;
+  }
+  .card.c-olive .item-price{ color:var(--olive); }
+  .card.c-rust .item-price{ color:var(--rust); }
+  .card.c-tan .item-price{ color:#8A6A38; }
+
+  .card .footnote{
+    font-size:12px;
+    color:var(--muted);
+    line-height:1.6;
+    padding-top:14px;
+    border-top:1px solid rgba(43,36,30,0.1);
+  }
+
+  .note-box{
+    background:var(--olive-soft);
+    color:#EDE9DC;
+    border-radius:18px;
+    padding:28px 32px;
+    font-size:13.5px;
+    margin-bottom:56px;
+  }
+  .note-box strong{ color:var(--tan-soft); }
+
+  .cta{
+    text-align:center;
+    padding:48px 24px;
+    background:var(--card-bg);
+    border-radius:22px;
+    box-shadow:0 18px 40px -28px rgba(43,36,30,0.3);
+  }
+  .cta h2{ color:var(--olive); font-size:24px; margin:0 0 10px; }
+  .cta p{ color:var(--muted); font-size:14px; margin:0 0 26px; }
+  .cta a{
+    display:inline-block;
+    background:var(--rust);
+    color:#FBF7EF;
+    font-weight:900;
+    text-decoration:none;
+    padding:16px 44px;
+    border-radius:999px;
+    font-size:16px;
+    transition:transform .15s ease;
+  }
+  .cta a:hover{ transform:translateY(-2px); background:var(--rust-soft); }
+
+  footer{
+    text-align:center;
+    padding:32px 20px 48px;
+    color:var(--muted);
+    font-size:12.5px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">HERFULSINS DESIGN</div>
+  <h1>設計服務價目表</h1>
+  <p>為確保設計品質與施工細節，我們依空間類型與服務內容制定以下收費標準</p>
+</header>
+
+<main>
+  <div class="cards">
+
+    <div class="card c-olive">
+      <h3>基本服務說明</h3>
+      <div class="desc">整體專案與各類空間裝潢設計費用</div>
+      <ul class="price-list">
+        <li><span class="item-name">整體專案接案金額</span><span class="item-price">150 萬元起</span></li>
+        <li><span class="item-name">設計費用</span><span class="item-price">4,000 元／坪起</span></li>
+        <li><span class="item-name">新成屋裝潢</span><span class="item-price">5 萬元／坪起</span></li>
+        <li><span class="item-name">老屋翻新裝潢</span><span class="item-price">10 萬元／坪起</span></li>
+      </ul>
+      <div class="footnote">＊實際費用將依空間條件、設計需求與材料選用調整</div>
+    </div>
+
+    <div class="card c-rust">
+      <h3>提案費／預售屋客變</h3>
+      <div class="desc">確定設計簽約後，我們會進行丈量與平面初步規劃；預售屋客變則依據屋主客變內容需求，提供格局變更平面與水電迴路配置圖等。</div>
+      <ul class="price-list">
+        <li><span class="item-name">提案／丈量費用</span><span class="item-price">10,000 元起</span></li>
+      </ul>
+      <div class="footnote">＊預售案、商空案需先收取提案或丈量費用，其費用可於設計約簽定時折抵</div>
+    </div>
+
+    <div class="card c-tan">
+      <h3>工程管理費</h3>
+      <div class="desc">工程預算概估與建議</div>
+      <ul class="price-list">
+        <li><span class="item-name">工程管理費</span><span class="item-price">總工程款 x 5～8%</span></li>
+        <li><span class="item-name">新成屋工程</span><span class="item-price">每坪 6～8 萬起</span></li>
+        <li><span class="item-name">中古屋工程</span><span class="item-price">每坪 10～15 萬起</span></li>
+        <li><span class="item-name">工程總預算</span><span class="item-price">150 萬元起</span></li>
+      </ul>
+      <div class="footnote">＊以上為經驗值之建議預算，實際工程款項以簽認之設計圖說內容，詳列各個施工項目、數量、尺寸、材質等細目為準</div>
+    </div>
+
+  </div>
+
+  <div class="note-box">
+    <strong>說明：</strong>以上費用為設計服務與工程管理相關費用參考範圍，正式報價將依現場丈量結果、空間條件與客製項目調整，實際金額以簽認之設計合約為準。
+  </div>
+
+  <div class="cta">
+    <h2>想知道您的空間需要多少預算？</h2>
+    <p>預約到店或到府諮詢，讓設計師為您評估實際需求</p>
+    <a href="booking.html">立即預約諮詢</a>
+  </div>
+</main>
+
+<footer>
+  赫柏空間設計 HERFULSINS DESIGN
+</footer>
+
+</body>
+</html>
