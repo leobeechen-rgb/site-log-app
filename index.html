@@ -3004,8 +3004,8 @@ function HbBookingsHub({onBack:l,notify:g}){
                 u.default.createElement("div",{style:{fontSize:12.5,color:s.inkSoft,marginTop:2}},b.service_type,b.address?(" · "+b.address):""),
                 b.note?u.default.createElement("div",{style:{fontSize:12,color:s.inkSoft,marginTop:4}},b.note):null
               ),
-              u.default.createElement("div",{style:{textAlign:"right"}},
-                u.default.createElement("div",{style:{fontSize:11,fontWeight:400,color:s.ocean,textTransform:"uppercase"}},statusLabel[b.status]||b.status)
+              u.default.createElement("div",{style:{textAlign:"right",whiteSpace:"nowrap",flexShrink:0,marginLeft:8}},
+                u.default.createElement("div",{style:{fontSize:11,fontWeight:400,color:s.ocean,textTransform:"uppercase",whiteSpace:"nowrap"}},statusLabel[b.status]||b.status)
               )
             ),
             editingId===b.id?
