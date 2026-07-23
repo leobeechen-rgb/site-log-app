@@ -295,6 +295,7 @@
       <h2 class="disp">預約已送出</h2>
       <p>我們已收到您的預約，將盡快與您確認。</p>
       <div class="ticket" id="ticket"></div>
+      <button class="btn" id="addCalBtn">＋加入手機行事曆</button>
       <button class="btn ghost" onclick="location.reload()">再預約一筆</button>
     </div>
   </div>
@@ -516,6 +517,66 @@ function renderTicket(){
   document.getElementById('ticket').innerHTML =
     `<b>姓名：</b>${name}<br><b>電話：</b>${phone}<br><b>方式：</b>${state.svc}<br><b>時間：</b>${state.date} ${state.time}`;
 }
+
+/* ---- 加入手機行事曆（產生 .ics 檔） ---- */
+function pad2(n){ return String(n).padStart(2,'0'); }
+function icsEscape(s){ return String(s||'').replace(/\\/g,'\\\\').replace(/\n/g,'\\n').replace(/,/g,'\\,').replace(/;/g,'\\;'); }
+
+function buildICS(){
+  const name = document.getElementById('fName').value.trim();
+  const phone = document.getElementById('fPhone').value.trim();
+  const addr = document.getElementById('fAddr').value.trim();
+  const note = document.getElementById('fNote').value.trim();
+
+  const d = localDateFromKey(state.date);
+  const [hh, mm] = state.time.split(':').map(Number);
+  const start = new Date(d.getFullYear(), d.getMonth(), d.getDate(), hh, mm);
+  // 諮詢時長預設 1 小時，可依需求調整
+  const end = new Date(start.getTime() + 60*60*1000);
+
+  const fmt = (dt) => `${dt.getFullYear()}${pad2(dt.getMonth()+1)}${pad2(dt.getDate())}T${pad2(dt.getHours())}${pad2(dt.getMinutes())}00`;
+  const stamp = new Date();
+  const fmtUTC = (dt) => `${dt.getUTCFullYear()}${pad2(dt.getUTCMonth()+1)}${pad2(dt.getUTCDate())}T${pad2(dt.getUTCHours())}${pad2(dt.getUTCMinutes())}${pad2(dt.getUTCSeconds())}Z`;
+
+  const descLines = [`聯絡人：${name}`, `電話：${phone}`];
+  if(note) descLines.push(`需求簡述：${note}`);
+  const description = icsEscape(descLines.join('\n'));
+
+  const ics = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//Herfulsins Interior Design//Booking//ZH-TW',
+    'CALSCALE:GREGORIAN',
+    'BEGIN:VEVENT',
+    `UID:${Date.now()}-${Math.random().toString(36).slice(2)}@herfulsins-booking`,
+    `DTSTAMP:${fmtUTC(stamp)}`,
+    `DTSTART:${fmt(start)}`,
+    `DTEND:${fmt(end)}`,
+    `SUMMARY:${icsEscape('赫柏空間設計｜' + state.svc)}`,
+    addr ? `LOCATION:${icsEscape(addr)}` : '',
+    `DESCRIPTION:${description}`,
+    'BEGIN:VALARM',
+    'ACTION:DISPLAY',
+    'DESCRIPTION:預約提醒',
+    'TRIGGER:-PT1H',
+    'END:VALARM',
+    'END:VEVENT',
+    'END:VCALENDAR'
+  ].filter(Boolean).join('\r\n');
+
+  return ics;
+}
+
+function addToCalendar(){
+  const ics = buildICS();
+  const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  // 直接導向 blob URL：iOS Safari 會辨識 text/calendar 並跳出「加入行事曆」畫面；
+  // 其他瀏覽器（Android/桌機）則會直接下載 .ics 檔，使用者點開即可加入行事曆。
+  window.location.href = url;
+  setTimeout(()=> URL.revokeObjectURL(url), 10000);
+}
+document.getElementById('addCalBtn').addEventListener('click', addToCalendar);
 
 /* ---- Footer / navigation buttons ---- */
 function renderFooter(n){
