@@ -2812,6 +2812,7 @@ function HbBookingsHub({onBack:l,notify:g}){
       [selectedCalDate,setSelectedCalDate]=(0,u.useState)(null),
       [overrides,setOverrides]=(0,u.useState)([]),
       [schedule,setSchedule]=(0,u.useState)([]),
+      [scProjects,setScProjects]=(0,u.useState)([]),
       [showAddSchedule,setShowAddSchedule]=(0,u.useState)(false),
       [savingSchedule,setSavingSchedule]=(0,u.useState)(false),
       [scType,setScType]=(0,u.useState)("site"),
@@ -2827,12 +2828,13 @@ function HbBookingsHub({onBack:l,notify:g}){
 
   let load=async()=>{
     setLoading(true);
-    let[{data:b,error:e1},{data:c,error:e2},{data:sl,error:e3},{data:ov,error:e4},{data:se,error:e5}]=await Promise.all([
+    let[{data:b,error:e1},{data:c,error:e2},{data:sl,error:e3},{data:ov,error:e4},{data:se,error:e5},{data:pr,error:e6}]=await Promise.all([
       q.from("sitelog_bookings").select("*").order("date",{ascending:true}).order("time",{ascending:true}),
       q.from("sitelog_booking_closed_dates").select("*").order("date",{ascending:true}),
       q.from("sitelog_booking_weekday_slots").select("*").order("time",{ascending:true}),
       q.from("sitelog_booking_slot_overrides").select("*"),
-      q.from("sitelog_schedule_events").select("*").order("start_date",{ascending:true})
+      q.from("sitelog_schedule_events").select("*").order("start_date",{ascending:true}),
+      q.from("sitelog_projects").select("id,name").order("name",{ascending:true})
     ]);
     if(!e1)setList(b||[]);
     if(!e2)setClosed(c||[]);
@@ -2843,6 +2845,7 @@ function HbBookingsHub({onBack:l,notify:g}){
     }
     if(!e4)setOverrides(ov||[]);
     if(!e5)setSchedule(se||[]);
+    if(!e6)setScProjects(pr||[]);
     setLoading(false);
   };
   (0,u.useEffect)(()=>{load()},[]);
@@ -2968,7 +2971,7 @@ function HbBookingsHub({onBack:l,notify:g}){
   let effSlots=(weekSlots[activeWeekday]||[]).map(x=>x.time);
 
   let statusLabel={pending:"待確認",confirmed:"已確認",cancelled:"已取消",completed:"已完成"};
-  let scheduleTypeLabel={consult:"諮詢預約",site:"工地行程",other:"其他"};
+  let scheduleTypeLabel={consult:"諮詢預約",site:"案件行程",personal:"私人行程",other:"其他"};
 
   return u.default.createElement("div",{style:{background:s.paper,minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},
     u.default.createElement("div",{style:{background:"rgba(255,255,255,0.55)",backdropFilter:"blur(14px)",WebkitBackdropFilter:"blur(14px)",padding:"20px 16px",borderBottom:`1px solid ${s.line}`}},
@@ -2977,7 +2980,7 @@ function HbBookingsHub({onBack:l,notify:g}){
     ),
     u.default.createElement("div",{style:{padding:16}},
       u.default.createElement("button",{onClick:()=>setShowAddBooking(true),style:{...Dl,width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:8,marginBottom:10}},u.default.createElement(E,{name:"users",size:16})," 新增預約（與客戶見面）"),
-      u.default.createElement("button",{onClick:()=>setShowAddSchedule(true),style:{...ll,width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:8,marginBottom:16}},u.default.createElement(E,{name:"calendar",size:16})," 新增行程（工地／其他）"),
+      u.default.createElement("button",{onClick:()=>setShowAddSchedule(true),style:{...ll,width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:8,marginBottom:16}},u.default.createElement(E,{name:"calendar",size:16})," 新增行程"),
       !loading&&u.default.createElement("div",{style:{background:s.card,border:`1px solid ${s.line}`,borderRadius:8,padding:"12px 14px",marginBottom:16}},
         u.default.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}},
           u.default.createElement("button",{onClick:()=>setCalMonth(m=>{let d=new Date(m);d.setMonth(d.getMonth()-1);return d}),style:{...at}},u.default.createElement(E,{name:"chevron-up",size:16,style:{transform:"rotate(-90deg)"}})),
@@ -3182,14 +3185,18 @@ function HbBookingsHub({onBack:l,notify:g}){
         u.default.createElement("h3",{style:{margin:"0 0 14px",fontSize:17,fontWeight:400,color:s.oceanDark}},"新增行程"),
         u.default.createElement("label",{style:{fontSize:12.5,color:s.inkSoft}},"行程類型"),
         u.default.createElement("select",{value:scType,onChange:x=>setScType(x.target.value),style:el},
-          u.default.createElement("option",{value:"site"},"工地行程"),
+          u.default.createElement("option",{value:"site"},"案件行程"),
           u.default.createElement("option",{value:"consult"},"諮詢預約"),
+          u.default.createElement("option",{value:"personal"},"私人行程"),
           u.default.createElement("option",{value:"other"},"其他")
         ),
         u.default.createElement("label",{style:{fontSize:12.5,color:s.inkSoft}},"標題"),
         u.default.createElement("input",{type:"text",value:scTitle,onChange:x=>setScTitle(x.target.value),placeholder:"例如：陳宅－水電進場",style:el}),
         u.default.createElement("label",{style:{fontSize:12.5,color:s.inkSoft}},"關聯案件（選填）"),
-        u.default.createElement("input",{type:"text",value:scProject,onChange:x=>setScProject(x.target.value),placeholder:"案件名稱",style:el}),
+        u.default.createElement("select",{value:scProject,onChange:x=>setScProject(x.target.value),style:el},
+          u.default.createElement("option",{value:""},"不關聯案件"),
+          scProjects.map(p=>u.default.createElement("option",{key:p.id,value:p.name},p.name))
+        ),
         u.default.createElement("label",{style:{fontSize:12.5,color:s.inkSoft}},"開始日期"),
         u.default.createElement("input",{type:"date",value:scStartDate,onChange:x=>{let v=x.target.value;setScStartDate(v);if(!scEndDate||scEndDate<v)setScEndDate(v)},style:el}),
         u.default.createElement("label",{style:{fontSize:12.5,color:s.inkSoft}},"結束日期（單日可留空，自動同開始日期）"),
