@@ -2880,6 +2880,12 @@ function HbBookingsHub({onBack:l,notify:g}){
     g("已取消預約");load();
   };
 
+  let confirmBooking=async id=>{
+    let{error}=await q.from("sitelog_bookings").update({status:"confirmed"}).eq("id",id);
+    if(error){g("確認失敗："+error.message);return}
+    g("已確認預約");load();
+  };
+
   let addClosedDate=async()=>{
     if(!newClosedDate){g("請選擇日期");return}
     let{error}=await q.from("sitelog_booking_closed_dates").insert({date:newClosedDate,reason:newClosedReason||null});
@@ -3015,6 +3021,7 @@ function HbBookingsHub({onBack:l,notify:g}){
               u.default.createElement("div",{style:{marginTop:10,paddingTop:10,borderTop:`1px solid ${s.line}`,display:"flex",justifyContent:"space-between",alignItems:"center"}},
                 u.default.createElement("div",{style:{fontSize:14,fontWeight:400,color:s.oceanDark}},Tl(b.date)," ",b.time),
                 u.default.createElement("div",{style:{display:"flex",gap:6}},
+                  b.status==="pending"&&u.default.createElement("button",{onClick:()=>confirmBooking(b.id),style:{...at,color:s.tree}},u.default.createElement(E,{name:"check",size:16})),
                   b.status!=="cancelled"&&u.default.createElement("button",{onClick:()=>startEdit(b),style:{...at}},u.default.createElement(E,{name:"pencil",size:16})),
                   b.status!=="cancelled"&&u.default.createElement("button",{onClick:()=>cancelBooking(b.id),style:{...at,color:s.danger}},u.default.createElement(E,{name:"x",size:16}))
                 )
