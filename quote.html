@@ -650,6 +650,23 @@ function buildSyncPayload(){
   };
 }
 
+function dedupeSavedQuotesByQNo(list){
+  const posByQNo = new Map();
+  const result = [];
+  list.forEach(sq=>{
+    const key = sq.meta && sq.meta.qNo;
+    if(!key){ result.push(sq); return; }
+    const idx = posByQNo.get(key);
+    if(idx===undefined){
+      posByQNo.set(key, result.length);
+      result.push(sq);
+    }else if(new Date(sq.savedAt||0) >= new Date(result[idx].savedAt||0)){
+      result[idx] = sq;
+    }
+  });
+  return result;
+}
+
 function applyLoadedData(data){
   if(!data) return;
   if(Array.isArray(data.priceList) && data.priceList.length){
@@ -657,7 +674,7 @@ function applyLoadedData(data){
     nextSeq = data.nextSeq || (PRICE_LIST.length + 1);
   }
   if(Array.isArray(data.savedQuotes)){
-    savedQuotes = data.savedQuotes;
+    savedQuotes = dedupeSavedQuotesByQNo(data.savedQuotes);
     savedSeq = data.savedSeq || (savedQuotes.length ? Math.max(...savedQuotes.map(s=>s.id||0)) + 1 : 1);
   }
   if(data.draft){
@@ -1394,6 +1411,20 @@ function currentMeta(){
 document.getElementById('saveQuoteBtn').addEventListener('click', ()=>{
   if(quoteRows.length===0){ alert('目前報價單還沒有任何項目'); return; }
   const meta = currentMeta();
+  const existing = meta.qNo ? savedQuotes.find(s=>s.meta.qNo === meta.qNo) : null;
+
+  if(existing){
+    existing.meta = meta;
+    existing.rows = JSON.parse(JSON.stringify(quoteRows));
+    existing.total = renderTotals();
+    existing.savedAt = new Date().toISOString();
+    renderSaved();
+    clearTimeout(cloudSyncTimer);
+    pushToCloud();
+    alert('已更新「' + existing.name + '」（單號 ' + meta.qNo + '）');
+    return;
+  }
+
   const defaultName = (meta.qClient ? meta.qClient + ' - ' : '') + (meta.qNo || ('報價單' + savedSeq));
   const name = prompt('請輸入這份報價單的名稱：', defaultName);
   if(name === null) return;
