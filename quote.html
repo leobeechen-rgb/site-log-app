@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>快速報價系統</title>
+<title>報價單</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2064%2064%22%3E%0A%3Crect%20width%3D%2264%22%20height%3D%2264%22%20rx%3D%2214%22%20fill%3D%22%23262424%22/%3E%0A%3Ctext%20x%3D%2232%22%20y%3D%2244%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-weight%3D%22900%22%20font-size%3D%2234%22%20fill%3D%22%23EEE5DA%22%20text-anchor%3D%22middle%22%3EQ%3C/text%3E%0A%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;600&family=Noto+Sans+TC:wght@400;500;600&family=Zen+Kaku+Gothic+New:wght@400;500&display=swap" rel="stylesheet">
@@ -385,6 +385,10 @@
     .topbar-deco,.lib-search-row,.lib-cats,.actions,#tabPaneLib,#savedPanel,.price-toggle-wrap,.cloud-badge,.lock-btn,.add-subitem-link,.del-btn{display:none;}
     body{background:#fff; line-height:1.25; font-size:12px;}
     .panel{border:none; box-shadow:none; backdrop-filter:none; margin-bottom:6px; break-inside:avoid;}
+    #quotePanel{break-inside:auto;}
+    #quotePanel thead{display:table-header-group;}
+    #quotePanel tbody tr{break-inside:avoid;}
+    #quotePanel .totals{break-inside:avoid;}
     .topbar{padding:8px 0; border-radius:0; box-shadow:none; backdrop-filter:none;}
     .brand-title{font-size:18px;}
     .quote-meta{padding:6px 10px; background:transparent; border:1px solid var(--line);}
@@ -461,7 +465,7 @@
   <div class="topbar-inner">
     <div>
       <div class="brand-eyebrow">Interior Renovation · Quotation</div>
-      <h1 class="brand-title">快速報價系統</h1>
+      <h1 class="brand-title">報價單</h1>
       <div class="brand-sub">點選項目，自動試算工程報價</div>
     </div>
     <div class="quote-meta">
@@ -529,7 +533,7 @@
     </div>
 
     <!-- Quote builder -->
-    <div class="panel">
+    <div class="panel" id="quotePanel">
       <div class="panel-head">
         <span>報價明細</span>
         <label class="price-toggle-wrap">
