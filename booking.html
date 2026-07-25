@@ -310,6 +310,8 @@ const SUPABASE_URL = "https://rqndozhhvuimqjqtmeli.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxbmRvemhodnVpbXFqcXRtZWxpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5Njc1ODIsImV4cCI6MjA5OTU0MzU4Mn0.meaGT1veRt9acHCl4Dcrpk9jxjNzrkFKWfs_96C6qLw";
 // TODO: 換成實際部署的 Edge Function 網址（負責發送 LINE 通知）
 const LINE_NOTIFY_FUNCTION_URL = "https://rqndozhhvuimqjqtmeli.supabase.co/functions/v1/send-booking-line-notify";
+// Email 通知備援管道（負責發送 Email 通知，透過 Resend）
+const EMAIL_NOTIFY_FUNCTION_URL = "https://rqndozhhvuimqjqtmeli.supabase.co/functions/v1/send-booking-email-notify";
 
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -659,6 +661,13 @@ async function submitBooking(){
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({ booking_id: inserted.id })
     }).catch(err => console.error('LINE 通知發送失敗', err));
+
+    // 通知 Email（備援管道，失敗不影響預約成立，只記錄錯誤）
+    fetch(EMAIL_NOTIFY_FUNCTION_URL, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ booking_id: inserted.id })
+    }).catch(err => console.error('Email 通知發送失敗', err));
 
     // 更新本地快取，避免同一頁面內重複選到剛預約的時段
     const mk = monthKey(localDateFromKey(state.date));
