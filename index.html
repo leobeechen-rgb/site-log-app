@@ -23,6 +23,10 @@
   #root { height: 100%; overflow: hidden; }
   * { box-sizing: border-box; }
 
+  /* 全站隱藏捲軸樣式，但保留可捲動功能 */
+  *::-webkit-scrollbar { display: none; width: 0; height: 0; }
+  * { scrollbar-width: none; -ms-overflow-style: none; }
+
   @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
   .animate-spin { animation: spin 0.8s linear infinite; transform-origin: center; transform-box: fill-box; }
 
