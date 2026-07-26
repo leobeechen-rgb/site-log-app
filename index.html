@@ -3758,10 +3758,6 @@ function Fy({projectId:l,onLogout:t}){let[e,n]=(0,u.useState)("loading"),[a,i]=(
       u.default.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10,minHeight:22}},
         hbBack?u.default.createElement("button",{onClick:hbBack,style:{background:"none",border:"none",color:s.inkSoft,cursor:"pointer",fontSize:11.5,display:"flex",alignItems:"center",gap:4,padding:0}},u.default.createElement(E,{name:"arrow-left",size:14})):u.default.createElement("span",null),
         u.default.createElement("div",{style:{position:"relative",display:"flex",alignItems:"center",gap:14}},
-          !hbPM&&hbGoCo&&u.default.createElement("div",{style:{display:"flex",background:"rgba(255,255,255,0.4)",backdropFilter:"blur(10px)",WebkitBackdropFilter:"blur(10px)",border:"1px solid rgba(255,255,255,0.5)",borderRadius:20,padding:2,gap:2,marginRight:2}},
-            u.default.createElement("span",{style:{padding:"4px 10px",borderRadius:18,background:s.oceanDark,color:s.card,fontSize:11.5,fontWeight:400}},"\u6848\u4EF6"),
-            u.default.createElement("button",{onClick:hbGoCo,style:{padding:"4px 10px",borderRadius:18,border:"none",background:"none",color:s.inkSoft,fontSize:11.5,fontWeight:400,cursor:"pointer"}},"\u516C\u53F8")
-          ),
           u.default.createElement("button",{onClick:n,disabled:a,style:{background:"none",border:"none",color:s.inkSoft,cursor:"pointer",display:"flex",padding:0}},u.default.createElement(E,{name:"refresh",size:19,className:a?"animate-spin":""})),
           !hbPM&&u.default.createElement("button",{onClick:()=>hbSetMenuOpen(v=>!v),style:{background:"none",border:"none",color:s.inkSoft,cursor:"pointer",display:"flex",padding:0}},u.default.createElement(E,{name:"more-vertical",size:19})),
           !hbPM&&hbMenuOpen&&u.default.createElement(u.default.Fragment,null,
