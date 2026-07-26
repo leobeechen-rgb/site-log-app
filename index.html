@@ -3343,12 +3343,23 @@ function HbDigitalCard({onBack,notify}){
   let copyLink=async()=>{
     try{await navigator.clipboard.writeText(window.location.origin);notify&&notify("\u5DF2\u8907\u88FD\u540D\u7247\u9023\u7D50")}catch{notify&&notify("\u8907\u88FD\u5931\u6557\uFF0C\u8ACB\u624B\u52D5\u8907\u88FD\u7DB2\u5740")}
   };
+  let saveContact=()=>{
+    let vcard=["BEGIN:VCARD","VERSION:3.0","N:\u9673;\u5954\u851A;;;","FN:\u9673\u5954\u851A","ORG:\u8D6B\u67CF\u7A7A\u9593\u8A2D\u8A08 HERFULSINS","TITLE:\u5BA4\u5167\u8A2D\u8A08\u516C\u53F8\u8CA0\u8CAC\u4EBA","TEL;TYPE=CELL:+886987583978","URL:https://herfulsinsvip.com","END:VCARD"].join("\n");
+    let a=document.createElement("a");
+    a.href="data:text/vcard;charset=utf-8,"+encodeURIComponent(vcard);
+    a.target="_blank";
+    a.rel="noopener";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
   let rows=[
-    {icon:"user",label:"\u806F\u7D61\u4EBA",value:"\u5C1A\u672A\u8A2D\u5B9A"},
-    {icon:"send",label:"\u96FB\u8A71",value:"\u5C1A\u672A\u8A2D\u5B9A"},
-    {icon:"message-circle",label:"Email",value:"\u5C1A\u672A\u8A2D\u5B9A"},
-    {icon:"map-pin",label:"\u5730\u5740",value:"\u5C1A\u672A\u8A2D\u5B9A"},
-    {icon:"link",label:"\u5B98\u7DB2",value:"herfulsinsvip.com"}
+    {icon:"user",label:"\u806F\u7D61\u4EBA",value:"\u9673\u5954\u851A"},
+    {icon:"briefcase",label:"\u8077\u7A31",value:"\u5BA4\u5167\u8A2D\u8A08\u516C\u53F8\u8CA0\u8CAC\u4EBA"},
+    {icon:"phone",label:"\u96FB\u8A71",value:"0987 583 978",href:"tel:+886987583978"},
+    {icon:"message-circle",label:"LINE",value:"\u52A0\u5165\u597D\u53CB",href:"https://line.me/ti/p/~3her05"},
+    {icon:"camera",label:"Instagram",value:"@3chyienian05",href:"https://www.instagram.com/3chyienian05?igsh=MWxwdGE2MDkxY3h5MQ%3D%3D&utm_source=qr"},
+    {icon:"link",label:"\u5B98\u7DB2",value:"herfulsinsvip.com",href:"https://herfulsinsvip.com"}
   ];
   return u.default.createElement("div",{style:{background:s.paper,minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},
     u.default.createElement("div",{style:{background:"rgba(28,27,24,0.82)",backdropFilter:"blur(14px)",WebkitBackdropFilter:"blur(14px)",padding:"20px 16px"}},
@@ -3359,19 +3370,23 @@ function HbDigitalCard({onBack,notify}){
       u.default.createElement("div",{style:{background:s.card,borderRadius:18,padding:"28px 24px",width:"100%",maxWidth:360,boxShadow:"0 10px 30px -10px rgba(140,111,82,0.3)",textAlign:"center"}},
         u.default.createElement("div",{style:{width:64,height:64,borderRadius:"50%",background:s.oceanDark,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 14px"}},u.default.createElement(E,{name:"id-card",size:28,color:"#fff"})),
         u.default.createElement("div",{className:"mono",style:{color:s.ocean,fontSize:11,letterSpacing:2,marginBottom:4}},"HERFULSINS INTERIOR DESIGN"),
-        u.default.createElement("h1",{style:{fontSize:22,fontWeight:300,color:s.oceanDark,margin:"0 0 6px"}},"\u8D6B\u67CF\u7A7A\u9593\u8A2D\u8A08"),
-        u.default.createElement("p",{style:{fontSize:12.5,color:s.inkSoft,margin:"0 0 20px"}},"\u5DE5\u5730\u7D00\u9304\u672C \xB7 \u96FB\u5B50\u540D\u7247"),
+        u.default.createElement("h1",{style:{fontSize:22,fontWeight:300,color:s.oceanDark,margin:"0 0 6px"}},"\u9673\u5954\u851A"),
+        u.default.createElement("p",{style:{fontSize:12.5,color:s.inkSoft,margin:"0 0 20px"}},"\u5BA4\u5167\u8A2D\u8A08\u516C\u53F8\u8CA0\u8CAC\u4EBA \xB7 \u8D6B\u67CF\u7A7A\u9593\u8A2D\u8A08"),
         u.default.createElement("div",{className:"dashed",style:{margin:"0 0 18px"}}),
         u.default.createElement("div",{style:{display:"flex",flexDirection:"column",gap:14,textAlign:"left"}},
-          rows.map((r,idx)=>u.default.createElement("div",{key:idx,style:{display:"flex",alignItems:"center",gap:12}},
-            u.default.createElement("div",{style:{width:34,height:34,borderRadius:"50%",background:s.cardAlt,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},u.default.createElement(E,{name:r.icon,size:15,color:s.ocean})),
-            u.default.createElement("div",null,
+          rows.map((r,idx)=>{
+            let iconEl=u.default.createElement("div",{style:{width:34,height:34,borderRadius:"50%",background:s.cardAlt,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},u.default.createElement(E,{name:r.icon,size:15,color:s.ocean}));
+            let textEl=u.default.createElement("div",null,
               u.default.createElement("div",{style:{fontSize:11,color:s.inkSoft}},r.label),
-              u.default.createElement("div",{style:{fontSize:13.5,color:r.value==="\u5C1A\u672A\u8A2D\u5B9A"?s.inkSoft:s.ink,fontStyle:r.value==="\u5C1A\u672A\u8A2D\u5B9A"?"italic":"normal"}},r.value)
-            )
-          ))
+              u.default.createElement("div",{style:{fontSize:13.5,color:s.ink}},r.value)
+            );
+            return r.href
+              ?u.default.createElement("a",{key:idx,href:r.href,target:"_blank",rel:"noopener noreferrer",style:{display:"flex",alignItems:"center",gap:12,textDecoration:"none",color:"inherit"}},iconEl,textEl)
+              :u.default.createElement("div",{key:idx,style:{display:"flex",alignItems:"center",gap:12}},iconEl,textEl);
+          })
         ),
-        u.default.createElement("button",{onClick:copyLink,style:{...Dl,width:"100%",marginTop:22,display:"flex",alignItems:"center",justifyContent:"center",gap:6}},u.default.createElement(E,{name:"share",size:15}),"\u8907\u88FD\u540D\u7247\u9023\u7D50")
+        u.default.createElement("button",{onClick:saveContact,style:{...Dl,width:"100%",marginTop:22,display:"flex",alignItems:"center",justifyContent:"center",gap:6}},u.default.createElement(E,{name:"user-plus",size:15}),"\u5132\u5B58\u806F\u7D61\u4EBA"),
+        u.default.createElement("button",{onClick:copyLink,style:{...ll,width:"100%",marginTop:10,display:"flex",alignItems:"center",justifyContent:"center",gap:6}},u.default.createElement(E,{name:"share",size:15}),"\u8907\u88FD\u540D\u7247\u9023\u7D50")
       )
     )
   );
