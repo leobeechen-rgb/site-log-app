@@ -3629,10 +3629,6 @@ function HbDigitalCard({onBack,notify}){
 </html>
 `;
   return u.default.createElement("div",{style:{background:s.paper,height:"100%",display:"flex",flexDirection:"column",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},
-    u.default.createElement("div",{style:{background:"rgba(28,27,24,0.82)",backdropFilter:"blur(14px)",WebkitBackdropFilter:"blur(14px)",padding:"20px 16px",flexShrink:0}},
-      u.default.createElement("button",{onClick:onBack,style:{background:"none",border:"none",color:s.card,display:"flex",alignItems:"center",gap:6,cursor:"pointer",padding:0,marginBottom:10}},u.default.createElement(E,{name:"arrow-left",size:18})),
-      u.default.createElement("h2",{style:{color:s.card,fontSize:20,fontWeight:300,margin:0}},"\u96FB\u5B50\u540D\u7247")
-    ),
     u.default.createElement("iframe",{srcDoc:cardHtml,title:"\u96FB\u5B50\u540D\u7247",style:{flex:1,minHeight:0,border:"none",width:"100%",background:"#EDE3D0"}})
   );
 }
