@@ -3340,55 +3340,300 @@ function HbBottomNav({active,onNavigate}){
   );
 }
 function HbDigitalCard({onBack,notify}){
-  let copyLink=async()=>{
-    try{await navigator.clipboard.writeText(window.location.origin);notify&&notify("\u5DF2\u8907\u88FD\u540D\u7247\u9023\u7D50")}catch{notify&&notify("\u8907\u88FD\u5931\u6557\uFF0C\u8ACB\u624B\u52D5\u8907\u88FD\u7DB2\u5740")}
-  };
-  let saveContact=()=>{
-    let vcard=["BEGIN:VCARD","VERSION:3.0","N:\u9673;\u5954\u851A;;;","FN:\u9673\u5954\u851A","ORG:\u8D6B\u67CF\u7A7A\u9593\u8A2D\u8A08 HERFULSINS","TITLE:\u5BA4\u5167\u8A2D\u8A08\u516C\u53F8\u8CA0\u8CAC\u4EBA","TEL;TYPE=CELL:+886987583978","URL:https://herfulsinsvip.com","END:VCARD"].join("\n");
-    let a=document.createElement("a");
-    a.href="data:text/vcard;charset=utf-8,"+encodeURIComponent(vcard);
-    a.target="_blank";
-    a.rel="noopener";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-  };
-  let rows=[
-    {icon:"user",label:"\u806F\u7D61\u4EBA",value:"\u9673\u5954\u851A"},
-    {icon:"briefcase",label:"\u8077\u7A31",value:"\u5BA4\u5167\u8A2D\u8A08\u516C\u53F8\u8CA0\u8CAC\u4EBA"},
-    {icon:"phone",label:"\u96FB\u8A71",value:"0987 583 978",href:"tel:+886987583978"},
-    {icon:"message-circle",label:"LINE",value:"\u52A0\u5165\u597D\u53CB",href:"https://line.me/ti/p/~3her05"},
-    {icon:"camera",label:"Instagram",value:"@3chyienian05",href:"https://www.instagram.com/3chyienian05?igsh=MWxwdGE2MDkxY3h5MQ%3D%3D&utm_source=qr"},
-    {icon:"link",label:"\u5B98\u7DB2",value:"herfulsinsvip.com",href:"https://herfulsinsvip.com"}
-  ];
-  return u.default.createElement("div",{style:{background:s.paper,minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},
-    u.default.createElement("div",{style:{background:"rgba(28,27,24,0.82)",backdropFilter:"blur(14px)",WebkitBackdropFilter:"blur(14px)",padding:"20px 16px"}},
+  let cardHtml=`<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>陳奕蒨 | 室內設計公司負責人</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;700&family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #EDE3D0;
+    --ink: #2E2820;
+    --ink-soft: #78705E;
+    --olive: #454F2D;
+    --rust: #B5622C;
+    --tan: #C79857;
+    --white: #FBF8F2;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Noto Sans TC', -apple-system, "PingFang TC", sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 40px 20px 60px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.45;
+    mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='matrix' values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.035 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  }
+
+  .card {
+    width: 100%;
+    max-width: 380px;
+    opacity: 0;
+    animation: rise 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .card, .blob, .cta { animation: none !important; opacity: 1 !important; transform: none !important; }
+  }
+
+  /* header — flush left, echoes the reference lockup */
+  .header {
+    padding: 4px 6px 30px;
+  }
+
+  .name {
+    font-family: 'Noto Serif TC', serif;
+    font-size: 30px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    line-height: 1.15;
+  }
+
+  .name-en {
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    color: var(--ink-soft);
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+
+  .dash {
+    width: 34px;
+    height: 2px;
+    background: var(--ink);
+    margin: 14px 0 12px;
+  }
+
+  .role {
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .company {
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin-top: 3px;
+    letter-spacing: 0.5px;
+  }
+
+  /* blob stack */
+  .stack {
+    position: relative;
+    padding: 6px 0 8px;
+  }
+
+  .blob {
+    position: relative;
+    width: 66%;
+    aspect-ratio: 1 / 1;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    color: var(--white);
+    box-shadow: 0 14px 26px rgba(30, 25, 15, 0.16);
+    opacity: 0;
+    transform: scale(0.92);
+    animation: pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+
+  .blob:nth-child(1) { background: var(--rust);  margin-left: 4%;   z-index: 1; animation-delay: 0.05s; }
+  .blob:nth-child(2) { background: var(--olive); margin-left: 30%;  margin-top: -20%; z-index: 2; animation-delay: 0.15s; }
+  .blob:nth-child(3) { background: var(--tan);   margin-left: 2%;   margin-top: -20%; z-index: 3; animation-delay: 0.25s; }
+
+  @keyframes pop {
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  .blob:hover, .blob:focus-visible {
+    filter: brightness(1.06);
+    outline: none;
+  }
+
+  .blob .icon {
+    width: 30px;
+    height: 30px;
+    margin-bottom: 8px;
+  }
+  .blob .icon svg {
+    width: 100%; height: 100%;
+    fill: none;
+    stroke: var(--white);
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .blob .label {
+    font-family: 'Noto Serif TC', serif;
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: 1px;
+  }
+
+  .blob .sub {
+    font-size: 10.5px;
+    margin-top: 3px;
+    opacity: 0.85;
+    letter-spacing: 0.3px;
+  }
+
+  /* white CTA circle overlapping the stack, echoes reference's white bubble */
+  .cta {
+    position: absolute;
+    top: 4%;
+    left: -4%;
+    width: 34%;
+    aspect-ratio: 1 / 1;
+    border-radius: 50%;
+    background: var(--white);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    color: var(--ink);
+    box-shadow: 0 10px 20px rgba(30, 25, 15, 0.18);
+    z-index: 4;
+    border: none;
+    cursor: pointer;
+    opacity: 0;
+    transform: scale(0.8);
+    animation: pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) 0.4s forwards;
+  }
+
+  .cta .icon {
+    width: 20px;
+    height: 20px;
+    margin-bottom: 4px;
+  }
+  .cta .icon svg {
+    width: 100%; height: 100%;
+    fill: none;
+    stroke: var(--ink);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .cta .label {
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.3;
+    text-align: center;
+  }
+
+  .footer {
+    text-align: left;
+    padding: 22px 6px 0;
+    font-size: 10px;
+    color: var(--ink-soft);
+    letter-spacing: 2px;
+  }
+</style>
+</head>
+<body>
+
+<div class="card">
+
+  <div class="header">
+    <div class="name">陳奕蒨</div>
+    <div class="dash"></div>
+    <div class="role">室內設計公司負責人</div>
+    <div class="company">赫柏空間設計 HERFULSINS</div>
+  </div>
+
+  <div class="stack">
+    <a class="blob" href="tel:+886987583978">
+      <span class="icon"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></span>
+      <span class="label">電話</span>
+      <span class="sub">0987 583 978</span>
+    </a>
+
+    <a class="blob" href="https://line.me/ti/p/~3her05" target="_blank" rel="noopener">
+      <span class="icon"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></span>
+      <span class="label">LINE</span>
+      <span class="sub">加入好友</span>
+    </a>
+
+    <a class="blob" href="https://www.instagram.com/3chyienian05?igsh=MWxwdGE2MDkxY3h5MQ%3D%3D&utm_source=qr" target="_blank" rel="noopener">
+      <span class="icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r="0.6" fill="currentColor" stroke="none"/></svg></span>
+      <span class="label">Instagram</span>
+      <span class="sub">@3chyienian05</span>
+    </a>
+
+    <a class="cta" id="saveContact" href="#">
+      <span class="icon"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="16" y1="11" x2="22" y2="11"/></svg></span>
+      <span class="label">儲存<br>聯絡人</span>
+    </a>
+  </div>
+
+  <div class="footer">赫柏空間設計 · HERFULSINS</div>
+</div>
+
+<script>
+  document.getElementById('saveContact').addEventListener('click', function(e) {
+    e.preventDefault();
+    var vcard = [
+      'BEGIN:VCARD',
+      'VERSION:3.0',
+      'N:陳;奕蒨;;;',
+      'FN:陳奕蒨',
+      'ORG:赫柏空間設計 HERFULSINS',
+      'TITLE:室內設計公司負責人',
+      'TEL;TYPE=CELL:+886987583978',
+      'URL:https://www.instagram.com/3chyienian05',
+      'END:VCARD'
+    ].join('\\n');
+
+    var vcardText = vcard;
+    var link = document.createElement('a');
+    link.href = 'data:text/vcard;charset=utf-8,' + encodeURIComponent(vcardText);
+    link.target = '_blank';
+    link.rel = 'noopener';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  });
+<\/script>
+
+</body>
+</html>
+`;
+  return u.default.createElement("div",{style:{background:s.paper,height:"100%",display:"flex",flexDirection:"column",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},
+    u.default.createElement("div",{style:{background:"rgba(28,27,24,0.82)",backdropFilter:"blur(14px)",WebkitBackdropFilter:"blur(14px)",padding:"20px 16px",flexShrink:0}},
       u.default.createElement("button",{onClick:onBack,style:{background:"none",border:"none",color:s.card,display:"flex",alignItems:"center",gap:6,cursor:"pointer",padding:0,marginBottom:10}},u.default.createElement(E,{name:"arrow-left",size:18})),
       u.default.createElement("h2",{style:{color:s.card,fontSize:20,fontWeight:300,margin:0}},"\u96FB\u5B50\u540D\u7247")
     ),
-    u.default.createElement("div",{style:{padding:"24px 16px",display:"flex",justifyContent:"center"}},
-      u.default.createElement("div",{style:{background:s.card,borderRadius:18,padding:"28px 24px",width:"100%",maxWidth:360,boxShadow:"0 10px 30px -10px rgba(140,111,82,0.3)",textAlign:"center"}},
-        u.default.createElement("div",{style:{width:64,height:64,borderRadius:"50%",background:s.oceanDark,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 14px"}},u.default.createElement(E,{name:"id-card",size:28,color:"#fff"})),
-        u.default.createElement("div",{className:"mono",style:{color:s.ocean,fontSize:11,letterSpacing:2,marginBottom:4}},"HERFULSINS INTERIOR DESIGN"),
-        u.default.createElement("h1",{style:{fontSize:22,fontWeight:300,color:s.oceanDark,margin:"0 0 6px"}},"\u9673\u5954\u851A"),
-        u.default.createElement("p",{style:{fontSize:12.5,color:s.inkSoft,margin:"0 0 20px"}},"\u5BA4\u5167\u8A2D\u8A08\u516C\u53F8\u8CA0\u8CAC\u4EBA \xB7 \u8D6B\u67CF\u7A7A\u9593\u8A2D\u8A08"),
-        u.default.createElement("div",{className:"dashed",style:{margin:"0 0 18px"}}),
-        u.default.createElement("div",{style:{display:"flex",flexDirection:"column",gap:14,textAlign:"left"}},
-          rows.map((r,idx)=>{
-            let iconEl=u.default.createElement("div",{style:{width:34,height:34,borderRadius:"50%",background:s.cardAlt,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},u.default.createElement(E,{name:r.icon,size:15,color:s.ocean}));
-            let textEl=u.default.createElement("div",null,
-              u.default.createElement("div",{style:{fontSize:11,color:s.inkSoft}},r.label),
-              u.default.createElement("div",{style:{fontSize:13.5,color:s.ink}},r.value)
-            );
-            return r.href
-              ?u.default.createElement("a",{key:idx,href:r.href,target:"_blank",rel:"noopener noreferrer",style:{display:"flex",alignItems:"center",gap:12,textDecoration:"none",color:"inherit"}},iconEl,textEl)
-              :u.default.createElement("div",{key:idx,style:{display:"flex",alignItems:"center",gap:12}},iconEl,textEl);
-          })
-        ),
-        u.default.createElement("button",{onClick:saveContact,style:{...Dl,width:"100%",marginTop:22,display:"flex",alignItems:"center",justifyContent:"center",gap:6}},u.default.createElement(E,{name:"user-plus",size:15}),"\u5132\u5B58\u806F\u7D61\u4EBA"),
-        u.default.createElement("button",{onClick:copyLink,style:{...ll,width:"100%",marginTop:10,display:"flex",alignItems:"center",justifyContent:"center",gap:6}},u.default.createElement(E,{name:"share",size:15}),"\u8907\u88FD\u540D\u7247\u9023\u7D50")
-      )
-    )
+    u.default.createElement("iframe",{srcDoc:cardHtml,title:"\u96FB\u5B50\u540D\u7247",style:{flex:1,minHeight:0,border:"none",width:"100%",background:"#EDE3D0"}})
   );
 }
 function Gy(){let[l,t]=(0,u.useState)(!0),[e,n]=(0,u.useState)(!1),[a,i]=(0,u.useState)([]),[o,f]=(0,u.useState)(()=>{try{let v=sessionStorage.getItem("hb_last_view");return v&&v!=="quoteImportPick"?v:"landing"}catch{return"landing"}}),[c,r]=(0,u.useState)(()=>{try{return sessionStorage.getItem("hb_last_project")||null}catch{return null}}),[d,h]=(0,u.useState)(!1),[m,p]=(0,u.useState)(null),[z,C]=(0,u.useState)(null),[hbOpenTab,hbSetOpenTab]=(0,u.useState)(()=>{try{return sessionStorage.getItem("hb_last_tab")||"photos"}catch{return"photos"}}),[hbQuoteImport,hbSetQuoteImport]=(0,u.useState)(null),D=async T=>{T?n(!0):t(!0);try{let{data:k,error:H}=await q.from("sitelog_projects").select("*, sitelog_photos(count), sitelog_quotes(count)").order("created_at",{ascending:!1});if(H){g("讀取案件失敗："+H.message);T||i([])}else i((k||[]).map(cm))}catch(k){g("讀取案件失敗："+(k.message||k))}finally{T?n(!1):t(!1)}},y=async()=>{let[T,k,H,B]=await Promise.all([q.from("sitelog_photos").select("size"),q.from("sitelog_quotes").select("size"),q.from("sitelog_files").select("size"),q.from("sitelog_materials").select("photo_size")]);if(T.error||k.error||H.error||B.error)return;let nl=(ql,je)=>(ql||[]).reduce((Ml,te)=>Ml+(Number(te[je])||0),0),hl=nl(T.data,"size")+nl(k.data,"size")+nl(H.data,"size")+nl(B.data,"photo_size");C(hl)};(0,u.useEffect)(()=>{D(!1),y()},[]);(0,u.useEffect)(()=>{try{o&&o!=="quoteImportPick"&&sessionStorage.setItem("hb_last_view",o);c?sessionStorage.setItem("hb_last_project",c):sessionStorage.removeItem("hb_last_project");sessionStorage.setItem("hb_last_tab",hbOpenTab)}catch{}},[o,c,hbOpenTab]);(0,u.useEffect)(()=>{let hbMsg=T=>{T?.data&&T.data.type==="hb-quote-import"&&(hbSetQuoteImport(T.data),f("quoteImportPick"))};return window.addEventListener("message",hbMsg),()=>window.removeEventListener("message",hbMsg)},[]);let g=(0,u.useCallback)(T=>{p(T),setTimeout(()=>p(null),2600)},[]),hbImportQuote=async T=>{if(!hbQuoteImport)return;try{let{blob:k,filename:H,meta:B}=hbQuoteImport,mt=k.type||"text/html",sl=`${T.id}/${Be()}.${mt==="application/json"?"json":"html"}`,X=await r2UploadSitelogFile("sitelog-quotes",sl,k,mt);let{error:dl}=await q.from("sitelog_quotes").insert({project_id:T.id,name:H,mime:mt,size:k.size,url:X,path:sl,folder_id:null});if(dl)throw dl;i(ql=>ql.map(je=>je.id===T.id?{...je,quoteCount:(je.quoteCount||0)+1}:je)),hbSetQuoteImport(null),r(T),hbSetOpenTab("quotes"),f("detail"),g(`\u5DF2\u5C07\u5831\u50F9\u55AE\u300C${B?.qClient||H}\u300D\u5B58\u5165\u6848\u4EF6`)}catch(k){g("\u5B58\u6A94\u5931\u6557\uFF1A"+(k.message||k))}},b=async(T,k,H,B)=>{let{data:nl,error:hl}=await q.from("sitelog_projects").insert({name:T,address:k,lat:H??null,lng:B??null,status:fn[0]}).select().single();if(hl){g("\u5EFA\u7ACB\u5931\u6557\uFF1A"+hl.message);return}i(ql=>[cm(nl),...ql]),h(!1),g("\u6848\u4EF6\u5DF2\u5EFA\u7ACB")},S=async(T,k)=>{i(hl=>hl.map(ql=>ql.id===T?{...ql,...k,updatedAt:new Date().toISOString()}:ql));let H={name:"name",address:"address",lat:"lat",lng:"lng",status:"status",ownerPassword:"owner_password"},B={};for(let hl of Object.keys(H))hl in k&&(B[H[hl]]=k[hl]);if(Object.keys(B).length===0)return;B.updated_at=new Date().toISOString();let{error:nl}=await q.from("sitelog_projects").update(B).eq("id",T);nl&&g("\u66F4\u65B0\u5931\u6557\uFF1A"+nl.message)},M=async T=>{let{error:k}=await q.from("sitelog_projects").delete().eq("id",T);if(k){g("\u522A\u9664\u5931\u6557\uFF1A"+k.message);return}i(H=>H.filter(B=>B.id!==T)),f("home"),g("\u6848\u4EF6\u5DF2\u522A\u9664")},j=a.find(T=>T.id===c);return u.default.createElement("div",{className:"hb-shell",style:{background:s.paper,height:"100vh",overflow:"hidden",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},u.default.createElement("style",null,`
