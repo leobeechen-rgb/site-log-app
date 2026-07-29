@@ -1203,7 +1203,7 @@ function HB_newEstItem(){return{id:HB_estUid(),name:"",spec:"",unit:"式",qty:"1
 function HB_newEstCategory(name){return{id:HB_estUid(),name:name||"",items:[HB_newEstItem()]}}
 function HB_estCatSubtotal(cat){return(cat.items||[]).reduce((sum,it)=>sum+HB_num(it.qty)*HB_num(it.price),0)}
 function HB_estGrandTotal(categories){return(categories||[]).reduce((sum,c)=>sum+HB_estCatSubtotal(c),0)}
-function HB_estCatCost(cat){return(cat.items||[]).reduce((sum,it)=>sum+HB_num(it.qty)*HB_num(it.vendorPrice),0)}
+function HB_estCatCost(cat){return(cat.items||[]).reduce((sum,it)=>sum+HB_num(it.vendorPrice),0)}
 function HB_estGrandCost(categories){return(categories||[]).reduce((sum,c)=>sum+HB_estCatCost(c),0)}
 
 let HB_GOOGLE_CLIENT_ID="215245919078-9jr65r3fl0ih29savivm6mc3guoj15s1.apps.googleusercontent.com";
@@ -1396,7 +1396,7 @@ async function HB_generateEstimateExcel(v){
         let qtyVal=HB_num(it.qty)||0;
         let priceVal=it.price!==""?HB_num(it.price):0;
         let costVal=it.vendorPrice!==""?HB_num(it.vendorPrice):0;
-        let r=ws.addRow([no,it.name||"",it.spec||"",it.unit||"",qtyVal||"",priceVal||"",{formula:`E${rowNum}*F${rowNum}`,result:qtyVal*priceVal},it.note||"",it.vendorPrice!==""?costVal:"",{formula:`E${rowNum}*(F${rowNum}-I${rowNum})`,result:qtyVal*(priceVal-costVal)}]);
+        let r=ws.addRow([no,it.name||"",it.spec||"",it.unit||"",qtyVal||"",priceVal||"",{formula:`E${rowNum}*F${rowNum}`,result:qtyVal*priceVal},it.note||"",it.vendorPrice!==""?costVal:"",{formula:`E${rowNum}*F${rowNum}-I${rowNum}`,result:qtyVal*priceVal-costVal}]);
         r.getCell(1).alignment={horizontal:"center"};
         r.getCell(2).alignment={wrapText:true,vertical:"top"};
         r.getCell(4).alignment={horizontal:"center"};
@@ -1404,7 +1404,7 @@ async function HB_generateEstimateExcel(v){
         r.getCell(6).numFmt="#,##0";r.getCell(6).alignment={horizontal:"right"};
         r.getCell(7).numFmt="#,##0";r.getCell(7).alignment={horizontal:"right"};
         r.getCell(9).numFmt="#,##0";r.getCell(9).alignment={horizontal:"right"};r.getCell(9).font={color:{argb:"FF8A6D00"}};
-        r.getCell(10).numFmt="#,##0";r.getCell(10).alignment={horizontal:"right"};r.getCell(10).font={color:{argb:it.vendorPrice!==""&&qtyVal*(priceVal-costVal)<0?"FFB0413E":"FF2E7D32"}};
+        r.getCell(10).numFmt="#,##0";r.getCell(10).alignment={horizontal:"right"};r.getCell(10).font={color:{argb:it.vendorPrice!==""&&qtyVal*priceVal-costVal<0?"FFB0413E":"FF2E7D32"}};
         r.eachCell(c=>{c.border=border});
       });
       let lastDataRowNum=ws.rowCount;
@@ -1671,7 +1671,7 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
       for(let c of a.categories){
         let name=(c.name||"未命名").slice(0,90);
         await window.gapi.client.sheets.spreadsheets.values.clear({spreadsheetId:id,range:`'${name}'!A1:Z1000`});
-        let rows=[header,...c.items.map((it,idx)=>{let r=idx+2;return[it.name||"",it.spec||"",it.unit||"",it.qty||"",it.price||"",`=D${r}*E${r}`,it.note||"",it.vendorPrice||"",`=D${r}*(E${r}-H${r})`]})];
+        let rows=[header,...c.items.map((it,idx)=>{let r=idx+2;return[it.name||"",it.spec||"",it.unit||"",it.qty||"",it.price||"",`=D${r}*E${r}`,it.note||"",it.vendorPrice||"",`=D${r}*E${r}-H${r}`]})];
         await window.gapi.client.sheets.spreadsheets.values.update({spreadsheetId:id,range:`'${name}'!A1`,valueInputOption:"USER_ENTERED",resource:{values:rows}})
       }
       e("已推送到 Google 試算表");
@@ -1895,7 +1895,7 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
             ),
             u.default.createElement("tbody",null,
               cat.items.map((it,idx)=>{
-                let rowProfit=HB_num(it.qty)*(HB_num(it.price)-HB_num(it.vendorPrice));
+                let rowProfit=HB_num(it.qty)*HB_num(it.price)-HB_num(it.vendorPrice);
                 return u.default.createElement("tr",{key:it.id,style:it.highlighted?{background:"#FFF3B0"}:null},
                   u.default.createElement("td",{style:{...tdStyle,textAlign:"center"}},u.default.createElement("input",{type:"checkbox",checked:(selectedItems[cat.id]||new Set()).has(it.id),onChange:()=>toggleSelectItem(cat.id,it.id),style:{width:14,height:14,verticalAlign:"middle"}})),
                   u.default.createElement("td",{style:{...tdStyle,textAlign:"center",color:s.inkSoft,fontSize:11.5}},idx+1),
