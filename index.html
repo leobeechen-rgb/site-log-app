@@ -1927,7 +1927,7 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
       u.default.createElement("button",{onClick:()=>addCat(""),style:{border:`1px solid ${s.line}`,background:"none",borderRadius:9,padding:"10px 0",width:"100%",fontSize:13,fontWeight:400,color:s.oceanDark,cursor:"pointer",marginBottom:14}},"+ 新增大項分類"),
       u.default.createElement("textarea",{placeholder:"付款/訂金條件備註",value:a.depositNote,onChange:v=>set("depositNote",v.target.value),rows:2,style:{...inputStyle,resize:"vertical"}})
     )),
-    u.default.createElement("div",{style:{position:"sticky",bottom:0,flexShrink:0,zIndex:50,background:"rgba(28,27,24,0.94)",backdropFilter:"blur(14px)",WebkitBackdropFilter:"blur(14px)",padding:"9px 16px 12px",boxShadow:"0 -4px 14px rgba(185,136,104,0.18)"}},
+    u.default.createElement("div",{style:{position:"sticky",bottom:"var(--hb-overlay-gap, 0px)",flexShrink:0,zIndex:50,background:"rgba(28,27,24,0.94)",backdropFilter:"blur(14px)",WebkitBackdropFilter:"blur(14px)",padding:"9px 16px 12px",boxShadow:"0 -4px 14px rgba(185,136,104,0.18)"}},
       u.default.createElement("div",{style:{maxWidth:960,margin:"0 auto"}},
       u.default.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:2}},
         u.default.createElement("span",{style:{color:"#C7B8A0",fontSize:11.5}},"總價（未含營業稅5%）"),
@@ -4518,10 +4518,78 @@ react-dom/cjs/react-dom-client.production.js:
    * Copyright (c) Meta Platforms, Inc. and affiliates.
    *
    * This source code is licensed under the MIT license found in the
-   * LICENSE file in the root directory of this source tree.
-   *)
-*/
+<script>
+/* 自動避開瀏覽器擴充功能(如 Monica、Sider 等AI助理)注入的懸浮小工具，
+   偵測到畫面下方有這類外部固定元素時，自動把底部操作列往上推開，避免按鈕被蓋住。 */
+(function(){
+  var GAP_VAR = "--hb-overlay-gap";
+  var BUFFER = 12;          // 額外保留的間距
+  var MAX_REASONABLE_H = 260; // 超過這個高度就不當成小工具處理，避免誤判
 
+  function isFloatingWidget(el){
+    if(!(el instanceof HTMLElement)) return false;
+    if(el.id === "root") return false;
+    var cs;
+    try{ cs = window.getComputedStyle(el); }catch(e){ return false; }
+    if(cs.position !== "fixed") return false;
+    var r = el.getBoundingClientRect();
+    if(r.width === 0 || r.height === 0) return false;
+    if(r.height > MAX_REASONABLE_H) return false;
+    var distFromBottom = window.innerHeight - r.bottom;
+    if(distFromBottom < 0 || distFromBottom > 40) return false; // 必須貼近畫面底部
+    return true;
+  }
+
+  function findFixedIn(node){
+    var found = [];
+    if(isFloatingWidget(node)) found.push(node);
+    if(node.querySelectorAll){
+      var all = node.querySelectorAll("*");
+      for(var i=0;i<all.length;i++){
+        if(isFloatingWidget(all[i])) found.push(all[i]);
+      }
+    }
+    return found;
+  }
+
+  var known = new Set();
+
+  function recompute(){
+    var max = 0;
+    known.forEach(function(el){
+      if(!document.body.contains(el)) { known.delete(el); return; }
+      if(!isFloatingWidget(el)) return;
+      var r = el.getBoundingClientRect();
+      var needed = (window.innerHeight - r.top) + BUFFER;
+      if(needed > max) max = needed;
+    });
+    document.documentElement.style.setProperty(GAP_VAR, (max>0?max:0) + "px");
+  }
+
+  function scanAdded(node){
+    if(node.nodeType !== 1) return;
+    findFixedIn(node).forEach(function(el){ known.add(el); });
+  }
+
+  var mo = new MutationObserver(function(mutations){
+    mutations.forEach(function(m){
+      m.addedNodes && m.addedNodes.forEach(scanAdded);
+    });
+    recompute();
+  });
+  mo.observe(document.body, {childList:true, subtree:true});
+
+  window.addEventListener("resize", recompute);
+  window.addEventListener("load", function(){
+    Array.prototype.forEach.call(document.body.children, scanAdded);
+    recompute();
+  });
+  // 保底輪詢：有些擴充功能只改變已存在元素的樣式(不觸發新增節點)
+  setInterval(function(){
+    Array.prototype.forEach.call(document.body.children, scanAdded);
+    recompute();
+  }, 1500);
+})();
 </script>
 </body>
 </html>
