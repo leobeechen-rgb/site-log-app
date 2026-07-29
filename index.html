@@ -1927,7 +1927,7 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
       u.default.createElement("button",{onClick:()=>addCat(""),style:{border:`1px solid ${s.line}`,background:"none",borderRadius:9,padding:"10px 0",width:"100%",fontSize:13,fontWeight:400,color:s.oceanDark,cursor:"pointer",marginBottom:14}},"+ 新增大項分類"),
       u.default.createElement("textarea",{placeholder:"付款/訂金條件備註",value:a.depositNote,onChange:v=>set("depositNote",v.target.value),rows:2,style:{...inputStyle,resize:"vertical"}})
     )),
-    u.default.createElement("div",{style:{position:"sticky",bottom:0,flexShrink:0,background:"rgba(28,27,24,0.94)",backdropFilter:"blur(14px)",WebkitBackdropFilter:"blur(14px)",padding:"9px 16px 12px",boxShadow:"0 -4px 14px rgba(185,136,104,0.18)"}},
+    u.default.createElement("div",{style:{position:"sticky",bottom:0,flexShrink:0,zIndex:50,background:"rgba(28,27,24,0.94)",backdropFilter:"blur(14px)",WebkitBackdropFilter:"blur(14px)",padding:"9px 16px 12px",boxShadow:"0 -4px 14px rgba(185,136,104,0.18)"}},
       u.default.createElement("div",{style:{maxWidth:960,margin:"0 auto"}},
       u.default.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:2}},
         u.default.createElement("span",{style:{color:"#C7B8A0",fontSize:11.5}},"總價（未含營業稅5%）"),
