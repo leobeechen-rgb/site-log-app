@@ -3019,6 +3019,8 @@ function HbBookingsHub({onBack:l,notify:g}){
 
   let statusLabel={pending:"待確認",confirmed:"已確認",cancelled:"已取消",completed:"已完成"};
   let scheduleTypeLabel={consult:"諮詢預約",site:"案件行程",personal:"私人行程",other:"其他"};
+  let todayStr=new Date().toISOString().slice(0,10);
+  let visibleSchedule=sc=>sc.status!=="cancelled"&&(selectedCalDate?(sc.start_date<=selectedCalDate&&sc.end_date>=selectedCalDate):sc.end_date>=todayStr);
 
   return u.default.createElement("div",{style:{background:s.paper,minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},
     u.default.createElement("div",{style:{background:"rgba(255,255,255,0.55)",backdropFilter:"blur(14px)",WebkitBackdropFilter:"blur(14px)",padding:"20px 16px",borderBottom:`1px solid ${s.line}`}},
@@ -3135,10 +3137,10 @@ function HbBookingsHub({onBack:l,notify:g}){
               )
           ))
         ),
-        schedule.filter(sc=>sc.status!=="cancelled"&&(!selectedCalDate||(sc.start_date<=selectedCalDate&&sc.end_date>=selectedCalDate))).length>0&&u.default.createElement("div",{style:{borderTop:`1px solid ${s.line}`,paddingTop:20,marginBottom:8}},
+        schedule.filter(visibleSchedule).length>0&&u.default.createElement("div",{style:{borderTop:`1px solid ${s.line}`,paddingTop:20,marginBottom:8}},
           u.default.createElement("h3",{style:{fontSize:15,fontWeight:300,margin:"0 0 12px",color:s.oceanDark}},"行程"),
           u.default.createElement("div",{style:{display:"flex",flexDirection:"column",gap:10}},
-            schedule.filter(sc=>sc.status!=="cancelled"&&(!selectedCalDate||(sc.start_date<=selectedCalDate&&sc.end_date>=selectedCalDate))).map(sc=>u.default.createElement("div",{key:sc.id,style:{background:s.card,border:`1px solid ${s.line}`,borderRadius:8,padding:"12px 14px"}},
+            schedule.filter(visibleSchedule).map(sc=>u.default.createElement("div",{key:sc.id,style:{background:s.card,border:`1px solid ${s.line}`,borderRadius:8,padding:"12px 14px"}},
               u.default.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:10}},
                 u.default.createElement("div",null,
                   u.default.createElement("div",{style:{fontSize:14,fontWeight:400}},sc.title),
