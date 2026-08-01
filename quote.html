@@ -573,10 +573,8 @@
       <div class="totals">
         <div class="totals-row"><label>工程小計合計</label><div class="val" id="sumSubtotal">$0</div></div>
         <div class="totals-row"><label>折扣金額</label><input id="discount" type="number" value="0" min="0"></div>
-        <div class="totals-row" style="display:none;"><label>營業稅 (%)</label><input id="taxRate" type="number" value="0" min="0"></div>
-        <input type="hidden" id="taxRateHiddenNote" value="總金額為未稅價，畫面另顯示不含營業稅5%備註">
+        <div class="totals-row"><label>營業稅 (%)</label><input id="taxRate" type="number" value="5" min="0"></div>
         <div class="totals-row grand"><label>總計金額</label><div class="val" id="sumTotal">$0</div></div>
-        <div class="totals-row" style="justify-content:flex-end;"><div style="font-size:12px;color:var(--ink-soft);">＊以上金額未含營業稅5%</div></div>
       </div>
 
       <div class="actions">
@@ -693,7 +691,7 @@ function applyLoadedData(data){
     document.getElementById('qPhone').value = m.qPhone || '';
     document.getElementById('qAddr').value = m.qAddr || '';
     document.getElementById('discount').value = m.discount || 0;
-    document.getElementById('taxRate').value = (m.taxRate===undefined?0:m.taxRate);
+    document.getElementById('taxRate').value = (m.taxRate===undefined?5:m.taxRate);
     showUnitPrice = m.showUnitPrice !== false;
     document.getElementById('showPriceToggle').checked = showUnitPrice;
     quoteRows = Array.isArray(data.draft.rows) ? data.draft.rows : [];
