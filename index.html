@@ -1230,13 +1230,29 @@ function HB_googleAuth(){
     if(!HB_gTokenClient){
       HB_gTokenClient=window.google.accounts.oauth2.initTokenClient({client_id:HB_GOOGLE_CLIENT_ID,scope:HB_GOOGLE_SCOPES,callback:()=>{}})
     }
+    let settled=!1;
+    let timer=setTimeout(()=>{
+      if(settled)return;
+      settled=!0;
+      reject(new Error("Google 登入視窗沒有反應，可能被瀏覽器擋掉了彈出視窗，請允許此網站的彈出視窗後再試一次"))
+    },20000);
     HB_gTokenClient.callback=resp=>{
-      if(resp.error)return reject(resp);
+      if(settled)return;
+      settled=!0;
+      clearTimeout(timer);
+      if(resp.error)return reject(new Error("Google 授權失敗："+resp.error));
       HB_gAccessToken=resp.access_token;
       window.gapi.client.setToken({access_token:resp.access_token});
       resolve(resp.access_token)
     };
-    HB_gTokenClient.requestAccessToken({prompt:HB_gAccessToken?"":"consent"})
+    try{
+      HB_gTokenClient.requestAccessToken({prompt:HB_gAccessToken?"":"consent"})
+    }catch(err){
+      if(settled)return;
+      settled=!0;
+      clearTimeout(timer);
+      reject(err)
+    }
   })
 }
 async function HB_ensureGoogleReady(){
@@ -1522,6 +1538,14 @@ function HerfulsinsEstimateHub({project:l,notify:t,onClose:e}){
 }
 
 function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
+  let[localToast,setLocalToast]=(0,u.useState)(null);
+  let localToastTimerRef=(0,u.useRef)(null);
+  let notify=msg=>{
+    setLocalToast(msg);
+    if(localToastTimerRef.current)clearTimeout(localToastTimerRef.current);
+    localToastTimerRef.current=setTimeout(()=>setLocalToast(null),3200);
+    e&&e(msg)
+  };
   let[a,i]=(0,u.useState)(()=>t?{clientName:t.client_name||"",contactName:t.contact_name||"",engName:t.eng_name||l?.name||"",siteAddress:t.site_address||l?.address||"",quoteDate:t.quote_date||new Date().toISOString().slice(0,10),validDays:t.valid_days||"5",depositNote:t.deposit_note||"如蒙惠顧請先付訂金3成，或雙方議定金額。",categories:(t.categories&&t.categories.length?t.categories:[HB_newEstCategory("裝修工程")])}:{clientName:"",contactName:"",engName:l?.name||"",siteAddress:l?.address||"",quoteDate:new Date().toISOString().slice(0,10),validDays:"5",depositNote:"如蒙惠顧請先付訂金3成，或雙方議定金額。",categories:[HB_newEstCategory("裝修工程")]});
   let[o,f]=(0,u.useState)(!1);
   let[showBasic,setShowBasic]=(0,u.useState)(!t);
@@ -1552,8 +1576,8 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
       let path=`estimates/vendor-quotes/${cid}_${Be()}.${ext}`;
       let url=await r2UploadSitelogFile("sitelog-quotes",path,file,file.type||"application/octet-stream");
       addCatFile(cid,{id:Be(),kind:isImg?"image":"file",url,name:file.name});
-      e("廠商報價單已上傳")
-    }catch(err){e("上傳失敗："+(err.message||err))}
+      notify("廠商報價單已上傳")
+    }catch(err){notify("上傳失敗："+(err.message||err))}
     finally{setUploadingVendorCat(null)}
   };
   let addCatTextNote=cid=>{
@@ -1573,11 +1597,11 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
     if(!cat)return;
     let sel=selectedItems[cid]||new Set();
     let rows=cat.items.filter(it=>sel.has(it.id));
-    if(rows.length===0){e("請先勾選要複製的項目");return}
+    if(rows.length===0){notify("請先勾選要複製的項目");return}
     let text=rows.map(it=>[it.name,it.spec,it.unit,it.qty,it.price,it.vendorPrice,it.note].map(x=>(x??"").toString().replace(/\t/g," ")).join("\t")).join("\n");
-    let done=()=>{e("已複製 "+rows.length+" 項，可貼到 Excel 或其他大項");setSelectedItems(p=>({...p,[cid]:new Set()}))};
-    if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(text).then(done).catch(()=>e("複製失敗，請手動選取文字複製"));
-    else e("此瀏覽器不支援自動複製，請手動選取文字複製")
+    let done=()=>{notify("已複製 "+rows.length+" 項，可貼到 Excel 或其他大項");setSelectedItems(p=>({...p,[cid]:new Set()}))};
+    if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(text).then(done).catch(()=>notify("複製失敗，請手動選取文字複製"));
+    else notify("此瀏覽器不支援自動複製，請手動選取文字複製")
   };
   let dupItem=(cid,iid)=>i(p=>({...p,categories:p.categories.map(c=>{
     if(c.id!==cid)return c;
@@ -1613,7 +1637,7 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
       return{id:HB_estUid(),name:cols[0]||"",spec:cols[1]||"",unit:cols[2]||"式",qty:cols[3]||"1",price:cols[4]||"",vendorPrice:cols[5]||"",note:cols[6]||""};
     });
     applyParsedRows(cid,parsed);
-    setPasteText(p=>({...p,[cid]:""})),setPasteOpen(p=>({...p,[cid]:!1})),e("已匯入 "+parsed.length+" 項");
+    setPasteText(p=>({...p,[cid]:""})),setPasteOpen(p=>({...p,[cid]:!1})),notify("已匯入 "+parsed.length+" 項");
   };
   let importFileRef=(0,u.useRef)(null);
   let[importTargetCat,setImportTargetCat]=(0,u.useState)(null);
@@ -1623,7 +1647,7 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
     ev.target.value="";
     let cid=importTargetCat;
     if(!file||!cid)return;
-    if(typeof window.XLSX==="undefined"){e("Excel 解析工具尚未載入，請重新整理頁面後再試");return}
+    if(typeof window.XLSX==="undefined"){notify("Excel 解析工具尚未載入，請重新整理頁面後再試");return}
     try{
       let buf=await file.arrayBuffer();
       let wb=window.XLSX.read(buf,{type:"array"});
@@ -1632,28 +1656,28 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
       rows=rows.filter(r=>Array.isArray(r)&&r.some(c=>String(c??"").trim()!==""));
       if(rows.length&&["項目","品名","name"].includes(String(rows[0][0]).trim()))rows=rows.slice(1);
       let parsed=rows.map(r=>({id:HB_estUid(),name:String(r[0]??"").trim(),spec:String(r[1]??"").trim(),unit:String(r[2]??"").trim()||"式",qty:String(r[3]??"1").trim()||"1",price:String(r[4]??"").trim(),vendorPrice:String(r[5]??"").trim(),note:String(r[6]??"").trim()}));
-      if(parsed.length===0){e("這個檔案裡沒有讀到任何品項資料");return}
+      if(parsed.length===0){notify("這個檔案裡沒有讀到任何品項資料");return}
       applyParsedRows(cid,parsed);
-      e("已從 Excel 匯入 "+parsed.length+" 項")
-    }catch(err){e("匯入失敗："+(err.message||err))}
+      notify("已從 Excel 匯入 "+parsed.length+" 項")
+    }catch(err){notify("匯入失敗："+(err.message||err))}
   };
   let grandTotal=HB_estGrandTotal(a.categories);
   let grandCost=HB_estGrandCost(a.categories);
   let grandProfit=grandTotal-grandCost;
   let save=async()=>{
-    if(!a.engName){e("請輸入工程名稱");return}
+    if(!a.engName){setShowBasic(!0);notify("請先輸入工程名稱");return}
     f(!0);
     let payload={project_id:l?.id||null,client_name:a.clientName,contact_name:a.contactName,eng_name:a.engName,site_address:a.siteAddress,quote_date:a.quoteDate||null,valid_days:a.validDays,deposit_note:a.depositNote,categories:a.categories};
     let res=t?await q.from("sitelog_estimates").update(payload).eq("id",t.id):await q.from("sitelog_estimates").insert(payload);
     f(!1);
-    if(res.error){e("儲存失敗："+res.error.message);return}
-    e("已儲存估價單"),n()
+    if(res.error){notify("儲存失敗："+res.error.message);return}
+    notify("已儲存估價單"),n()
   };
   let[sheetId,setSheetId]=(0,u.useState)(null);
   let[sheetBusy,setSheetBusy]=(0,u.useState)(null);
   let[embedOpen,setEmbedOpen]=(0,u.useState)(!1);
   let pushToSheet=async()=>{
-    if(!a.engName){e("請先輸入工程名稱");return}
+    if(!a.engName){setShowBasic(!0);notify("請先輸入工程名稱");return}
     setSheetBusy("push");
     try{
       await HB_ensureGoogleReady();
@@ -1675,9 +1699,9 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
         let rows=[header,...c.items.map((it,idx)=>{let r=idx+2;return[it.name||"",it.spec||"",it.unit||"",it.qty||"",it.price||"",`=D${r}*E${r}`,it.note||"",it.vendorPrice||"",`=D${r}*E${r}-H${r}`]})];
         await window.gapi.client.sheets.spreadsheets.values.update({spreadsheetId:id,range:`'${name}'!A1`,valueInputOption:"USER_ENTERED",resource:{values:rows}})
       }
-      e("已推送到 Google 試算表");
+      notify("已推送到 Google 試算表");
       window.open(`https://docs.google.com/spreadsheets/d/${id}/edit`,"_blank")
-    }catch(err){e("推送失敗："+(err&&err.result&&err.result.error&&err.result.error.message||err.message||err))}
+    }catch(err){notify("推送失敗："+(err&&err.result&&err.result.error&&err.result.error.message||err.message||err))}
     finally{setSheetBusy(null)}
   };
   let[pickerFiles,setPickerFiles]=(0,u.useState)(null);
@@ -1687,10 +1711,10 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
       await HB_ensureGoogleReady();
       let listRes=await window.gapi.client.drive.files.list({q:"mimeType='application/vnd.google-apps.spreadsheet' and trashed=false",fields:"files(id,name,modifiedTime)",orderBy:"modifiedTime desc",pageSize:20});
       let files=listRes.result.files||[];
-      if(files.length===0){e("目前沒有可選擇的 Google 試算表，請先按「推送到 Google 試算表」建立一份");setSheetBusy(null);return}
+      if(files.length===0){notify("目前沒有可選擇的 Google 試算表，請先按「推送到 Google 試算表」建立一份");setSheetBusy(null);return}
       setSheetBusy(null);
       setPickerFiles(files)
-    }catch(err){e("讀取試算表清單失敗："+(err&&err.result&&err.result.error&&err.result.error.message||err.message||err));setSheetBusy(null)}
+    }catch(err){notify("讀取試算表清單失敗："+(err&&err.result&&err.result.error&&err.result.error.message||err.message||err));setSheetBusy(null)}
   };
   let doPull=async id=>{
     setPickerFiles(null);
@@ -1711,17 +1735,17 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
         else newCats.push({...HB_newEstCategory(title),items})
       }
       i(p=>({...p,categories:newCats}));
-      e("已從 Google 試算表載入")
-    }catch(err){e("載入失敗："+(err&&err.result&&err.result.error&&err.result.error.message||err.message||err))}
+      notify("已從 Google 試算表載入")
+    }catch(err){notify("載入失敗："+(err&&err.result&&err.result.error&&err.result.error.message||err.message||err))}
     finally{setSheetBusy(null)}
   };
   let openEmbeddedSheet=async()=>{
-    if(!a.engName){e("請先輸入工程名稱");return}
+    if(!a.engName){setShowBasic(!0);notify("請先輸入工程名稱");return}
     setSheetBusy("push");
     try{
       await pushToSheet();
       setEmbedOpen(!0)
-    }catch(err){e("開啟失敗："+(err.message||err))}
+    }catch(err){notify("開啟失敗："+(err.message||err))}
     finally{setSheetBusy(null)}
   };
   let closeEmbeddedSheet=async(sync)=>{
@@ -1788,7 +1812,7 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
         });
         return{...c,items}
       })}));
-      e("已貼上 "+rows.length+" 列資料")
+      notify("已貼上 "+rows.length+" 列資料")
     };
     window.addEventListener("mouseup",up);
     document.addEventListener("copy",onCopy);
@@ -1838,6 +1862,7 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
   };
   let selBg="rgba(65,16,27,0.12)";
   return u.default.createElement("div",{style:{position:"fixed",inset:0,background:s.paper,zIndex:71,overflowY:"auto",display:"flex",flexDirection:"column"}},
+    localToast&&u.default.createElement("div",{className:"fade-in",style:{position:"fixed",bottom:20,left:"50%",transform:"translateX(-50%)",background:s.ink,color:s.card,padding:"10px 18px",borderRadius:8,fontSize:13,boxShadow:"0 4px 14px rgba(0,0,0,0.35)",zIndex:99,maxWidth:"90vw",textAlign:"center"}},localToast),
     u.default.createElement("div",{style:{background:"rgba(28,27,24,0.82)",backdropFilter:"blur(14px)",WebkitBackdropFilter:"blur(14px)",padding:"16px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}},
       u.default.createElement("button",{onClick:n,style:{background:"none",border:"none",color:"#C7B8A0",cursor:"pointer",display:"flex",alignItems:"center",gap:4,fontSize:12.5}},u.default.createElement(E,{name:"arrow-left",size:15})),
       u.default.createElement("h2",{style:{color:s.card,fontSize:16,margin:0}},t?"編輯估價單":"快速新增估價單"),
