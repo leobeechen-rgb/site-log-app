@@ -6,11 +6,16 @@
 <title>報價單</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2064%2064%22%3E%0A%3Crect%20width%3D%2264%22%20height%3D%2264%22%20rx%3D%2214%22%20fill%3D%22%23262424%22/%3E%0A%3Ctext%20x%3D%2232%22%20y%3D%2244%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-weight%3D%22900%22%20font-size%3D%2234%22%20fill%3D%22%23EEE5DA%22%20text-anchor%3D%22middle%22%3EQ%3C/text%3E%0A%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;600&family=Noto+Sans+TC:wght@400;500;600&family=Zen+Kaku+Gothic+New:wght@400;500&family=Iansui&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;600&family=Noto+Sans+TC:wght@400;500;600&family=Zen+Kaku+Gothic+New:wght@400;500&display=swap" rel="stylesheet">
 <!-- 雲端同步用（Supabase）：若尚未設定 supabaseConfig，這個檔案載入後不會有任何作用，系統仍可正常以本機模式運作 -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
+  @font-face{
+    font-family:'Iansui';
+    src:url('./Iansui-Custom.ttf') format('truetype');
+    font-weight:400; font-style:normal; font-display:swap;
+  }
   :root{
     --navy-900:#1A1A1A;
     --navy-800:#232323;
@@ -19,8 +24,8 @@
     --card:#EFEBE4;
     --ink:#232323;
     --ink-soft:#7A756E;
-    --font-serif:'Noto Serif TC','Zen Kaku Gothic New',serif;
-    --font-sans:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+    --font-serif:'Iansui','Noto Serif TC','Zen Kaku Gothic New',serif;
+    --font-sans:'Iansui','Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
     --font-title:'Iansui','Noto Serif TC','Zen Kaku Gothic New',serif;
     --yellow:#232323;
     --yellow2:#3A3A3A;
@@ -80,7 +85,7 @@
     flex-wrap:wrap; gap:14px; position:relative; z-index:1;
   }
   .brand-eyebrow{
-    font-family:'Zen Kaku Gothic New',sans-serif;
+    font-family:'Iansui','Zen Kaku Gothic New',sans-serif;
     font-size:10px; letter-spacing:.2em; text-transform:uppercase;
     color:var(--navy-700); font-weight:500; margin-bottom:2px;
   }
