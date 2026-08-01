@@ -1507,10 +1507,27 @@ document.getElementById('importSavedBtn').addEventListener('click', ()=>{
 document.getElementById('importSavedFile').addEventListener('change', (e)=>{
   readJsonFile(e, (data)=>{
     if(!Array.isArray(data)) throw new Error('格式錯誤');
-    savedQuotes = data;
-    savedSeq = Math.max(0, ...savedQuotes.map(s=>s.id||0)) + 1;
+    // 合併匯入的資料到現有清單，而不是整個覆蓋掉
+    // 用 meta.qNo（報價單號）判斷是否為同一份報價單：有相同單號就更新，沒有就新增
+    let addedCount = 0, updatedCount = 0;
+    data.forEach(incoming=>{
+      const incomingNo = incoming.meta && incoming.meta.qNo;
+      const existingIdx = incomingNo
+        ? savedQuotes.findIndex(sq => sq.meta && sq.meta.qNo === incomingNo)
+        : -1;
+      if(existingIdx >= 0){
+        // 保留原本的 id，只更新內容
+        incoming.id = savedQuotes[existingIdx].id;
+        savedQuotes[existingIdx] = incoming;
+        updatedCount++;
+      } else {
+        incoming.id = savedSeq++;
+        savedQuotes.push(incoming);
+        addedCount++;
+      }
+    });
     renderSaved();
-    alert('已匯入 ' + savedQuotes.length + ' 份報價單紀錄');
+    alert(`已匯入完成：新增 ${addedCount} 份，更新 ${updatedCount} 份（目前共 ${savedQuotes.length} 份）`);
   }, '匯入失敗，請確認是本系統匯出的報價單 JSON 檔');
 });
 
