@@ -6,7 +6,7 @@
 <title>報價單</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2064%2064%22%3E%0A%3Crect%20width%3D%2264%22%20height%3D%2264%22%20rx%3D%2214%22%20fill%3D%22%23262424%22/%3E%0A%3Ctext%20x%3D%2232%22%20y%3D%2244%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-weight%3D%22900%22%20font-size%3D%2234%22%20fill%3D%22%23EEE5DA%22%20text-anchor%3D%22middle%22%3EQ%3C/text%3E%0A%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;600&family=Noto+Sans+TC:wght@400;500;600&family=Zen+Kaku+Gothic+New:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;600&family=Noto+Sans+TC:wght@400;500;600&family=Zen+Kaku+Gothic+New:wght@400;500&family=Iansui&display=swap" rel="stylesheet">
 <!-- 雲端同步用（Supabase）：若尚未設定 supabaseConfig，這個檔案載入後不會有任何作用，系統仍可正常以本機模式運作 -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -21,6 +21,7 @@
     --ink-soft:#7A756E;
     --font-serif:'Noto Serif TC','Zen Kaku Gothic New',serif;
     --font-sans:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+    --font-title:'Iansui','Noto Serif TC','Zen Kaku Gothic New',serif;
     --yellow:#232323;
     --yellow2:#3A3A3A;
     --yellow-soft:#EFEBE4;
@@ -84,7 +85,7 @@
     color:var(--navy-700); font-weight:500; margin-bottom:2px;
   }
   .brand-title{
-    font-family:var(--font-serif);
+    font-family:var(--font-title);
     font-size:17px; font-weight:600; letter-spacing:.02em; margin:0;
     color:var(--ink); line-height:1.25;
   }
@@ -121,7 +122,7 @@
   }
   .panel-head{
     background:rgba(209,201,188,.22); color:var(--ink); padding:14px 18px;
-    font-family:var(--font-serif);
+    font-family:var(--font-title);
     font-weight:600; font-size:15px; display:flex; align-items:center; justify-content:space-between;
     flex-wrap:wrap; gap:8px; border-bottom:1px solid var(--line);
   }
@@ -431,7 +432,7 @@
   }
   .modal-head{
     display:flex; justify-content:space-between; align-items:center;
-    padding:14px 18px; font-family:var(--font-serif); font-weight:600; font-size:15px;
+    padding:14px 18px; font-family:var(--font-title); font-weight:600; font-size:15px;
     background:rgba(209,201,188,.22); border-bottom:1px solid var(--line);
   }
   .modal-head button{border:none; background:none; font-size:16px; cursor:pointer; color:var(--ink-soft);}
@@ -514,7 +515,7 @@
     <!-- Price library -->
     <div class="panel" id="tabPaneLib">
       <div class="lib-panel-head">
-        <span style="font-family:var(--font-serif);font-weight:600;font-size:15px;">單價庫 <span class="count" id="libCount"></span></span>
+        <span style="font-family:var(--font-title);font-weight:600;font-size:15px;">單價庫 <span class="count" id="libCount"></span></span>
         <div class="panel-head-actions" style="margin-left:auto;">
           <button class="head-btn" id="importExcelBtn">匯入 Excel</button>
           <input type="file" id="importExcelFile" accept=".xlsx,.xls,.csv" style="display:none;">
