@@ -2871,7 +2871,8 @@ function HbBookingsHub({onBack:l,notify:g}){
       [scTime,setScTime]=(0,u.useState)(""),
       [scLocation,setScLocation]=(0,u.useState)(""),
       [scAssignee,setScAssignee]=(0,u.useState)(""),
-      [scNote,setScNote]=(0,u.useState)("");
+      [scNote,setScNote]=(0,u.useState)(""),
+      [scEditId,setScEditId]=(0,u.useState)(null);
 
   let load=async()=>{
     setLoading(true);
@@ -2964,22 +2965,38 @@ function HbBookingsHub({onBack:l,notify:g}){
     g("已移除公休日");load();
   };
 
+  let resetScheduleForm=()=>{setShowAddSchedule(false);setScEditId(null);setScType("site");setScTitle("");setScProject("");setScStartDate("");setScEndDate("");setScAllDay(true);setScTime("");setScLocation("");setScAssignee("");setScNote("")};
+
+  let startEditSchedule=sc=>{
+    setScEditId(sc.id);setScType(sc.type||"site");setScTitle(sc.title||"");setScProject(sc.project_id||"");
+    setScStartDate(sc.start_date||"");setScEndDate(sc.end_date||sc.start_date||"");setScAllDay(sc.all_day!==false);
+    setScTime(sc.time||"");setScLocation(sc.location||"");setScAssignee(sc.assignee||"");setScNote(sc.note||"");
+    setShowAddSchedule(true);
+  };
+
   let addSchedule=async()=>{
     if(!scTitle.trim()){g("請輸入標題");return}
     if(!scStartDate){g("請選擇開始日期");return}
     let endDate=scEndDate||scStartDate;
     if(endDate<scStartDate){g("結束日期不能早於開始日期");return}
     setSavingSchedule(true);
-    let{error}=await q.from("sitelog_schedule_events").insert({
+    let payload={
       type:scType,title:scTitle.trim(),project_id:scProject||null,project_name:scProjects.find(p=>p.id===scProject)?.name||null,
       start_date:scStartDate,end_date:endDate,all_day:scAllDay,
       time:scAllDay?null:(scTime||null),location:scLocation.trim()||null,
-      assignee:scAssignee.trim()||null,note:scNote.trim()||null,status:"confirmed"
-    });
+      assignee:scAssignee.trim()||null,note:scNote.trim()||null
+    };
+    let error;
+    if(scEditId){
+      ({error}=await q.from("sitelog_schedule_events").update(payload).eq("id",scEditId));
+    }else{
+      ({error}=await q.from("sitelog_schedule_events").insert({...payload,status:"confirmed"}));
+    }
     setSavingSchedule(false);
-    if(error){g("新增失敗："+error.message);return}
-    setShowAddSchedule(false);setScType("site");setScTitle("");setScProject("");setScStartDate("");setScEndDate("");setScAllDay(true);setScTime("");setScLocation("");setScAssignee("");setScNote("");
-    g("已新增行程");load();
+    if(error){g((scEditId?"更新":"新增")+"失敗："+error.message);return}
+    let wasEdit=!!scEditId;
+    resetScheduleForm();
+    g(wasEdit?"已更新行程":"已新增行程");load();
   };
 
   let cancelSchedule=async id=>{
@@ -3152,7 +3169,10 @@ function HbBookingsHub({onBack:l,notify:g}){
                   sc.assignee?u.default.createElement("div",{style:{fontSize:12,color:s.inkSoft,marginTop:2}},"負責人："+sc.assignee):null,
                   sc.note?u.default.createElement("div",{style:{fontSize:12,color:s.inkSoft,marginTop:4}},sc.note):null
                 ),
-                u.default.createElement("button",{onClick:()=>cancelSchedule(sc.id),style:{...at,color:s.danger}},u.default.createElement(E,{name:"x",size:16}))
+                u.default.createElement("div",{style:{display:"flex",gap:6}},
+                  u.default.createElement("button",{onClick:()=>startEditSchedule(sc),style:{...at}},u.default.createElement(E,{name:"pencil",size:16})),
+                  u.default.createElement("button",{onClick:()=>cancelSchedule(sc.id),style:{...at,color:s.danger}},u.default.createElement(E,{name:"x",size:16}))
+                )
               ),
               u.default.createElement("div",{style:{marginTop:10,paddingTop:10,borderTop:`1px solid ${s.line}`,fontSize:14,fontWeight:400,color:s.oceanDark}},
                 sc.start_date===sc.end_date?Tl(sc.start_date):(Tl(sc.start_date)+" ～ "+Tl(sc.end_date)),
@@ -3245,7 +3265,7 @@ function HbBookingsHub({onBack:l,notify:g}){
     ),
     showAddSchedule&&u.default.createElement("div",{style:{position:"fixed",inset:0,background:"rgba(43,38,32,0.45)",display:"flex",alignItems:"center",justifyContent:"center",padding:20,zIndex:55,overflowY:"auto"}},
       u.default.createElement("div",{className:"fade-in",style:{background:s.card,borderRadius:10,padding:22,width:"100%",maxWidth:360,maxHeight:"88vh",overflowY:"auto"}},
-        u.default.createElement("h3",{style:{margin:"0 0 14px",fontSize:17,fontWeight:400,color:s.oceanDark}},"新增行程"),
+        u.default.createElement("h3",{style:{margin:"0 0 14px",fontSize:17,fontWeight:400,color:s.oceanDark}},scEditId?"編輯行程":"新增行程"),
         u.default.createElement("label",{style:{fontSize:12.5,color:s.inkSoft}},"行程類型"),
         u.default.createElement("select",{value:scType,onChange:x=>setScType(x.target.value),style:el},
           u.default.createElement("option",{value:"site"},"案件行程"),
@@ -3279,8 +3299,8 @@ function HbBookingsHub({onBack:l,notify:g}){
         u.default.createElement("label",{style:{fontSize:12.5,color:s.inkSoft}},"備註（選填）"),
         u.default.createElement("textarea",{value:scNote,onChange:x=>setScNote(x.target.value),style:{...el,minHeight:60,resize:"vertical"}}),
         u.default.createElement("div",{style:{display:"flex",gap:8,marginTop:6}},
-          u.default.createElement("button",{onClick:addSchedule,disabled:savingSchedule,style:{...Dl,flex:1}},savingSchedule?"送出中…":"新增"),
-          u.default.createElement("button",{onClick:()=>setShowAddSchedule(false),style:{...ll,flex:1}},"取消")
+          u.default.createElement("button",{onClick:addSchedule,disabled:savingSchedule,style:{...Dl,flex:1}},savingSchedule?"送出中…":(scEditId?"儲存":"新增")),
+          u.default.createElement("button",{onClick:resetScheduleForm,style:{...ll,flex:1}},"取消")
         )
       )
     )
