@@ -19,6 +19,11 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600&family=Noto+Serif+TC:wght@200;300;400;500&family=Cormorant+Garamond:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
+  @font-face{
+    font-family:'Iansui';
+    src:url('./Iansui-Custom.ttf') format('truetype');
+    font-weight:400; font-style:normal; font-display:swap;
+  }
   html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; overscroll-behavior: none; }
   #root { height: 100%; overflow: hidden; }
   * { box-sizing: border-box; }
@@ -32,7 +37,7 @@
 
   /* ===== 全站字體美化：內文維持 Noto Sans TC 細字重，標題改用細緻襯線字體 ===== */
   html, body, input, textarea, select, button {
-    font-family: "Noto Sans TC","PingFang TC","Microsoft JhengHei",-apple-system,BlinkMacSystemFont,sans-serif !important;
+    font-family: "Iansui","Noto Sans TC","PingFang TC","Microsoft JhengHei",-apple-system,BlinkMacSystemFont,sans-serif !important;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
@@ -46,7 +51,7 @@
   b, strong { font-weight: 400 !important; }
   /* 標題改用纖細襯線字體（中文 Noto Serif TC，西文 Cormorant Garamond），質感更細緻 */
   h1, h2, h3 {
-    font-family: "Noto Serif TC","Cormorant Garamond",serif !important;
+    font-family: "Iansui","Noto Serif TC","Cormorant Garamond",serif !important;
     font-weight: 400 !important;
     letter-spacing: 0.02em;
   }
