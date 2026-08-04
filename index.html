@@ -283,10 +283,15 @@ function HbMarketingPhotoHub({onBack,notify}){
   let[zipping,setZipping]=(0,u.useState)(false);
   let[pendingTag,setPendingTag]=(0,u.useState)("");
   let[showAddTag,setShowAddTag]=(0,u.useState)(false);
+  let[pendingCaseTag,setPendingCaseTag]=(0,u.useState)("");
+  let[showAddCaseTag,setShowAddCaseTag]=(0,u.useState)(false);
   let[pickerTag,setPickerTag]=(0,u.useState)("");
+  let[pickerCaseTag,setPickerCaseTag]=(0,u.useState)("");
   let[previewPhoto,setPreviewPhoto]=(0,u.useState)(null);
   let fileInputRef=(0,u.useRef)(null);
 
+  let spaceTagRows=tagList.filter(x=>x.type!=="case");
+  let caseTagRows=tagList.filter(x=>x.type==="case");
   let allTagOptions=tagList.map(x=>x.name);
 
   let load=async()=>{
@@ -306,7 +311,7 @@ function HbMarketingPhotoHub({onBack,notify}){
     let legacy=HB_loadCustomTags();
     for(let t of legacy)if(!existingNames.includes(t)&&!toSeed.includes(t))toSeed.push(t);
     if(toSeed.length){
-      let insertRows=toSeed.map((name,idx)=>({name,sort_order:existingNames.length+idx}));
+      let insertRows=toSeed.map((name,idx)=>({name,sort_order:existingNames.length+idx,type:"space"}));
       let{data:inserted,error:insErr}=await q.from("sitelog_marketing_tags").upsert(insertRows,{onConflict:"name",ignoreDuplicates:true}).select();
       if(!insErr){
         rows=[...rows,...(inserted||[])];
@@ -317,16 +322,20 @@ function HbMarketingPhotoHub({onBack,notify}){
   };
   (0,u.useEffect)(()=>{load();loadTags()},[]);
 
-  let addCustomTag=async name=>{
+  let addCustomTag=async(name,tagType)=>{
     let t=(name||"").trim();
     if(!t)return;
-    if(allTagOptions.includes(t)){setPickerTag(t);setPendingTag("");setShowAddTag(false);return}
-    let{data,error}=await q.from("sitelog_marketing_tags").insert({name:t,sort_order:tagList.length}).select().single();
+    let tp=tagType==="case"?"case":"space";
+    if(allTagOptions.includes(t)){
+      if(tp==="case")setPickerCaseTag(t);else setPickerTag(t);
+      setPendingTag("");setPendingCaseTag("");setShowAddTag(false);setShowAddCaseTag(false);
+      return;
+    }
+    let{data,error}=await q.from("sitelog_marketing_tags").insert({name:t,sort_order:tagList.length,type:tp}).select().single();
     if(error){notify("新增標籤失敗："+error.message);return}
     setTagList(tl=>[...tl,data]);
-    setPickerTag(t);
-    setPendingTag("");
-    setShowAddTag(false);
+    if(tp==="case")setPickerCaseTag(t);else setPickerTag(t);
+    setPendingTag("");setPendingCaseTag("");setShowAddTag(false);setShowAddCaseTag(false);
   };
 
   let renameTag=async(oldName,newNameRaw)=>{
@@ -347,7 +356,16 @@ function HbMarketingPhotoHub({onBack,notify}){
     setTagList(tl=>tl.map(x=>x.id===row.id?{...x,name:newName}:x));
     if(filterTag===oldName)setFilterTagState(newName);
     if(pickerTag===oldName)setPickerTag(newName);
+    if(pickerCaseTag===oldName)setPickerCaseTag(newName);
     notify(`已將「${oldName}」重新命名為「${newName}」`);
+  };
+
+  let toggleTagType=async row=>{
+    let newType=row.type==="case"?"space":"case";
+    let{error}=await q.from("sitelog_marketing_tags").update({type:newType}).eq("id",row.id);
+    if(error){notify("更新分類失敗："+error.message);return}
+    setTagList(tl=>tl.map(x=>x.id===row.id?{...x,type:newType}:x));
+    notify(`已將「${row.name}」歸類為${newType==="case"?"空間案例":"空間標籤"}`);
   };
 
   let deleteTag=async name=>{
@@ -365,6 +383,7 @@ function HbMarketingPhotoHub({onBack,notify}){
     setTagList(tl=>tl.filter(x=>x.id!==row.id));
     if(filterTag===name)setFilterTagState("");
     if(pickerTag===name)setPickerTag("");
+    if(pickerCaseTag===name)setPickerCaseTag("");
     notify(`已刪除標籤「${name}」`);
   };
 
@@ -374,7 +393,7 @@ function HbMarketingPhotoHub({onBack,notify}){
     setUploading(true);
     try{
       let added=[];
-      let tagsArr=pickerTag?[pickerTag]:[];
+      let tagsArr=[pickerTag,pickerCaseTag].filter(Boolean);
       for(let file of picked){
         if(file.size>20*1024*1024){notify(`${file.name} 檔案過大（上限 20MB），略過`);continue}
         if(!(file.type||"").startsWith("image/")){notify(`${file.name} 不是圖片，略過`);continue}
@@ -403,6 +422,7 @@ function HbMarketingPhotoHub({onBack,notify}){
   let setFilterTag=tag=>setFilterTagState(p=>p===tag?"":tag);
   let toggleSelect=id=>setSelected(sset=>{let n=new Set(sset);n.has(id)?n.delete(id):n.add(id);return n});
   let togglePicker=tag=>setPickerTag(p=>p===tag?"":tag);
+  let togglePickerCase=tag=>setPickerCaseTag(p=>p===tag?"":tag);
 
   let filtered=photos.filter(p=>{
     if(search.trim()&&!p.tags.some(t=>t.includes(search.trim()))&&!(p.note||"").includes(search.trim()))return false;
@@ -477,8 +497,16 @@ function HbMarketingPhotoHub({onBack,notify}){
       @keyframes iyBreatheB { 0%,100%{transform:scale(1);opacity:.7} 50%{transform:scale(1.3);opacity:1} }
       .iy-breathe-a { animation: iyBreatheA 3.8s ease-in-out infinite; transform-origin:center; }
       .iy-breathe-b { animation: iyBreatheB 4.6s ease-in-out infinite; animation-delay:1s; transform-origin:center; }
+      .hb-mkt-shell{display:flex;flex-direction:column;gap:18px;}
+      .hb-mkt-sidebar{width:100%;}
+      .hb-mkt-main{width:100%;min-width:0;}
+      @media (min-width:960px){
+        .hb-mkt-shell{flex-direction:row;align-items:flex-start;gap:24px;}
+        .hb-mkt-sidebar{width:300px;flex:0 0 300px;position:sticky;top:16px;}
+        .hb-mkt-main{flex:1;min-width:0;}
+      }
     `),
-    u.default.createElement("div",{style:{maxWidth:720,margin:"0 auto",padding:"16px 16px 0"}},
+    u.default.createElement("div",{style:{maxWidth:1320,margin:"0 auto",padding:"16px 16px 0"}},
       u.default.createElement("div",{style:{padding:"4px 2px 8px",position:"relative",overflow:"hidden"}},
         u.default.createElement("button",{onClick:onBack,style:{background:"none",border:"none",color:MP.oliveDark,display:"flex",alignItems:"center",gap:6,cursor:"pointer",padding:0,marginBottom:8,fontSize:12.5}},u.default.createElement(E,{name:"arrow-left",size:16}),"返回"),
         u.default.createElement("svg",{viewBox:"0 0 240 56",style:{width:120,height:22,display:"block",marginBottom:2}},
@@ -489,48 +517,66 @@ function HbMarketingPhotoHub({onBack,notify}){
         u.default.createElement("h2",{style:{color:MP.oliveDark,fontSize:19,fontWeight:300,margin:0}},"行銷照片庫")
       )
     ),
-    u.default.createElement("div",{style:{maxWidth:720,margin:"0 auto",padding:16}},
-      u.default.createElement("div",{style:{background:MP.card,borderRadius:10,padding:14,marginBottom:14,border:`1px solid ${MP.line}`}},
-        u.default.createElement("div",{style:{fontSize:13,fontWeight:400,color:MP.oliveDark,marginBottom:8}},"上傳前先選擇空間標籤"),
-        u.default.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:6,marginBottom:10}},
-          allTagOptions.map(tag=>u.default.createElement("button",{key:tag,onClick:()=>togglePicker(tag),style:{border:`1px solid ${pickerTag===tag?MP.olive:MP.line}`,background:pickerTag===tag?MP.olive:"#fff",color:pickerTag===tag?MP.cream:MP.ink,borderRadius:16,padding:"5px 12px",fontSize:12.5,cursor:"pointer"}},tag)),
-          showAddTag?u.default.createElement("div",{style:{display:"flex",gap:4,alignItems:"center"}},
-            u.default.createElement("input",{value:pendingTag,onChange:e=>setPendingTag(e.target.value),placeholder:"新標籤",style:{border:`1px solid ${MP.line}`,borderRadius:16,padding:"4px 10px",fontSize:12.5,width:80}}),
-            u.default.createElement("button",{onClick:()=>addCustomTag(pendingTag),style:{background:MP.olive,color:MP.cream,border:"none",borderRadius:16,padding:"5px 10px",fontSize:12,cursor:"pointer"}},"加入")
-          ):u.default.createElement("button",{onClick:()=>setShowAddTag(true),style:{border:`1px dashed ${MP.line}`,background:"#fff",color:MP.inkSoft,borderRadius:16,padding:"5px 12px",fontSize:12.5,cursor:"pointer"}},"＋新增標籤"),
-          u.default.createElement("button",{onClick:()=>setShowManageTags(true),style:{border:`1px solid ${MP.line}`,background:"#fff",color:MP.inkSoft,borderRadius:16,padding:"5px 12px",fontSize:12.5,cursor:"pointer",display:"flex",alignItems:"center",gap:4}},u.default.createElement(E,{name:"pencil",size:12}),"管理標籤")
+    u.default.createElement("div",{className:"hb-mkt-shell",style:{maxWidth:1320,margin:"0 auto",padding:16}},
+      u.default.createElement("div",{className:"hb-mkt-sidebar"},
+        u.default.createElement("div",{style:{background:MP.card,borderRadius:10,padding:14,marginBottom:14,border:`1px solid ${MP.line}`}},
+          u.default.createElement("div",{style:{fontSize:13,fontWeight:400,color:MP.oliveDark,marginBottom:8}},"上傳前先選擇空間標籤"),
+          u.default.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:6,marginBottom:12}},
+            spaceTagRows.map(t=>u.default.createElement("button",{key:t.id,onClick:()=>togglePicker(t.name),style:{border:`1px solid ${pickerTag===t.name?MP.olive:MP.line}`,background:pickerTag===t.name?MP.olive:"#fff",color:pickerTag===t.name?MP.cream:MP.ink,borderRadius:16,padding:"5px 12px",fontSize:12.5,cursor:"pointer"}},t.name)),
+            showAddTag?u.default.createElement("div",{style:{display:"flex",gap:4,alignItems:"center"}},
+              u.default.createElement("input",{value:pendingTag,onChange:e=>setPendingTag(e.target.value),placeholder:"新標籤",style:{border:`1px solid ${MP.line}`,borderRadius:16,padding:"4px 10px",fontSize:12.5,width:80}}),
+              u.default.createElement("button",{onClick:()=>addCustomTag(pendingTag,"space"),style:{background:MP.olive,color:MP.cream,border:"none",borderRadius:16,padding:"5px 10px",fontSize:12,cursor:"pointer"}},"加入")
+            ):u.default.createElement("button",{onClick:()=>setShowAddTag(true),style:{border:`1px dashed ${MP.line}`,background:"#fff",color:MP.inkSoft,borderRadius:16,padding:"5px 12px",fontSize:12.5,cursor:"pointer"}},"＋新增標籤")
+          ),
+          u.default.createElement("div",{style:{fontSize:13,fontWeight:400,color:MP.oliveDark,marginBottom:8}},"空間案例（選填）"),
+          u.default.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:6,marginBottom:10}},
+            caseTagRows.map(t=>u.default.createElement("button",{key:t.id,onClick:()=>togglePickerCase(t.name),style:{border:`1px solid ${pickerCaseTag===t.name?MP.olive:MP.line}`,background:pickerCaseTag===t.name?MP.olive:"#fff",color:pickerCaseTag===t.name?MP.cream:MP.ink,borderRadius:16,padding:"5px 12px",fontSize:12.5,cursor:"pointer"}},t.name)),
+            showAddCaseTag?u.default.createElement("div",{style:{display:"flex",gap:4,alignItems:"center"}},
+              u.default.createElement("input",{value:pendingCaseTag,onChange:e=>setPendingCaseTag(e.target.value),placeholder:"案場名稱",style:{border:`1px solid ${MP.line}`,borderRadius:16,padding:"4px 10px",fontSize:12.5,width:100}}),
+              u.default.createElement("button",{onClick:()=>addCustomTag(pendingCaseTag,"case"),style:{background:MP.olive,color:MP.cream,border:"none",borderRadius:16,padding:"5px 10px",fontSize:12,cursor:"pointer"}},"加入")
+            ):u.default.createElement("button",{onClick:()=>setShowAddCaseTag(true),style:{border:`1px dashed ${MP.line}`,background:"#fff",color:MP.inkSoft,borderRadius:16,padding:"5px 12px",fontSize:12.5,cursor:"pointer"}},"＋新增案例")
+          ),
+          u.default.createElement("input",{ref:fileInputRef,type:"file",accept:"image/*",multiple:true,onChange:handleUpload,style:{display:"none"}}),
+          u.default.createElement("button",{onClick:()=>fileInputRef.current&&fileInputRef.current.click(),disabled:uploading,style:{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:8,background:MP.olive,color:MP.cream,border:"none",borderRadius:8,padding:"11px 0",fontWeight:400,fontSize:14,cursor:"pointer",opacity:uploading?.6:1}},uploading?u.default.createElement(E,{name:"loader",size:16,className:"animate-spin"}):u.default.createElement(E,{name:"upload",size:16}),uploading?"上傳中...":"選擇照片上傳"),
+          u.default.createElement("button",{onClick:()=>setShowManageTags(true),style:{width:"100%",marginTop:8,border:`1px solid ${MP.line}`,background:"#fff",color:MP.inkSoft,borderRadius:8,padding:"8px 0",fontSize:12.5,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:4}},u.default.createElement(E,{name:"pencil",size:12}),"管理標籤")
         ),
-        u.default.createElement("input",{ref:fileInputRef,type:"file",accept:"image/*",multiple:true,onChange:handleUpload,style:{display:"none"}}),
-        u.default.createElement("button",{onClick:()=>fileInputRef.current&&fileInputRef.current.click(),disabled:uploading,style:{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:8,background:MP.olive,color:MP.cream,border:"none",borderRadius:8,padding:"11px 0",fontWeight:400,fontSize:14,cursor:"pointer",opacity:uploading?.6:1}},uploading?u.default.createElement(E,{name:"loader",size:16,className:"animate-spin"}):u.default.createElement(E,{name:"upload",size:16}),uploading?"上傳中...":"選擇照片上傳")
+        u.default.createElement("div",{style:{background:MP.card,borderRadius:10,padding:14,border:`1px solid ${MP.line}`}},
+          u.default.createElement("div",{style:{fontSize:12.5,fontWeight:400,color:MP.oliveDark,marginBottom:8}},"瀏覽"),
+          u.default.createElement("div",{style:{display:"flex",flexDirection:"column",gap:6}},
+            u.default.createElement("button",{key:"__ALL__",onClick:()=>setFilterTag("__ALL__"),style:{textAlign:"left",border:`1px solid ${filterTag==="__ALL__"?MP.olive:MP.line}`,background:filterTag==="__ALL__"?MP.olive:"#fff",color:filterTag==="__ALL__"?MP.cream:MP.ink,borderRadius:8,padding:"7px 12px",fontSize:12.5,cursor:"pointer",fontWeight:400}},"全部",` (${filtered.length})`),
+            spaceTagRows.length>0&&u.default.createElement("div",{style:{fontSize:11,color:MP.inkSoft,margin:"6px 0 2px",paddingLeft:2}},"空間標籤"),
+            spaceTagRows.map(t=>u.default.createElement("button",{key:t.id,onClick:()=>setFilterTag(t.name),style:{textAlign:"left",border:`1px solid ${filterTag===t.name?MP.olive:MP.line}`,background:filterTag===t.name?MP.olive:"#fff",color:filterTag===t.name?MP.cream:MP.ink,borderRadius:8,padding:"7px 12px",fontSize:12.5,cursor:"pointer"}},t.name,` (${photosByTag(t.name).length})`)),
+            caseTagRows.length>0&&u.default.createElement("div",{style:{fontSize:11,color:MP.inkSoft,margin:"10px 0 2px",paddingLeft:2}},"空間案例"),
+            caseTagRows.map(t=>u.default.createElement("button",{key:t.id,onClick:()=>setFilterTag(t.name),style:{textAlign:"left",border:`1px solid ${filterTag===t.name?MP.olive:MP.line}`,background:filterTag===t.name?MP.olive:"#fff",color:filterTag===t.name?MP.cream:MP.ink,borderRadius:8,padding:"7px 12px",fontSize:12.5,cursor:"pointer"}},t.name,` (${photosByTag(t.name).length})`))
+          )
+        )
       ),
-      u.default.createElement("input",{value:search,onChange:e=>setSearch(e.target.value),placeholder:"搜尋標籤或備註...",style:{width:"100%",boxSizing:"border-box",border:`1px solid ${MP.line}`,borderRadius:8,padding:"9px 11px",fontSize:14,marginBottom:14,marginTop:4,background:"#fff",color:MP.ink,fontFamily:"inherit"}}),
-      u.default.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}},
-        u.default.createElement("div",{style:{fontSize:12.5,color:MP.inkSoft}},`共 ${filtered.length} 張${selected.size?`，已選 ${selected.size} 張`:""}`),
-        u.default.createElement("button",{onClick:downloadSelected,disabled:zipping,style:{display:"flex",alignItems:"center",gap:6,background:"none",border:`1px solid ${MP.olive}`,color:MP.oliveDark,borderRadius:8,padding:"6px 12px",fontSize:12.5,cursor:"pointer",opacity:zipping?.6:1}},zipping?u.default.createElement(E,{name:"loader",size:14,className:"animate-spin"}):u.default.createElement(E,{name:"download",size:14}),zipping?"打包中...":"下載選取/全部")
-      ),
-      u.default.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:6,marginBottom:16}},
-        u.default.createElement("button",{key:"__ALL__",onClick:()=>setFilterTag("__ALL__"),style:{border:`1px solid ${filterTag==="__ALL__"?MP.olive:MP.line}`,background:filterTag==="__ALL__"?MP.olive:"#fff",color:filterTag==="__ALL__"?MP.cream:MP.ink,borderRadius:16,padding:"6px 13px",fontSize:12.5,cursor:"pointer",fontWeight:400}},"全部",` (${filtered.length})`),
-        allTagOptions.map(tag=>u.default.createElement("button",{key:tag,onClick:()=>setFilterTag(tag),style:{border:`1px solid ${filterTag===tag?MP.olive:MP.line}`,background:filterTag===tag?MP.olive:"#fff",color:filterTag===tag?MP.cream:MP.ink,borderRadius:16,padding:"6px 13px",fontSize:12.5,cursor:"pointer"}},tag,` (${photosByTag(tag).length})`))
-      ),
-      loading?u.default.createElement("div",{style:{textAlign:"center",padding:40}},u.default.createElement(E,{name:"loader",className:"animate-spin",size:24,color:MP.olive})):
-      !filterTag?u.default.createElement(He,{icon:"image",text:"請點選上方空間，查看該空間的照片"}):
-      (()=>{
-        let list=photosByTag(filterTag);
-        return list.length===0?u.default.createElement(He,{icon:"image",text:"此空間尚無照片"}):
-        u.default.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(110px,1fr))",gap:8}},
-          list.map(p=>u.default.createElement("div",{key:p.id,style:{position:"relative",borderRadius:8,overflow:"hidden",border:`2px solid ${selected.has(p.id)?MP.olive:"transparent"}`,cursor:"pointer"}},
-            u.default.createElement("img",{src:p.url,onClick:()=>toggleSelect(p.id),style:{width:"100%",height:110,objectFit:"cover",display:"block"}}),
-            u.default.createElement("button",{onClick:e=>{e.stopPropagation();setPreviewPhoto(p)},style:{position:"absolute",top:4,left:4,background:"rgba(0,0,0,0.5)",border:"none",borderRadius:6,padding:4,cursor:"pointer",display:"flex"}},u.default.createElement(E,{name:"eye",size:13,color:"#fff"})),
-            u.default.createElement("div",{style:{position:"absolute",top:4,right:4,display:"flex",gap:4}},
-              u.default.createElement("button",{onClick:e=>{e.stopPropagation();downloadSinglePhoto(p)},style:{background:"rgba(0,0,0,0.5)",border:"none",borderRadius:6,padding:4,cursor:"pointer",display:"flex"}},u.default.createElement(E,{name:"download",size:13,color:"#fff"})),
-              u.default.createElement("button",{onClick:e=>{e.stopPropagation();deletePhoto(p)},style:{background:"rgba(0,0,0,0.5)",border:"none",borderRadius:6,padding:4,cursor:"pointer",display:"flex"}},u.default.createElement(E,{name:"trash",size:13,color:"#fff"}))
-            ),
-            p.tags.length>0&&u.default.createElement("div",{style:{position:"absolute",bottom:0,left:0,right:0,background:"rgba(0,0,0,0.55)",padding:"3px 6px"}},u.default.createElement("div",{style:{fontSize:9.5,color:"#fff",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},p.tags.join("、")))
-          ))
-        );
-      })()
+      u.default.createElement("div",{className:"hb-mkt-main"},
+        u.default.createElement("input",{value:search,onChange:e=>setSearch(e.target.value),placeholder:"搜尋標籤或備註...",style:{width:"100%",boxSizing:"border-box",border:`1px solid ${MP.line}`,borderRadius:8,padding:"9px 11px",fontSize:14,marginBottom:14,background:"#fff",color:MP.ink,fontFamily:"inherit"}}),
+        u.default.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}},
+          u.default.createElement("div",{style:{fontSize:12.5,color:MP.inkSoft}},`共 ${filtered.length} 張${selected.size?`，已選 ${selected.size} 張`:""}`),
+          u.default.createElement("button",{onClick:downloadSelected,disabled:zipping,style:{display:"flex",alignItems:"center",gap:6,background:"none",border:`1px solid ${MP.olive}`,color:MP.oliveDark,borderRadius:8,padding:"6px 12px",fontSize:12.5,cursor:"pointer",opacity:zipping?.6:1}},zipping?u.default.createElement(E,{name:"loader",size:14,className:"animate-spin"}):u.default.createElement(E,{name:"download",size:14}),zipping?"打包中...":"下載選取/全部")
+        ),
+        loading?u.default.createElement("div",{style:{textAlign:"center",padding:40}},u.default.createElement(E,{name:"loader",className:"animate-spin",size:24,color:MP.olive})):
+        !filterTag?u.default.createElement(He,{icon:"image",text:"請點選左側空間標籤或空間案例，查看照片"}):
+        (()=>{
+          let list=photosByTag(filterTag);
+          return list.length===0?u.default.createElement(He,{icon:"image",text:"此分類尚無照片"}):
+          u.default.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(130px,1fr))",gap:8}},
+            list.map(p=>u.default.createElement("div",{key:p.id,style:{position:"relative",borderRadius:8,overflow:"hidden",border:`2px solid ${selected.has(p.id)?MP.olive:"transparent"}`,cursor:"pointer"}},
+              u.default.createElement("img",{src:p.url,onClick:()=>toggleSelect(p.id),style:{width:"100%",height:130,objectFit:"cover",display:"block"}}),
+              u.default.createElement("button",{onClick:e=>{e.stopPropagation();setPreviewPhoto(p)},style:{position:"absolute",top:4,left:4,background:"rgba(0,0,0,0.5)",border:"none",borderRadius:6,padding:4,cursor:"pointer",display:"flex"}},u.default.createElement(E,{name:"eye",size:13,color:"#fff"})),
+              u.default.createElement("div",{style:{position:"absolute",top:4,right:4,display:"flex",gap:4}},
+                u.default.createElement("button",{onClick:e=>{e.stopPropagation();downloadSinglePhoto(p)},style:{background:"rgba(0,0,0,0.5)",border:"none",borderRadius:6,padding:4,cursor:"pointer",display:"flex"}},u.default.createElement(E,{name:"download",size:13,color:"#fff"})),
+                u.default.createElement("button",{onClick:e=>{e.stopPropagation();deletePhoto(p)},style:{background:"rgba(0,0,0,0.5)",border:"none",borderRadius:6,padding:4,cursor:"pointer",display:"flex"}},u.default.createElement(E,{name:"trash",size:13,color:"#fff"}))
+              ),
+              p.tags.length>0&&u.default.createElement("div",{style:{position:"absolute",bottom:0,left:0,right:0,background:"rgba(0,0,0,0.55)",padding:"3px 6px"}},u.default.createElement("div",{style:{fontSize:9.5,color:"#fff",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},p.tags.join("、")))
+            ))
+          );
+        })()
+      )
     ),
-    showManageTags&&u.default.createElement(HbMarketingTagModal,{tags:tagList,photos,onClose:()=>setShowManageTags(false),onRename:renameTag,onDelete:deleteTag}),
+    showManageTags&&u.default.createElement(HbMarketingTagModal,{tags:tagList,photos,onClose:()=>setShowManageTags(false),onRename:renameTag,onDelete:deleteTag,onToggleType:toggleTagType}),
     previewPhoto&&u.default.createElement(HbMarketingPreviewModal,{photo:previewPhoto,onClose:()=>setPreviewPhoto(null),onDownload:downloadSinglePhoto,onCopy:copyPhotoToClipboard})
   );
 }
@@ -551,40 +597,49 @@ function HbMarketingPreviewModal({photo,onClose,onDownload,onCopy}){
   );
 }
 
-function HbMarketingTagModal({tags,photos,onClose,onRename,onDelete}){
+function HbMarketingTagModal({tags,photos,onClose,onRename,onDelete,onToggleType}){
   let MP={cream:"#EDEDED",card:"#F7F7F7",olive:"#82796A",oliveDark:"#1C1B18",oliveSoft:"#5C5347",line:"#D8D3CC",ink:"#1C1B18",inkSoft:"#82796A",danger:"#B3413B"};
   let[editingId,setEditingId]=(0,u.useState)(null);
   let[editValue,setEditValue]=(0,u.useState)("");
   let[confirmDeleteId,setConfirmDeleteId]=(0,u.useState)(null);
   let startEdit=t=>{setEditingId(t.id);setEditValue(t.name);setConfirmDeleteId(null)};
   let saveEdit=async t=>{let v=editValue.trim();if(!v||v===t.name){setEditingId(null);return}await onRename(t.name,v);setEditingId(null)};
+  let renderTagRow=t=>u.default.createElement("div",{key:t.id,style:{display:"flex",alignItems:"center",gap:8,border:`1px solid ${MP.line}`,borderRadius:8,padding:"8px 10px"}},
+    editingId===t.id?
+      u.default.createElement(u.default.Fragment,null,
+        u.default.createElement("input",{value:editValue,onChange:e=>setEditValue(e.target.value),autoFocus:true,style:{flex:1,border:`1px solid ${MP.olive}`,borderRadius:6,padding:"6px 8px",fontSize:13}}),
+        u.default.createElement("button",{onClick:()=>saveEdit(t),style:{background:MP.olive,color:MP.cream,border:"none",borderRadius:6,padding:"6px 10px",fontSize:12,cursor:"pointer"}},"儲存"),
+        u.default.createElement("button",{onClick:()=>setEditingId(null),style:{background:"none",border:`1px solid ${MP.line}`,color:MP.inkSoft,borderRadius:6,padding:"6px 10px",fontSize:12,cursor:"pointer"}},"取消")
+      ):
+      u.default.createElement(u.default.Fragment,null,
+        u.default.createElement("span",{style:{flex:1,fontSize:13.5}},t.name),
+        u.default.createElement("span",{style:{fontSize:11.5,color:MP.inkSoft}},photos.filter(p=>p.tags.includes(t.name)).length," 張"),
+        confirmDeleteId===t.id?
+          u.default.createElement(u.default.Fragment,null,
+            u.default.createElement("button",{onClick:()=>setConfirmDeleteId(null),style:{background:"none",border:`1px solid ${MP.line}`,color:MP.inkSoft,borderRadius:6,padding:"6px 8px",fontSize:12,cursor:"pointer"}},"取消"),
+            u.default.createElement("button",{onClick:()=>{onDelete(t.name);setConfirmDeleteId(null)},style:{background:MP.danger,color:"#fff",border:"none",borderRadius:6,padding:"6px 8px",fontSize:12,cursor:"pointer"}},"確認刪除")
+          ):
+          u.default.createElement(u.default.Fragment,null,
+            u.default.createElement("button",{onClick:()=>onToggleType(t),title:t.type==="case"?"改列為空間標籤":"改列為空間案例",style:{background:"none",border:`1px solid ${MP.line}`,color:MP.oliveSoft,borderRadius:6,padding:"4px 7px",fontSize:11,cursor:"pointer",whiteSpace:"nowrap"}},t.type==="case"?"案例":"標籤"),
+            u.default.createElement("button",{onClick:()=>startEdit(t),style:{background:"none",border:"none",color:MP.inkSoft,cursor:"pointer",padding:4,display:"flex"}},u.default.createElement(E,{name:"pencil",size:15})),
+            u.default.createElement("button",{onClick:()=>setConfirmDeleteId(t.id),style:{background:"none",border:"none",color:MP.danger,cursor:"pointer",padding:4,display:"flex"}},u.default.createElement(E,{name:"trash",size:15}))
+          )
+      )
+  );
+  let spaceTags=tags.filter(t=>t.type!=="case");
+  let caseTags=tags.filter(t=>t.type==="case");
   return u.default.createElement("div",{style:{position:"fixed",inset:0,background:"rgba(28,27,24,0.55)",display:"flex",alignItems:"center",justifyContent:"center",padding:20,zIndex:60}},
     u.default.createElement("div",{className:"fade-in",style:{background:MP.card,borderRadius:10,padding:20,width:"100%",maxWidth:380,maxHeight:"78vh",overflowY:"auto"}},
       u.default.createElement("h3",{style:{margin:"0 0 4px",fontSize:16,fontWeight:400,color:MP.oliveDark}},"管理標籤"),
-      u.default.createElement("p",{style:{fontSize:12,color:MP.inkSoft,margin:"0 0 14px"}},"更改名稱後，所有已套用此標籤的照片會自動一併更新"),
+      u.default.createElement("p",{style:{fontSize:12,color:MP.inkSoft,margin:"0 0 14px"}},"更改名稱後，所有已套用此標籤的照片會自動一併更新；點「標籤／案例」按鈕可切換分類"),
       tags.length===0?u.default.createElement("p",{style:{fontSize:13,color:MP.inkSoft}},"目前沒有標籤。"):
-      u.default.createElement("div",{style:{display:"flex",flexDirection:"column",gap:8,marginBottom:16}},
-        tags.map(t=>u.default.createElement("div",{key:t.id,style:{display:"flex",alignItems:"center",gap:8,border:`1px solid ${MP.line}`,borderRadius:8,padding:"8px 10px"}},
-          editingId===t.id?
-            u.default.createElement(u.default.Fragment,null,
-              u.default.createElement("input",{value:editValue,onChange:e=>setEditValue(e.target.value),autoFocus:true,style:{flex:1,border:`1px solid ${MP.olive}`,borderRadius:6,padding:"6px 8px",fontSize:13}}),
-              u.default.createElement("button",{onClick:()=>saveEdit(t),style:{background:MP.olive,color:MP.cream,border:"none",borderRadius:6,padding:"6px 10px",fontSize:12,cursor:"pointer"}},"儲存"),
-              u.default.createElement("button",{onClick:()=>setEditingId(null),style:{background:"none",border:`1px solid ${MP.line}`,color:MP.inkSoft,borderRadius:6,padding:"6px 10px",fontSize:12,cursor:"pointer"}},"取消")
-            ):
-            u.default.createElement(u.default.Fragment,null,
-              u.default.createElement("span",{style:{flex:1,fontSize:13.5}},t.name),
-              u.default.createElement("span",{style:{fontSize:11.5,color:MP.inkSoft}},photos.filter(p=>p.tags.includes(t.name)).length," 張"),
-              confirmDeleteId===t.id?
-                u.default.createElement(u.default.Fragment,null,
-                  u.default.createElement("button",{onClick:()=>setConfirmDeleteId(null),style:{background:"none",border:`1px solid ${MP.line}`,color:MP.inkSoft,borderRadius:6,padding:"6px 8px",fontSize:12,cursor:"pointer"}},"取消"),
-                  u.default.createElement("button",{onClick:()=>{onDelete(t.name);setConfirmDeleteId(null)},style:{background:MP.danger,color:"#fff",border:"none",borderRadius:6,padding:"6px 8px",fontSize:12,cursor:"pointer"}},"確認刪除")
-                ):
-                u.default.createElement(u.default.Fragment,null,
-                  u.default.createElement("button",{onClick:()=>startEdit(t),style:{background:"none",border:"none",color:MP.inkSoft,cursor:"pointer",padding:4,display:"flex"}},u.default.createElement(E,{name:"pencil",size:15})),
-                  u.default.createElement("button",{onClick:()=>setConfirmDeleteId(t.id),style:{background:"none",border:"none",color:MP.danger,cursor:"pointer",padding:4,display:"flex"}},u.default.createElement(E,{name:"trash",size:15}))
-                )
-            )
-        ))
+      u.default.createElement(u.default.Fragment,null,
+        u.default.createElement("div",{style:{fontSize:11.5,color:MP.inkSoft,margin:"0 0 6px"}},"空間標籤"),
+        spaceTags.length===0?u.default.createElement("p",{style:{fontSize:12,color:MP.inkSoft,margin:"0 0 12px"}},"（無）"):
+        u.default.createElement("div",{style:{display:"flex",flexDirection:"column",gap:8,marginBottom:16}},spaceTags.map(renderTagRow)),
+        u.default.createElement("div",{style:{fontSize:11.5,color:MP.inkSoft,margin:"0 0 6px"}},"空間案例"),
+        caseTags.length===0?u.default.createElement("p",{style:{fontSize:12,color:MP.inkSoft,margin:"0 0 16px"}},"（無）"):
+        u.default.createElement("div",{style:{display:"flex",flexDirection:"column",gap:8,marginBottom:16}},caseTags.map(renderTagRow))
       ),
       u.default.createElement("button",{onClick:onClose,style:{width:"100%",background:"none",border:`1px solid ${MP.line}`,color:MP.ink,borderRadius:8,padding:"10px 0",fontSize:13.5,cursor:"pointer"}},"關閉")
     )
