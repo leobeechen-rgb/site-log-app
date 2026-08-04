@@ -445,7 +445,7 @@ function HbMarketingPhotoHub({onBack,notify}){
       let content=await zip.generateAsync({type:"blob"});
       let a=document.createElement("a");
       a.href=URL.createObjectURL(content);
-      a.download=`行銷照片庫_${Tl(new Date().toISOString())}.zip`;
+      a.download=`赫柏空間作品案例_${Tl(new Date().toISOString())}.zip`;
       a.click();
     }catch(err){notify("打包失敗："+(err.message||err))}
     finally{setZipping(false)}
@@ -492,23 +492,27 @@ function HbMarketingPhotoHub({onBack,notify}){
     }catch(err){notify("複製失敗："+(err.message||err))}
   };
 
-  return u.default.createElement("div",{style:{background:MP.cream,minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:MP.ink,paddingBottom:40,position:"fixed",inset:0,zIndex:9999,overflowY:"auto",width:"100vw"}},
+  return u.default.createElement("div",{style:{background:MP.cream,fontFamily:"'Noto Sans TC', sans-serif",color:MP.ink,position:"fixed",inset:0,zIndex:9999,width:"100vw",height:"100vh",display:"flex",flexDirection:"column",overflow:"hidden"}},
     u.default.createElement("style",null,`
       @keyframes iyBreatheA { 0%,100%{transform:scale(1);opacity:.7} 50%{transform:scale(1.3);opacity:1} }
       @keyframes iyBreatheB { 0%,100%{transform:scale(1);opacity:.7} 50%{transform:scale(1.3);opacity:1} }
       .iy-breathe-a { animation: iyBreatheA 3.8s ease-in-out infinite; transform-origin:center; }
       .iy-breathe-b { animation: iyBreatheB 4.6s ease-in-out infinite; animation-delay:1s; transform-origin:center; }
       #root.hb-mkt-wide-root{max-width:1320px !important;}
+      .hb-mkt-body{flex:1;min-height:0;overflow-y:auto;}
       .hb-mkt-shell{display:flex;flex-direction:column;gap:18px;}
       .hb-mkt-sidebar{width:100%;}
-      .hb-mkt-main{width:100%;min-width:0;}
+      .hb-mkt-main{width:100%;min-width:0;display:flex;flex-direction:column;}
+      .hb-mkt-grid-scroll{overflow:visible;}
       @media (min-width:960px){
-        .hb-mkt-shell{flex-direction:row;align-items:flex-start;gap:24px;}
-        .hb-mkt-sidebar{width:300px;flex:0 0 300px;position:sticky;top:16px;}
-        .hb-mkt-main{flex:1;min-width:0;}
+        .hb-mkt-body{overflow:hidden;display:flex;flex-direction:column;min-height:0;}
+        .hb-mkt-shell{flex:1;min-height:0;flex-direction:row;align-items:stretch;gap:24px;overflow:hidden;}
+        .hb-mkt-sidebar{width:300px;flex:0 0 300px;overflow-y:auto;height:100%;}
+        .hb-mkt-main{flex:1;min-width:0;height:100%;min-height:0;}
+        .hb-mkt-grid-scroll{flex:1;min-height:0;overflow-y:auto;}
       }
     `),
-    u.default.createElement("div",{style:{maxWidth:1320,margin:"0 auto",padding:"16px 16px 0"}},
+    u.default.createElement("div",{style:{maxWidth:1320,margin:"0 auto",padding:"16px 16px 0",width:"100%",flexShrink:0,boxSizing:"border-box"}},
       u.default.createElement("div",{style:{padding:"4px 2px 8px",position:"relative",overflow:"hidden"}},
         u.default.createElement("button",{onClick:onBack,style:{background:"none",border:"none",color:MP.oliveDark,display:"flex",alignItems:"center",gap:6,cursor:"pointer",padding:0,marginBottom:8,fontSize:12.5}},u.default.createElement(E,{name:"arrow-left",size:16}),"返回"),
         u.default.createElement("svg",{viewBox:"0 0 240 56",style:{width:120,height:22,display:"block",marginBottom:2}},
@@ -516,10 +520,11 @@ function HbMarketingPhotoHub({onBack,notify}){
           u.default.createElement("circle",{className:"iy-breathe-a",cx:10,cy:40,r:3,fill:MP.olive}),
           u.default.createElement("circle",{className:"iy-breathe-b",cx:120,cy:32,r:2.2,fill:MP.oliveDark})
         ),
-        u.default.createElement("h2",{style:{color:MP.oliveDark,fontSize:19,fontWeight:300,margin:0}},"行銷照片庫")
+        u.default.createElement("h2",{style:{color:MP.oliveDark,fontSize:19,fontWeight:300,margin:0}},"赫柏空間作品案例")
       )
     ),
-    u.default.createElement("div",{className:"hb-mkt-shell",style:{maxWidth:1320,margin:"0 auto",padding:16}},
+    u.default.createElement("div",{className:"hb-mkt-body"},
+    u.default.createElement("div",{className:"hb-mkt-shell",style:{maxWidth:1320,margin:"0 auto",padding:16,boxSizing:"border-box"}},
       u.default.createElement("div",{className:"hb-mkt-sidebar"},
         u.default.createElement("div",{style:{background:MP.card,borderRadius:10,padding:14,marginBottom:14,border:`1px solid ${MP.line}`}},
           u.default.createElement("div",{style:{fontSize:13,fontWeight:400,color:MP.oliveDark,marginBottom:8}},"上傳前先選擇空間標籤"),
@@ -554,11 +559,14 @@ function HbMarketingPhotoHub({onBack,notify}){
         )
       ),
       u.default.createElement("div",{className:"hb-mkt-main"},
-        u.default.createElement("input",{value:search,onChange:e=>setSearch(e.target.value),placeholder:"搜尋標籤或備註...",style:{width:"100%",boxSizing:"border-box",border:`1px solid ${MP.line}`,borderRadius:8,padding:"9px 11px",fontSize:14,marginBottom:14,background:"#fff",color:MP.ink,fontFamily:"inherit"}}),
-        u.default.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}},
-          u.default.createElement("div",{style:{fontSize:12.5,color:MP.inkSoft}},`共 ${filtered.length} 張${selected.size?`，已選 ${selected.size} 張`:""}`),
-          u.default.createElement("button",{onClick:downloadSelected,disabled:zipping,style:{display:"flex",alignItems:"center",gap:6,background:"none",border:`1px solid ${MP.olive}`,color:MP.oliveDark,borderRadius:8,padding:"6px 12px",fontSize:12.5,cursor:"pointer",opacity:zipping?.6:1}},zipping?u.default.createElement(E,{name:"loader",size:14,className:"animate-spin"}):u.default.createElement(E,{name:"download",size:14}),zipping?"打包中...":"下載選取/全部")
+        u.default.createElement("div",{style:{flexShrink:0}},
+          u.default.createElement("input",{value:search,onChange:e=>setSearch(e.target.value),placeholder:"搜尋標籤或備註...",style:{width:"100%",boxSizing:"border-box",border:`1px solid ${MP.line}`,borderRadius:8,padding:"9px 11px",fontSize:14,marginBottom:14,background:"#fff",color:MP.ink,fontFamily:"inherit"}}),
+          u.default.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}},
+            u.default.createElement("div",{style:{fontSize:12.5,color:MP.inkSoft}},`共 ${filtered.length} 張${selected.size?`，已選 ${selected.size} 張`:""}`),
+            u.default.createElement("button",{onClick:downloadSelected,disabled:zipping,style:{display:"flex",alignItems:"center",gap:6,background:"none",border:`1px solid ${MP.olive}`,color:MP.oliveDark,borderRadius:8,padding:"6px 12px",fontSize:12.5,cursor:"pointer",opacity:zipping?.6:1}},zipping?u.default.createElement(E,{name:"loader",size:14,className:"animate-spin"}):u.default.createElement(E,{name:"download",size:14}),zipping?"打包中...":"下載選取/全部")
+          )
         ),
+        u.default.createElement("div",{className:"hb-mkt-grid-scroll"},
         loading?u.default.createElement("div",{style:{textAlign:"center",padding:40}},u.default.createElement(E,{name:"loader",className:"animate-spin",size:24,color:MP.olive})):
         !filterTag?u.default.createElement(He,{icon:"image",text:"請點選左側空間標籤或空間案例，查看照片"}):
         (()=>{
@@ -576,7 +584,9 @@ function HbMarketingPhotoHub({onBack,notify}){
             ))
           );
         })()
+        )
       )
+    )
     ),
     showManageTags&&u.default.createElement(HbMarketingTagModal,{tags:tagList,photos,onClose:()=>setShowManageTags(false),onRename:renameTag,onDelete:deleteTag,onToggleType:toggleTagType}),
     (()=>{
@@ -2145,7 +2155,7 @@ function HbLanding({onCase:l,onCompany:t,onManageStaff:e,onLogout:n,onQuickQuote
       u.default.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:12}},
         u.default.createElement(HbCompanyGridCard,{icon:"clipboard-list",title:"案件資料庫",desc:"管理進行中的空間設計與工程專案：施工照片、材料送達、專案檔案、設備資料",onClick:l}),
         u.default.createElement(HbCompanyGridCard,{icon:"folder",title:"公司資料庫",desc:"公司營運、行政與制式合約：設計合約、工程報價單",onClick:t}),
-        u.default.createElement(HbCompanyGridCard,{icon:"image",title:"行銷照片庫",desc:"跨案件的行銷／提案用照片庫",onClick:mp}),
+        u.default.createElement(HbCompanyGridCard,{icon:"image",title:"赫柏空間作品案例",desc:"跨案件的行銷／提案用照片庫",onClick:mp}),
         u.default.createElement(HbCompanyGridCard,{icon:"presentation",title:"圖面管理",desc:"依資料夾管理施工圖面，支援子資料夾與版本紀錄回溯",onClick:dw})
       ),
 
