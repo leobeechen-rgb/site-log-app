@@ -321,7 +321,7 @@ function HbMarketingPhotoHub({onBack,notify}){
     setTagList(rows.slice().sort((a,b)=>(a.sort_order||0)-(b.sort_order||0)));
   };
   (0,u.useEffect)(()=>{load();loadTags()},[]);
-  (0,u.useEffect)(()=>{let rootEl=document.getElementById("root");if(rootEl)rootEl.classList.add("hb-mkt-wide-root");return()=>{if(rootEl)rootEl.classList.remove("hb-mkt-wide-root")}},[]);
+  (0,u.useEffect)(()=>{let rootEl=document.getElementById("root");let prevMaxWidth="",prevBoxShadow="";if(rootEl){prevMaxWidth=rootEl.style.maxWidth;prevBoxShadow=rootEl.style.boxShadow;rootEl.classList.add("hb-mkt-wide-root");rootEl.style.setProperty("max-width","1320px","important");rootEl.style.setProperty("box-shadow","none","important")}return()=>{if(rootEl){rootEl.classList.remove("hb-mkt-wide-root");rootEl.style.maxWidth=prevMaxWidth;rootEl.style.boxShadow=prevBoxShadow}}},[]);
 
   let addCustomTag=async(name,tagType)=>{
     let t=(name||"").trim();
