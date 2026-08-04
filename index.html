@@ -321,6 +321,7 @@ function HbMarketingPhotoHub({onBack,notify}){
     setTagList(rows.slice().sort((a,b)=>(a.sort_order||0)-(b.sort_order||0)));
   };
   (0,u.useEffect)(()=>{load();loadTags()},[]);
+  (0,u.useEffect)(()=>{let rootEl=document.getElementById("root");if(rootEl)rootEl.classList.add("hb-mkt-wide-root");return()=>{if(rootEl)rootEl.classList.remove("hb-mkt-wide-root")}},[]);
 
   let addCustomTag=async(name,tagType)=>{
     let t=(name||"").trim();
@@ -497,6 +498,7 @@ function HbMarketingPhotoHub({onBack,notify}){
       @keyframes iyBreatheB { 0%,100%{transform:scale(1);opacity:.7} 50%{transform:scale(1.3);opacity:1} }
       .iy-breathe-a { animation: iyBreatheA 3.8s ease-in-out infinite; transform-origin:center; }
       .iy-breathe-b { animation: iyBreatheB 4.6s ease-in-out infinite; animation-delay:1s; transform-origin:center; }
+      #root.hb-mkt-wide-root{max-width:1320px !important;}
       .hb-mkt-shell{display:flex;flex-direction:column;gap:18px;}
       .hb-mkt-sidebar{width:100%;}
       .hb-mkt-main{width:100%;min-width:0;}
