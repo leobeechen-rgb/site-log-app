@@ -492,7 +492,7 @@ function HbMarketingPhotoHub({onBack,notify}){
     }catch(err){notify("複製失敗："+(err.message||err))}
   };
 
-  return u.default.createElement("div",{style:{background:MP.cream,minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:MP.ink,paddingBottom:40}},
+  return u.default.createElement("div",{style:{background:MP.cream,minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:MP.ink,paddingBottom:40,position:"fixed",inset:0,zIndex:9999,overflowY:"auto",width:"100vw"}},
     u.default.createElement("style",null,`
       @keyframes iyBreatheA { 0%,100%{transform:scale(1);opacity:.7} 50%{transform:scale(1.3);opacity:1} }
       @keyframes iyBreatheB { 0%,100%{transform:scale(1);opacity:.7} 50%{transform:scale(1.3);opacity:1} }
