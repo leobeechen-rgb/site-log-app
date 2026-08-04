@@ -420,8 +420,38 @@ function HbMarketingPhotoHub({onBack,notify}){
     setSelected(sset=>{let n=new Set(sset);n.delete(p.id);return n});
   };
 
-  let setFilterTag=tag=>setFilterTagState(p=>p===tag?"":tag);
+  let deleteSelectedPhotos=async()=>{
+    let list=photos.filter(p=>selected.has(p.id));
+    if(!list.length){notify("請先選擇要刪除的照片");return}
+    if(!window.confirm(`確定要刪除選取的 ${list.length} 張照片嗎？此動作無法復原。`))return;
+    let okIds=[];
+    for(let p of list){
+      try{
+        if(p.key)await r2DeleteObj(p.key);
+        let{error}=await q.from("sitelog_marketing_photos").delete().eq("id",p.id);
+        if(error)throw error;
+        okIds.push(p.id);
+      }catch(err){notify(`刪除「${p.tags[0]||p.id}」失敗：${err.message||err}`)}
+    }
+    if(okIds.length){
+      setPhotos(ps=>ps.filter(p=>!okIds.includes(p.id)));
+      setSelected(sset=>{let n=new Set(sset);okIds.forEach(id=>n.delete(id));return n});
+      notify(`已刪除 ${okIds.length} 張照片`);
+    }
+  };
+
+  let[lastClickedIdx,setLastClickedIdx]=(0,u.useState)(null);
+  let setFilterTag=tag=>{setFilterTagState(p=>p===tag?"":tag);setSelected(new Set());setLastClickedIdx(null)};
   let toggleSelect=id=>setSelected(sset=>{let n=new Set(sset);n.has(id)?n.delete(id):n.add(id);return n});
+  let handlePhotoClick=(e,idx,list)=>{
+    if(e.shiftKey&&lastClickedIdx!==null){
+      let start=Math.min(lastClickedIdx,idx),end=Math.max(lastClickedIdx,idx);
+      setSelected(sset=>{let n=new Set(sset);for(let i=start;i<=end;i++)n.add(list[i].id);return n});
+    }else{
+      toggleSelect(list[idx].id);
+      setLastClickedIdx(idx);
+    }
+  };
   let togglePicker=tag=>setPickerTag(p=>p===tag?"":tag);
   let togglePickerCase=tag=>setPickerCaseTag(p=>p===tag?"":tag);
 
@@ -430,6 +460,15 @@ function HbMarketingPhotoHub({onBack,notify}){
     return true;
   });
   let photosByTag=tag=>tag==="__ALL__"?filtered:filtered.filter(p=>p.tags.includes(tag));
+  let toggleSelectAllInList=list=>{
+    let allIn=list.length>0&&list.every(p=>selected.has(p.id));
+    setSelected(sset=>{
+      let n=new Set(sset);
+      if(allIn)list.forEach(p=>n.delete(p.id));
+      else list.forEach(p=>n.add(p.id));
+      return n;
+    });
+  };
 
   let downloadSelected=async()=>{
     if(typeof window.JSZip==="undefined"){notify("打包工具尚未載入，請重新整理頁面後再試");return}
@@ -559,9 +598,13 @@ function HbMarketingPhotoHub({onBack,notify}){
       u.default.createElement("div",{className:"hb-mkt-main"},
         u.default.createElement("div",{style:{flexShrink:0}},
           u.default.createElement("input",{value:search,onChange:e=>setSearch(e.target.value),placeholder:"搜尋標籤或備註...",style:{width:"100%",boxSizing:"border-box",border:`1px solid ${MP.line}`,borderRadius:8,padding:"9px 11px",fontSize:14,marginBottom:14,background:"#fff",color:MP.ink,fontFamily:"inherit"}}),
-          u.default.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}},
+          u.default.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10,gap:8,flexWrap:"wrap"}},
             u.default.createElement("div",{style:{fontSize:12.5,color:MP.inkSoft}},`共 ${filtered.length} 張${selected.size?`，已選 ${selected.size} 張`:""}`),
-            u.default.createElement("button",{onClick:downloadSelected,disabled:zipping,style:{display:"flex",alignItems:"center",gap:6,background:"none",border:`1px solid ${MP.olive}`,color:MP.oliveDark,borderRadius:8,padding:"6px 12px",fontSize:12.5,cursor:"pointer",opacity:zipping?.6:1}},zipping?u.default.createElement(E,{name:"loader",size:14,className:"animate-spin"}):u.default.createElement(E,{name:"download",size:14}),zipping?"打包中...":"下載選取/全部")
+            u.default.createElement("div",{style:{display:"flex",gap:8,flexWrap:"wrap"}},
+              filterTag&&u.default.createElement("button",{onClick:()=>toggleSelectAllInList(photosByTag(filterTag)),style:{display:"flex",alignItems:"center",gap:6,background:"none",border:`1px solid ${MP.line}`,color:MP.inkSoft,borderRadius:8,padding:"6px 12px",fontSize:12.5,cursor:"pointer"}},photosByTag(filterTag).length>0&&photosByTag(filterTag).every(p=>selected.has(p.id))?"取消全選":"全選"),
+              selected.size>0&&u.default.createElement("button",{onClick:deleteSelectedPhotos,style:{display:"flex",alignItems:"center",gap:6,background:"none",border:"1px solid #B3413B",color:"#B3413B",borderRadius:8,padding:"6px 12px",fontSize:12.5,cursor:"pointer"}},u.default.createElement(E,{name:"trash",size:14}),`刪除選取 (${selected.size})`),
+              u.default.createElement("button",{onClick:downloadSelected,disabled:zipping,style:{display:"flex",alignItems:"center",gap:6,background:"none",border:`1px solid ${MP.olive}`,color:MP.oliveDark,borderRadius:8,padding:"6px 12px",fontSize:12.5,cursor:"pointer",opacity:zipping?.6:1}},zipping?u.default.createElement(E,{name:"loader",size:14,className:"animate-spin"}):u.default.createElement(E,{name:"download",size:14}),zipping?"打包中...":"下載選取/全部")
+            )
           )
         ),
         u.default.createElement("div",{className:"hb-mkt-grid-scroll"},
@@ -571,8 +614,8 @@ function HbMarketingPhotoHub({onBack,notify}){
           let list=photosByTag(filterTag);
           return list.length===0?u.default.createElement(He,{icon:"image",text:"此分類尚無照片"}):
           u.default.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(130px,1fr))",gap:8}},
-            list.map(p=>u.default.createElement("div",{key:p.id,style:{position:"relative",borderRadius:8,overflow:"hidden",border:`2px solid ${selected.has(p.id)?MP.olive:"transparent"}`,cursor:"pointer"}},
-              u.default.createElement("img",{src:p.url,onClick:()=>toggleSelect(p.id),style:{width:"100%",height:130,objectFit:"cover",display:"block"}}),
+            list.map((p,idx)=>u.default.createElement("div",{key:p.id,style:{position:"relative",borderRadius:8,overflow:"hidden",border:`2px solid ${selected.has(p.id)?MP.olive:"transparent"}`,cursor:"pointer"}},
+              u.default.createElement("img",{src:p.url,onClick:e=>handlePhotoClick(e,idx,list),style:{width:"100%",height:130,objectFit:"cover",display:"block",userSelect:"none"}}),
               u.default.createElement("button",{onClick:e=>{e.stopPropagation();setPreviewId(p.id)},style:{position:"absolute",top:4,left:4,background:"rgba(0,0,0,0.5)",border:"none",borderRadius:6,padding:4,cursor:"pointer",display:"flex"}},u.default.createElement(E,{name:"eye",size:13,color:"#fff"})),
               u.default.createElement("div",{style:{position:"absolute",top:4,right:4,display:"flex",gap:4}},
                 u.default.createElement("button",{onClick:e=>{e.stopPropagation();downloadSinglePhoto(p)},style:{background:"rgba(0,0,0,0.5)",border:"none",borderRadius:6,padding:4,cursor:"pointer",display:"flex"}},u.default.createElement(E,{name:"download",size:13,color:"#fff"})),
