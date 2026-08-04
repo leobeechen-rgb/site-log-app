@@ -296,9 +296,15 @@ function HbMarketingPhotoHub({onBack,notify}){
 
   let load=async()=>{
     setLoading(true);
-    let{data,error}=await q.from("sitelog_marketing_photos").select("*").order("uploaded_at",{ascending:false});
-    if(error){notify("讀取照片庫失敗："+error.message);setPhotos([])}
-    else setPhotos((data||[]).map(r=>({id:r.id,url:r.url,key:r.r2_key,tags:r.tags||[],note:r.note||"",size:r.size,uploadedAt:r.uploaded_at})));
+    let all=[],from=0,pageSize=1000;
+    while(true){
+      let{data,error}=await q.from("sitelog_marketing_photos").select("*").order("uploaded_at",{ascending:false}).range(from,from+pageSize-1);
+      if(error){notify("讀取照片庫失敗："+error.message);break}
+      all=all.concat(data||[]);
+      if(!data||data.length<pageSize)break;
+      from+=pageSize;
+    }
+    setPhotos(all.map(r=>({id:r.id,url:r.url,key:r.r2_key,tags:r.tags||[],note:r.note||"",size:r.size,uploadedAt:r.uploaded_at})));
     setLoading(false);
   };
   let loadTags=async()=>{
