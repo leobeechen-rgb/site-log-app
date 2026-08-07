@@ -3512,7 +3512,6 @@ function HbAttendanceHub({onBack,notify,projects}){
   let[masterWorkers,setMasterWorkers]=(0,u.useState)([]);
   let[newWorkerName,setNewWorkerName]=(0,u.useState)(""); 
   let[showManage,setShowManage]=(0,u.useState)(false);
-  let[copied,setCopied]=(0,u.useState)(false);
   let[siteList,setSiteList]=(0,u.useState)([]);
   let[newSiteName,setNewSiteName]=(0,u.useState)("");
   let[newSiteAddress,setNewSiteAddress]=(0,u.useState)("");
@@ -3563,14 +3562,10 @@ function HbAttendanceHub({onBack,notify,projects}){
     let{error}=await q.from("sitelog_workers").delete().eq("id",id);
     if(!error)loadWorkers()
   };
-  let checkinUrl=(()=>{try{return window.location.origin+window.location.pathname+"?checkin=1"}catch{return""}})();
-  let copyCheckinUrl=async()=>{
-    try{await navigator.clipboard.writeText(checkinUrl);setCopied(!0);setTimeout(()=>setCopied(!1),2e3)}catch{notify("複製失敗，請手動選取連結")}
-  };
   let createOne=async v=>{
     let{error}=await q.from("sitelog_attendance").insert({
       worker_name:v.workerName,site_location:v.siteLocation,work_date:v.dateStr,
-      days:v.days,daily_rate:v.dailyRate||null,note:v.note||null
+      days:v.days,daily_rate:v.dailyRate||null,note:v.note||null,hours:v.hours||null
     });
     if(error){notify("新增失敗："+error.message);return}
     setCreating(!1);notify("已記錄出勤");load()
@@ -3624,7 +3619,7 @@ function HbAttendanceHub({onBack,notify,projects}){
           u.default.createElement(E,{name:showSiteManage?"chevron-up":"chevron-down",size:18,color:s.inkSoft})
         ),
         showSiteManage&&u.default.createElement("div",{style:{marginTop:14}},
-          u.default.createElement("div",{style:{fontSize:12,color:s.inkSoft,marginBottom:8,lineHeight:1.6}},"新增的工地會馬上出現在師傅打卡頁的選單裡。工地完工後按「標記完工」，就不會再出現在打卡選單中（但紀錄仍會保留）。"),
+          u.default.createElement("div",{style:{fontSize:12,color:s.inkSoft,marginBottom:8,lineHeight:1.6}},"新增的工地會馬上出現在新增出勤紀錄的工地選單裡。工地完工後按「標記完工」，就不會再出現在選單中（但紀錄仍會保留）。"),
           u.default.createElement("div",{style:{display:"flex",gap:8,marginBottom:14,flexWrap:"wrap"}},
             u.default.createElement("input",{value:newSiteName,onChange:e=>setNewSiteName(e.target.value),placeholder:"工地名稱，例：忠孝東路 陳宅",style:{...el,marginBottom:0,flex:"1 1 160px"}}),
             u.default.createElement("input",{value:newSiteAddress,onChange:e=>setNewSiteAddress(e.target.value),placeholder:"地址（選填）",style:{...el,marginBottom:0,flex:"1 1 140px"}}),
@@ -3655,18 +3650,18 @@ function HbAttendanceHub({onBack,notify,projects}){
         u.default.createElement("div",{onClick:()=>setShowManage(!showManage),style:{display:"flex",justifyContent:"space-between",alignItems:"center",cursor:"pointer"}},
           u.default.createElement("div",{style:{display:"flex",alignItems:"center",gap:8}},
             u.default.createElement(E,{name:"users",size:16,color:s.ocean}),
-            u.default.createElement("div",{style:{fontSize:14,fontWeight:600,color:s.oceanDark}},"師傅名單與打卡連結")
+            u.default.createElement("div",{style:{fontSize:14,fontWeight:600,color:s.oceanDark}},"師傅名單管理")
           ),
           u.default.createElement(E,{name:showManage?"chevron-up":"chevron-down",size:18,color:s.inkSoft})
         ),
         showManage&&u.default.createElement("div",{style:{marginTop:14}},
-          u.default.createElement("div",{style:{fontSize:12,color:s.inkSoft,marginBottom:8,lineHeight:1.6}},"在這裡新增師傅姓名後，師傅就能在打卡頁面直接點自己的名字，不需要自己輸入文字。"),
+          u.default.createElement("div",{style:{fontSize:12,color:s.inkSoft,marginBottom:8,lineHeight:1.6}},"在這裡新增師傅姓名後，新增出勤紀錄時就能直接從清單挑選，不用每次自己輸入文字。"),
           u.default.createElement("div",{style:{display:"flex",gap:8,marginBottom:14}},
             u.default.createElement("input",{value:newWorkerName,onChange:e=>setNewWorkerName(e.target.value),onKeyDown:e=>e.key==="Enter"&&addWorker(),placeholder:"新增師傅姓名，例：阿明師傅",style:{...el,marginBottom:0,flex:1}}),
             u.default.createElement("button",{onClick:addWorker,style:{...Dl,padding:"0 16px",fontSize:14}},"新增")
           ),
           masterWorkers.length===0?u.default.createElement("div",{style:{fontSize:12.5,color:s.inkSoft,textAlign:"center",padding:"8px 0"}},"尚未新增任何師傅"):
-          u.default.createElement("div",{style:{display:"flex",flexDirection:"column",gap:8,marginBottom:16}},
+          u.default.createElement("div",{style:{display:"flex",flexDirection:"column",gap:8}},
             masterWorkers.map(w=>u.default.createElement("div",{key:w.id,style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 10px",background:s.paper,borderRadius:8,opacity:w.active?1:.45}},
               u.default.createElement("div",{style:{fontSize:13.5,fontWeight:500}},w.name),
               u.default.createElement("div",{style:{display:"flex",gap:6}},
@@ -3674,13 +3669,6 @@ function HbAttendanceHub({onBack,notify,projects}){
                 u.default.createElement("button",{onClick:()=>deleteWorker(w.id),style:{...at,color:s.danger}},u.default.createElement(E,{name:"trash",size:14}))
               )
             ))
-          ),
-          u.default.createElement("div",{style:{borderTop:`1px solid ${s.line}`,paddingTop:14}},
-            u.default.createElement("div",{style:{fontSize:12,color:s.inkSoft,marginBottom:8,lineHeight:1.6}},"把這個連結傳給師傅，請他們用手機打開後加入主畫面，之後點一下就能打卡。"),
-            u.default.createElement("div",{style:{display:"flex",gap:8}},
-              u.default.createElement("input",{readOnly:!0,value:checkinUrl,onClick:e=>e.target.select(),style:{...el,marginBottom:0,flex:1,fontSize:12.5,color:s.inkSoft}}),
-              u.default.createElement("button",{onClick:copyCheckinUrl,style:{...(copied?ll:Dl),padding:"0 16px",fontSize:13,whiteSpace:"nowrap"}},copied?"已複製":"複製連結")
-            )
           )
         )
       ),
@@ -3703,7 +3691,7 @@ function HbAttendanceHub({onBack,notify,projects}){
         filtered.map(r=>u.default.createElement("div",{key:r.id,style:{background:s.card,border:`1px solid ${s.line}`,borderRadius:10,padding:"12px 14px",display:"flex",justifyContent:"space-between",alignItems:"center",gap:10}},
           u.default.createElement("div",null,
             u.default.createElement("div",{style:{fontSize:14.5,fontWeight:400,color:s.oceanDark}},r.worker_name),
-            u.default.createElement("div",{style:{fontSize:12,color:s.inkSoft,marginTop:2}},r.work_date,r.site_location?"　·　"+r.site_location:"",r.note?"　·　"+r.note:"")
+            u.default.createElement("div",{style:{fontSize:12,color:s.inkSoft,marginTop:2}},r.work_date,r.site_location?"　·　"+r.site_location:"",r.hours?"　·　"+r.hours+"小時":"",r.note?"　·　"+r.note:"")
           ),
           u.default.createElement("div",{style:{display:"flex",alignItems:"center",gap:10}},
             u.default.createElement("div",{className:"mono",style:{fontSize:16,color:s.ocean,fontWeight:400}},r.days,"天"),
@@ -3726,6 +3714,7 @@ function HbAttendanceForm({onCancel,onCreate,projects,workerOptions,lastRateFor}
   let[siteLocation,setSiteLocation]=(0,u.useState)("");
   let[dateStr,setDateStr]=(0,u.useState)(()=>new Date().toISOString().slice(0,10));
   let[days,setDays]=(0,u.useState)(1);
+  let[hours,setHours]=(0,u.useState)("");
   let[dailyRate,setDailyRate]=(0,u.useState)("");
   let[note,setNote]=(0,u.useState)("");
   let onWorkerPick=val=>{
@@ -3764,13 +3753,15 @@ function HbAttendanceForm({onCancel,onCreate,projects,workerOptions,lastRateFor}
         presets.map(p=>u.default.createElement("button",{key:p,type:"button",onClick:()=>setDays(p),style:{...(days===p?Dl:ll),padding:"8px 14px",fontSize:13.5}},p)),
         u.default.createElement("input",{type:"number",step:"0.5",min:"0",value:presets.includes(days)?"":days,onChange:e=>setDays(parseFloat(e.target.value)||0),placeholder:"其他",style:{...el,marginBottom:0,width:80}})
       ),
+      u.default.createElement("label",{style:{fontSize:12.5,color:s.inkSoft}},"工時（小時，選填）"),
+      u.default.createElement("input",{type:"number",step:"0.5",min:"0",value:hours,onChange:e=>setHours(e.target.value),placeholder:"例：8",style:el}),
       u.default.createElement("label",{style:{fontSize:12.5,color:s.inkSoft}},"日薪（選填，用於計算工資）"),
       u.default.createElement("input",{type:"number",value:dailyRate,onChange:e=>setDailyRate(e.target.value),placeholder:"例：2500",style:el}),
       u.default.createElement("label",{style:{fontSize:12.5,color:s.inkSoft}},"備註（選填）"),
       u.default.createElement("input",{value:note,onChange:e=>setNote(e.target.value),placeholder:"例：加班半天、材料搬運",style:el}),
       u.default.createElement("div",{style:{display:"flex",gap:10,marginTop:6}},
         u.default.createElement("button",{onClick:onCancel,style:{...ll,flex:1}},"取消"),
-        u.default.createElement("button",{disabled:!valid,onClick:()=>onCreate({workerName:workerName.trim(),siteLocation:siteLocation.trim(),dateStr,days,dailyRate:dailyRate?parseFloat(dailyRate):null,note:note.trim()}),style:{...Dl,flex:1,opacity:valid?1:.5}},"建立")
+        u.default.createElement("button",{disabled:!valid,onClick:()=>onCreate({workerName:workerName.trim(),siteLocation:siteLocation.trim(),dateStr,days,hours:hours?parseFloat(hours):null,dailyRate:dailyRate?parseFloat(dailyRate):null,note:note.trim()}),style:{...Dl,flex:1,opacity:valid?1:.5}},"建立")
       )
     )
   )
@@ -4328,132 +4319,8 @@ function Gy(){let[l,t]=(0,u.useState)(!0),[e,n]=(0,u.useState)(!1),[a,i]=(0,u.us
         }
         .fade-in { animation: fadeIn 0.2s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(4px);} to { opacity:1; transform:translateY(0);} }
-      `),u.default.createElement("div",{style:{height:"100%",overflowY:o==="landing"?"hidden":"auto",WebkitOverflowScrolling:"touch",paddingBottom:o==="landing"?0:92}},l?u.default.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh"}},u.default.createElement(E,{name:"loader",className:"animate-spin",size:28,color:s.ocean})):o==="landing"?u.default.createElement(HbLanding,{onCase:()=>f("home"),onCompany:()=>f("companyHub"),onManageStaff:()=>f("staff"),onQuickQuote:()=>HB_openQuoteSystem(),onProposal:()=>HB_openProposalSystem(),onMarketingPhotos:()=>f("marketingPhotos"),onBookings:()=>f("bookings"),onOpenBooking:()=>HB_openBookingSystem(),onDrawings:()=>f("drawings"),onLogout:()=>{try{localStorage.removeItem("sitelog_admin_unlocked"),localStorage.removeItem("sitelog_admin_username")}catch{}window.location.reload()}}):o==="companyHub"?u.default.createElement(HbCompanyHub,{onBack:()=>f("landing"),onContracts:()=>f("contracts"),onQuotes:()=>f("estimateHub"),onReceipts:()=>f("receipts"),onVendorReceipts:()=>f("vendorReceipts"),onQuickQuote:()=>HB_openQuoteSystem(),onGoHome:()=>f("home"),onVendorQuotes:()=>f("vendorQuotes"),onProposal:()=>HB_openProposalSystem(),onMarketingPhotos:()=>f("marketingPhotos"),onBookings:()=>f("bookings"),onOpenBooking:()=>HB_openBookingSystem(),onDrawings:()=>f("drawings"),onAttendance:()=>f("attendance")}):o==="attendance"?u.default.createElement(HbAttendanceHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="marketingPhotos"?u.default.createElement(HbMarketingPhotoHub,{onBack:()=>f("landing"),notify:g}):o==="bookings"?u.default.createElement(HbBookingsHub,{onBack:()=>f("landing"),notify:g}):o==="vendorQuotes"?u.default.createElement(HbVendorQuoteHub,{onBack:()=>f("companyHub"),notify:g}):o==="drawings"?u.default.createElement(HbDrawingHub,{onBack:()=>f("companyHub"),notify:g}):o==="receipts"?u.default.createElement(HbReceiptsHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="vendorReceipts"?u.default.createElement(HbVendorReceiptsHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="quoteImportPick"?u.default.createElement(Iy,{projects:a,onOpen:hbImportQuote,onNew:()=>h(!0),onRefresh:()=>{D(!0),y()},refreshing:e,storageUsedBytes:z,onManageStaff:()=>f("staff"),pickerMode:!0,onBack:()=>f("companyHub")}):o==="estimateHub"?u.default.createElement(HerfulsinsEstimateHub,{project:null,notify:g,onClose:()=>f("companyHub")}):o==="home"?u.default.createElement(Iy,{projects:a,onOpen:T=>{r(T),hbSetOpenTab("photos"),f("detail")},onNew:()=>h(!0),onRefresh:()=>{D(!0),y()},refreshing:e,storageUsedBytes:z,onManageStaff:()=>f("staff"),onBack:()=>f("landing"),onGoCompany:()=>f("companyHub")}):o==="staff"?u.default.createElement(Ky,{onBack:()=>f("landing")}):o==="contracts"?u.default.createElement(HerfulsinsContractsHub,{onBack:()=>f("landing"),notify:g}):o==="digitalCard"?u.default.createElement(HbDigitalCard,{onBack:()=>f("landing"),notify:g}):u.default.createElement(lh,{project:j,onBack:()=>f("home"),onUpdateMeta:S,onDelete:M,notify:g,initialTab:hbOpenTab})),d&&u.default.createElement(Py,{onCancel:()=>h(!1),onCreate:b}),m&&u.default.createElement("div",{className:"fade-in",style:{position:"fixed",bottom:20,left:"50%",transform:"translateX(-50%)",background:s.ink,color:s.card,padding:"10px 18px",borderRadius:8,fontSize:13,boxShadow:"0 4px 14px rgba(0,0,0,0.25)",zIndex:60}},m),u.default.createElement(HbBottomNav,{active:o,onNavigate:T=>f(T)}))}/* ---------- 師傅打卡頁（免登入，大按鈕，給師傅手機使用） ---------- */
-function HbCheckinPage(){
-  let[step,setStep]=(0,u.useState)(1);
-  let[projectsCk,setProjectsCk]=(0,u.useState)([]);
-  let[workersCk,setWorkersCk]=(0,u.useState)([]);
-  let[loading,setLoading]=(0,u.useState)(!0);
-  let[siteName,setSiteName]=(0,u.useState)("");
-  let[workerName,setWorkerName]=(0,u.useState)("");
-  let[dayType,setDayType]=(0,u.useState)(null);
-  let[submitting,setSubmitting]=(0,u.useState)(!1);
-  let[err,setErr]=(0,u.useState)("");
-  let[done,setDone]=(0,u.useState)(!1);
-
-  (0,u.useEffect)(()=>{
-    (async()=>{
-      let[pr,wr]=await Promise.all([
-        q.from("sitelog_projects").select("id,name,address,status").order("created_at",{ascending:!1}),
-        q.from("sitelog_workers").select("id,name").eq("active",!0).order("name",{ascending:!0})
-      ]);
-      let all=pr.data||[];
-      let activeSites=all.filter(p=>p.status==="工程進行中");
-      setProjectsCk(activeSites.length>0?activeSites:all);
-      setWorkersCk(wr.data||[]);
-      setLoading(!1);
-    })();
-  },[]);
-
-  let pickSite=p=>{setSiteName(p.name);setStep(2)};
-  let pickWorker=nm=>{setWorkerName(nm);setStep(3)};
-  let pickDay=t=>{setDayType(t);setStep(4)};
-
-  let confirmCheckin=async()=>{
-    setSubmitting(!0);setErr("");
-    let today=new Date().toISOString().slice(0,10);
-    let days=dayType==="half"?0.5:1;
-    try{
-      let{data:existing}=await q.from("sitelog_attendance").select("id").eq("worker_name",workerName).eq("work_date",today).maybeSingle();
-      if(existing){
-        let{error}=await q.from("sitelog_attendance").update({site_location:siteName,days}).eq("id",existing.id);
-        if(error)throw error;
-      }else{
-        let{error}=await q.from("sitelog_attendance").insert({worker_name:workerName,site_location:siteName,work_date:today,days});
-        if(error)throw error;
-      }
-      setDone(!0);
-    }catch(e){
-      setErr("打卡失敗，請再試一次，或請公司協助："+(e.message||e));
-    }finally{
-      setSubmitting(!1);
-    }
-  };
-
-  let reset=()=>{setStep(1);setSiteName("");setWorkerName("");setDayType(null);setDone(!1);setErr("")};
-
-  (0,u.useEffect)(()=>{
-    if(done){let t=setTimeout(reset,5e3);return()=>clearTimeout(t)}
-  },[done]);
-
-  let wrapStyle={fontFamily:"'Noto Sans TC', sans-serif",background:s.paper,minHeight:"100vh"};
-
-  if(loading)return u.default.createElement("div",{style:{...wrapStyle,display:"flex",alignItems:"center",justifyContent:"center"}},u.default.createElement(E,{name:"loader",className:"animate-spin",size:36,color:s.ocean}));
-
-  if(done)return u.default.createElement("div",{style:{...wrapStyle,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24,textAlign:"center"}},
-    u.default.createElement("div",{style:{width:100,height:100,borderRadius:"50%",background:s.tree,display:"flex",alignItems:"center",justifyContent:"center",marginBottom:22}},
-      u.default.createElement(E,{name:"check",size:58,color:"#fff"})
-    ),
-    u.default.createElement("div",{style:{fontSize:30,fontWeight:700,color:s.oceanDark,marginBottom:10}},"打卡成功！"),
-    u.default.createElement("div",{style:{fontSize:19,color:s.inkSoft,lineHeight:1.9}},workerName,u.default.createElement("br",null),siteName,u.default.createElement("br",null),dayType==="half"?"半天":"整天"),
-    u.default.createElement("button",{onClick:reset,style:{...Dl,marginTop:36,fontSize:19,padding:"18px 36px",borderRadius:16}},"再打一筆")
-  );
-
-  return u.default.createElement("div",{style:{...wrapStyle,padding:"26px 18px 60px"}},
-    u.default.createElement("div",{style:{textAlign:"center",marginBottom:24}},
-      u.default.createElement("div",{className:"mono",style:{color:s.ocean,fontSize:12,letterSpacing:2,marginBottom:6}},"HERFULSINS INTERIOR DESIGN"),
-      u.default.createElement("div",{style:{fontSize:26,fontWeight:700,color:s.ink}},"師傅打卡"),
-      u.default.createElement("div",{style:{fontSize:15,color:s.inkSoft,marginTop:4}},new Date().toLocaleDateString("zh-TW",{month:"long",day:"numeric",weekday:"long"}))
-    ),
-    u.default.createElement("div",{style:{display:"flex",justifyContent:"center",gap:8,marginBottom:28}},
-      [1,2,3].map(n=>u.default.createElement("div",{key:n,style:{width:step===n?30:11,height:11,borderRadius:6,background:step>=n?s.ocean:s.line,transition:"all .2s"}}))
-    ),
-    err&&u.default.createElement("div",{style:{background:"#FCE8E8",color:s.danger,padding:"13px 16px",borderRadius:10,marginBottom:18,fontSize:15,textAlign:"center"}},err),
-
-    step===1&&u.default.createElement("div",null,
-      u.default.createElement("div",{style:{fontSize:21,fontWeight:700,textAlign:"center",marginBottom:20}},"① 今天在哪個工地？"),
-      projectsCk.length===0?u.default.createElement("div",{style:{textAlign:"center",color:s.inkSoft,fontSize:16}},"目前沒有工地資料，請聯絡公司"):
-      u.default.createElement("div",{style:{display:"flex",flexDirection:"column",gap:14}},
-        projectsCk.map(p=>u.default.createElement("button",{key:p.id,onClick:()=>pickSite(p),style:{background:s.card,border:`2px solid ${s.line}`,borderRadius:16,padding:"22px 20px",fontSize:20,fontWeight:700,color:s.oceanDark,textAlign:"left",cursor:"pointer"}},
-          p.name,
-          p.address&&u.default.createElement("div",{style:{fontSize:14,fontWeight:400,color:s.inkSoft,marginTop:5}},p.address)
-        ))
-      )
-    ),
-
-    step===2&&u.default.createElement("div",null,
-      u.default.createElement("button",{onClick:()=>setStep(1),style:{background:"none",border:"none",color:s.inkSoft,fontSize:16,display:"flex",alignItems:"center",gap:5,marginBottom:18,cursor:"pointer",padding:0}},u.default.createElement(E,{name:"arrow-left",size:17}),"上一步"),
-      u.default.createElement("div",{style:{fontSize:21,fontWeight:700,textAlign:"center",marginBottom:20}},"② 您是哪一位師傅？"),
-      workersCk.length===0?u.default.createElement("div",{style:{textAlign:"center",color:s.inkSoft,fontSize:16}},"目前沒有師傅名單，請聯絡公司新增"):
-      u.default.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}},
-        workersCk.map(w=>u.default.createElement("button",{key:w.id,onClick:()=>pickWorker(w.name),style:{background:s.card,border:`2px solid ${s.line}`,borderRadius:16,padding:"26px 10px",fontSize:19,fontWeight:700,color:s.oceanDark,cursor:"pointer"}},w.name))
-      )
-    ),
-
-    step===3&&u.default.createElement("div",null,
-      u.default.createElement("button",{onClick:()=>setStep(2),style:{background:"none",border:"none",color:s.inkSoft,fontSize:16,display:"flex",alignItems:"center",gap:5,marginBottom:18,cursor:"pointer",padding:0}},u.default.createElement(E,{name:"arrow-left",size:17}),"上一步"),
-      u.default.createElement("div",{style:{fontSize:21,fontWeight:700,textAlign:"center",marginBottom:6}},"③ 今天做多久？"),
-      u.default.createElement("div",{style:{fontSize:16,color:s.inkSoft,textAlign:"center",marginBottom:24}},workerName,"　·　",siteName),
-      u.default.createElement("div",{style:{display:"flex",flexDirection:"column",gap:16}},
-        u.default.createElement("button",{onClick:()=>pickDay("full"),style:{background:s.ocean,color:"#fff",border:"none",borderRadius:18,padding:"32px 0",fontSize:27,fontWeight:700,cursor:"pointer"}},"整天"),
-        u.default.createElement("button",{onClick:()=>pickDay("half"),style:{background:s.card,border:`2px solid ${s.ocean}`,color:s.oceanDark,borderRadius:18,padding:"32px 0",fontSize:27,fontWeight:700,cursor:"pointer"}},"半天")
-      )
-    ),
-
-    step===4&&u.default.createElement("div",null,
-      u.default.createElement("button",{onClick:()=>setStep(3),style:{background:"none",border:"none",color:s.inkSoft,fontSize:16,display:"flex",alignItems:"center",gap:5,marginBottom:18,cursor:"pointer",padding:0}},u.default.createElement(E,{name:"arrow-left",size:17}),"上一步"),
-      u.default.createElement("div",{style:{fontSize:21,fontWeight:700,textAlign:"center",marginBottom:20}},"④ 確認打卡"),
-      u.default.createElement("div",{style:{background:s.card,border:`1px solid ${s.line}`,borderRadius:16,padding:"26px 20px",marginBottom:26,textAlign:"center"}},
-        u.default.createElement("div",{style:{fontSize:25,fontWeight:700,color:s.oceanDark}},workerName),
-        u.default.createElement("div",{style:{fontSize:17,color:s.inkSoft,marginTop:9}},siteName),
-        u.default.createElement("div",{style:{fontSize:23,fontWeight:700,color:s.ocean,marginTop:14}},dayType==="half"?"半天（0.5天）":"整天（1天）")
-      ),
-      u.default.createElement("button",{onClick:confirmCheckin,disabled:submitting,style:{...Dl,width:"100%",fontSize:23,padding:"22px 0",borderRadius:16,opacity:submitting?.6:1}},submitting?"送出中…":"確認打卡")
-    )
-  )
-}
-
-function Ly(){let l=new URLSearchParams(window.location.search);return l.has("checkin")?u.default.createElement(HbCheckinPage,null):l.has("owner")||l.has("share")?u.default.createElement(Wy,null):u.default.createElement(SSOEntry,null)}function Zy(){let[l,t]=(0,u.useState)(()=>{try{return localStorage.getItem("sitelog_admin_unlocked")==="true"}catch{return!1}});return l?u.default.createElement(Gy,null):u.default.createElement(Vy,{onSuccess:e=>{try{localStorage.setItem("sitelog_admin_unlocked","true"),localStorage.setItem("sitelog_admin_username",e)}catch{}t(!0)}})}function Vy({onSuccess:l}){let[t,e]=(0,u.useState)(""),[n,a]=(0,u.useState)(""),[i,o]=(0,u.useState)(""),[f,c]=(0,u.useState)(!1),r=async()=>{if(!(!t.trim()||!n.trim())){c(!0),o("");try{let{data:d,error:h}=await q.from("sitelog_staff").select("username, password").eq("username",t.trim()).maybeSingle();if(h){o("\u7121\u6CD5\u9A57\u8B49\u5E33\u865F\uFF0C\u8ACB\u78BA\u8A8D\u7DB2\u8DEF\u9023\u7DDA\u5F8C\u518D\u8A66\u4E00\u6B21");return}d&&n===d.password?l(d.username):o("\u5E33\u865F\u6216\u5BC6\u78BC\u4E0D\u6B63\u78BA")}catch(d){o("\u767C\u751F\u932F\u8AA4\uFF1A"+(d.message||d))}finally{c(!1)}}};return u.default.createElement("div",{style:{background:s.paper,minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",padding:20,fontFamily:"'Noto Sans TC', sans-serif"}},u.default.createElement("style",null,"@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap');"),u.default.createElement("div",{style:{background:s.card,borderRadius:12,padding:28,width:"100%",maxWidth:340,boxShadow:"0 4px 20px rgba(185,136,104,0.15)"}},u.default.createElement("div",{className:"mono",style:{color:s.ocean,fontSize:11,letterSpacing:2,fontWeight:400,marginBottom:6}},"HERFULSINS INTERIOR DESIGN"),u.default.createElement("h1",{style:{fontSize:20,fontWeight:300,color:s.oceanDark,margin:"0 0 18px"}},"\u8D6B\u67CF\u7A7A\u9593\u8A2D\u8A08 \xB7 \u5DE5\u5730\u7D00\u9304\u672C"),u.default.createElement("label",{style:{fontSize:12.5,color:s.inkSoft}},"\u5E33\u865F"),u.default.createElement("input",{value:t,onChange:d=>e(d.target.value),onKeyDown:d=>d.key==="Enter"&&r(),style:el,autoFocus:!0}),u.default.createElement("label",{style:{fontSize:12.5,color:s.inkSoft}},"\u5BC6\u78BC"),u.default.createElement("input",{type:"password",value:n,onChange:d=>a(d.target.value),onKeyDown:d=>d.key==="Enter"&&r(),style:el}),i&&u.default.createElement("p",{style:{color:s.danger,fontSize:12.5,margin:"0 0 10px"}},i),u.default.createElement("button",{onClick:r,disabled:!t.trim()||!n.trim()||f,style:{...Dl,width:"100%",opacity:t.trim()&&n.trim()&&!f?1:.5,display:"flex",alignItems:"center",justifyContent:"center",gap:6}},f?u.default.createElement(E,{name:"loader",size:15,className:"animate-spin"}):null," \u767B\u5165")))}
+      `),u.default.createElement("div",{style:{height:"100%",overflowY:o==="landing"?"hidden":"auto",WebkitOverflowScrolling:"touch",paddingBottom:o==="landing"?0:92}},l?u.default.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh"}},u.default.createElement(E,{name:"loader",className:"animate-spin",size:28,color:s.ocean})):o==="landing"?u.default.createElement(HbLanding,{onCase:()=>f("home"),onCompany:()=>f("companyHub"),onManageStaff:()=>f("staff"),onQuickQuote:()=>HB_openQuoteSystem(),onProposal:()=>HB_openProposalSystem(),onMarketingPhotos:()=>f("marketingPhotos"),onBookings:()=>f("bookings"),onOpenBooking:()=>HB_openBookingSystem(),onDrawings:()=>f("drawings"),onLogout:()=>{try{localStorage.removeItem("sitelog_admin_unlocked"),localStorage.removeItem("sitelog_admin_username")}catch{}window.location.reload()}}):o==="companyHub"?u.default.createElement(HbCompanyHub,{onBack:()=>f("landing"),onContracts:()=>f("contracts"),onQuotes:()=>f("estimateHub"),onReceipts:()=>f("receipts"),onVendorReceipts:()=>f("vendorReceipts"),onQuickQuote:()=>HB_openQuoteSystem(),onGoHome:()=>f("home"),onVendorQuotes:()=>f("vendorQuotes"),onProposal:()=>HB_openProposalSystem(),onMarketingPhotos:()=>f("marketingPhotos"),onBookings:()=>f("bookings"),onOpenBooking:()=>HB_openBookingSystem(),onDrawings:()=>f("drawings"),onAttendance:()=>f("attendance")}):o==="attendance"?u.default.createElement(HbAttendanceHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="marketingPhotos"?u.default.createElement(HbMarketingPhotoHub,{onBack:()=>f("landing"),notify:g}):o==="bookings"?u.default.createElement(HbBookingsHub,{onBack:()=>f("landing"),notify:g}):o==="vendorQuotes"?u.default.createElement(HbVendorQuoteHub,{onBack:()=>f("companyHub"),notify:g}):o==="drawings"?u.default.createElement(HbDrawingHub,{onBack:()=>f("companyHub"),notify:g}):o==="receipts"?u.default.createElement(HbReceiptsHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="vendorReceipts"?u.default.createElement(HbVendorReceiptsHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="quoteImportPick"?u.default.createElement(Iy,{projects:a,onOpen:hbImportQuote,onNew:()=>h(!0),onRefresh:()=>{D(!0),y()},refreshing:e,storageUsedBytes:z,onManageStaff:()=>f("staff"),pickerMode:!0,onBack:()=>f("companyHub")}):o==="estimateHub"?u.default.createElement(HerfulsinsEstimateHub,{project:null,notify:g,onClose:()=>f("companyHub")}):o==="home"?u.default.createElement(Iy,{projects:a,onOpen:T=>{r(T),hbSetOpenTab("photos"),f("detail")},onNew:()=>h(!0),onRefresh:()=>{D(!0),y()},refreshing:e,storageUsedBytes:z,onManageStaff:()=>f("staff"),onBack:()=>f("landing"),onGoCompany:()=>f("companyHub")}):o==="staff"?u.default.createElement(Ky,{onBack:()=>f("landing")}):o==="contracts"?u.default.createElement(HerfulsinsContractsHub,{onBack:()=>f("landing"),notify:g}):o==="digitalCard"?u.default.createElement(HbDigitalCard,{onBack:()=>f("landing"),notify:g}):u.default.createElement(lh,{project:j,onBack:()=>f("home"),onUpdateMeta:S,onDelete:M,notify:g,initialTab:hbOpenTab})),d&&u.default.createElement(Py,{onCancel:()=>h(!1),onCreate:b}),m&&u.default.createElement("div",{className:"fade-in",style:{position:"fixed",bottom:20,left:"50%",transform:"translateX(-50%)",background:s.ink,color:s.card,padding:"10px 18px",borderRadius:8,fontSize:13,boxShadow:"0 4px 14px rgba(0,0,0,0.25)",zIndex:60}},m),u.default.createElement(HbBottomNav,{active:o,onNavigate:T=>f(T)}))}
+function Ly(){let l=new URLSearchParams(window.location.search);return l.has("owner")||l.has("share")?u.default.createElement(Wy,null):u.default.createElement(SSOEntry,null)}function Zy(){let[l,t]=(0,u.useState)(()=>{try{return localStorage.getItem("sitelog_admin_unlocked")==="true"}catch{return!1}});return l?u.default.createElement(Gy,null):u.default.createElement(Vy,{onSuccess:e=>{try{localStorage.setItem("sitelog_admin_unlocked","true"),localStorage.setItem("sitelog_admin_username",e)}catch{}t(!0)}})}function Vy({onSuccess:l}){let[t,e]=(0,u.useState)(""),[n,a]=(0,u.useState)(""),[i,o]=(0,u.useState)(""),[f,c]=(0,u.useState)(!1),r=async()=>{if(!(!t.trim()||!n.trim())){c(!0),o("");try{let{data:d,error:h}=await q.from("sitelog_staff").select("username, password").eq("username",t.trim()).maybeSingle();if(h){o("\u7121\u6CD5\u9A57\u8B49\u5E33\u865F\uFF0C\u8ACB\u78BA\u8A8D\u7DB2\u8DEF\u9023\u7DDA\u5F8C\u518D\u8A66\u4E00\u6B21");return}d&&n===d.password?l(d.username):o("\u5E33\u865F\u6216\u5BC6\u78BC\u4E0D\u6B63\u78BA")}catch(d){o("\u767C\u751F\u932F\u8AA4\uFF1A"+(d.message||d))}finally{c(!1)}}};return u.default.createElement("div",{style:{background:s.paper,minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",padding:20,fontFamily:"'Noto Sans TC', sans-serif"}},u.default.createElement("style",null,"@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap');"),u.default.createElement("div",{style:{background:s.card,borderRadius:12,padding:28,width:"100%",maxWidth:340,boxShadow:"0 4px 20px rgba(185,136,104,0.15)"}},u.default.createElement("div",{className:"mono",style:{color:s.ocean,fontSize:11,letterSpacing:2,fontWeight:400,marginBottom:6}},"HERFULSINS INTERIOR DESIGN"),u.default.createElement("h1",{style:{fontSize:20,fontWeight:300,color:s.oceanDark,margin:"0 0 18px"}},"\u8D6B\u67CF\u7A7A\u9593\u8A2D\u8A08 \xB7 \u5DE5\u5730\u7D00\u9304\u672C"),u.default.createElement("label",{style:{fontSize:12.5,color:s.inkSoft}},"\u5E33\u865F"),u.default.createElement("input",{value:t,onChange:d=>e(d.target.value),onKeyDown:d=>d.key==="Enter"&&r(),style:el,autoFocus:!0}),u.default.createElement("label",{style:{fontSize:12.5,color:s.inkSoft}},"\u5BC6\u78BC"),u.default.createElement("input",{type:"password",value:n,onChange:d=>a(d.target.value),onKeyDown:d=>d.key==="Enter"&&r(),style:el}),i&&u.default.createElement("p",{style:{color:s.danger,fontSize:12.5,margin:"0 0 10px"}},i),u.default.createElement("button",{onClick:r,disabled:!t.trim()||!n.trim()||f,style:{...Dl,width:"100%",opacity:t.trim()&&n.trim()&&!f?1:.5,display:"flex",alignItems:"center",justifyContent:"center",gap:6}},f?u.default.createElement(E,{name:"loader",size:15,className:"animate-spin"}):null," \u767B\u5165")))}
 function SSOEntry(){
   let[staffOn,setStaffOn]=(0,u.useState)(()=>{try{return localStorage.getItem("sitelog_admin_unlocked")==="true"}catch{return!1}}),
       [ownerPid,setOwnerPid]=(0,u.useState)(()=>{try{return localStorage.getItem("sitelog_owner_project_id")}catch{return null}});
