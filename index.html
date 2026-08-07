@@ -3513,6 +3513,10 @@ function HbAttendanceHub({onBack,notify,projects}){
   let[newWorkerName,setNewWorkerName]=(0,u.useState)(""); 
   let[showManage,setShowManage]=(0,u.useState)(false);
   let[copied,setCopied]=(0,u.useState)(false);
+  let[siteList,setSiteList]=(0,u.useState)([]);
+  let[newSiteName,setNewSiteName]=(0,u.useState)("");
+  let[newSiteAddress,setNewSiteAddress]=(0,u.useState)("");
+  let[showSiteManage,setShowSiteManage]=(0,u.useState)(false);
   let load=async()=>{
     setLoading(true);
     let{data,error}=await q.from("sitelog_attendance").select("*").order("work_date",{ascending:!1});
@@ -3523,7 +3527,27 @@ function HbAttendanceHub({onBack,notify,projects}){
     let{data,error}=await q.from("sitelog_workers").select("*").order("created_at",{ascending:!0});
     if(!error)setMasterWorkers(data||[]);
   };
-  (0,u.useEffect)(()=>{load();loadWorkers()},[]);
+  let loadSites=async()=>{
+    let{data,error}=await q.from("sitelog_projects").select("id,name,address,status").order("created_at",{ascending:!1});
+    if(!error)setSiteList(data||[]);
+  };
+  (0,u.useEffect)(()=>{load();loadWorkers();loadSites()},[]);
+  let addSite=async()=>{
+    let name=newSiteName.trim();
+    if(!name)return;
+    let{error}=await q.from("sitelog_projects").insert({name,address:newSiteAddress.trim()||null,status:"工程進行中"});
+    if(error){notify("新增工地失敗："+error.message);return}
+    setNewSiteName("");setNewSiteAddress("");notify("已新增工地「"+name+"」");loadSites()
+  };
+  let markSiteDone=async id=>{
+    let{error}=await q.from("sitelog_projects").update({status:"工程已完工"}).eq("id",id);
+    if(!error)loadSites()
+  };
+  let reactivateSite=async id=>{
+    let{error}=await q.from("sitelog_projects").update({status:"工程進行中"}).eq("id",id);
+    if(!error)loadSites()
+  };
+  let activeSites=siteList.filter(p=>p.status==="工程進行中");
   let addWorker=async()=>{
     let name=newWorkerName.trim();
     if(!name)return;
@@ -3591,6 +3615,42 @@ function HbAttendanceHub({onBack,notify,projects}){
       u.default.createElement("div",{style:{marginBottom:14}},
         u.default.createElement("input",{type:"month",value:filterMonth,onChange:e=>setFilterMonth(e.target.value),style:{...el,marginBottom:0}})
       ),
+      u.default.createElement("div",{style:{background:s.card,border:`1px solid ${s.line}`,borderRadius:10,padding:"14px 16px",marginBottom:12}},
+        u.default.createElement("div",{onClick:()=>setShowSiteManage(!showSiteManage),style:{display:"flex",justifyContent:"space-between",alignItems:"center",cursor:"pointer"}},
+          u.default.createElement("div",{style:{display:"flex",alignItems:"center",gap:8}},
+            u.default.createElement(E,{name:"map-pin",size:16,color:s.ocean}),
+            u.default.createElement("div",{style:{fontSize:14,fontWeight:600,color:s.oceanDark}},"工地管理")
+          ),
+          u.default.createElement(E,{name:showSiteManage?"chevron-up":"chevron-down",size:18,color:s.inkSoft})
+        ),
+        showSiteManage&&u.default.createElement("div",{style:{marginTop:14}},
+          u.default.createElement("div",{style:{fontSize:12,color:s.inkSoft,marginBottom:8,lineHeight:1.6}},"新增的工地會馬上出現在師傅打卡頁的選單裡。工地完工後按「標記完工」，就不會再出現在打卡選單中（但紀錄仍會保留）。"),
+          u.default.createElement("div",{style:{display:"flex",gap:8,marginBottom:14,flexWrap:"wrap"}},
+            u.default.createElement("input",{value:newSiteName,onChange:e=>setNewSiteName(e.target.value),placeholder:"工地名稱，例：忠孝東路 陳宅",style:{...el,marginBottom:0,flex:"1 1 160px"}}),
+            u.default.createElement("input",{value:newSiteAddress,onChange:e=>setNewSiteAddress(e.target.value),placeholder:"地址（選填）",style:{...el,marginBottom:0,flex:"1 1 140px"}}),
+            u.default.createElement("button",{onClick:addSite,style:{...Dl,padding:"0 16px",fontSize:14}},"新增")
+          ),
+          activeSites.length===0?u.default.createElement("div",{style:{fontSize:12.5,color:s.inkSoft,textAlign:"center",padding:"8px 0"}},"目前沒有進行中的工地"):
+          u.default.createElement("div",{style:{display:"flex",flexDirection:"column",gap:8}},
+            activeSites.map(p=>u.default.createElement("div",{key:p.id,style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 10px",background:s.paper,borderRadius:8}},
+              u.default.createElement("div",null,
+                u.default.createElement("div",{style:{fontSize:13.5,fontWeight:500}},p.name),
+                p.address&&u.default.createElement("div",{style:{fontSize:11.5,color:s.inkSoft,marginTop:2}},p.address)
+              ),
+              u.default.createElement("button",{onClick:()=>markSiteDone(p.id),style:{...ll,padding:"5px 10px",fontSize:11.5}},"標記完工")
+            ))
+          ),
+          siteList.filter(p=>p.status==="工程已完工").length>0&&u.default.createElement("div",{style:{marginTop:14,paddingTop:12,borderTop:`1px solid ${s.line}`}},
+            u.default.createElement("div",{style:{fontSize:11.5,fontWeight:600,color:s.inkSoft,marginBottom:8}},"已完工（不會出現在打卡選單）"),
+            u.default.createElement("div",{style:{display:"flex",flexDirection:"column",gap:8}},
+              siteList.filter(p=>p.status==="工程已完工").map(p=>u.default.createElement("div",{key:p.id,style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 10px",background:s.paper,borderRadius:8,opacity:.55}},
+                u.default.createElement("div",{style:{fontSize:13.5,fontWeight:500}},p.name),
+                u.default.createElement("button",{onClick:()=>reactivateSite(p.id),style:{...ll,padding:"5px 10px",fontSize:11.5}},"重新啟用")
+              ))
+            )
+          )
+        )
+      ),
       u.default.createElement("div",{style:{background:s.card,border:`1px solid ${s.line}`,borderRadius:10,padding:"14px 16px",marginBottom:16}},
         u.default.createElement("div",{onClick:()=>setShowManage(!showManage),style:{display:"flex",justifyContent:"space-between",alignItems:"center",cursor:"pointer"}},
           u.default.createElement("div",{style:{display:"flex",alignItems:"center",gap:8}},
@@ -3652,7 +3712,7 @@ function HbAttendanceHub({onBack,notify,projects}){
         ))
       )
     ),
-    creating&&u.default.createElement(HbAttendanceForm,{onCancel:()=>setCreating(!1),onCreate:createOne,projects:projects||[],workerOptions,lastRateFor})
+    creating&&u.default.createElement(HbAttendanceForm,{onCancel:()=>setCreating(!1),onCreate:createOne,projects:siteList.length?siteList:(projects||[]),workerOptions,lastRateFor})
   )
 }
 
