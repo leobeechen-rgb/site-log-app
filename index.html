@@ -3546,6 +3546,12 @@ function HbAttendanceHub({onBack,notify,projects}){
     let{error}=await q.from("sitelog_projects").update({status:"工程進行中"}).eq("id",id);
     if(!error)loadSites()
   };
+  let deleteSite=async(id,name)=>{
+    if(!confirm("確定要刪除工地「"+name+"」嗎？\n\n注意：這個工地是整個系統共用的案件資料，刪除後該案件的合約／收據／照片等相關資料也會一併消失，且無法復原。\n\n如果只是這個工地做完了，建議改用「標記完工」即可。"))return;
+    let{error}=await q.from("sitelog_projects").delete().eq("id",id);
+    if(error){notify("刪除失敗："+error.message);return}
+    notify("已刪除工地");loadSites()
+  };
   let activeSites=siteList.filter(p=>p.status==="工程進行中");
   let addWorker=async()=>{
     let name=newWorkerName.trim();
@@ -3632,15 +3638,21 @@ function HbAttendanceHub({onBack,notify,projects}){
                 u.default.createElement("div",{style:{fontSize:13.5,fontWeight:500}},p.name),
                 p.address&&u.default.createElement("div",{style:{fontSize:11.5,color:s.inkSoft,marginTop:2}},p.address)
               ),
-              u.default.createElement("button",{onClick:()=>markSiteDone(p.id),style:{...ll,padding:"5px 10px",fontSize:11.5}},"標記完工")
+              u.default.createElement("div",{style:{display:"flex",gap:6}},
+                u.default.createElement("button",{onClick:()=>markSiteDone(p.id),style:{...ll,padding:"5px 10px",fontSize:11.5}},"標記完工"),
+                u.default.createElement("button",{onClick:()=>deleteSite(p.id,p.name),style:{...at,color:s.danger}},u.default.createElement(E,{name:"trash",size:14}))
+              )
             ))
           ),
           siteList.filter(p=>p.status==="工程已完工").length>0&&u.default.createElement("div",{style:{marginTop:14,paddingTop:12,borderTop:`1px solid ${s.line}`}},
-            u.default.createElement("div",{style:{fontSize:11.5,fontWeight:600,color:s.inkSoft,marginBottom:8}},"已完工（不會出現在打卡選單）"),
+            u.default.createElement("div",{style:{fontSize:11.5,fontWeight:600,color:s.inkSoft,marginBottom:8}},"已完工（不會出現在新增紀錄的工地選單）"),
             u.default.createElement("div",{style:{display:"flex",flexDirection:"column",gap:8}},
               siteList.filter(p=>p.status==="工程已完工").map(p=>u.default.createElement("div",{key:p.id,style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 10px",background:s.paper,borderRadius:8,opacity:.55}},
                 u.default.createElement("div",{style:{fontSize:13.5,fontWeight:500}},p.name),
-                u.default.createElement("button",{onClick:()=>reactivateSite(p.id),style:{...ll,padding:"5px 10px",fontSize:11.5}},"重新啟用")
+                u.default.createElement("div",{style:{display:"flex",gap:6}},
+                  u.default.createElement("button",{onClick:()=>reactivateSite(p.id),style:{...ll,padding:"5px 10px",fontSize:11.5}},"重新啟用"),
+                  u.default.createElement("button",{onClick:()=>deleteSite(p.id,p.name),style:{...at,color:s.danger}},u.default.createElement(E,{name:"trash",size:14}))
+                )
               ))
             )
           )
@@ -3735,9 +3747,9 @@ function HbAttendanceForm({onCancel,onCreate,projects,workerOptions,lastRateFor}
     u.default.createElement("div",{className:"fade-in",style:{background:s.card,borderRadius:10,padding:22,width:"100%",maxWidth:380,maxHeight:"85vh",overflowY:"auto"}},
       u.default.createElement("h3",{style:{margin:"0 0 14px",fontSize:17,fontWeight:400,color:s.oceanDark}},"新增出勤紀錄"),
       u.default.createElement("label",{style:{fontSize:12.5,color:s.inkSoft}},"師傅姓名"),
-      wOpts.length>0&&u.default.createElement("select",{value:workerPick,onChange:e=>onWorkerPick(e.target.value),style:el},
-        u.default.createElement("option",{value:OTHER},"— 其他（自行輸入）—"),
-        wOpts.map(nm=>u.default.createElement("option",{key:nm,value:nm},nm))
+      wOpts.length>0&&u.default.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:8,marginBottom:10}},
+        wOpts.map(nm=>u.default.createElement("button",{key:nm,type:"button",onClick:()=>onWorkerPick(nm),style:{...(workerPick===nm?Dl:ll),padding:"9px 14px",fontSize:13.5}},nm)),
+        u.default.createElement("button",{type:"button",onClick:()=>onWorkerPick(OTHER),style:{...(workerPick===OTHER?Dl:ll),padding:"9px 14px",fontSize:13.5}},"其他")
       ),
       (wOpts.length===0||workerPick===OTHER)&&u.default.createElement("input",{value:workerName,onChange:e=>setWorkerName(e.target.value),placeholder:"例：阿明師傅",style:el}),
       u.default.createElement("label",{style:{fontSize:12.5,color:s.inkSoft}},"工地"),
