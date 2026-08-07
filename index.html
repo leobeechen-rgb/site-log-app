@@ -3504,7 +3504,7 @@ function HbBookingsHub({onBack:l,notify:g}){
 }
 
 /* ---------- 師傅出勤紀錄 UI ---------- */
-function HbAttendanceHub({onBack,notify,projects}){
+function HbAttendanceHub({onBack,notify}){
   let[list,setList]=(0,u.useState)([]);
   let[loading,setLoading]=(0,u.useState)(true);
   let[creating,setCreating]=(0,u.useState)(false);
@@ -3527,32 +3527,32 @@ function HbAttendanceHub({onBack,notify,projects}){
     if(!error)setMasterWorkers(data||[]);
   };
   let loadSites=async()=>{
-    let{data,error}=await q.from("sitelog_projects").select("id,name,address,status").order("created_at",{ascending:!1});
+    let{data,error}=await q.from("sitelog_attendance_sites").select("id,name,address,active").order("created_at",{ascending:!1});
     if(!error)setSiteList(data||[]);
   };
   (0,u.useEffect)(()=>{load();loadWorkers();loadSites()},[]);
   let addSite=async()=>{
     let name=newSiteName.trim();
     if(!name)return;
-    let{error}=await q.from("sitelog_projects").insert({name,address:newSiteAddress.trim()||null,status:"工程進行中"});
-    if(error){notify("新增工地失敗："+error.message);return}
+    let{error}=await q.from("sitelog_attendance_sites").insert({name,address:newSiteAddress.trim()||null,active:!0});
+    if(error){notify("新增工地失敗："+(error.message.includes("duplicate")?"這個工地已經在名單中":error.message));return}
     setNewSiteName("");setNewSiteAddress("");notify("已新增工地「"+name+"」");loadSites()
   };
   let markSiteDone=async id=>{
-    let{error}=await q.from("sitelog_projects").update({status:"工程已完工"}).eq("id",id);
+    let{error}=await q.from("sitelog_attendance_sites").update({active:!1}).eq("id",id);
     if(!error)loadSites()
   };
   let reactivateSite=async id=>{
-    let{error}=await q.from("sitelog_projects").update({status:"工程進行中"}).eq("id",id);
+    let{error}=await q.from("sitelog_attendance_sites").update({active:!0}).eq("id",id);
     if(!error)loadSites()
   };
   let deleteSite=async(id,name)=>{
-    if(!confirm("確定要刪除工地「"+name+"」嗎？\n\n注意：這個工地是整個系統共用的案件資料，刪除後該案件的合約／收據／照片等相關資料也會一併消失，且無法復原。\n\n如果只是這個工地做完了，建議改用「標記完工」即可。"))return;
-    let{error}=await q.from("sitelog_projects").delete().eq("id",id);
+    if(!confirm("確定要刪除工地「"+name+"」嗎？這只會刪除記工用的工地名稱，不會影響案件管理裡的任何資料。"))return;
+    let{error}=await q.from("sitelog_attendance_sites").delete().eq("id",id);
     if(error){notify("刪除失敗："+error.message);return}
     notify("已刪除工地");loadSites()
   };
-  let activeSites=siteList.filter(p=>p.status==="工程進行中");
+  let activeSites=siteList.filter(p=>p.active);
   let addWorker=async()=>{
     let name=newWorkerName.trim();
     if(!name)return;
@@ -3644,10 +3644,10 @@ function HbAttendanceHub({onBack,notify,projects}){
               )
             ))
           ),
-          siteList.filter(p=>p.status==="工程已完工").length>0&&u.default.createElement("div",{style:{marginTop:14,paddingTop:12,borderTop:`1px solid ${s.line}`}},
+          siteList.filter(p=>!p.active).length>0&&u.default.createElement("div",{style:{marginTop:14,paddingTop:12,borderTop:`1px solid ${s.line}`}},
             u.default.createElement("div",{style:{fontSize:11.5,fontWeight:600,color:s.inkSoft,marginBottom:8}},"已完工（不會出現在新增紀錄的工地選單）"),
             u.default.createElement("div",{style:{display:"flex",flexDirection:"column",gap:8}},
-              siteList.filter(p=>p.status==="工程已完工").map(p=>u.default.createElement("div",{key:p.id,style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 10px",background:s.paper,borderRadius:8,opacity:.55}},
+              siteList.filter(p=>!p.active).map(p=>u.default.createElement("div",{key:p.id,style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 10px",background:s.paper,borderRadius:8,opacity:.55}},
                 u.default.createElement("div",{style:{fontSize:13.5,fontWeight:500}},p.name),
                 u.default.createElement("div",{style:{display:"flex",gap:6}},
                   u.default.createElement("button",{onClick:()=>reactivateSite(p.id),style:{...ll,padding:"5px 10px",fontSize:11.5}},"重新啟用"),
@@ -3712,7 +3712,7 @@ function HbAttendanceHub({onBack,notify,projects}){
         ))
       )
     ),
-    creating&&u.default.createElement(HbAttendanceForm,{onCancel:()=>setCreating(!1),onCreate:createOne,projects:siteList.length?siteList:(projects||[]),workerOptions,lastRateFor})
+    creating&&u.default.createElement(HbAttendanceForm,{onCancel:()=>setCreating(!1),onCreate:createOne,projects:siteList,workerOptions,lastRateFor})
   )
 }
 
@@ -4331,7 +4331,7 @@ function Gy(){let[l,t]=(0,u.useState)(!0),[e,n]=(0,u.useState)(!1),[a,i]=(0,u.us
         }
         .fade-in { animation: fadeIn 0.2s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(4px);} to { opacity:1; transform:translateY(0);} }
-      `),u.default.createElement("div",{style:{height:"100%",overflowY:o==="landing"?"hidden":"auto",WebkitOverflowScrolling:"touch",paddingBottom:o==="landing"?0:92}},l?u.default.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh"}},u.default.createElement(E,{name:"loader",className:"animate-spin",size:28,color:s.ocean})):o==="landing"?u.default.createElement(HbLanding,{onCase:()=>f("home"),onCompany:()=>f("companyHub"),onManageStaff:()=>f("staff"),onQuickQuote:()=>HB_openQuoteSystem(),onProposal:()=>HB_openProposalSystem(),onMarketingPhotos:()=>f("marketingPhotos"),onBookings:()=>f("bookings"),onOpenBooking:()=>HB_openBookingSystem(),onDrawings:()=>f("drawings"),onLogout:()=>{try{localStorage.removeItem("sitelog_admin_unlocked"),localStorage.removeItem("sitelog_admin_username")}catch{}window.location.reload()}}):o==="companyHub"?u.default.createElement(HbCompanyHub,{onBack:()=>f("landing"),onContracts:()=>f("contracts"),onQuotes:()=>f("estimateHub"),onReceipts:()=>f("receipts"),onVendorReceipts:()=>f("vendorReceipts"),onQuickQuote:()=>HB_openQuoteSystem(),onGoHome:()=>f("home"),onVendorQuotes:()=>f("vendorQuotes"),onProposal:()=>HB_openProposalSystem(),onMarketingPhotos:()=>f("marketingPhotos"),onBookings:()=>f("bookings"),onOpenBooking:()=>HB_openBookingSystem(),onDrawings:()=>f("drawings"),onAttendance:()=>f("attendance")}):o==="attendance"?u.default.createElement(HbAttendanceHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="marketingPhotos"?u.default.createElement(HbMarketingPhotoHub,{onBack:()=>f("landing"),notify:g}):o==="bookings"?u.default.createElement(HbBookingsHub,{onBack:()=>f("landing"),notify:g}):o==="vendorQuotes"?u.default.createElement(HbVendorQuoteHub,{onBack:()=>f("companyHub"),notify:g}):o==="drawings"?u.default.createElement(HbDrawingHub,{onBack:()=>f("companyHub"),notify:g}):o==="receipts"?u.default.createElement(HbReceiptsHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="vendorReceipts"?u.default.createElement(HbVendorReceiptsHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="quoteImportPick"?u.default.createElement(Iy,{projects:a,onOpen:hbImportQuote,onNew:()=>h(!0),onRefresh:()=>{D(!0),y()},refreshing:e,storageUsedBytes:z,onManageStaff:()=>f("staff"),pickerMode:!0,onBack:()=>f("companyHub")}):o==="estimateHub"?u.default.createElement(HerfulsinsEstimateHub,{project:null,notify:g,onClose:()=>f("companyHub")}):o==="home"?u.default.createElement(Iy,{projects:a,onOpen:T=>{r(T),hbSetOpenTab("photos"),f("detail")},onNew:()=>h(!0),onRefresh:()=>{D(!0),y()},refreshing:e,storageUsedBytes:z,onManageStaff:()=>f("staff"),onBack:()=>f("landing"),onGoCompany:()=>f("companyHub")}):o==="staff"?u.default.createElement(Ky,{onBack:()=>f("landing")}):o==="contracts"?u.default.createElement(HerfulsinsContractsHub,{onBack:()=>f("landing"),notify:g}):o==="digitalCard"?u.default.createElement(HbDigitalCard,{onBack:()=>f("landing"),notify:g}):u.default.createElement(lh,{project:j,onBack:()=>f("home"),onUpdateMeta:S,onDelete:M,notify:g,initialTab:hbOpenTab})),d&&u.default.createElement(Py,{onCancel:()=>h(!1),onCreate:b}),m&&u.default.createElement("div",{className:"fade-in",style:{position:"fixed",bottom:20,left:"50%",transform:"translateX(-50%)",background:s.ink,color:s.card,padding:"10px 18px",borderRadius:8,fontSize:13,boxShadow:"0 4px 14px rgba(0,0,0,0.25)",zIndex:60}},m),u.default.createElement(HbBottomNav,{active:o,onNavigate:T=>f(T)}))}
+      `),u.default.createElement("div",{style:{height:"100%",overflowY:o==="landing"?"hidden":"auto",WebkitOverflowScrolling:"touch",paddingBottom:o==="landing"?0:92}},l?u.default.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh"}},u.default.createElement(E,{name:"loader",className:"animate-spin",size:28,color:s.ocean})):o==="landing"?u.default.createElement(HbLanding,{onCase:()=>f("home"),onCompany:()=>f("companyHub"),onManageStaff:()=>f("staff"),onQuickQuote:()=>HB_openQuoteSystem(),onProposal:()=>HB_openProposalSystem(),onMarketingPhotos:()=>f("marketingPhotos"),onBookings:()=>f("bookings"),onOpenBooking:()=>HB_openBookingSystem(),onDrawings:()=>f("drawings"),onLogout:()=>{try{localStorage.removeItem("sitelog_admin_unlocked"),localStorage.removeItem("sitelog_admin_username")}catch{}window.location.reload()}}):o==="companyHub"?u.default.createElement(HbCompanyHub,{onBack:()=>f("landing"),onContracts:()=>f("contracts"),onQuotes:()=>f("estimateHub"),onReceipts:()=>f("receipts"),onVendorReceipts:()=>f("vendorReceipts"),onQuickQuote:()=>HB_openQuoteSystem(),onGoHome:()=>f("home"),onVendorQuotes:()=>f("vendorQuotes"),onProposal:()=>HB_openProposalSystem(),onMarketingPhotos:()=>f("marketingPhotos"),onBookings:()=>f("bookings"),onOpenBooking:()=>HB_openBookingSystem(),onDrawings:()=>f("drawings"),onAttendance:()=>f("attendance")}):o==="attendance"?u.default.createElement(HbAttendanceHub,{onBack:()=>f("companyHub"),notify:g}):o==="marketingPhotos"?u.default.createElement(HbMarketingPhotoHub,{onBack:()=>f("landing"),notify:g}):o==="bookings"?u.default.createElement(HbBookingsHub,{onBack:()=>f("landing"),notify:g}):o==="vendorQuotes"?u.default.createElement(HbVendorQuoteHub,{onBack:()=>f("companyHub"),notify:g}):o==="drawings"?u.default.createElement(HbDrawingHub,{onBack:()=>f("companyHub"),notify:g}):o==="receipts"?u.default.createElement(HbReceiptsHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="vendorReceipts"?u.default.createElement(HbVendorReceiptsHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="quoteImportPick"?u.default.createElement(Iy,{projects:a,onOpen:hbImportQuote,onNew:()=>h(!0),onRefresh:()=>{D(!0),y()},refreshing:e,storageUsedBytes:z,onManageStaff:()=>f("staff"),pickerMode:!0,onBack:()=>f("companyHub")}):o==="estimateHub"?u.default.createElement(HerfulsinsEstimateHub,{project:null,notify:g,onClose:()=>f("companyHub")}):o==="home"?u.default.createElement(Iy,{projects:a,onOpen:T=>{r(T),hbSetOpenTab("photos"),f("detail")},onNew:()=>h(!0),onRefresh:()=>{D(!0),y()},refreshing:e,storageUsedBytes:z,onManageStaff:()=>f("staff"),onBack:()=>f("landing"),onGoCompany:()=>f("companyHub")}):o==="staff"?u.default.createElement(Ky,{onBack:()=>f("landing")}):o==="contracts"?u.default.createElement(HerfulsinsContractsHub,{onBack:()=>f("landing"),notify:g}):o==="digitalCard"?u.default.createElement(HbDigitalCard,{onBack:()=>f("landing"),notify:g}):u.default.createElement(lh,{project:j,onBack:()=>f("home"),onUpdateMeta:S,onDelete:M,notify:g,initialTab:hbOpenTab})),d&&u.default.createElement(Py,{onCancel:()=>h(!1),onCreate:b}),m&&u.default.createElement("div",{className:"fade-in",style:{position:"fixed",bottom:20,left:"50%",transform:"translateX(-50%)",background:s.ink,color:s.card,padding:"10px 18px",borderRadius:8,fontSize:13,boxShadow:"0 4px 14px rgba(0,0,0,0.25)",zIndex:60}},m),u.default.createElement(HbBottomNav,{active:o,onNavigate:T=>f(T)}))}
 function Ly(){let l=new URLSearchParams(window.location.search);return l.has("owner")||l.has("share")?u.default.createElement(Wy,null):u.default.createElement(SSOEntry,null)}function Zy(){let[l,t]=(0,u.useState)(()=>{try{return localStorage.getItem("sitelog_admin_unlocked")==="true"}catch{return!1}});return l?u.default.createElement(Gy,null):u.default.createElement(Vy,{onSuccess:e=>{try{localStorage.setItem("sitelog_admin_unlocked","true"),localStorage.setItem("sitelog_admin_username",e)}catch{}t(!0)}})}function Vy({onSuccess:l}){let[t,e]=(0,u.useState)(""),[n,a]=(0,u.useState)(""),[i,o]=(0,u.useState)(""),[f,c]=(0,u.useState)(!1),r=async()=>{if(!(!t.trim()||!n.trim())){c(!0),o("");try{let{data:d,error:h}=await q.from("sitelog_staff").select("username, password").eq("username",t.trim()).maybeSingle();if(h){o("\u7121\u6CD5\u9A57\u8B49\u5E33\u865F\uFF0C\u8ACB\u78BA\u8A8D\u7DB2\u8DEF\u9023\u7DDA\u5F8C\u518D\u8A66\u4E00\u6B21");return}d&&n===d.password?l(d.username):o("\u5E33\u865F\u6216\u5BC6\u78BC\u4E0D\u6B63\u78BA")}catch(d){o("\u767C\u751F\u932F\u8AA4\uFF1A"+(d.message||d))}finally{c(!1)}}};return u.default.createElement("div",{style:{background:s.paper,minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",padding:20,fontFamily:"'Noto Sans TC', sans-serif"}},u.default.createElement("style",null,"@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap');"),u.default.createElement("div",{style:{background:s.card,borderRadius:12,padding:28,width:"100%",maxWidth:340,boxShadow:"0 4px 20px rgba(185,136,104,0.15)"}},u.default.createElement("div",{className:"mono",style:{color:s.ocean,fontSize:11,letterSpacing:2,fontWeight:400,marginBottom:6}},"HERFULSINS INTERIOR DESIGN"),u.default.createElement("h1",{style:{fontSize:20,fontWeight:300,color:s.oceanDark,margin:"0 0 18px"}},"\u8D6B\u67CF\u7A7A\u9593\u8A2D\u8A08 \xB7 \u5DE5\u5730\u7D00\u9304\u672C"),u.default.createElement("label",{style:{fontSize:12.5,color:s.inkSoft}},"\u5E33\u865F"),u.default.createElement("input",{value:t,onChange:d=>e(d.target.value),onKeyDown:d=>d.key==="Enter"&&r(),style:el,autoFocus:!0}),u.default.createElement("label",{style:{fontSize:12.5,color:s.inkSoft}},"\u5BC6\u78BC"),u.default.createElement("input",{type:"password",value:n,onChange:d=>a(d.target.value),onKeyDown:d=>d.key==="Enter"&&r(),style:el}),i&&u.default.createElement("p",{style:{color:s.danger,fontSize:12.5,margin:"0 0 10px"}},i),u.default.createElement("button",{onClick:r,disabled:!t.trim()||!n.trim()||f,style:{...Dl,width:"100%",opacity:t.trim()&&n.trim()&&!f?1:.5,display:"flex",alignItems:"center",justifyContent:"center",gap:6}},f?u.default.createElement(E,{name:"loader",size:15,className:"animate-spin"}):null," \u767B\u5165")))}
 function SSOEntry(){
   let[staffOn,setStaffOn]=(0,u.useState)(()=>{try{return localStorage.getItem("sitelog_admin_unlocked")==="true"}catch{return!1}}),
