@@ -1169,7 +1169,7 @@ function HerfulsinsContractForm({category:l,projects:t,accounts:e,defaultProject
   );
   let submit=()=>{
     if(isEng&&!o){a();return}
-    if(!c.designName||!c.partyAName)return;
+    if(!c.designName)return;
     let cleanedStages=c.paymentStages.filter(st=>st.name||st.percent||st.condition).map(st=>({name:st.name,percent:st.percent===""?null:HB_num(st.percent),condition:st.condition}));
     i({...c,
       areaPing:c.areaPing===""?null:HB_num(c.areaPing),
@@ -1191,7 +1191,7 @@ function HerfulsinsContractForm({category:l,projects:t,accounts:e,defaultProject
       ),
       field(isEng?"工程名稱":"設計案名稱","designName"),
       field(isEng?"工程地點":"設計案地點","designLocation"),
-      field("甲方姓名/名稱","partyAName"),
+      field("甲方姓名/名稱（選填，可留白由業主現場簽名）","partyAName"),
       field("甲方代表人（選填，預設同姓名）","partyARep"),
       field("甲方地址","partyAAddress"),
       field("甲方電話","partyAPhone"),
