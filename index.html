@@ -864,25 +864,27 @@ function HB_buildContractHTML(v){
 <style>
   @page { size: A4; margin: 18mm 16mm; }
   * { box-sizing: border-box; }
-  body { font-family: "Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif; color:#2B2620; background:#F4F1EA; max-width:760px; margin:0 auto; padding:24px; line-height:1.75; font-size:13.5px; }
-  .brand { text-align:center; color:#B98868; font-weight:700; font-size:13px; letter-spacing:1px; margin-bottom:2px; }
-  h1 { font-size:22px; text-align:center; margin:0 0 18px; color:#2B2620; }
-  h2 { font-size:15px; border-bottom:3px solid #B98868; padding-bottom:6px; margin:24px 0 10px; color:#2B2620; }
+  body { font-family: "Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif; color:#1A1A1A; background:#EAF6FA; max-width:760px; margin:0 auto; padding:24px; line-height:1.75; font-size:13.5px; }
+  .brand { text-align:center; color:#E6A212; font-weight:700; font-size:13px; letter-spacing:1px; margin-bottom:2px; }
+  h1 { font-size:22px; text-align:center; margin:0 0 18px; color:#1A1A1A; }
+  h2 { font-size:15px; border-bottom:3px solid #1F6E85; padding-bottom:6px; margin:24px 0 10px; color:#1F6E85; }
   p { margin:6px 0; }
   .blank { text-decoration:underline; padding:0 4px; }
-  .quote { color:#B98868; font-style:italic; font-weight:700; }
+  .quote { color:#E6A212; font-style:italic; font-weight:700; }
   table { width:100%; border-collapse:collapse; margin:10px 0; font-size:12.5px; background:#fff; }
-  table.pay th, table.pay td, table.stage th, table.stage td { border:1px solid #D9CEBE; padding:6px 8px; text-align:left; }
+  table.pay th, table.pay td, table.stage th, table.stage td { border:1px solid #BFE1EA; padding:6px 8px; text-align:left; }
   table.pay .c { text-align:center; }
-  table.pay th, table.stage th { background:#2B2620; color:#fff; }
-  table.sign td { border:1px solid #D9CEBE; padding:14px 12px; width:50%; vertical-align:top; }
-  .accbox { background:#EFE6D6; border:1px solid #E3DACB; border-radius:8px; padding:14px 16px; margin-top:10px; }
-  .footer { font-size:11px; color:#8C8275; margin-top:30px; text-align:center; }
+  table.pay th, table.stage th { background:#1F6E85; color:#fff; }
+  table.sign td { border:1px solid #BFE1EA; padding:14px 12px; width:50%; vertical-align:top; }
+  table.pay, table.stage, table.sign, .signblock { page-break-inside:avoid; break-inside:avoid; }
+  table.pay tr, table.stage tr, table.sign tr, table.sign td { page-break-inside:avoid; break-inside:avoid; }
+  .accbox { background:#EAF6FA; border:1px solid #BFE1EA; border-radius:8px; padding:14px 16px; margin-top:10px; }
+  .footer { font-size:11px; color:#999999; margin-top:30px; text-align:center; }
   @media print { .toolbar{display:none!important;} body{padding:0;background:#fff;} }
-  .toolbar { position:sticky; top:0; background:rgba(43,38,32,0.88);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px); padding:12px 16px; display:flex; justify-content:space-between; align-items:center; margin:-24px -24px 24px; }
+  .toolbar { position:sticky; top:0; background:rgba(31,110,133,0.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px); padding:12px 16px; display:flex; justify-content:space-between; align-items:center; margin:-24px -24px 24px; }
   .toolbar button { border:none; border-radius:7px; padding:8px 16px; font-weight:700; font-size:13px; cursor:pointer; }
-  .toolbar .back { background:none; color:#E9DFCE; border:1px solid #E9DFCE !important; }
-  .toolbar .print { background:#B98868; color:#FBF8F2; }
+  .toolbar .back { background:none; color:#EAF6FA; border:1px solid #EAF6FA !important; }
+  .toolbar .print { background:#E6A212; color:#1A1A1A; }
 </style>
 </head>
 <body>
@@ -986,11 +988,13 @@ ${accountsHtml}
 
 <p style="text-align:center;margin-top:24px;">（以下空白，為簽章欄位）</p>
 
+<div class="signblock">
 <h2 style="border:none;padding:0;text-align:center;color:#1A1A1A;">立合約書人簽章欄位</h2>
 <table class="sign">
 <tr><td><strong>甲方（委託人）簽章</strong><br/><br/>單位名稱：${e(v.partyAName)}（簽章）<br/><br/>負責人：${e(v.partyARep)}<br/><br/>居住地址：${e(v.partyAAddress)}<br/><br/>聯絡電話：${e(v.partyAPhone)}<br/><br/>身分證字號：${e(v.partyAId)}</td>
 <td><strong>乙方（受託人）簽章</strong><br/><br/>單位名稱：赫柏空間設計 (HERFULSINS)（簽章）<br/><br/>負責人：陳奕蒨<br/><br/>公司地址：嘉義市新民路168號<br/><br/>聯絡電話：0987583978<br/><br/>統一編號：00351070</td></tr>
 </table>
+</div>
 <p style="text-align:center;margin-top:20px;">簽署日期：中華民國　${e(v.contractYear)}　年　${e(v.contractMonth)}　月　${e(v.contractDay)}　日</p>
 
 <p class="footer">本文件由赫柏空間設計工地紀錄本產生，內容以雙方正式簽署之書面合約為準</p>
@@ -1021,23 +1025,25 @@ function HB_buildEngContractHTML(v){
 <style>
   @page { size: A4; margin: 18mm 16mm; }
   * { box-sizing: border-box; }
-  body { font-family: "Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif; color:#2B2620; background:#F4F1EA; max-width:760px; margin:0 auto; padding:24px; line-height:1.75; font-size:13.5px; }
-  .brand { text-align:center; color:#B98868; font-weight:700; font-size:13px; letter-spacing:1px; margin-bottom:2px; }
-  h1 { font-size:22px; text-align:center; margin:0 0 18px; color:#2B2620; }
-  h2 { font-size:15px; border-bottom:3px solid #B98868; padding-bottom:6px; margin:24px 0 10px; color:#2B2620; }
+  body { font-family: "Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif; color:#1A1A1A; background:#EAF6FA; max-width:760px; margin:0 auto; padding:24px; line-height:1.75; font-size:13.5px; }
+  .brand { text-align:center; color:#E6A212; font-weight:700; font-size:13px; letter-spacing:1px; margin-bottom:2px; }
+  h1 { font-size:22px; text-align:center; margin:0 0 18px; color:#1A1A1A; }
+  h2 { font-size:15px; border-bottom:3px solid #1F6E85; padding-bottom:6px; margin:24px 0 10px; color:#1F6E85; }
   p { margin:6px 0; }
   .blank { text-decoration:underline; padding:0 4px; }
   table { width:100%; border-collapse:collapse; margin:10px 0; font-size:12.5px; background:#fff; }
-  table.pay th, table.pay td { border:1px solid #D9CEBE; padding:6px 8px; text-align:left; }
-  table.pay th { background:#2B2620; color:#fff; }
-  table.sign td { border:1px solid #D9CEBE; padding:14px 12px; width:50%; vertical-align:top; }
-  .accbox { background:#EFE6D6; border:1px solid #E3DACB; border-radius:8px; padding:14px 16px; margin-top:10px; }
-  .footer { font-size:11px; color:#8C8275; margin-top:30px; text-align:center; }
+  table.pay th, table.pay td { border:1px solid #BFE1EA; padding:6px 8px; text-align:left; }
+  table.pay th { background:#1F6E85; color:#fff; }
+  table.sign td { border:1px solid #BFE1EA; padding:14px 12px; width:50%; vertical-align:top; }
+  table.pay, table.sign, .signblock { page-break-inside:avoid; break-inside:avoid; }
+  table.pay tr, table.sign tr, table.sign td { page-break-inside:avoid; break-inside:avoid; }
+  .accbox { background:#EAF6FA; border:1px solid #BFE1EA; border-radius:8px; padding:14px 16px; margin-top:10px; }
+  .footer { font-size:11px; color:#999999; margin-top:30px; text-align:center; }
   @media print { .toolbar{display:none!important;} body{padding:0;background:#fff;} }
-  .toolbar { position:sticky; top:0; background:rgba(43,38,32,0.88);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px); padding:12px 16px; display:flex; justify-content:space-between; align-items:center; margin:-24px -24px 24px; }
+  .toolbar { position:sticky; top:0; background:rgba(31,110,133,0.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px); padding:12px 16px; display:flex; justify-content:space-between; align-items:center; margin:-24px -24px 24px; }
   .toolbar button { border:none; border-radius:7px; padding:8px 16px; font-weight:700; font-size:13px; cursor:pointer; }
-  .toolbar .back { background:none; color:#E9DFCE; border:1px solid #E9DFCE !important; }
-  .toolbar .print { background:#B98868; color:#FBF8F2; }
+  .toolbar .back { background:none; color:#EAF6FA; border:1px solid #EAF6FA !important; }
+  .toolbar .print { background:#E6A212; color:#1A1A1A; }
 </style>
 </head>
 <body>
@@ -1088,6 +1094,7 @@ function HB_buildEngContractHTML(v){
 ${stageRows}
 </table>
 
+<div class="signblock">
 <h2>立合約書人簽章欄位</h2>
 <table class="sign">
 <tr>
@@ -1095,6 +1102,7 @@ ${stageRows}
 <td><strong>乙　方（承攬人）簽章</strong><br/><br/>公司名稱：赫柏空間設計（簽章）<br/><br/>負責承攬人：陳奕蒨（簽章）<br/><br/>身分證字號：Q223889194<br/><br/>公司地址：嘉義市新民路168號<br/><br/>聯絡電話：0987583978</td>
 </tr>
 </table>
+</div>
 <p>簽署日期：中華民國 ${e(v.contractYear)} 年 ${e(v.contractMonth)} 月 ${e(v.contractDay)} 日</p>
 
 <h2>赫柏空間設計 指定匯款帳戶</h2>
