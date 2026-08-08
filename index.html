@@ -3571,7 +3571,7 @@ function HbAttendanceHub({onBack,notify}){
   let createOne=async v=>{
     let{error}=await q.from("sitelog_attendance").insert({
       worker_name:v.workerName,site_location:v.siteLocation,work_date:v.dateStr,
-      days:v.days,daily_rate:v.dailyRate||null,note:v.note||null,hours:v.hours||null
+      days:v.days,period:v.period||null,daily_rate:v.dailyRate||null,note:v.note||null,hours:v.hours||null
     });
     if(error){notify("新增失敗："+error.message);return}
     setCreating(!1);notify("已記錄出勤");load()
@@ -3703,7 +3703,7 @@ function HbAttendanceHub({onBack,notify}){
         filtered.map(r=>u.default.createElement("div",{key:r.id,style:{background:s.card,border:`1px solid ${s.line}`,borderRadius:10,padding:"12px 14px",display:"flex",justifyContent:"space-between",alignItems:"center",gap:10}},
           u.default.createElement("div",null,
             u.default.createElement("div",{style:{fontSize:14.5,fontWeight:400,color:s.oceanDark}},r.worker_name),
-            u.default.createElement("div",{style:{fontSize:12,color:s.inkSoft,marginTop:2}},r.work_date,r.site_location?"　·　"+r.site_location:"",r.hours?"　·　"+r.hours+"小時":"",r.note?"　·　"+r.note:"")
+            u.default.createElement("div",{style:{fontSize:12,color:s.inkSoft,marginTop:2}},r.work_date,r.site_location?"　·　"+r.site_location:"",r.period?"　·　"+r.period:"",r.hours?"　·　"+r.hours+"小時":"",r.note?"　·　"+r.note:"")
           ),
           u.default.createElement("div",{style:{display:"flex",alignItems:"center",gap:10}},
             u.default.createElement("div",{className:"mono",style:{fontSize:16,color:s.ocean,fontWeight:400}},r.days,"天"),
@@ -3726,6 +3726,7 @@ function HbAttendanceForm({onCancel,onCreate,projects,workerOptions,lastRateFor}
   let[siteLocation,setSiteLocation]=(0,u.useState)("");
   let[dateStr,setDateStr]=(0,u.useState)(()=>new Date().toISOString().slice(0,10));
   let[days,setDays]=(0,u.useState)(1);
+  let[period,setPeriod]=(0,u.useState)("全天");
   let[hours,setHours]=(0,u.useState)("");
   let[dailyRate,setDailyRate]=(0,u.useState)("");
   let[note,setNote]=(0,u.useState)("");
@@ -3741,7 +3742,9 @@ function HbAttendanceForm({onCancel,onCreate,projects,workerOptions,lastRateFor}
     let proj=projList.find(p=>p.id===val);
     setSiteLocation(proj?proj.address||proj.name||"":"");
   };
-  let presets=[0.5,1,1.5,2];
+  let periodPresets=[{label:"上午",days:.5},{label:"下午",days:.5},{label:"全天",days:1}];
+  let onPickPeriod=pp=>{setPeriod(pp.label);setDays(pp.days)};
+  let onCustomDays=v=>{setPeriod(null);setDays(v)};
   let valid=workerName.trim()&&dateStr&&days;
   return u.default.createElement("div",{style:{position:"fixed",inset:0,background:"rgba(43,38,32,0.45)",display:"flex",alignItems:"center",justifyContent:"center",padding:20,zIndex:55}},
     u.default.createElement("div",{className:"fade-in",style:{background:s.card,borderRadius:10,padding:22,width:"100%",maxWidth:380,maxHeight:"85vh",overflowY:"auto"}},
@@ -3760,10 +3763,10 @@ function HbAttendanceForm({onCancel,onCreate,projects,workerOptions,lastRateFor}
       (projList.length===0||sitePick===OTHER)&&u.default.createElement("input",{value:siteLocation,onChange:e=>setSiteLocation(e.target.value),placeholder:"工地名稱或地址",style:el}),
       u.default.createElement("label",{style:{fontSize:12.5,color:s.inkSoft}},"日期"),
       u.default.createElement("input",{type:"date",value:dateStr,onChange:e=>setDateStr(e.target.value),style:el}),
-      u.default.createElement("label",{style:{fontSize:12.5,color:s.inkSoft}},"出工天數"),
+      u.default.createElement("label",{style:{fontSize:12.5,color:s.inkSoft}},"出工時段"),
       u.default.createElement("div",{style:{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap"}},
-        presets.map(p=>u.default.createElement("button",{key:p,type:"button",onClick:()=>setDays(p),style:{...(days===p?Dl:ll),padding:"8px 14px",fontSize:13.5}},p)),
-        u.default.createElement("input",{type:"number",step:"0.5",min:"0",value:presets.includes(days)?"":days,onChange:e=>setDays(parseFloat(e.target.value)||0),placeholder:"其他",style:{...el,marginBottom:0,width:80}})
+        periodPresets.map(pp=>u.default.createElement("button",{key:pp.label,type:"button",onClick:()=>onPickPeriod(pp),style:{...(period===pp.label?Dl:ll),padding:"8px 14px",fontSize:13.5}},pp.label)),
+        u.default.createElement("input",{type:"number",step:"0.5",min:"0",value:period===null?days:"",onChange:e=>onCustomDays(parseFloat(e.target.value)||0),placeholder:"其他天數",style:{...el,marginBottom:0,width:88}})
       ),
       u.default.createElement("label",{style:{fontSize:12.5,color:s.inkSoft}},"工時（小時，選填）"),
       u.default.createElement("input",{type:"number",step:"0.5",min:"0",value:hours,onChange:e=>setHours(e.target.value),placeholder:"例：8",style:el}),
@@ -3773,7 +3776,7 @@ function HbAttendanceForm({onCancel,onCreate,projects,workerOptions,lastRateFor}
       u.default.createElement("input",{value:note,onChange:e=>setNote(e.target.value),placeholder:"例：加班半天、材料搬運",style:el}),
       u.default.createElement("div",{style:{display:"flex",gap:10,marginTop:6}},
         u.default.createElement("button",{onClick:onCancel,style:{...ll,flex:1}},"取消"),
-        u.default.createElement("button",{disabled:!valid,onClick:()=>onCreate({workerName:workerName.trim(),siteLocation:siteLocation.trim(),dateStr,days,hours:hours?parseFloat(hours):null,dailyRate:dailyRate?parseFloat(dailyRate):null,note:note.trim()}),style:{...Dl,flex:1,opacity:valid?1:.5}},"建立")
+        u.default.createElement("button",{disabled:!valid,onClick:()=>onCreate({workerName:workerName.trim(),siteLocation:siteLocation.trim(),dateStr,days,period,hours:hours?parseFloat(hours):null,dailyRate:dailyRate?parseFloat(dailyRate):null,note:note.trim()}),style:{...Dl,flex:1,opacity:valid?1:.5}},"建立")
       )
     )
   )
@@ -4080,7 +4083,7 @@ function HbBottomNav({active,onNavigate}){
     {key:"home",icon:"clipboard-list",label:"\u5C08\u6848\u8CC7\u6599\u5EAB"},
     {key:"shareLine",icon:"share",label:"\u5206\u4EAB\u5230LINE",action:()=>HB_shareBookingLinkToLine()}
   ];
-  return u.default.createElement("div",{style:{position:"fixed",left:"50%",bottom:16,transform:"translateX(-50%)",zIndex:80,display:"flex",alignItems:"flex-end",gap:14,background:s.paper,borderRadius:999,padding:"10px 18px 8px",boxShadow:"8px 8px 18px rgba(140,111,82,0.22), -8px -8px 18px rgba(255,255,255,0.75)"}},
+  return u.default.createElement("div",{style:{position:"fixed",left:"50%",bottom:16,transform:"translateX(-50%)",zIndex:20,display:"flex",alignItems:"flex-end",gap:14,background:s.paper,borderRadius:999,padding:"10px 18px 8px",boxShadow:"8px 8px 18px rgba(140,111,82,0.22), -8px -8px 18px rgba(255,255,255,0.75)"}},
     items.map(it=>{
       let isActive=!it.action&&active===it.key,d=isActive?46:38;
       return u.default.createElement("button",{key:it.key,onClick:()=>it.action?it.action():onNavigate(it.key),style:{display:"flex",flexDirection:"column",alignItems:"center",gap:4,background:"none",border:"none",cursor:"pointer",padding:0,width:52}},
