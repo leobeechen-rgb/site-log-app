@@ -1144,11 +1144,15 @@ function HerfulsinsAccountManager({accounts:l,onClose:t,onAdd:e,onDelete:n}){
   )
 }
 
-/* ===== 新增合約表單 ===== */
-function HerfulsinsContractForm({category:l,projects:t,accounts:e,defaultProjectId:n,onCancel:a,onCreate:i}){
+/* ===== 新增／編輯合約表單 ===== */
+function HerfulsinsContractForm({category:l,projects:t,accounts:e,defaultProjectId:n,initialValues:iv,editing:isEditing,onCancel:a,onCreate:i}){
   let isEng=l==="case";
-  let[o,f]=(0,u.useState)(n||(t[0]&&t[0].id)||"");
-  let[c,r]=(0,u.useState)({
+  let[o,f]=(0,u.useState)((iv&&iv.projectId)||n||(t[0]&&t[0].id)||"");
+  let[c,r]=(0,u.useState)(()=>iv?{
+    designName:iv.designName||"",designLocation:iv.designLocation||"",partyAName:iv.partyAName||"",partyARep:iv.partyARep||"",partyAAddress:iv.partyAAddress||"",partyAPhone:iv.partyAPhone||"",partyAId:iv.partyAId||"",
+    areaPing:iv.areaPing??"",pricePerPing:iv.pricePerPing??"",totalPrice:iv.totalPrice??"",durationDays:iv.durationDays??"",contractDate:iv.contractDate||"",accountIds:iv.accountIds||[],
+    paymentStages:(iv.paymentStages&&iv.paymentStages.length>0)?iv.paymentStages.map(st=>({name:st.name||"",percent:st.percent??"",condition:st.condition||""})):[{name:"簽約款",percent:"30",condition:"本合約簽署之時付款"},{name:"二期款",percent:"60",condition:""},{name:"三期款",percent:"10",condition:""}]
+  }:{
     designName:"",designLocation:"",partyAName:"",partyARep:"",partyAAddress:"",partyAPhone:"",partyAId:"",
     areaPing:"",pricePerPing:"",totalPrice:"",durationDays:"",contractDate:"",accountIds:[],
     paymentStages:[{name:"簽約款",percent:"30",condition:"本合約簽署之時付款"},{name:"二期款",percent:"60",condition:""},{name:"三期款",percent:"10",condition:""}]
@@ -1178,7 +1182,7 @@ function HerfulsinsContractForm({category:l,projects:t,accounts:e,defaultProject
   };
   return u.default.createElement("div",{style:{position:"fixed",inset:0,background:"rgba(43,38,32,0.55)",display:"flex",alignItems:"center",justifyContent:"center",padding:20,zIndex:65,overflowY:"auto"}},
     u.default.createElement("div",{className:"fade-in",style:{background:s.card,borderRadius:10,padding:20,width:"100%",maxWidth:420,maxHeight:"90vh",overflowY:"auto"}},
-      u.default.createElement("h3",{style:{margin:"0 0 14px",fontSize:16,color:s.oceanDark}},isEng?"新增工程合約":"新增設計合約"),
+      u.default.createElement("h3",{style:{margin:"0 0 14px",fontSize:16,color:s.oceanDark}},isEditing?(isEng?"編輯工程合約":"編輯設計合約"):(isEng?"新增工程合約":"新增設計合約")),
       isEng&&u.default.createElement("div",{style:{marginBottom:12}},
         u.default.createElement("label",{style:{fontSize:12.5,color:s.inkSoft,display:"block",marginBottom:4}},"所屬案件"),
         u.default.createElement("select",{value:o,onChange:v=>f(v.target.value),style:{width:"100%",padding:"9px 10px",borderRadius:7,border:`1px solid ${s.line}`,fontSize:14}},
@@ -1229,7 +1233,7 @@ function HerfulsinsContractForm({category:l,projects:t,accounts:e,defaultProject
       ),
       u.default.createElement("div",{style:{display:"flex",gap:10,marginTop:10}},
         u.default.createElement("button",{onClick:a,style:{flex:1,background:"none",border:`1px solid ${s.line}`,borderRadius:9,padding:"11px 0",fontSize:13.5,cursor:"pointer",color:s.inkSoft}},"取消"),
-        u.default.createElement("button",{onClick:submit,style:{flex:1,background:s.ocean,color:s.lemon,border:"none",borderRadius:9,padding:"11px 0",fontSize:13.5,fontWeight:400,cursor:"pointer"}},"新增至資料庫")
+        u.default.createElement("button",{onClick:submit,style:{flex:1,background:s.ocean,color:s.lemon,border:"none",borderRadius:9,padding:"11px 0",fontSize:13.5,fontWeight:400,cursor:"pointer"}},isEditing?"儲存修改":"新增至資料庫")
       )
     )
   )
@@ -1238,6 +1242,7 @@ function HerfulsinsContractForm({category:l,projects:t,accounts:e,defaultProject
 /* ===== 設計合約庫（頂層獨立頁面） ===== */
 function HerfulsinsContractsHub({onBack:l,notify:t}){
   let[e,n]=(0,u.useState)("company"),[a,i]=(0,u.useState)([]),[o,f]=(0,u.useState)([]),[c,r]=(0,u.useState)([]),[d,h]=(0,u.useState)(!0),[m,p]=(0,u.useState)(null),[z,C]=(0,u.useState)(!1),[D,y]=(0,u.useState)(!1);
+  let[editingRow,setEditingRow]=(0,u.useState)(null);
   let load=async()=>{
     h(!0);
     let[g,b,S]=await Promise.all([
@@ -1258,6 +1263,21 @@ function HerfulsinsContractsHub({onBack:l,notify:t}){
     if(g){t("新增失敗："+g.message);return}
     C(!1),t(e==="case"?"已新增工程合約":"已新增設計合約"),load()
   };
+  let updateContract=async(id,v)=>{
+    let{error:g}=await q.from("sitelog_contracts").update({
+      project_id:v.projectId,design_name:v.designName,design_location:v.designLocation,
+      party_a_name:v.partyAName,party_a_rep:v.partyARep,party_a_address:v.partyAAddress,party_a_phone:v.partyAPhone,party_a_id:v.partyAId,
+      area_ping:v.areaPing,price_per_ping:v.pricePerPing,total_price:v.totalPrice,contract_date:v.contractDate||null,account_ids:v.accountIds,
+      duration_days:v.durationDays||null,payment_stages:v.paymentStages||null
+    }).eq("id",id);
+    if(g){t("更新失敗："+g.message);return}
+    C(!1),setEditingRow(null),t("已更新合約"),load()
+  };
+  let toFormValues=row=>({
+    designName:row.design_name||"",designLocation:row.design_location||"",partyAName:row.party_a_name||"",partyARep:row.party_a_rep||"",partyAAddress:row.party_a_address||"",partyAPhone:row.party_a_phone||"",partyAId:row.party_a_id||"",
+    areaPing:row.area_ping??"",pricePerPing:row.price_per_ping??"",totalPrice:row.total_price??"",durationDays:row.duration_days??"",contractDate:row.contract_date||"",
+    accountIds:row.account_ids||[],paymentStages:row.payment_stages||[],projectId:row.project_id||null
+  });
   let deleteContract=async id=>{
     let{error:g}=await q.from("sitelog_contracts").delete().eq("id",id);
     if(g){t("刪除失敗："+g.message);return}
@@ -1330,12 +1350,13 @@ function HerfulsinsContractsHub({onBack:l,notify:t}){
           u.default.createElement("div",{style:{display:"flex",gap:8,marginTop:10}},
             u.default.createElement("button",{onClick:()=>genWord(v),style:{flex:1,border:`1px solid ${s.line}`,background:"none",borderRadius:7,padding:"7px 0",fontSize:12.5,color:s.oceanDark,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:5}},u.default.createElement(E,{name:"file-output",size:14}),"Word"),
             u.default.createElement("button",{onClick:()=>genPdf(v),style:{flex:1,border:`1px solid ${s.line}`,background:"none",borderRadius:7,padding:"7px 0",fontSize:12.5,color:s.oceanDark,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:5}},u.default.createElement(E,{name:"printer",size:14}),"PDF"),
+            u.default.createElement("button",{onClick:()=>{setEditingRow(v);C(!0)},style:{border:"none",background:"none",color:s.oceanDark,cursor:"pointer",padding:"7px 10px"}},u.default.createElement(E,{name:"pencil",size:14})),
             u.default.createElement("button",{onClick:()=>deleteContract(v.id),style:{border:"none",background:"none",color:s.danger,cursor:"pointer",padding:"7px 10px"}},u.default.createElement(E,{name:"trash",size:14}))
           )
         ))
       )
     ),
-    z&&u.default.createElement(HerfulsinsContractForm,{category:e,projects:caseProjects,accounts:o,defaultProjectId:selectedProject,onCancel:()=>C(!1),onCreate:createContract}),
+    z&&u.default.createElement(HerfulsinsContractForm,{category:editingRow?editingRow.category:e,projects:caseProjects,accounts:o,defaultProjectId:selectedProject,initialValues:editingRow?toFormValues(editingRow):null,editing:!!editingRow,onCancel:()=>{C(!1);setEditingRow(null)},onCreate:editingRow?(v=>updateContract(editingRow.id,v)):createContract}),
     D&&u.default.createElement(HerfulsinsAccountManager,{accounts:o,onClose:()=>y(!1),onAdd:addAccount,onDelete:deleteAccount})
   )
 }
