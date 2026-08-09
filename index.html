@@ -874,6 +874,8 @@ function HB_buildContractHTML(v){
   table.partyline { width:auto; border-collapse:collapse; background:transparent; margin:6px 0; }
   table.partyline td { border:none; padding:2px 0; background:transparent; white-space:nowrap; vertical-align:baseline; }
   table.partyline td:first-child { text-align:right; }
+  table.partyline td.pv { width:170px; padding-left:2px; }
+  table.partyline td.pv .blank { display:inline-block; width:100%; text-align:center; }
   table.partyline td:last-child { white-space:normal; padding-left:2px; }
   table { width:100%; border-collapse:collapse; margin:10px 0; font-size:12.5px; background:#fff; }
   table.pay th, table.pay td, table.stage th, table.stage td { border:1px solid #BFE1EA; padding:6px 8px; text-align:left; }
@@ -901,8 +903,8 @@ function HB_buildContractHTML(v){
 <div class="brand">HERFULSINS INTERIOR DESIGN｜赫柏空間設計</div>
 <h1>赫柏空間委任設計合約書</h1>
 <table class="partyline">
-<tr><td><strong>立合約書人：</strong>委託人：</td><td><span class="blank">${e(v.partyAName)||"　　　　　　　　　　　　"}</span>（以下簡稱甲方）</td></tr>
-<tr><td>受託人：</td><td><span class="blank">赫柏空間設計</span>（以下簡稱乙方）</td></tr>
+<tr><td><strong>立合約書人：</strong>委託人：</td><td class="pv"><span class="blank">${e(v.partyAName)||"　"}</span></td><td>（以下簡稱甲方）</td></tr>
+<tr><td>受託人：</td><td class="pv"><span class="blank">赫柏空間設計</span></td><td>（以下簡稱乙方）</td></tr>
 </table>
 <p>茲因甲方委託乙方辦理室內設計事宜，經雙方本於誠實信用原則共同議定本合約條款如下，以資雙方共同遵守：</p>
 
