@@ -875,7 +875,8 @@ function HB_buildContractHTML(v){
   table.pay th, table.pay td, table.stage th, table.stage td { border:1px solid #BFE1EA; padding:6px 8px; text-align:left; }
   table.pay .c { text-align:center; }
   table.pay th, table.stage th { background:#1F6E85; color:#fff; }
-  table.sign td { border:1px solid #BFE1EA; padding:14px 12px; width:50%; vertical-align:top; }
+  table.sign td { border:1px solid #BFE1EA; padding:9px 12px; width:50%; vertical-align:middle; }
+  table.sign tr:first-child td { background:#EAF6FA; padding:10px 12px; }
   table.pay, table.stage, table.sign, .signblock { page-break-inside:avoid; break-inside:avoid; }
   table.pay tr, table.stage tr, table.sign tr, table.sign td { page-break-inside:avoid; break-inside:avoid; }
   .accbox { background:#EAF6FA; border:1px solid #BFE1EA; border-radius:8px; padding:14px 16px; margin-top:10px; }
@@ -895,7 +896,8 @@ function HB_buildContractHTML(v){
 <div class="toolbar"><button class="back" onclick="window.close()" title="返回">\u2190</button><div class="btns"><button class="lineshare" onclick="shareToLine()">分享PDF到LINE</button><button class="print" onclick="window.print()">列印 / 存 PDF</button></div></div>
 <div class="brand">HERFULSINS INTERIOR DESIGN｜赫柏空間設計</div>
 <h1>赫柏空間委任設計合約書</h1>
-<p><strong>立合約書人：</strong>委託人：${e(v.partyAName)}（以下簡稱甲方）　受託人：赫柏空間設計（以下簡稱乙方）</p>
+<p><strong>立合約書人：</strong>委託人：<span class="blank">${e(v.partyAName)||"　　　　　　　　　　　　"}</span>（以下簡稱甲方）</p>
+<p style="margin-left:4.5em;">受託人：<span class="blank">赫柏空間設計</span>（以下簡稱乙方）</p>
 <p>茲因甲方委託乙方辦理室內設計事宜，經雙方本於誠實信用原則共同議定本合約條款如下，以資雙方共同遵守：</p>
 
 <h2>第一條：設計案名稱與地點</h2>
@@ -995,8 +997,12 @@ ${accountsHtml}
 <div class="signblock">
 <h2 style="border:none;padding:0;text-align:center;color:#1A1A1A;">立合約書人簽章欄位</h2>
 <table class="sign">
-<tr><td><strong>甲方（委託人）簽章</strong><br/><br/>單位名稱：${e(v.partyAName)}（簽章）<br/><br/>負責人：${e(v.partyARep)}<br/><br/>居住地址：${e(v.partyAAddress)}<br/><br/>聯絡電話：${e(v.partyAPhone)}<br/><br/>身分證字號：${e(v.partyAId)}</td>
-<td><strong>乙方（受託人）簽章</strong><br/><br/>單位名稱：赫柏空間設計 (HERFULSINS)（簽章）<br/><br/>負責人：陳奕蒨<br/><br/>公司地址：嘉義市新民路168號<br/><br/>聯絡電話：0987583978<br/><br/>統一編號：00351070</td></tr>
+<tr><td><strong>甲方（委託人）簽章</strong></td><td><strong>乙方（受託人）簽章</strong></td></tr>
+<tr><td>單位名稱：${e(v.partyAName)}（簽章）</td><td>單位名稱：赫柏空間設計 (HERFULSINS)（簽章）</td></tr>
+<tr><td>負責人：${e(v.partyARep)}</td><td>負責人：陳奕蒨</td></tr>
+<tr><td>地址：${e(v.partyAAddress)}</td><td>地址：嘉義市新民路168號</td></tr>
+<tr><td>聯絡電話：${e(v.partyAPhone)}</td><td>聯絡電話：0987583978</td></tr>
+<tr><td>身分證字號 / 統一編號：${e(v.partyAId)}</td><td>身分證字號 / 統一編號：00351070</td></tr>
 </table>
 </div>
 <p style="text-align:center;margin-top:20px;">簽署日期：中華民國　${e(v.contractYear)}　年　${e(v.contractMonth)}　月　${e(v.contractDay)}　日</p>
@@ -1067,7 +1073,8 @@ function HB_buildEngContractHTML(v){
   table { width:100%; border-collapse:collapse; margin:10px 0; font-size:12.5px; background:#fff; }
   table.pay th, table.pay td { border:1px solid #BFE1EA; padding:6px 8px; text-align:left; }
   table.pay th { background:#1F6E85; color:#fff; }
-  table.sign td { border:1px solid #BFE1EA; padding:14px 12px; width:50%; vertical-align:top; }
+  table.sign td { border:1px solid #BFE1EA; padding:9px 12px; width:50%; vertical-align:middle; }
+  table.sign tr:first-child td { background:#EAF6FA; padding:10px 12px; }
   table.pay, table.sign, .signblock { page-break-inside:avoid; break-inside:avoid; }
   table.pay tr, table.sign tr, table.sign td { page-break-inside:avoid; break-inside:avoid; }
   .accbox { background:#EAF6FA; border:1px solid #BFE1EA; border-radius:8px; padding:14px 16px; margin-top:10px; }
@@ -1134,10 +1141,12 @@ ${stageRows}
 <div class="signblock">
 <h2>立合約書人簽章欄位</h2>
 <table class="sign">
-<tr>
-<td><strong>甲　方（業主）簽章</strong><br/><br/>業主姓名（簽章）：${e(v.partyAName)}<br/><br/>身份證字號 / 統編：${e(v.partyAId)}<br/><br/>居住地址：${e(v.partyAAddress)}<br/><br/>聯絡電話：${e(v.partyAPhone)}</td>
-<td><strong>乙　方（承攬人）簽章</strong><br/><br/>公司名稱：赫柏空間設計（簽章）<br/><br/>負責承攬人：陳奕蒨（簽章）<br/><br/>身分證字號：Q223889194<br/><br/>公司地址：嘉義市新民路168號<br/><br/>聯絡電話：0987583978</td>
-</tr>
+<tr><td><strong>甲　方（業主）簽章</strong></td><td><strong>乙　方（承攬人）簽章</strong></td></tr>
+<tr><td>名稱（簽章）：${e(v.partyAName)}</td><td>名稱（簽章）：赫柏空間設計</td></tr>
+<tr><td>代表人：${e(v.partyARep||v.partyAName)}</td><td>代表人：陳奕蒨</td></tr>
+<tr><td>身分證字號 / 統編：${e(v.partyAId)}</td><td>身分證字號 / 統編：Q223889194</td></tr>
+<tr><td>地址：${e(v.partyAAddress)}</td><td>地址：嘉義市新民路168號</td></tr>
+<tr><td>聯絡電話：${e(v.partyAPhone)}</td><td>聯絡電話：0987583978</td></tr>
 </table>
 </div>
 <p>簽署日期：中華民國 ${e(v.contractYear)} 年 ${e(v.contractMonth)} 月 ${e(v.contractDay)} 日</p>
