@@ -5228,9 +5228,9 @@ react-dom/cjs/react-dom-client.production.js:
    偵測到畫面下方有這類外部固定元素時，自動把底部操作列往上推開，避免按鈕被蓋住。 */
 (function(){
   var GAP_VAR = "--hb-overlay-gap";
-  var BUFFER = 12;          // 額外保留的間距
+  var BUFFER = 6;          // 額外保留的間距
   var MAX_REASONABLE_H = 260; // 超過這個高度就不當成小工具處理，避免誤判
-  var MAX_GAP = 90;          // 避讓間距上限，避免誤判導致底部留下一大塊空白
+  var MAX_GAP = 28;          // 避讓間距上限，避免誤判導致底部留下一大塊空白
 
   function isFloatingWidget(el){
     if(!(el instanceof HTMLElement)) return false;
