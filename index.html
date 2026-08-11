@@ -2118,12 +2118,68 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
     }
   };
   let selBg="rgba(65,16,27,0.12)";
+  let[calcOpen,setCalcOpen]=(0,u.useState)(!1);
+  let[calcDisplay,setCalcDisplay]=(0,u.useState)("0");
+  let[calcAcc,setCalcAcc]=(0,u.useState)(null);
+  let[calcOp,setCalcOp]=(0,u.useState)(null);
+  let[calcWaiting,setCalcWaiting]=(0,u.useState)(!1);
+  let[calcExprText,setCalcExprText]=(0,u.useState)("");
+  let HB_CELL_LABELS=["項目","規格","單位","數量","單價","備註","廠商單價"];
+  let calcCompute=(x,op,y)=>{switch(op){case"+":return x+y;case"-":return x-y;case"\xD7":return x*y;case"\xF7":return y===0?NaN:x/y;default:return y}};
+  let calcFormat=n=>{if(!isFinite(n)||isNaN(n))return"錯誤";let r=Math.round(n*1e8)/1e8;return r.toString()};
+  let calcDigit=d=>{setCalcDisplay(p=>{if(calcWaiting||p==="0")return d;return p.replace("-","").length>=14?p:p+d});setCalcWaiting(!1)};
+  let calcDot=()=>{setCalcDisplay(p=>calcWaiting?"0.":(p.indexOf(".")===-1?p+".":p));setCalcWaiting(!1)};
+  let calcClear=()=>{setCalcDisplay("0");setCalcAcc(null);setCalcOp(null);setCalcWaiting(!1);setCalcExprText("")};
+  let calcBackspace=()=>{if(calcWaiting)return;setCalcDisplay(p=>p.length<=1||(p.length===2&&p[0]==="-")?"0":p.slice(0,-1))};
+  let calcToggleSign=()=>setCalcDisplay(p=>p==="0"?p:(p[0]==="-"?p.slice(1):"-"+p));
+  let calcPercent=()=>setCalcDisplay(p=>calcFormat(parseFloat(p||"0")/100));
+  let calcOperator=op=>{
+    let cur=parseFloat(calcDisplay||"0");
+    if(calcOp!=null&&!calcWaiting){
+      let res=calcCompute(calcAcc,calcOp,cur);
+      setCalcAcc(res);setCalcDisplay(calcFormat(res));setCalcExprText(calcFormat(res)+" "+op)
+    }else{setCalcAcc(cur);setCalcExprText(calcFormat(cur)+" "+op)}
+    setCalcOp(op);setCalcWaiting(!0)
+  };
+  let calcEquals=()=>{
+    if(calcOp==null)return;
+    let cur=parseFloat(calcDisplay||"0");
+    let res=calcCompute(calcAcc,calcOp,cur);
+    setCalcExprText("");setCalcDisplay(calcFormat(res));setCalcAcc(null);setCalcOp(null);setCalcWaiting(!0)
+  };
+  let calcSelLabel=cellSel?HB_CELL_LABELS[cellSel.c0]:null;
+  let applyCalcToCell=()=>{
+    if(!cellSel){notify("請先在表格中點選要帶入的欄位");return}
+    let cat=a.categories.find(c=>c.id===cellSel.catId);
+    let it=cat&&cat.items[cellSel.r0];
+    if(!cat||!it)return;
+    let colKey=HB_CELL_COLS[cellSel.c0];
+    setItem(cellSel.catId,it.id,colKey,calcDisplay);
+    notify("已將 "+calcDisplay+" 帶入「"+calcSelLabel+"」欄位");
+    setCalcOpen(!1)
+  };
+  let calcBtn=(label,onClick,extra)=>u.default.createElement("button",{key:label+Math.random(),onClick,style:{border:`1px solid ${s.line}`,background:s.card,color:s.ink,borderRadius:8,padding:"12px 0",fontSize:15,cursor:"pointer",...(extra||{})}},label);
+  (0,u.useEffect)(()=>{
+    if(!calcOpen)return;
+    let onKey=ev=>{
+      if(ev.key>="0"&&ev.key<="9"){calcDigit(ev.key);ev.preventDefault();return}
+      if(ev.key==="."){calcDot();ev.preventDefault();return}
+      if(ev.key==="+"||ev.key==="-"){calcOperator(ev.key);ev.preventDefault();return}
+      if(ev.key==="*"){calcOperator("\xD7");ev.preventDefault();return}
+      if(ev.key==="/"){calcOperator("\xF7");ev.preventDefault();return}
+      if(ev.key==="Enter"||ev.key==="="){calcEquals();ev.preventDefault();return}
+      if(ev.key==="Backspace"){calcBackspace();ev.preventDefault();return}
+      if(ev.key==="Escape"){setCalcOpen(!1);ev.preventDefault();return}
+    };
+    window.addEventListener("keydown",onKey);
+    return()=>window.removeEventListener("keydown",onKey)
+  },[calcOpen,calcDisplay,calcAcc,calcOp,calcWaiting]);
   return u.default.createElement("div",{style:{position:"fixed",inset:0,background:s.paper,zIndex:71,overflowY:"auto",display:"flex",flexDirection:"column"}},
     localToast&&u.default.createElement("div",{className:"fade-in",style:{position:"fixed",bottom:20,left:"50%",transform:"translateX(-50%)",background:s.ink,color:s.card,padding:"10px 18px",borderRadius:8,fontSize:13,boxShadow:"0 4px 14px rgba(0,0,0,0.35)",zIndex:99,maxWidth:"90vw",textAlign:"center"}},localToast),
     u.default.createElement("div",{style:{background:"rgba(28,27,24,0.82)",backdropFilter:"blur(14px)",WebkitBackdropFilter:"blur(14px)",padding:"16px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}},
       u.default.createElement("button",{onClick:n,style:{background:"none",border:"none",color:"#C7B8A0",cursor:"pointer",display:"flex",alignItems:"center",gap:4,fontSize:12.5}},u.default.createElement(E,{name:"arrow-left",size:15})),
       u.default.createElement("h2",{style:{color:s.card,fontSize:16,margin:0}},t?"編輯估價單":"快速新增估價單"),
-      u.default.createElement("div",{style:{width:15}})
+      u.default.createElement("button",{onClick:()=>setCalcOpen(!0),title:"計算機",style:{background:"none",border:"none",color:"#C7B8A0",cursor:"pointer",display:"flex",alignItems:"center",padding:0}},u.default.createElement(E,{name:"calculator",size:17}))
     ),
     u.default.createElement("input",{ref:importFileRef,type:"file",accept:".xlsx,.xls,.csv",hidden:!0,onChange:handleFileImport}),
     u.default.createElement("input",{ref:vendorFileRef,type:"file",accept:"image/*,.pdf,.doc,.docx,.xls,.xlsx",hidden:!0,onChange:handleVendorFile}),
@@ -2265,6 +2321,42 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
       ),
       u.default.createElement("p",{style:{color:s.inkSoft,fontSize:11,padding:"6px 14px 0",margin:0}},"這是完整的 Google 試算表，可以像 Excel 一樣自由編輯、套用公式；編輯完按左上角「完成並同步回報價單」即可把資料帶回估價單。"),
       u.default.createElement("iframe",{src:`https://docs.google.com/spreadsheets/d/${sheetId}/edit?rm=embedded&widget=true&headers=false`,style:{flex:1,border:"none",width:"100%"},title:"Google 試算表"})
+    ),
+    calcOpen&&u.default.createElement("div",{onClick:()=>setCalcOpen(!1),style:{position:"fixed",inset:0,background:"rgba(28,27,24,0.55)",display:"flex",alignItems:"center",justifyContent:"center",padding:20,zIndex:98}},
+      u.default.createElement("div",{onClick:ev=>ev.stopPropagation(),className:"fade-in",style:{background:s.card,borderRadius:14,padding:16,width:"100%",maxWidth:300,boxShadow:"0 12px 40px rgba(0,0,0,0.35)"}},
+        u.default.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}},
+          u.default.createElement("span",{style:{fontSize:13,color:s.oceanDark,display:"flex",alignItems:"center",gap:5}},u.default.createElement(E,{name:"calculator",size:15}),"計算機"),
+          u.default.createElement("button",{onClick:()=>setCalcOpen(!1),style:{border:"none",background:"none",color:s.inkSoft,cursor:"pointer",padding:0}},u.default.createElement(E,{name:"x",size:16}))
+        ),
+        cellSel&&u.default.createElement("div",{style:{fontSize:11,color:s.oceanDark,background:s.cardAlt,borderRadius:6,padding:"5px 8px",marginBottom:8}},"目前選取欄位："+calcSelLabel),
+        u.default.createElement("div",{style:{background:s.paper,border:`1px solid ${s.line}`,borderRadius:8,padding:"10px 12px",marginBottom:10,textAlign:"right"}},
+          u.default.createElement("div",{style:{fontSize:11,color:s.inkSoft,minHeight:14}},calcExprText),
+          u.default.createElement("div",{className:"mono",style:{fontSize:26,color:s.ink,wordBreak:"break-all"}},calcDisplay)
+        ),
+        u.default.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:7,marginBottom:10}},
+          calcBtn("C",calcClear,{color:s.danger}),
+          calcBtn("⌫",calcBackspace),
+          calcBtn("%",calcPercent),
+          calcBtn("÷",()=>calcOperator("\xF7"),{background:s.ocean,color:"#fff",borderColor:s.ocean}),
+          calcBtn("7",()=>calcDigit("7")),
+          calcBtn("8",()=>calcDigit("8")),
+          calcBtn("9",()=>calcDigit("9")),
+          calcBtn("×",()=>calcOperator("\xD7"),{background:s.ocean,color:"#fff",borderColor:s.ocean}),
+          calcBtn("4",()=>calcDigit("4")),
+          calcBtn("5",()=>calcDigit("5")),
+          calcBtn("6",()=>calcDigit("6")),
+          calcBtn("−",()=>calcOperator("-"),{background:s.ocean,color:"#fff",borderColor:s.ocean}),
+          calcBtn("1",()=>calcDigit("1")),
+          calcBtn("2",()=>calcDigit("2")),
+          calcBtn("3",()=>calcDigit("3")),
+          calcBtn("+",()=>calcOperator("+"),{background:s.ocean,color:"#fff",borderColor:s.ocean}),
+          calcBtn("±",calcToggleSign),
+          calcBtn("0",()=>calcDigit("0")),
+          calcBtn(".",calcDot),
+          calcBtn("=",calcEquals,{background:s.lemon,color:s.oceanDark,borderColor:s.lemon})
+        ),
+        u.default.createElement("button",{onClick:applyCalcToCell,disabled:!cellSel,style:{width:"100%",border:"none",background:cellSel?s.oceanDark:s.line,color:"#fff",borderRadius:9,padding:"10px 0",fontSize:13,cursor:cellSel?"pointer":"default",opacity:cellSel?1:.6}},cellSel?"帶入「"+calcSelLabel+"」欄位":"請先點選表格中的欄位")
+      )
     )
   )
 }
