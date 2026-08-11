@@ -1968,7 +1968,7 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
       await HB_ensureGoogleReady();
       let listRes=await window.gapi.client.drive.files.list({q:"mimeType='application/vnd.google-apps.spreadsheet' and trashed=false",fields:"files(id,name,modifiedTime)",orderBy:"modifiedTime desc",pageSize:20});
       let files=listRes.result.files||[];
-      if(files.length===0){notify("目前沒有可選擇的 Google 試算表，請先按「推送到 Google 試算表」建立一份");setSheetBusy(null);return}
+      if(files.length===0){notify("目前沒有可選擇的 Google 試算表");setSheetBusy(null);return}
       setSheetBusy(null);
       setPickerFiles(files)
     }catch(err){notify("讀取試算表清單失敗："+(err&&err.result&&err.result.error&&err.result.error.message||err.message||err));setSheetBusy(null)}
@@ -2290,10 +2290,8 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
         u.default.createElement("span",{style:{color:"#C7B8A0",fontWeight:400,fontSize:12.5}},"NT$ ",HB_money(grandProfit))
       ),
       u.default.createElement("div",{style:{display:"flex",gap:7,marginBottom:7}},
-        u.default.createElement("button",{onClick:pushToSheet,disabled:!!sheetBusy,style:{flex:1,border:"1px solid rgba(255,255,255,0.4)",background:"none",borderRadius:9,padding:"9px 0",fontSize:12,color:"#fff",cursor:"pointer",opacity:sheetBusy?.6:1}},sheetBusy==="push"?"推送中…":(sheetId?"↑ 更新 Google 試算表":"↑ 推送到 Google 試算表")),
         u.default.createElement("button",{onClick:openSheetPicker,disabled:!!sheetBusy,style:{flex:1,border:"1px solid rgba(255,255,255,0.4)",background:"none",borderRadius:9,padding:"9px 0",fontSize:12,color:"#fff",cursor:"pointer",opacity:sheetBusy?.6:1}},sheetBusy==="pull"?"載入中…":"↓ 從試算表載入")
       ),
-      u.default.createElement("button",{onClick:openEmbeddedSheet,disabled:!!sheetBusy,style:{width:"100%",border:"1px solid rgba(255,255,255,0.4)",background:"rgba(255,255,255,0.1)",borderRadius:9,padding:"9px 0",fontSize:12,color:"#fff",cursor:"pointer",opacity:sheetBusy?.6:1,marginBottom:7,display:"flex",alignItems:"center",justifyContent:"center",gap:6}},u.default.createElement(E,{name:"presentation",size:14}),sheetBusy==="push"&&!embedOpen?"準備中…":"在此頁內嵌完整 Excel 試算表編輯"),
       u.default.createElement("div",{style:{display:"flex",gap:7,marginTop:grandCost>0?0:8}},
         u.default.createElement("button",{onClick:save,disabled:o,style:{flex:2,background:s.lemon,color:s.oceanDark,border:"none",borderRadius:9,padding:"11px 0",fontWeight:300,fontSize:13.5,cursor:"pointer",opacity:o?.6:1}},o?"儲存中…":"儲存估價單"),
         u.default.createElement("button",{onClick:()=>HB_openEstimatePrint(a),style:{flex:1,border:"1px solid rgba(255,255,255,0.4)",background:"none",borderRadius:9,padding:"10px 0",fontSize:12.5,color:"#fff",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:5}},u.default.createElement(E,{name:"printer",size:14}),"PDF"),
@@ -2310,17 +2308,6 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
         ),
         u.default.createElement("button",{onClick:()=>setPickerFiles(null),style:{...ll,width:"100%"}},"取消")
       )
-    ),
-    embedOpen&&sheetId&&u.default.createElement("div",{style:{position:"fixed",inset:0,background:s.paper,zIndex:90,display:"flex",flexDirection:"column"}},
-      u.default.createElement("div",{style:{background:"rgba(28,27,24,0.92)",padding:"10px 14px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:8,flexShrink:0}},
-        u.default.createElement("div",{style:{color:"#fff",fontSize:12.5,display:"flex",alignItems:"center",gap:6}},u.default.createElement(E,{name:"presentation",size:14}),"完整 Excel／Google 試算表編輯中"),
-        u.default.createElement("div",{style:{display:"flex",gap:8}},
-          u.default.createElement("button",{onClick:()=>closeEmbeddedSheet(!0),disabled:sheetBusy==="pull",style:{border:"none",background:s.lemon,color:s.oceanDark,borderRadius:7,padding:"7px 14px",fontSize:12.5,fontWeight:400,cursor:"pointer"}},sheetBusy==="pull"?"同步中…":"完成並同步回報價單"),
-          u.default.createElement("button",{onClick:()=>closeEmbeddedSheet(!1),style:{border:"1px solid rgba(255,255,255,0.4)",background:"none",color:"#fff",borderRadius:7,padding:"7px 14px",fontSize:12.5,cursor:"pointer"}},"關閉（不同步）")
-        )
-      ),
-      u.default.createElement("p",{style:{color:s.inkSoft,fontSize:11,padding:"6px 14px 0",margin:0}},"這是完整的 Google 試算表，可以像 Excel 一樣自由編輯、套用公式；編輯完按左上角「完成並同步回報價單」即可把資料帶回估價單。"),
-      u.default.createElement("iframe",{src:`https://docs.google.com/spreadsheets/d/${sheetId}/edit?rm=embedded&widget=true&headers=false`,style:{flex:1,border:"none",width:"100%"},title:"Google 試算表"})
     ),
     calcOpen&&u.default.createElement("div",{onClick:()=>setCalcOpen(!1),style:{position:"fixed",inset:0,background:"rgba(28,27,24,0.55)",display:"flex",alignItems:"center",justifyContent:"center",padding:20,zIndex:98}},
       u.default.createElement("div",{onClick:ev=>ev.stopPropagation(),className:"fade-in",style:{background:s.card,borderRadius:14,padding:16,width:"100%",maxWidth:300,boxShadow:"0 12px 40px rgba(0,0,0,0.35)"}},
