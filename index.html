@@ -2010,9 +2010,9 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
     setEmbedOpen(!1)
   };
   let inputStyle={width:"100%",padding:"7px 9px",borderRadius:6,border:`1px solid ${s.line}`,fontSize:13,boxSizing:"border-box",fontFamily:"inherit"};
-  let thStyle={border:`1px solid ${s.line}`,background:s.cardAlt,color:s.oceanDark,fontWeight:400,fontSize:11,padding:"5px 4px",whiteSpace:"nowrap"};
-  let tdStyle={border:`1px solid ${s.line}`,padding:"2px 3px",verticalAlign:"top"};
-  let cellInputStyle={width:"100%",border:"none",background:"transparent",fontSize:12.5,padding:"3px 4px",fontFamily:"inherit",boxSizing:"border-box",color:s.ink};
+  let thStyle={border:`1px solid ${s.line}`,background:s.cardAlt,color:s.oceanDark,fontWeight:400,fontSize:12,padding:"8px 7px",whiteSpace:"nowrap"};
+  let tdStyle={border:`1px solid ${s.line}`,padding:"4px 5px",verticalAlign:"top"};
+  let cellInputStyle={width:"100%",border:"none",background:"transparent",fontSize:13,padding:"5px 6px",fontFamily:"inherit",boxSizing:"border-box",color:s.ink};
   let autoGrow=el=>{if(el){el.style.height="auto";el.style.height=el.scrollHeight+"px"}};
   let HB_CELL_COLS=["name","spec","unit","qty","price","note","vendorPrice"];
   let[cellSel,setCellSel]=(0,u.useState)(null);
@@ -2183,8 +2183,8 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
     ),
     u.default.createElement("input",{ref:importFileRef,type:"file",accept:".xlsx,.xls,.csv",hidden:!0,onChange:handleFileImport}),
     u.default.createElement("input",{ref:vendorFileRef,type:"file",accept:"image/*,.pdf,.doc,.docx,.xls,.xlsx",hidden:!0,onChange:handleVendorFile}),
-    u.default.createElement("div",{style:{flex:1,overflowY:"auto",padding:"14px 14px 20px"}},
-    u.default.createElement("div",{style:{maxWidth:960,margin:"0 auto"}},
+    u.default.createElement("div",{style:{flex:1,overflowY:"auto",padding:"14px 20px 20px"}},
+    u.default.createElement("div",{style:{maxWidth:1240,margin:"0 auto"}},
       u.default.createElement("div",{style:{background:s.card,borderRadius:8,marginBottom:12,overflow:"hidden"}},
         u.default.createElement("button",{onClick:()=>setShowBasic(x=>!x),style:{width:"100%",background:"none",border:"none",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 13px",cursor:"pointer",fontSize:13,fontWeight:400,color:s.oceanDark}},
           u.default.createElement("span",null,"基本資料",!showBasic&&a.engName?"　"+a.engName:""),
@@ -2228,7 +2228,7 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
           )
         ),
         u.default.createElement("div",{style:{overflowX:"auto",marginBottom:8,border:`1px solid ${s.line}`,borderRadius:6}},
-          u.default.createElement("table",{style:{width:"100%",borderCollapse:"collapse",fontSize:12.5,minWidth:760}},
+          u.default.createElement("table",{style:{width:"100%",borderCollapse:"collapse",fontSize:13,minWidth:840}},
             u.default.createElement("thead",null,
               u.default.createElement("tr",null,
                 u.default.createElement("th",{style:{...thStyle,width:22}},u.default.createElement("input",{type:"checkbox",checked:cat.items.length>0&&cat.items.every(it=>(selectedItems[cat.id]||new Set()).has(it.id)),onChange:()=>toggleSelectAllItems(cat.id,cat.items.map(it=>it.id)),style:{width:14,height:14,verticalAlign:"middle"}})),
@@ -2280,7 +2280,7 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
       u.default.createElement("textarea",{placeholder:"付款/訂金條件備註",value:a.depositNote,onChange:v=>set("depositNote",v.target.value),rows:2,style:{...inputStyle,resize:"vertical"}})
     )),
     u.default.createElement("div",{style:{position:"sticky",bottom:"var(--hb-overlay-gap, 0px)",flexShrink:0,zIndex:50,background:"rgba(28,27,24,0.94)",backdropFilter:"blur(14px)",WebkitBackdropFilter:"blur(14px)",padding:"9px 16px 12px",boxShadow:"0 -4px 14px rgba(185,136,104,0.18)"}},
-      u.default.createElement("div",{style:{maxWidth:960,margin:"0 auto"}},
+      u.default.createElement("div",{style:{maxWidth:1240,margin:"0 auto"}},
       u.default.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:2}},
         u.default.createElement("span",{style:{color:"#C7B8A0",fontSize:11.5}},"總價（未含營業稅5%）"),
         u.default.createElement("span",{style:{color:s.lemon,fontWeight:300,fontSize:17}},"NT$ ",HB_money(grandTotal))
@@ -5230,6 +5230,7 @@ react-dom/cjs/react-dom-client.production.js:
   var GAP_VAR = "--hb-overlay-gap";
   var BUFFER = 12;          // 額外保留的間距
   var MAX_REASONABLE_H = 260; // 超過這個高度就不當成小工具處理，避免誤判
+  var MAX_GAP = 90;          // 避讓間距上限，避免誤判導致底部留下一大塊空白
 
   function isFloatingWidget(el){
     if(!(el instanceof HTMLElement)) return false;
@@ -5268,6 +5269,7 @@ react-dom/cjs/react-dom-client.production.js:
       var needed = (window.innerHeight - r.top) + BUFFER;
       if(needed > max) max = needed;
     });
+    if(max > MAX_GAP) max = MAX_GAP;
     document.documentElement.style.setProperty(GAP_VAR, (max>0?max:0) + "px");
   }
 
