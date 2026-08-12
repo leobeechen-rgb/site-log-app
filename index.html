@@ -4608,64 +4608,65 @@ function SSOForm({onStaff:l,onOwner:t}){
   };
   let tabItem=(key,label)=>u.default.createElement("span",{
     key,onClick:()=>setTab(key),
-    style:{cursor:"pointer",paddingBottom:5,fontSize:13.5,fontWeight:300,letterSpacing:"0.03em",color:tab===key?"#7C6A56":s.inkSoft,borderBottom:tab===key?"2px solid #7C6A56":"2px solid transparent",transition:"color .2s ease, border-color .2s ease",userSelect:"none"}
+    style:{cursor:"pointer",paddingBottom:5,fontSize:11,fontWeight:400,letterSpacing:"0.02em",color:tab===key?"#7C6A56":s.inkSoft,borderBottom:tab===key?"2px solid #7C6A56":"2px solid transparent",transition:"color .2s ease, border-color .2s ease",userSelect:"none"}
   },label);
-  let dotField=(value,onChange,onEnter,autoFocus)=>u.default.createElement("div",{className:"sso-dotwrap",style:{position:"relative",borderBottom:`1px solid ${s.line}`,padding:"6px 2px",marginBottom:10,minHeight:18,display:"flex",alignItems:"center",gap:8}},
-    Array.from({length:value.length}).map((_,idx)=>u.default.createElement("span",{key:idx,style:{width:6,height:6,borderRadius:"50%",background:s.ink,display:"inline-block",flexShrink:0}})),
-    u.default.createElement("span",{className:"sso-caret",style:{width:1,height:15,background:"#7C6A56",display:"inline-block",flexShrink:0}}),
+  let dotField=(value,onChange,onEnter,autoFocus)=>u.default.createElement("div",{className:"sso-dotwrap",style:{position:"relative",borderBottom:`1px solid ${s.line}`,padding:"3px 2px",marginBottom:6,minHeight:13,display:"flex",alignItems:"center",gap:8}},
+    Array.from({length:value.length}).map((_,idx)=>u.default.createElement("span",{key:idx,style:{width:5,height:5,borderRadius:"50%",background:s.ink,display:"inline-block",flexShrink:0}})),
     u.default.createElement("input",{type:"password",value,onChange,onKeyDown:d=>d.key==="Enter"&&onEnter(),autoFocus,autoCapitalize:"off",autoCorrect:"off",spellCheck:!1,style:{position:"absolute",inset:0,opacity:0,border:"none",background:"transparent",width:"100%",height:"100%",cursor:"text",fontSize:16}})
   );
-  return u.default.createElement("div",{style:{background:"#FAF9F6",height:"100vh",boxSizing:"border-box",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"space-between",fontFamily:"'Noto Sans TC', sans-serif",padding:"48px 26px 30px",overflow:"hidden"}},
+  return u.default.createElement("div",{style:{background:"#FAF9F6",height:"100vh",boxSizing:"border-box",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:"'Noto Sans TC', sans-serif",padding:"20px 26px",overflow:"hidden",position:"relative"}},
     u.default.createElement("style",null,`
       @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
       @keyframes hbSsoLogoIn { from { opacity:0; transform:scale(.85); } to { opacity:1; transform:scale(1); } }
       @keyframes hbSsoLogoSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
       .hb-sso-logo { animation: hbSsoLogoIn .9s ease-out, hbSsoLogoSpin 60s linear infinite; animation-delay: 0s, .9s; transform-origin:center; }
+      @keyframes hbSsoLogoBgIn { from { opacity:0; } to { opacity:.06; } }
+      .hb-sso-logo-bg { position:absolute; top:50%; left:50%; width:640px; height:640px; margin:-320px 0 0 -320px; object-fit:contain; pointer-events:none; z-index:0; animation: hbSsoLogoBgIn 1.4s ease-out forwards, hbSsoLogoSpin 120s linear infinite; animation-delay: 0s, 1.4s; transform-origin:center; }
       .sso-dotwrap { transition:border-color .2s ease; }
       .sso-dotwrap:focus-within { border-bottom-color:#7C6A56; }
-      .sso-caret { animation: ssoCaretBlink 1s steps(1) infinite; }
-      @keyframes ssoCaretBlink { 0%,50%{opacity:1} 51%,100%{opacity:0} }
+      .hb-sso-form, .hb-sso-form input, .hb-sso-form button { font-family: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif !important; }
     `),
 
-    u.default.createElement("div",{style:{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:22}},
-      u.default.createElement("img",{className:"hb-sso-logo",src:HB_LOGO_MARK,alt:"\u8d6b\u67cf\u7a7a\u9593\u8a2d\u8a08",style:{width:60,height:60,display:"block",objectFit:"contain"}}),
-      u.default.createElement("h1",{style:{color:s.ink,fontSize:46,margin:0,lineHeight:1.3,fontWeight:400,letterSpacing:"0.15em",writingMode:"vertical-rl",textOrientation:"upright",fontFamily:"'IansuiTitle',serif"}},"\u8d6b\u67cf\u7a7a\u9593\u8a2d\u8a08")
+    u.default.createElement("img",{className:"hb-sso-logo-bg",src:HB_LOGO_MARK,alt:""}),
+
+    u.default.createElement("div",{style:{display:"flex",flexDirection:"column",alignItems:"center",gap:16,marginBottom:26,position:"relative",zIndex:1}},
+      u.default.createElement("h1",{style:{color:s.ink,fontSize:58,margin:0,lineHeight:1.28,fontWeight:400,letterSpacing:"0.15em",writingMode:"vertical-rl",textOrientation:"upright",fontFamily:"'IansuiTitle',serif"}},"\u8d6b\u67cf\u7a7a\u9593\u8a2d\u8a08")
     ),
 
-    u.default.createElement("div",{style:{width:"100%",maxWidth:260,textAlign:"center"}},
+    u.default.createElement("div",{className:"hb-sso-form",style:{width:"100%",maxWidth:240,textAlign:"center",fontFamily:"'Noto Sans TC', sans-serif",position:"relative",zIndex:1}},
 
-      u.default.createElement("div",{style:{fontSize:9,letterSpacing:"0.2em",color:"#7C6A56",fontWeight:300,marginBottom:14}},"\u6848\u4ef6\u767b\u5165\u7cfb\u7d71"),
+      u.default.createElement("div",{style:{fontSize:11,letterSpacing:"0.1em",color:"#7C6A56",fontWeight:400,marginBottom:10}},"\u6848\u4ef6\u767b\u5165\u7cfb\u7d71"),
 
-      u.default.createElement("div",{style:{textAlign:"left",borderTop:`1px solid ${s.line}`,paddingTop:16}},
+      u.default.createElement("div",{style:{textAlign:"left",borderTop:`1px solid ${s.line}`,paddingTop:12}},
 
-      u.default.createElement("div",{style:{display:"flex",gap:16,marginBottom:14,borderBottom:`1px solid ${s.line}`}},
+      u.default.createElement("div",{style:{display:"flex",gap:14,marginBottom:10,borderBottom:`1px solid ${s.line}`}},
         tabItem("owner","\u696d\u4e3b\u767b\u5165"),
         tabItem("staff","\u516c\u53f8\u767b\u5165")
       ),
 
-      u.default.createElement("div",{style:{minHeight:150}},
+      u.default.createElement("div",{style:{minHeight:120}},
         tab==="staff"?u.default.createElement(u.default.Fragment,null,
-          u.default.createElement("label",{style:{fontSize:9.5,fontWeight:300,letterSpacing:"0.08em",color:s.inkSoft,display:"block",marginBottom:2}},"\u5e33\u865f"),
+          u.default.createElement("label",{style:{fontSize:11,fontWeight:400,letterSpacing:"0.02em",color:s.inkSoft,display:"block",marginBottom:2}},"\u5e33\u865f"),
           u.default.createElement("input",{value:su,onChange:d=>setSu(d.target.value),onKeyDown:d=>d.key==="Enter"&&doStaff(),style:ssoLine,autoFocus:!0,autoCapitalize:"off",autoCorrect:"off",spellCheck:!1,inputMode:"text"}),
-          u.default.createElement("label",{style:{fontSize:9.5,fontWeight:300,letterSpacing:"0.08em",color:s.inkSoft,display:"block",marginBottom:2}},"\u5bc6\u78bc"),
+          u.default.createElement("label",{style:{fontSize:11,fontWeight:400,letterSpacing:"0.02em",color:s.inkSoft,display:"block",marginBottom:2}},"\u5bc6\u78bc"),
           dotField(sp,d=>setSp(d.target.value),doStaff,!1),
-          se&&u.default.createElement("p",{style:{color:s.danger,fontSize:11,margin:"0 0 10px"}},se),
-          u.default.createElement("button",{onClick:doStaff,disabled:!su.trim()||!sp.trim()||sb,style:{...ssoBtn,marginTop:4,opacity:su.trim()&&sp.trim()&&!sb?1:.45}},sb?u.default.createElement(E,{name:"loader",size:13,className:"animate-spin"}):null," \u767b\u5165")
+          se&&u.default.createElement("p",{style:{color:s.danger,fontSize:11,margin:"0 0 8px"}},se),
+          u.default.createElement("button",{onClick:doStaff,disabled:!su.trim()||!sp.trim()||sb,style:{...ssoBtn,marginTop:4,opacity:su.trim()&&sp.trim()&&!sb?1:.45}},sb?u.default.createElement(E,{name:"loader",size:12,className:"animate-spin"}):null," \u767b\u5165")
         ):u.default.createElement(u.default.Fragment,null,
-          u.default.createElement("label",{style:{fontSize:9.5,fontWeight:300,letterSpacing:"0.08em",color:s.inkSoft,display:"block",marginBottom:2}},"\u8acb\u8f38\u5165\u6848\u4ef6\u5bc6\u78bc"),
+          u.default.createElement("label",{style:{fontSize:11,fontWeight:400,letterSpacing:"0.02em",color:s.inkSoft,display:"block",marginBottom:2}},"\u8acb\u8f38\u5165\u6848\u4ef6\u5bc6\u78bc"),
           dotField(op,d=>setOp(d.target.value),doOwner,!0),
-          oe&&u.default.createElement("p",{style:{color:s.danger,fontSize:11,margin:"0 0 10px"}},oe),
-          u.default.createElement("button",{onClick:doOwner,disabled:!op.trim()||ob,style:{...ssoBtn,marginTop:4,opacity:op.trim()&&!ob?1:.45}},ob?u.default.createElement(E,{name:"loader",size:13,className:"animate-spin"}):null," \u9032\u5165\u6848\u4ef6")
+          oe&&u.default.createElement("p",{style:{color:s.danger,fontSize:11,margin:"0 0 8px"}},oe),
+          u.default.createElement("button",{onClick:doOwner,disabled:!op.trim()||ob,style:{...ssoBtn,marginTop:4,opacity:op.trim()&&!ob?1:.45}},ob?u.default.createElement(E,{name:"loader",size:12,className:"animate-spin"}):null," \u9032\u5165\u6848\u4ef6")
         )
       ),
 
-      u.default.createElement("div",{style:{fontSize:9,fontWeight:300,color:s.inkSoft,opacity:.7,marginTop:4,textAlign:"center"}},"\u6848\u4ef6\u8cc7\u6599\u52a0\u5bc6\u4fdd\u8b77")
+      u.default.createElement("div",{style:{fontSize:11,fontWeight:400,color:s.inkSoft,opacity:.7,marginTop:4,textAlign:"center"}},"\u6848\u4ef6\u8cc7\u6599\u52a0\u5bc6\u4fdd\u8b77")
       )
     )
   );
 }
-let ssoLine={width:"100%",boxSizing:"border-box",border:"none",borderBottom:`1px solid ${s.line}`,borderRadius:0,padding:"7px 2px",fontSize:14,fontWeight:300,marginBottom:14,background:"transparent",color:s.ink,fontFamily:"inherit",outline:"none"};
-let ssoBtn={background:"#1C1B18",color:"#FFFFFF",border:"none",borderRadius:4,padding:"12px 0",fontWeight:400,fontSize:13.5,letterSpacing:"0.03em",cursor:"pointer",width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:6};
+let ssoLine={width:"100%",boxSizing:"border-box",border:"none",borderBottom:`1px solid ${s.line}`,borderRadius:0,padding:"6px 2px",fontSize:11,fontWeight:400,marginBottom:10,background:"transparent",color:s.ink,fontFamily:"'Noto Sans TC', sans-serif",outline:"none"};
+let ssoBtn={background:"#1C1B18",color:"#FFFFFF",border:"none",borderRadius:4,padding:"9px 0",fontWeight:400,fontSize:11,letterSpacing:"0.02em",cursor:"pointer",width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:6,fontFamily:"'Noto Sans TC', sans-serif"};
 
 function Ky({onBack:l}){let[t,e]=(0,u.useState)([]),[n,a]=(0,u.useState)(!0),[i,o]=(0,u.useState)(!1),[f,c]=(0,u.useState)(null),r=p=>{c(p),setTimeout(()=>c(null),2400)},d=async()=>{a(!0);let{data:p,error:z}=await q.from("sitelog_staff").select("id, username, created_at").order("created_at",{ascending:!0});z||e(p||[]),a(!1)};(0,u.useEffect)(()=>{d()},[]);let h=async(p,z)=>{let{error:C}=await q.from("sitelog_staff").insert({username:p,password:z});if(C){r("\u65B0\u589E\u5931\u6557\uFF1A"+(C.message.includes("duplicate")?"\u9019\u500B\u5E33\u865F\u5DF2\u7D93\u5B58\u5728":C.message));return}o(!1),r("\u5E33\u865F\u5DF2\u65B0\u589E"),d()},m=async(p,z)=>{if(t.length<=1){r("\u81F3\u5C11\u8981\u4FDD\u7559\u4E00\u7D44\u5E33\u865F");return}let C=(()=>{try{return localStorage.getItem("sitelog_admin_username")}catch{return null}})();if(z===C){r("\u4E0D\u80FD\u522A\u9664\u81EA\u5DF1\u76EE\u524D\u767B\u5165\u7684\u5E33\u865F");return}let{error:D}=await q.from("sitelog_staff").delete().eq("id",p);if(D){r("\u522A\u9664\u5931\u6557\uFF1A"+D.message);return}r("\u5E33\u865F\u5DF2\u522A\u9664"),d()};return u.default.createElement("div",{style:{background:s.paper,minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},u.default.createElement("div",{style:{background:"rgba(28,27,24,0.82)",backdropFilter:"blur(14px)",WebkitBackdropFilter:"blur(14px)",padding:"20px 16px"}},u.default.createElement("button",{onClick:l,style:{background:"none",border:"none",color:s.card,display:"flex",alignItems:"center",gap:6,cursor:"pointer",padding:0,marginBottom:10}},u.default.createElement(E,{name:"arrow-left",size:18})),u.default.createElement("h2",{style:{color:s.card,fontSize:20,fontWeight:300,margin:0}},"\u5E33\u865F\u7BA1\u7406")),u.default.createElement("div",{style:{padding:16}},u.default.createElement("button",{onClick:()=>o(!0),style:{...Dl,width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:8,marginBottom:16}},u.default.createElement(E,{name:"plus",size:16})," \u65B0\u589E\u54E1\u5DE5\u5E33\u865F"),n?u.default.createElement("div",{style:{textAlign:"center",padding:30}},u.default.createElement(E,{name:"loader",className:"animate-spin",size:22,color:s.ocean})):u.default.createElement("div",{style:{display:"flex",flexDirection:"column",gap:10}},t.map(p=>u.default.createElement("div",{key:p.id,style:{background:s.card,border:`1px solid ${s.line}`,borderRadius:8,padding:"12px 14px",display:"flex",alignItems:"center",justifyContent:"space-between"}},u.default.createElement("div",null,u.default.createElement("div",{style:{fontSize:14,fontWeight:400}},p.username),u.default.createElement("div",{className:"mono",style:{fontSize:11,color:s.inkSoft}},"\u5EFA\u7ACB\u65BC ",Tl(p.created_at))),u.default.createElement("button",{onClick:()=>m(p.id,p.username),style:{...at,color:s.danger}},u.default.createElement(E,{name:"trash",size:16})))))),i&&u.default.createElement(Jy,{onCancel:()=>o(!1),onCreate:h}),f&&u.default.createElement("div",{className:"fade-in",style:{position:"fixed",bottom:20,left:"50%",transform:"translateX(-50%)",background:s.ink,color:s.card,padding:"10px 18px",borderRadius:8,fontSize:13,boxShadow:"0 4px 14px rgba(0,0,0,0.25)",zIndex:60}},f))}function Jy({onCancel:l,onCreate:t}){let[e,n]=(0,u.useState)(""),[a,i]=(0,u.useState)("");return u.default.createElement("div",{style:{position:"fixed",inset:0,background:"rgba(43,38,32,0.45)",display:"flex",alignItems:"center",justifyContent:"center",padding:20,zIndex:55}},u.default.createElement("div",{className:"fade-in",style:{background:s.card,borderRadius:10,padding:22,width:"100%",maxWidth:340}},u.default.createElement("h3",{style:{margin:"0 0 14px",fontSize:17,fontWeight:400,color:s.oceanDark}},"\u65B0\u589E\u54E1\u5DE5\u5E33\u865F"),u.default.createElement("label",{style:{fontSize:12.5,color:s.inkSoft}},"\u5E33\u865F"),u.default.createElement("input",{value:e,onChange:o=>n(o.target.value),placeholder:"\u4F8B\uFF1Amary",style:el}),u.default.createElement("label",{style:{fontSize:12.5,color:s.inkSoft}},"\u5BC6\u78BC"),u.default.createElement("input",{value:a,onChange:o=>i(o.target.value),style:el}),u.default.createElement("div",{style:{display:"flex",gap:10,marginTop:6}},u.default.createElement("button",{onClick:l,style:{...ll,flex:1}},"\u53D6\u6D88"),u.default.createElement("button",{disabled:!e.trim()||!a.trim(),onClick:()=>t(e.trim(),a.trim()),style:{...Dl,flex:1,opacity:e.trim()&&a.trim()?1:.5}},"\u5EFA\u7ACB"))))}function Wy(){let[l,t]=(0,u.useState)(()=>{try{return localStorage.getItem("sitelog_owner_project_id")}catch{return null}}),[e,n]=(0,u.useState)(""),[a,i]=(0,u.useState)(""),[o,f]=(0,u.useState)(!1),c=()=>{try{localStorage.removeItem("sitelog_owner_project_id")}catch{}t(null)};if(l)return u.default.createElement(Fy,{projectId:l,onLogout:c});let r=async()=>{if(e.trim()){f(!0),i("");try{let{data:d,error:h}=await q.from("sitelog_projects").select("id").eq("owner_password",e).maybeSingle();if(h){i("\u7121\u6CD5\u9A57\u8B49\u5BC6\u78BC\uFF0C\u8ACB\u78BA\u8A8D\u7DB2\u8DEF\u9023\u7DDA\u5F8C\u518D\u8A66\u4E00\u6B21");return}if(d){try{localStorage.setItem("sitelog_owner_project_id",d.id)}catch{}t(d.id)}else i("\u5BC6\u78BC\u4E0D\u6B63\u78BA")}catch(d){i("\u767C\u751F\u932F\u8AA4\uFF1A"+(d.message||d))}finally{f(!1)}}};
   return u.default.createElement("div",{style:{background:"#FAF9F6",minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Noto Sans TC', sans-serif",padding:"36px 26px"}},
