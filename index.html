@@ -3487,10 +3487,11 @@ function HbBookingsHub({onBack:l,notify:g}){
           u.default.createElement("div",{style:{fontSize:14,fontWeight:400,color:s.oceanDark}},calMonth.getFullYear()+"年 "+(calMonth.getMonth()+1)+"月"),
           u.default.createElement("button",{onClick:()=>setCalMonth(m=>{let d=new Date(m);d.setMonth(d.getMonth()+1);return d}),style:{...at}},u.default.createElement(E,{name:"chevron-down",size:16,style:{transform:"rotate(-90deg)"}}))
         ),
-        u.default.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:4,marginBottom:6}},
-          ["日","一","二","三","四","五","六"].map(dn=>u.default.createElement("div",{key:dn,style:{textAlign:"center",fontSize:11,color:s.inkSoft,fontWeight:400}},dn))
+        u.default.createElement("div",{style:{maxWidth:380,margin:"0 auto"}},
+        u.default.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:3,marginBottom:6}},
+          ["日","一","二","三","四","五","六"].map(dn=>u.default.createElement("div",{key:dn,style:{textAlign:"center",fontSize:10.5,color:s.inkSoft,fontWeight:400}},dn))
         ),
-        u.default.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:4,marginBottom:10}},
+        u.default.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:3,marginBottom:10}},
           (()=>{
             let y=calMonth.getFullYear(),mo=calMonth.getMonth();
             let firstDow=new Date(y,mo,1).getDay();
@@ -3507,7 +3508,7 @@ function HbBookingsHub({onBack:l,notify:g}){
               let hasSchedule=schedule.some(sc=>sc.status!=="cancelled"&&sc.start_date<=dkey&&sc.end_date>=dkey);
               let isSel=selectedCalDate===dkey;
               let clickable=!isClosedDay||hasSchedule;
-              cells.push(u.default.createElement("div",{key:dkey,onClick:()=>clickable&&setSelectedCalDate(p=>p===dkey?null:dkey),style:{aspectRatio:"1",borderRadius:7,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:2,fontSize:12,cursor:clickable?"pointer":"default",background:isSel?s.ocean:"#fff",color:isSel?"#fff":isClosedDay?s.line:s.ink,border:`1px solid ${isSel?s.ocean:s.line}`}},
+              cells.push(u.default.createElement("div",{key:dkey,onClick:()=>clickable&&setSelectedCalDate(p=>p===dkey?null:dkey),style:{aspectRatio:"1",borderRadius:6,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:2,fontSize:11,cursor:clickable?"pointer":"default",background:isSel?s.ocean:"#fff",color:isSel?"#fff":isClosedDay?s.line:s.ink,border:`1px solid ${isSel?s.ocean:s.line}`}},
                 day,
                 (dotColor||hasSchedule)&&u.default.createElement("div",{style:{display:"flex",gap:3}},
                   dotColor&&u.default.createElement("span",{style:{width:5,height:5,borderRadius:"50%",background:isSel?"#fff":dotColor}}),
@@ -3517,6 +3518,7 @@ function HbBookingsHub({onBack:l,notify:g}){
             }
             return cells;
           })()
+        )
         ),
         u.default.createElement("div",{style:{display:"flex",gap:12,fontSize:11,color:s.inkSoft,flexWrap:"wrap"}},
           u.default.createElement("span",{style:{display:"flex",alignItems:"center",gap:4}},u.default.createElement("span",{style:{width:6,height:6,borderRadius:"50%",background:s.tree}}),"時段充裕"),
@@ -3546,9 +3548,9 @@ function HbBookingsHub({onBack:l,notify:g}){
       ),
       loading?u.default.createElement("div",{style:{textAlign:"center",padding:30}},u.default.createElement(E,{name:"loader",className:"animate-spin",size:22,color:s.ocean})):
       u.default.createElement(u.default.Fragment,null,
-        list.filter(b=>b.status!=="cancelled"&&(!selectedCalDate||b.date===selectedCalDate)).length===0?u.default.createElement("div",{style:{textAlign:"center",padding:30,color:s.inkSoft,fontSize:13}},"目前還沒有任何預約"):
+        list.filter(b=>b.status!=="cancelled"&&(selectedCalDate?b.date===selectedCalDate:b.date>=todayStr)).length===0?u.default.createElement("div",{style:{textAlign:"center",padding:30,color:s.inkSoft,fontSize:13}},"目前還沒有任何預約"):
         u.default.createElement("div",{style:{display:"flex",flexDirection:"column",gap:10,marginBottom:28}},
-          list.filter(b=>b.status!=="cancelled"&&(!selectedCalDate||b.date===selectedCalDate)).map(b=>u.default.createElement("div",{key:b.id,style:{background:s.card,border:`1px solid ${s.line}`,borderRadius:8,padding:"12px 14px"}},
+          list.filter(b=>b.status!=="cancelled"&&(selectedCalDate?b.date===selectedCalDate:b.date>=todayStr)).map(b=>u.default.createElement("div",{key:b.id,style:{background:s.card,border:`1px solid ${s.line}`,borderRadius:8,padding:"12px 14px"}},
             u.default.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:10}},
               u.default.createElement("div",null,
                 u.default.createElement("div",{style:{fontSize:14,fontWeight:400}},b.name," · ",b.phone),
