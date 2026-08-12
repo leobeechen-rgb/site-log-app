@@ -4030,15 +4030,11 @@ function HbCompanyHub({onBack:l,onContracts:t,onQuotes:e,onReceipts:rc,onVendorR
       u.default.createElement(HbCompanyGridCard,{icon:"clipboard-list",title:"工程報價單",desc:"選擇案件，管理該案件的報價單附件",onClick:e}),
       u.default.createElement(HbCompanyGridCard,{icon:"folder",title:"廠商報價單",desc:"依廠商分類管理報價檔案（Excel／圖片），可打包下載或匯出 PDF 清單",onClick:vq})
     ),
-    u.default.createElement("div",{style:{position:"relative",padding:"20px 0",textAlign:"center",overflow:"visible"}},
-      u.default.createElement("svg",{viewBox:"0 0 240 56",style:{width:150,height:28,display:"block",margin:"0 auto 0"}},
-        u.default.createElement("path",{d:"M10,40 C30,8 74,8 60,34 C48,58 106,62 120,32 C132,8 176,2 208,18",fill:"none",stroke:s.ocean,strokeWidth:1.2,strokeLinecap:"round",opacity:.75}),
-        u.default.createElement("circle",{className:"iy-breathe-a",cx:10,cy:40,r:3.5,fill:s.ocean}),
-        u.default.createElement("circle",{className:"iy-breathe-b",cx:120,cy:32,r:2.6,fill:s.tree})
-      ),
-      u.default.createElement("div",{className:"mono",style:{color:s.ocean,fontSize:11,letterSpacing:2,marginBottom:2,fontWeight:400}},"HERFULSINS INTERIOR DESIGN"),
-      u.default.createElement("h1",{style:{color:s.ink,fontSize:21,fontWeight:300,margin:0}},"赫柏空間設計"),
-      u.default.createElement("p",{style:{color:s.inkSoft,fontSize:12.5,marginTop:3,fontWeight:300}},"工地紀錄本 · 公司資料庫管理")
+    u.default.createElement("div",{style:{textAlign:"center",padding:"8px 0 22px",borderTop:`1px solid ${s.line}`,borderBottom:`1px solid ${s.line}`,marginBottom:4}},
+      u.default.createElement("img",{className:"hb-logo-mark",src:HB_LOGO_MARK,alt:"赫柏空間設計",style:{width:44,height:44,display:"block",margin:"14px auto 10px",objectFit:"contain"}}),
+      u.default.createElement("div",{className:"mono",style:{color:s.ocean,fontSize:10.5,letterSpacing:3,marginBottom:12,fontWeight:400}},"HERFULSINS INTERIOR DESIGN"),
+      u.default.createElement("h1",{style:{color:s.ink,fontSize:22,fontWeight:300,margin:0,letterSpacing:"0.08em",fontFamily:"'IansuiTitle',serif"}},"赫柏空間設計"),
+      u.default.createElement("p",{style:{color:s.inkSoft,fontSize:12.5,marginTop:8,marginBottom:14,fontWeight:300,letterSpacing:"0.02em"}},"工地紀錄本 · 公司資料庫管理")
     ),
     u.default.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12}},
       u.default.createElement(HbCompanyGridCard,{icon:"file-text",title:"設計合約",desc:"前期設計合約／指定案件工程合約的設計委任合約產生與紀錄",onClick:t}),
@@ -4756,15 +4752,12 @@ function Fy({projectId:l,onLogout:t}){let[e,n]=(0,u.useState)("loading"),[a,i]=(
           )
         )
       ),
-      u.default.createElement("svg",{viewBox:"0 0 240 56",style:{width:150,height:28,display:"block",marginBottom:0}},
-        u.default.createElement("path",{d:"M10,40 C30,8 74,8 60,34 C48,58 106,62 120,32 C132,8 176,2 208,18",
-          fill:"none",stroke:s.ocean,strokeWidth:1.2,strokeLinecap:"round",opacity:.75}),
-        u.default.createElement("circle",{className:"iy-breathe-a",cx:10,cy:40,r:3.5,fill:s.ocean}),
-        u.default.createElement("circle",{className:"iy-breathe-b",cx:120,cy:32,r:2.6,fill:s.tree})
-      ),
-      u.default.createElement("div",{className:"mono",style:{color:s.ocean,fontSize:11,letterSpacing:2,marginBottom:2,fontWeight:400}},"HERFULSINS INTERIOR DESIGN"),
-      u.default.createElement("h1",{style:{color:s.ink,fontSize:21,fontWeight:300,margin:0}},hbPM?"\u5DE5\u7A0B\u5831\u50F9\u55AE":"\u8D6B\u67CF\u7A7A\u9593\u8A2D\u8A08"),
-      u.default.createElement("p",{style:{color:s.inkSoft,fontSize:12.5,marginTop:3,fontWeight:300}},hbPM?"\u9078\u64C7\u6848\u4EF6\u4EE5\u7BA1\u7406\u5831\u50F9\u55AE":"\u5DE5\u5730\u7D00\u9304\u672C \xB7 \u6848\u4EF6\u7368\u7ACB\u7BA1\u7406")
+      u.default.createElement("div",{style:{textAlign:"center",padding:"8px 0 22px"}},
+        u.default.createElement("img",{className:"hb-logo-mark",src:HB_LOGO_MARK,alt:"\u8d6b\u67cf\u7a7a\u9593\u8a2d\u8a08",style:{width:44,height:44,display:"block",margin:"0 auto 10px",objectFit:"contain"}}),
+        u.default.createElement("div",{className:"mono",style:{color:s.ocean,fontSize:10.5,letterSpacing:3,marginBottom:12,fontWeight:400}},"HERFULSINS INTERIOR DESIGN"),
+        u.default.createElement("h1",{style:{color:s.ink,fontSize:22,fontWeight:300,margin:0,letterSpacing:"0.08em",fontFamily:"'IansuiTitle',serif"}},hbPM?"\u5DE5\u7A0B\u5831\u50F9\u55AE":"\u8D6B\u67CF\u7A7A\u9593\u8A2D\u8A08"),
+        u.default.createElement("p",{style:{color:s.inkSoft,fontSize:12.5,marginTop:8,fontWeight:300,letterSpacing:"0.02em"}},hbPM?"\u9078\u64C7\u6848\u4EF6\u4EE5\u7BA1\u7406\u5831\u50F9\u55AE":"\u5DE5\u5730\u7D00\u9304\u672C \xB7 \u6848\u4EF6\u7368\u7ACB\u7BA1\u7406")
+      )
     ),
 
     u.default.createElement("div",{style:{padding:"6px 16px 100px",position:"relative",zIndex:1}},
