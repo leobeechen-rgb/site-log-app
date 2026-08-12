@@ -2448,14 +2448,14 @@ function HbLanding({onCase:l,onCompany:t,onManageStaff:e,onLogout:n,onQuickQuote
         u.default.createElement("p",{style:{color:s.inkSoft,fontSize:12.5,marginTop:12,fontWeight:300,letterSpacing:"0.03em"}},"\u5de5\u5730\u7d00\u9304\u672c\u3000\u00b7\u3000\u8acb\u9078\u64c7\u8981\u7ba1\u7406\u7684\u8cc7\u6599\u5eab")
       ),
 
-      u.default.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:1,background:s.line,border:`1px solid ${s.line}`,marginBottom:32}},
+      u.default.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fit, minmax(210px, 1fr))",gap:1,background:s.line,border:`1px solid ${s.line}`,marginBottom:32}},
         u.default.createElement(HbCompanyGridCard,{icon:"clipboard-list",title:"\u6848\u4ef6\u8cc7\u6599\u5eab",desc:"\u7ba1\u7406\u9032\u884c\u4e2d\u7684\u7a7a\u9593\u8a2d\u8a08\u8207\u5de5\u7a0b\u5c08\u6848\uff1a\u65bd\u5de5\u7167\u7247\u3001\u6750\u6599\u9001\u9054\u3001\u5c08\u6848\u6a94\u6848\u3001\u8a2d\u5099\u8cc7\u6599",onClick:l}),
         u.default.createElement(HbCompanyGridCard,{icon:"folder",title:"\u516c\u53f8\u8cc7\u6599\u5eab",desc:"\u516c\u53f8\u71df\u904b\u3001\u884c\u653f\u8207\u5236\u5f0f\u5408\u7d04\uff1a\u8a2d\u8a08\u5408\u7d04\u3001\u5de5\u7a0b\u5831\u50f9\u55ae",onClick:t}),
         u.default.createElement(HbCompanyGridCard,{icon:"image",title:"\u8d6b\u67cf\u7a7a\u9593\u4f5c\u54c1\u6848\u4f8b",desc:"\u8de8\u6848\u4ef6\u7684\u884c\u92b7\uff0f\u63d0\u6848\u7528\u7167\u7247\u5eab",onClick:mp}),
         u.default.createElement(HbCompanyGridCard,{icon:"presentation",title:"\u5716\u9762\u7ba1\u7406",desc:"\u4f9d\u8cc7\u6599\u593e\u7ba1\u7406\u65bd\u5de5\u5716\u9762\uff0c\u652f\u63f4\u5b50\u8cc7\u6599\u593e\u8207\u7248\u672c\u7d00\u9304\u56de\u6eaf",onClick:dw})
       ),
 
-      u.default.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:1,background:s.line,border:`1px solid ${s.line}`}},
+      u.default.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fit, minmax(210px, 1fr))",gap:1,background:s.line,border:`1px solid ${s.line}`}},
         u.default.createElement(HbCompanyGridCard,{icon:"zap",title:"\u5feb\u901f\u5831\u50f9\u7cfb\u7d71",desc:"\u7368\u7acb\u55ae\u50f9\u5eab\uff0b\u5831\u50f9\u55ae\u7522\u751f\u5de5\u5177\uff0c\u65bc\u65b0\u8996\u7a97\u958b\u555f",onClick:qq}),
         u.default.createElement(HbCompanyGridCard,{icon:"users",title:"\u5ba2\u6236\u9810\u7d04\u9801\u9762",desc:"\u958b\u555f\u5ba2\u6236\u7dda\u4e0a\u9810\u7d04\u8af8\u8a62\u9801\u9762",onClick:ob}),
         u.default.createElement(HbCompanyGridCard,{icon:"calendar",title:"\u9810\u7d04\u7ba1\u7406",desc:"\u67e5\u770b\u5ba2\u6236\u9810\u7d04\u3001\u4fee\u6539\u6642\u6bb5\u3001\u8a2d\u5b9a\u516c\u4f11\u65e5",onClick:bk}),
