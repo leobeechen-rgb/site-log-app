@@ -42,7 +42,7 @@
 
   /* ===== 全站字體美化：內文維持 Noto Sans TC 細字重，標題改用細緻襯線字體 ===== */
   html, body, input, textarea, select, button {
-    font-family: "Iansui","Noto Sans TC","PingFang TC","Microsoft JhengHei",-apple-system,BlinkMacSystemFont,sans-serif !important;
+    font-family: "Noto Sans TC","PingFang TC","Microsoft JhengHei",-apple-system,BlinkMacSystemFont,sans-serif !important;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
@@ -54,9 +54,9 @@
   [style*="font-weight: 700"], [style*="font-weight:700"],
   [style*="font-weight: bold"], [style*="font-weight:bold"],
   b, strong { font-weight: 400 !important; }
-  /* 標題改用纖細襯線字體（中文 Noto Serif TC，西文 Cormorant Garamond），質感更細緻 */
+  /* 標題恢復正常字型（僅首頁主標題單獨使用雅倩體，見該處 inline 樣式） */
   h1, h2, h3 {
-    font-family: "Iansui","Noto Serif TC","Cormorant Garamond",serif !important;
+    font-family: "Noto Sans TC","PingFang TC","Microsoft JhengHei",-apple-system,BlinkMacSystemFont,sans-serif;
     font-weight: 400 !important;
     letter-spacing: 0.02em;
   }
@@ -4318,7 +4318,7 @@ function HbBottomNav({active,onNavigate}){
       .hb-dock { opacity: .5; transition: opacity .25s ease, transform .25s ease; }
       .hb-dock:hover, .hb-dock:focus-within { opacity: .98; }
     `),
-    u.default.createElement("div",{className:"hb-dock",style:{position:"fixed",right:20,bottom:20,zIndex:20,display:"flex",alignItems:"flex-end",gap:14,background:"rgba(255,255,255,0.65)",backdropFilter:"blur(14px)",WebkitBackdropFilter:"blur(14px)",border:`1px solid rgba(255,255,255,0.6)`,borderRadius:999,padding:"10px 18px 8px",boxShadow:"0 8px 24px -8px rgba(43,38,32,0.28)"}},
+    u.default.createElement("div",{className:"hb-dock",style:{position:"fixed",left:"50%",bottom:20,transform:"translateX(-50%)",zIndex:20,display:"flex",alignItems:"flex-end",gap:14,background:"rgba(255,255,255,0.65)",backdropFilter:"blur(14px)",WebkitBackdropFilter:"blur(14px)",border:`1px solid rgba(255,255,255,0.6)`,borderRadius:999,padding:"10px 18px 8px",boxShadow:"0 8px 24px -8px rgba(43,38,32,0.28)"}},
     items.map(it=>{
       let isActive=!it.action&&active===it.key,d=isActive?46:38;
       return u.default.createElement("button",{key:it.key,onClick:()=>it.action?it.action():onNavigate(it.key),style:{display:"flex",flexDirection:"column",alignItems:"center",gap:4,background:"none",border:"none",cursor:"pointer",padding:0,width:52}},
@@ -4624,13 +4624,15 @@ function SSOForm({onStaff:l,onOwner:t}){
       .hb-sso-logo-bg { position:absolute; top:50%; left:50%; width:640px; height:640px; margin:-320px 0 0 -320px; object-fit:contain; pointer-events:none; z-index:0; animation: hbSsoLogoBgIn 1.4s ease-out forwards, hbSsoLogoSpin 120s linear infinite; animation-delay: 0s, 1.4s; transform-origin:center; }
       .sso-dotwrap { transition:border-color .2s ease; }
       .sso-dotwrap:focus-within { border-bottom-color:#7C6A56; }
+      @font-face { font-family: 'YaqianTTF'; src: url('./yaqian.ttf') format('truetype'); font-weight: normal; font-style: normal; font-display: swap; }
       .hb-sso-form, .hb-sso-form input, .hb-sso-form button { font-family: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif !important; }
+      .hb-sso-title { font-family: 'YaqianTTF', 'IansuiTitle', serif !important; }
     `),
 
     u.default.createElement("img",{className:"hb-sso-logo-bg",src:HB_LOGO_MARK,alt:""}),
 
     u.default.createElement("div",{style:{display:"flex",flexDirection:"column",alignItems:"center",gap:16,marginBottom:26,position:"relative",zIndex:1}},
-      u.default.createElement("h1",{style:{color:s.ink,fontSize:58,margin:0,lineHeight:1.28,fontWeight:400,letterSpacing:"0.15em",writingMode:"vertical-rl",textOrientation:"upright",fontFamily:"'IansuiTitle',serif"}},"\u8d6b\u67cf\u7a7a\u9593\u8a2d\u8a08")
+      u.default.createElement("h1",{className:"hb-sso-title",style:{color:s.ink,fontSize:58,margin:0,lineHeight:1.28,fontWeight:400,letterSpacing:"0.15em",writingMode:"vertical-rl",textOrientation:"upright"}},"\u8d6b\u67cf\u7a7a\u9593\u8a2d\u8a08")
     ),
 
     u.default.createElement("div",{className:"hb-sso-form",style:{width:"100%",maxWidth:240,textAlign:"center",fontFamily:"'Noto Sans TC', sans-serif",position:"relative",zIndex:1}},
