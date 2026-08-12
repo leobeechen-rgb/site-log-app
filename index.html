@@ -2437,18 +2437,18 @@ function HbLanding({onCase:l,onCompany:t,onManageStaff:e,onLogout:n,onQuickQuote
         )
       ),
 
-      u.default.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:1,background:s.line,border:`1px solid ${s.line}`,marginBottom:36}},
+      u.default.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:1,background:s.line,border:`1px solid ${s.line}`,marginBottom:24}},
         u.default.createElement(HbCompanyGridCard,{icon:"clipboard-list",title:"\u6848\u4ef6\u8cc7\u6599\u5eab",desc:"\u7ba1\u7406\u9032\u884c\u4e2d\u7684\u7a7a\u9593\u8a2d\u8a08\u8207\u5de5\u7a0b\u5c08\u6848\uff1a\u65bd\u5de5\u7167\u7247\u3001\u6750\u6599\u9001\u9054\u3001\u5c08\u6848\u6a94\u6848\u3001\u8a2d\u5099\u8cc7\u6599",onClick:l}),
         u.default.createElement(HbCompanyGridCard,{icon:"folder",title:"\u516c\u53f8\u8cc7\u6599\u5eab",desc:"\u516c\u53f8\u71df\u904b\u3001\u884c\u653f\u8207\u5236\u5f0f\u5408\u7d04\uff1a\u8a2d\u8a08\u5408\u7d04\u3001\u5de5\u7a0b\u5831\u50f9\u55ae",onClick:t}),
         u.default.createElement(HbCompanyGridCard,{icon:"image",title:"\u8d6b\u67cf\u7a7a\u9593\u4f5c\u54c1\u6848\u4f8b",desc:"\u8de8\u6848\u4ef6\u7684\u884c\u92b7\uff0f\u63d0\u6848\u7528\u7167\u7247\u5eab",onClick:mp}),
         u.default.createElement(HbCompanyGridCard,{icon:"presentation",title:"\u5716\u9762\u7ba1\u7406",desc:"\u4f9d\u8cc7\u6599\u593e\u7ba1\u7406\u65bd\u5de5\u5716\u9762\uff0c\u652f\u63f4\u5b50\u8cc7\u6599\u593e\u8207\u7248\u672c\u7d00\u9304\u56de\u6eaf",onClick:dw})
       ),
 
-      u.default.createElement("div",{style:{textAlign:"center",padding:"12px 0 22px",borderTop:`1px solid ${s.line}`,borderBottom:`1px solid ${s.line}`,marginBottom:24}},
-        u.default.createElement("img",{className:"hb-logo-mark",src:HB_LOGO_MARK,alt:"\u8d6b\u67cf\u7a7a\u9593\u8a2d\u8a08",style:{width:42,height:42,display:"block",margin:"0 auto 8px",objectFit:"contain"}}),
-        u.default.createElement("div",{className:"mono",style:{color:s.ocean,fontSize:10,letterSpacing:1.5,marginBottom:8,fontWeight:400}},"HERFULSINS INTERIOR DESIGN"),
-        u.default.createElement("h1",{style:{color:s.ink,fontSize:23,fontWeight:300,margin:0,letterSpacing:"0.04em",fontFamily:"'IansuiTitle',serif"}},"\u8d6b\u67cf\u7a7a\u9593\u8a2d\u8a08"),
-        u.default.createElement("p",{style:{color:s.inkSoft,fontSize:12,marginTop:6,fontWeight:300,letterSpacing:"0.02em"}},"\u5de5\u5730\u7d00\u9304\u672c\u3000\u00b7\u3000\u8acb\u9078\u64c7\u8981\u7ba1\u7406\u7684\u8cc7\u6599\u5eab")
+      u.default.createElement("div",{style:{textAlign:"center",padding:"20px 0 40px",borderTop:`1px solid ${s.line}`,borderBottom:`1px solid ${s.line}`,marginBottom:36}},
+        u.default.createElement("img",{className:"hb-logo-mark",src:HB_LOGO_MARK,alt:"\u8d6b\u67cf\u7a7a\u9593\u8a2d\u8a08",style:{width:56,height:56,display:"block",margin:"0 auto 12px",objectFit:"contain"}}),
+        u.default.createElement("div",{className:"mono",style:{color:s.ocean,fontSize:10.5,letterSpacing:1.5,marginBottom:14,fontWeight:400}},"HERFULSINS INTERIOR DESIGN"),
+        u.default.createElement("h1",{style:{color:s.ink,fontSize:27,fontWeight:300,margin:0,letterSpacing:"0.04em",fontFamily:"'IansuiTitle',serif"}},"\u8d6b\u67cf\u7a7a\u9593\u8a2d\u8a08"),
+        u.default.createElement("p",{style:{color:s.inkSoft,fontSize:12.5,marginTop:10,fontWeight:300,letterSpacing:"0.02em"}},"\u5de5\u5730\u7d00\u9304\u672c\u3000\u00b7\u3000\u8acb\u9078\u64c7\u8981\u7ba1\u7406\u7684\u8cc7\u6599\u5eab")
       ),
 
       u.default.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:1,background:s.line,border:`1px solid ${s.line}`}},
@@ -4034,7 +4034,7 @@ function HbCompanyHub({onBack:l,onContracts:t,onQuotes:e,onReceipts:rc,onVendorR
     )
   )
 )}
-function HbCompanyGridCard({icon:l,title:t,desc:e,onClick:n}){return u.default.createElement("div",{onClick:n,style:{background:s.card,padding:"20px 16px",display:"flex",flexDirection:"column",gap:10,cursor:"pointer"}},u.default.createElement("div",{style:{width:28,height:28,display:"flex",alignItems:"center",justifyContent:"center"}},u.default.createElement(E,{name:l,size:18,color:s.ocean})),u.default.createElement("div",null,u.default.createElement("div",{style:{fontSize:14,fontWeight:400,color:s.ink,letterSpacing:"0.02em"}},t),u.default.createElement("div",{style:{fontSize:11,color:s.inkSoft,marginTop:5,lineHeight:1.6}},e)))}
+function HbCompanyGridCard({icon:l,title:t,desc:e,onClick:n}){return u.default.createElement("div",{onClick:n,style:{background:s.card,padding:"13px 14px",display:"flex",flexDirection:"column",gap:5,cursor:"pointer"}},u.default.createElement("div",{style:{width:20,height:20,display:"flex",alignItems:"center",justifyContent:"center"}},u.default.createElement(E,{name:l,size:15,color:s.ocean})),u.default.createElement("div",null,u.default.createElement("div",{style:{fontSize:13,fontWeight:400,color:s.ink,letterSpacing:"0.02em"}},t),u.default.createElement("div",{style:{fontSize:10.5,color:s.inkSoft,marginTop:3,lineHeight:1.45}},e)))}
 function HbDrawingHub({onBack,notify}){
   let[folders,setFolders]=(0,u.useState)([]);
   let[drawings,setDrawings]=(0,u.useState)([]);
