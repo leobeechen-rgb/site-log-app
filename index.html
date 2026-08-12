@@ -91,7 +91,7 @@
   }
 
   @media (min-width: 700px) {
-    #root { max-width: 640px; margin: 0 auto; box-shadow: 0 0 50px rgba(28,27,24,0.08); }
+    #root { max-width: 960px; margin: 0 auto; box-shadow: 0 0 50px rgba(28,27,24,0.08); }
   }
 
   /* ===== 玻璃質感輕透：卡片（cardAlt, #F2EFE8）改為半透明毛玻璃 ===== */
@@ -2420,8 +2420,13 @@ function HbArchCard({icon:l,title:t,tint:e,onClick:n}){return u.default.createEl
 function HbLandingCard({icon:l,title:t,desc:e,onClick:n}){return u.default.createElement("div",{onClick:n,style:{background:"rgba(255,255,255,0.34)",backdropFilter:"blur(18px)",WebkitBackdropFilter:"blur(18px)",borderRadius:22,padding:"20px 20px",display:"flex",gap:16,alignItems:"flex-start",cursor:"pointer",border:"1px solid rgba(255,255,255,0.55)",boxShadow:"0 8px 24px -8px rgba(140,111,82,0.18)"}},u.default.createElement("div",{style:{width:46,height:46,borderRadius:"50% 50% 12px 12px",background:"rgba(255,255,255,0.5)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},u.default.createElement(E,{name:l,size:21,color:s.ocean})),u.default.createElement("div",{style:{flex:1}},u.default.createElement("div",{style:{fontSize:16,fontWeight:300,color:s.oceanDark}},t),u.default.createElement("div",{style:{fontSize:12.5,color:s.inkSoft,marginTop:4,lineHeight:1.5}},e)),u.default.createElement(E,{name:"arrow-left",size:16,color:s.inkSoft,style:{transform:"scaleX(-1)",marginTop:4}}))}
 function HbLanding({onCase:l,onCompany:t,onManageStaff:e,onLogout:n,onQuickQuote:qq,onProposal:pg,onMarketingPhotos:mp,onBookings:bk,onOpenBooking:ob,onDrawings:dw}){
   return u.default.createElement("div",{style:{background:s.paper,height:"100vh",overflow:"hidden",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},
+    u.default.createElement("style",null,`
+      @keyframes hbLogoSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+      @keyframes hbLogoIn { from { opacity: 0; transform: scale(0.85); } to { opacity: 1; transform: scale(1); } }
+      .hb-logo-mark { animation: hbLogoIn .8s ease-out, hbLogoSpin 60s linear infinite; animation-delay: 0s, .8s; transform-origin: center; }
+    `),
 
-    u.default.createElement("div",{className:"hb-scroll",style:{maxWidth:640,margin:"0 auto",height:"100%",overflowY:"auto",padding:"28px 20px 96px"}},
+    u.default.createElement("div",{className:"hb-scroll",style:{maxWidth:900,margin:"0 auto",height:"100%",overflowY:"auto",padding:"28px 20px 96px"}},
 
       u.default.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:40}},
         u.default.createElement("span",{style:{fontSize:11.5,color:s.inkSoft,fontWeight:300,letterSpacing:"0.02em"}},"\u6b61\u8fce\u56de\u4f86\uff0c\u4eca\u5929\u4e5f\u8981\u597d\u597d\u7167\u9867\u6bcf\u500b\u5de5\u5730"),
@@ -2432,7 +2437,7 @@ function HbLanding({onCase:l,onCompany:t,onManageStaff:e,onLogout:n,onQuickQuote
       ),
 
       u.default.createElement("div",{style:{textAlign:"center",padding:"20px 0 40px",borderTop:`1px solid ${s.line}`,borderBottom:`1px solid ${s.line}`,marginBottom:36}},
-        u.default.createElement("img",{src:HB_LOGO_MARK,alt:"\u8d6b\u67cf\u7a7a\u9593\u8a2d\u8a08",style:{width:64,height:64,display:"block",margin:"0 auto 14px",objectFit:"contain"}}),
+        u.default.createElement("img",{className:"hb-logo-mark",src:HB_LOGO_MARK,alt:"\u8d6b\u67cf\u7a7a\u9593\u8a2d\u8a08",style:{width:64,height:64,display:"block",margin:"0 auto 14px",objectFit:"contain"}}),
         u.default.createElement("div",{className:"mono",style:{color:s.ocean,fontSize:10.5,letterSpacing:3,marginBottom:16,fontWeight:400}},"HERFULSINS INTERIOR DESIGN"),
         u.default.createElement("h1",{style:{color:s.ink,fontSize:28,fontWeight:300,margin:0,letterSpacing:"0.1em"}},"\u8d6b\u67cf\u7a7a\u9593\u8a2d\u8a08"),
         u.default.createElement("p",{style:{color:s.inkSoft,fontSize:12.5,marginTop:12,fontWeight:300,letterSpacing:"0.03em"}},"\u5de5\u5730\u7d00\u9304\u672c\u3000\u00b7\u3000\u8acb\u9078\u64c7\u8981\u7ba1\u7406\u7684\u8cc7\u6599\u5eab")
@@ -4303,7 +4308,12 @@ function HbBottomNav({active,onNavigate}){
     {key:"home",icon:"clipboard-list",label:"\u5C08\u6848\u8CC7\u6599\u5EAB"},
     {key:"shareLine",icon:"share",label:"\u5206\u4EAB\u5230LINE",action:()=>HB_shareBookingLinkToLine()}
   ];
-  return u.default.createElement("div",{style:{position:"fixed",left:"50%",bottom:16,transform:"translateX(-50%)",zIndex:20,display:"flex",alignItems:"flex-end",gap:14,background:s.paper,borderRadius:999,padding:"10px 18px 8px",boxShadow:"8px 8px 18px rgba(140,111,82,0.22), -8px -8px 18px rgba(255,255,255,0.75)"}},
+  return u.default.createElement(u.default.Fragment,null,
+    u.default.createElement("style",null,`
+      .hb-dock { opacity: .5; transition: opacity .25s ease, transform .25s ease; }
+      .hb-dock:hover, .hb-dock:focus-within { opacity: .98; }
+    `),
+    u.default.createElement("div",{className:"hb-dock",style:{position:"fixed",right:20,bottom:20,zIndex:20,display:"flex",alignItems:"flex-end",gap:14,background:"rgba(255,255,255,0.65)",backdropFilter:"blur(14px)",WebkitBackdropFilter:"blur(14px)",border:`1px solid rgba(255,255,255,0.6)`,borderRadius:999,padding:"10px 18px 8px",boxShadow:"0 8px 24px -8px rgba(43,38,32,0.28)"}},
     items.map(it=>{
       let isActive=!it.action&&active===it.key,d=isActive?46:38;
       return u.default.createElement("button",{key:it.key,onClick:()=>it.action?it.action():onNavigate(it.key),style:{display:"flex",flexDirection:"column",alignItems:"center",gap:4,background:"none",border:"none",cursor:"pointer",padding:0,width:52}},
@@ -4313,6 +4323,7 @@ function HbBottomNav({active,onNavigate}){
         u.default.createElement("span",{style:{fontSize:9.5,color:isActive?s.oceanDark:s.inkSoft,fontWeight:isActive?500:400,whiteSpace:"nowrap"}},it.label)
       );
     })
+    )
   );
 }
 function HbDigitalCard({onBack,notify}){
@@ -4540,7 +4551,7 @@ function Gy(){let[l,t]=(0,u.useState)(!0),[e,n]=(0,u.useState)(!1),[a,i]=(0,u.us
         @media (min-width: 860px) {
           html, body { background: #DCE4E1; }
           .hb-shell {
-            max-width: 640px;
+            max-width: 960px;
             margin: 0 auto !important;
             box-shadow: 0 0 0 1px rgba(43,38,32,0.08), 0 30px 60px -20px rgba(43,38,32,0.25);
           }
