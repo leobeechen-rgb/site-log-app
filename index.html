@@ -5312,7 +5312,7 @@ react-dom/cjs/react-dom-client.production.js:
 </script>
 <!--
   =====================================================================
-  赫柏工地紀錄本 · 側邊導覽列 v6
+  赫柏工地紀錄本 · 側邊導覽列 v7
   貼法：整段貼在 index.html 最後的 </body> 前面
   內容：首頁／公司資料庫／專案資料庫／分享到LINE（＋捲動後出現的回到頂端）
   作法：底部 hb-dock 用 CSS 隱藏但保留在 DOM，側邊列點擊時代按對應的 dock 按鈕，
@@ -5383,6 +5383,20 @@ react-dom/cjs/react-dom-client.production.js:
     '@media (max-width:859px){.hb-rail__item{width:42px;padding:7px 0;}',
     '  .hb-rail__txt{display:none;}}',
 
+    /* 收合把手：只有畫面內模式（手機／窄視窗）才會用到 */
+    '.hb-rail__handle{display:none;position:absolute;right:0;top:50%;',
+    '  transform:translateY(-50%);width:16px;height:52px;padding:0;border:0;',
+    '  border-radius:3px 0 0 3px;background:rgba(28,27,24,.10);cursor:pointer;',
+    '  align-items:center;justify-content:center;color:#6E695E;',
+    '  -webkit-tap-highlight-color:transparent;}',
+    '.hb-rail__handle svg{width:11px;height:11px;fill:none;stroke:currentColor;',
+    '  stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}',
+    '.hb-rail[data-collapsed="1"]{background:transparent!important;border:0!important;',
+    '  -webkit-backdrop-filter:none!important;backdrop-filter:none!important;padding:0;}',
+    '.hb-rail[data-collapsed="1"] .hb-rail__items{display:none;}',
+    '.hb-rail[data-collapsed="1"] .hb-rail__handle{display:flex;}',
+    '.hb-rail__items{display:flex;flex-direction:column;}',
+
     '.hb-rail__top{display:none;}',
     '.hb-rail[data-scrolled="1"] .hb-rail__top{display:flex;}',
     '@media (prefers-reduced-motion:reduce){.hb-rail,.hb-rail *{transition:none!important;}}'
@@ -5418,13 +5432,18 @@ react-dom/cjs/react-dom-client.production.js:
     return null;
   }
 
+  var itemsBox = document.createElement('div');
+  itemsBox.className = 'hb-rail__items';
+  rail.appendChild(itemsBox);
+
   var railItems = HB_RAIL_ITEMS.map(function (it) {
     var el = makeItem(it.label, it.svg, function () {
       var btn = dockButton(it.label);
       if (btn) btn.click();               // 沿用 App 原本的導覽邏輯
       else if (window.HB_RAIL_DEBUG) console.warn('[hb-rail] 找不到 dock 按鈕：' + it.label);
+      setCollapsed(true);                  // 導覽後自動收回
     });
-    rail.appendChild(el);
+    itemsBox.appendChild(el);
     return { label: it.label, el: el };
   });
 
@@ -5438,9 +5457,36 @@ react-dom/cjs/react-dom-client.production.js:
       else sc.scrollTop = 0;
     });
   topBtn.classList.add('hb-rail__top');
-  rail.appendChild(topBtn);
+  itemsBox.appendChild(topBtn);
+
+  // 收合把手
+  var handle = document.createElement('button');
+  handle.type = 'button';
+  handle.className = 'hb-rail__handle';
+  handle.setAttribute('aria-label', '展開導覽');
+  handle.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg>';
+  rail.appendChild(handle);
 
   document.body.appendChild(rail);
+
+  /* ---- 收合邏輯：畫面內模式預設收成把手，點一下才展開 ---- */
+  var collapseTimer = null;
+  function canCollapse() { return rail.getAttribute('data-place') === 'inside'; }
+  function setCollapsed(v) {
+    if (!canCollapse()) { rail.removeAttribute('data-collapsed'); return; }
+    rail.setAttribute('data-collapsed', v ? '1' : '0');
+    if (v) { clearTimeout(collapseTimer); collapseTimer = null; }
+    else armAutoCollapse();
+  }
+  function armAutoCollapse() {
+    clearTimeout(collapseTimer);
+    collapseTimer = setTimeout(function () { setCollapsed(true); }, 5000);
+  }
+  handle.addEventListener('click', function (e) { e.stopPropagation(); setCollapsed(false); });
+  rail.addEventListener('click', function () { if (canCollapse()) armAutoCollapse(); });
+  document.addEventListener('click', function (e) {
+    if (canCollapse() && !rail.contains(e.target)) setCollapsed(true);
+  }, true);
 
   /* ---- 4. 顯示條件 ---- */
   function onLoginScreen() {
@@ -5493,25 +5539,17 @@ react-dom/cjs/react-dom-client.production.js:
   // dock 收起後，原本替它預留的底部空間就不需要了；
   // 另外當側邊列必須疊在畫面內時，替它在右側讓出等寬的空間，才不會蓋到頁面上的按鈕
   function adjustHost() {
-    var inside = rail.getAttribute('data-place') === 'inside';
-    var reserve = inside ? (Math.round(rail.getBoundingClientRect().width) || 44) + 4 : 0;
-
     var scs = document.querySelectorAll('.hb-scroll');
     for (var i = 0; i < scs.length; i++) {
       if (parseInt(scs[i].style.paddingBottom, 10) >= 60) scs[i].style.paddingBottom = '28px';
     }
-
     var shell = document.querySelector('.hb-shell');
     if (!shell) return;
     for (var j = 0; j < shell.children.length; j++) {
       var ch = shell.children[j];
       if (!ch.style) continue;
       if (parseInt(ch.style.paddingBottom, 10) >= 60) ch.style.paddingBottom = '20px';
-      // 只動真正在捲的那層外層容器
-      if (ch.style.overflowY === 'auto' || ch.style.overflowY === 'hidden') {
-        var want = reserve ? reserve + 'px' : '';
-        if (ch.style.paddingRight !== want) ch.style.paddingRight = want;
-      }
+      if (ch.style.paddingRight) ch.style.paddingRight = '';   // 清掉舊版留下的讓位
     }
   }
 
@@ -5520,6 +5558,11 @@ react-dom/cjs/react-dom-client.production.js:
     rail.hidden = !show;
     if (!show) return;
     alignToShell();
+    if (canCollapse()) {
+      if (!rail.hasAttribute('data-collapsed')) rail.setAttribute('data-collapsed', '1');
+    } else {
+      rail.removeAttribute('data-collapsed');
+    }
     syncActive();
     adjustHost();
     var sc = scroller();
@@ -5557,7 +5600,7 @@ react-dom/cjs/react-dom-client.production.js:
       目前頁: (rail.querySelector('[aria-current]') || {}).ariaLabel || null,
       捲動容器: sc ? (sc.className || sc.tagName) : null,
       擺放方式: rail.getAttribute('data-place'),
-      右側讓出: (document.querySelector('.hb-shell > [style*="overflow"]') || {style:{}}).style.paddingRight || '0',
+      收合中: rail.getAttribute('data-collapsed') === '1',
       距視窗右緣: rail.style.right
     };
   };
