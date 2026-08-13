@@ -5312,11 +5312,12 @@ react-dom/cjs/react-dom-client.production.js:
 </script>
 <!--
   =====================================================================
-  赫柏工地紀錄本 · 側邊聯絡索引列 v3
-  貼法：整段複製，貼在 index.html 最後的 </body> 前面
-  顯示規則：登入頁不顯示，登入後每個畫面都在（右側垂直置中）
-  排錯：在瀏覽器 console 輸入 __hbRailStatus() 可看目前狀態
-  連結要改：搜尋 HB_RAIL_ITEMS
+  赫柏工地紀錄本 · 側邊導覽列 v4
+  貼法：整段貼在 index.html 最後的 </body> 前面
+  內容：首頁／公司資料庫／專案資料庫／分享到LINE（＋捲動後出現的回到頂端）
+  作法：底部 hb-dock 用 CSS 隱藏但保留在 DOM，側邊列點擊時代按對應的 dock 按鈕，
+        所以不用改任何 React 程式碼，導覽邏輯與原本完全一致
+  排錯：console 輸入 __hbRailStatus()
   =====================================================================
 -->
 <script>
@@ -5329,58 +5330,50 @@ react-dom/cjs/react-dom-client.production.js:
 
   function boot() {
 
-  /* ---- 1. 聯絡項目：要增刪改這裡就好 ---- */
+  /* ---- 1. 導覽項目：label 必須與底部 dock 的文字一致，才對得上 ---- */
   var HB_RAIL_ITEMS = [
-    {
-      label: 'LINE 諮詢',
-      href: 'https://line.me/ti/p/~3her05',
-      external: true,
-      solid: true,
-      svg: '<path d="M12 3C7 3 2.9 6.3 2.9 10.4c0 3.7 3.2 6.8 7.6 7.4.3.05.7.2.8.45.09.23.06.58.03.8l-.13.78c-.04.23-.18.9.79.5s5.2-3.1 7.1-5.3c1.3-1.4 2-2.9 2-4.6C21.1 6.3 17 3 12 3M8.2 12.9H6.4a.48.48 0 0 1-.5-.48V8.8a.48.48 0 1 1 .97 0V12H8.2a.48.48 0 1 1 0 .96m1.9-.48a.48.48 0 1 1-.97 0V8.8a.48.48 0 1 1 .97 0zm4.3 0a.48.48 0 0 1-.87.29l-1.9-2.57v2.28a.48.48 0 1 1-.96 0V8.8a.48.48 0 0 1 .87-.29l1.9 2.57V8.8a.48.48 0 1 1 .96 0zm3.1-2.3a.48.48 0 1 1 0 .96h-1.37v.87h1.37a.48.48 0 1 1 0 .96h-1.85a.48.48 0 0 1-.48-.48V8.8a.48.48 0 0 1 .48-.48h1.85a.48.48 0 1 1 0 .96h-1.37v.87z"/>'
-    },
-    {
-      label: '來電洽詢',
-      href: 'tel:+886987583978',
-      solid: true,
-      svg: '<path d="M6.2 3.5h3l1.5 3.8-2 1.4a12 12 0 0 0 5.6 5.6l1.4-2 3.8 1.5v3a1.6 1.6 0 0 1-1.8 1.6C10.9 17.9 6.1 13.1 4.6 5.3A1.6 1.6 0 0 1 6.2 3.5"/>'
-    },
-    {
-      label: 'Instagram',
-      href: 'https://www.instagram.com/3chyienian05',
-      external: true,
-      svg: '<rect x="3.5" y="3.5" width="17" height="17" rx="4.5"/><circle cx="12" cy="12" r="4"/><circle cx="17" cy="7" r=".9" fill="currentColor" stroke="none"/>'
-    }
-    /* 要加 Facebook 或公司信箱，照格式補一組：
-    ,{ label:'E-mail', href:'mailto:service@herfulsins.com',
-       svg:'<rect x="3" y="5.5" width="18" height="13" rx="1"/><path d="m3.5 7 8.5 6 8.5-6"/>' }
-    */
+    { label: '首頁',       svg: '<path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z"/>' },
+    { label: '公司資料庫', svg: '<path d="M3 7.5A1.5 1.5 0 0 1 4.5 6h4L10.5 8h9A1.5 1.5 0 0 1 21 9.5v8A1.5 1.5 0 0 1 19.5 19h-15A1.5 1.5 0 0 1 3 17.5z"/>' },
+    { label: '專案資料庫', svg: '<rect x="5" y="4" width="14" height="17" rx="1.5"/><path d="M9 3.5h6v2.5H9z"/><path d="M9 11h6M9 15h4"/>' },
+    { label: '分享到LINE', svg: '<circle cx="17.5" cy="6" r="2.5"/><circle cx="6.5" cy="12" r="2.5"/><circle cx="17.5" cy="18" r="2.5"/><path d="m8.8 10.7 6.4-3.4M8.8 13.3l6.4 3.4"/>' }
   ];
 
-  /* ---- 2. 樣式（色票沿用 App 的 s 色票，質感對齊底部 hb-dock） ---- */
+  /* ---- 2. 樣式 ---- */
   var css = document.createElement('style');
   css.textContent = [
+    /* 隱藏底部導覽列（保留在 DOM，側邊列靠它做導覽） */
+    '.hb-dock{display:none!important;}',
+
     '.hb-rail{position:fixed;right:0;top:50%;transform:translateY(-50%);z-index:18;',
-    '  display:flex;flex-direction:column;background:#FAF9F6;border:1px solid #E6E2D8;',
-    '  border-radius:4px 0 0 4px;opacity:.88;',
-    '  box-shadow:0 6px 18px -10px rgba(43,38,32,.35);',
+    '  display:flex;flex-direction:column;padding:6px 0;background:#FFFFFF;',
+    '  border:1px solid #E6E2D8;border-right:0;border-radius:4px 0 0 4px;opacity:.95;',
+    '  box-shadow:0 8px 22px -14px rgba(28,27,24,.45);',
     '  transition:opacity .25s ease;font-family:"Noto Sans TC","PingFang TC",sans-serif;}',
     '.hb-rail:hover,.hb-rail:focus-within{opacity:1;}',
     '.hb-rail[hidden]{display:none!important;}',
-    '.hb-rail__item{position:relative;width:44px;height:44px;display:flex;align-items:center;',
-    '  justify-content:center;color:#7C6A56;background:none;border:0;padding:0;cursor:pointer;',
-    '  text-decoration:none;-webkit-tap-highlight-color:transparent;transition:color .2s ease;}',
-    '.hb-rail__item:hover,.hb-rail__item:focus-visible{color:#1C1B18;}',
-    '.hb-rail__item:focus-visible{outline:1px solid #7C6A56;outline-offset:-4px;}',
-    '.hb-rail__item+.hb-rail__item::before{content:"";position:absolute;top:0;left:10px;right:10px;',
-    '  height:1px;background:#E6E2D8;}',
-    '.hb-rail__item svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.5;',
+
+    '.hb-rail__item{display:flex;flex-direction:column;align-items:center;gap:3px;width:58px;',
+    '  padding:8px 0;background:none;border:0;cursor:pointer;text-decoration:none;',
+    '  -webkit-tap-highlight-color:transparent;}',
+    '.hb-rail__ico{width:32px;height:32px;border-radius:50%;border:1px solid #E6E2D8;',
+    '  display:flex;align-items:center;justify-content:center;color:#7C6A56;',
+    '  transition:all .15s ease;}',
+    '.hb-rail__ico svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.6;',
     '  stroke-linecap:round;stroke-linejoin:round;}',
-    '.hb-rail__item svg.solid{fill:currentColor;stroke:none;}',
-    '.hb-rail__label{position:absolute;right:calc(100% + 8px);top:50%;transform:translateY(-50%);',
-    '  white-space:nowrap;background:#1C1B18;color:#FAF9F6;font-size:12px;letter-spacing:.08em;',
-    '  padding:5px 10px;border-radius:3px;opacity:0;pointer-events:none;transition:opacity .2s ease;}',
-    '.hb-rail__item:hover .hb-rail__label,.hb-rail__item:focus-visible .hb-rail__label{opacity:1;}',
-    '@media (max-width:859px){.hb-rail__label{display:none;}.hb-rail__item{width:40px;height:40px;}}',
+    '.hb-rail__txt{font-size:9.5px;color:#8C877D;white-space:nowrap;letter-spacing:.02em;}',
+    '.hb-rail__item:hover .hb-rail__ico{border-color:#7C6A56;color:#1C1B18;}',
+    '.hb-rail__item:focus-visible{outline:1px solid #7C6A56;outline-offset:-3px;}',
+
+    /* 目前所在頁：跟原本 dock 一樣是實心圓 */
+    '.hb-rail__item[aria-current="page"] .hb-rail__ico{width:36px;height:36px;background:#1C1B18;',
+    '  border-color:#1C1B18;color:#FFFFFF;}',
+    '.hb-rail__item[aria-current="page"] .hb-rail__ico svg{width:20px;height:20px;}',
+    '.hb-rail__item[aria-current="page"] .hb-rail__txt{color:#1C1B18;font-weight:500;}',
+
+    /* 手機：只留圖示，避免吃掉內容寬度 */
+    '@media (max-width:859px){.hb-rail{opacity:.9;}.hb-rail__item{width:44px;padding:7px 0;}',
+    '  .hb-rail__txt{display:none;}}',
+
     '.hb-rail__top{display:none;}',
     '.hb-rail[data-scrolled="1"] .hb-rail__top{display:flex;}',
     '@media (prefers-reduced-motion:reduce){.hb-rail,.hb-rail *{transition:none!important;}}'
@@ -5388,43 +5381,59 @@ react-dom/cjs/react-dom-client.production.js:
   (document.head || document.documentElement).appendChild(css);
 
   /* ---- 3. 建立 DOM（掛在 body，不進 React 樹） ---- */
-  function iconSvg(path, solid) {
-    return '<svg viewBox="0 0 24 24" aria-hidden="true"' + (solid ? ' class="solid"' : '') + '>' + path + '</svg>';
+  function makeItem(label, svg, onClick) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'hb-rail__item';
+    b.setAttribute('aria-label', label);
+    b.innerHTML =
+      '<span class="hb-rail__ico"><svg viewBox="0 0 24 24" aria-hidden="true">' + svg + '</svg></span>' +
+      '<span class="hb-rail__txt">' + label + '</span>';
+    b.addEventListener('click', onClick);
+    return b;
   }
 
   var rail = document.createElement('nav');
   rail.className = 'hb-rail';
-  rail.setAttribute('aria-label', '聯絡方式');
+  rail.setAttribute('aria-label', '主導覽');
   rail.hidden = true;
 
-  HB_RAIL_ITEMS.forEach(function (it) {
-    var a = document.createElement('a');
-    a.className = 'hb-rail__item';
-    a.href = it.href;
-    a.setAttribute('aria-label', it.label);
-    if (it.external) { a.target = '_blank'; a.rel = 'noopener'; }
-    a.innerHTML = iconSvg(it.svg, it.solid) + '<span class="hb-rail__label">' + it.label + '</span>';
-    rail.appendChild(a);
+  // 找底部 dock 裡文字相符的按鈕
+  function dockButton(label) {
+    var dock = document.querySelector('.hb-dock');
+    if (!dock) return null;
+    var btns = dock.querySelectorAll('button');
+    for (var i = 0; i < btns.length; i++) {
+      if ((btns[i].textContent || '').indexOf(label) !== -1) return btns[i];
+    }
+    return null;
+  }
+
+  var railItems = HB_RAIL_ITEMS.map(function (it) {
+    var el = makeItem(it.label, it.svg, function () {
+      var btn = dockButton(it.label);
+      if (btn) btn.click();               // 沿用 App 原本的導覽邏輯
+      else if (window.HB_RAIL_DEBUG) console.warn('[hb-rail] 找不到 dock 按鈕：' + it.label);
+    });
+    rail.appendChild(el);
+    return { label: it.label, el: el };
   });
 
-  var topBtn = document.createElement('button');
-  topBtn.type = 'button';
-  topBtn.className = 'hb-rail__item hb-rail__top';
-  topBtn.setAttribute('aria-label', '回到頂端');
-  topBtn.innerHTML = iconSvg('<path d="M12 19V6"/><path d="m6 11.5 6-6 6 6"/>') +
-    '<span class="hb-rail__label">回到頂端</span>';
-  topBtn.addEventListener('click', function () {
-    var sc = scroller();
-    if (!sc) return;
-    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (sc.scrollTo) sc.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' });
-    else sc.scrollTop = 0;
-  });
+  var topBtn = makeItem('回到頂端',
+    '<path d="M12 19V6"/><path d="m6 11.5 6-6 6 6"/>',
+    function () {
+      var sc = scroller();
+      if (!sc) return;
+      var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (sc.scrollTo) sc.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' });
+      else sc.scrollTop = 0;
+    });
+  topBtn.classList.add('hb-rail__top');
   rail.appendChild(topBtn);
 
   document.body.appendChild(rail);
 
-  /* ---- 4. 顯示條件：登入頁隱藏，其餘畫面都顯示 ---- */
+  /* ---- 4. 顯示條件 ---- */
   function onLoginScreen() {
     return !!document.querySelector('.hb-sso-form, .hb-sso-title, .hb-login-logo');
   }
@@ -5433,33 +5442,57 @@ react-dom/cjs/react-dom-client.production.js:
     return !!(root && root.firstElementChild);
   }
 
-  // 全站 html/body 都是 overflow:hidden，真正在捲的是內層容器；
-  // 用捕獲階段記住最後一個被捲動的容器，當成「回到頂端」的目標
   var lastScrolled = null;
   function scroller() {
     if (lastScrolled && document.body.contains(lastScrolled)) return lastScrolled;
     return document.querySelector('.hb-scroll');
   }
 
-  // 桌機（>=860px）App 外殼是 960px 置中，若貼在視窗最右邊會孤零零落在灰色留白裡，
-  // 所以改成貼齊 .hb-shell 的右緣
+  // 桌機 shell 是 960px 置中，貼齊它的右緣而不是視窗最右邊
   function alignToShell() {
     var shell = document.querySelector('.hb-shell');
     if (!shell) { rail.style.right = '0px'; return; }
     var r = shell.getBoundingClientRect();
-    if (!r.width) { rail.style.right = '0px'; return; }
-    rail.style.right = Math.max(0, Math.round(window.innerWidth - r.right)) + 'px';
+    rail.style.right = r.width ? Math.max(0, Math.round(window.innerWidth - r.right)) + 'px' : '0px';
+  }
+
+  // 目前所在頁：讀 dock 按鈕的作用中樣式（實心圓＝作用中）
+  function syncActive() {
+    railItems.forEach(function (item) {
+      var btn = dockButton(item.label);
+      var circle = btn && btn.querySelector('div');
+      var bg = circle && circle.style ? circle.style.background : '';
+      var active = !!bg && bg !== 'transparent';
+      if (active) item.el.setAttribute('aria-current', 'page');
+      else item.el.removeAttribute('aria-current');
+    });
+  }
+
+  // dock 收起後，原本替它預留的底部空間就不需要了
+  function trimBottomGap() {
+    var scs = document.querySelectorAll('.hb-scroll');
+    for (var i = 0; i < scs.length; i++) {
+      if (parseInt(scs[i].style.paddingBottom, 10) >= 60) scs[i].style.paddingBottom = '28px';
+    }
+    var shell = document.querySelector('.hb-shell');
+    if (shell) {
+      for (var j = 0; j < shell.children.length; j++) {
+        var ch = shell.children[j];
+        if (ch.style && parseInt(ch.style.paddingBottom, 10) >= 60) ch.style.paddingBottom = '20px';
+      }
+    }
   }
 
   function update() {
     var show = appReady() && !onLoginScreen();
     rail.hidden = !show;
-    if (show) alignToShell();
+    if (!show) return;
+    alignToShell();
+    syncActive();
+    trimBottomGap();
     var sc = scroller();
     rail.setAttribute('data-scrolled', (sc && sc.scrollTop > 200) ? '1' : '0');
-    if (window.HB_RAIL_DEBUG) {
-      console.log('[hb-rail]', { show: show, appReady: appReady(), login: onLoginScreen(), scrollTop: sc && sc.scrollTop });
-    }
+    if (window.HB_RAIL_DEBUG) console.log('[hb-rail]', window.__hbRailStatus());
   }
 
   var queued = false;
@@ -5481,16 +5514,16 @@ react-dom/cjs/react-dom-client.production.js:
   setInterval(update, 800);
   update();
 
-  // 排錯用：console 輸入 __hbRailStatus()
   window.__hbRailStatus = function () {
     var sc = scroller();
+    var found = {};
+    HB_RAIL_ITEMS.forEach(function (it) { found[it.label] = !!dockButton(it.label); });
     return {
-      掛載: document.body.contains(rail),
       顯示中: !rail.hidden,
       在登入頁: onLoginScreen(),
-      App已渲染: appReady(),
+      找到dock按鈕: found,
+      目前頁: (rail.querySelector('[aria-current]') || {}).ariaLabel || null,
       捲動容器: sc ? (sc.className || sc.tagName) : null,
-      捲動位置: sc ? sc.scrollTop : null,
       距視窗右緣: rail.style.right
     };
   };
