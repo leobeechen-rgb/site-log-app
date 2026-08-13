@@ -2269,7 +2269,7 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
           u.default.createElement("input",{placeholder:"施工地點",value:a.siteAddress,onChange:v=>set("siteAddress",v.target.value),style:inputStyle}),
           u.default.createElement("div",{style:{display:"flex",gap:7}},
             u.default.createElement("input",{type:"date",value:a.quoteDate,onChange:v=>set("quoteDate",v.target.value),style:inputStyle}),
-            u.default.createElement("input",{type:"number",placeholder:"有效天數",value:a.validDays,onChange:v=>set("validDays",v.target.value),style:{...inputStyle,width:90}})
+            u.default.createElement("input",{type:"text",inputMode:"numeric",placeholder:"有效天數",value:a.validDays,onChange:v=>set("validDays",v.target.value),style:{...inputStyle,width:90}})
           )
         )
       ),
@@ -2327,11 +2327,11 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
                   u.default.createElement("td",{style:tdStyle},u.default.createElement("textarea",{ref:el=>{if(el){refs["name_"+it.id]=el;autoGrow(el)}},placeholder:"項目（可換行輸入多行）",value:it.name,onChange:v=>setItem(cat.id,it.id,"name",v.target.value),onInput:v=>autoGrow(v.target),onMouseDown:()=>cellDown(cat.id,idx,0),onMouseEnter:()=>cellEnter(cat.id,idx,0),onKeyDown:v=>cellNav(v,cat.id,idx,0),"data-hbcell":"1",rows:1,style:{...cellInputStyle,resize:"none",overflow:"hidden",lineHeight:1.45,display:"block",background:cellInSel(cat.id,idx,0)?selBg:"transparent"}})),
                   u.default.createElement("td",{style:tdStyle},u.default.createElement("input",{ref:el=>{if(el)refs["spec_"+it.id]=el},placeholder:"規格",value:it.spec,onChange:v=>setItem(cat.id,it.id,"spec",v.target.value),onMouseDown:()=>cellDown(cat.id,idx,1),onMouseEnter:()=>cellEnter(cat.id,idx,1),onKeyDown:v=>cellNav(v,cat.id,idx,1),"data-hbcell":"1",style:{...cellInputStyle,background:cellInSel(cat.id,idx,1)?selBg:"transparent"}})),
                   u.default.createElement("td",{style:tdStyle},u.default.createElement("input",{ref:el=>{if(el)refs["unit_"+it.id]=el},placeholder:"式",value:it.unit,onChange:v=>setItem(cat.id,it.id,"unit",v.target.value),onMouseDown:()=>cellDown(cat.id,idx,2),onMouseEnter:()=>cellEnter(cat.id,idx,2),onKeyDown:v=>cellNav(v,cat.id,idx,2),"data-hbcell":"1",style:{...cellInputStyle,textAlign:"center",background:cellInSel(cat.id,idx,2)?selBg:"transparent"}})),
-                  u.default.createElement("td",{style:tdStyle},u.default.createElement("input",{ref:el=>{if(el)refs["qty_"+it.id]=el},type:"number",inputMode:"decimal",value:it.qty,onChange:v=>setItem(cat.id,it.id,"qty",v.target.value),onMouseDown:()=>cellDown(cat.id,idx,3),onMouseEnter:()=>cellEnter(cat.id,idx,3),onKeyDown:v=>cellNav(v,cat.id,idx,3),"data-hbcell":"1",style:{...cellInputStyle,textAlign:"right",background:cellInSel(cat.id,idx,3)?selBg:"transparent"}})),
-                  u.default.createElement("td",{style:tdStyle},u.default.createElement("input",{ref:el=>{if(el)refs["price_"+it.id]=el},type:"number",inputMode:"decimal",placeholder:"單價",value:it.price,onChange:v=>setItem(cat.id,it.id,"price",v.target.value),onMouseDown:()=>cellDown(cat.id,idx,4),onMouseEnter:()=>cellEnter(cat.id,idx,4),onKeyDown:v=>cellNav(v,cat.id,idx,4),"data-hbcell":"1",style:{...cellInputStyle,textAlign:"right",background:cellInSel(cat.id,idx,4)?selBg:"transparent"}})),
+                  u.default.createElement("td",{style:tdStyle},u.default.createElement("input",{ref:el=>{if(el)refs["qty_"+it.id]=el},type:"text",inputMode:"decimal",autoCapitalize:"off",autoCorrect:"off",spellCheck:!1,value:it.qty,onChange:v=>setItem(cat.id,it.id,"qty",v.target.value),onMouseDown:()=>cellDown(cat.id,idx,3),onMouseEnter:()=>cellEnter(cat.id,idx,3),onKeyDown:v=>cellNav(v,cat.id,idx,3),"data-hbcell":"1",style:{...cellInputStyle,textAlign:"right",background:cellInSel(cat.id,idx,3)?selBg:"transparent"}})),
+                  u.default.createElement("td",{style:tdStyle},u.default.createElement("input",{ref:el=>{if(el)refs["price_"+it.id]=el},type:"text",inputMode:"decimal",autoCapitalize:"off",autoCorrect:"off",spellCheck:!1,placeholder:"單價",value:it.price,onChange:v=>setItem(cat.id,it.id,"price",v.target.value),onMouseDown:()=>cellDown(cat.id,idx,4),onMouseEnter:()=>cellEnter(cat.id,idx,4),onKeyDown:v=>cellNav(v,cat.id,idx,4),"data-hbcell":"1",style:{...cellInputStyle,textAlign:"right",background:cellInSel(cat.id,idx,4)?selBg:"transparent"}})),
                   u.default.createElement("td",{style:{...tdStyle,textAlign:"right",whiteSpace:"nowrap",paddingRight:6,color:s.oceanDark,fontWeight:400}},HB_money(HB_num(it.qty)*HB_num(it.price))),
                   u.default.createElement("td",{style:tdStyle},u.default.createElement("input",{ref:el=>{if(el)refs["note_"+it.id]=el},placeholder:"備註",value:it.note,onChange:v=>setItem(cat.id,it.id,"note",v.target.value),onMouseDown:()=>cellDown(cat.id,idx,5),onMouseEnter:()=>cellEnter(cat.id,idx,5),onKeyDown:v=>cellNav(v,cat.id,idx,5),"data-hbcell":"1",style:{...cellInputStyle,background:cellInSel(cat.id,idx,5)?selBg:"transparent"}})),
-                  u.default.createElement("td",{style:{...tdStyle,borderLeft:`2px solid ${s.lemon}`}},u.default.createElement("input",{ref:el=>{if(el)refs["vendorPrice_"+it.id]=el},type:"number",inputMode:"decimal",placeholder:"成本",value:it.vendorPrice,onChange:v=>setItem(cat.id,it.id,"vendorPrice",v.target.value),onMouseDown:()=>cellDown(cat.id,idx,6),onMouseEnter:()=>cellEnter(cat.id,idx,6),onKeyDown:v=>cellNav(v,cat.id,idx,6),"data-hbcell":"1",style:{...cellInputStyle,textAlign:"right",background:cellInSel(cat.id,idx,6)?selBg:"#FFFBEF"}})),
+                  u.default.createElement("td",{style:{...tdStyle,borderLeft:`2px solid ${s.lemon}`}},u.default.createElement("input",{ref:el=>{if(el)refs["vendorPrice_"+it.id]=el},type:"text",inputMode:"decimal",autoCapitalize:"off",autoCorrect:"off",spellCheck:!1,placeholder:"成本",value:it.vendorPrice,onChange:v=>setItem(cat.id,it.id,"vendorPrice",v.target.value),onMouseDown:()=>cellDown(cat.id,idx,6),onMouseEnter:()=>cellEnter(cat.id,idx,6),onKeyDown:v=>cellNav(v,cat.id,idx,6),"data-hbcell":"1",style:{...cellInputStyle,textAlign:"right",background:cellInSel(cat.id,idx,6)?selBg:"#FFFBEF"}})),
                   u.default.createElement("td",{style:{...tdStyle,textAlign:"right",whiteSpace:"nowrap",paddingRight:6,color:it.vendorPrice===""?s.inkSoft:rowProfit>=0?s.tree:s.cane,fontSize:11.5}},it.vendorPrice===""?"—":HB_money(rowProfit)),
                   u.default.createElement("td",{style:{...tdStyle,textAlign:"center",whiteSpace:"nowrap"}},
                     u.default.createElement("button",{onClick:()=>moveItem(cat.id,it.id,-1),disabled:idx===0,title:"上移",style:{border:"none",background:"none",color:idx===0?s.line:s.oceanDark,cursor:idx===0?"default":"pointer",padding:"0 2px"}},u.default.createElement(E,{name:"chevron-up",size:13})),
@@ -5312,7 +5312,7 @@ react-dom/cjs/react-dom-client.production.js:
 </script>
 <!--
   =====================================================================
-  赫柏工地紀錄本 · 側邊導覽列 v4
+  赫柏工地紀錄本 · 側邊導覽列 v6
   貼法：整段貼在 index.html 最後的 </body> 前面
   內容：首頁／公司資料庫／專案資料庫／分享到LINE（＋捲動後出現的回到頂端）
   作法：底部 hb-dock 用 CSS 隱藏但保留在 DOM，側邊列點擊時代按對應的 dock 按鈕，
@@ -5345,33 +5345,42 @@ react-dom/cjs/react-dom-client.production.js:
     '.hb-dock{display:none!important;}',
 
     '.hb-rail{position:fixed;right:0;top:50%;transform:translateY(-50%);z-index:18;',
-    '  display:flex;flex-direction:column;padding:6px 0;background:#FFFFFF;',
-    '  border:1px solid #E6E2D8;border-right:0;border-radius:4px 0 0 4px;opacity:.95;',
-    '  box-shadow:0 8px 22px -14px rgba(28,27,24,.45);',
-    '  transition:opacity .25s ease;font-family:"Noto Sans TC","PingFang TC",sans-serif;}',
-    '.hb-rail:hover,.hb-rail:focus-within{opacity:1;}',
+    '  display:flex;flex-direction:column;padding:4px 0;',
+    '  transition:opacity .25s ease,right .2s ease;',
+    '  font-family:"Noto Sans TC","PingFang TC",sans-serif;}',
     '.hb-rail[hidden]{display:none!important;}',
 
-    '.hb-rail__item{display:flex;flex-direction:column;align-items:center;gap:3px;width:58px;',
-    '  padding:8px 0;background:none;border:0;cursor:pointer;text-decoration:none;',
+    /* 桌機留白夠寬時：整條浮在畫面外的留白區，不加底不加框 */
+    '.hb-rail[data-place="outside"]{background:transparent;border:0;box-shadow:none;opacity:.9;}',
+    '.hb-rail[data-place="outside"]:hover{opacity:1;}',
+
+    /* 留白不夠或手機：貼在畫面右緣，用最輕的一層底 */
+    '.hb-rail[data-place="inside"]{background:rgba(250,249,246,.94);',
+    '  -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);',
+    '  border-left:1px solid #E6E2D8;border-radius:3px 0 0 3px;opacity:.92;}',
+    '.hb-rail[data-place="inside"]:hover,.hb-rail[data-place="inside"]:focus-within{opacity:1;}',
+
+    '.hb-rail__item{display:flex;flex-direction:column;align-items:center;gap:2px;width:58px;',
+    '  padding:9px 0;background:none;border:0;cursor:pointer;text-decoration:none;',
     '  -webkit-tap-highlight-color:transparent;}',
-    '.hb-rail__ico{width:32px;height:32px;border-radius:50%;border:1px solid #E6E2D8;',
-    '  display:flex;align-items:center;justify-content:center;color:#7C6A56;',
-    '  transition:all .15s ease;}',
-    '.hb-rail__ico svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.6;',
+    '.hb-rail__ico{width:30px;height:30px;border-radius:50%;border:1px solid transparent;',
+    '  display:flex;align-items:center;justify-content:center;color:#A8A296;',
+    '  transition:all .18s ease;}',
+    '.hb-rail__ico svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.5;',
     '  stroke-linecap:round;stroke-linejoin:round;}',
-    '.hb-rail__txt{font-size:9.5px;color:#8C877D;white-space:nowrap;letter-spacing:.02em;}',
-    '.hb-rail__item:hover .hb-rail__ico{border-color:#7C6A56;color:#1C1B18;}',
+    '.hb-rail__txt{font-size:9px;color:#A8A296;white-space:nowrap;letter-spacing:.02em;',
+    '  transition:color .18s ease;}',
+    '.hb-rail__item:hover .hb-rail__ico{color:#1C1B18;}',
+    '.hb-rail__item:hover .hb-rail__txt{color:#8C877D;}',
     '.hb-rail__item:focus-visible{outline:1px solid #7C6A56;outline-offset:-3px;}',
 
     /* 目前所在頁：跟原本 dock 一樣是實心圓 */
-    '.hb-rail__item[aria-current="page"] .hb-rail__ico{width:36px;height:36px;background:#1C1B18;',
+    '.hb-rail__item[aria-current="page"] .hb-rail__ico{background:#1C1B18;',
     '  border-color:#1C1B18;color:#FFFFFF;}',
-    '.hb-rail__item[aria-current="page"] .hb-rail__ico svg{width:20px;height:20px;}',
     '.hb-rail__item[aria-current="page"] .hb-rail__txt{color:#1C1B18;font-weight:500;}',
 
     /* 手機：只留圖示，避免吃掉內容寬度 */
-    '@media (max-width:859px){.hb-rail{opacity:.9;}.hb-rail__item{width:44px;padding:7px 0;}',
+    '@media (max-width:859px){.hb-rail__item{width:42px;padding:7px 0;}',
     '  .hb-rail__txt{display:none;}}',
 
     '.hb-rail__top{display:none;}',
@@ -5451,9 +5460,22 @@ react-dom/cjs/react-dom-client.production.js:
   // 桌機 shell 是 960px 置中，貼齊它的右緣而不是視窗最右邊
   function alignToShell() {
     var shell = document.querySelector('.hb-shell');
-    if (!shell) { rail.style.right = '0px'; return; }
+    if (!shell) { rail.style.right = '0px'; rail.setAttribute('data-place', 'inside'); return; }
     var r = shell.getBoundingClientRect();
-    rail.style.right = r.width ? Math.max(0, Math.round(window.innerWidth - r.right)) + 'px' : '0px';
+    if (!r.width) { rail.style.right = '0px'; rail.setAttribute('data-place', 'inside'); return; }
+
+    var gutter = Math.max(0, Math.round(window.innerWidth - r.right)); // 外殼右側的留白
+    var railW = Math.round(rail.getBoundingClientRect().width) || 58;
+
+    if (gutter >= railW + 8) {
+      // 留白放得下：整條移到外殼外面，不壓到內容，底和框都拿掉
+      rail.setAttribute('data-place', 'outside');
+      rail.style.right = Math.max(2, gutter - railW - 8) + 'px';
+    } else {
+      // 放不下（手機或窄視窗）：貼右緣，補一層很淡的底
+      rail.setAttribute('data-place', 'inside');
+      rail.style.right = gutter + 'px';
+    }
   }
 
   // 目前所在頁：讀 dock 按鈕的作用中樣式（實心圓＝作用中）
@@ -5468,17 +5490,27 @@ react-dom/cjs/react-dom-client.production.js:
     });
   }
 
-  // dock 收起後，原本替它預留的底部空間就不需要了
-  function trimBottomGap() {
+  // dock 收起後，原本替它預留的底部空間就不需要了；
+  // 另外當側邊列必須疊在畫面內時，替它在右側讓出等寬的空間，才不會蓋到頁面上的按鈕
+  function adjustHost() {
+    var inside = rail.getAttribute('data-place') === 'inside';
+    var reserve = inside ? (Math.round(rail.getBoundingClientRect().width) || 44) + 4 : 0;
+
     var scs = document.querySelectorAll('.hb-scroll');
     for (var i = 0; i < scs.length; i++) {
       if (parseInt(scs[i].style.paddingBottom, 10) >= 60) scs[i].style.paddingBottom = '28px';
     }
+
     var shell = document.querySelector('.hb-shell');
-    if (shell) {
-      for (var j = 0; j < shell.children.length; j++) {
-        var ch = shell.children[j];
-        if (ch.style && parseInt(ch.style.paddingBottom, 10) >= 60) ch.style.paddingBottom = '20px';
+    if (!shell) return;
+    for (var j = 0; j < shell.children.length; j++) {
+      var ch = shell.children[j];
+      if (!ch.style) continue;
+      if (parseInt(ch.style.paddingBottom, 10) >= 60) ch.style.paddingBottom = '20px';
+      // 只動真正在捲的那層外層容器
+      if (ch.style.overflowY === 'auto' || ch.style.overflowY === 'hidden') {
+        var want = reserve ? reserve + 'px' : '';
+        if (ch.style.paddingRight !== want) ch.style.paddingRight = want;
       }
     }
   }
@@ -5489,7 +5521,7 @@ react-dom/cjs/react-dom-client.production.js:
     if (!show) return;
     alignToShell();
     syncActive();
-    trimBottomGap();
+    adjustHost();
     var sc = scroller();
     rail.setAttribute('data-scrolled', (sc && sc.scrollTop > 200) ? '1' : '0');
     if (window.HB_RAIL_DEBUG) console.log('[hb-rail]', window.__hbRailStatus());
@@ -5524,6 +5556,8 @@ react-dom/cjs/react-dom-client.production.js:
       找到dock按鈕: found,
       目前頁: (rail.querySelector('[aria-current]') || {}).ariaLabel || null,
       捲動容器: sc ? (sc.className || sc.tagName) : null,
+      擺放方式: rail.getAttribute('data-place'),
+      右側讓出: (document.querySelector('.hb-shell > [style*="overflow"]') || {style:{}}).style.paddingRight || '0',
       距視窗右緣: rail.style.right
     };
   };
