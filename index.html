@@ -1921,6 +1921,17 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
     [items[idx],items[newIdx]]=[items[newIdx],items[idx]];
     return{...c,items};
   })}));
+  let reorderItem=(cid,iid,toIdx)=>i(p=>({...p,categories:p.categories.map(c=>{
+    if(c.id!==cid)return c;
+    let from=c.items.findIndex(it=>it.id===iid);
+    if(from===-1)return c;
+    let items=[...c.items];
+    let[moved]=items.splice(from,1);
+    let to=Math.max(0,Math.min(items.length,toIdx));
+    items.splice(to,0,moved);
+    return{...c,items};
+  })}));
+  try{window.HB_reorderItem=reorderItem}catch{}
   let applyParsedRows=(cid,parsed)=>{
     i(p=>({...p,categories:p.categories.map(c=>{
       if(c.id!==cid)return c;
@@ -2321,9 +2332,9 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
             u.default.createElement("tbody",null,
               cat.items.map((it,idx)=>{
                 let rowProfit=HB_num(it.qty)*HB_num(it.price)-HB_num(it.vendorPrice);
-                return u.default.createElement("tr",{key:it.id,style:it.highlighted?{background:"#FFF3B0"}:null},
+                return u.default.createElement("tr",{key:it.id,"data-hbcat":cat.id,"data-hbid":it.id,style:it.highlighted?{background:"#FFF3B0"}:null},
                   u.default.createElement("td",{style:{...tdStyle,textAlign:"center"}},u.default.createElement("input",{type:"checkbox",checked:(selectedItems[cat.id]||new Set()).has(it.id),onChange:()=>toggleSelectItem(cat.id,it.id),style:{width:14,height:14,verticalAlign:"middle"}})),
-                  u.default.createElement("td",{style:{...tdStyle,textAlign:"center",color:s.inkSoft,fontSize:11.5}},idx+1),
+                  u.default.createElement("td",{className:"hb-draghandle",title:"按住序號可拖曳調整順序",style:{...tdStyle,textAlign:"center",color:s.inkSoft,fontSize:11.5}},idx+1),
                   u.default.createElement("td",{style:tdStyle},u.default.createElement("textarea",{ref:el=>{if(el){refs["name_"+it.id]=el;autoGrow(el)}},placeholder:"項目（可換行輸入多行）",value:it.name,onChange:v=>setItem(cat.id,it.id,"name",v.target.value),onInput:v=>autoGrow(v.target),onMouseDown:()=>cellDown(cat.id,idx,0),onMouseEnter:()=>cellEnter(cat.id,idx,0),onKeyDown:v=>cellNav(v,cat.id,idx,0),"data-hbcell":"1",rows:1,style:{...cellInputStyle,resize:"none",overflow:"hidden",lineHeight:1.45,display:"block",background:cellInSel(cat.id,idx,0)?selBg:"transparent"}})),
                   u.default.createElement("td",{style:tdStyle},u.default.createElement("input",{ref:el=>{if(el)refs["spec_"+it.id]=el},placeholder:"規格",value:it.spec,onChange:v=>setItem(cat.id,it.id,"spec",v.target.value),onMouseDown:()=>cellDown(cat.id,idx,1),onMouseEnter:()=>cellEnter(cat.id,idx,1),onKeyDown:v=>cellNav(v,cat.id,idx,1),"data-hbcell":"1",style:{...cellInputStyle,background:cellInSel(cat.id,idx,1)?selBg:"transparent"}})),
                   u.default.createElement("td",{style:tdStyle},u.default.createElement("input",{ref:el=>{if(el)refs["unit_"+it.id]=el},placeholder:"式",value:it.unit,onChange:v=>setItem(cat.id,it.id,"unit",v.target.value),onMouseDown:()=>cellDown(cat.id,idx,2),onMouseEnter:()=>cellEnter(cat.id,idx,2),onKeyDown:v=>cellNav(v,cat.id,idx,2),"data-hbcell":"1",style:{...cellInputStyle,textAlign:"center",background:cellInSel(cat.id,idx,2)?selBg:"transparent"}})),
@@ -5606,6 +5617,139 @@ react-dom/cjs/react-dom-client.production.js:
   };
 
   } // boot
+})();
+</script>
+
+<!--
+  =====================================================================
+  赫柏工地紀錄本 · 估價單項目拖曳排序
+  搭配 bundle 內三處小修改：
+    1. <tr> 加上 data-hbcat / data-hbid
+    2. 序號欄加上 class="hb-draghandle"（拖曳把手）
+    3. 元件內新增 reorderItem() 並掛到 window.HB_reorderItem
+  桌機滑鼠、手機觸控都用 Pointer Events，同一套邏輯
+  =====================================================================
+-->
+<script>
+(function () {
+  if (window.__HB_DRAG__) return;
+  window.__HB_DRAG__ = true;
+
+  var css = document.createElement('style');
+  css.textContent = [
+    '.hb-draghandle{cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;}',
+    '.hb-draghandle:active{cursor:grabbing;}',
+    '.hb-draghandle::after{content:"⠿";display:block;font-size:10px;line-height:1;',
+    '  color:#C9C4B8;margin-top:1px;}',
+    'tr[data-hbdragging="1"]{opacity:.4;}',
+    'tr[data-hbdrop="before"]>td{box-shadow:inset 0 2px 0 0 #1C1B18;}',
+    'tr[data-hbdrop="after"]>td{box-shadow:inset 0 -2px 0 0 #1C1B18;}',
+    'body[data-hbdragging="1"]{cursor:grabbing;user-select:none;-webkit-user-select:none;}'
+  ].join('');
+  (document.head || document.documentElement).appendChild(css);
+
+  var drag = null;
+
+  // 拖到哪一格：先把自己抽掉再插入，索引要跟著修正
+  function computeTarget(fromIdx, targetIdx, pos) {
+    var to = targetIdx + (pos === 'after' ? 1 : 0);
+    if (to > fromIdx) to -= 1;
+    return to;
+  }
+  window.__hbComputeTarget = computeTarget;   // 供測試使用
+
+  function rowsOf(catId) {
+    var all = document.querySelectorAll('tr[data-hbid]');
+    var out = [];
+    for (var i = 0; i < all.length; i++) {
+      if (all[i].getAttribute('data-hbcat') === catId) out.push(all[i]);
+    }
+    return out;
+  }
+
+  function clearMarks() {
+    var marked = document.querySelectorAll('tr[data-hbdrop]');
+    for (var i = 0; i < marked.length; i++) marked[i].removeAttribute('data-hbdrop');
+  }
+
+  function scrollParent(el) {
+    for (var n = el; n && n !== document.body; n = n.parentElement) {
+      var ov = getComputedStyle(n).overflowY;
+      if ((ov === 'auto' || ov === 'scroll') && n.scrollHeight > n.clientHeight) return n;
+    }
+    return null;
+  }
+
+  // 拖到邊緣時自動捲動
+  function autoScroll(y) {
+    if (!drag || !drag.scroller) return;
+    var r = drag.scroller.getBoundingClientRect();
+    var edge = 60;
+    if (y < r.top + edge) drag.scroller.scrollTop -= 12;
+    else if (y > r.bottom - edge) drag.scroller.scrollTop += 12;
+  }
+
+  document.addEventListener('pointerdown', function (e) {
+    if (e.button != null && e.button !== 0) return;
+    var t = e.target;
+    var handle = t && t.closest ? t.closest('.hb-draghandle') : null;
+    if (!handle) return;
+    var tr = handle.closest('tr[data-hbid]');
+    if (!tr) return;
+
+    drag = {
+      cat: tr.getAttribute('data-hbcat'),
+      id: tr.getAttribute('data-hbid'),
+      tr: tr,
+      target: null,
+      pos: null,
+      scroller: scrollParent(tr)
+    };
+    tr.setAttribute('data-hbdragging', '1');
+    document.body.setAttribute('data-hbdragging', '1');
+    if (handle.setPointerCapture) { try { handle.setPointerCapture(e.pointerId); } catch (err) {} }
+    e.preventDefault();
+  }, true);
+
+  document.addEventListener('pointermove', function (e) {
+    if (!drag) return;
+    e.preventDefault();
+    autoScroll(e.clientY);
+
+    var el = document.elementFromPoint(e.clientX, e.clientY);
+    var row = el && el.closest ? el.closest('tr[data-hbid]') : null;
+    clearMarks();
+    if (!row || row === drag.tr || row.getAttribute('data-hbcat') !== drag.cat) {
+      drag.target = null;
+      return;
+    }
+    var r = row.getBoundingClientRect();
+    var pos = (e.clientY > r.top + r.height / 2) ? 'after' : 'before';
+    row.setAttribute('data-hbdrop', pos);
+    drag.target = row;
+    drag.pos = pos;
+  });
+
+  function endDrag() {
+    if (!drag) return;
+    var d = drag;
+    drag = null;
+    d.tr.removeAttribute('data-hbdragging');
+    document.body.removeAttribute('data-hbdragging');
+    clearMarks();
+
+    if (!d.target || typeof window.HB_reorderItem !== 'function') return;
+    var rows = rowsOf(d.cat);
+    var from = rows.indexOf(d.tr);
+    var tIdx = rows.indexOf(d.target);
+    if (from < 0 || tIdx < 0) return;
+    var to = computeTarget(from, tIdx, d.pos);
+    if (to !== from) window.HB_reorderItem(d.cat, d.id, to);
+  }
+
+  document.addEventListener('pointerup', endDrag);
+  document.addEventListener('pointercancel', endDrag);
+  window.addEventListener('blur', endDrag);
 })();
 </script>
 
