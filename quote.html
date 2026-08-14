@@ -450,6 +450,15 @@
   .modal-actions{display:flex; gap:8px; flex-wrap:wrap;}
   .modal-actions .btn{flex:1;}
   .auth-error{color:var(--red); font-size:12px; margin-top:8px; min-height:14px;}
+
+/* ---- 報價明細拖曳排序 ---- */
+.drag-handle{cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;text-align:center;}
+.drag-handle:active{cursor:grabbing;}
+.drag-handle::after{content:"⠿";display:block;font-size:10px;line-height:1;color:#C9C4B8;margin-top:1px;}
+tr.item-row[data-hbdragging="1"]{opacity:.4;}
+tr.item-row[data-hbdrop="before"]>td{box-shadow:inset 0 2px 0 0 #1C1B18;}
+tr.item-row[data-hbdrop="after"]>td{box-shadow:inset 0 -2px 0 0 #1C1B18;}
+body[data-hbdragging="1"]{cursor:grabbing;user-select:none;-webkit-user-select:none;}
 </style>
 </head>
 <body>
@@ -572,8 +581,8 @@
 
       <div class="totals">
         <div class="totals-row"><label>工程小計合計</label><div class="val" id="sumSubtotal">$0</div></div>
-        <div class="totals-row"><label>折扣金額</label><input id="discount" type="number" value="0" min="0"></div>
-        <div class="totals-row"><label>營業稅 (%)</label><input id="taxRate" type="number" value="5" min="0"></div>
+        <div class="totals-row"><label>折扣金額</label><input id="discount" type="text" value="0"></div>
+        <div class="totals-row"><label>營業稅 (%)</label><input id="taxRate" type="text" value="5"></div>
         <div class="totals-row grand"><label>總計金額</label><div class="val" id="sumTotal">$0</div></div>
       </div>
 
@@ -605,6 +614,11 @@
 </div>
 
 <script>
+/* 只有觸控裝置才給 inputmode：桌機 Chrome 收到 inputmode=decimal 會關掉中文輸入法 */
+const HB_COARSE = (function(){
+  try { return !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches); }
+  catch(e){ return false; }
+})();
 let PRICE_LIST = [{"cat": "拆除工程", "name": "隔間牆拆除", "unit": "坪", "price": 2500, "note": "含清運", "code": "P001"}, {"cat": "拆除工程", "name": "地磚拆除", "unit": "坪", "price": 1600, "note": "", "code": "P002"}, {"cat": "拆除工程", "name": "衛浴設備拆除", "unit": "間", "price": 7500, "note": "馬桶+洗手台+浴缸", "code": "P003"}, {"cat": "水電工程", "name": "配電迴路新增", "unit": "迴路", "price": 2800, "note": "含線材", "code": "P004"}, {"cat": "水電工程", "name": "配電插座新增", "unit": "只", "price": 2800, "note": "", "code": "P005"}, {"cat": "水電工程", "name": "給排水管線更新", "unit": "坪", "price": 3300, "note": "", "code": "P006"}, {"cat": "水電工程", "name": "插座/開關更換", "unit": "個", "price": 350, "note": "", "code": "P007"}, {"cat": "泥作工程", "name": "地坪打底", "unit": "坪", "price": 1800, "note": "", "code": "P008"}, {"cat": "泥作工程", "name": "磁磚舖貼(牆)", "unit": "坪", "price": 2200, "note": "材料另計", "code": "P009"}, {"cat": "泥作工程", "name": "磁磚舖貼(地)", "unit": "坪", "price": 2000, "note": "材料另計", "code": "P010"}, {"cat": "木作工程", "name": "木作矽酸鈣天花板封板(平釘)", "unit": "坪", "price": 4800, "note": "", "code": "P011"}, {"cat": "木作工程", "name": "系統櫃(訂製)", "unit": "尺", "price": 12000, "note": "含五金", "code": "P012"}, {"cat": "木作工程", "name": "SPC石塑木地板舖設", "unit": "坪", "price": 5500, "note": "", "code": "P013"}, {"cat": "油漆工程", "name": "矽酸鈣牆面/天花板批土油漆", "unit": "坪", "price": 2100, "note": "含批土兩底一度", "code": "P014"}, {"cat": "油漆工程", "name": "水泥牆面批土油漆", "unit": "坪", "price": 1200, "note": "含批土兩底一度", "code": "P015"}, {"cat": "油漆工程", "name": "天花板油漆", "unit": "坪", "price": 1200, "note": "", "code": "P016"}, {"cat": "衛浴工程", "name": "衛浴設備安裝(整組)", "unit": "式", "price": 48000, "note": "馬桶+洗手台+龍頭+蓮蓬頭+置物架+四方鏡", "code": "P017"}, {"cat": "衛浴工程", "name": "淋浴拉門安裝", "unit": "式", "price": 19800, "note": "", "code": "P018"}, {"cat": "燈具工程", "name": "崁燈安裝", "unit": "個", "price": 600, "note": "含燈具", "code": "P019"}, {"cat": "其他", "name": "垃圾清運", "unit": "車", "price": 14000, "note": "", "code": "P020"}, {"cat": "其他", "name": "保護工程(全室)", "unit": "坪", "price": 950, "note": "施工前防護", "code": "P021"}, {"cat": "外牆工程", "name": "外牆施工鷹架+防塵網", "unit": "式", "price": 98000, "note": "", "code": "P022"}, {"cat": "外牆工程", "name": "外牆正面石頭漆噴塗", "unit": "式", "price": 110000, "note": "", "code": "P023"}, {"cat": "外牆工程", "name": "後方防水漆", "unit": "式", "price": 40000, "note": "", "code": "P024"}, {"cat": "衛浴設備", "name": "抽風機", "unit": "台", "price": 0, "note": "CAESAR D610", "code": "P025"}, {"cat": "衛浴設備", "name": "馬桶(TOTO CW887CRTW)", "unit": "組", "price": 0, "note": "TOTO CW887CRTW", "code": "P026"}, {"cat": "衛浴設備", "name": "馬桶(CAESAR CF1394)", "unit": "組", "price": 0, "note": "CAESAR CF1394", "code": "P027"}, {"cat": "衛浴設備", "name": "馬桶(KOHTHER 28529TW-0)", "unit": "組", "price": 0, "note": "KOHTHER 28529TW-0", "code": "P028"}, {"cat": "衛浴設備", "name": "化妝鏡", "unit": "面", "price": 0, "note": "CAESAR M807-F-T", "code": "P029"}, {"cat": "衛浴設備", "name": "浴櫃W=60公分(CAESAR LF5357)", "unit": "組", "price": 0, "note": "CAESAR LF5357", "code": "P030"}, {"cat": "衛浴設備", "name": "浴櫃W=60公分(CAESAR LF5384)", "unit": "組", "price": 0, "note": "CAESAR LF5384", "code": "P031"}, {"cat": "衛浴設備", "name": "浴櫃W=160公分(木工訂製)", "unit": "式", "price": 0, "note": "木工訂製", "code": "P032"}, {"cat": "衛浴設備", "name": "浴櫃龍頭(CAESAR B520C)", "unit": "組", "price": 0, "note": "CAESAR B520C", "code": "P033"}, {"cat": "衛浴設備", "name": "浴櫃龍頭(KOHTHER 29546T-4-CP)", "unit": "組", "price": 0, "note": "KOHTHER 29546T-4-CP", "code": "P034"}, {"cat": "衛浴設備", "name": "淋浴龍頭(CAESAR S783C)", "unit": "組", "price": 0, "note": "CAESAR S783C", "code": "P035"}, {"cat": "衛浴設備", "name": "淋浴龍頭(CAESAR S788CW)", "unit": "組", "price": 0, "note": "CAESAR S788CW", "code": "P036"}, {"cat": "衛浴設備", "name": "沖洗器", "unit": "組", "price": 0, "note": "CAESAR BS310CWT", "code": "P037"}, {"cat": "衛浴設備", "name": "置物架", "unit": "組", "price": 0, "note": "CAESAR Q6309", "code": "P038"}, {"cat": "衛浴設備", "name": "暖風機", "unit": "台", "price": 0, "note": "KOHTHER 77315TW-G-MZ", "code": "P039"}, {"cat": "衛浴設備", "name": "鏡櫃", "unit": "組", "price": 0, "note": "KOHTHER 33694T-L-NA；60公分*1、30公分*2組合", "code": "P040"}, {"cat": "衛浴設備", "name": "毛巾架", "unit": "支", "price": 0, "note": "KOHTHER 29348T-A-0", "code": "P041"}, {"cat": "衛浴設備", "name": "浴缸", "unit": "組", "price": 0, "note": "KOHTHER MO-1051", "code": "P042"}, {"cat": "衛浴設備", "name": "浴缸龍頭(訂製款)", "unit": "組", "price": 0, "note": "KOHTHER 訂製款", "code": "P043"}];
 let nextSeq = PRICE_LIST.length + 1;
 
@@ -886,7 +900,7 @@ function libEditFormHtml(item){
       </div>
       <div class="frow">
         <div style="width:80px;"><span class="flabel">單位</span><input id="ef-unit" value="${esc(v.unit)}" placeholder="坪"></div>
-        <div style="width:110px;"><span class="flabel">參考單價</span><input id="ef-price" type="text" inputmode="decimal" value="${v.price || ''}"></div>
+        <div style="width:110px;"><span class="flabel">參考單價</span><input id="ef-price" type="text" ${HB_COARSE ? 'inputmode="decimal"' : ''} value="${v.price || ''}"></div>
         <div style="flex:1;"><span class="flabel">廠商</span><input id="ef-vendor" value="${esc(v.vendor||'')}" placeholder="選填"></div>
       </div>
       <div class="frow">
@@ -1257,11 +1271,11 @@ function renderQuote(){
         if(!r.hidePrice){
           html += `
             <tr class="item-row" data-id="${r.id}">
-              <td>${no}</td>
+              <td class="drag-handle" data-id="${r.id}" title="按住序號可拖曳調整順序">${no}</td>
               <td>${nameCell}</td>
               <td>${unitCell}</td>
-              <td><input class="price-input" data-id="${r.id}" type="text" inputmode="decimal" value="${r.price}"></td>
-              <td><input class="qty-input" data-id="${r.id}" type="text" inputmode="decimal" value="${r.qty}"></td>
+              <td><input class="price-input" data-id="${r.id}" type="text" ${HB_COARSE ? 'inputmode="decimal"' : ''} value="${r.price}"></td>
+              <td><input class="qty-input" data-id="${r.id}" type="text" ${HB_COARSE ? 'inputmode="decimal"' : ''} value="${r.qty}"></td>
               <td class="subtotal-cell">${fmt(r.price*r.qty)}</td>
               <td>${opsCell}</td>
             </tr>
@@ -1269,7 +1283,7 @@ function renderQuote(){
         } else {
           html += `
             <tr class="item-row" data-id="${r.id}">
-              <td>${no}</td>
+              <td class="drag-handle" data-id="${r.id}" title="按住序號可拖曳調整順序">${no}</td>
               <td>${nameCell}</td>
               <td>${unitCell}</td>
               <td colspan="3" class="price-hidden-cell">1 式</td>
@@ -1552,6 +1566,106 @@ setSaveStatus(restored ? '已載入本機儲存的報價資料' : '尚未儲存�
 
 // then set up cloud sync (if configured) — will overwrite with cloud data once logged-in state resolves
 initCloudSync();
+/* =====================================================================
+   報價明細：按住序號拖曳排序
+   - 直接調整 quoteRows 的順序，再走原本的 renderQuote() / saveToStorage()
+   - 拖到別的大項底下時，該列的分類也會跟著改成那個大項
+     （groupRows 是照陣列順序分組的，不同步改分類的話會被歸回原本那組）
+   ===================================================================== */
+(function(){
+  var drag = null;
+
+  function computeTarget(fromIdx, targetIdx, pos){
+    var to = targetIdx + (pos === 'after' ? 1 : 0);
+    if (to > fromIdx) to -= 1;
+    return to;
+  }
+  window.__quoteComputeTarget = computeTarget;   // 供測試
+
+  function applyMove(dragId, targetId, pos){
+    var from = quoteRows.findIndex(function(r){ return String(r.id) === String(dragId); });
+    var tIdx = quoteRows.findIndex(function(r){ return String(r.id) === String(targetId); });
+    if (from < 0 || tIdx < 0) return false;
+    var to = computeTarget(from, tIdx, pos);
+    if (to === from) return false;
+    var targetCat = quoteRows[tIdx].cat;
+    var moved = quoteRows.splice(from, 1)[0];
+    if (moved.cat !== targetCat) moved.cat = targetCat;   // 跨大項時一起換分類
+    quoteRows.splice(to, 0, moved);
+    return true;
+  }
+  window.__quoteApplyMove = applyMove;
+
+  function clearMarks(){
+    document.querySelectorAll('tr[data-hbdrop]').forEach(function(el){ el.removeAttribute('data-hbdrop'); });
+  }
+
+  function scrollParent(el){
+    for (var n = el; n && n !== document.body; n = n.parentElement){
+      var ov = getComputedStyle(n).overflowY;
+      if ((ov === 'auto' || ov === 'scroll') && n.scrollHeight > n.clientHeight) return n;
+    }
+    return null;
+  }
+
+  document.addEventListener('pointerdown', function(e){
+    if (e.button != null && e.button !== 0) return;
+    var handle = e.target && e.target.closest ? e.target.closest('.drag-handle') : null;
+    if (!handle) return;
+    var tr = handle.closest('tr.item-row');
+    if (!tr) return;
+    drag = { id: tr.dataset.id, tr: tr, target: null, pos: null, scroller: scrollParent(tr) };
+    tr.setAttribute('data-hbdragging','1');
+    document.body.setAttribute('data-hbdragging','1');
+    if (handle.setPointerCapture) { try { handle.setPointerCapture(e.pointerId); } catch(err){} }
+    e.preventDefault();
+  }, true);
+
+  document.addEventListener('pointermove', function(e){
+    if (!drag) return;
+    e.preventDefault();
+    if (drag.scroller){
+      var r = drag.scroller.getBoundingClientRect();
+      if (e.clientY < r.top + 60) drag.scroller.scrollTop -= 12;
+      else if (e.clientY > r.bottom - 60) drag.scroller.scrollTop += 12;
+    }
+    var el = document.elementFromPoint(e.clientX, e.clientY);
+    var row = el && el.closest ? el.closest('tr.item-row') : null;
+    clearMarks();
+    if (!row || row === drag.tr){ drag.target = null; return; }
+    var rect = row.getBoundingClientRect();
+    var pos = (e.clientY > rect.top + rect.height / 2) ? 'after' : 'before';
+    row.setAttribute('data-hbdrop', pos);
+    drag.target = row;
+    drag.pos = pos;
+  });
+
+  function endDrag(){
+    if (!drag) return;
+    var d = drag; drag = null;
+    d.tr.removeAttribute('data-hbdragging');
+    document.body.removeAttribute('data-hbdragging');
+    clearMarks();
+    if (!d.target) return;
+    if (applyMove(d.id, d.target.dataset.id, d.pos)){
+      renderQuote();
+      saveToStorage();
+    }
+  }
+
+  document.addEventListener('pointerup', endDrag);
+  document.addEventListener('pointercancel', endDrag);
+  window.addEventListener('blur', endDrag);
+})();
+
+/* 觸控裝置才補上 inputmode（桌機保持不給，避免中文輸入法被關掉） */
+(function(){
+  if (!HB_COARSE) return;
+  ['discount','taxRate'].forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) el.setAttribute('inputmode','decimal');
+  });
+})();
 </script>
 </body>
 </html>
