@@ -5323,7 +5323,7 @@ react-dom/cjs/react-dom-client.production.js:
 </script>
 <!--
   =====================================================================
-  赫柏工地紀錄本 · 側邊導覽列 v7
+  赫柏工地紀錄本 · 側邊導覽列 v8
   貼法：整段貼在 index.html 最後的 </body> 前面
   內容：首頁／公司資料庫／專案資料庫／分享到LINE（＋捲動後出現的回到頂端）
   作法：底部 hb-dock 用 CSS 隱藏但保留在 DOM，側邊列點擊時代按對應的 dock 按鈕，
@@ -5356,7 +5356,7 @@ react-dom/cjs/react-dom-client.production.js:
     '.hb-dock{display:none!important;}',
 
     '.hb-rail{position:fixed;right:0;top:50%;transform:translateY(-50%);z-index:18;',
-    '  display:flex;flex-direction:column;padding:4px 0;',
+    '  display:flex;flex-direction:column;padding:3px 0;',
     '  transition:opacity .25s ease,right .2s ease;',
     '  font-family:"Noto Sans TC","PingFang TC",sans-serif;}',
     '.hb-rail[hidden]{display:none!important;}',
@@ -5371,28 +5371,24 @@ react-dom/cjs/react-dom-client.production.js:
     '  border-left:1px solid #E6E2D8;border-radius:3px 0 0 3px;opacity:.92;}',
     '.hb-rail[data-place="inside"]:hover,.hb-rail[data-place="inside"]:focus-within{opacity:1;}',
 
-    '.hb-rail__item{display:flex;flex-direction:column;align-items:center;gap:2px;width:58px;',
-    '  padding:9px 0;background:none;border:0;cursor:pointer;text-decoration:none;',
+    '.hb-rail__item{display:flex;align-items:center;justify-content:center;width:38px;',
+    '  padding:4px 0;background:none;border:0;cursor:pointer;text-decoration:none;',
     '  -webkit-tap-highlight-color:transparent;}',
-    '.hb-rail__ico{width:30px;height:30px;border-radius:50%;border:1px solid transparent;',
+    '.hb-rail__ico{width:28px;height:28px;border-radius:50%;border:1px solid transparent;',
     '  display:flex;align-items:center;justify-content:center;color:#A8A296;',
     '  transition:all .18s ease;}',
     '.hb-rail__ico svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.5;',
     '  stroke-linecap:round;stroke-linejoin:round;}',
-    '.hb-rail__txt{font-size:9px;color:#A8A296;white-space:nowrap;letter-spacing:.02em;',
-    '  transition:color .18s ease;}',
+    '.hb-rail__txt{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);}',
     '.hb-rail__item:hover .hb-rail__ico{color:#1C1B18;}',
-    '.hb-rail__item:hover .hb-rail__txt{color:#8C877D;}',
     '.hb-rail__item:focus-visible{outline:1px solid #7C6A56;outline-offset:-3px;}',
 
     /* 目前所在頁：跟原本 dock 一樣是實心圓 */
     '.hb-rail__item[aria-current="page"] .hb-rail__ico{background:#1C1B18;',
     '  border-color:#1C1B18;color:#FFFFFF;}',
-    '.hb-rail__item[aria-current="page"] .hb-rail__txt{color:#1C1B18;font-weight:500;}',
 
     /* 手機：只留圖示，避免吃掉內容寬度 */
-    '@media (max-width:859px){.hb-rail__item{width:42px;padding:7px 0;}',
-    '  .hb-rail__txt{display:none;}}',
+    '@media (max-width:859px){.hb-rail__item{width:38px;padding:5px 0;}}',
 
     /* 收合把手：只有畫面內模式（手機／窄視窗）才會用到 */
     '.hb-rail__handle{display:none;position:absolute;right:0;top:50%;',
@@ -5524,10 +5520,10 @@ react-dom/cjs/react-dom-client.production.js:
     var gutter = Math.max(0, Math.round(window.innerWidth - r.right)); // 外殼右側的留白
     var railW = Math.round(rail.getBoundingClientRect().width) || 58;
 
-    if (gutter >= railW + 8) {
+    if (gutter >= railW) {
       // 留白放得下：整條移到外殼外面，不壓到內容，底和框都拿掉
       rail.setAttribute('data-place', 'outside');
-      rail.style.right = Math.max(2, gutter - railW - 8) + 'px';
+      rail.style.right = Math.max(0, gutter - railW) + 'px';
     } else {
       // 放不下（手機或窄視窗）：貼右緣，補一層很淡的底
       rail.setAttribute('data-place', 'inside');
