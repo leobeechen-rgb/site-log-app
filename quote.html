@@ -666,8 +666,38 @@ function fmt(n){
   n = Math.round(n||0);
   return '$' + n.toLocaleString('en-US');
 }
+// 單價庫的 code 是「點選項目→加入報價單」「編輯」「刪除」共同的鍵，
+// 一旦重複，find() 只會回傳第一筆，於是後面那筆永遠點不到、
+// 點了還會加到別的項目。以下三個函式負責讓 code 永遠唯一。
+function syncNextSeq(){
+  // 用現有 code 的最大號往上接，而不是用「項目筆數＋1」——
+  // 刪除或取代匯入會讓筆數變少，序號一倒退就開始撞號。
+  let max = 0;
+  PRICE_LIST.forEach(p=>{
+    const m = /^P(\d+)$/.exec(String(p && p.code || ''));
+    if(m) max = Math.max(max, parseInt(m[1], 10));
+  });
+  nextSeq = max + 1;
+  return nextSeq;
+}
 function nextCode(){
-  return 'P' + String(nextSeq++).padStart(3,'0');
+  let code;
+  do{
+    code = 'P' + String(nextSeq++).padStart(3,'0');
+  } while(PRICE_LIST.some(p => p && p.code === code));
+  return code;
+}
+function repairCodes(){
+  // 修既有資料：沒有 code 或 code 重複的，一律補發新號。
+  const seen = new Set();
+  let fixed = 0;
+  PRICE_LIST.forEach(item=>{
+    if(!item) return;
+    if(!item.code || seen.has(item.code)){ item.code = nextCode(); fixed++; }
+    seen.add(item.code);
+  });
+  if(fixed) console.warn('[單價庫] 已修復 ' + fixed + ' 筆重複或缺漏的項目編號');
+  return fixed;
 }
 function esc(s){
   return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -722,7 +752,8 @@ function applyLoadedData(data){
   if(!data) return;
   if(Array.isArray(data.priceList) && data.priceList.length){
     PRICE_LIST = data.priceList;
-    nextSeq = data.nextSeq || (PRICE_LIST.length + 1);
+    syncNextSeq();
+    repairCodes();
   }
   if(Array.isArray(data.savedQuotes)){
     savedQuotes = dedupeSavedQuotesByQNo(data.savedQuotes);
@@ -975,7 +1006,7 @@ function renderLib(){
     html += '<div style="padding:20px;text-align:center;color:#5C6B73;font-size:13px;">找不到符合的項目</div>';
   } else {
     let lastCat = null;
-    grouped.forEach(i=>{
+    grouped.forEach((i, gi)=>{
       if(i.cat !== lastCat){
         html += `<div class="lib-group-head">${esc(i.cat)}</div>`;
         lastCat = i.cat;
@@ -987,7 +1018,7 @@ function renderLib(){
       html += `
         <div class="lib-item">
           <div class="lib-item-row">
-            <div class="lib-item-main" data-code="${esc(i.code)}">
+            <div class="lib-item-main" data-code="${esc(i.code)}" data-idx="${gi}">
               <div class="lib-item-name">${esc(i.name)}</div>
               <div class="lib-item-meta">${i.vendor ? `<span class="lib-item-vendor">${esc(i.vendor)}</span> · ` : ''}${esc(i.note)||'—'}</div>
             </div>
@@ -1008,7 +1039,10 @@ function renderLib(){
 
   listEl.querySelectorAll('.lib-item-main').forEach(el=>{
     el.addEventListener('click', ()=>{
-      const item = PRICE_LIST.find(p=>p.code===el.dataset.code);
+      // 以畫面上這一筆的實際資料為準（grouped[idx]），code 只是備援；
+      // 這樣就算資料還有舊的重複編號，點到的也一定是看到的那一筆。
+      const item = grouped[parseInt(el.dataset.idx, 10)] || PRICE_LIST.find(p=>p.code===el.dataset.code);
+      if(!item){ alert('這個項目讀取失敗，請重新整理頁面再試一次'); return; }
       addRow(item);
     });
   });
@@ -1103,7 +1137,8 @@ document.getElementById('importFile').addEventListener('change', (e)=>{
       cat: d.cat||'未分類', name: d.name||'', unit: d.unit||'式',
       price: parseFloat(d.price)||0, note: d.note||'', vendor: d.vendor||'', code: d.code || nextCode()
     }));
-    nextSeq = PRICE_LIST.length + 1;
+    syncNextSeq();
+    repairCodes();
     activeCat = '全部'; activeVendor = '全部';
     editingCode = null;
     renderVendors();
@@ -1169,7 +1204,8 @@ document.getElementById('importExcelFile').addEventListener('change', (e)=>{
         PRICE_LIST = PRICE_LIST.filter(p => p.vendor !== vendorName);
       }
       PRICE_LIST = PRICE_LIST.concat(parsed);
-      nextSeq = PRICE_LIST.length + 1;
+      syncNextSeq();
+      repairCodes();
       activeVendor = vendorName;
       activeCat = '全部';
       renderVendors();
@@ -1215,6 +1251,7 @@ function readJsonFile(e, onData, errMsg){
 
 // ---------- Quote rows ----------
 function addRow(item){
+  if(!item){ alert('這個項目讀取失敗，請重新整理頁面再試一次'); return; }
   quoteRows.push({
     id: rowSeq++,
     cat: item.cat,
@@ -1584,6 +1621,7 @@ document.getElementById('importSavedFile').addEventListener('change', (e)=>{
 
 // init: restore from this browser's local storage first (instant, offline-friendly)
 const restored = loadFromStorage();
+repairCodes();   // 修復先前版本可能已寫入本機的重複編號
 if(!document.getElementById('qDate').value){
   document.getElementById('qDate').valueAsDate = new Date();
 }
