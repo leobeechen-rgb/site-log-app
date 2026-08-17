@@ -401,14 +401,21 @@
       max-height:calc(100vh - 36px);
       display:flex; flex-direction:column; margin-bottom:0;
     }
-    #tabPaneLib .lib-list{overflow-y:auto; flex:1; min-height:0;}
+    /* 只有清單可以被壓縮，標題／搜尋／分類列一律保持原高度，
+       否則欄位被擠扁，橫向捲軸會壓在分類文字上。 */
+    #tabPaneLib > *{flex:0 0 auto;}
+    #tabPaneLib .lib-list{overflow-y:auto; flex:1 1 auto; min-height:0;}
+    /* 左欄窄，分類改成換行排列，不用橫向捲軸 */
+    #tabPaneLib .lib-cats{flex-wrap:wrap; overflow-x:visible; gap:11px 16px; padding-bottom:18px;}
     #quotePanel{grid-column:2; grid-row:1; margin-bottom:0;}
     #savedPanel{grid-column:2; grid-row:2; margin-bottom:0;}
-    /* 左欄較窄，內距跟著收 */
-    .lib-panel-head{padding:22px 22px 12px;}
-    .lib-search-row,.lib-cats{padding-left:22px; padding-right:22px;}
+    /* 左欄較窄，內距與控制項跟著收，把高度留給清單 */
+    .lib-panel-head{padding:18px 22px 8px; gap:10px 12px;}
+    .lib-search-row{padding:2px 22px 10px; gap:12px;}
+    .lib-cats{padding-left:22px; padding-right:22px;}
     .lib-list{padding:0 22px 24px;}
-    .lib-cats{gap:16px;}
+    #tabPaneLib .head-btn{font-size:11px; padding:3px 7px;}
+    #tabPaneLib .lib-search input{padding:6px 2px;}
   }
   /* 窄螢幕：單價庫不吃掉整個畫面 */
   @media (max-width:1119px){
