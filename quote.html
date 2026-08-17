@@ -63,6 +63,12 @@
     position:relative;
     min-height:100vh;
   }
+  /* overflow-x:hidden 會讓 html/body 變成捲動容器，position:sticky 就失效。
+     clip 一樣擋住橫向溢出，但不會產生捲動容器，左欄才釘得住。 */
+  @supports (overflow-x:clip){
+    html{overflow-x:clip;}
+    body{overflow-x:clip;}
+  }
   body::before{
     content:"";
     position:fixed; inset:0; z-index:-1;
@@ -227,7 +233,7 @@
     padding:16px 10px 12px; text-align:left; border-bottom:1px solid var(--line);
     letter-spacing:.2em;
   }
-  tbody td{padding:17px 10px; border-bottom:1px solid var(--line); vertical-align:middle;}
+  tbody td{padding:12px 10px; border-bottom:1px solid var(--line); vertical-align:middle;}
   tbody tr:hover{background:var(--yellow-soft);}
   tr.group-row td{
     background:transparent; font-weight:500; color:var(--ink); font-size:13px; letter-spacing:.16em;
@@ -378,6 +384,41 @@
   .switch input:checked + .switch-slider{background:var(--navy-800);}
   .switch input:checked + .switch-slider::before{transform:translateX(17px);}
   .price-toggle-hint{font-size:11px; color:var(--ink-soft); margin-top:2px;}
+
+  /* ── 寬螢幕：左右分欄 ──────────────────────────────────
+     單價庫釘在左欄自己捲動，報價明細在右欄，
+     加項目與打價格不必再上下來回捲。                        */
+  @media (min-width:1120px){
+    .wrap{max-width:1340px;}
+    .footnote{max-width:1340px;}
+    .stack{
+      display:grid; grid-template-columns:360px minmax(0,1fr);
+      align-items:start; gap:32px;
+    }
+    #tabPaneLib{
+      grid-column:1; grid-row:1 / span 2;
+      position:sticky; top:18px; align-self:start;
+      max-height:calc(100vh - 36px);
+      display:flex; flex-direction:column; margin-bottom:0;
+    }
+    #tabPaneLib .lib-list{overflow-y:auto; flex:1; min-height:0;}
+    #quotePanel{grid-column:2; grid-row:1; margin-bottom:0;}
+    #savedPanel{grid-column:2; grid-row:2; margin-bottom:0;}
+    /* 左欄較窄，內距跟著收 */
+    .lib-panel-head{padding:22px 22px 12px;}
+    .lib-search-row,.lib-cats{padding-left:22px; padding-right:22px;}
+    .lib-list{padding:0 22px 24px;}
+    .lib-cats{gap:16px;}
+  }
+  /* 窄螢幕：單價庫不吃掉整個畫面 */
+  @media (max-width:1119px){
+    #tabPaneLib .lib-list{max-height:46vh; overflow-y:auto;}
+  }
+  /* 收合狀態 */
+  body.lib-collapsed #tabPaneLib .lib-search-row,
+  body.lib-collapsed #tabPaneLib .lib-cats,
+  body.lib-collapsed #tabPaneLib .lib-list{display:none;}
+  body.lib-collapsed #tabPaneLib .lib-panel-head{padding-bottom:22px;}
 
   /* Responsive refinements */
   @media (max-width:640px){
@@ -562,6 +603,7 @@ body[data-hbdragging="1"]{cursor:grabbing;user-select:none;-webkit-user-select:n
       <div class="lib-panel-head">
         <span style="font-family:var(--font-title);font-weight:600;font-size:15px;">單價庫 <span class="count" id="libCount"></span></span>
         <div class="panel-head-actions" style="margin-left:auto;">
+          <button class="head-btn" id="libToggleBtn" title="收合／展開單價庫">收合</button>
           <button class="head-btn" id="importExcelBtn">匯入 Excel</button>
           <input type="file" id="importExcelFile" accept=".xlsx,.xls,.csv" style="display:none;">
           <button class="head-btn" id="addItemBtn">+ 新增項目</button>
@@ -605,7 +647,7 @@ body[data-hbdragging="1"]{cursor:grabbing;user-select:none;-webkit-user-select:n
             </tr>
           </thead>
           <tbody id="quoteBody">
-            <tr class="empty-row"><td colspan="7">從上方單價庫點選項目，加入報價單</td></tr>
+            <tr class="empty-row"><td colspan="7">從單價庫點選項目，加入報價單</td></tr>
           </tbody>
         </table>
       </div>
@@ -1248,6 +1290,44 @@ function readJsonFile(e, onData, errMsg){
   reader.readAsText(file);
   e.target.value = '';
 }
+
+// ---------- 單價庫收合 ----------
+(function(){
+  const btn = document.getElementById('libToggleBtn');
+  if(!btn) return;
+  btn.addEventListener('click', ()=>{
+    const collapsed = document.body.classList.toggle('lib-collapsed');
+    btn.textContent = collapsed ? '展開' : '收合';
+  });
+})();
+
+// ---------- 鍵盤流：Enter／上下鍵在同一欄位往下一列跑 ----------
+// 打價格時不用回到滑鼠，也不用 Tab 穿過中間的分類與名稱欄位。
+(function(){
+  document.addEventListener('keydown', function(e){
+    const el = e.target;
+    if(!el || !el.classList) return;
+    const isQty = el.classList.contains('qty-input');
+    const isPrice = el.classList.contains('price-input');
+    if(!isQty && !isPrice) return;
+    let dir = 0;
+    if(e.key === 'Enter' || e.key === 'ArrowDown') dir = 1;
+    else if(e.key === 'ArrowUp') dir = -1;
+    else return;
+    e.preventDefault();
+    const sel = isQty ? '.qty-input' : '.price-input';
+    const all = Array.from(document.querySelectorAll('#quoteBody ' + sel));
+    const idx = all.indexOf(el);
+    const next = all[idx + dir];
+    if(next){
+      next.focus();
+      next.select();
+      next.scrollIntoView({block:'center', behavior:'smooth'});
+    } else {
+      el.blur();
+    }
+  });
+})();
 
 // ---------- Quote rows ----------
 function addRow(item){
