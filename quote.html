@@ -326,6 +326,11 @@
     box-shadow:none;
   }
 
+  .totals-note{
+    text-align:right; font-size:12px; color:var(--ink-soft);
+    margin-top:12px; letter-spacing:.06em; line-height:1.7;
+  }
+
   .actions{display:flex; gap:14px; padding:6px 30px 34px; flex-wrap:wrap;}
   button.btn{
     font-family:inherit; font-weight:500; font-size:13.5px; padding:11px 20px;
@@ -486,6 +491,7 @@
     .totals{padding:6px 10px;}
     .totals-row{padding:1px 0; font-size:11px;}
     .totals-row.grand{margin-top:2px; padding-top:6px;}
+    .totals-note{font-size:10px; margin-top:6px;}
     /* 沒開「列印背景圖形」時，實心色塊會整塊消失，所以列印改成描邊 */
     .totals-row.grand .val{
       font-size:15px; padding:3px 10px;
@@ -664,6 +670,7 @@ body[data-hbdragging="1"]{cursor:grabbing;user-select:none;-webkit-user-select:n
         <div class="totals-row"><label>折扣金額</label><input id="discount" type="text" value="0"></div>
         <div class="totals-row"><label>營業稅 (%)</label><input id="taxRate" type="text" value="5"></div>
         <div class="totals-row grand"><label>總計金額</label><div class="val" id="sumTotal">$0</div></div>
+        <div class="totals-note" id="taxNote">※ 以上報價金額不含營業稅 5%</div>
       </div>
 
       <div class="actions">
@@ -1556,6 +1563,15 @@ function renderTotals(){
 
   document.getElementById('sumSubtotal').textContent = fmt(subtotal);
   document.getElementById('sumTotal').textContent = fmt(total);
+
+  // 稅額備註：稅率填 0 時＝報價未稅，另加 5%；稅率有填時＝總計已含該稅率
+  const noteEl = document.getElementById('taxNote');
+  if(noteEl){
+    const pct = parseFloat(document.getElementById('taxRate').value)||0;
+    noteEl.textContent = pct > 0
+      ? '※ 總計金額已含營業稅 ' + pct + '%'
+      : '※ 以上報價金額不含營業稅 5%，開立發票時另加計 5%';
+  }
   return total;
 }
 
