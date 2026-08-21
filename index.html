@@ -137,37 +137,21 @@ Error generating stack: `+n.message+`
 
 /* ===== Cloudflare R2（行銷照片庫）設定與簽章上傳 ===== */
 var R2_CONFIG={
-  accountId:"44258013bd6785b2c570cb3c72b8fb6c",
-  bucket:"herfulsins-marketing-photos",
   publicUrl:"https://pub-2063c1ccef9742fbb3a0513c9f792077.r2.dev",
-  accessKeyId:"f4287070a9a2883f68400993c22b2e55",
-  secretAccessKey:"4bee54657d72cb074f552a2874e951c9a5efe13fd65800080688f1f6818f33d0"
+  workerUrl:"https://REPLACE-ME.workers.dev",
+  token:"REPLACE_WITH_HB_UPLOAD_TOKEN"
 };
 async function r2Sha256Hex(buf){let h=await crypto.subtle.digest("SHA-256",buf);return Array.from(new Uint8Array(h)).map(b=>b.toString(16).padStart(2,"0")).join("")}
 async function r2Hmac(key,data){let ck=await crypto.subtle.importKey("raw",key,{name:"HMAC",hash:"SHA-256"},false,["sign"]);return new Uint8Array(await crypto.subtle.sign("HMAC",ck,typeof data==="string"?new TextEncoder().encode(data):data))}
 async function r2SigningKey(secret,dateStamp,region,service){let kDate=await r2Hmac(new TextEncoder().encode("AWS4"+secret),dateStamp);let kRegion=await r2Hmac(kDate,region);let kService=await r2Hmac(kRegion,service);return r2Hmac(kService,"aws4_request")}
 function r2Hex(buf){return Array.from(buf).map(b=>b.toString(16).padStart(2,"0")).join("")}
 async function r2Request(method,key,bodyBuf,contentType){
-  let region="auto",service="s3";
-  let host=`${R2_CONFIG.accountId}.r2.cloudflarestorage.com`;
-  let now=new Date();
-  let amzDate=now.toISOString().replace(/[:-]|\.\d{3}/g,"");
-  let dateStamp=amzDate.slice(0,8);
   let encodedKey=key.split("/").map(encodeURIComponent).join("/");
-  let canonicalUri=`/${R2_CONFIG.bucket}/${encodedKey}`;
-  let payloadHash=await r2Sha256Hex(bodyBuf||new Uint8Array(0));
-  let ct=contentType||"application/octet-stream";
-  let canonicalHeaders=`content-type:${ct}\nhost:${host}\nx-amz-content-sha256:${payloadHash}\nx-amz-date:${amzDate}\n`;
-  let signedHeaders="content-type;host;x-amz-content-sha256;x-amz-date";
-  let canonicalRequest=`${method}\n${canonicalUri}\n\n${canonicalHeaders}\n${signedHeaders}\n${payloadHash}`;
-  let credentialScope=`${dateStamp}/${region}/${service}/aws4_request`;
-  let stringToSign=`AWS4-HMAC-SHA256\n${amzDate}\n${credentialScope}\n${await r2Sha256Hex(new TextEncoder().encode(canonicalRequest))}`;
-  let signingKey=await r2SigningKey(R2_CONFIG.secretAccessKey,dateStamp,region,service);
-  let signature=r2Hex(await r2Hmac(signingKey,stringToSign));
-  let authHeader=`AWS4-HMAC-SHA256 Credential=${R2_CONFIG.accessKeyId}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
-  let url=`https://${host}${canonicalUri}`;
-  let res=await fetch(url,{method,headers:{"content-type":ct,"x-amz-content-sha256":payloadHash,"x-amz-date":amzDate,"authorization":authHeader},body:method==="PUT"?bodyBuf:undefined});
-  if(!res.ok){let txt=await res.text().catch(()=>"");throw new Error(`R2 ${method} 失敗 (${res.status}): ${txt.slice(0,200)}`)}
+  let url=`${R2_CONFIG.workerUrl}/marketing/${encodedKey}`;
+  let headers={"x-hb-token":R2_CONFIG.token};
+  if(method==="PUT") headers["content-type"]=contentType||"application/octet-stream";
+  let res=await fetch(url,{method,headers,body:method==="PUT"?bodyBuf:undefined});
+  if(!res.ok){let txt=await res.text().catch(()=>"");throw new Error(`R2 ${method} \u5931\u6557 (${res.status}): ${txt.slice(0,200)}`)}
   return res;
 }
 async function r2Upload(key,blob,contentType){
@@ -179,33 +163,17 @@ async function r2DeleteObj(key){try{await r2Request("DELETE",key,null,null)}catc
 
 /* ===== Cloudflare R2（施工照片 / 專案檔案）設定與簽章上傳 ===== */
 var R2_SITELOG_CONFIG={
-  accountId:"44258013bd6785b2c570cb3c72b8fb6c",
-  bucket:"herfulsins-sitelog-files",
   publicUrl:"https://pub-0a93db6b495e4243a9a71d5d0c6dd3e8.r2.dev",
-  accessKeyId:"b43f88ce23fc4ae97782e84fafec995e",
-  secretAccessKey:"558c2d49cdab27425f9f13b623ebdcbdbcd825b21e45defadfdd5eb8ad6bd8a9"
+  workerUrl:"https://REPLACE-ME.workers.dev",
+  token:"REPLACE_WITH_HB_UPLOAD_TOKEN"
 };
 async function r2SitelogRequest(method,key,bodyBuf,contentType){
-  let region="auto",service="s3";
-  let host=`${R2_SITELOG_CONFIG.accountId}.r2.cloudflarestorage.com`;
-  let now=new Date();
-  let amzDate=now.toISOString().replace(/[:-]|\.\d{3}/g,"");
-  let dateStamp=amzDate.slice(0,8);
   let encodedKey=key.split("/").map(encodeURIComponent).join("/");
-  let canonicalUri=`/${R2_SITELOG_CONFIG.bucket}/${encodedKey}`;
-  let payloadHash=await r2Sha256Hex(bodyBuf||new Uint8Array(0));
-  let ct=contentType||"application/octet-stream";
-  let canonicalHeaders=`content-type:${ct}\nhost:${host}\nx-amz-content-sha256:${payloadHash}\nx-amz-date:${amzDate}\n`;
-  let signedHeaders="content-type;host;x-amz-content-sha256;x-amz-date";
-  let canonicalRequest=`${method}\n${canonicalUri}\n\n${canonicalHeaders}\n${signedHeaders}\n${payloadHash}`;
-  let credentialScope=`${dateStamp}/${region}/${service}/aws4_request`;
-  let stringToSign=`AWS4-HMAC-SHA256\n${amzDate}\n${credentialScope}\n${await r2Sha256Hex(new TextEncoder().encode(canonicalRequest))}`;
-  let signingKey=await r2SigningKey(R2_SITELOG_CONFIG.secretAccessKey,dateStamp,region,service);
-  let signature=r2Hex(await r2Hmac(signingKey,stringToSign));
-  let authHeader=`AWS4-HMAC-SHA256 Credential=${R2_SITELOG_CONFIG.accessKeyId}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
-  let url=`https://${host}${canonicalUri}`;
-  let res=await fetch(url,{method,headers:{"content-type":ct,"x-amz-content-sha256":payloadHash,"x-amz-date":amzDate,"authorization":authHeader},body:method==="PUT"?bodyBuf:undefined});
-  if(!res.ok){let txt=await res.text().catch(()=>"");throw new Error(`R2 ${method} 失敗 (${res.status}): ${txt.slice(0,200)}`)}
+  let url=`${R2_SITELOG_CONFIG.workerUrl}/sitelog/${encodedKey}`;
+  let headers={"x-hb-token":R2_SITELOG_CONFIG.token};
+  if(method==="PUT") headers["content-type"]=contentType||"application/octet-stream";
+  let res=await fetch(url,{method,headers,body:method==="PUT"?bodyBuf:undefined});
+  if(!res.ok){let txt=await res.text().catch(()=>"");throw new Error(`R2 ${method} \u5931\u6557 (${res.status}): ${txt.slice(0,200)}`)}
   return res;
 }
 async function r2UploadSitelogFile(bucketTag,path,blob,contentType){
@@ -4843,7 +4811,7 @@ return function(){wrap.removeEventListener("touchstart",onStart);wrap.removeEven
 return u.default.createElement("div",{ref:wrapRef,style:{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden",touchAction:"none"}},u.default.createElement("img",{ref:imgRef,src:src,alt:"",draggable:false,style:{maxWidth:"100%",maxHeight:"100%",objectFit:"contain",transformOrigin:"center center",willChange:"transform",userSelect:"none",WebkitUserSelect:"none",WebkitTouchCallout:"none"},onClick:function(e){e.stopPropagation()}}))}
 try{window.HBZoomImg=HBZoomImg}catch(e){}
 function mm({photos:l,index:t,onIndexChange:e,onClose:n}){let a=l[t],i=(0,u.useRef)(null),[hbZ,hbSetZ]=(0,u.useState)(!1),o=(0,u.useCallback)(()=>e(d=>d>0?d-1:d),[e]),f=(0,u.useCallback)(()=>e(d=>d<l.length-1?d+1:d),[e,l.length]);return(0,u.useEffect)(()=>{let d=h=>{h.key==="ArrowLeft"?o():h.key==="ArrowRight"?f():h.key==="Escape"&&n()};return window.addEventListener("keydown",d),()=>window.removeEventListener("keydown",d)},[o,f,n]),a?u.default.createElement("div",{style:{position:"fixed",inset:0,background:"rgba(0,0,0,0.9)",display:"flex",flexDirection:"column",zIndex:60},onTouchStart:d=>{i.current=!hbZ&&d.touches.length===1?d.touches[0].clientX:null},onTouchEnd:d=>{if(i.current==null||d.touches.length>0){i.current=null;return}let h=d.changedTouches[0].clientX-i.current;h>50?o():h<-50&&f(),i.current=null}},u.default.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 18px",flexShrink:0}},u.default.createElement("span",{style:{color:"#fff",fontSize:12.5},className:"mono"},t+1," / ",l.length),u.default.createElement("button",{onClick:n,style:{background:"none",border:"none",color:"#fff",cursor:"pointer",display:"flex"}},u.default.createElement(E,{name:"x",size:24}))),u.default.createElement("div",{style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",position:"relative",overflow:"hidden",minHeight:0}},t>0&&u.default.createElement("button",{onClick:o,style:{position:"absolute",left:8,background:"rgba(255,255,255,0.15)",border:"none",borderRadius:"50%",width:36,height:36,color:"#fff",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",zIndex:2}},u.default.createElement(E,{name:"arrow-left",size:18})),u.default.createElement(HBZoomImg,{src:a.url,onZoomState:hbSetZ}),t<l.length-1&&u.default.createElement("button",{onClick:f,style:{position:"absolute",right:8,background:"rgba(255,255,255,0.15)",border:"none",borderRadius:"50%",width:36,height:36,color:"#fff",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",transform:"scaleX(-1)",zIndex:2}},u.default.createElement(E,{name:"arrow-left",size:18})))):null}function $y(l){return l==null?null:(l/(1024*1024)).toFixed(1)}function Iy({projects:l,onOpen:t,onNew:e,onRefresh:n,refreshing:a,storageUsedBytes:i,onManageStaff:o,pickerMode:hbPM,onBack:hbBack,onGoCompany:hbGoCo}){
-  let c=$y(i),r=i!=null?Math.min(100,i/1073741824*100):null,[hbMenuOpen,hbSetMenuOpen]=(0,u.useState)(!1);
+  let c=$y(i),r=i!=null?Math.min(100,i/10737418240*100):null,[hbMenuOpen,hbSetMenuOpen]=(0,u.useState)(!1);
   return u.default.createElement("div",{style:{background:s.paper,minHeight:"100vh",position:"relative"}},
     u.default.createElement("style",null,`
       @keyframes iyBreatheA { 0%,100%{transform:scale(1);opacity:.7} 50%{transform:scale(1.3);opacity:1} }
@@ -4878,7 +4846,7 @@ function mm({photos:l,index:t,onIndexChange:e,onClose:n}){let a=l[t],i=(0,u.useR
       r!=null&&u.default.createElement("div",{style:{background:s.card,border:`1px solid ${s.line}`,borderRadius:4,padding:"10px 14px",marginBottom:16}},
         u.default.createElement("div",{style:{display:"flex",justifyContent:"space-between",fontSize:12,color:s.inkSoft,marginBottom:6}},
           u.default.createElement("span",null,"\u5DF2\u4F7F\u7528\u5132\u5B58\u7A7A\u9593"),
-          u.default.createElement("span",{className:"mono"},c," MB / 1024 MB")
+          u.default.createElement("span",{className:"mono"},c," MB / 10240 MB")
         ),
         u.default.createElement("div",{style:{background:"rgba(255,255,255,0.45)",borderRadius:999,height:6,overflow:"hidden"}},
           u.default.createElement("div",{style:{width:`${r}%`,height:"100%",background:r>90?s.cane:r>70?s.lemon:s.shoal,borderRadius:999}})
