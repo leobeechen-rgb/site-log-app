@@ -1469,22 +1469,39 @@ if (typeof module !== 'undefined') module.exports = G;
    所以立面座標 u = L - t (t 為沿 d 的距離)。
    ============================================================ */
 
+/* 櫃體是立面施工圖的主角,參數化到工班看得懂的程度:
+   門片數、層板、抽屜、吊桿、開放格、踢腳、檯面、開啟方向 */
 const ELEM_DEF = {
-  door:    { name: '門',       layer: 'A-DOOR', w: 900,  h: 2100, v: 0,    mat: 'WD-01' },
-  window:  { name: '窗',       layer: 'A-GLAZ', w: 1500, h: 1200, v: 900,  mat: 'AL-01' },
-  open:    { name: '開口',     layer: 'A-WALL', w: 900,  h: 2100, v: 0,    mat: '' },
-  cabinet: { name: '櫃體',     layer: 'A-FURN', w: 1200, h: 2400, v: 0,    mat: 'WD-01', doors: 2 },
-  upper:   { name: '吊櫃',     layer: 'A-FURN', w: 1200, h: 700,  v: 1500, mat: 'WD-01', doors: 2 },
-  counter: { name: '檯面',     layer: 'A-FURN', w: 1800, h: 40,   v: 850,  mat: 'ST-01' },
-  niche:   { name: '壁龕/凹槽', layer: 'A-FURN', w: 900,  h: 300,  v: 1200, mat: 'PT-01' },
-  mirror:  { name: '鏡面',     layer: 'A-FURN', w: 800,  h: 1000, v: 900,  mat: 'GL-01' },
-  panel:   { name: '造型板',   layer: 'A-FURN', w: 1200, h: 2400, v: 0,    mat: 'WD-01' },
-  outlet:  { name: '插座',     layer: 'A-EQPM', w: 120,  h: 75,   v: 300,  mat: '' },
-  switch:  { name: '開關',     layer: 'A-EQPM', w: 120,  h: 75,   v: 1200, mat: '' },
-  light:   { name: '壁燈',     layer: 'A-EQPM', w: 200,  h: 200,  v: 1800, mat: 'LT-01' },
+  cabinet: { name: '衣櫃', layer: 'A-FURN', w: 1800, h: 2400, v: 0, mat: 'WD-01',
+             doors: 4, shelves: 1, drawers: 2, rod: true, open: 0, toe: 100, counter: 0, swing: true, inside: true },
+  book:    { name: '書櫃/展示櫃', layer: 'A-FURN', w: 1200, h: 2100, v: 0, mat: 'WD-01',
+             doors: 0, shelves: 5, drawers: 0, rod: false, open: 0, toe: 80, counter: 0, swing: false, inside: true },
+  tvunit:  { name: '電視櫃', layer: 'A-FURN', w: 2400, h: 500, v: 0, mat: 'WD-01',
+             doors: 2, shelves: 0, drawers: 2, rod: false, open: 0, toe: 80, counter: 0, swing: false, inside: true },
+  shoe:    { name: '鞋櫃', layer: 'A-FURN', w: 900, h: 2100, v: 0, mat: 'WD-01',
+             doors: 2, shelves: 5, drawers: 0, rod: false, open: 1, toe: 100, counter: 0, swing: true, inside: true },
+  base:    { name: '廚下櫃', layer: 'A-FURN', w: 2400, h: 850, v: 0, mat: 'WD-01',
+             doors: 2, shelves: 0, drawers: 3, rod: false, open: 0, toe: 100, counter: 30, swing: false, inside: true },
+  upper:   { name: '吊櫃', layer: 'A-FURN', w: 2400, h: 700, v: 1500, mat: 'WD-01',
+             doors: 3, shelves: 1, drawers: 0, rod: false, open: 0, toe: 0, counter: 0, swing: true, inside: true },
+  vanity:  { name: '浴櫃', layer: 'A-FURN', w: 900, h: 800, v: 0, mat: 'WD-01',
+             doors: 2, shelves: 0, drawers: 0, rod: false, open: 0, toe: 100, counter: 20, swing: true, inside: false },
+  mirror:  { name: '鏡櫃/鏡面', layer: 'A-FURN', w: 900, h: 900, v: 950, mat: 'GL-01',
+             doors: 0, shelves: 0, drawers: 0, rod: false, open: 0, toe: 0, counter: 0, swing: false, inside: false },
+  panel:   { name: '造型板', layer: 'A-FURN', w: 1200, h: 2400, v: 0, mat: 'WD-01',
+             doors: 0, shelves: 0, drawers: 0, grooves: 4, toe: 0, counter: 0, swing: false, inside: false },
+  counter: { name: '檯面', layer: 'A-FURN', w: 1800, h: 30, v: 850, mat: 'ST-01' },
+  niche:   { name: '壁龕/凹槽', layer: 'A-FURN', w: 900, h: 300, v: 1200, mat: 'PT-01' },
+  door:    { name: '門', layer: 'A-DOOR', w: 900, h: 2100, v: 0, mat: 'WD-01' },
+  window:  { name: '窗', layer: 'A-GLAZ', w: 1500, h: 1200, v: 900, mat: 'AL-01' },
+  open:    { name: '開口', layer: 'A-WALL', w: 900, h: 2100, v: 0, mat: '' },
+  outlet:  { name: '插座', layer: 'A-EQPM', w: 120, h: 75, v: 300, mat: '' },
+  switch:  { name: '開關', layer: 'A-EQPM', w: 120, h: 75, v: 1200, mat: '' },
+  light:   { name: '壁燈', layer: 'A-EQPM', w: 200, h: 200, v: 1800, mat: 'LT-01' },
   ac:      { name: '冷氣/出風口', layer: 'A-EQPM', w: 900, h: 200, v: 2300, mat: '' },
-  custom:  { name: '自訂',     layer: 'A-FURN', w: 600,  h: 600,  v: 0,    mat: '' },
+  custom:  { name: '自訂', layer: 'A-FURN', w: 600, h: 600, v: 0, mat: '' },
 };
+const CABINET_TYPES = ['cabinet', 'book', 'tvunit', 'shoe', 'base', 'upper', 'vanity'];
 
 const DEFAULT_MATERIALS = [
   { code: 'PT-01', name: '乳膠漆', spec: 'ICI 得利 / 平光白' },
@@ -1507,7 +1524,7 @@ function buildElevation(room, edgeIdx, elems, opt) {
   const H = room.ceilH || 2800;
   const bb = room.baseboard || 0;
   const drop = room.ceilDrop || 0;
-  const wallT = opt.wallCut ? (room.wallT || 100) : 0;
+  const wallT = opt.wallCut ? (room.wallT || 120) : 0;
   const slabT = opt.wallCut ? 150 : 0;
 
   const dimTxt = 2.0 * S;
@@ -1516,43 +1533,46 @@ function buildElevation(room, edgeIdx, elems, opt) {
 
   /* --- 樓板 / 側牆剖面 --- */
   if (opt.wallCut) {
-    dw.rect('A-WALL', -wallT, -slabT, L + wallT * 2, slabT);           // 樓板
-    dw.rect('A-WALL', -wallT, H, L + wallT * 2, slabT);                // 上層樓板
-    dw.rect('A-WALL', -wallT, 0, wallT, H);                            // 左側牆
-    dw.rect('A-WALL', L, 0, wallT, H);                                 // 右側牆
+    dw.rect('A-WALL', -wallT, -slabT, L + wallT * 2, slabT);
+    dw.rect('A-WALL', -wallT, H, L + wallT * 2, slabT);
+    dw.rect('A-WALL', -wallT, 0, wallT, H);
+    dw.rect('A-WALL', L, 0, wallT, H);
     hatch45(dw, 'A-WALL-PATT', -wallT, -slabT, L + wallT * 2, slabT, 8 * S);
     hatch45(dw, 'A-WALL-PATT', -wallT, H, L + wallT * 2, slabT, 8 * S);
     hatch45(dw, 'A-WALL-PATT', -wallT, 0, wallT, H, 8 * S);
     hatch45(dw, 'A-WALL-PATT', L, 0, wallT, H, 8 * S);
   }
 
-  /* --- 牆面本體 --- */
   dw.rect('A-WALL', 0, 0, L, H);
 
-  /* --- 天花造型 --- */
   if (drop > 0) {
     dw.rect('A-CLNG', 0, H - drop, L, drop);
-    dw.line('A-CLNG', 0, H - drop, L, H - drop);
+    if (opt.wallCut) hatch45(dw, 'A-WALL-PATT', 0, H - drop, L, drop, 10 * S);
   }
-
-  /* --- 踢腳板 --- */
-  if (bb > 0) {
-    dw.rect('A-FLOR', 0, 0, L, bb);
-  }
+  if (bb > 0) dw.rect('A-FLOR', 0, 0, L, bb);
 
   /* --- 元件 --- */
   const items = elems.filter(e => e.room === room.id && e.edge === edgeIdx)
                      .sort((x, y) => x.u - y.u);
-  for (const e of items) drawElement(dw, e, S, H);
+  const detailStops = [];
+  for (const e of items) drawElement(dw, e, S, detailStops);
 
-  /* --- 尺寸鏈 --- */
+  /* --- 三層尺寸鏈:細部 / 分段 / 總長 --- */
   if (opt.dims !== false) {
-    const structural = items.filter(e => ['door', 'window', 'open', 'cabinet', 'upper', 'panel', 'niche', 'mirror', 'counter'].includes(e.type));
-    const hStops = [0, L];
-    structural.forEach(e => { hStops.push(e.u, e.u + e.w); });
-    const off1 = -(slabT + dimTxt * 3.2);
-    dimChain(dw, hStops, 'x', 0, off1, dimTxt);
-    dimLinear(dw, 0, 0, L, 0, off1 - dimTxt * 3.4, dimTxt);
+    const structural = items.filter(e => !['outlet', 'switch', 'light'].includes(e.type));
+    const g0 = -(slabT + dimTxt * 3.2);
+    const gap = dimTxt * 3.4;
+    let row = 0;
+    if (detailStops.length) {
+      dimChain(dw, [0, L, ...detailStops], 'x', 0, g0, dimTxt * 0.85);
+      row++;
+    }
+    const segStops = [0, L];
+    structural.forEach(e => segStops.push(e.u, e.u + e.w));
+    dimChain(dw, segStops, 'x', 0, g0 - gap * row, dimTxt);
+    row++;
+    dimLinear(dw, 0, 0, L, 0, g0 - gap * row, dimTxt);
+    const hBottom = g0 - gap * row;
 
     const vStops = [0, H];
     if (bb > 0) vStops.push(bb);
@@ -1561,41 +1581,60 @@ function buildElevation(room, edgeIdx, elems, opt) {
     const off2 = (wallT + dimTxt * 3.6);
     dimChain(dw, vStops, 'y', L, off2, dimTxt);
     dimLinear(dw, L, 0, L, H, off2 + dimTxt * 4.2, dimTxt);
+    dw._hBottom = hBottom;
   }
 
-  /* --- 完成面標記 FL / CH --- */
+  /* --- 標高 --- */
   const tickX = -(wallT + dimTxt * 1.2);
   levelTag(dw, tickX, 0, dimTxt, 'FL ±0');
   levelTag(dw, tickX, H, dimTxt, 'CH +' + H);
   if (drop > 0) levelTag(dw, tickX, H - drop, dimTxt, '+' + (H - drop));
 
-  /* --- 材質引線標註 --- */
+  /* --- 材質圈號 --- */
   if (opt.anno !== false) {
     const tags = [];
     const wf = (room.finish && room.finish[edgeIdx]) || room.wallFinish;
     if (wf) tags.push({ u: freeSpot(items, L), v: H * 0.72, code: wf });
     for (const e of items) {
-      if (e.mat) tags.push({ u: e.u + e.w / 2, v: e.v + e.h / 2, code: e.mat, label: e.label });
+      if (e.mat) tags.push({ u: e.u + e.w / 2, v: e.v + e.h * 0.62, code: e.mat });
+      if (e.mat2) tags.push({ u: e.u + e.w * 0.25, v: e.v + e.h * 0.2, code: e.mat2 });
     }
     layoutTags(dw, tags, L, H + slabT, annoTxt);
   }
 
-  /* --- 圖名 --- */
+  /* --- 施工註記 --- */
+  const notes = items.filter(e => e.note);
+  dw._notes = notes;
+
+  /* --- 圖名(圈號 + 底線) --- */
   const label = room.wallLabels ? room.wallLabels[edgeIdx] : String.fromCharCode(65 + edgeIdx);
-  const titleY = -(slabT + dimTxt * 3.2 + dimTxt * 3.4 + titleTxt * 3.2);
-  dw.text('A-TEXT', 0, titleY, titleTxt, `${label}  ${room.name || '空間'} 立面圖`, { va: 'base' });
-  dw.text('A-TEXT', 0, titleY - titleTxt * 1.5, titleTxt * 0.62, `SCALE 1/${S}`, { va: 'base' });
-  const tw = titleTxt * 0.62 * (`${label}  ${room.name || '空間'} 立面圖`.length * 1.1);
-  dw.line('A-TEXT', 0, titleY - titleTxt * 0.45, Math.max(tw, L * 0.4), titleY - titleTxt * 0.45);
-  dw.line('A-TEXT', 0, titleY - titleTxt * 0.62, Math.max(tw, L * 0.4), titleY - titleTxt * 0.62);
+  const titleY = (dw._hBottom != null ? dw._hBottom : -(slabT + dimTxt * 7)) - titleTxt * 3.4;
+  const r = titleTxt * 0.78;
+  dw.circle('A-TEXT', r, titleY + r * 0.35, r);
+  dw.text('A-TEXT', r, titleY + r * 0.35 - titleTxt * 0.35, titleTxt, label, { ha: 'center' });
+  dw.text('A-TEXT', r * 2.6, titleY, titleTxt, `${room.name || '空間'} 立面圖`, { va: 'base' });
+  const tw = r * 2.6 + (`${room.name || '空間'} 立面圖`).length * titleTxt * 1.05;
+  dw.line('A-TEXT', 0, titleY - titleTxt * 0.5, Math.max(tw, L * 0.35), titleY - titleTxt * 0.5);
+  dw.line('A-TEXT', 0, titleY - titleTxt * 0.72, Math.max(tw, L * 0.35), titleY - titleTxt * 0.72);
+  dw.text('A-TEXT', 0, titleY - titleTxt * 1.9, titleTxt * 0.6, `SCALE 1/${S}`, { va: 'base' });
+
+  // 施工說明放圖名下方
+  if (dw._notes && dw._notes.length) {
+    const nt = 2.4 * S;
+    let ny = titleY - titleTxt * 3.6;
+    dw.text('A-TEXT', 0, ny, nt * 1.05, '施工說明', { ha: 'left' });
+    dw._notes.forEach((e, i) => {
+      dw.text('A-TEXT', 0, ny - nt * 1.75 * (i + 1), nt,
+              `${i + 1}. ${ELEM_DEF[e.type].name} — ${e.note}`, { ha: 'left' });
+    });
+  }
 
   return { dw, L, H, label };
 }
 
-/** 找牆面上最寬的空檔,把牆面材質編號的引線指在那裡,才不會壓到櫃體 */
+/** 找牆面上最寬的空檔,牆面材質的引線指在那裡才不會壓到櫃體 */
 function freeSpot(items, L) {
-  const spans = items
-    .filter(e => e.h > 900)
+  const spans = items.filter(e => e.h > 900)
     .map(e => [Math.max(0, e.u), Math.min(L, e.u + e.w)])
     .sort((a, b) => a[0] - b[0]);
   let best = [0, L], cur = 0;
@@ -1613,117 +1652,255 @@ function levelTag(dw, x, y, t, str) {
   dw.text('A-DIMS', x, y + t * 0.4, t, str, { ha: 'left', va: 'base' });
 }
 
-function drawElement(dw, e, S, H) {
-  const d = ELEM_DEF[e.type] || ELEM_DEF.custom;
-  const layer = d.layer;
+/* ============================================================
+   元件繪製
+   ============================================================ */
+function drawElement(dw, e, S, detailStops) {
   const { u, v, w, h } = e;
   switch (e.type) {
-    case 'door': {
-      dw.rect('A-DOOR', u, v, w, h);
-      dw.rect('A-DOOR', u + 40, v, w - 80, h - 40);           // 門框
-      dw.rect('A-DOOR', u + 75, v, w - 150, h - 75);          // 門片
-      const hy = v + 1000;
-      dw.circle('A-DOOR', u + w - 150, hy, 22);
-      dw.line('A-DOOR', u + w - 150, hy, u + w - 260, hy);
-      break;
-    }
-    case 'window': {
-      dw.rect('A-GLAZ', u, v, w, h);
-      dw.rect('A-GLAZ', u + 50, v + 50, w - 100, h - 100);
-      dw.line('A-GLAZ', u + w / 2, v + 50, u + w / 2, v + h - 50);
-      dw.line('A-FLOR', u - 30, v, u + w + 30, v);            // 窗台
-      break;
-    }
-    case 'open': {
-      dw.rect('A-WALL', u, v, w, h);
-      break;
-    }
-    case 'cabinet': case 'upper': case 'panel': {
+    case 'door': return drawDoor(dw, e, S);
+    case 'window': return drawWindow(dw, e, S);
+    case 'open': dw.rect('A-WALL', u, v, w, h); return;
+    case 'counter':
       dw.rect('A-FURN', u, v, w, h);
-      const n = Math.max(1, e.doors || 2);
-      const dwd = w / n;
-      for (let i = 1; i < n; i++) dw.line('A-FURN', u + i * dwd, v, u + i * dwd, v + h);
-      if (e.type !== 'panel') {
-        for (let i = 0; i < n; i++) {
-          const l = u + i * dwd, r = l + dwd;
-          if (h >= 1200) {                                  // 高櫃:直立把手,約 FL+1000
-            const hy = Math.max(v + 150, Math.min(v + h - 150, 1000));
-            const hx = (i < n / 2) ? r - 55 : l + 55;
-            dw.line('A-FURN-HDLN', hx, hy - 110, hx, hy + 110);
-          } else if (e.type === 'upper') {                  // 吊櫃:下緣橫把手
-            dw.line('A-FURN-HDLN', l + dwd * 0.3, v + 45, r - dwd * 0.3, v + 45);
-          } else {                                          // 下櫃:上緣橫把手
-            dw.line('A-FURN-HDLN', l + dwd * 0.3, v + h - 45, r - dwd * 0.3, v + h - 45);
-          }
-        }
-      }
-      if (e.type === 'upper') dw.line('A-FURN-HIDD', u, v, u + w, v);
-      break;
-    }
-    case 'counter': {
-      dw.rect('A-FURN', u, v, w, h);
-      dw.line('A-FURN-HDLN', u, v + h * 0.5, u + w, v + h * 0.5);
-      break;
-    }
-    case 'niche': {
+      dw.line('A-FURN-HDLN', u, v + h * 0.45, u + w, v + h * 0.45);
+      return;
+    case 'niche':
       dw.rect('A-FURN', u, v, w, h);
       hatch45(dw, 'A-FURN-HDLN', u, v, w, h, 6 * S);
-      break;
-    }
-    case 'mirror': {
-      dw.rect('A-FURN', u, v, w, h);
-      const k = Math.min(w, h) * 0.28;
-      dw.line('A-FURN-HDLN', u, v + h - k, u + k, v + h);
-      dw.line('A-FURN-HDLN', u, v + h - k * 2, u + k * 2, v + h);
-      break;
-    }
-    case 'outlet': {
+      return;
+    case 'mirror': return drawMirror(dw, e, S);
+    case 'panel': return drawPanel(dw, e, S, detailStops);
+    case 'outlet':
       dw.rect('A-EQPM', u, v, w, h);
       dw.circle('A-EQPM', u + w * 0.33, v + h / 2, Math.min(w, h) * 0.13);
       dw.circle('A-EQPM', u + w * 0.67, v + h / 2, Math.min(w, h) * 0.13);
-      break;
-    }
-    case 'switch': {
+      return;
+    case 'switch':
       dw.rect('A-EQPM', u, v, w, h);
       dw.line('A-EQPM', u + w * 0.25, v + h * 0.3, u + w * 0.75, v + h * 0.7);
-      break;
-    }
+      return;
     case 'light': {
-      dw.circle('A-EQPM', u + w / 2, v + h / 2, Math.min(w, h) / 2);
       const r = Math.min(w, h) / 2;
+      dw.circle('A-EQPM', u + w / 2, v + h / 2, r);
       dw.line('A-EQPM', u + w / 2 - r, v + h / 2, u + w / 2 + r, v + h / 2);
       dw.line('A-EQPM', u + w / 2, v + h / 2 - r, u + w / 2, v + h / 2 + r);
-      break;
+      return;
     }
-    case 'ac': {
+    case 'ac':
       dw.rect('A-EQPM', u, v, w, h);
       for (let i = 1; i < 4; i++) dw.line('A-EQPM', u, v + (h * i) / 4, u + w, v + (h * i) / 4);
-      break;
-    }
+      return;
     default:
-      dw.rect(layer, u, v, w, h);
-  }
-  if (e.label) {
-    dw.text('A-TEXT', u + w / 2, v + h / 2 - 1.2 * S, 2.2 * S, e.label, { ha: 'center' });
+      if (CABINET_TYPES.includes(e.type)) return drawCabinet(dw, e, S, detailStops);
+      dw.rect(ELEM_DEF[e.type] ? ELEM_DEF[e.type].layer : 'A-FURN', u, v, w, h);
   }
 }
 
-/* 材質編號引線:斜線 + 水平肩線 + 編號,分層堆疊避免重疊 */
+/* ---------- 櫃體:立面施工圖的主角 ---------- */
+function drawCabinet(dw, e, S, detailStops) {
+  const d = ELEM_DEF[e.type] || {};
+  const n = (v, dflt) => (v == null ? dflt : v);
+  const u = e.u, w = e.w;
+  const toe = n(e.toe, d.toe || 0);
+  const counter = n(e.counter, d.counter || 0);
+  const doors = Math.max(0, n(e.doors, d.doors || 0));
+  const shelves = Math.max(0, n(e.shelves, d.shelves || 0));
+  const drawers = Math.max(0, n(e.drawers, d.drawers || 0));
+  const openN = Math.max(0, n(e.open, d.open || 0));
+  const rod = n(e.rod, d.rod || false);
+  // 櫃身節數預設要跟門片對齊(分節線落在門縫上),單節寬度不超過 1250
+  const autoBays = (() => {
+    if (doors > 0) {
+      for (let d = 1; d <= doors; d++) if (doors % d === 0 && w / d <= 1250) return d;
+      return doors;
+    }
+    return Math.max(1, Math.ceil(w / 1000));
+  })();
+  const bays = Math.max(1, n(e.bays, autoBays));
+  const swing = n(e.swing, d.swing !== false);
+  const inside = n(e.inside, d.inside !== false);
+  const v0 = e.v, vTop = e.v + e.h;
+
+  // 外框
+  dw.rect('A-FURN', u, v0, w, e.h);
+
+  // 踢腳(內縮)
+  const bodyBot = v0 + toe;
+  if (toe > 0) {
+    dw.line('A-FURN', u, bodyBot, u + w, bodyBot);
+    dw.line('A-FURN-HDLN', u + 18, v0, u + 18, bodyBot);
+    dw.line('A-FURN-HDLN', u + w - 18, v0, u + w - 18, bodyBot);
+  }
+  // 檯面
+  const bodyTop = vTop - counter;
+  if (counter > 0) {
+    dw.rect('A-FURN', u - 20, bodyTop, w + 40, counter);
+    dw.line('A-FURN-HDLN', u - 20, bodyTop + counter * 0.45, u + w + 20, bodyTop + counter * 0.45);
+  }
+
+  const bodyH = bodyTop - bodyBot;
+  if (bodyH <= 0) return;
+
+  // 抽屜區(下)與門片區(上)
+  const drawerH = drawers > 0 ? Math.min(bodyH * 0.55, drawers * (e.drawerH || 200)) : 0;
+  const drawerTop = bodyBot + drawerH;
+  const doorBot = drawerTop;
+  const doorH = bodyTop - doorBot;
+
+  // 抽屜
+  if (drawers > 0) {
+    const dh = drawerH / drawers;
+    for (let i = 0; i < drawers; i++) {
+      const y = bodyBot + i * dh;
+      if (i) dw.line('A-FURN', u, y, u + w, y);
+      dw.line('A-FURN-HDLN', u + w * 0.5 - 120, y + dh - 45, u + w * 0.5 + 120, y + dh - 45);
+    }
+    if (doorH > 1) dw.line('A-FURN', u, drawerTop, u + w, drawerTop);
+  }
+
+  // 門片分割
+  if (doors > 0 && doorH > 1) {
+    const dwd = w / doors;
+    for (let i = 1; i < doors; i++) {
+      const x = u + i * dwd;
+      dw.line('A-FURN', x, doorBot, x, bodyTop);
+      if (detailStops) detailStops.push(x);
+    }
+    if (detailStops) { detailStops.push(u, u + w); }
+
+    for (let i = 0; i < doors; i++) {
+      const l = u + i * dwd, r = l + dwd;
+      const hingeLeft = (i % 2 === 0);          // 雙開門成對:左片左鉸、右片右鉸
+      const openN2 = openN && i >= doors - openN;
+      if (openN2) continue;                    // 開放格不畫門
+      // 開啟方向(虛線 V,尖端在把手側)
+      if (swing && doorH > 300) {
+        const hx = hingeLeft ? l : r;
+        const px = hingeLeft ? r : l;
+        dw.line('A-FURN-HIDD', hx, doorBot, px, (doorBot + bodyTop) / 2);
+        dw.line('A-FURN-HIDD', hx, bodyTop, px, (doorBot + bodyTop) / 2);
+      }
+      // 把手
+      const hx2 = hingeLeft ? r - 55 : l + 55;
+      if (doorH >= 1000) {
+        const hy = Math.max(doorBot + 150, Math.min(bodyTop - 150, v0 + 1000));
+        dw.line('A-FURN-HDLN', hx2, hy - 110, hx2, hy + 110);
+      } else {
+        dw.line('A-FURN-HDLN', l + dwd * 0.3, bodyTop - 45, r - dwd * 0.3, bodyTop - 45);
+      }
+    }
+  }
+
+  // 櫃身分節:單一櫃身寬度有限,分節線是結構(實線)
+  const bayW = w / bays;
+  if (bays > 1 && doorH > 1) {
+    for (let i = 1; i < bays; i++) {
+      const x = u + i * bayW;
+      dw.line('A-FURN', x, bodyBot, x, bodyTop);
+      if (detailStops) detailStops.push(x);
+    }
+  }
+
+  // 內部結構(層板、吊桿)—— 有門片時用虛線,而且逐節畫
+  if (inside && doorH > 1) {
+    const hid = doors > 0 && openN === 0 ? 'A-FURN-HIDD' : 'A-FURN';
+    const zoneBot = doorBot, zoneTop = bodyTop;
+    for (let bi = 0; bi < bays; bi++) {
+      const bl = u + bi * bayW + 25, br = u + (bi + 1) * bayW - 25;
+      if (rod) {
+        const ry = zoneTop - 320;
+        dw.line(hid, bl, ry, br, ry);
+        dw.circle(hid, bl, ry, 18);
+        dw.circle(hid, br, ry, 18);
+      }
+      if (shelves > 0) {
+        const top = rod ? zoneTop - 420 : zoneTop;
+        const span = top - zoneBot;
+        for (let i = 1; i <= shelves; i++) {
+          const y = zoneBot + (span * i) / (shelves + 1);
+          dw.line(openN ? 'A-FURN' : hid, bl, y, br, y);
+        }
+      }
+    }
+  }
+
+  // 開放格分隔(實線)
+  if (openN > 0 && doors > 0) {
+    const dwd = w / doors;
+    const l = u + (doors - openN) * dwd;
+    dw.line('A-FURN', l, doorBot, l, bodyTop);
+  }
+
+  if (e.label) {
+    dw.text('A-TEXT', u + w / 2, v0 + e.h * 0.5 - 1.2 * S, 2.2 * S, e.label, { ha: 'center' });
+  }
+}
+
+function drawPanel(dw, e, S, detailStops) {
+  const { u, v, w, h } = e;
+  dw.rect('A-FURN', u, v, w, h);
+  const g = Math.max(0, e.grooves == null ? 4 : e.grooves);
+  for (let i = 1; i <= g; i++) {
+    const x = u + (w * i) / (g + 1);
+    dw.line('A-FURN-HDLN', x, v + 20, x, v + h - 20);
+    if (detailStops) detailStops.push(x);
+  }
+}
+
+function drawDoor(dw, e, S) {
+  const { u, v, w, h } = e;
+  dw.rect('A-DOOR', u, v, w, h);
+  dw.rect('A-DOOR', u + 40, v, w - 80, h - 40);
+  dw.rect('A-DOOR', u + 75, v, w - 150, h - 75);
+  const hy = v + 1000;
+  dw.circle('A-DOOR', u + w - 150, hy, 22);
+  dw.line('A-DOOR', u + w - 150, hy, u + w - 260, hy);
+  // 開啟方向
+  dw.line('A-FURN-HIDD', u + 75, v, u + w - 75, v + (h - 75) / 2);
+  dw.line('A-FURN-HIDD', u + 75, v + h - 75, u + w - 75, v + (h - 75) / 2);
+}
+
+function drawWindow(dw, e, S) {
+  const { u, v, w, h } = e;
+  dw.rect('A-GLAZ', u, v, w, h);
+  dw.rect('A-GLAZ', u + 50, v + 50, w - 100, h - 100);
+  dw.line('A-GLAZ', u + w / 2, v + 50, u + w / 2, v + h - 50);
+  dw.line('A-FLOR', u - 40, v, u + w + 40, v);
+  dw.line('A-FLOR', u - 40, v - 25, u + w + 40, v - 25);
+}
+
+function drawMirror(dw, e, S) {
+  const { u, v, w, h } = e;
+  dw.rect('A-FURN', u, v, w, h);
+  const k = Math.min(w, h) * 0.26;
+  for (let i = 1; i <= 3; i++) {
+    const o = (k * i) / 1.6;
+    dw.line('A-FURN-HDLN', u, v + h - o, u + o, v + h);
+  }
+}
+
+/* ---------- 材質圈號:圓圈 + 引線 + 實心圓點 ---------- */
 function layoutTags(dw, tags, L, top, t) {
   if (!tags.length) return;
+  const r = t * 0.95;
   const sorted = tags.slice().sort((a, b) => a.u - b.u);
-  const rows = 3;
+  const rows = sorted.length > 4 ? 2 : 1;
+  // 由左到右排,圈號盡量正上方;會擠到才往右挪,所以引線不會交叉
+  const nextX = new Array(rows).fill(-Infinity);
   sorted.forEach((tag, i) => {
     const row = i % rows;
-    const y = top + t * (2.4 + row * 2.0);
-    const dir = tag.u > L / 2 ? 1 : -1;
-    const kx = tag.u + dir * t * 1.6;
-    const sx = kx + dir * t * 3.2;
-    dw.line('A-ANNO', tag.u, tag.v, kx, y);
-    dw.line('A-ANNO', kx, y, sx, y);
-    dw.circle('A-ANNO', tag.u, tag.v, t * 0.18);
-    dw.text('A-ANNO', sx + dir * t * 0.4, y + t * 0.35, t,
-            tag.code, { ha: dir > 0 ? 'left' : 'right' });
+    const y = top + t * (2.4 + row * 2.8);
+    const cx = Math.max(tag.u, nextX[row] + r * 2.7);
+    nextX[row] = cx;
+    const kneeY = y - t * 1.1;
+    dw.line('A-ANNO', tag.u, tag.v, tag.u, kneeY);
+    if (Math.abs(cx - tag.u) > 1) dw.line('A-ANNO', tag.u, kneeY, cx, kneeY);
+    dw.line('A-ANNO', cx, kneeY, cx, y - r);
+    dw.solid('A-ANNO', [[tag.u - t * 0.14, tag.v], [tag.u, tag.v + t * 0.14],
+                        [tag.u + t * 0.14, tag.v], [tag.u, tag.v - t * 0.14]]);
+    dw.circle('A-ANNO', cx, y, r);
+    dw.text('A-ANNO', cx, y - t * 0.33, t * 0.82, tag.code, { ha: 'center' });
   });
 }
 
@@ -1754,12 +1931,9 @@ function titleBlock(dw, W, Hs, S, info) {
     dw.text('A-TITL', bx + 2 * S, y + rh * 0.34, t, r[0]);
     dw.text('A-TITL', bx + 20 * S, y + rh * 0.34, t, r[1]);
   });
-  if (info.company) {
-    dw.text('A-TITL', bx, by + bh + 4 * S, t * 1.5, info.company);
-  }
+  if (info.company) dw.text('A-TITL', bx, by + bh + 4 * S, t * 1.5, info.company);
 }
 
-/* 把多個立面自動排進圖框(多頁) */
 function paginate(elevs, opt) {
   const S = opt.scale || 30;
   const sheet = SHEETS[opt.sheet] || SHEETS.A3;
@@ -1779,7 +1953,7 @@ function paginate(elevs, opt) {
     const bx = el.dw.bbox();
     const w = bx.w, h = bx.h;
     if (cx > 0 && cx + w > areaW) { cx = 0; cy += rowH + pad; rowH = 0; }
-    if (cy + h > areaH && (cx > 0 || cy > 0)) { startPage(); }
+    if (cy + h > areaH && (cx > 0 || cy > 0)) startPage();
     const dx = areaX + cx - bx.x1;
     const dy = areaY + areaH - cy - h - bx.y1;
     const tmp = new Draw();
@@ -1795,15 +1969,13 @@ function paginate(elevs, opt) {
     dw.p = p.prims;
     if (opt.titleBlock !== false) {
       titleBlock(dw, W, Hs, S, Object.assign({}, opt.info, {
-        sheet: `E-${String(i + 1).padStart(2, '0')}`,
-        pages: pages.length,
+        sheet: `E-${String(i + 1).padStart(2, '0')}`, pages: pages.length,
       }));
     }
     return { dw, W, H: Hs, index: i, count: pages.length, items: p.items };
   });
 }
 
-/* 材料表 */
 function materialTable(mats, S, opt = {}) {
   const dw = new Draw();
   const t = 3.0 * S;
@@ -1827,7 +1999,7 @@ function materialTable(mats, S, opt = {}) {
   return dw;
 }
 
-if (typeof module !== 'undefined') module.exports = { buildElevation, ELEM_DEF, DEFAULT_MATERIALS, paginate, materialTable, SHEETS, titleBlock };
+if (typeof module !== 'undefined') module.exports = { buildElevation, ELEM_DEF, CABINET_TYPES, DEFAULT_MATERIALS, paginate, materialTable, SHEETS, titleBlock };
 /* ============================================================
    PDF 讀取器 —— 純 JS,無外部相依
    目標:把 CAD 列印出來的向量 PDF 還原成線段 + 圖層,
@@ -4098,7 +4270,8 @@ function inspElev(c) {
     fld('此面材質', matSelect(rm.finish[ST.edgeI] ?? rm.wallFinish, v => rm.finish[ST.edgeI] = v))));
 
   const pal = el('div', { class: 'palette' });
-  ['cabinet', 'upper', 'counter', 'door', 'window', 'open', 'panel', 'niche', 'mirror', 'outlet', 'switch', 'light', 'ac', 'custom']
+  ['cabinet', 'book', 'tvunit', 'shoe', 'base', 'upper', 'vanity', 'panel', 'counter', 'niche', 'mirror',
+   'door', 'window', 'open', 'outlet', 'switch', 'light', 'ac', 'custom']
     .forEach(t => pal.append(el('button', { onclick: () => addElem(t) }, ELEM_DEF[t].name)));
   c.append(sec('放入元件', pal,
     el('p', { class: 'note' }, '加進來後可直接在圖上拖曳、拉把手改尺寸,或在下面輸入精確數值。')));
@@ -4128,9 +4301,34 @@ function inspElev(c) {
       fld('材質', matSelect(e.mat, v => e.mat = v)),
       fld('註記', el('input', { value: e.label || '', oninput: ev => { e.label = ev.target.value; draw(); } })),
     ];
-    if (['cabinet', 'upper', 'panel'].includes(e.type)) {
-      body.splice(5, 0, fld('門片數', numIn(e.doors || 2, v => e.doors = Math.max(1, R(v)), 1)));
+    if (CABINET_TYPES.includes(e.type)) {
+      const dd = ELEM_DEF[e.type];
+      const num1 = (label, key, dflt, max) => fld(label, numIn(e[key] != null ? e[key] : dflt,
+        v => e[key] = Math.max(0, Math.min(max || 99, R(v))), 1));
+      body.push(el('hr'));
+      body.push(el('div', { style: 'font-size:10px;letter-spacing:.14em;color:var(--text-3)' }, '櫃體構造'));
+      body.push(num1('櫃身節數', 'bays', Math.max(1, Math.ceil(e.w / 1250)), 8));
+      body.push(num1('門片數', 'doors', dd.doors, 12));
+      body.push(num1('層板數', 'shelves', dd.shelves, 12));
+      body.push(num1('抽屜數', 'drawers', dd.drawers, 8));
+      body.push(num1('開放格', 'open', dd.open, 12));
+      body.push(fld('踢腳高', numIn(e.toe != null ? e.toe : dd.toe, v => e.toe = Math.max(0, v), 10), 'mm'));
+      body.push(fld('檯面厚', numIn(e.counter != null ? e.counter : dd.counter, v => e.counter = Math.max(0, v), 5), 'mm'));
+      const ck = (label, key, dflt) => el('label', { style: 'display:flex;gap:8px;align-items:center;font-size:12px;cursor:pointer' },
+        el('input', { type: 'checkbox', checked: e[key] != null ? e[key] : dflt, style: 'width:auto',
+          onchange: ev => { e[key] = ev.target.checked; draw(); } }), label);
+      body.push(ck('吊桿', 'rod', dd.rod));
+      body.push(ck('畫門片開啟方向', 'swing', dd.swing !== false));
+      body.push(ck('顯示內部層板(虛線)', 'inside', dd.inside !== false));
     }
+    if (e.type === 'panel') {
+      body.push(fld('溝縫數', numIn(e.grooves != null ? e.grooves : 4, v => e.grooves = Math.max(0, R(v)), 1)));
+    }
+    body.push(el('hr'));
+    body.push(fld('次要材質', matSelect(e.mat2, v => e.mat2 = v)));
+    body.push(el('div', { class: 'fld' }, el('label', {}, '施工說明'),
+      el('input', { value: e.note || '', placeholder: '例:內部貼美耐板,層板可調',
+        oninput: ev => { e.note = ev.target.value; draw(); } })));
     body.push(el('div', { class: 'btnrow' },
       el('button', { class: 'btn sm', onclick: () => { const L2 = L; e.u = R((L2 - e.w) / 2); draw(); fillInspector(); } }, '水平置中'),
       el('button', { class: 'btn sm', onclick: () => { e.u = 0; draw(); fillInspector(); } }, '靠左'),
@@ -4157,7 +4355,9 @@ function addElem(type) {
   const d = ELEM_DEF[type];
   const w = Math.min(d.w, L);
   const e = { id: uid(), room: rm.id, edge: ST.edgeI, type,
-              u: R((L - w) / 2), w, v: d.v, h: d.h, mat: d.mat, doors: d.doors || 2 };
+              u: R((L - w) / 2), w, v: d.v, h: d.h, mat: d.mat };
+  ['doors', 'shelves', 'drawers', 'rod', 'open', 'toe', 'counter', 'swing', 'inside', 'grooves', 'bays']
+    .forEach(k => { if (d[k] !== undefined) e[k] = d[k]; });
   ST.elems.push(e); ST.selElem = e.id;
   render();
 }
@@ -4403,7 +4603,9 @@ function loadDemo() {
       const rm = ST.rooms[0];
       if (rm) {
         rm.name = '主臥'; rm.ceilDrop = 300;
-        ST.elems.push({ id: uid(), room: rm.id, edge: 3, type: 'cabinet', u: 400, w: 2400, v: 0, h: 2400, doors: 4, mat: 'WD-01', label: '衣櫃' });
+        ST.elems.push({ id: uid(), room: rm.id, edge: 3, type: 'cabinet', u: 400, w: 2400, v: 0, h: 2400,
+          doors: 4, shelves: 1, drawers: 2, rod: true, toe: 100, swing: true, inside: true,
+          mat: 'WD-01', mat2: 'MT-01', note: '內部貼白色美耐板,層板可調,鋁把手' });
         ST.elems.push({ id: uid(), room: rm.id, edge: 3, type: 'switch', u: 3400, w: 120, h: 75, v: 1200 });
       }
       if (ST.rooms[1]) ST.rooms[1].name = '次臥';
