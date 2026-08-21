@@ -94,7 +94,7 @@ aside{border-right:1px solid var(--line-2)}
 .layers{padding:0 10px 14px}
 .lyrow{display:grid;grid-template-columns:1fr auto;gap:6px;align-items:center;padding:3px 4px;border-radius:var(--r)}
 .lyrow:hover{background:var(--surface-2)}
-.lyname{font-size:11.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;gap:6px}
+.lyname{font-size:11.5px;overflow:hidden;white-space:nowrap;display:flex;align-items:center;gap:5px}
 .swatch{width:8px;height:8px;border-radius:2px;flex:none}
 .lyrow select{font-size:10.5px;padding:1px 2px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface-2)}
 
@@ -930,7 +930,7 @@ if (typeof module !== 'undefined') module.exports = { Draw, LAYERS, ACI, writeDX
 const G = (() => {
 
   /* 把線段畫到一張二值點陣圖上 */
-  function rasterize(segs, box, maxPx, thick) {
+  function rasterize(segs, box, maxPx, thick, polys) {
     const w0 = box.x2 - box.x1, h0 = box.y2 - box.y1;
     const sc = maxPx / Math.max(w0, h0);
     const w = Math.max(4, Math.ceil(w0 * sc) + 4);
@@ -942,6 +942,9 @@ const G = (() => {
     for (const s of segs) {
       const a = toR(s.x1, s.y1), b = toR(s.x2, s.y2);
       plot(mask, w, h, a.x, a.y, b.x, b.y, r);
+    }
+    if (polys && polys.length) {
+      for (const poly of polys) fillPoly(mask, w, h, poly.map(p => toR(p.x, p.y)));
     }
     return { mask, w, h, sc, toR, toW };
   }
@@ -956,6 +959,63 @@ const G = (() => {
         if (px >= 0 && py >= 0 && px < w && py < h) mask[py * w + px] = 1;
       }
     }
+  }
+
+  /* 把多邊形實心畫進點陣圖(掃描線,偶奇規則) */
+  function fillPoly(mask, w, h, pts) {
+    if (!pts || pts.length < 3) return;
+    let y0 = Infinity, y1 = -Infinity;
+    for (const p of pts) { y0 = Math.min(y0, p.y); y1 = Math.max(y1, p.y); }
+    y0 = Math.max(0, Math.floor(y0)); y1 = Math.min(h - 1, Math.ceil(y1));
+    const xs = [];
+    for (let y = y0; y <= y1; y++) {
+      xs.length = 0;
+      const yc = y + 0.5;
+      for (let i = 0; i < pts.length; i++) {
+        const a = pts[i], b = pts[(i + 1) % pts.length];
+        if ((a.y <= yc && b.y > yc) || (b.y <= yc && a.y > yc))
+          xs.push(a.x + ((yc - a.y) / (b.y - a.y)) * (b.x - a.x));
+      }
+      if (xs.length < 2) continue;
+      xs.sort((p, q) => p - q);
+      for (let k = 0; k + 1 < xs.length; k += 2) {
+        const xa = Math.max(0, Math.round(xs[k])), xb = Math.min(w - 1, Math.round(xs[k + 1]));
+        for (let x = xa; x <= xb; x++) mask[y * w + x] = 1;
+      }
+    }
+  }
+
+  /* 距離轉換(Chamfer 3-4):每個像素到最近前景的距離 */
+  function distXform(mask, w, h, invert) {
+    const BIG = 1e9, d = new Float32Array(w * h);
+    for (let i = 0; i < d.length; i++) d[i] = (invert ? !mask[i] : mask[i]) ? 0 : BIG;
+    const D1 = 1, D2 = 1.41421356;
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const i = y * w + x; let v = d[i];
+      if (y > 0) { v = Math.min(v, d[i - w] + D1); if (x > 0) v = Math.min(v, d[i - w - 1] + D2); if (x < w - 1) v = Math.min(v, d[i - w + 1] + D2); }
+      if (x > 0) v = Math.min(v, d[i - 1] + D1);
+      d[i] = v;
+    }
+    for (let y = h - 1; y >= 0; y--) for (let x = w - 1; x >= 0; x--) {
+      const i = y * w + x; let v = d[i];
+      if (y < h - 1) { v = Math.min(v, d[i + w] + D1); if (x < w - 1) v = Math.min(v, d[i + w + 1] + D2); if (x > 0) v = Math.min(v, d[i + w - 1] + D2); }
+      if (x < w - 1) v = Math.min(v, d[i + 1] + D1);
+      d[i] = v;
+    }
+    return d;
+  }
+
+  /* 形態學閉合:先膨脹再侵蝕,把小於 2r 的缺口(門洞)補起來,
+     牆的位置不會跑掉 —— 這是讓「配置圖」也能自動抓空間的關鍵。 */
+  function closeGaps(mask, w, h, r) {
+    if (!(r > 0.5)) return mask;
+    const d = distXform(mask, w, h, false);
+    const dil = new Uint8Array(w * h);
+    for (let i = 0; i < dil.length; i++) dil[i] = d[i] <= r ? 1 : 0;
+    const d2 = distXform(dil, w, h, true);       // 到「非膨脹區」的距離
+    const out = new Uint8Array(w * h);
+    for (let i = 0; i < out.length; i++) out[i] = (mask[i] || d2[i] > r) ? 1 : 0;
+    return out;
   }
 
   /* 從一點往外填充,碰到牆停住。回傳 filled 與是否「漏出圖外」 */
@@ -1396,7 +1456,7 @@ const G = (() => {
 
   return { rasterize, flood, contour, simplify, regularize, area, ensureCCW,
            inside, perimeter, snapToPoints, findOpenings, distToSeg, plot,
-           keepLongEdges, snapEdgesToSegs, refineOpenings, intersect, dropShort, dominantAngle, dropCollinear };
+           keepLongEdges, snapEdgesToSegs, refineOpenings, intersect, dropShort, dominantAngle, dropCollinear, closeGaps, distXform, fillPoly };
 })();
 
 if (typeof module !== 'undefined') module.exports = G;
@@ -2154,7 +2214,7 @@ const PDF = (() => {
     }
     const content = parts.join('\n');
 
-    const segs = [], texts = [], images = [];
+    const segs = [], texts = [], images = [], fills = [];
     const seen = new Set();
 
     await run(content, res0, [1, 0, 0, 1, 0, 0], 0);
@@ -2164,9 +2224,10 @@ const PDF = (() => {
     segs.forEach(s => { s.x1 -= ox; s.y1 -= oy; s.x2 -= ox; s.y2 -= oy; });
     texts.forEach(t => { t.x -= ox; t.y -= oy; });
     images.forEach(i => { i.x -= ox; i.y -= oy; });
+    fills.forEach(f => f.pts.forEach(p => { p.x -= ox; p.y -= oy; }));
 
     return {
-      segs, texts, images,
+      segs, texts, images, fills,
       width: mb[2] - mb[0], height: mb[3] - mb[1],
     };
 
@@ -2174,7 +2235,7 @@ const PDF = (() => {
       if (depth > 6) return;
       const lex = new Lexer(src);
       let stack = [];
-      const gs = { m: baseM.slice(), col: '#000000', lw: 0.5, layer: null };
+      const gs = { m: baseM.slice(), colS: '#000000', colF: '#000000', lw: 0.5, layer: null };
       const gstack = [];
       const ocStack = [];
       let path = [], cur = null, start = null, pendClip = false;
@@ -2200,27 +2261,120 @@ const PDF = (() => {
       };
       const closeP = () => { if (path.length && start) path[path.length - 1].push(start); cur = start; };
 
-      const emit = () => {
-        // 底圖用的白色矩形不要當成牆
-        if (!pendClip && gs.col !== '#ffffff') {
-          const lw = Math.round(gs.lw * scaleOf(gs.m) * 100) / 100;
-          const layer = gs.layer || (`${gs.col} · ${lw.toFixed(2)}`);
-          for (const sp of path) {
-            for (let i = 0; i < sp.length - 1; i++) {
-              const a = sp[i], b = sp[i + 1];
-              if (Math.abs(a.x - b.x) < 1e-7 && Math.abs(a.y - b.y) < 1e-7) continue;
-              segs.push({ x1: a.x, y1: a.y, x2: b.x, y2: b.y, layer, col: gs.col, lw });
-              if (!seen.has(layer)) seen.add(layer);
+      const pageArea = Math.max(1, (mb[2] - mb[0]) * (mb[3] - mb[1]));
+      const isBackdrop = () => {
+        if (path.length !== 1 || path[0].length > 6) return false;
+        let a = Infinity, b = Infinity, c = -Infinity, d = -Infinity;
+        for (const p of path[0]) { a = Math.min(a, p.x); b = Math.min(b, p.y); c = Math.max(c, p.x); d = Math.max(d, p.y); }
+        return (c - a) * (d - b) > pageArea * 0.6;
+      };
+
+      /** kind: 'S' 描邊 / 'F' 填充 —— 顏色分開,而且填充要保留成多邊形。
+          CAD 匯出的實心牆是「三角化」的,拆成線段的話那些斜邊會變成假的牆。 */
+      const emit = (kind) => {
+        const col = kind === 'F' ? gs.colF : gs.colS;
+        // 只有「鋪滿整頁的白色矩形」才是底圖,其他一律保留
+        if (!pendClip && !(col === '#ffffff' && isBackdrop())) {
+          if (kind === 'F') {
+            const layer = gs.layer || `${col} · 填充`;
+            for (const sp of path) {
+              if (sp.length < 3) continue;
+              const pts = sp.map(p => ({ x: p.x, y: p.y }));
+              const last = pts[pts.length - 1], first = pts[0];
+              if (Math.abs(last.x - first.x) < 1e-7 && Math.abs(last.y - first.y) < 1e-7) pts.pop();
+              if (pts.length < 3) continue;
+              fills.push({ pts, layer, col });
+              seen.add(layer);
+            }
+          } else {
+            const lw = Math.round(gs.lw * scaleOf(gs.m) * 100) / 100;
+            const layer = gs.layer || `${col} · ${lw.toFixed(2)}`;
+            for (const sp of path) {
+              for (let i = 0; i < sp.length - 1; i++) {
+                const a = sp[i], b = sp[i + 1];
+                if (Math.abs(a.x - b.x) < 1e-7 && Math.abs(a.y - b.y) < 1e-7) continue;
+                segs.push({ x1: a.x, y1: a.y, x2: b.x, y2: b.y, layer, col, lw });
+                seen.add(layer);
+              }
             }
           }
         }
         path = []; pendClip = false;
       };
 
+      const pickColor = (cs) => {
+        const nums = stack.filter(v => typeof v === 'number');
+        if (!nums.length) return null;                  // 只有圖樣名稱
+        const fam = cs && cs.fam;
+        // 索引色:數值是調色盤的編號,不是明度
+        if (fam === 'Indexed' && cs.pal) {
+          const i = Math.max(0, Math.round(nums[0])) * cs.base;
+          const p = cs.pal;
+          if (cs.base === 3) return rgbHex(p[i] / 255, p[i + 1] / 255, p[i + 2] / 255);
+          if (cs.base === 4) return cmykHex(p[i] / 255, p[i + 1] / 255, p[i + 2] / 255, p[i + 3] / 255);
+          return grayHex((p[i] || 0) / 255);
+        }
+        if (nums.length >= 4) return cmykHex(nums[0], nums[1], nums[2], nums[3]);
+        if (nums.length === 3) return rgbHex(nums[0], nums[1], nums[2]);
+        // 專色 / DeviceN:數值是「上多少墨」,1 代表全黑
+        if (fam === 'Separation' || fam === 'DeviceN') return grayHex(1 - nums[0]);
+        return grayHex(nums[0]);
+      };
+
+      const csCache = new Map();
+      const compsOf = (e) => {
+        const r = doc.resolve(e);
+        if (r && r.name) return { DeviceRGB: 3, CalRGB: 3, Lab: 3, DeviceCMYK: 4, DeviceGray: 1, CalGray: 1 }[r.name] || 1;
+        if (Array.isArray(r)) {
+          const f = doc.resolve(r[0]);
+          if (f && f.name === 'ICCBased') { const st = doc.resolve(r[1]) || {}; return doc.num(st.N) || 3; }
+          return compsOf(r[0]);
+        }
+        return 1;
+      };
+      const csInfo = async (nameObj, resources) => {
+        if (!nameObj || !nameObj.name) return null;
+        const n = nameObj.name;
+        if (csCache.has(n)) return csCache.get(n);
+        let out = { fam: n };
+        if (!['DeviceGray', 'DeviceRGB', 'DeviceCMYK', 'G', 'RGB', 'CMYK', 'Pattern'].includes(n)) {
+          try {
+            const csd = doc.resolve(resources.ColorSpace) || {};
+            const raw = csd[n];
+            const e = doc.resolve(raw);
+            if (e && e.name) out = { fam: e.name };
+            else if (Array.isArray(e)) {
+              const famObj = doc.resolve(e[0]);
+              const f = famObj && famObj.name;
+              if (f === 'ICCBased') {
+                const st = doc.resolve(e[1]) || {};
+                const N = doc.num(st.N);
+                out = { fam: N === 4 ? 'DeviceCMYK' : N === 3 ? 'DeviceRGB' : 'DeviceGray' };
+              } else if (f === 'Indexed') {
+                const base = compsOf(e[1]);
+                let pal = null;
+                const lk = e[3];
+                if (lk && lk.ref !== undefined) {
+                  const d = await doc.streamOf(lk.ref);
+                  if (d && !d.raw) pal = d;
+                } else {
+                  const v = doc.resolve(lk);
+                  if (v && v.str != null) { pal = new Uint8Array(v.str.length); for (let k = 0; k < v.str.length; k++) pal[k] = v.str.charCodeAt(k) & 255; }
+                  else if (v && v.hex != null) { const h = v.hex; pal = new Uint8Array(h.length >> 1); for (let k = 0; k < pal.length; k++) pal[k] = parseInt(h.substr(k * 2, 2), 16); }
+                }
+                out = { fam: 'Indexed', base, pal };
+              } else out = { fam: f };
+            }
+          } catch (err) { /* 忽略 */ }
+        }
+        csCache.set(n, out);
+        return out;
+      };
+
       const hex2 = v => Math.max(0, Math.min(255, Math.round(v * 255))).toString(16).padStart(2, '0');
-      const setGray = g => gs.col = '#' + hex2(g).repeat(3);
-      const setRGB = (r, g, b) => gs.col = '#' + hex2(r) + hex2(g) + hex2(b);
-      const setCMYK = (c, m2, y2, k) => setRGB((1 - c) * (1 - k), (1 - m2) * (1 - k), (1 - y2) * (1 - k));
+      const grayHex = g => '#' + hex2(g).repeat(3);
+      const rgbHex = (r, g, b) => '#' + hex2(r) + hex2(g) + hex2(b);
+      const cmykHex = (c, m2, y2, k) => rgbHex((1 - c) * (1 - k), (1 - m2) * (1 - k), (1 - y2) * (1 - k));
 
       for (;;) {
         const t = lex.obj();
@@ -2247,25 +2401,26 @@ const PDF = (() => {
             cur = p[0]; start = p[0];
             break;
           }
-          case 'S': case 's': case 'f': case 'F': case 'f*':
+          case 'S': case 's':
+            if (op === 's') closeP();
+            emit('S'); break;
+          case 'f': case 'F': case 'f*':
+            closeP(); emit('F'); break;
           case 'B': case 'B*': case 'b': case 'b*':
-            if (op === 's' || op === 'b' || op === 'b*') closeP();
-            emit(); break;
+            if (op === 'b' || op === 'b*') closeP();
+            emit('S'); break;
           case 'n': path = []; pendClip = false; break;
           case 'W': case 'W*': pendClip = true; break;
-          case 'g': setGray(n(1)); break;
-          case 'G': setGray(n(1)); break;
-          case 'rg': setRGB(n(3), n(2), n(1)); break;
-          case 'RG': setRGB(n(3), n(2), n(1)); break;
-          case 'k': setCMYK(n(4), n(3), n(2), n(1)); break;
-          case 'K': setCMYK(n(4), n(3), n(2), n(1)); break;
-          case 'sc': case 'scn': case 'SC': case 'SCN': {
-            const nums = stack.filter(v => typeof v === 'number');
-            if (nums.length === 1) setGray(nums[0]);
-            else if (nums.length === 3) setRGB(nums[0], nums[1], nums[2]);
-            else if (nums.length === 4) setCMYK(nums[0], nums[1], nums[2], nums[3]);
-            break;
-          }
+          case 'g': gs.colF = grayHex(n(1)); break;
+          case 'G': gs.colS = grayHex(n(1)); break;
+          case 'rg': gs.colF = rgbHex(n(3), n(2), n(1)); break;
+          case 'RG': gs.colS = rgbHex(n(3), n(2), n(1)); break;
+          case 'k': gs.colF = cmykHex(n(4), n(3), n(2), n(1)); break;
+          case 'K': gs.colS = cmykHex(n(4), n(3), n(2), n(1)); break;
+          case 'cs': gs.csF = await csInfo(stack[stack.length - 1], res); break;
+          case 'CS': gs.csS = await csInfo(stack[stack.length - 1], res); break;
+          case 'sc': case 'scn': { const v = pickColor(gs.csF); if (v) gs.colF = v; break; }
+          case 'SC': case 'SCN': { const v = pickColor(gs.csS); if (v) gs.colS = v; break; }
           case 'BDC': case 'BMC': {
             let name = null;
             const tag = stack[stack.length - 2], prop = stack[stack.length - 1];
@@ -2451,8 +2606,14 @@ const PDF = (() => {
     }
     if (bn < 3) return null;
     const grp = ratios.slice(bi, bi + bn);
-    const mm = grp.reduce((a, b) => a + b.r, 0) / grp.length;
-    return { mmPerPt: mm, scale: mm * 72 / 25.4, from: 'dim', n: bn,
+    let mm = grp.reduce((a, b) => a + b.r, 0) / grp.length;
+    let unit = 'mm';
+    // 台灣的平面圖常常用公分標註;算出來的比例小得不合理就代表是 cm
+    if (mm * 72 / 25.4 < 5) { mm *= 10; unit = 'cm'; }
+    else if (mm * 72 / 25.4 > 400) { mm /= 10; unit = '0.1mm'; }
+    const S = mm * 72 / 25.4;
+    if (S < 3 || S > 600) return null;
+    return { mmPerPt: mm, scale: S, from: 'dim', n: bn, unit,
              sample: grp.map(g => g.v).slice(0, 3).join(' / ') };
   }
 
@@ -2470,6 +2631,66 @@ const PDF = (() => {
     let best = S, bd = Infinity;
     for (const c of COMMON) { const d = Math.abs(c - S) / c; if (d < bd) { bd = d; best = c; } }
     return bd < 0.04 ? best : Math.round(S);
+  }
+
+  /* 量出牆的雙線間距(眾數)—— 也就是圖上的牆厚,單位 pt */
+  function wallSpacing(segs) {
+    const S = segs.filter(s => Math.hypot(s.x2 - s.x1, s.y2 - s.y1) > 15);
+    if (S.length < 6) return null;
+    const d = [];
+    for (let i = 0; i < S.length; i++) {
+      const a = S[i], la = Math.hypot(a.x2 - a.x1, a.y2 - a.y1);
+      const ux = (a.x2 - a.x1) / la, uy = (a.y2 - a.y1) / la;
+      let best = Infinity;
+      for (let j = 0; j < S.length; j++) {
+        if (i === j) continue;
+        const b = S[j], lb = Math.hypot(b.x2 - b.x1, b.y2 - b.y1);
+        const vx = (b.x2 - b.x1) / lb, vy = (b.y2 - b.y1) / lb;
+        if (Math.abs(ux * vx + uy * vy) < 0.9986) continue;
+        const p1 = (b.x1 - a.x1) * -uy + (b.y1 - a.y1) * ux;
+        const p2 = (b.x2 - a.x1) * -uy + (b.y2 - a.y1) * ux;
+        if (Math.abs(p1 - p2) > 0.6) continue;
+        const dist = Math.abs((p1 + p2) / 2);
+        if (dist < 1 || dist > 25) continue;
+        const t1 = (b.x1 - a.x1) * ux + (b.y1 - a.y1) * uy;
+        const t2 = (b.x2 - a.x1) * ux + (b.y2 - a.y1) * uy;
+        const ov = Math.min(la, Math.max(t1, t2)) - Math.max(0, Math.min(t1, t2));
+        if (ov < Math.min(la, lb) * 0.5) continue;
+        best = Math.min(best, dist);
+      }
+      if (best < Infinity) d.push(best);
+    }
+    if (d.length < 8) return null;
+    const bins = {};
+    d.forEach(v => { const k = Math.round(v * 4) / 4; bins[k] = (bins[k] || 0) + 1; });
+    const top = Object.entries(bins).sort((a, b) => b[1] - a[1])[0];
+    return { pt: +top[0], n: top[1], total: d.length };
+  }
+
+  /* 圖上沒有比例資訊時,列出「說得通」的幾個選項讓人挑,
+     判準是:換算出來的牆厚要接近標準厚度,而且整棟大小要像住宅。 */
+  const STD_WALL = [100, 120, 150, 180, 200, 240];
+  function scaleCandidates(spacingPt, extentPt) {
+    const out = [];
+    for (const S of COMMON) {
+      const k = S * PT2MM;
+      const extentM = extentPt ? (extentPt * k / 1000) : null;
+      let wall = null, err = 1;
+      if (spacingPt) {
+        const mm = spacingPt * k;
+        for (const t of STD_WALL) {
+          const e = Math.abs(mm - t) / t;
+          if (e < err) { err = e; wall = t; }
+        }
+      }
+      const sizeOK = extentM == null || (extentM > 3 && extentM < 40);
+      if (!sizeOK) continue;
+      if (spacingPt && err > 0.10) continue;
+      out.push({ scale: S, wallMm: spacingPt ? Math.round(spacingPt * k) : null, stdWall: wall,
+                 extentM: extentM ? +extentM.toFixed(1) : null, err: +err.toFixed(3) });
+    }
+    out.sort((a, b) => a.err - b.err || a.scale - b.scale);
+    return out.slice(0, 4);
   }
 
   /* ---------- 依紙張大小猜列印比例 ---------- */
@@ -2494,7 +2715,7 @@ const PDF = (() => {
   }
 
   return { load, extractPage, extractImage, guessScale, paperName, PT2MM, latin1,
-           scaleFromText, scaleFromDims, snapCommon, COMMON };
+           scaleFromText, scaleFromDims, snapCommon, COMMON, wallSpacing, scaleCandidates };
 })();
 
 if (typeof module !== 'undefined') module.exports = PDF;
@@ -2537,13 +2758,13 @@ const ST = {
   rooms: [], elems: [], materials: null,
   roomI: 0, edgeI: 0, selElem: null, selVert: -1,
   tool: 'pan',
-  detect: { minWall: 600, thr: 150 },
+  detect: { minWall: 600, thr: 150, gap: 1000 },
   view: { cx: 0, cy: 0, z: 0.05 },
   eview: { cx: 0, cy: 0, z: 0.05 },
   opt: { scale: 30, sheet: 'A3', wallCut: true, dims: true, anno: true, titleBlock: true },
   info: { project: '', title: '立面施工圖', company: '', date: new Date().toISOString().slice(0, 10) },
   raster: null, showLegend: true, exportRoom: '', draft: [],
-  pdf: null, pdfPage: 0, pdfScale: 50, rawSegs: null, scaleInfo: null,
+  pdf: null, pdfPage: 0, pdfScale: 50, rawSegs: null, rawFills: null, fills: [], scaleInfo: null,
 };
 ST.materials = JSON.parse(JSON.stringify(DEFAULT_MATERIALS));
 
@@ -2623,6 +2844,19 @@ function drawPlanView() {
     cx2.globalAlpha = .85;
     cx2.imageSmoothingEnabled = true;
     cx2.drawImage(ST.img, tl.x, tl.y, w * V().z, h * V().z);
+    cx2.globalAlpha = 1;
+  }
+  // 實心填充(牆體剖面)
+  if (ST.fills && ST.fills.length) {
+    for (const f of ST.fills) {
+      const role = ST.roles[f.layer] || 'furn';
+      if (role === 'off') continue;
+      cx2.fillStyle = ROLE_C[role] || '#5A6970';
+      cx2.globalAlpha = role === 'wall' ? .55 : .3;
+      cx2.beginPath();
+      f.pts.forEach((p, i) => { const q = w2s(p); i ? cx2.lineTo(q.x, q.y) : cx2.moveTo(q.x, q.y); });
+      cx2.closePath(); cx2.fill();
+    }
     cx2.globalAlpha = 1;
   }
   // CAD 線段
@@ -2717,6 +2951,18 @@ function drawPlanView() {
     cx2.lineTo(q.x, q.y); cx2.stroke(); cx2.setLineDash([]);
     [ST.calib[0], ST.calib[1]].forEach(pt => { if (!pt) return; const s = w2s(pt);
       cx2.fillStyle = '#FFD166'; cx2.beginPath(); cx2.arc(s.x, s.y, 4, 0, 7); cx2.fill(); });
+  }
+  // 矩形預覽
+  if (drag && drag.mode === 'rect') {
+    const ang = baseAngle() * Math.PI / 180, cos = Math.cos(ang), sin = Math.sin(ang);
+    const to = p => ({ u: p.x * cos + p.y * sin, v: -p.x * sin + p.y * cos });
+    const back = q => w2s({ x: q.u * cos - q.v * sin, y: q.u * sin + q.v * cos });
+    const A = to(drag.a), B = to(drag.b);
+    const pts = [{ u: A.u, v: A.v }, { u: B.u, v: A.v }, { u: B.u, v: B.v }, { u: A.u, v: B.v }].map(back);
+    cx2.strokeStyle = '#FFD166'; cx2.lineWidth = 1.6; cx2.setLineDash([5, 4]);
+    cx2.beginPath(); pts.forEach((p, i) => i ? cx2.lineTo(p.x, p.y) : cx2.moveTo(p.x, p.y));
+    cx2.closePath(); cx2.stroke(); cx2.setLineDash([]);
+    cx2.fillStyle = 'rgba(255,209,102,.10)'; cx2.fill();
   }
   // 手動描牆
   if (ST.tool === 'poly' && ST.draft && ST.draft.length) {
@@ -2866,7 +3112,7 @@ function loadDXF(f) {
         const k = DXF.UNIT_MM[u.unit] || 1;
         flat.segs.forEach(s => { s.x1 *= k; s.y1 *= k; s.x2 *= k; s.y2 *= k; });
         flat.texts.forEach(t => { t.x *= k; t.y *= k; t.h *= k; });
-        ST.kind = 'dxf'; ST.src = 'dxf'; ST.doc = doc; ST.segs = flat.segs; ST.texts = flat.texts;
+        ST.kind = 'dxf'; ST.src = 'dxf'; ST.doc = doc; ST.segs = flat.segs; ST.texts = flat.texts; ST.fills = [];
         ST.unit = u.unit; ST.unitFrom = u.from; ST.img = null;
         ST.roles = autoRoles(doc, flat.segs);
         ST.bbox = segBox(flat.segs, 400);
@@ -2916,7 +3162,7 @@ async function usePdfPage(idx, first) {
   }
 
   ST.kind = 'dxf'; ST.src = 'pdf'; ST.doc = null; ST.img = null;
-  ST.rawSegs = page.segs; ST.pdfTexts = page.texts;
+  ST.rawSegs = page.segs; ST.rawFills = page.fills || []; ST.pdfTexts = page.texts;
 
   // 決定比例
   let info = PDF.scaleFromText(page.texts);
@@ -2927,7 +3173,15 @@ async function usePdfPage(idx, first) {
   if (!info) {
     let x1 = Infinity, y1 = Infinity, x2 = -Infinity, y2 = -Infinity;
     for (const g of page.segs) { x1 = Math.min(x1, g.x1, g.x2); x2 = Math.max(x2, g.x1, g.x2); y1 = Math.min(y1, g.y1, g.y2); y2 = Math.max(y2, g.y1, g.y2); }
-    info = { scale: PDF.guessScale(page.width, page.height, Math.max(x2 - x1, y2 - y1)), from: 'guess' };
+    const extent = Math.max(x2 - x1, y2 - y1);
+    // 用線最多的那一組量牆的雙線間距,推出幾個說得通的比例
+    const byLen = {};
+    page.segs.forEach(g => (byLen[g.layer] = (byLen[g.layer] || 0) + Math.hypot(g.x2 - g.x1, g.y2 - g.y1)));
+    const topLayer = Object.entries(byLen).sort((a, b) => b[1] - a[1])[0];
+    const sp = topLayer ? PDF.wallSpacing(page.segs.filter(g => g.layer === topLayer[0])) : null;
+    const cands = PDF.scaleCandidates(sp && sp.pt, extent);
+    info = { scale: (cands[0] && cands[0].scale) || PDF.guessScale(page.width, page.height, extent),
+             from: 'guess', cands, spacingPt: sp && sp.pt };
   }
   ST.scaleInfo = info;
   applyPdfScale(info.scale, true);
@@ -2937,7 +3191,7 @@ async function usePdfPage(idx, first) {
   setStep(1);
   zoomTo(activeBox());
   const how = { text: '圖上印的比例', dim: '尺寸標註反推', guess: '圖面大小推測' }[info.from];
-  toast(`讀到 ${page.segs.length} 條向量線、${new Set(page.segs.map(g => g.layer)).size} 個圖層。比例 1:${info.scale}(${how})—— 請在右邊確認。`, 7000);
+  toast(`讀到 ${page.segs.length} 條向量線${ST.fills.length ? `、${ST.fills.length} 塊實心填充` : ''}、${layerNames().length} 個圖層。比例 1:${info.scale}(${how})—— 請在右邊確認。`, 7000);
 }
 
 /** 依列印比例把 PDF 單位換成 mm(每次都從原始座標重算,不累積誤差) */
@@ -2946,7 +3200,8 @@ function applyPdfScale(S, keepRooms) {
   ST.pdfScale = S; ST.mmPerPt = mmPerPt;
   ST.segs = ST.rawSegs.map(g => ({ x1: g.x1 * mmPerPt, y1: g.y1 * mmPerPt, x2: g.x2 * mmPerPt, y2: g.y2 * mmPerPt, layer: g.layer, col: g.col, lw: g.lw }));
   ST.texts = (ST.pdfTexts || []).map(t => ({ x: t.x * mmPerPt, y: t.y * mmPerPt, h: t.h * mmPerPt, text: t.text, layer: t.layer }));
-  if (!keepRooms || !ST.roles || !Object.keys(ST.roles).length) ST.roles = autoRoles(null, ST.segs);
+  ST.fills = (ST.rawFills || []).map(f => ({ layer: f.layer, col: f.col, pts: f.pts.map(p => ({ x: p.x * mmPerPt, y: p.y * mmPerPt })) }));
+  if (!keepRooms || !ST.roles || !Object.keys(ST.roles).length) ST.roles = autoRoles(null, ST.segs, ST.fills);
   ST.bbox = segBox(ST.segs, 400);
   ST.raster = null; ST._abox = null; _base = null; ST.rooms = []; ST.elems = [];
 }
@@ -2974,7 +3229,7 @@ async function pdfFallbackImage(doc, page) {
   }
   await done;
   if (!im.width) { toast('影像解不開。請改用 PDF 閱讀器輸出成 JPG/PNG。', 6000); return; }
-  ST.kind = 'img'; ST.src = 'pdf'; ST.img = im; ST.doc = null; ST.segs = []; ST.texts = [];
+  ST.kind = 'img'; ST.src = 'pdf'; ST.img = im; ST.doc = null; ST.segs = []; ST.texts = []; ST.fills = [];
   // 用頁面上的擺放位置換算:影像寬度對應多少 PDF 單位
   const guessS = 50;
   ST.mmPerPx = (img.w / Math.max(1, im.width)) * PDF.PT2MM * guessS;
@@ -2994,7 +3249,7 @@ function loadImage(f) {
     r.onload = () => {
       const im = new Image();
       im.onload = () => {
-        ST.kind = 'img'; ST.src = 'img'; ST.img = im; ST.doc = null; ST.segs = []; ST.texts = [];
+        ST.kind = 'img'; ST.src = 'img'; ST.img = im; ST.doc = null; ST.segs = []; ST.texts = []; ST.fills = [];
         ST.mmPerPx = 10; ST.unit = 'mm'; ST.unitFrom = '';
         ST.roles = {}; ST.rooms = []; ST.elems = []; ST.raster = null;
         ST.bbox = { x1: 0, y1: 0, x2: im.width * ST.mmPerPx, y2: im.height * ST.mmPerPx };
@@ -3022,11 +3277,15 @@ function segBox(segs, pad = 0) {
   return { x1: x1 - pad, y1: y1 - pad, x2: x2 + pad, y2: y2 + pad };
 }
 
+function layerNames() {
+  return [...new Set([...ST.segs.map(s => s.layer), ...(ST.fills || []).map(f => f.layer)])];
+}
+
 /* 依圖層名稱猜用途;PDF 若沒有圖層名,改用線寬判斷 */
-function autoRoles(doc, segs) {
-  const names = new Set(segs.map(s => s.layer));
+function autoRoles(doc, segs, fills) {
+  const names = new Set([...segs.map(s => s.layer), ...(fills || []).map(f => f.layer)]);
   const pseudo = [...names].every(n => / · /.test(n));
-  if (pseudo) return autoRolesByWeight(segs, names);
+  if (pseudo) return autoRolesByWeight(segs, names, fills);
   const roles = {};
   for (const n of names) {
     const s = n.toUpperCase();
@@ -3034,6 +3293,7 @@ function autoRoles(doc, segs) {
     else if (/(窗|WIN|GLAZ|玻璃)/i.test(n) || /WIN/.test(s)) roles[n] = 'window';
     else if (/(牆|墻|WALL|W-|結構|柱|COLU|STRU|隔間)/i.test(n) || /WALL|COLU/.test(s)) roles[n] = 'wall';
     else if (/(尺寸|標註|DIM|TEXT|文字|AXIS|軸|標高|HATCH|填充|圖框|TITLE|FRAME)/i.test(n)) roles[n] = 'off';
+    else if (/ · 填充$/.test(n)) roles[n] = 'fillpend';
     else if (/^#[0-9a-f]{6} · /.test(n)) roles[n] = 'pending';
     else roles[n] = 'furn';
   }
@@ -3045,6 +3305,13 @@ function autoRoles(doc, segs) {
     const maxLw = Math.max(0.01, ...Object.values(lw));
     pend.forEach(k => roles[k] = (lw[k] || 0) < maxLw * 0.6 ? 'off' : 'furn');
   }
+  // 實心填充跟牆線同色 → 當作實心牆
+  const wallCol = Object.keys(roles).find(k => roles[k] === 'wall');
+  const wc = wallCol ? String(wallCol).split(' · ')[0] : null;
+  Object.keys(roles).forEach(k => {
+    if (roles[k] !== 'fillpend') return;
+    roles[k] = (wc && k.startsWith(wc)) ? 'wall' : 'furn';
+  });
   if (!Object.values(roles).includes('wall')) {
     // 找不到牆層:用線段最多的圖層當牆
     const c = {}; segs.forEach(s => c[s.layer] = (c[s.layer] || 0) + 1);
@@ -3055,7 +3322,7 @@ function autoRoles(doc, segs) {
 }
 
 /* PDF 沒帶圖層資訊時:最粗的那一組線通常就是牆 */
-function autoRolesByWeight(segs, names) {
+function autoRolesByWeight(segs, names, fills) {
   const info = {};
   for (const g of segs) {
     const k = g.layer;
@@ -3063,7 +3330,7 @@ function autoRolesByWeight(segs, names) {
   }
   const roles = {};
   const arr = Object.entries(info);
-  const maxLw = Math.max(...arr.map(([, v]) => v.lw));
+  const maxLw = arr.length ? Math.max(...arr.map(([, v]) => v.lw)) : 0;
   const thick = arr.filter(([, v]) => v.lw >= maxLw * 0.75);
   const wall = (thick.length ? thick : arr).sort((a, b) => b[1].len - a[1].len)[0];
   for (const [k] of arr) roles[k] = 'furn';
@@ -3073,6 +3340,13 @@ function autoRolesByWeight(segs, names) {
     if (k === (wall && wall[0])) continue;
     if (v.lw <= maxLw * 0.4 && v.len < (wall ? wall[1].len : Infinity) * 0.35) roles[k] = 'off';
   }
+  // 實心填充:顏色跟牆線同色的,那就是實心牆(牆體剖面),一起當牆
+  const wallCol = wall ? String(wall[0]).split(' · ')[0] : null;
+  for (const f of (fills || [])) {
+    if (roles[f.layer]) continue;
+    roles[f.layer] = (wallCol && f.layer.startsWith(wallCol)) ? 'wall' : 'furn';
+  }
+  for (const n of names) if (!roles[n]) roles[n] = 'furn';
   return roles;
 }
 
@@ -3083,22 +3357,37 @@ const RES = 2000;
 function activeBox() {
   if (ST._abox) return ST._abox;
   const use = ST.segs.filter(s => ['wall', 'door', 'window'].includes(ST.roles[s.layer]));
-  ST._abox = segBox(use.length ? use : ST.segs, 600);
+  const box = segBox(use.length ? use : ST.segs, 600);
+  for (const f of roleFills(['wall', 'door', 'window'])) for (const p of f) {
+    box.x1 = Math.min(box.x1, p.x - 600); box.x2 = Math.max(box.x2, p.x + 600);
+    box.y1 = Math.min(box.y1, p.y - 600); box.y2 = Math.max(box.y2, p.y + 600);
+  }
+  ST._abox = box;
   return ST._abox;
+}
+function roleFills(roles) {
+  return (ST.fills || []).filter(f => roles.includes(ST.roles[f.layer])).map(f => f.pts);
 }
 function barrierRaster() {
   if (ST.raster) return ST.raster;
-  if (ST.kind === 'img') ST.raster = imageRaster();
+  if (ST.kind === 'img') {
+    const r = imageRaster();
+    if (ST.detect.gap > 0) r.mask = G.closeGaps(r.mask, r.w, r.h, (ST.detect.gap / 2) * r.sc);
+    ST.raster = r;
+  }
   else {
     const segs = ST.segs.filter(s => ['wall', 'door', 'window'].includes(ST.roles[s.layer]));
-    ST.raster = G.rasterize(segs.length ? segs : ST.segs, activeBox(), RES, 2);
+    const r = G.rasterize(segs.length ? segs : ST.segs, activeBox(), RES, 2, roleFills(['wall', 'door', 'window']));
+    if (ST.detect.gap > 0) r.mask = G.closeGaps(r.mask, r.w, r.h, (ST.detect.gap / 2) * r.sc);
+    ST.raster = r;
   }
   return ST.raster;
 }
 function roleRaster(role) {
   const segs = ST.segs.filter(s => ST.roles[s.layer] === role);
-  if (!segs.length) return null;
-  return G.rasterize(segs, activeBox(), RES, 2);
+  const polys = roleFills([role]);
+  if (!segs.length && !polys.length) return null;
+  return G.rasterize(segs, activeBox(), RES, 2, polys);
 }
 function imageRaster() {
   const im = ST.img;
@@ -3248,6 +3537,7 @@ cv.addEventListener('pointerdown', e => {
     ST.draft.push(snap); draw(); return;
   }
   if (ST.tool === 'opening') { addOpeningAt(w); return; }
+  if (ST.tool === 'rect') { drag = { mode: 'rect', a: w, b: w }; draw(); return; }
   // select:拖頂點 / 選空間
   const rm = ST.rooms[ST.roomI];
   if (rm) {
@@ -3274,6 +3564,8 @@ cv.addEventListener('pointermove', e => {
       const v = V();
       v.cx = drag.v.cx - (mouseS.x - drag.s.x) / v.z;
       v.cy = drag.v.cy + (mouseS.y - drag.s.y) / v.z;
+    } else if (drag.mode === 'rect') {
+      drag.b = mouseW;
     } else if (drag.mode === 'vert') {
       ST.rooms[ST.roomI].poly[drag.i] = snapPoint(mouseW);
     } else if (drag.mode === 'move') {
@@ -3293,7 +3585,11 @@ cv.addEventListener('pointermove', e => {
   }
   if (ST.tool === 'poly' || ST.tool === 'calib') draw(); else updateStatus();
 });
-cv.addEventListener('pointerup', () => { if (drag && drag.mode === 'vert') render(); drag = null; });
+cv.addEventListener('pointerup', () => {
+  if (drag && drag.mode === 'vert') render();
+  if (drag && drag.mode === 'rect') { finishRect(drag.a, drag.b); drag = null; return; }
+  drag = null;
+});
 cv.addEventListener('contextmenu', e => e.preventDefault());
 cv.addEventListener('dblclick', () => { if (ST.tool === 'poly') finishPoly(); });
 cv.addEventListener('wheel', e => {
@@ -3320,18 +3616,84 @@ function snapPoint(w) {
   return { x: best.x, y: best.y };
 }
 
-function finishPoly() {
-  if (!ST.draft || ST.draft.length < 3) { ST.draft = []; draw(); return; }
-  const poly = G.ensureCCW(ST.draft.slice());
+/** 拉出來的矩形:四邊吸附到真正的牆線,兩下就有精確的房間 */
+function finishRect(a, b) {
+  const ang = baseAngle() * Math.PI / 180;
+  const cos = Math.cos(ang), sin = Math.sin(ang);
+  const to = p => ({ u: p.x * cos + p.y * sin, v: -p.x * sin + p.y * cos });
+  const back = q => ({ x: q.u * cos - q.v * sin, y: q.u * sin + q.v * cos });
+  const A = to(a), B = to(b);
+  if (Math.abs(A.u - B.u) < 300 || Math.abs(A.v - B.v) < 300) { toast('框太小了,再拉大一點。'); return; }
+  const u1 = Math.min(A.u, B.u), u2 = Math.max(A.u, B.u);
+  const v1 = Math.min(A.v, B.v), v2 = Math.max(A.v, B.v);
+  let poly = [{ u: u1, v: v1 }, { u: u2, v: v1 }, { u: u2, v: v2 }, { u: u1, v: v2 }].map(back);
+  poly = G.ensureCCW(poly);
+  const wallSegs = ST.segs.filter(x => ST.roles[x.layer] === 'wall');
+  let snapped = poly;
+  if (ST.kind === 'dxf' && wallSegs.length) {
+    const shortest = Math.min(...poly.map((p, i) => {
+      const q = poly[(i + 1) % poly.length]; return Math.hypot(q.x - p.x, q.y - p.y);
+    }));
+    const tol = Math.max(300, Math.min(1500, shortest * 0.30));
+    // 先寬鬆吸一次抓到正確的牆,再收緊一次確保貼準
+    let s2 = G.snapEdgesToSegs(poly, wallSegs, tol, 6, false);
+    if (s2.length >= 3 && Number.isFinite(G.area(s2))) {
+      const s3 = G.snapEdgesToSegs(s2, wallSegs, 120, 5, false);
+      snapped = G.dropCollinear(s3.length >= 3 ? s3 : s2, 4);
+    }
+  }
+  snapped = G.ensureCCW(snapped);
+  const ar = Math.abs(G.area(snapped)) / 1e6;
+  if (!(ar > 0.3)) { toast('抓不出合理的範圍,再試一次。'); return; }
+  // 回報有幾條邊真的貼到牆(門窗開口處沒有牆線,所以看整條邊而不是只看中點)
+  let hit = 0;
+  for (let i = 0; i < snapped.length; i++) {
+    const a = snapped[i], b = snapped[(i + 1) % snapped.length];
+    const L = Math.hypot(b.x - a.x, b.y - a.y);
+    if (L < 1) continue;
+    const dx = (b.x - a.x) / L, dy = (b.y - a.y) / L;
+    let cover = 0;
+    for (const g of wallSegs) {
+      const gl = Math.hypot(g.x2 - g.x1, g.y2 - g.y1);
+      if (gl < 1) continue;
+      if (Math.abs(((g.x2 - g.x1) / gl) * dx + ((g.y2 - g.y1) / gl) * dy) < 0.996) continue;
+      const d1 = Math.abs((g.x1 - a.x) * -dy + (g.y1 - a.y) * dx);
+      const d2 = Math.abs((g.x2 - a.x) * -dy + (g.y2 - a.y) * dx);
+      if (d1 > 30 || d2 > 30) continue;
+      const t1 = (g.x1 - a.x) * dx + (g.y1 - a.y) * dy;
+      const t2 = (g.x2 - a.x) * dx + (g.y2 - a.y) * dy;
+      cover = Math.max(cover, Math.min(L, Math.max(t1, t2)) - Math.max(0, Math.min(t1, t2)));
+    }
+    if (cover > L * 0.25) hit++;
+  }
+  const msg = hit === snapped.length
+    ? `${snapped.length} 條邊全部貼齊牆線 · ${ar.toFixed(2)} m² / ${(ar / 3.305785).toFixed(2)} 坪`
+    : `貼齊 ${hit}/${snapped.length} 條邊 · ${ar.toFixed(2)} m² —— 沒貼到的那幾邊,框再拉靠近牆一點會更準`;
+  addRoom(snapped, msg);
+}
+
+function addRoom(poly, msg) {
   ST.rooms.push({
     id: uid(), name: '空間 ' + (ST.rooms.length + 1), poly,
     ceilH: 2800, baseboard: 80, ceilDrop: 0, wallT: 120,
     wallFinish: 'PT-01', finish: {},
     labels: poly.map((_, i) => String.fromCharCode(65 + i)),
   });
-  ST.roomI = ST.rooms.length - 1; ST.edgeI = 0; ST.draft = [];
-  ST.tool = 'select';
+  ST.roomI = ST.rooms.length - 1; ST.edgeI = 0;
+  if (msg) toast(msg);
   render();
+}
+
+function finishPoly() {
+  if (!ST.draft || ST.draft.length < 3) { ST.draft = []; draw(); return; }
+  let poly = G.ensureCCW(ST.draft.slice());
+  const wallSegs = ST.segs.filter(x => ST.roles[x.layer] === 'wall');
+  if (ST.kind === 'dxf' && wallSegs.length) {
+    const s2 = G.snapEdgesToSegs(poly, wallSegs, 250, 6, false);
+    if (s2.length >= 3 && Number.isFinite(G.area(s2))) poly = G.ensureCCW(G.dropCollinear(s2, 4));
+  }
+  ST.draft = []; ST.tool = 'select';
+  addRoom(poly);
 }
 
 function addOpeningAt(w) {
@@ -3412,15 +3774,21 @@ function buildRail() {
   if (ST.step === 2 && ST.kind === 'dxf') {
     c.append(el('div', { class: 'railsec' }, '圖層用途'));
     const box = el('div', { class: 'layers' });
-    const names = [...new Set(ST.segs.map(s => s.layer))].sort();
-    const cnt = {}; ST.segs.forEach(s => cnt[s.layer] = (cnt[s.layer] || 0) + 1);
+    const names = layerNames().sort();
+    const cnt = {};
+    ST.segs.forEach(s => cnt[s.layer] = (cnt[s.layer] || 0) + 1);
+    (ST.fills || []).forEach(f => cnt[f.layer] = (cnt[f.layer] || 0) + 1);
     for (const n of names) {
       const sel = el('select', { onchange: ev => { ST.roles[n] = ev.target.value; ST.raster = null; ST._abox = null; _base = null; render(); } });
       [['wall', '牆體'], ['door', '門'], ['window', '窗'], ['furn', '參考'], ['off', '忽略']]
         .forEach(([v, t]) => sel.append(el('option', { value: v, selected: ST.roles[n] === v }, t)));
-      box.append(el('div', { class: 'lyrow', title: `${n} · ${cnt[n]} 條` },
+      const hex = /^(#[0-9a-f]{6})/.exec(n);
+      box.append(el('div', { class: 'lyrow', title: `${n} · ${cnt[n]} 條線` },
         el('span', { class: 'lyname' },
-          el('i', { class: 'swatch', style: `background:${ROLE_C[ST.roles[n]] || '#5A6970'}` }), n),
+          el('i', { class: 'swatch', style: `background:${ROLE_C[ST.roles[n]] || '#5A6970'}` }),
+          hex ? el('i', { class: 'swatch', style: `background:${hex[1]};outline:1px solid var(--line-2)` }) : '',
+          el('span', { style: 'overflow:hidden;text-overflow:ellipsis' }, n),
+          el('span', { style: 'color:var(--text-3);font-family:"IBM Plex Mono",monospace;font-size:10px;flex:none' }, cnt[n])),
         sel));
     }
     c.append(box);
@@ -3474,6 +3842,7 @@ function buildVpBar() {
     b.append(mk('校正比例', 'calib'));
     b.append(el('span', { class: 'sep' }));
     b.append(mk('自動抓空間', 'detect', '點房間內部'));
+    b.append(mk('拉矩形', 'rect', '拉一個大概的框,四邊自動吸到牆線'));
     b.append(mk('手動描牆', 'poly', '沿牆角點,雙擊或回到起點結束'));
     b.append(mk('加開口', 'opening', '點牆線加一個門'));
     b.append(el('span', { class: 'sep' }));
@@ -3501,7 +3870,8 @@ function buildVpBar() {
   const msg = {
     calib: '<b>校正比例</b> — 在圖上點一段已知長度的兩端(例如一道 3000mm 的牆),然後輸入實際距離。',
     detect: '<b>自動抓空間</b> — 點房間內部的空白處。門窗要是畫成封閉的(有門片或窗框),才抓得到完整輪廓。',
-    poly: '<b>手動描牆</b> — 沿著房間內角依序點擊,雙擊或點回起點結束。DXF 模式會自動吸附到端點。',
+    rect: '<b>拉矩形</b> — 在房間上拉一個大概的框就好,放開後四條邊會自動吸附到真正的牆線。方正的房間用這個最快。',
+    poly: '<b>手動描牆</b> — 沿著房間內角依序點擊,雙擊或點回起點結束。收尾時每條邊會自動吸附到牆線。',
     opening: '<b>加開口</b> — 點在牆線上,會加一個 900×2100 的門,再到右邊改尺寸與類型。',
   }[ST.tool];
   h.hidden = !msg; if (msg) h.innerHTML = msg;
@@ -3604,16 +3974,26 @@ function inspPdf(c) {
     el('p', { class: 'note' }, `照這個比例,圖上畫的東西是 ${wM.toFixed(2)} m × ${hM.toFixed(2)} m —— 對得起來嗎?`),
     el('p', { class: 'note' + (inf.from === 'guess' ? ' warn' : '') },
       inf.from === 'guess'
-        ? '⚠ 圖上找不到比例資訊,這是用圖面大小猜的 —— 請對照上面的公尺數確認,或用兩點校正。'
+        ? '⚠ 這張 PDF 上找不到比例資訊(沒有標註數字,也沒印「SCALE 1:x」)—— 下面是幾個說得通的選項,或直接兩點校正。'
         : `比例來源:${how}。`),
+    ...(inf.from === 'guess' && inf.cands && inf.cands.length ? [
+      el('div', { class: 'list' }, inf.cands.map(cd => el('div', {
+        class: 'item', 'aria-selected': String(cd.scale === ST.pdfScale),
+        onclick: () => { applyPdfScale(cd.scale, true); ST.scaleInfo = Object.assign({}, inf, { scale: cd.scale }); zoomTo(activeBox()); render(); },
+      },
+        el('span', { class: 'tag' }, '1:' + cd.scale),
+        el('span', { class: 'sub' }, cd.wallMm ? `牆厚 ${cd.wallMm} mm` : '—'),
+        el('span', { class: 'sub' }, cd.extentM ? `圖寬 ${cd.extentM} m` : '')))),
+      el('p', { class: 'note' }, '挑「牆厚」看起來對的那一個 —— 台灣常見是 1/2B 磚牆 120mm、RC 150~240mm。'),
+    ] : []),
     el('button', { class: 'btn', onclick: () => { ST.tool = 'calib'; ST.calib = []; render(); } }, '用兩點校正比例'),
     el('p', { class: 'note' }, '在圖上點一段已知長度的兩端(例如一道 3000mm 的牆),輸入實際尺寸,比例就會被鎖定。')));
 
-  const names = [...new Set(ST.segs.map(g => g.layer))];
+  const names = layerNames();
   const pseudo = names.every(n => / · /.test(n));
   c.append(sec('來源檔案',
     el('p', { class: 'note' }, ST.fileName),
-    el('p', { class: 'note' }, `${ST.segs.length} 條向量線 · ${names.length} 個圖層`),
+    el('p', { class: 'note' }, `${ST.segs.length} 條向量線${ST.fills && ST.fills.length ? ` · ${ST.fills.length} 塊實心填充` : ''} · ${names.length} 個圖層`),
     el('p', { class: 'note' }, pseudo
       ? '這個 PDF 沒有帶圖層資訊,我改用「線色＋線寬」分組 —— 最粗的那一組通常是牆,下一步可以調整。'
       : '這個 PDF 有帶 AutoCAD 的圖層名稱,下一步直接指定用途就好。'),
@@ -3642,16 +4022,23 @@ function inspLayers(c) {
     el('p', { class: 'note' }, `目前:牆 ${cnt.wall || 0} 層、門 ${cnt.door || 0} 層、窗 ${cnt.window || 0} 層、忽略 ${cnt.off || 0} 層`)));
   c.append(sec('偵測參數',
     fld('忽略短牆', numIn(ST.detect.minWall, v => ST.detect.minWall = v, 50), 'mm'),
-    el('p', { class: 'note' }, '短於這個長度的邊會被併掉 —— 這也是門片開啟弧線不會變成一面牆的原因。'),
+    fld('封閉門洞', numIn(ST.detect.gap, v => { ST.detect.gap = Math.max(0, v); ST.raster = null; }, 100), 'mm'),
+    el('p', { class: 'note' }, '「封閉門洞」會把牆線上小於這個寬度的缺口先補起來,填充才不會從門口漏到隔壁房間。走道比這個窄的話要調小。'),
     el('button', { class: 'btn pri', onclick: () => setStep(3) }, '下一步:抓出空間')));
 }
 
 function inspRoom(c) {
   const rm = ST.rooms[ST.roomI];
   if (!rm) {
-    c.append(sec('抓出空間',
-      el('p', { class: 'note', html: '在視圖裡<b>點一下房間內部</b>,程式會沿牆填充、描出輪廓,再規整成正交多邊形。' }),
-      el('p', { class: 'note' }, '如果填充漏出去了,代表那個空間沒封閉 —— 改用「手動描牆」沿內角點一圈。')));
+    c.append(sec('三種抓法',
+      el('p', { class: 'note', html: '<b>自動抓空間</b> — 點房間內部。適合牆體乾淨的建築平面圖。' }),
+      el('p', { class: 'note', html: '<b>拉矩形</b> — 在房間上拉個大概的框,四邊會自動吸到真正的牆線。<b>方正的房間用這個最快也最準。</b>' }),
+      el('p', { class: 'note', html: '<b>手動描牆</b> — 沿內角點一圈,收尾時一樣會吸附牆線。不規則的空間用這個。' })));
+    c.append(sec('如果自動抓得不好',
+      el('p', { class: 'note' }, '平面配置圖裡的櫃體、床、沙發常常跟牆用同一支筆畫,填充會沿著傢俱繞,輪廓就變得很碎。'),
+      el('p', { class: 'note' }, '這種圖建議直接用「拉矩形」——  兩下就有一個貼齊牆線的精確房間,比修碎輪廓快得多。'),
+      fld('封閉門洞', numIn(ST.detect.gap, v => { ST.detect.gap = Math.max(0, v); ST.raster = null; }, 100), 'mm'),
+      fld('忽略短牆', numIn(ST.detect.minWall, v => ST.detect.minWall = v, 50), 'mm')));
     return;
   }
   c.append(sec('空間',
