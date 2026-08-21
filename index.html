@@ -138,8 +138,8 @@ Error generating stack: `+n.message+`
 /* ===== Cloudflare R2（行銷照片庫）設定與簽章上傳 ===== */
 var R2_CONFIG={
   publicUrl:"https://pub-2063c1ccef9742fbb3a0513c9f792077.r2.dev",
-  workerUrl:"https://REPLACE-ME.workers.dev",
-  token:"REPLACE_WITH_HB_UPLOAD_TOKEN"
+  workerUrl:"https://herfulsins-r2-proxy.3chyienian05.workers.dev",
+  token:"a316ef6f5c3d41ebb9266a3656c764bcab9f0126968849c28d8bf50509ab0b64"
 };
 async function r2Sha256Hex(buf){let h=await crypto.subtle.digest("SHA-256",buf);return Array.from(new Uint8Array(h)).map(b=>b.toString(16).padStart(2,"0")).join("")}
 async function r2Hmac(key,data){let ck=await crypto.subtle.importKey("raw",key,{name:"HMAC",hash:"SHA-256"},false,["sign"]);return new Uint8Array(await crypto.subtle.sign("HMAC",ck,typeof data==="string"?new TextEncoder().encode(data):data))}
@@ -164,8 +164,8 @@ async function r2DeleteObj(key){try{await r2Request("DELETE",key,null,null)}catc
 /* ===== Cloudflare R2（施工照片 / 專案檔案）設定與簽章上傳 ===== */
 var R2_SITELOG_CONFIG={
   publicUrl:"https://pub-0a93db6b495e4243a9a71d5d0c6dd3e8.r2.dev",
-  workerUrl:"https://REPLACE-ME.workers.dev",
-  token:"REPLACE_WITH_HB_UPLOAD_TOKEN"
+  workerUrl:"https://herfulsins-r2-proxy.3chyienian05.workers.dev",
+  token:"a316ef6f5c3d41ebb9266a3656c764bcab9f0126968849c28d8bf50509ab0b64"
 };
 async function r2SitelogRequest(method,key,bodyBuf,contentType){
   let encodedKey=key.split("/").map(encodeURIComponent).join("/");
