@@ -141,6 +141,104 @@ var R2_CONFIG={
   workerUrl:"https://herfulsins-r2-proxy.3chyienian05.workers.dev",
   token:"a316ef6f5c3d41ebb9266a3656c764bcab9f0126968849c28d8bf50509ab0b64"
 };
+/* ===================================================================
+   現場實用性優化套件 v1（赫柏空間設計 · 工地紀錄本）
+   1) 上傳前自動壓縮照片：省 R2 空間、省手機流量、上傳快 5～10 倍
+   2) 上傳失敗自動重試：工地訊號不穩時不會一按就失敗
+   3) 全域上傳進度提示：知道還有幾張在傳、省下多少流量
+   =================================================================== */
+var HB_UP_ACTIVE=0, HB_UP_DONE=0, HB_UP_SAVED=0, HB_UP_EL=null, HB_UP_TIMER=null;
+
+function HB_upEnsureEl(){
+  if(HB_UP_EL&&document.body.contains(HB_UP_EL))return HB_UP_EL;
+  var el=document.createElement("div");
+  el.style.cssText="position:fixed;top:14px;left:50%;transform:translateX(-50%) translateY(-16px);z-index:9999;"
+    +"background:rgba(28,27,24,0.90);color:#F1EEE6;font-size:12.5px;letter-spacing:.04em;"
+    +"padding:8px 16px;border-radius:999px;display:flex;align-items:center;gap:8px;"
+    +"font-family:'Noto Sans TC','PingFang TC',sans-serif;pointer-events:none;opacity:0;"
+    +"transition:opacity .25s ease,transform .25s ease;box-shadow:0 8px 24px -8px rgba(0,0,0,.4)";
+  document.body.appendChild(el);
+  HB_UP_EL=el;
+  return el;
+}
+function HB_upRender(){
+  var el=HB_upEnsureEl();
+  if(HB_UP_ACTIVE>0){
+    el.innerHTML='<span style="display:inline-block;width:11px;height:11px;border:2px solid rgba(241,238,230,.35);'
+      +'border-top-color:#CDA57E;border-radius:50%;animation:spin .8s linear infinite"></span>'
+      +'<span>上傳中　剩 '+HB_UP_ACTIVE+' 個檔案</span>';
+    el.style.opacity="1";
+    el.style.transform="translateX(-50%) translateY(0)";
+    if(HB_UP_TIMER){clearTimeout(HB_UP_TIMER);HB_UP_TIMER=null}
+  }else{
+    var mb=HB_UP_SAVED/1048576;
+    el.innerHTML='<span style="color:#CDA57E">✓</span><span>上傳完成'
+      +(mb>=0.5?'　（自動壓縮省下 '+mb.toFixed(1)+' MB）':'')+'</span>';
+    el.style.opacity="1";
+    el.style.transform="translateX(-50%) translateY(0)";
+    if(HB_UP_TIMER)clearTimeout(HB_UP_TIMER);
+    HB_UP_TIMER=setTimeout(function(){
+      el.style.opacity="0";
+      el.style.transform="translateX(-50%) translateY(-16px)";
+      HB_UP_SAVED=0;
+    },2600);
+  }
+}
+function HB_upStart(){HB_UP_ACTIVE++;HB_upRender()}
+function HB_upEnd(){HB_UP_ACTIVE=Math.max(0,HB_UP_ACTIVE-1);HB_UP_DONE++;HB_upRender()}
+
+/* 圖片自動壓縮：長邊縮到 maxEdge、重新編碼 JPEG。
+   非圖片、GIF/SVG、小檔、或任何轉檔失敗的情況一律回傳原檔，確保不會壞掉。 */
+async function HB_optimizeBlob(blob,opts){
+  opts=opts||{};
+  var maxEdge=opts.maxEdge||2200, quality=opts.quality||0.82;
+  try{
+    if(!blob||typeof blob.arrayBuffer!=="function")return blob;
+    var type=String(blob.type||"");
+    if(!/^image\//i.test(type))return blob;
+    if(/gif|svg|avif/i.test(type))return blob;
+    var isPng=/png/i.test(type);
+    var minSize=isPng?2.5*1024*1024:900*1024;   // PNG 較保守（可能是簽名或去背圖）
+    if(blob.size<minSize)return blob;
+    if(typeof createImageBitmap!=="function")return blob;
+    var bmp;
+    try{bmp=await createImageBitmap(blob,{imageOrientation:"from-image"})}
+    catch(e1){try{bmp=await createImageBitmap(blob)}catch(e2){return blob}}
+    var w=bmp.width,h=bmp.height;
+    if(!w||!h){if(bmp.close)bmp.close();return blob}
+    var scale=Math.min(1,maxEdge/Math.max(w,h));
+    var nw=Math.max(1,Math.round(w*scale)),nh=Math.max(1,Math.round(h*scale));
+    var cv=document.createElement("canvas");cv.width=nw;cv.height=nh;
+    var ctx=cv.getContext("2d");
+    if(!ctx){if(bmp.close)bmp.close();return blob}
+    ctx.fillStyle="#FFFFFF";ctx.fillRect(0,0,nw,nh);
+    ctx.imageSmoothingQuality="high";
+    ctx.drawImage(bmp,0,0,nw,nh);
+    if(bmp.close)bmp.close();
+    var out=await new Promise(function(res){cv.toBlob(function(b){res(b)},"image/jpeg",quality)});
+    cv.width=cv.height=0;
+    if(!out||out.size>=blob.size)return blob;
+    HB_UP_SAVED+=(blob.size-out.size);
+    return out;
+  }catch(e){return blob}
+}
+
+/* 上傳自動重試：網路瞬斷、Worker 逾時時自動退避重試，權限錯誤則直接失敗 */
+async function HB_retry(fn,tries){
+  tries=tries||3;
+  var last=null;
+  for(var i=0;i<tries;i++){
+    try{return await fn()}
+    catch(e){
+      last=e;
+      var msg=String((e&&e.message)||e||"");
+      if(/\(40[0-9]\)/.test(msg)&&!/408|429/.test(msg))break;   // 400/401/403/404 不重試
+      if(i<tries-1)await new Promise(function(r){setTimeout(r,900*Math.pow(2,i))});
+    }
+  }
+  throw last||new Error("上傳失敗");
+}
+
 async function r2Sha256Hex(buf){let h=await crypto.subtle.digest("SHA-256",buf);return Array.from(new Uint8Array(h)).map(b=>b.toString(16).padStart(2,"0")).join("")}
 async function r2Hmac(key,data){let ck=await crypto.subtle.importKey("raw",key,{name:"HMAC",hash:"SHA-256"},false,["sign"]);return new Uint8Array(await crypto.subtle.sign("HMAC",ck,typeof data==="string"?new TextEncoder().encode(data):data))}
 async function r2SigningKey(secret,dateStamp,region,service){let kDate=await r2Hmac(new TextEncoder().encode("AWS4"+secret),dateStamp);let kRegion=await r2Hmac(kDate,region);let kService=await r2Hmac(kRegion,service);return r2Hmac(kService,"aws4_request")}
@@ -155,9 +253,19 @@ async function r2Request(method,key,bodyBuf,contentType){
   return res;
 }
 async function r2Upload(key,blob,contentType){
-  let buf=await blob.arrayBuffer();
-  await r2Request("PUT",key,buf,contentType||blob.type||"application/octet-stream");
-  return `${R2_CONFIG.publicUrl}/${key.split("/").map(encodeURIComponent).join("/")}`;
+  let orig=blob;
+  blob=await HB_optimizeBlob(blob,{maxEdge:2600,quality:0.86});   // 行銷／作品照片保留較高畫質
+  if(blob!==orig)contentType="image/jpeg";
+  let ct=contentType||blob.type||"application/octet-stream";
+  let url=`${R2_CONFIG.publicUrl}/${key.split("/").map(encodeURIComponent).join("/")}`;
+  HB_upStart();
+  try{
+    return await HB_retry(async()=>{
+      let buf=await blob.arrayBuffer();
+      await r2Request("PUT",key,buf,ct);
+      return url;
+    });
+  }finally{HB_upEnd()}
 }
 async function r2DeleteObj(key){try{await r2Request("DELETE",key,null,null)}catch{}}
 
@@ -178,9 +286,19 @@ async function r2SitelogRequest(method,key,bodyBuf,contentType){
 }
 async function r2UploadSitelogFile(bucketTag,path,blob,contentType){
   let key=`${bucketTag}/${path}`;
-  let buf=await blob.arrayBuffer();
-  await r2SitelogRequest("PUT",key,buf,contentType||blob.type||"application/octet-stream");
-  return `${R2_SITELOG_CONFIG.publicUrl}/${key.split("/").map(encodeURIComponent).join("/")}`;
+  let orig=blob;
+  blob=await HB_optimizeBlob(blob,{maxEdge:2200,quality:0.82});   // 施工照片：夠看細節即可
+  if(blob!==orig)contentType="image/jpeg";
+  let ct=contentType||blob.type||"application/octet-stream";
+  let url=`${R2_SITELOG_CONFIG.publicUrl}/${key.split("/").map(encodeURIComponent).join("/")}`;
+  HB_upStart();
+  try{
+    return await HB_retry(async()=>{
+      let buf=await blob.arrayBuffer();
+      await r2SitelogRequest("PUT",key,buf,ct);
+      return url;
+    });
+  }finally{HB_upEnd()}
 }
 async function r2DeleteSitelogFile(bucketTag,path){
   try{await r2SitelogRequest("DELETE",`${bucketTag}/${path}`,null,null)}catch{}
@@ -5912,6 +6030,35 @@ react-dom/cjs/react-dom-client.production.js:
   document.addEventListener('pointerup', endDrag);
   document.addEventListener('pointercancel', endDrag);
   window.addEventListener('blur', endDrag);
+})();
+</script>
+
+<!-- ===== 現場實用性優化套件 v1（續）：離線偵測橫幅 + PWA 離線快取 ===== -->
+<script>
+(function(){
+  /* ---------- 1. 斷線橫幅：工地訊號差時明確告訴使用者，而不是讓他以為 App 壞了 ---------- */
+  var bar = document.createElement('div');
+  bar.style.cssText = 'position:fixed;left:0;right:0;top:0;z-index:9998;background:#B5622C;color:#fff;'
+    + 'font-family:"Noto Sans TC","PingFang TC",sans-serif;font-size:12.5px;letter-spacing:.05em;'
+    + 'text-align:center;padding:7px 12px;transform:translateY(-100%);transition:transform .3s ease;'
+    + 'pointer-events:none;padding-top:calc(7px + env(safe-area-inset-top,0px))';
+  bar.textContent = '目前離線中　·　拍的照片請等有訊號時再上傳';
+  document.body.appendChild(bar);
+
+  function sync(){
+    var off = (navigator.onLine === false);
+    bar.style.transform = off ? 'translateY(0)' : 'translateY(-100%)';
+  }
+  window.addEventListener('online',  sync);
+  window.addEventListener('offline', sync);
+  sync();
+
+  /* ---------- 2. Service Worker：讓 App 在沒訊號時也打得開 ---------- */
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function(){
+      navigator.serviceWorker.register('./sw.js').catch(function(){ /* 尚未部署 sw.js 時安靜略過 */ });
+    });
+  }
 })();
 </script>
 
