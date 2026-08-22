@@ -1794,6 +1794,143 @@ function HB_pbExportCsv(list){
   HB_downloadBlob(new Blob(["﻿"+lines.join("\r\n")],{type:"text/csv;charset=utf-8"}),"赫柏空間_常用工項單價庫_"+HB_pbToday()+".csv");
 }
 
+/* ---------- 單價庫匯入：Excel（.xlsx/.xls）與 CSV ---------- */
+function HB_pbCsvCell(v){return '"'+String(v??"").replace(/"/g,'""')+'"'}
+function HB_pbDownloadTemplate(){
+  let head=["分類","項目","規格","單位","數量","售價","廠商單位成本","備註"];
+  let sample=[
+    ["木作工程","天花板矽酸鈣板平釘","6mm 麗仕","坪","1","3800","2600","含板材、角料與工資"],
+    ["水電工程","無熔絲開關","BH 2P 15A","只","1","300","300",""],
+    ["泥作工程","牆面貼磚","30x60 拋光石英磚","坪","1","4200","3000",""]
+  ];
+  let lines=[head.map(HB_pbCsvCell).join(",")].concat(sample.map(r=>r.map(HB_pbCsvCell).join(",")));
+  HB_downloadBlob(new Blob(["﻿"+lines.join("\r\n")],{type:"text/csv;charset=utf-8"}),"赫柏空間_單價庫匯入範本.csv");
+}
+
+/* 逗號分隔解析，支援雙引號包住的欄位與欄位內換行 */
+function HB_pbParseCsv(text){
+  text=String(text||"").replace(/^﻿/,"");
+  let rows=[],row=[],cur="",inQ=!1;
+  for(let i=0;i<text.length;i++){
+    let ch=text[i];
+    if(inQ){
+      if(ch==='"'){if(text[i+1]==='"'){cur+='"';i++}else inQ=!1}
+      else cur+=ch;
+    }else{
+      if(ch==='"')inQ=!0;
+      else if(ch===","){row.push(cur);cur=""}
+      else if(ch==="\n"){row.push(cur);cur="";rows.push(row);row=[]}
+      else if(ch==="\r"){}
+      else cur+=ch;
+    }
+  }
+  if(cur!==""||row.length){row.push(cur);rows.push(row)}
+  return rows.filter(r=>r.some(c=>String(c).trim()!==""));
+}
+
+/* 讀成 {headers:[], rows:[[]]}；Excel 走已載入的 XLSX 函式庫 */
+async function HB_pbReadTable(file){
+  let name=String(file&&file.name||"").toLowerCase();
+  let table;
+  if(/\.(xlsx|xlsm|xls)$/.test(name)){
+    if(!window.XLSX)throw new Error("Excel 讀取元件尚未載入，請重新整理頁面後再試");
+    let buf=await file.arrayBuffer();
+    let wb=window.XLSX.read(new Uint8Array(buf),{type:"array"});
+    let ws=wb.Sheets[wb.SheetNames[0]];
+    if(!ws)throw new Error("這個 Excel 檔沒有可讀的工作表");
+    table=window.XLSX.utils.sheet_to_json(ws,{header:1,defval:"",raw:!1});
+    table=table.filter(r=>(r||[]).some(c=>String(c??"").trim()!==""));
+  }else{
+    table=HB_pbParseCsv(await file.text());
+  }
+  if(!table.length)throw new Error("檔案裡沒有資料");
+  let width=table.reduce((m,r)=>Math.max(m,r.length),0);
+  let headers=[];
+  for(let i=0;i<width;i++){
+    let h=HB_pbClean((table[0]||[])[i]);
+    headers.push(h||("第 "+(i+1)+" 欄"));
+  }
+  return{headers:headers,rows:table.slice(1).map(r=>{let o=[];for(let i=0;i<width;i++)o.push(HB_pbClean(r[i]));return o})};
+}
+
+var HB_PB_COL_HINTS=[
+  ["vendor_price",["廠商單位成本","廠商成本","廠商單價","成本價","成本","進價","批價","cost","vendor"]],
+  ["price",["售價","單價","報價","定價","客戶價","price","amount"]],
+  ["name",["項目","品名","名稱","工項","工程項目","item","name"]],
+  ["category",["分類","大項","類別","工程別","項次分類","category","group"]],
+  ["spec",["規格","材質","型號","說明","spec","model"]],
+  ["unit",["單位","計價單位","unit"]],
+  ["qty",["數量","數 量","qty","quantity"]],
+  ["note",["備註","註記","說明備註","remark","note","memo"]]
+];
+function HB_pbAutoMap(headers){
+  let map={category:-1,name:-1,spec:-1,unit:-1,qty:-1,price:-1,vendor_price:-1,note:-1};
+  let used=new Set();
+  for(let[field,hints]of HB_PB_COL_HINTS){
+    for(let i=0;i<headers.length;i++){
+      if(used.has(i))continue;
+      let h=HB_pbNorm(headers[i]);
+      if(!h)continue;
+      if(hints.some(x=>h.includes(HB_pbNorm(x)))){map[field]=i;used.add(i);break}
+    }
+  }
+  return map;
+}
+/* 依欄位對應把一列轉成單價庫記錄；有填數量時，成本視為整列總成本並換算成單位成本 */
+function HB_pbRowToRecord(row,map){
+  let get=f=>map[f]>=0?HB_pbClean(row[map[f]]):"";
+  let name=get("name");
+  if(!name)return null;
+  let price=HB_num(get("price"));
+  let cost=HB_num(get("vendor_price"));
+  let qn=map.qty>=0?(HB_num(get("qty"))||1):1;
+  if(cost&&qn>1)cost=Math.round(cost/qn*100)/100;
+  if(!price&&!cost)return null;
+  return{
+    category:get("category"),name:name,spec:get("spec"),
+    unit:get("unit")||"式",note:get("note"),
+    price:price||null,vendor_price:cost||null,
+    use_count:1,price_history:[{d:HB_pbToday(),p:price||null,c:cost||null}],last_used_at:HB_pbToday()
+  };
+}
+
+async function HB_pbImportRecords(records,updateExisting,onProgress){
+  await HB_pbLoad(!0);
+  let existing=new Map((HB_PB_CACHE||[]).map(x=>[HB_pbKey(x),x]));
+  let seen=new Set(),toInsert=[],toUpdate=[];
+  for(let r of records){
+    let key=HB_pbKey(r);
+    if(seen.has(key))continue;
+    seen.add(key);
+    let hit=existing.get(key);
+    if(hit){if(updateExisting)toUpdate.push({hit:hit,r:r})}
+    else toInsert.push(r);
+  }
+  let total=toInsert.length+toUpdate.length,done=0;
+  for(let i=0;i<toInsert.length;i+=150){
+    let chunk=toInsert.slice(i,i+150);
+    let{error}=await q.from("sitelog_price_items").insert(chunk);
+    if(error)throw error;
+    done+=chunk.length;onProgress&&onProgress(done,total);
+  }
+  for(let{hit,r}of toUpdate){
+    let hist=Array.isArray(hit.price_history)?hit.price_history.slice():[];
+    let entry={d:HB_pbToday(),p:r.price,c:r.vendor_price};
+    let last=hist[hist.length-1];
+    if(!last||last.p!==entry.p||last.c!==entry.c)hist.push(entry);
+    if(hist.length>60)hist=hist.slice(-60);
+    let{error}=await q.from("sitelog_price_items").update({
+      category:r.category||hit.category,spec:r.spec||hit.spec,unit:r.unit||hit.unit,note:r.note||hit.note,
+      price:r.price??hit.price,vendor_price:r.vendor_price??hit.vendor_price,
+      price_history:hist,last_used_at:HB_pbToday(),updated_at:new Date().toISOString()
+    }).eq("id",hit.id);
+    if(error)throw error;
+    done++;onProgress&&onProgress(done,total);
+  }
+  await HB_pbLoad(!0);
+  return{inserted:toInsert.length,updated:toUpdate.length,skipped:records.length-toInsert.length-toUpdate.length};
+}
+
 /* ---------- 單價庫管理介面 ---------- */
 function HbPriceBookHub({onBack,notify}){
   let h=u.default.createElement;
@@ -1808,6 +1945,20 @@ function HbPriceBookHub({onBack,notify}){
   let[scanning,setScanning]=(0,u.useState)(null);
   let[sel,setSel]=(0,u.useState)(()=>new Set());
   let[bulkBusy,setBulkBusy]=(0,u.useState)(null);
+  let[importData,setImportData]=(0,u.useState)(null);
+  let[reading,setReading]=(0,u.useState)(!1);
+  let fileRef=(0,u.useRef)(null);
+  let onPickFile=async ev=>{
+    let file=ev.target.files&&ev.target.files[0];
+    ev.target.value="";
+    if(!file)return;
+    setReading(!0);
+    try{
+      let table=await HB_pbReadTable(file);
+      setImportData({table:table,fileName:file.name});
+    }catch(e){notify&&notify("讀取失敗："+(e.message||e))}
+    finally{setReading(!1)}
+  };
 
   let reload=async(force)=>{
     setLoading(!0);setErr(null);
@@ -1896,9 +2047,15 @@ function HbPriceBookHub({onBack,notify}){
         h("button",{onClick:doScan,disabled:!!scanning,style:{flex:"1 1 180px",border:`1px solid ${s.line}`,background:"none",borderRadius:9,padding:"10px 8px",fontSize:12.5,color:s.oceanDark,cursor:scanning?"default":"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6,opacity:scanning?.6:1}},
           scanning?h(E,{name:"loader",size:14,className:"animate-spin"}):h(E,{name:"zap",size:14}),
           scanning?(scanning.total?`建庫中 ${scanning.done}/${scanning.total}`:"掃描中…"):"從歷史估價單建庫"),
-        h("button",{onClick:()=>HB_pbExportCsv(filtered),style:{border:`1px solid ${s.line}`,background:"none",borderRadius:9,padding:"10px 14px",fontSize:12.5,color:s.oceanDark,cursor:"pointer",display:"flex",alignItems:"center",gap:6}},h(E,{name:"download",size:14}),"CSV"),
-        h("button",{onClick:()=>reload(!0),style:{border:`1px solid ${s.line}`,background:"none",borderRadius:9,padding:"10px 12px",color:s.oceanDark,cursor:"pointer"}},h(E,{name:"refresh",size:14}))
+        h("button",{onClick:()=>fileRef.current&&fileRef.current.click(),disabled:!!reading,style:{border:`1px solid ${s.ocean}`,background:"none",borderRadius:9,padding:"10px 14px",fontSize:12.5,color:s.oceanDark,cursor:reading?"default":"pointer",display:"flex",alignItems:"center",gap:6,opacity:reading?.6:1}},
+          reading?h(E,{name:"loader",size:14,className:"animate-spin"}):h(E,{name:"upload",size:14}),reading?"讀取中…":"匯入 Excel／CSV"),
+        h("button",{onClick:()=>HB_pbExportCsv(filtered),title:"把目前篩選出來的清單匯出成 CSV",style:{border:`1px solid ${s.line}`,background:"none",borderRadius:9,padding:"10px 14px",fontSize:12.5,color:s.oceanDark,cursor:"pointer",display:"flex",alignItems:"center",gap:6}},h(E,{name:"download",size:14}),"匯出"),
+        h("button",{onClick:()=>reload(!0),style:{border:`1px solid ${s.line}`,background:"none",borderRadius:9,padding:"10px 12px",color:s.oceanDark,cursor:"pointer"}},h(E,{name:"refresh",size:14})),
+        h("input",{ref:fileRef,type:"file",accept:".csv,.xlsx,.xlsm,.xls,text/csv",style:{display:"none"},onChange:onPickFile})
       ),
+      h("p",{style:{fontSize:11,color:s.inkSoft,margin:"-2px 0 10px",lineHeight:1.6}},
+        "手上已經有單價表？直接按「匯入 Excel／CSV」，欄位可以自己對應，不用先整理格式。",
+        h("span",{onClick:HB_pbDownloadTemplate,style:{color:s.ocean,cursor:"pointer",textDecoration:"underline",marginLeft:6}},"下載匯入範本")),
 
       h("input",{value:kw,onChange:v=>setKw(v.target.value),placeholder:"搜尋項目、規格或備註…",style:{width:"100%",boxSizing:"border-box",border:`1px solid ${s.line}`,borderRadius:9,padding:"10px 12px",fontSize:14,background:"#fff",color:s.ink,marginBottom:10}}),
 
@@ -1980,7 +2137,81 @@ function HbPriceBookHub({onBack,notify}){
         filtered.length>400&&h("p",{style:{textAlign:"center",fontSize:11.5,color:s.inkSoft,padding:"10px 0"}},"只顯示前 400 筆，請用搜尋縮小範圍（共 ",filtered.length," 筆）")
       )
     ),
-    editRow&&h(HbPriceBookForm,{initial:editRow,cats:cats,onCancel:()=>setEditRow(null),onSave:doSaveEdit})
+    editRow&&h(HbPriceBookForm,{initial:editRow,cats:cats,onCancel:()=>setEditRow(null),onSave:doSaveEdit}),
+    importData&&h(HbPriceBookImport,{table:importData.table,fileName:importData.fileName,notify:notify,
+      onCancel:()=>setImportData(null),
+      onDone:()=>{setImportData(null);setList((HB_PB_CACHE||[]).slice());setSel(new Set())}})
+  )
+}
+
+/* ---------- 匯入對話框：欄位對應 + 預覽 + 確認 ---------- */
+function HbPriceBookImport({table,fileName,onCancel,onDone,notify}){
+  let h=u.default.createElement;
+  let[map,setMap]=(0,u.useState)(()=>HB_pbAutoMap(table.headers));
+  let[updateExisting,setUpdateExisting]=(0,u.useState)(!1);
+  let[busy,setBusy]=(0,u.useState)(null);
+  let FIELDS=[
+    ["name","項目名稱",!0],["category","分類",!1],["spec","規格",!1],["unit","單位",!1],
+    ["qty","數量（選填）",!1],["price","售價",!1],["vendor_price","廠商成本",!1],["note","備註",!1]
+  ];
+  let records=[];
+  for(let r of table.rows){let rec=HB_pbRowToRecord(r,map);if(rec)records.push(rec)}
+  let dedup=new Set();records.forEach(r=>dedup.add(HB_pbKey(r)));
+  let ready=map.name>=0&&records.length>0;
+  let lb={fontSize:11.5,color:s.inkSoft,display:"block",marginBottom:3};
+  let selStyle={width:"100%",border:`1px solid ${s.line}`,borderRadius:7,padding:"7px 8px",fontSize:12.5,background:"#fff",color:s.ink,fontFamily:"inherit"};
+  let run=async()=>{
+    setBusy({done:0,total:records.length});
+    try{
+      let r=await HB_pbImportRecords(records,updateExisting,(done,total)=>setBusy({done,total}));
+      notify&&notify(`匯入完成：新增 ${r.inserted} 筆${r.updated?`、更新 ${r.updated} 筆`:""}${r.skipped?`、略過 ${r.skipped} 筆（已存在或重複）`:""}`);
+      onDone();
+    }catch(e){notify&&notify("匯入失敗："+(e.message||e));setBusy(null)}
+  };
+  return h("div",{style:{position:"fixed",inset:0,background:"rgba(43,38,32,0.45)",display:"flex",alignItems:"center",justifyContent:"center",padding:16,zIndex:70}},
+    h("div",{className:"fade-in",style:{background:s.card,borderRadius:12,padding:20,width:"100%",maxWidth:620,maxHeight:"92vh",overflowY:"auto"}},
+      h("h3",{style:{margin:"0 0 4px",fontSize:17,fontWeight:400,color:s.oceanDark}},"匯入單價表"),
+      h("p",{style:{fontSize:11.5,color:s.inkSoft,margin:"0 0 14px",lineHeight:1.6}},
+        fileName,"　·　讀到 ",table.rows.length," 列。請確認下面的欄位對應，數字欄位會自動忽略逗號與空白。"),
+
+      h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"10px 12px",marginBottom:14}},
+        FIELDS.map(([f,label,req])=>h("div",{key:f},
+          h("label",{style:lb},label,req?h("span",{style:{color:s.danger}}," ＊必要"):null),
+          h("select",{value:String(map[f]),onChange:ev=>setMap(p=>({...p,[f]:parseInt(ev.target.value,10)})),
+            style:{...selStyle,borderColor:req&&map[f]<0?s.danger:s.line}},
+            h("option",{value:"-1"},"（不匯入）"),
+            table.headers.map((hd,i)=>h("option",{key:i,value:String(i)},hd))
+          )
+        ))
+      ),
+
+      h("div",{style:{border:`1px solid ${s.line}`,borderRadius:8,overflow:"hidden",marginBottom:12}},
+        h("div",{style:{fontSize:11,color:s.inkSoft,padding:"6px 10px",background:"#FBFAF7",borderBottom:`1px solid ${s.line}`}},
+          "預覽（前 6 筆，共可匯入 ",records.length," 筆／不重複 ",dedup.size," 筆）"),
+        h("div",{style:{overflowX:"auto"}},
+          h("table",{style:{width:"100%",borderCollapse:"collapse",fontSize:11.5,minWidth:520}},
+            h("thead",null,h("tr",null,["分類","項目","規格","單位","售價","單位成本"].map(x=>
+              h("th",{key:x,style:{textAlign:"left",padding:"5px 8px",background:"#F2EFE8",color:s.ink,fontWeight:400,whiteSpace:"nowrap"}},x)))),
+            h("tbody",null,records.slice(0,6).map((r,i)=>h("tr",{key:i},
+              [r.category||"—",r.name,r.spec||"—",r.unit,r.price==null?"—":HB_money(r.price),r.vendor_price==null?"—":HB_money(r.vendor_price)]
+                .map((c,j)=>h("td",{key:j,style:{padding:"5px 8px",borderTop:`1px solid ${s.line}`,whiteSpace:j===1?"normal":"nowrap"}},c))
+            )))
+          ))
+      ),
+
+      h("label",{style:{display:"flex",alignItems:"center",gap:8,fontSize:12.5,color:s.oceanDark,marginBottom:14,cursor:"pointer"}},
+        h("input",{type:"checkbox",checked:updateExisting,onChange:()=>setUpdateExisting(v=>!v),style:{width:15,height:15}}),
+        "單價庫裡已經有的項目也更新價格（不勾就只新增沒有的）"),
+
+      records.length===0&&h("p",{style:{fontSize:12,color:s.danger,margin:"0 0 12px",lineHeight:1.6}},
+        "目前對應不出任何可匯入的資料。請確認「項目名稱」欄位選對了，而且售價或成本至少要有一個有數字。"),
+
+      h("div",{style:{display:"flex",gap:10}},
+        h("button",{onClick:onCancel,disabled:!!busy,style:{flex:1,background:"transparent",color:s.oceanDark,border:`1px solid ${s.ocean}`,borderRadius:8,padding:"11px 0",fontSize:14,cursor:"pointer"}},"取消"),
+        h("button",{onClick:run,disabled:!ready||!!busy,style:{flex:2,background:s.lemon,color:s.oceanDark,border:"none",borderRadius:8,padding:"11px 0",fontSize:14,cursor:"pointer",opacity:(ready&&!busy)?1:.5}},
+          busy?`匯入中 ${busy.done}/${busy.total}`:`匯入 ${dedup.size} 筆`)
+      )
+    )
   )
 }
 
