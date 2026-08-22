@@ -2652,6 +2652,117 @@ function HerfulsinsEstimateHub({project:l,notify:t,onClose:e}){
   )
 }
 
+/* ===== 廠商報價 → 估價單成本 =====
+   估價單的「廠商單價」欄與廠商報價的金額都是「整列總價」，所以可以直接對應。
+   含稅的報價預設換算成未稅再帶入，才會跟未稅的售價站在同一個基準上。 */
+function HB_vqScore(itemName,quote){
+  let a=HB_pbNorm(itemName),b=HB_pbNorm(quote.workItem);
+  if(!a||!b)return 0;
+  let base=a===b?100:((a.includes(b)||b.includes(a))?70:0);
+  if(!base)return 0;
+  if(quote.status==="adopted")base+=40;
+  return base;
+}
+async function HB_vqLoadQuotes(){
+  let[qRes,fRes,pRes]=await Promise.all([
+    q.from("sitelog_vendor_quotes").select("*").limit(2000),
+    q.from("sitelog_vendor_quote_folders").select("*"),
+    q.from("sitelog_projects").select("id,name")
+  ]);
+  if(qRes.error)throw qRes.error;
+  let folders=new Map((fRes.data||[]).map(f=>[f.id,f]));
+  let projs=new Map((pRes.data||[]).map(p=>[p.id,p.name]));
+  return(qRes.data||[]).filter(r=>Number(r.amount)>0).map(r=>{
+    let f=folders.get(r.folder_id)||{};
+    return{
+      id:r.id,vendor:f.name||"未指定廠商",
+      projectName:f.project_id?(projs.get(f.project_id)||"未知案件"):"未指定案件",
+      workItem:r.work_item||"",amount:Number(r.amount),
+      taxIncluded:r.tax_included===!0,status:r.status||"pending",quotedAt:r.quoted_at||""
+    };
+  }).sort((a,b)=>(b.status==="adopted")-(a.status==="adopted")||a.amount-b.amount);
+}
+
+function HB_VendorCostPicker({rows,quotes,onCancel,onApply}){
+  let h=u.default.createElement;
+  let[stripTax,setStripTax]=(0,u.useState)(!0);
+  let[onlyMatched,setOnlyMatched]=(0,u.useState)(!0);
+  let best=(name)=>{
+    let scored=quotes.map(qq=>[HB_vqScore(name,qq),qq]).filter(x=>x[0]>0);
+    scored.sort((a,b)=>b[0]-a[0]||a[1].amount-b[1].amount);
+    return scored.length?scored[0][1]:null;
+  };
+  let[pick,setPick]=(0,u.useState)(()=>{
+    let m={};
+    for(let r of rows){let b=best(r.name);if(b)m[r.id]=b.id}
+    return m;
+  });
+  let val=qq=>{if(!qq)return 0;return(stripTax&&qq.taxIncluded)?Math.round(qq.amount/1.05):qq.amount};
+  let qById=id=>quotes.find(x=>x.id===id)||null;
+  let shown=rows.filter(r=>onlyMatched?!!pick[r.id]:!0);
+  let chosen=rows.filter(r=>pick[r.id]);
+  let lb={fontSize:11.5,color:s.inkSoft};
+  let selStyle={width:"100%",border:`1px solid ${s.line}`,borderRadius:7,padding:"6px 7px",fontSize:11.5,background:"#fff",color:s.ink,fontFamily:"inherit"};
+  return h("div",{style:{position:"fixed",inset:0,background:"rgba(43,38,32,0.45)",display:"flex",alignItems:"center",justifyContent:"center",padding:16,zIndex:70}},
+    h("div",{className:"fade-in",style:{background:s.card,borderRadius:12,padding:20,width:"100%",maxWidth:680,maxHeight:"92vh",overflowY:"auto"}},
+      h("h3",{style:{margin:"0 0 4px",fontSize:17,fontWeight:400,color:s.oceanDark}},"從廠商報價帶入成本"),
+      h("p",{style:{fontSize:11.5,color:s.inkSoft,margin:"0 0 12px",lineHeight:1.6}},
+        "依工項名稱自動配對，已標記「採用」的報價會優先。帶入的是整列總成本，跟估價單的廠商單價欄一致。"),
+
+      h("div",{style:{display:"flex",flexDirection:"column",gap:7,marginBottom:12}},
+        h("label",{style:{display:"flex",alignItems:"center",gap:7,fontSize:12.5,color:s.oceanDark,cursor:"pointer"}},
+          h("input",{type:"checkbox",checked:stripTax,onChange:()=>setStripTax(v=>!v),style:{width:15,height:15,accentColor:s.ocean}}),
+          "含稅的報價換算成未稅再帶入（建議，售價也是未稅）"),
+        h("label",{style:{display:"flex",alignItems:"center",gap:7,fontSize:12.5,color:s.oceanDark,cursor:"pointer"}},
+          h("input",{type:"checkbox",checked:onlyMatched,onChange:()=>setOnlyMatched(v=>!v),style:{width:15,height:15,accentColor:s.ocean}}),
+          "只顯示有配對到的項目")
+      ),
+
+      quotes.length===0
+        ? h("p",{style:{fontSize:12.5,color:s.danger,lineHeight:1.7,margin:"0 0 14px"}},
+            "還沒有任何填了金額的廠商報價。請先到「公司資料庫 → 廠商報價單」，幫報價填上工項與金額。")
+        : shown.length===0
+          ? h("p",{style:{fontSize:12.5,color:s.inkSoft,lineHeight:1.7,margin:"0 0 14px"}},
+              "沒有配對到任何項目。把上面「只顯示有配對到的項目」取消勾選，就能手動指定。")
+          : h("div",{style:{border:`1px solid ${s.line}`,borderRadius:8,overflow:"hidden",marginBottom:14}},
+              h("div",{style:{overflowX:"auto"}},
+                h("table",{style:{width:"100%",borderCollapse:"collapse",fontSize:11.5,minWidth:560}},
+                  h("thead",null,h("tr",null,["估價單項目","廠商報價來源","帶入成本"].map((x,xi)=>
+                    h("th",{key:xi,style:{textAlign:xi===2?"right":"left",padding:"6px 9px",background:"#F7F5F0",color:s.inkSoft,fontWeight:400,whiteSpace:"nowrap"}},x)))),
+                  h("tbody",null,shown.map(r=>{
+                    let sel=qById(pick[r.id]);
+                    return h("tr",{key:r.id},
+                      h("td",{style:{padding:"6px 9px",borderTop:`1px solid ${s.line}`,maxWidth:180}},
+                        h("div",{style:{color:s.ink}},r.name),
+                        h("div",{style:lb},r.catName,"　現有成本 ",r.currentCost?HB_money(r.currentCost):"—")),
+                      h("td",{style:{padding:"6px 9px",borderTop:`1px solid ${s.line}`,minWidth:250}},
+                        h("select",{value:pick[r.id]||"",onChange:ev=>setPick(p=>{let n={...p};ev.target.value?n[r.id]=ev.target.value:delete n[r.id];return n}),style:selStyle},
+                          h("option",{value:""},"（不帶入）"),
+                          quotes.map(qq=>h("option",{key:qq.id,value:qq.id},
+                            `${qq.vendor}｜${qq.workItem||"未填工項"}｜${HB_money(qq.amount)}${qq.taxIncluded?"(含稅)":""}${qq.status==="adopted"?" ★採用":""}｜${qq.projectName}`))
+                        )),
+                      h("td",{style:{padding:"6px 9px",borderTop:`1px solid ${s.line}`,textAlign:"right",whiteSpace:"nowrap",color:sel?s.oceanDark:s.inkSoft}},
+                        sel?HB_money(val(sel)):"—")
+                    )
+                  }))
+                ))
+            ),
+
+      h("div",{style:{display:"flex",gap:10}},
+        h("button",{onClick:onCancel,style:{flex:1,background:"transparent",color:s.oceanDark,border:`1px solid ${s.ocean}`,borderRadius:8,padding:"11px 0",fontSize:14,cursor:"pointer"}},"取消"),
+        h("button",{onClick:()=>{
+            let assign={};
+            for(let r of chosen){let qq=qById(pick[r.id]);if(!qq)continue;
+              assign[r.id]={value:val(qq),source:`${qq.vendor}｜${qq.workItem||"未填工項"}｜${HB_money(qq.amount)}${qq.taxIncluded?"(含稅)":"(未稅)"}${qq.quotedAt?"｜"+qq.quotedAt:""}`}}
+            onApply(assign);
+          },disabled:chosen.length===0,
+          style:{flex:2,background:s.lemon,color:s.oceanDark,border:"none",borderRadius:8,padding:"11px 0",fontSize:14,cursor:"pointer",opacity:chosen.length?1:.5}},
+          `帶入 ${chosen.length} 項成本`)
+      )
+    )
+  )
+}
+
 function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
   let[localToast,setLocalToast]=(0,u.useState)(null);
   let localToastTimerRef=(0,u.useRef)(null);
@@ -2672,6 +2783,39 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
   let[pbSug,setPbSug]=(0,u.useState)(null);
   let[pbHint,setPbHint]=(0,u.useState)({});
   let[pbBusy,setPbBusy]=(0,u.useState)(!1);
+  let[vqPick,setVqPick]=(0,u.useState)(null);
+  let[vqLoading,setVqLoading]=(0,u.useState)(!1);
+  let openVendorCost=async()=>{
+    setVqLoading(!0);
+    try{
+      let quotes=await HB_vqLoadQuotes();
+      let rows=[];
+      for(let c of (a.categories||[]))for(let it of (c.items||[])){
+        let nm=HB_pbClean(it.name);
+        if(!nm)continue;
+        rows.push({id:it.id,catId:c.id,catName:HB_pbClean(c.name)||"未命名分類",name:nm,currentCost:HB_num(it.vendorPrice)});
+      }
+      if(!rows.length){notify("這張估價單還沒有填任何項目名稱");return}
+      setVqPick({rows,quotes});
+    }catch(err){
+      notify(/column|42703|PGRST204|work_item|amount/i.test(String(err&&err.message||""))
+        ?"廠商報價還沒有金額欄位，請先到 Supabase 執行 vendor_quotes_amount.sql"
+        :"讀取廠商報價失敗："+(err.message||err));
+    }finally{setVqLoading(!1)}
+  };
+  let applyVendorCosts=assign=>{
+    let n2=0;
+    i(p=>({...p,categories:p.categories.map(c=>({...c,items:(c.items||[]).map(it=>{
+      let a2=assign[it.id];
+      if(!a2)return it;
+      n2++;
+      let nx={...it,vendorPrice:String(a2.value),vqSource:a2.source};
+      delete nx.pbCost;
+      return nx;
+    })}))}));
+    setVqPick(null);
+    notify(`已帶入 ${Object.keys(assign).length} 項廠商成本`);
+  };
   (0,u.useEffect)(()=>{HB_pbLoad(!1).catch(()=>{})},[]);
   let pbOnType=(catId,itemId,text,el)=>{
     let kw=HB_pbClean(text);
@@ -3148,6 +3292,7 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
     return()=>window.removeEventListener("keydown",onKey)
   },[calcOpen,calcDisplay,calcAcc,calcOp,calcWaiting]);
   return u.default.createElement("div",{style:{position:"fixed",inset:0,background:s.paper,zIndex:71,overflowY:"auto",display:"flex",flexDirection:"column"}},
+    vqPick&&u.default.createElement(HB_VendorCostPicker,{rows:vqPick.rows,quotes:vqPick.quotes,onCancel:()=>setVqPick(null),onApply:applyVendorCosts}),
     pbSug&&pbSug.list&&pbSug.list.length>0&&u.default.createElement("div",{
       style:{position:"fixed",zIndex:95,width:330,maxHeight:290,overflowY:"auto",background:"#fff",
         border:`1px solid ${s.ocean}`,borderRadius:10,boxShadow:"0 14px 34px -12px rgba(28,27,24,0.4)",
@@ -3258,7 +3403,7 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
                   u.default.createElement("td",{style:tdStyle},u.default.createElement("input",{ref:el=>{if(el)refs["price_"+it.id]=el},type:"text",inputMode:window.HB_COARSE?"decimal":void 0,autoCapitalize:"off",autoCorrect:"off",spellCheck:!1,placeholder:"單價",value:it.price,onChange:v=>setItem(cat.id,it.id,"price",v.target.value),onMouseDown:()=>cellDown(cat.id,idx,4),onMouseEnter:()=>cellEnter(cat.id,idx,4),onKeyDown:v=>cellNav(v,cat.id,idx,4),"data-hbcell":"1",style:{...cellInputStyle,textAlign:"right",background:cellInSel(cat.id,idx,4)?selBg:"transparent",opacity:it.hidePrice?.4:1,textDecoration:it.hidePrice?"line-through":"none"}})),
                   u.default.createElement("td",{style:{...tdStyle,textAlign:"right",whiteSpace:"nowrap",paddingRight:6,color:s.oceanDark,fontWeight:400}},HB_money(HB_num(it.qty)*HB_num(it.price))),
                   u.default.createElement("td",{style:tdStyle},u.default.createElement("input",{ref:el=>{if(el)refs["note_"+it.id]=el},placeholder:"備註",value:it.note,onChange:v=>setItem(cat.id,it.id,"note",v.target.value),onMouseDown:()=>cellDown(cat.id,idx,5),onMouseEnter:()=>cellEnter(cat.id,idx,5),onKeyDown:v=>cellNav(v,cat.id,idx,5),"data-hbcell":"1",style:{...cellInputStyle,background:cellInSel(cat.id,idx,5)?selBg:"transparent"}})),
-                  u.default.createElement("td",{style:{...tdStyle,borderLeft:`2px solid ${s.lemon}`}},u.default.createElement("input",{ref:el=>{if(el)refs["vendorPrice_"+it.id]=el},type:"text",inputMode:window.HB_COARSE?"decimal":void 0,autoCapitalize:"off",autoCorrect:"off",spellCheck:!1,placeholder:"成本",value:it.vendorPrice,onChange:v=>setItem(cat.id,it.id,"vendorPrice",v.target.value),onMouseDown:()=>cellDown(cat.id,idx,6),onMouseEnter:()=>cellEnter(cat.id,idx,6),onKeyDown:v=>cellNav(v,cat.id,idx,6),"data-hbcell":"1",style:{...cellInputStyle,textAlign:"right",background:cellInSel(cat.id,idx,6)?selBg:"#FFFBEF"}})),
+                  u.default.createElement("td",{style:{...tdStyle,borderLeft:`2px solid ${s.lemon}`}},u.default.createElement("input",{ref:el=>{if(el)refs["vendorPrice_"+it.id]=el},type:"text",inputMode:window.HB_COARSE?"decimal":void 0,autoCapitalize:"off",autoCorrect:"off",spellCheck:!1,placeholder:"成本",title:it.vqSource?("來源："+it.vqSource):void 0,value:it.vendorPrice,onChange:v=>setItem(cat.id,it.id,"vendorPrice",v.target.value),onMouseDown:()=>cellDown(cat.id,idx,6),onMouseEnter:()=>cellEnter(cat.id,idx,6),onKeyDown:v=>cellNav(v,cat.id,idx,6),"data-hbcell":"1",style:{...cellInputStyle,textAlign:"right",background:cellInSel(cat.id,idx,6)?selBg:"#FFFBEF"}})),
                   u.default.createElement("td",{style:{...tdStyle,textAlign:"right",whiteSpace:"nowrap",paddingRight:6,color:it.vendorPrice===""?s.inkSoft:rowProfit>=0?s.tree:s.cane,fontSize:11.5}},it.vendorPrice===""?"—":HB_money(rowProfit)),
                   u.default.createElement("td",{style:{...tdStyle,textAlign:"center",whiteSpace:"nowrap"}},
                     u.default.createElement("button",{onClick:()=>moveItem(cat.id,it.id,-1),disabled:idx===0,title:"上移",style:{border:"none",background:"none",color:idx===0?s.line:s.oceanDark,cursor:idx===0?"default":"pointer",padding:"0 2px"}},u.default.createElement(E,{name:"chevron-up",size:13})),
@@ -3279,9 +3424,12 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
         HB_estCatCost(cat)>0&&u.default.createElement("p",{style:{textAlign:"right",fontSize:11,fontWeight:400,color:s.tree,margin:"3px 0 0"}},(cat.name||"本項")+" 淨利：NT$ ",HB_money(HB_estCatSubtotal(cat)-HB_estCatCost(cat)))
       )),
       u.default.createElement("button",{onClick:()=>addCat(""),style:{border:`1px solid ${s.line}`,background:"none",borderRadius:9,padding:"10px 0",width:"100%",fontSize:13,fontWeight:400,color:s.oceanDark,cursor:"pointer",marginBottom:10}},"+ 新增大項分類"),
-      u.default.createElement("button",{onClick:pbStoreAll,disabled:pbBusy,style:{border:`1px dashed ${s.ocean}`,background:"none",borderRadius:9,padding:"10px 0",width:"100%",fontSize:12.5,fontWeight:400,color:s.oceanDark,cursor:pbBusy?"default":"pointer",marginBottom:14,display:"flex",alignItems:"center",justifyContent:"center",gap:7,opacity:pbBusy?.6:1}},
+      u.default.createElement("button",{onClick:pbStoreAll,disabled:pbBusy,style:{border:`1px dashed ${s.ocean}`,background:"none",borderRadius:9,padding:"10px 0",width:"100%",fontSize:12.5,fontWeight:400,color:s.oceanDark,cursor:pbBusy?"default":"pointer",marginBottom:8,display:"flex",alignItems:"center",justifyContent:"center",gap:7,opacity:pbBusy?.6:1}},
         pbBusy?u.default.createElement(E,{name:"loader",size:14,className:"animate-spin"}):u.default.createElement(E,{name:"bookmark",size:14}),
         pbBusy?"存入中…":"把這張估價單的工項存進常用單價庫"),
+      u.default.createElement("button",{onClick:openVendorCost,disabled:vqLoading,style:{border:`1px dashed ${s.ocean}`,background:"none",borderRadius:9,padding:"10px 0",width:"100%",fontSize:12.5,fontWeight:400,color:s.oceanDark,cursor:vqLoading?"default":"pointer",marginBottom:14,display:"flex",alignItems:"center",justifyContent:"center",gap:7,opacity:vqLoading?.6:1}},
+        vqLoading?u.default.createElement(E,{name:"loader",size:14,className:"animate-spin"}):u.default.createElement(E,{name:"package",size:14}),
+        vqLoading?"讀取中…":"從廠商報價帶入成本"),
       u.default.createElement("textarea",{placeholder:"付款/訂金條件備註",value:a.depositNote,onChange:v=>set("depositNote",v.target.value),rows:2,style:{...inputStyle,resize:"vertical"}})
     )),
     u.default.createElement("div",{style:{position:"sticky",bottom:"var(--hb-overlay-gap, 0px)",flexShrink:0,zIndex:50,background:"rgba(28,27,24,0.94)",backdropFilter:"blur(14px)",WebkitBackdropFilter:"blur(14px)",padding:"9px 16px 12px",boxShadow:"0 -4px 14px rgba(185,136,104,0.18)"}},
@@ -3873,6 +4021,84 @@ function HbVendorReceiptForm({onCancel,onCreate,projects,vendorOptions}){
   )
 }
 
+/* ===== 廠商通訊錄 ===== */
+var HB_VD_TRADES=["拆除","泥作","水電","木作","系統櫃","油漆","空調","鋁窗","玻璃","鐵工","石材","地板","窗簾","清潔","防水","廚具","衛浴","燈具","家具","雜項"];
+function HB_vdTrades(v){let t=v&&v.trades;return Array.isArray(t)?t:[]}
+function HB_vdAvg(v){
+  let xs=[v&&v.ratingQuality,v&&v.ratingOntime,v&&v.ratingCoop].map(Number).filter(x=>x>0);
+  if(!xs.length)return 0;
+  return Math.round(xs.reduce((a,b)=>a+b,0)/xs.length*10)/10;
+}
+function HB_vdStars(n,size){
+  let h=u.default.createElement,out=[];
+  for(let i=1;i<=5;i++)out.push(h("span",{key:i,style:{color:i<=Math.round(n)?"#C79857":s.line,fontSize:size||13,lineHeight:1}},"★"));
+  return out;
+}
+function HB_vdMap(r){
+  return{id:r.id,name:r.name||"",contactPerson:r.contact_person||"",phone:r.phone||"",lineId:r.line_id||"",
+    taxId:r.tax_id||"",address:r.address||"",trades:Array.isArray(r.trades)?r.trades:[],paymentTerms:r.payment_terms||"",
+    ratingQuality:Number(r.rating_quality)||0,ratingOntime:Number(r.rating_ontime)||0,ratingCoop:Number(r.rating_coop)||0,
+    note:r.note||"",createdAt:r.created_at};
+}
+
+function vqVendorModal({initial,onCancel,onSave}){
+  let h=u.default.createElement;
+  let[v,setV]=(0,u.useState)(()=>({
+    name:"",contactPerson:"",phone:"",lineId:"",taxId:"",address:"",trades:[],paymentTerms:"",
+    ratingQuality:0,ratingOntime:0,ratingCoop:0,note:"",...(initial||{})
+  }));
+  let[busy,setBusy]=(0,u.useState)(!1);
+  let set=(k,val)=>setV(p=>({...p,[k]:val}));
+  let toggleTrade=t=>setV(p=>({...p,trades:p.trades.includes(t)?p.trades.filter(x=>x!==t):[...p.trades,t]}));
+  let fs={width:"100%",boxSizing:"border-box",border:`1px solid ${s.line}`,borderRadius:8,padding:"9px 11px",fontSize:14,marginBottom:11,marginTop:4,background:"#fff",color:s.ink,fontFamily:"inherit"};
+  let lb={fontSize:12.5,color:s.inkSoft};
+  let stars=(key,label)=>h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:7}},
+    h("span",{style:{fontSize:12.5,color:s.inkSoft,width:52}},label),
+    [1,2,3,4,5].map(i=>h("button",{key:i,onClick:()=>set(key,v[key]===i?0:i),
+      style:{border:"none",background:"none",cursor:"pointer",padding:"0 2px",fontSize:19,lineHeight:1,color:i<=v[key]?"#C79857":s.line}},"★")),
+    v[key]?h("span",{onClick:()=>set(key,0),style:{fontSize:11,color:s.inkSoft,cursor:"pointer",marginLeft:2}},"清除"):null);
+  let submit=async()=>{setBusy(!0);await onSave(v);setBusy(!1)};
+  return h("div",{style:{position:"fixed",inset:0,background:"rgba(43,38,32,0.45)",display:"flex",alignItems:"center",justifyContent:"center",padding:16,zIndex:70,overflowY:"auto"}},
+    h("div",{className:"fade-in",style:{background:s.card,borderRadius:12,padding:20,width:"100%",maxWidth:460,maxHeight:"92vh",overflowY:"auto"}},
+      h("h3",{style:{margin:"0 0 14px",fontSize:17,fontWeight:400,color:s.oceanDark}},v.id?"編輯廠商":"新增廠商"),
+
+      h("label",{style:lb},"廠商名稱 ",h("span",{style:{color:s.danger}},"＊")),
+      h("input",{value:v.name,onChange:e=>set("name",e.target.value),placeholder:"例：日成木業",style:fs,autoFocus:!0}),
+
+      h("label",{style:lb},"擅長工種（可複選）"),
+      h("div",{style:{display:"flex",flexWrap:"wrap",gap:6,margin:"6px 0 13px"}},
+        HB_VD_TRADES.map(t=>h("button",{key:t,onClick:()=>toggleTrade(t),
+          style:{border:`1px solid ${v.trades.includes(t)?s.ocean:s.line}`,background:v.trades.includes(t)?"rgba(124,106,86,0.12)":"none",
+            color:v.trades.includes(t)?s.oceanDark:s.inkSoft,borderRadius:999,padding:"4px 11px",fontSize:11.5,cursor:"pointer"}},t))),
+
+      h("div",{style:{display:"flex",gap:10}},
+        h("div",{style:{flex:1}},h("label",{style:lb},"聯絡人"),h("input",{value:v.contactPerson,onChange:e=>set("contactPerson",e.target.value),placeholder:"例：溫先生",style:fs})),
+        h("div",{style:{flex:1}},h("label",{style:lb},"電話"),h("input",{value:v.phone,onChange:e=>set("phone",e.target.value),inputMode:"tel",placeholder:"09xx-xxx-xxx",style:fs}))
+      ),
+      h("div",{style:{display:"flex",gap:10}},
+        h("div",{style:{flex:1}},h("label",{style:lb},"LINE ID"),h("input",{value:v.lineId,onChange:e=>set("lineId",e.target.value),style:fs})),
+        h("div",{style:{flex:1}},h("label",{style:lb},"統一編號"),h("input",{value:v.taxId,onChange:e=>set("taxId",e.target.value),inputMode:"numeric",style:fs}))
+      ),
+      h("label",{style:lb},"地址"),
+      h("input",{value:v.address,onChange:e=>set("address",e.target.value),style:fs}),
+      h("label",{style:lb},"付款條件"),
+      h("input",{value:v.paymentTerms,onChange:e=>set("paymentTerms",e.target.value),placeholder:"例：月結 30 天／完工付清",style:fs}),
+
+      h("div",{style:{borderTop:`1px solid ${s.line}`,paddingTop:12,marginBottom:6}},
+        h("div",{style:{fontSize:12.5,color:s.oceanDark,marginBottom:8}},"配合評價"),
+        stars("ratingQuality","品質"),stars("ratingOntime","準時"),stars("ratingCoop","配合度")),
+
+      h("label",{style:lb},"備註"),
+      h("input",{value:v.note,onChange:e=>set("note",e.target.value),placeholder:"例：假日不接、材料自備",style:fs}),
+
+      h("div",{style:{display:"flex",gap:10,marginTop:6}},
+        h("button",{onClick:onCancel,disabled:busy,style:{flex:1,background:"transparent",color:s.oceanDark,border:`1px solid ${s.ocean}`,borderRadius:8,padding:"11px 0",fontSize:14,cursor:"pointer"}},"取消"),
+        h("button",{onClick:submit,disabled:!String(v.name||"").trim()||busy,style:{flex:2,background:s.lemon,color:s.oceanDark,border:"none",borderRadius:8,padding:"11px 0",fontSize:14,cursor:"pointer",opacity:(String(v.name||"").trim()&&!busy)?1:.5}},busy?"儲存中…":"儲存")
+      )
+    )
+  )
+}
+
 /* 廠商報價：填寫工項與金額，讓報價可以被比價 */
 function vqQuoteInfoModal({item,workItems,onCancel,onSave}){
   let h=u.default.createElement;
@@ -3937,28 +4163,41 @@ function HbVendorQuoteHub({onBack,notify}){
   let[zipping,setZipping]=(0,u.useState)(false);
   let[selectedProjects,setSelectedProjects]=(0,u.useState)(null);
   let[vqTab,setVqTab]=(0,u.useState)("folders");
+  let[vendors,setVendors]=(0,u.useState)([]);
+  let[vdEdit,setVdEdit]=(0,u.useState)(null);
+  let[vdOpen,setVdOpen]=(0,u.useState)(null);
+  let[vdKw,setVdKw]=(0,u.useState)("");
+  let[vdTrade,setVdTrade]=(0,u.useState)("");
+  let[vdBusy,setVdBusy]=(0,u.useState)(!1);
   let[editQuote,setEditQuote]=(0,u.useState)(null);
   let[taxNorm,setTaxNorm]=(0,u.useState)(!1);
   let fileInputRef=(0,u.useRef)(null);
 
   let load=async()=>{
     setLoading(true);
-    let[fRes,qRes,pRes]=await Promise.all([
+    let[fRes,qRes,pRes,vRes]=await Promise.all([
       q.from("sitelog_vendor_quote_folders").select("*").order("created_at",{ascending:false}),
       q.from("sitelog_vendor_quotes").select("*").order("uploaded_at",{ascending:false}),
-      q.from("sitelog_projects").select("id,name").order("created_at",{ascending:false})
+      q.from("sitelog_projects").select("id,name").order("created_at",{ascending:false}),
+      q.from("sitelog_vendors").select("*").order("name",{ascending:true})
     ]);
-    setFolders((fRes.data||[]).map(r=>({id:r.id,name:r.name,projectId:r.project_id,createdAt:r.created_at})));
+    setVendors((vRes&&vRes.data?vRes.data:[]).map(HB_vdMap));
+    setFolders((fRes.data||[]).map(r=>({id:r.id,name:r.name,projectId:r.project_id,vendorId:r.vendor_id||null,createdAt:r.created_at})));
     setFiles((qRes.data||[]).map(r=>({id:r.id,folderId:r.folder_id,kind:r.kind||"file",name:r.name,textContent:r.text_content,mime:r.mime,size:r.size,url:r.url,path:r.path,uploadedAt:r.uploaded_at,workItem:r.work_item||"",amount:(r.amount==null?null:Number(r.amount)),quotedAt:r.quoted_at||"",taxIncluded:r.tax_included===!0,validUntil:r.valid_until||"",status:r.status||"pending",note:r.note||""})));
     setProjects((pRes.data||[]).map(r=>({id:r.id,name:r.name})));
     setLoading(false);
   };
   (0,u.useEffect)(()=>{load()},[]);
 
-  let createFolder=async(name,projectId)=>{
-    let{data,error}=await q.from("sitelog_vendor_quote_folders").insert({name,project_id:projectId||null}).select().single();
+  let createFolder=async(name,projectId,vendorId)=>{
+    let payload={name,project_id:projectId||null};
+    if(vendorId)payload.vendor_id=vendorId;
+    let res=await q.from("sitelog_vendor_quote_folders").insert(payload).select().single();
+    if(res.error&&vendorId&&/vendor_id|column|PGRST204|42703/i.test(String(res.error.message||"")))
+      res=await q.from("sitelog_vendor_quote_folders").insert({name,project_id:projectId||null}).select().single();
+    let{data,error}=res;
     if(error){notify("建立失敗："+error.message);return}
-    setFolders(fs=>[{id:data.id,name:data.name,projectId:data.project_id,createdAt:data.created_at},...fs]);
+    setFolders(fs=>[{id:data.id,name:data.name,projectId:data.project_id,vendorId:data.vendor_id||null,createdAt:data.created_at},...fs]);
     setShowNewFolder(false);
     setOpenFolder(data.id);
   };
@@ -4081,6 +4320,82 @@ function HbVendorQuoteHub({onBack,notify}){
     out.sort((a,b)=>a.key==="__none__"?1:b.key==="__none__"?-1:0);
     return out;
   })();
+
+  /* ===== 廠商通訊錄 ===== */
+  let vdColErr=e=>/sitelog_vendors|vendor_id|column|PGRST204|42703|42P01|does not exist/i.test(String((e&&e.message)||"")+String((e&&e.code)||""));
+  let vdFoldersOf=v=>folders.filter(f=>f.vendorId?f.vendorId===v.id:HB_pbNorm(f.name)===HB_pbNorm(v.name));
+  let vdQuotesOf=v=>{
+    let ids=new Set(vdFoldersOf(v).map(f=>f.id));
+    return files.filter(f=>ids.has(f.folderId)&&HB_num(f.amount))
+      .map(f=>({...f,projectName:projName((folders.find(x=>x.id===f.folderId)||{}).projectId)}))
+      .sort((a,b)=>String(b.quotedAt||"").localeCompare(String(a.quotedAt||"")));
+  };
+  let saveVendor=async v=>{
+    let payload={name:HB_pbClean(v.name),contact_person:HB_pbClean(v.contactPerson),phone:HB_pbClean(v.phone),
+      line_id:HB_pbClean(v.lineId),tax_id:HB_pbClean(v.taxId),address:HB_pbClean(v.address),
+      trades:v.trades||[],payment_terms:HB_pbClean(v.paymentTerms),
+      rating_quality:Number(v.ratingQuality)||0,rating_ontime:Number(v.ratingOntime)||0,rating_coop:Number(v.ratingCoop)||0,
+      note:HB_pbClean(v.note),updated_at:new Date().toISOString()};
+    let res=v.id
+      ? await q.from("sitelog_vendors").update(payload).eq("id",v.id).select().single()
+      : await q.from("sitelog_vendors").insert(payload).select().single();
+    if(res.error){
+      notify(vdColErr(res.error)?"還沒有廠商通訊錄資料表，請先到 Supabase 執行 vendors.sql"
+        :(/duplicate|unique/i.test(String(res.error.message||""))?"已經有同名的廠商了":"儲存失敗："+res.error.message));
+      return!1;
+    }
+    let row=HB_vdMap(res.data);
+    setVendors(vs=>v.id?vs.map(x=>x.id===row.id?row:x):[...vs,row].sort((a,b)=>a.name.localeCompare(b.name)));
+    notify(v.id?"廠商資料已更新":"已新增廠商");
+    return!0;
+  };
+  let deleteVendor=async v=>{
+    if(!confirm(`確定要從通訊錄刪除「${v.name}」嗎？\n（報價資料夾與檔案都不會被刪除）`))return;
+    let{error}=await q.from("sitelog_vendors").delete().eq("id",v.id);
+    if(error){notify("刪除失敗："+error.message);return}
+    setVendors(vs=>vs.filter(x=>x.id!==v.id));
+    setVdOpen(null);
+    notify("已刪除廠商");
+  };
+  /* 從現有資料夾名稱建立廠商，並把資料夾掛到對應廠商底下 */
+  let buildVendorsFromFolders=async()=>{
+    let names=[...new Set(folders.map(f=>HB_pbClean(f.name)).filter(Boolean))];
+    if(!names.length){notify("目前沒有任何廠商資料夾");return}
+    if(!confirm(`要把現有的 ${names.length} 個資料夾名稱建立成廠商通訊錄嗎？\n（已存在的會略過，不會覆蓋你填好的聯絡資料）`))return;
+    setVdBusy(!0);
+    try{
+      let have=new Map(vendors.map(v=>[HB_pbNorm(v.name),v]));
+      let toCreate=names.filter(n=>!have.has(HB_pbNorm(n))).map(n=>({name:n}));
+      let created=[];
+      for(let i=0;i<toCreate.length;i+=100){
+        let chunk=toCreate.slice(i,i+100);
+        let{data,error}=await q.from("sitelog_vendors").insert(chunk).select();
+        if(error)throw error;
+        created.push(...(data||[]));
+      }
+      let all=[...vendors,...created.map(HB_vdMap)];
+      let byName=new Map(all.map(v=>[HB_pbNorm(v.name),v]));
+      let linked=0;
+      for(let f of folders){
+        if(f.vendorId)continue;
+        let v=byName.get(HB_pbNorm(f.name));
+        if(!v)continue;
+        let{error}=await q.from("sitelog_vendor_quote_folders").update({vendor_id:v.id}).eq("id",f.id);
+        if(!error)linked++;
+      }
+      await load();
+      notify(`已建立 ${created.length} 家廠商，連結 ${linked} 個資料夾`);
+    }catch(err){
+      notify(vdColErr(err)?"請先到 Supabase 執行 vendors.sql":"建立失敗："+(err.message||err));
+    }finally{setVdBusy(!1)}
+  };
+  let vdAllTrades=[...new Set(vendors.flatMap(HB_vdTrades))].sort();
+  let vdFiltered=vendors.filter(v=>{
+    if(vdTrade&&!HB_vdTrades(v).includes(vdTrade))return!1;
+    let k=HB_pbNorm(vdKw);
+    if(!k)return!0;
+    return HB_pbNorm(v.name).includes(k)||HB_pbNorm(v.contactPerson).includes(k)||HB_pbNorm(v.phone).includes(k)||HB_pbNorm(v.note).includes(k)||HB_vdTrades(v).some(t=>HB_pbNorm(t).includes(k));
+  });
 
   let projName=pid=>{let p=projects.find(x=>x.id===pid);return p?p.name:"未指定案件"};
   let isProjSelected=key=>selectedProjects===null?true:selectedProjects.has(key);
@@ -4271,12 +4586,85 @@ function HbVendorQuoteHub({onBack,notify}){
             )
           : u.default.createElement(u.default.Fragment,null,
               u.default.createElement("div",{style:{display:"flex",gap:8,marginBottom:16}},
-                [["folders","資料夾","folder"],["compare","比價表","calculator"]].map(([k,label,icon])=>
+                [["folders","資料夾","folder"],["compare","比價表","calculator"],["vendors","廠商","users"]].map(([k,label,icon])=>
                   u.default.createElement("button",{key:k,onClick:()=>setVqTab(k),style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:6,
                     background:vqTab===k?"rgba(124,106,86,0.12)":"none",border:`1px solid ${vqTab===k?s.ocean:s.line}`,color:vqTab===k?s.oceanDark:s.inkSoft,
                     borderRadius:9,padding:"9px 0",fontSize:13,cursor:"pointer"}},u.default.createElement(E,{name:icon,size:15}),label))
               ),
-              vqTab==="compare"
+              vqTab==="vendors"
+              ? u.default.createElement(u.default.Fragment,null,
+                  u.default.createElement("div",{style:{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap"}},
+                    u.default.createElement("button",{onClick:()=>setVdEdit({}),style:{flex:"1 1 130px",background:s.ocean,color:s.lemon,border:"none",borderRadius:9,padding:"10px 0",fontSize:13,cursor:"pointer"}},"+ 新增廠商"),
+                    u.default.createElement("button",{onClick:buildVendorsFromFolders,disabled:vdBusy,style:{flex:"1 1 180px",border:`1px solid ${s.line}`,background:"none",borderRadius:9,padding:"10px 8px",fontSize:12.5,color:s.oceanDark,cursor:vdBusy?"default":"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6,opacity:vdBusy?.6:1}},
+                      vdBusy?u.default.createElement(E,{name:"loader",size:14,className:"animate-spin"}):u.default.createElement(E,{name:"zap",size:14}),
+                      vdBusy?"建立中…":"從現有資料夾建立廠商")
+                  ),
+                  u.default.createElement("input",{value:vdKw,onChange:v=>setVdKw(v.target.value),placeholder:"搜尋廠商、聯絡人、電話或工種…",
+                    style:{width:"100%",boxSizing:"border-box",border:`1px solid ${s.line}`,borderRadius:9,padding:"10px 12px",fontSize:14,background:"#fff",color:s.ink,marginBottom:10}}),
+                  vdAllTrades.length>0&&u.default.createElement("div",{style:{display:"flex",gap:6,overflowX:"auto",paddingBottom:8,marginBottom:6}},
+                    [["","全部工種"],...vdAllTrades.map(t=>[t,t])].map(([val,label])=>
+                      u.default.createElement("button",{key:label,onClick:()=>setVdTrade(vdTrade===val?"":val),
+                        style:{border:`1px solid ${vdTrade===val?s.ocean:s.line}`,background:vdTrade===val?"rgba(124,106,86,0.10)":"none",
+                          color:vdTrade===val?s.oceanDark:s.inkSoft,borderRadius:999,padding:"5px 12px",fontSize:11.5,cursor:"pointer",whiteSpace:"nowrap"}},label))),
+                  vendors.length===0
+                    ? u.default.createElement(He,{icon:"users",text:"通訊錄還是空的。按上面的「從現有資料夾建立廠商」，可以把既有的廠商資料夾一次全部建進來。"})
+                    : vdFiltered.length===0
+                      ? u.default.createElement(He,{icon:"users",text:"沒有符合的廠商"})
+                      : u.default.createElement("div",{style:{display:"flex",flexDirection:"column",gap:9}},
+                          vdFiltered.map(v=>{
+                            let qs=vdQuotesOf(v),ad=qs.filter(x=>x.status==="adopted");
+                            let adTotal=ad.reduce((n,x)=>n+HB_num(x.amount),0);
+                            let avg=HB_vdAvg(v),open=vdOpen===v.id;
+                            return u.default.createElement("div",{key:v.id,style:{background:s.card,border:`1px solid ${s.line}`,borderRadius:10,overflow:"hidden"}},
+                              u.default.createElement("div",{onClick:()=>setVdOpen(open?null:v.id),style:{padding:"11px 13px",cursor:"pointer"}},
+                                u.default.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"baseline",gap:8,flexWrap:"wrap"}},
+                                  u.default.createElement("span",{style:{fontSize:14,color:s.ink}},v.name,
+                                    v.contactPerson?u.default.createElement("span",{style:{fontSize:11.5,color:s.inkSoft,marginLeft:6}},v.contactPerson):null),
+                                  avg?u.default.createElement("span",{style:{whiteSpace:"nowrap"}},HB_vdStars(avg,12),
+                                    u.default.createElement("span",{style:{fontSize:10.5,color:s.inkSoft,marginLeft:4}},avg)):null),
+                                HB_vdTrades(v).length>0&&u.default.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:5,marginTop:6}},
+                                  HB_vdTrades(v).map(t=>u.default.createElement("span",{key:t,style:{fontSize:10.5,color:s.oceanDark,background:"#F2EFE8",borderRadius:999,padding:"2px 9px"}},t))),
+                                u.default.createElement("div",{style:{fontSize:11,color:s.inkSoft,marginTop:6,display:"flex",gap:10,flexWrap:"wrap"}},
+                                  v.phone?u.default.createElement("span",null,v.phone):null,
+                                  qs.length?u.default.createElement("span",null,"報價 ",qs.length," 筆"):null,
+                                  ad.length?u.default.createElement("span",{style:{color:s.tree}},"已採用 ",ad.length," 筆 · NT$ ",HB_money(adTotal)):null)
+                              ),
+                              open&&u.default.createElement("div",{style:{borderTop:`1px solid ${s.line}`,background:"#FBFAF7",padding:"11px 13px"}},
+                                u.default.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"7px 14px",fontSize:12,marginBottom:10}},
+                                  [["電話",v.phone,"tel"],["LINE",v.lineId],["統一編號",v.taxId],["付款條件",v.paymentTerms],["地址",v.address],["備註",v.note]]
+                                    .filter(([,val])=>val).map(([k,val,kind])=>u.default.createElement("div",{key:k},
+                                      u.default.createElement("div",{style:{fontSize:10.5,color:s.inkSoft}},k),
+                                      kind==="tel"
+                                        ? u.default.createElement("a",{href:"tel:"+String(val).replace(/[^0-9+]/g,""),style:{color:s.ocean,textDecoration:"none"}},val)
+                                        : u.default.createElement("div",{style:{color:s.ink,wordBreak:"break-all"}},val)))),
+                                (v.ratingQuality||v.ratingOntime||v.ratingCoop)?u.default.createElement("div",{style:{display:"flex",gap:14,flexWrap:"wrap",fontSize:11.5,color:s.inkSoft,marginBottom:10}},
+                                  [["品質",v.ratingQuality],["準時",v.ratingOntime],["配合度",v.ratingCoop]].filter(([,n2])=>n2>0)
+                                    .map(([k,n2])=>u.default.createElement("span",{key:k},k," ",HB_vdStars(n2,11)))):null,
+                                u.default.createElement("div",{style:{fontSize:11.5,color:s.inkSoft,marginBottom:5}},"歷史報價"),
+                                qs.length===0
+                                  ? u.default.createElement("div",{style:{fontSize:11.5,color:s.inkSoft,padding:"6px 0"}},"這家廠商還沒有填金額的報價")
+                                  : u.default.createElement("div",{style:{overflowX:"auto",border:`1px solid ${s.line}`,borderRadius:7,background:"#fff",marginBottom:10}},
+                                      u.default.createElement("table",{style:{width:"100%",borderCollapse:"collapse",fontSize:11.5,minWidth:400}},
+                                        u.default.createElement("thead",null,u.default.createElement("tr",null,["案件","工項","金額","日期"].map((hd,hi)=>
+                                          u.default.createElement("th",{key:hi,style:{textAlign:hi===2?"right":"left",padding:"5px 8px",background:"#F7F5F0",color:s.inkSoft,fontWeight:400,whiteSpace:"nowrap"}},hd)))),
+                                        u.default.createElement("tbody",null,qs.slice(0,20).map(x=>u.default.createElement("tr",{key:x.id},
+                                          u.default.createElement("td",{style:{padding:"5px 8px",borderTop:`1px solid ${s.line}`}},x.projectName),
+                                          u.default.createElement("td",{style:{padding:"5px 8px",borderTop:`1px solid ${s.line}`}},x.workItem||"—",
+                                            x.status==="adopted"?u.default.createElement("span",{style:{fontSize:9.5,color:"#fff",background:s.tree,borderRadius:999,padding:"1px 6px",marginLeft:5}},"採用"):null),
+                                          u.default.createElement("td",{style:{padding:"5px 8px",borderTop:`1px solid ${s.line}`,textAlign:"right",whiteSpace:"nowrap"}},HB_money(HB_num(x.amount)),
+                                            u.default.createElement("span",{style:{fontSize:9.5,color:s.inkSoft,marginLeft:3}},x.taxIncluded?"含稅":"未稅")),
+                                          u.default.createElement("td",{style:{padding:"5px 8px",borderTop:`1px solid ${s.line}`,color:s.inkSoft,whiteSpace:"nowrap"}},x.quotedAt||"—")
+                                        )))
+                                      )),
+                                u.default.createElement("div",{style:{display:"flex",gap:8}},
+                                  u.default.createElement("button",{onClick:()=>setVdEdit(v),style:{flex:1,border:`1px solid ${s.line}`,background:"none",borderRadius:7,padding:"8px 0",fontSize:12.5,color:s.oceanDark,cursor:"pointer"}},"編輯"),
+                                  u.default.createElement("button",{onClick:()=>deleteVendor(v),style:{border:"none",background:"none",color:s.danger,cursor:"pointer",padding:"8px 14px",fontSize:12.5}},"刪除"))
+                              )
+                            )
+                          })
+                        )
+                )
+              : vqTab==="compare"
               ? u.default.createElement(u.default.Fragment,null,
                   u.default.createElement("label",{style:{display:"flex",alignItems:"center",gap:7,fontSize:12,color:s.oceanDark,marginBottom:14,cursor:"pointer"}},
                     u.default.createElement("input",{type:"checkbox",checked:taxNorm,onChange:()=>setTaxNorm(v=>!v),style:{width:15,height:15,accentColor:s.ocean}}),
@@ -4354,7 +4742,9 @@ function HbVendorQuoteHub({onBack,notify}){
                   ))
             ))
     ),
-    showNewFolder && u.default.createElement(vqFolderModal,{projects,onCancel:()=>setShowNewFolder(false),onCreate:createFolder}),
+    showNewFolder && u.default.createElement(vqFolderModal,{projects,vendors,onCancel:()=>setShowNewFolder(false),onCreate:createFolder}),
+    vdEdit && u.default.createElement(vqVendorModal,{initial:vdEdit,onCancel:()=>setVdEdit(null),
+      onSave:async v=>{let ok=await saveVendor(v);if(ok)setVdEdit(null)}}),
     showTextNote && u.default.createElement(vqTextModal,{onCancel:()=>setShowTextNote(false),onCreate:addTextNote}),
     editQuote && u.default.createElement(vqQuoteInfoModal,{item:editQuote,workItems:allWorkItems,
       onCancel:()=>setEditQuote(null),
@@ -4362,12 +4752,26 @@ function HbVendorQuoteHub({onBack,notify}){
   );
 }
 
-function vqFolderModal({projects,onCancel,onCreate}){
+function vqFolderModal({projects,vendors,onCancel,onCreate}){
   let[name,setName]=(0,u.useState)("");
   let[projectId,setProjectId]=(0,u.useState)("");
+  let[vendorId,setVendorId]=(0,u.useState)("");
+  let pickVendor=id=>{
+    setVendorId(id);
+    let v=(vendors||[]).find(x=>x.id===id);
+    if(v&&!name.trim())setName(v.name);
+  };
   return u.default.createElement("div",{style:{position:"fixed",inset:0,background:"rgba(43,38,32,0.45)",display:"flex",alignItems:"center",justifyContent:"center",padding:20,zIndex:55}},
     u.default.createElement("div",{className:"fade-in",style:{background:s.card,borderRadius:10,padding:22,width:"100%",maxWidth:360}},
       u.default.createElement("h3",{style:{margin:"0 0 14px",fontSize:17,fontWeight:400,color:s.oceanDark}},"新增廠商資料夾"),
+      (vendors&&vendors.length>0)?u.default.createElement(u.default.Fragment,null,
+        u.default.createElement("label",{style:{fontSize:12.5,color:s.inkSoft}},"從通訊錄選廠商（選填）"),
+        u.default.createElement("select",{value:vendorId,onChange:e=>pickVendor(e.target.value),style:el},
+          u.default.createElement("option",{value:""},"不指定（手動輸入名稱）"),
+          vendors.map(v=>u.default.createElement("option",{key:v.id,value:v.id},
+            v.name+(HB_vdTrades(v).length?"（"+HB_vdTrades(v).join("、")+"）":"")))
+        )
+      ):null,
       u.default.createElement("label",{style:{fontSize:12.5,color:s.inkSoft}},"廠商 / 資料夾名稱"),
       u.default.createElement("input",{value:name,onChange:e=>setName(e.target.value),placeholder:"例：木工（溫榮輝）",style:el,autoFocus:true}),
       u.default.createElement("label",{style:{fontSize:12.5,color:s.inkSoft}},"歸屬案件（選填）"),
@@ -4377,7 +4781,7 @@ function vqFolderModal({projects,onCancel,onCreate}){
       ),
       u.default.createElement("div",{style:{display:"flex",gap:10,marginTop:6}},
         u.default.createElement("button",{onClick:onCancel,style:{...ll,flex:1}},"取消"),
-        u.default.createElement("button",{disabled:!name.trim(),onClick:()=>onCreate(name.trim(),projectId||null),style:{...Dl,flex:1,opacity:name.trim()?1:.5}},"建立")
+        u.default.createElement("button",{disabled:!name.trim(),onClick:()=>onCreate(name.trim(),projectId||null,vendorId||null),style:{...Dl,flex:1,opacity:name.trim()?1:.5}},"建立")
       )
     )
   );
