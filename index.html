@@ -4022,6 +4022,20 @@ function HbVendorReceiptForm({onCancel,onCreate,projects,vendorOptions}){
 }
 
 /* ===== 廠商通訊錄 ===== */
+/* 常用金融機構代碼（三碼）。清單只收常往來的銀行，其餘用「其他」手動輸入。
+   資料交叉比對自 findrate.tw 與滙豐銀行公布的跨行轉帳金融機構代號一覽表。 */
+var HB_TW_BANKS=[
+  ["004","臺灣銀行"],["005","臺灣土地銀行"],["006","合作金庫"],["007","第一銀行"],["008","華南銀行"],
+  ["009","彰化銀行"],["011","上海商業儲蓄銀行"],["012","台北富邦"],["013","國泰世華"],["016","高雄銀行"],
+  ["017","兆豐國際商銀"],["021","花旗(台灣)"],["050","臺灣企銀"],["052","渣打國際商銀"],["053","台中銀行"],
+  ["054","京城銀行"],["081","滙豐(台灣)"],["101","瑞興銀行"],["102","華泰銀行"],["103","臺灣新光商銀"],
+  ["108","陽信銀行"],["118","板信銀行"],["147","三信商銀"],["700","中華郵政"],["803","聯邦銀行"],
+  ["805","遠東商銀"],["806","元大銀行"],["807","永豐銀行"],["808","玉山銀行"],["809","凱基銀行"],
+  ["810","星展(台灣)"],["812","台新銀行"],["816","安泰銀行"],["822","中國信託"],["823","將來銀行"],
+  ["824","連線商銀 LINE Bank"],["826","樂天國際銀行"]
+];
+function HB_bankLabel(code){let b=HB_TW_BANKS.find(x=>x[0]===String(code||""));return b?b[0]+"　"+b[1]:""}
+
 var HB_VD_TRADES=["拆除","泥作","水電","木作","系統櫃","油漆","空調","鋁窗","玻璃","鐵工","石材","地板","窗簾","清潔","防水","廚具","衛浴","燈具","家具","雜項"];
 function HB_vdTrades(v){let t=v&&v.trades;return Array.isArray(t)?t:[]}
 function HB_vdAvg(v){
@@ -4061,7 +4075,7 @@ async function HB_vdCopy(text,notify,label){
   }catch(e){notify&&notify("複製失敗，請手動選取")}
 }
 
-function vqVendorModal({initial,onCancel,onSave}){
+function vqVendorModal({initial,branches,onCancel,onSave}){
   let h=u.default.createElement;
   let[v,setV]=(0,u.useState)(()=>({
     name:"",contactPerson:"",phone:"",lineId:"",taxId:"",address:"",trades:[],paymentTerms:"",
@@ -4069,6 +4083,11 @@ function vqVendorModal({initial,onCancel,onSave}){
     ratingQuality:0,ratingOntime:0,ratingCoop:0,note:"",...(initial||{})
   }));
   let[busy,setBusy]=(0,u.useState)(!1);
+  let[bankOther,setBankOther]=(0,u.useState)(()=>{
+    let c=(initial&&initial.bankCode)||"",n=(initial&&initial.bankName)||"";
+    if(!c&&!n)return!1;
+    return!HB_TW_BANKS.some(x=>x[0]===c);
+  });
   let set=(k,val)=>setV(p=>({...p,[k]:val}));
   let toggleTrade=t=>setV(p=>({...p,trades:p.trades.includes(t)?p.trades.filter(x=>x!==t):[...p.trades,t]}));
   let fs={width:"100%",boxSizing:"border-box",border:`1px solid ${s.line}`,borderRadius:8,padding:"9px 11px",fontSize:14,marginBottom:11,marginTop:4,background:"#fff",color:s.ink,fontFamily:"inherit"};
@@ -4107,11 +4126,25 @@ function vqVendorModal({initial,onCancel,onSave}){
 
       h("div",{style:{borderTop:`1px solid ${s.line}`,paddingTop:12,marginBottom:2}},
         h("div",{style:{fontSize:12.5,color:s.oceanDark,marginBottom:8}},"匯款資訊"),
-        h("div",{style:{display:"flex",gap:10}},
-          h("div",{style:{width:82}},h("label",{style:lb},"銀行代號"),h("input",{value:v.bankCode,onChange:e=>set("bankCode",e.target.value),inputMode:"numeric",placeholder:"013",style:fs})),
-          h("div",{style:{flex:1}},h("label",{style:lb},"銀行"),h("input",{value:v.bankName,onChange:e=>set("bankName",e.target.value),placeholder:"例：國泰世華",style:fs})),
-          h("div",{style:{flex:1}},h("label",{style:lb},"分行"),h("input",{value:v.bankBranch,onChange:e=>set("bankBranch",e.target.value),placeholder:"例：嘉義分行",style:fs}))
+        h("label",{style:lb},"銀行"),
+        h("select",{value:bankOther?"__other":(v.bankCode||""),onChange:e=>{
+            let val=e.target.value;
+            if(val==="__other"){setBankOther(!0);return}
+            setBankOther(!1);
+            let b=HB_TW_BANKS.find(x=>x[0]===val);
+            setV(p=>({...p,bankCode:b?b[0]:"",bankName:b?b[1]:""}));
+          },style:fs},
+          h("option",{value:""},"（未指定）"),
+          HB_TW_BANKS.map(b=>h("option",{key:b[0],value:b[0]},b[0]+"　"+b[1])),
+          h("option",{value:"__other"},"其他（手動輸入）")
         ),
+        bankOther?h("div",{style:{display:"flex",gap:10}},
+          h("div",{style:{width:92}},h("label",{style:lb},"代號"),h("input",{value:v.bankCode,onChange:e=>set("bankCode",e.target.value),inputMode:"numeric",placeholder:"三碼",style:fs})),
+          h("div",{style:{flex:1}},h("label",{style:lb},"銀行名稱"),h("input",{value:v.bankName,onChange:e=>set("bankName",e.target.value),placeholder:"例：陽信銀行",style:fs}))
+        ):null,
+        h("label",{style:lb},"分行"),
+        h("input",{value:v.bankBranch,onChange:e=>set("bankBranch",e.target.value),list:"hb-vd-branches",placeholder:"例：嘉義分行（可直接打，之後會記住）",style:fs}),
+        h("datalist",{id:"hb-vd-branches"},(branches||[]).map(x=>h("option",{key:x,value:x}))),
         h("label",{style:lb},"戶名"),
         h("input",{value:v.bankAccountName,onChange:e=>set("bankAccountName",e.target.value),placeholder:"例：日成木業有限公司",style:fs}),
         h("label",{style:lb},"帳號"),
@@ -4816,7 +4849,9 @@ function HbVendorQuoteHub({onBack,notify}){
     ),
     showNewFolder && u.default.createElement(vqFolderModal,{projects,vendors,onCancel:()=>setShowNewFolder(false),onCreate:createFolder}),
     preview && u.default.createElement(ih,{file:preview,onClose:()=>setPreview(null)}),
-    vdEdit && u.default.createElement(vqVendorModal,{initial:vdEdit,onCancel:()=>setVdEdit(null),
+    vdEdit && u.default.createElement(vqVendorModal,{initial:vdEdit,
+      branches:[...new Set(vendors.map(x=>x.bankBranch).filter(Boolean))].sort(),
+      onCancel:()=>setVdEdit(null),
       onSave:async v=>{let ok=await saveVendor(v);if(ok)setVdEdit(null)}}),
     showTextNote && u.default.createElement(vqTextModal,{onCancel:()=>setShowTextNote(false),onCreate:addTextNote}),
     editQuote && u.default.createElement(vqQuoteInfoModal,{item:editQuote,workItems:allWorkItems,
