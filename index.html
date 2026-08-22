@@ -304,6 +304,46 @@ async function r2DeleteSitelogFile(bucketTag,path){
   try{await r2SitelogRequest("DELETE",`${bucketTag}/${path}`,null,null)}catch{}
 }
 
+/* 把已上傳的檔案讀回瀏覽器。
+   <img src> 顯示不需要 CORS，但要把圖片畫進 canvas 再輸出、或解析 Excel，就必須讀得到位元組。
+   先直接抓，失敗再試自家的 Worker，都不行就丟出看得懂的錯誤。 */
+var HB_ASSET_CORS_HINT="讀不到檔案內容。請先依「R2-CORS-修正說明」更新 Cloudflare Worker（加上 GET 與 CORS）。";
+
+/* 公開網址 → 自家 Worker 網址。公開網址本來就是用編碼過的片段組出來的，直接沿用。 */
+function HB_assetProxyUrl(url){
+  var u=String(url||"").split("?")[0];
+  if(u.indexOf(R2_SITELOG_CONFIG.publicUrl+"/")===0)
+    return R2_SITELOG_CONFIG.workerUrl+"/sitelog/"+u.slice(R2_SITELOG_CONFIG.publicUrl.length+1);
+  if(u.indexOf(R2_CONFIG.publicUrl+"/")===0)
+    return R2_SITELOG_CONFIG.workerUrl+"/marketing/"+u.slice(R2_CONFIG.publicUrl.length+1);
+  return null;
+}
+
+/* 把已上傳的檔案讀回瀏覽器。
+   <img src> 顯示不需要 CORS，但要把圖片畫進 canvas 再輸出、解析 Excel、或打包成 ZIP，
+   都必須讀得到位元組。r2.dev 公開網址不支援 CORS，所以優先走自家 Worker。 */
+async function HB_fetchAsset(url,opts){
+  var last=null;
+  var proxy=HB_assetProxyUrl(url);
+  if(proxy){
+    try{
+      var rp=await fetch(proxy,{mode:"cors",headers:{"x-hb-token":R2_SITELOG_CONFIG.token}});
+      if(rp.ok)return await rp.blob();
+      last=new Error("Worker 回應 "+rp.status);
+    }catch(e){last=e}
+  }
+  try{
+    var r=await fetch(url,{mode:"cors"});
+    if(r.ok)return await r.blob();
+    last=last||new Error("下載失敗（"+r.status+"）");
+  }catch(e2){last=last||e2}
+  var msg=String((last&&last.message)||"");
+  var err=new Error(HB_ASSET_CORS_HINT+"（"+(msg||"unknown")+"）");
+  err.isCors=!0;
+  throw err;
+}
+try{window.HB_fetchAsset=function(u,o){return HB_fetchAsset(u,o)}}catch(e){}
+
 /* ===== 一次性搬移工具：把 Supabase Storage 裡既有的施工照片/專案檔案搬到 Cloudflare R2 =====
    使用方式：App 開啟並登入後，打開瀏覽器 DevTools（F12）→ Console，
    輸入 migrateSitelogFilesToR2() 並按 Enter 執行。
@@ -4494,9 +4534,7 @@ function HbVendorQuoteHub({onBack,notify}){
         let inFolder=files.filter(f=>f.folderId===folder.id&&f.kind!=="text");
         for(let f of inFolder){
           try{
-            let res=await fetch(f.url);
-            if(!res.ok)continue;
-            let blob=await res.blob();
+            let blob=await HB_fetchAsset(f.url,{});
             zip.file(`${safe(projName(folder.projectId))}/${safe(folder.name)}/${f.name}`,blob);
             any=true;
           }catch{}
@@ -6848,9 +6886,7 @@ function Py({onCancel:l,onCreate:t}){let[e,n]=(0,u.useState)(""),[a,i]=(0,u.useS
       let out=document.createElement("canvas"),ctx=out.getContext("2d");
       let isImg=(picked.mime||"").startsWith("image/");
       if(isImg){
-        let resp=await fetch(picked.url);
-        if(!resp.ok)throw new Error("\u539F\u59CB\u6A94\u6848\u8B80\u53D6\u5931\u6557");
-        let blob=await resp.blob();
+        let blob=await HB_fetchAsset(picked.url,{});
         let imgUrl=URL.createObjectURL(blob);
         let img=await new Promise((res,rej)=>{let im=new window.Image();im.onload=()=>res(im);im.onerror=()=>rej(new Error("\u5716\u7247\u89E3\u6790\u5931\u6557"));im.src=imgUrl});
         let maxW=2000,scale=Math.min(1,maxW/img.width);
@@ -7179,7 +7215,7 @@ function HbMilestoneNotify({project,photoCount,onClose,notify}){
   );
 }
 
-function lh({project:l,onBack:t,onUpdateMeta:e,onDelete:n,notify:a,initialTab:hbInitTab}){let[i,o]=(0,u.useState)(hbInitTab||"photos"),[f,c]=(0,u.useState)([]),[r,d]=(0,u.useState)([]),[h,m]=(0,u.useState)([]),[p,z]=(0,u.useState)([]),[C,D]=(0,u.useState)(null),[y,g]=(0,u.useState)(!1),[b,S]=(0,u.useState)(null),[M,j]=(0,u.useState)([]),[T,k]=(0,u.useState)(null),[H,B]=(0,u.useState)(!1),[nl,hl]=(0,u.useState)(null),[ql,je]=(0,u.useState)([]),[Ml,te]=(0,u.useState)([]),[ee,N]=(0,u.useState)([]),[dfL,dfSet]=(0,u.useState)([]),[dfFormOpen,dfSetForm]=(0,u.useState)(!1),[dfBusy,dfSetBusy]=(0,u.useState)(!1),[dfCm,dfSetCm]=(0,u.useState)({}),[dfCmOpen,dfSetCmOpen]=(0,u.useState)(null),[dfCmBusy,dfSetCmBusy]=(0,u.useState)(!1),[schL,schSet]=(0,u.useState)([]),[it,gl]=(0,u.useState)(!1),[HB_editApp,HB_setEditApp]=(0,u.useState)(null),[vt,cn]=(0,u.useState)(!0),[ut,bt]=(0,u.useState)(null),[Ye,Ht]=(0,u.useState)(!1),[oa,sn]=(0,u.useState)(!1),[fa,dn]=(0,u.useState)(!1),[to,Tt]=(0,u.useState)(!1),[Qe,ns]=(0,u.useState)(!1),[ym,eo]=(0,u.useState)(!1),[as,mi]=(0,u.useState)(null),[is,no]=(0,u.useState)(null),[us,gi]=(0,u.useState)(null),[ao,io]=(0,u.useState)(null),[uo,pi]=(0,u.useState)(null),[hm,os]=(0,u.useState)(!1),[vm,oo]=(0,u.useState)(null),yi=(0,u.useRef)(null),hi=(0,u.useRef)(null),vi=(0,u.useRef)(null),[rn,_t]=(0,u.useState)(!1),[fo,co]=(0,u.useState)([]),[fs,cs]=(0,u.useState)(!1),[so,ro]=(0,u.useState)(!1),[bm,ss]=(0,u.useState)(!1),[HB_sigOpen,HB_setSigOpen]=(0,u.useState)(!1),[hbCmp,hbSetCmp]=(0,u.useState)(!1),[hbMs,hbSetMs]=(0,u.useState)(!1),HB_isOwnerView=new URLSearchParams(window.location.search).has("owner"),ds=async v=>{if(!l)return;v?cs(!0):cn(!0);let[_,O,A,U,Ol,sl,X,W,Dfx,Sch,Sch2]=await Promise.all([q.from("sitelog_albums").select("*").eq("project_id",l.id).order("created_at",{ascending:!1}),q.from("sitelog_photos").select("*").eq("project_id",l.id).order("uploaded_at",{ascending:!1}),q.from("sitelog_quotes").select("*").eq("project_id",l.id).order("uploaded_at",{ascending:!1}),q.from("sitelog_quote_folders").select("*").eq("project_id",l.id).order("created_at",{ascending:!1}),q.from("sitelog_materials").select("*").eq("project_id",l.id).order("delivered_at",{ascending:!1}),q.from("sitelog_files").select("*").eq("project_id",l.id).order("uploaded_at",{ascending:!1}),q.from("sitelog_file_folders").select("*").eq("project_id",l.id).order("created_at",{ascending:!1}),q.from("sitelog_appliances").select("*").eq("project_id",l.id).order("created_at",{ascending:!1}),q.from("sitelog_defects").select("*").eq("project_id",l.id).order("created_at",{ascending:!1}),q.from("sitelog_schedule_events").select("*").eq("project_id",l.id).eq("type","site").neq("status","cancelled").order("start_date",{ascending:!0}),q.from("sitelog_schedule_events").select("*").is("project_id",null).eq("project_name",l.name).eq("type","site").neq("status","cancelled").order("start_date",{ascending:!0})]);(_.error||O.error||A.error||U.error||Ol.error||sl.error||X.error||W.error)&&a("\u8B80\u53D6\u8CC7\u6599\u5931\u6557\uFF0C\u8ACB\u91CD\u65B0\u6574\u7406"),(Sch.error||Sch2.error)&&a("\u884c\u7a0b\u8b80\u53d6\u5931\u6557\uff1a"+((Sch.error||Sch2.error).message||"")),c((_.data||[]).map(Pc)),d((O.data||[]).map(ls)),m((A.data||[]).map(sm)),z((U.data||[]).map(dm)),je((Ol.data||[]).map(ts)),te((sl.data||[]).map(es)),j((X.data||[]).map(rm)),N((W.data||[]).map(Pu)),dfSet((Dfx.data||[]).map(dft)),schSet([...(Sch.data||[]),...(Sch2.data||[])].map(scht).sort((x,y)=>(x.startDate||"").localeCompare(y.startDate||""))),v||(bt(null),D(null),k(null)),v?cs(!1):cn(!1)};(0,u.useEffect)(()=>{ds(!1)},[l?.id]);let Sm=async()=>{if(typeof window.JSZip>"u"){a("\u6253\u5305\u5DE5\u5177\u5C1A\u672A\u8F09\u5165\uFF0C\u8ACB\u91CD\u65B0\u6574\u7406\u9801\u9762\u5F8C\u518D\u8A66");return}ro(!0);try{let v=new window.JSZip,_=X=>String(X||"\u672A\u547D\u540D").replace(/[\\/:*?"<>|]/g,"_"),O=async X=>{let W=await fetch(X);if(!W.ok)throw new Error("\u4E0B\u8F09\u5931\u6557");return await W.blob()},A=!1;for(let X of f){let W=r.filter(dl=>dl.albumId===X.id);for(let dl of W)try{let St=await O(dl.url),Ct=`${Tl(dl.uploadedAt).replace(/\./g,"")}${dl.note?"_"+_(dl.note).slice(0,20):""}_${dl.id.slice(0,6)}`;v.file(`\u65BD\u5DE5\u7167\u7247/${_(X.name)}/${Ct}.jpg`,St),A=!0}catch{}}for(let X of ql)if(X.photoUrl)try{let W=await O(X.photoUrl);v.file(`\u6750\u6599\u9001\u9054/${_(X.itemName)}_${X.deliveredAt}_${X.id.slice(0,6)}.jpg`,W),A=!0}catch{}for(let X of Ml)try{let W=await O(X.url),dl=X.folderId&&M.find(St=>St.id===X.folderId)?.name||"\u672A\u5206\u985E";v.file(`\u5C08\u6848\u6A94\u6848/${_(dl)}/${X.name}`,W),A=!0}catch{}for(let X of h)try{let W=await O(X.url),dl=X.folderId&&p.find(St=>St.id===X.folderId)?.name||"\u672A\u5206\u985E";v.file(`\u5831\u50F9\u55AE/${_(dl)}/${X.name}`,W),A=!0}catch{}if(!A){a("\u76EE\u524D\u6C92\u6709\u4EFB\u4F55\u6A94\u6848\u53EF\u4EE5\u6253\u5305"),ro(!1);return}let U=await v.generateAsync({type:"blob"}),Ol=URL.createObjectURL(U),sl=document.createElement("a");sl.href=Ol,sl.download=`${_(l.name)}_\u5168\u90E8\u6A94\u6848.zip`,sl.click(),setTimeout(()=>URL.revokeObjectURL(Ol),4e3),a("\u6253\u5305\u5B8C\u6210\uFF0C\u958B\u59CB\u4E0B\u8F09")}catch(v){a("\u6253\u5305\u5931\u6557\uFF1A"+(v.message||v))}finally{ro(!1)}};if(!l)return null;let ca=ua[l.status]||ua[fn[0]],rs=f.find(v=>v.id===ut),bi=r.filter(v=>v.albumId===ut),xm=async v=>{let{data:_,error:O}=await q.from("sitelog_albums").insert({project_id:l.id,name:v}).select().single();if(O){a("\u5EFA\u7ACB\u76F8\u7C3F\u5931\u6557\uFF1A"+O.message);return}let A=Pc(_);c(U=>[A,...U]),Ht(!1),bt(A.id),a("\u76F8\u7C3F\u5DF2\u5EFA\u7ACB")},zm=async v=>{let{error:_}=await q.from("sitelog_albums").delete().eq("id",v);if(_){a("\u522A\u9664\u76F8\u7C3F\u5931\u6557\uFF1A"+_.message);return}let O=r.filter(A=>A.albumId===v).length;d(A=>A.filter(U=>U.albumId!==v)),c(A=>A.filter(U=>U.id!==v)),bt(null),oo(null),e(l.id,{photoCount:Math.max(0,r.length-O)}),a("\u76F8\u7C3F\u5DF2\u522A\u9664")},Am=v=>{let _=Array.from(v.target.files||[]);!_.length||!ut||(co(_),yi.current&&(yi.current.value=""))},Tm=()=>co([]),_m=async(v,_)=>{_t(!0);try{let O=[];for(let A of fo){let U=await Ru(A),Ol=`${l.id}/${ut}/${Be()}.jpg`,sl=await r2UploadSitelogFile("sitelog-photos",Ol,U,"image/jpeg"),{data:X,error:W}=await q.from("sitelog_photos").insert({project_id:l.id,album_id:ut,url:sl,path:Ol,note:v,size:U.size,lat:_?.lat??null,lng:_?.lng??null}).select().single();if(W)throw W;O.push(ls(X))}d(A=>[...O,...A]),e(l.id,{photoCount:r.length+O.length}),a(`\u5DF2\u4E0A\u50B3 ${O.length} \u5F35\u7167\u7247`),co([])}catch(O){a("\u4E0A\u50B3\u5931\u6557\uFF1A"+(O.message||O))}finally{_t(!1)}},Cm=async v=>{let _=r.find(A=>A.id===v),{error:O}=await q.from("sitelog_photos").delete().eq("id",v);if(O){a("\u522A\u9664\u5931\u6557\uFF1A"+O.message);return}_?.path&&r2DeleteSitelogFile("sitelog-photos",_.path),d(A=>A.filter(U=>U.id!==v)),e(l.id,{photoCount:Math.max(0,r.length-1)}),pi(null)},
+function lh({project:l,onBack:t,onUpdateMeta:e,onDelete:n,notify:a,initialTab:hbInitTab}){let[i,o]=(0,u.useState)(hbInitTab||"photos"),[f,c]=(0,u.useState)([]),[r,d]=(0,u.useState)([]),[h,m]=(0,u.useState)([]),[p,z]=(0,u.useState)([]),[C,D]=(0,u.useState)(null),[y,g]=(0,u.useState)(!1),[b,S]=(0,u.useState)(null),[M,j]=(0,u.useState)([]),[T,k]=(0,u.useState)(null),[H,B]=(0,u.useState)(!1),[nl,hl]=(0,u.useState)(null),[ql,je]=(0,u.useState)([]),[Ml,te]=(0,u.useState)([]),[ee,N]=(0,u.useState)([]),[dfL,dfSet]=(0,u.useState)([]),[dfFormOpen,dfSetForm]=(0,u.useState)(!1),[dfBusy,dfSetBusy]=(0,u.useState)(!1),[dfCm,dfSetCm]=(0,u.useState)({}),[dfCmOpen,dfSetCmOpen]=(0,u.useState)(null),[dfCmBusy,dfSetCmBusy]=(0,u.useState)(!1),[schL,schSet]=(0,u.useState)([]),[it,gl]=(0,u.useState)(!1),[HB_editApp,HB_setEditApp]=(0,u.useState)(null),[vt,cn]=(0,u.useState)(!0),[ut,bt]=(0,u.useState)(null),[Ye,Ht]=(0,u.useState)(!1),[oa,sn]=(0,u.useState)(!1),[fa,dn]=(0,u.useState)(!1),[to,Tt]=(0,u.useState)(!1),[Qe,ns]=(0,u.useState)(!1),[ym,eo]=(0,u.useState)(!1),[as,mi]=(0,u.useState)(null),[is,no]=(0,u.useState)(null),[us,gi]=(0,u.useState)(null),[ao,io]=(0,u.useState)(null),[uo,pi]=(0,u.useState)(null),[hm,os]=(0,u.useState)(!1),[vm,oo]=(0,u.useState)(null),yi=(0,u.useRef)(null),hi=(0,u.useRef)(null),vi=(0,u.useRef)(null),[rn,_t]=(0,u.useState)(!1),[fo,co]=(0,u.useState)([]),[fs,cs]=(0,u.useState)(!1),[so,ro]=(0,u.useState)(!1),[bm,ss]=(0,u.useState)(!1),[HB_sigOpen,HB_setSigOpen]=(0,u.useState)(!1),[hbCmp,hbSetCmp]=(0,u.useState)(!1),[hbMs,hbSetMs]=(0,u.useState)(!1),HB_isOwnerView=new URLSearchParams(window.location.search).has("owner"),ds=async v=>{if(!l)return;v?cs(!0):cn(!0);let[_,O,A,U,Ol,sl,X,W,Dfx,Sch,Sch2]=await Promise.all([q.from("sitelog_albums").select("*").eq("project_id",l.id).order("created_at",{ascending:!1}),q.from("sitelog_photos").select("*").eq("project_id",l.id).order("uploaded_at",{ascending:!1}),q.from("sitelog_quotes").select("*").eq("project_id",l.id).order("uploaded_at",{ascending:!1}),q.from("sitelog_quote_folders").select("*").eq("project_id",l.id).order("created_at",{ascending:!1}),q.from("sitelog_materials").select("*").eq("project_id",l.id).order("delivered_at",{ascending:!1}),q.from("sitelog_files").select("*").eq("project_id",l.id).order("uploaded_at",{ascending:!1}),q.from("sitelog_file_folders").select("*").eq("project_id",l.id).order("created_at",{ascending:!1}),q.from("sitelog_appliances").select("*").eq("project_id",l.id).order("created_at",{ascending:!1}),q.from("sitelog_defects").select("*").eq("project_id",l.id).order("created_at",{ascending:!1}),q.from("sitelog_schedule_events").select("*").eq("project_id",l.id).eq("type","site").neq("status","cancelled").order("start_date",{ascending:!0}),q.from("sitelog_schedule_events").select("*").is("project_id",null).eq("project_name",l.name).eq("type","site").neq("status","cancelled").order("start_date",{ascending:!0})]);(_.error||O.error||A.error||U.error||Ol.error||sl.error||X.error||W.error)&&a("\u8B80\u53D6\u8CC7\u6599\u5931\u6557\uFF0C\u8ACB\u91CD\u65B0\u6574\u7406"),(Sch.error||Sch2.error)&&a("\u884c\u7a0b\u8b80\u53d6\u5931\u6557\uff1a"+((Sch.error||Sch2.error).message||"")),c((_.data||[]).map(Pc)),d((O.data||[]).map(ls)),m((A.data||[]).map(sm)),z((U.data||[]).map(dm)),je((Ol.data||[]).map(ts)),te((sl.data||[]).map(es)),j((X.data||[]).map(rm)),N((W.data||[]).map(Pu)),dfSet((Dfx.data||[]).map(dft)),schSet([...(Sch.data||[]),...(Sch2.data||[])].map(scht).sort((x,y)=>(x.startDate||"").localeCompare(y.startDate||""))),v||(bt(null),D(null),k(null)),v?cs(!1):cn(!1)};(0,u.useEffect)(()=>{ds(!1)},[l?.id]);let Sm=async()=>{if(typeof window.JSZip>"u"){a("\u6253\u5305\u5DE5\u5177\u5C1A\u672A\u8F09\u5165\uFF0C\u8ACB\u91CD\u65B0\u6574\u7406\u9801\u9762\u5F8C\u518D\u8A66");return}ro(!0);try{let v=new window.JSZip,_=X=>String(X||"\u672A\u547D\u540D").replace(/[\\/:*?"<>|]/g,"_"),O=async X=>await HB_fetchAsset(X,{}),A=!1;for(let X of f){let W=r.filter(dl=>dl.albumId===X.id);for(let dl of W)try{let St=await O(dl.url),Ct=`${Tl(dl.uploadedAt).replace(/\./g,"")}${dl.note?"_"+_(dl.note).slice(0,20):""}_${dl.id.slice(0,6)}`;v.file(`\u65BD\u5DE5\u7167\u7247/${_(X.name)}/${Ct}.jpg`,St),A=!0}catch{}}for(let X of ql)if(X.photoUrl)try{let W=await O(X.photoUrl);v.file(`\u6750\u6599\u9001\u9054/${_(X.itemName)}_${X.deliveredAt}_${X.id.slice(0,6)}.jpg`,W),A=!0}catch{}for(let X of Ml)try{let W=await O(X.url),dl=X.folderId&&M.find(St=>St.id===X.folderId)?.name||"\u672A\u5206\u985E";v.file(`\u5C08\u6848\u6A94\u6848/${_(dl)}/${X.name}`,W),A=!0}catch{}for(let X of h)try{let W=await O(X.url),dl=X.folderId&&p.find(St=>St.id===X.folderId)?.name||"\u672A\u5206\u985E";v.file(`\u5831\u50F9\u55AE/${_(dl)}/${X.name}`,W),A=!0}catch{}if(!A){a("\u76EE\u524D\u6C92\u6709\u4EFB\u4F55\u6A94\u6848\u53EF\u4EE5\u6253\u5305"),ro(!1);return}let U=await v.generateAsync({type:"blob"}),Ol=URL.createObjectURL(U),sl=document.createElement("a");sl.href=Ol,sl.download=`${_(l.name)}_\u5168\u90E8\u6A94\u6848.zip`,sl.click(),setTimeout(()=>URL.revokeObjectURL(Ol),4e3),a("\u6253\u5305\u5B8C\u6210\uFF0C\u958B\u59CB\u4E0B\u8F09")}catch(v){a("\u6253\u5305\u5931\u6557\uFF1A"+(v.message||v))}finally{ro(!1)}};if(!l)return null;let ca=ua[l.status]||ua[fn[0]],rs=f.find(v=>v.id===ut),bi=r.filter(v=>v.albumId===ut),xm=async v=>{let{data:_,error:O}=await q.from("sitelog_albums").insert({project_id:l.id,name:v}).select().single();if(O){a("\u5EFA\u7ACB\u76F8\u7C3F\u5931\u6557\uFF1A"+O.message);return}let A=Pc(_);c(U=>[A,...U]),Ht(!1),bt(A.id),a("\u76F8\u7C3F\u5DF2\u5EFA\u7ACB")},zm=async v=>{let{error:_}=await q.from("sitelog_albums").delete().eq("id",v);if(_){a("\u522A\u9664\u76F8\u7C3F\u5931\u6557\uFF1A"+_.message);return}let O=r.filter(A=>A.albumId===v).length;d(A=>A.filter(U=>U.albumId!==v)),c(A=>A.filter(U=>U.id!==v)),bt(null),oo(null),e(l.id,{photoCount:Math.max(0,r.length-O)}),a("\u76F8\u7C3F\u5DF2\u522A\u9664")},Am=v=>{let _=Array.from(v.target.files||[]);!_.length||!ut||(co(_),yi.current&&(yi.current.value=""))},Tm=()=>co([]),_m=async(v,_)=>{_t(!0);try{let O=[];for(let A of fo){let U=await Ru(A),Ol=`${l.id}/${ut}/${Be()}.jpg`,sl=await r2UploadSitelogFile("sitelog-photos",Ol,U,"image/jpeg"),{data:X,error:W}=await q.from("sitelog_photos").insert({project_id:l.id,album_id:ut,url:sl,path:Ol,note:v,size:U.size,lat:_?.lat??null,lng:_?.lng??null}).select().single();if(W)throw W;O.push(ls(X))}d(A=>[...O,...A]),e(l.id,{photoCount:r.length+O.length}),a(`\u5DF2\u4E0A\u50B3 ${O.length} \u5F35\u7167\u7247`),co([])}catch(O){a("\u4E0A\u50B3\u5931\u6557\uFF1A"+(O.message||O))}finally{_t(!1)}},Cm=async v=>{let _=r.find(A=>A.id===v),{error:O}=await q.from("sitelog_photos").delete().eq("id",v);if(O){a("\u522A\u9664\u5931\u6557\uFF1A"+O.message);return}_?.path&&r2DeleteSitelogFile("sitelog-photos",_.path),d(A=>A.filter(U=>U.id!==v)),e(l.id,{photoCount:Math.max(0,r.length-1)}),pi(null)},
   hbCmpOpen=null,
   hbSetPhotoAngle=async(photoId,angle)=>{
     let{error}=await q.from("sitelog_photos").update({angle:angle||""}).eq("id",photoId);
@@ -7194,7 +7230,7 @@ function lh({project:l,onBack:t,onUpdateMeta:e,onDelete:n,notify:a,initialTab:hb
   },
   hbAnnotatePhoto=photo=>{
     if(!photo||typeof window.HB_openAnnotator!=="function")return;
-    window.HB_openAnnotator({src:photo.url,onSave:async blob=>{
+    window.HB_openAnnotator({src:photo.url,path:photo.path,bucketTag:"sitelog-photos",onSave:async blob=>{
       try{
         a("標註儲存中…");
         let albumId=photo.albumId||ut;
@@ -7244,9 +7280,8 @@ function HB_SheetViewer({url,name}){
     (async()=>{
       try{
         if(!window.XLSX)throw new Error("表格讀取元件尚未載入，請重新整理頁面後再試");
-        let res=await fetch(url);
-        if(!res.ok)throw new Error("下載失敗（"+res.status+"）");
-        let buf=await res.arrayBuffer();
+        let blob=await HB_fetchAsset(url,{});
+        let buf=await blob.arrayBuffer();
         let wb=window.XLSX.read(new Uint8Array(buf),{type:"array"});
         let sheets=(wb.SheetNames||[]).map(nm=>({
           name:nm,
@@ -8270,22 +8305,23 @@ react-dom/cjs/react-dom-client.production.js:
   ];
 
   /* 先用 fetch 取回圖片再轉 objectURL，避免 canvas 被跨網域污染而無法輸出 */
-  function loadImage(src){
+  function loadImage(opts){
     return new Promise(function(resolve, reject){
-      fetch(src, { mode:'cors' })
-        .then(function(r){ if(!r.ok) throw new Error('下載失敗 ' + r.status); return r.blob(); })
-        .then(function(b){
+      var get = (window.HB_fetchAsset ? window.HB_fetchAsset(opts.src, opts)
+                                      : fetch(opts.src,{mode:'cors'}).then(function(r){ return r.blob(); }));
+      get.then(function(b){
           var url = URL.createObjectURL(b), img = new Image();
           img.onload = function(){ resolve({ img:img, revoke:function(){ URL.revokeObjectURL(url); } }); };
           img.onerror = function(){ URL.revokeObjectURL(url); reject(new Error('圖片解析失敗')); };
           img.src = url;
         })
-        .catch(function(){
+        .catch(function(err){
+          /* 最後一搏：有些設定下 crossOrigin 反而過得去 */
           var img = new Image();
           img.crossOrigin = 'anonymous';
           img.onload = function(){ resolve({ img:img, revoke:function(){} }); };
-          img.onerror = function(){ reject(new Error('無法載入這張照片')); };
-          img.src = src;
+          img.onerror = function(){ reject(err); };
+          img.src = opts.src;
         });
     });
   }
@@ -8483,7 +8519,7 @@ react-dom/cjs/react-dom-client.production.js:
       if (ev.key === 'Escape'){ document.removeEventListener('keydown', esc); done(null); }
     });
 
-    loadImage(opts.src).then(function(res){
+    loadImage(opts).then(function(res){
       base = res.img;
       var long = Math.max(base.naturalWidth || base.width, base.naturalHeight || base.height) || 1200;
       var scale = Math.min(1, 1600 / long);
@@ -8493,7 +8529,14 @@ react-dom/cjs/react-dom-client.production.js:
       canvas.style.display = 'block';
       syncTools(); syncColors(); redraw();
     }).catch(function(err){
+      loading.style.cssText = 'color:#fff;font-size:13px;line-height:2;max-width:520px;text-align:center;padding:0 20px';
       loading.textContent = err.message || '無法載入這張照片';
+      var a = document.createElement('div');
+      a.style.cssText = 'color:rgba(255,255,255,.6);font-size:12px;line-height:1.9;margin-top:10px';
+      a.textContent = err.isCors
+        ? '照片本身沒問題（後面看得到）。要把標註畫進照片必須讀得到原始檔，請先開放雲端儲存的跨網域讀取。'
+        : '可以先試著重新整理頁面再開一次。';
+      loading.appendChild(a);
     });
   };
 })();
