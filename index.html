@@ -3381,6 +3381,9 @@ function HbLanding({onCase:l,onCompany:t,onManageStaff:e,onLogout:n,onQuickQuote
       @keyframes hbLogoSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
       @keyframes hbLogoIn { from { opacity: 0; transform: scale(0.85); } to { opacity: 1; transform: scale(1); } }
       .hb-logo-mark { animation: hbLogoIn .8s ease-out, hbLogoSpin 60s linear infinite; animation-delay: 0s, .8s; transform-origin: center; }
+      /* 下方三個入口：桌機一排三欄，手機自動改成一欄，避免文字擠成一團 */
+      .hb-landing-tri { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1px; }
+      @media (max-width: 620px) { .hb-landing-tri { grid-template-columns: 1fr; } }
     `),
 
     u.default.createElement("div",{className:"hb-scroll",style:{maxWidth:900,margin:"0 auto",height:"100%",overflowY:"auto",padding:"20px 20px 100px"}},
@@ -3407,8 +3410,7 @@ function HbLanding({onCase:l,onCompany:t,onManageStaff:e,onLogout:n,onQuickQuote
         u.default.createElement("p",{style:{color:s.inkSoft,fontSize:12.5,marginTop:10,fontWeight:300,letterSpacing:"0.02em"}},"\u5de5\u5730\u7d00\u9304\u672c\u3000\u00b7\u3000\u8acb\u9078\u64c7\u8981\u7ba1\u7406\u7684\u8cc7\u6599\u5eab")
       ),
 
-      u.default.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:1,background:s.line,border:`1px solid ${s.line}`}},
-        u.default.createElement(HbCompanyGridCard,{icon:"zap",title:"\u5feb\u901f\u5831\u50f9",desc:"\u5de5\u7a0b\u4f30\u50f9\u55ae\uff1a\u5e36\u5165\u5e38\u7528\u55ae\u50f9\u3001\u9396\u4f4f\u55ae\u50f9\u9632\u6bd4\u50f9\u3001\u6298\u8b93\u8207\u7a05\u91d1\u3001\u6210\u672c\u6bdb\u5229",onClick:qq}),
+      u.default.createElement("div",{className:"hb-landing-tri",style:{background:s.line,border:`1px solid ${s.line}`}},
         u.default.createElement(HbCompanyGridCard,{icon:"users",title:"\u5ba2\u6236\u9810\u7d04\u9801\u9762",desc:"\u958b\u555f\u5ba2\u6236\u7dda\u4e0a\u9810\u7d04\u8af8\u8a62\u9801\u9762",onClick:ob}),
         u.default.createElement(HbCompanyGridCard,{icon:"calendar",title:"\u9810\u7d04\u7ba1\u7406",desc:"\u67e5\u770b\u5ba2\u6236\u9810\u7d04\u3001\u4fee\u6539\u6642\u6bb5\u3001\u8a2d\u5b9a\u516c\u4f11\u65e5",onClick:bk}),
         u.default.createElement(HbCompanyGridCard,{icon:"presentation",title:"\u63d0\u6848\u7c21\u5831",desc:"\u63d0\u6848\u7c21\u5831\u7528PPT\u7522\u751f\u5668\uff0c\u65bc\u65b0\u8996\u7a97\u958b\u555f",onClick:pg})
