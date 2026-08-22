@@ -3873,6 +3873,58 @@ function HbVendorReceiptForm({onCancel,onCreate,projects,vendorOptions}){
   )
 }
 
+/* 廠商報價：填寫工項與金額，讓報價可以被比價 */
+function vqQuoteInfoModal({item,workItems,onCancel,onSave}){
+  let h=u.default.createElement;
+  let[v,setV]=(0,u.useState)(()=>({
+    workItem:item.workItem||"",
+    amount:(item.amount==null?"":String(item.amount)),
+    quotedAt:item.quotedAt||new Date().toISOString().slice(0,10),
+    taxIncluded:!!item.taxIncluded,
+    validUntil:item.validUntil||"",
+    note:item.note||""
+  }));
+  let[busy,setBusy]=(0,u.useState)(!1);
+  let set=(k,val)=>setV(p=>({...p,[k]:val}));
+  let fs={width:"100%",boxSizing:"border-box",border:`1px solid ${s.line}`,borderRadius:8,padding:"9px 11px",fontSize:14,marginBottom:11,marginTop:4,background:"#fff",color:s.ink,fontFamily:"inherit"};
+  let lb={fontSize:12.5,color:s.inkSoft};
+  let submit=async()=>{setBusy(!0);await onSave(v);setBusy(!1)};
+  let amt=HB_num(v.amount);
+  return h("div",{style:{position:"fixed",inset:0,background:"rgba(43,38,32,0.45)",display:"flex",alignItems:"center",justifyContent:"center",padding:18,zIndex:70,overflowY:"auto"}},
+    h("div",{className:"fade-in",style:{background:s.card,borderRadius:12,padding:20,width:"100%",maxWidth:420,maxHeight:"92vh",overflowY:"auto"}},
+      h("h3",{style:{margin:"0 0 4px",fontSize:17,fontWeight:400,color:s.oceanDark}},"報價資訊"),
+      h("p",{style:{fontSize:11.5,color:s.inkSoft,margin:"0 0 14px",lineHeight:1.6}},
+        item.kind==="text"?(item.textContent||"").slice(0,40):(item.name||""),
+        "　·　填好工項與金額後，這筆就會出現在比價表"),
+
+      h("label",{style:lb},"工項"),
+      h("input",{value:v.workItem,onChange:e=>set("workItem",e.target.value),list:"vq-workitems",placeholder:"例：木作天花板",style:fs,autoFocus:!0}),
+      h("datalist",{id:"vq-workitems"},(workItems||[]).map(w=>h("option",{key:w,value:w}))),
+
+      h("label",{style:lb},"報價金額"),
+      h("input",{value:v.amount,onChange:e=>set("amount",e.target.value),inputMode:"decimal",placeholder:"0",style:{...fs,textAlign:"right",fontSize:17}}),
+
+      h("label",{style:{display:"flex",alignItems:"center",gap:8,fontSize:13,color:s.oceanDark,margin:"0 0 14px",cursor:"pointer"}},
+        h("input",{type:"checkbox",checked:v.taxIncluded,onChange:()=>set("taxIncluded",!v.taxIncluded),style:{width:15,height:15,accentColor:s.ocean}}),
+        "這個金額已含營業稅",
+        amt?h("span",{style:{color:s.inkSoft,fontSize:11.5,marginLeft:4}},v.taxIncluded?`（未稅約 ${HB_money(Math.round(amt/1.05))}）`:`（含稅約 ${HB_money(Math.round(amt*1.05))}）`):null),
+
+      h("div",{style:{display:"flex",gap:10}},
+        h("div",{style:{flex:1}},h("label",{style:lb},"報價日期"),h("input",{type:"date",value:v.quotedAt,onChange:e=>set("quotedAt",e.target.value),style:fs})),
+        h("div",{style:{flex:1}},h("label",{style:lb},"有效期限（選填）"),h("input",{type:"date",value:v.validUntil,onChange:e=>set("validUntil",e.target.value),style:fs}))
+      ),
+
+      h("label",{style:lb},"備註（選填）"),
+      h("input",{value:v.note,onChange:e=>set("note",e.target.value),placeholder:"例：不含拆除與清運",style:fs}),
+
+      h("div",{style:{display:"flex",gap:10,marginTop:6}},
+        h("button",{onClick:onCancel,disabled:busy,style:{flex:1,background:"transparent",color:s.oceanDark,border:`1px solid ${s.ocean}`,borderRadius:8,padding:"11px 0",fontSize:14,cursor:"pointer"}},"取消"),
+        h("button",{onClick:submit,disabled:busy,style:{flex:2,background:s.lemon,color:s.oceanDark,border:"none",borderRadius:8,padding:"11px 0",fontSize:14,cursor:"pointer",opacity:busy?.5:1}},busy?"儲存中…":"儲存")
+      )
+    )
+  )
+}
+
 function HbVendorQuoteHub({onBack,notify}){
   let[folders,setFolders]=(0,u.useState)([]);
   let[files,setFiles]=(0,u.useState)([]);
@@ -3884,6 +3936,9 @@ function HbVendorQuoteHub({onBack,notify}){
   let[uploading,setUploading]=(0,u.useState)(false);
   let[zipping,setZipping]=(0,u.useState)(false);
   let[selectedProjects,setSelectedProjects]=(0,u.useState)(null);
+  let[vqTab,setVqTab]=(0,u.useState)("folders");
+  let[editQuote,setEditQuote]=(0,u.useState)(null);
+  let[taxNorm,setTaxNorm]=(0,u.useState)(!1);
   let fileInputRef=(0,u.useRef)(null);
 
   let load=async()=>{
@@ -3894,7 +3949,7 @@ function HbVendorQuoteHub({onBack,notify}){
       q.from("sitelog_projects").select("id,name").order("created_at",{ascending:false})
     ]);
     setFolders((fRes.data||[]).map(r=>({id:r.id,name:r.name,projectId:r.project_id,createdAt:r.created_at})));
-    setFiles((qRes.data||[]).map(r=>({id:r.id,folderId:r.folder_id,kind:r.kind||"file",name:r.name,textContent:r.text_content,mime:r.mime,size:r.size,url:r.url,path:r.path,uploadedAt:r.uploaded_at})));
+    setFiles((qRes.data||[]).map(r=>({id:r.id,folderId:r.folder_id,kind:r.kind||"file",name:r.name,textContent:r.text_content,mime:r.mime,size:r.size,url:r.url,path:r.path,uploadedAt:r.uploaded_at,workItem:r.work_item||"",amount:(r.amount==null?null:Number(r.amount)),quotedAt:r.quoted_at||"",taxIncluded:r.tax_included===!0,validUntil:r.valid_until||"",status:r.status||"pending",note:r.note||""})));
     setProjects((pRes.data||[]).map(r=>({id:r.id,name:r.name})));
     setLoading(false);
   };
@@ -3958,6 +4013,74 @@ function HbVendorQuoteHub({onBack,notify}){
     if(f&&f.path)r2DeleteSitelogFile("sitelog-quotes",f.path);
     setFiles(fs=>fs.filter(x=>x.id!==id));
   };
+
+  /* ===== 報價金額與比價 ===== */
+  let vqColErr=e=>/column|PGRST204|42703|work_item|amount|tax_included/i.test(String((e&&e.message)||"")+String((e&&e.code)||""));
+  let saveQuoteInfo=async(id,v)=>{
+    let payload={
+      work_item:HB_pbClean(v.workItem),
+      amount:HB_num(v.amount)||null,
+      quoted_at:v.quotedAt||null,
+      tax_included:!!v.taxIncluded,
+      valid_until:v.validUntil||null,
+      note:HB_pbClean(v.note)
+    };
+    let{error}=await q.from("sitelog_vendor_quotes").update(payload).eq("id",id);
+    if(error){
+      notify(vqColErr(error)?"資料表還沒有金額欄位，請先到 Supabase 執行 vendor_quotes_amount.sql":"儲存失敗："+error.message);
+      return!1;
+    }
+    setFiles(fs=>fs.map(f=>f.id===id?{...f,workItem:payload.work_item,amount:payload.amount,quotedAt:payload.quoted_at||"",taxIncluded:payload.tax_included,validUntil:payload.valid_until||"",note:payload.note}:f));
+    notify("已儲存報價資訊");
+    return!0;
+  };
+  /* 採用：同一案件同一工項只會有一家被採用，其餘標記為未採用；再按一次全部取消 */
+  let toggleAdopt=async(id,group)=>{
+    let target=files.find(f=>f.id===id);
+    let ids=group.map(g=>g.id);
+    if(target&&target.status==="adopted"){
+      let{error}=await q.from("sitelog_vendor_quotes").update({status:"pending"}).in("id",ids);
+      if(error){notify(vqColErr(error)?"請先執行 vendor_quotes_amount.sql":"更新失敗："+error.message);return}
+      setFiles(fs=>fs.map(f=>ids.includes(f.id)?{...f,status:"pending"}:f));
+      notify("已取消採用");
+      return;
+    }
+    let others=ids.filter(x=>x!==id);
+    let r1=await q.from("sitelog_vendor_quotes").update({status:"adopted"}).eq("id",id);
+    if(r1.error){notify(vqColErr(r1.error)?"請先執行 vendor_quotes_amount.sql":"更新失敗："+r1.error.message);return}
+    if(others.length){let r2=await q.from("sitelog_vendor_quotes").update({status:"rejected"}).in("id",others);if(r2.error)notify("其餘報價狀態更新失敗："+r2.error.message)}
+    setFiles(fs=>fs.map(f=>f.id===id?{...f,status:"adopted"}:(others.includes(f.id)?{...f,status:"rejected"}:f)));
+    notify("已標記為採用");
+  };
+  let vqEff=f=>{let a=HB_num(f.amount);if(!a)return 0;return(taxNorm&&!f.taxIncluded)?Math.round(a*1.05):a};
+  let allWorkItems=[...new Set(files.map(f=>HB_pbClean(f.workItem)).filter(Boolean))].sort();
+  let adoptedTotalOf=folderId=>files.filter(f=>f.folderId===folderId&&f.status==="adopted").reduce((n,f)=>n+HB_num(f.amount),0);
+
+  /* 比價資料：案件 → 工項 → 各廠商報價 */
+  let compareGroups=(()=>{
+    let byProj=new Map();
+    for(let f of files){
+      if(!HB_num(f.amount))continue;
+      let folder=folders.find(x=>x.id===f.folderId);
+      if(!folder)continue;
+      let pk=folder.projectId||"__none__";
+      if(!byProj.has(pk))byProj.set(pk,new Map());
+      let ik=HB_pbClean(f.workItem)||"（未填工項）";
+      let m=byProj.get(pk);
+      if(!m.has(ik))m.set(ik,[]);
+      m.get(ik).push({...f,vendor:folder.name});
+    }
+    let out=[...byProj.entries()].map(([key,m])=>({
+      key,
+      label:key==="__none__"?"未指定案件":((projects.find(p=>p.id===key)||{}).name||"未知案件"),
+      items:[...m.entries()].map(([name,rows])=>{
+        rows.sort((a,b)=>vqEff(a)-vqEff(b));
+        return{name,rows,min:vqEff(rows[0])||0};
+      }).sort((a,b)=>a.name.localeCompare(b.name))
+    }));
+    out.sort((a,b)=>a.key==="__none__"?1:b.key==="__none__"?-1:0);
+    return out;
+  })();
 
   let projName=pid=>{let p=projects.find(x=>x.id===pid);return p?p.name:"未指定案件"};
   let isProjSelected=key=>selectedProjects===null?true:selectedProjects.has(key);
@@ -4112,24 +4235,93 @@ function HbVendorQuoteHub({onBack,notify}){
               currentFiles.length===0
                 ? u.default.createElement(He,{icon:"file-text",text:"這個資料夾還沒有內容"})
                 : u.default.createElement("div",{style:{display:"flex",flexDirection:"column",gap:10,marginTop:16}},
-                    currentFiles.map(f=>u.default.createElement("div",{key:f.id,style:{background:s.card,border:`1px solid ${s.line}`,borderRadius:8,padding:"12px 14px",display:"flex",alignItems:"center",gap:12}},
-                      f.kind==="text"
-                        ? u.default.createElement(E,{name:"file-text",size:22,color:s.tree})
-                        : (f.mime||"").startsWith("image/")
-                          ? u.default.createElement("img",{src:f.url,alt:"",style:{width:40,height:40,borderRadius:6,objectFit:"cover",flexShrink:0}})
-                          : u.default.createElement(E,{name:"file-text",size:22,color:s.ocean}),
-                      u.default.createElement("div",{style:{flex:1,minWidth:0}},
+                    currentFiles.map(f=>u.default.createElement("div",{key:f.id,style:{background:s.card,border:`1px solid ${f.status==="adopted"?s.tree:s.line}`,borderRadius:8,padding:"12px 14px"}},
+                      u.default.createElement("div",{style:{display:"flex",alignItems:"center",gap:12}},
                         f.kind==="text"
-                          ? u.default.createElement("div",{style:{fontSize:13.5,whiteSpace:"pre-wrap"}},f.textContent)
-                          : u.default.createElement("div",{style:{fontSize:13.5,fontWeight:400,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},f.name),
-                        u.default.createElement("div",{className:"mono",style:{fontSize:11,color:s.inkSoft,marginTop:2}},Tl(f.uploadedAt))
+                          ? u.default.createElement(E,{name:"file-text",size:22,color:s.tree})
+                          : (f.mime||"").startsWith("image/")
+                            ? u.default.createElement("img",{src:f.url,alt:"",style:{width:40,height:40,borderRadius:6,objectFit:"cover",flexShrink:0}})
+                            : u.default.createElement(E,{name:"file-text",size:22,color:s.ocean}),
+                        u.default.createElement("div",{style:{flex:1,minWidth:0}},
+                          f.kind==="text"
+                            ? u.default.createElement("div",{style:{fontSize:13.5,whiteSpace:"pre-wrap"}},f.textContent)
+                            : u.default.createElement("div",{style:{fontSize:13.5,fontWeight:400,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},f.name),
+                          u.default.createElement("div",{className:"mono",style:{fontSize:11,color:s.inkSoft,marginTop:2}},Tl(f.uploadedAt))
+                        ),
+                        f.kind!=="text"&&u.default.createElement("a",{href:f.url,target:"_blank",rel:"noopener noreferrer",style:at},u.default.createElement(E,{name:"download",size:16})),
+                        u.default.createElement("button",{onClick:()=>deleteFile(f.id),style:{...at,color:s.danger}},u.default.createElement(E,{name:"trash",size:16}))
                       ),
-                      f.kind!=="text"&&u.default.createElement("a",{href:f.url,target:"_blank",rel:"noopener noreferrer",style:at},u.default.createElement(E,{name:"download",size:16})),
-                      u.default.createElement("button",{onClick:()=>deleteFile(f.id),style:{...at,color:s.danger}},u.default.createElement(E,{name:"trash",size:16}))
+                      u.default.createElement("div",{onClick:()=>setEditQuote(f),style:{display:"flex",alignItems:"center",gap:7,marginTop:9,paddingTop:9,borderTop:`1px dashed ${s.line}`,flexWrap:"wrap",cursor:"pointer"}},
+                        HB_num(f.amount)
+                          ? u.default.createElement(u.default.Fragment,null,
+                              u.default.createElement("span",{style:{fontSize:11.5,color:s.oceanDark,background:"#F2EFE8",borderRadius:999,padding:"3px 10px"}},f.workItem||"（未填工項）"),
+                              u.default.createElement("span",{style:{fontSize:13,color:s.ink}},"NT$ ",HB_money(HB_num(f.amount))),
+                              u.default.createElement("span",{style:{fontSize:10.5,color:s.inkSoft}},f.taxIncluded?"含稅":"未稅"),
+                              f.quotedAt?u.default.createElement("span",{style:{fontSize:10.5,color:s.inkSoft}},"· ",f.quotedAt):null,
+                              f.validUntil?u.default.createElement("span",{style:{fontSize:10.5,color:s.inkSoft}},"· 有效至 ",f.validUntil):null,
+                              f.status==="adopted"?u.default.createElement("span",{style:{fontSize:10,color:"#fff",background:s.tree,borderRadius:999,padding:"2px 8px"}},"已採用"):null,
+                              f.status==="rejected"?u.default.createElement("span",{style:{fontSize:10,color:s.inkSoft,border:`1px solid ${s.line}`,borderRadius:999,padding:"2px 8px"}},"未採用"):null,
+                              u.default.createElement("span",{style:{marginLeft:"auto",fontSize:11,color:s.ocean,display:"flex",alignItems:"center",gap:4}},u.default.createElement(E,{name:"pencil",size:12}),"編輯")
+                            )
+                          : u.default.createElement("span",{style:{fontSize:11.5,color:s.ocean,border:`1px dashed ${s.ocean}`,borderRadius:8,padding:"5px 12px",display:"flex",alignItems:"center",gap:5}},
+                              u.default.createElement(E,{name:"calculator",size:12}),"填寫工項與金額，才能進比價表")
+                      )
                     ))
                   )
             )
           : u.default.createElement(u.default.Fragment,null,
+              u.default.createElement("div",{style:{display:"flex",gap:8,marginBottom:16}},
+                [["folders","資料夾","folder"],["compare","比價表","calculator"]].map(([k,label,icon])=>
+                  u.default.createElement("button",{key:k,onClick:()=>setVqTab(k),style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:6,
+                    background:vqTab===k?"rgba(124,106,86,0.12)":"none",border:`1px solid ${vqTab===k?s.ocean:s.line}`,color:vqTab===k?s.oceanDark:s.inkSoft,
+                    borderRadius:9,padding:"9px 0",fontSize:13,cursor:"pointer"}},u.default.createElement(E,{name:icon,size:15}),label))
+              ),
+              vqTab==="compare"
+              ? u.default.createElement(u.default.Fragment,null,
+                  u.default.createElement("label",{style:{display:"flex",alignItems:"center",gap:7,fontSize:12,color:s.oceanDark,marginBottom:14,cursor:"pointer"}},
+                    u.default.createElement("input",{type:"checkbox",checked:taxNorm,onChange:()=>setTaxNorm(v=>!v),style:{width:15,height:15,accentColor:s.ocean}}),
+                    "未稅的報價自動加 5% 換算成含稅再比較"),
+                  compareGroups.length===0
+                    ? u.default.createElement(He,{icon:"calculator",text:"還沒有填金額的報價。先進資料夾，幫每筆報價填上工項與金額，這裡就會自動整理成比價表。"})
+                    : compareGroups.map(g=>u.default.createElement("div",{key:g.key,style:{marginBottom:24}},
+                        u.default.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"baseline",borderLeft:`3px solid ${s.ocean}`,paddingLeft:9,marginBottom:10,flexWrap:"wrap",gap:6}},
+                          u.default.createElement("span",{style:{fontSize:13.5,color:s.oceanDark}},g.label),
+                          (()=>{let t=g.items.reduce((n,it)=>n+it.rows.filter(r=>r.status==="adopted").reduce((m,r)=>m+HB_num(r.amount),0),0);
+                            return t?u.default.createElement("span",{style:{fontSize:11.5,color:s.tree}},"已採用合計 NT$ ",HB_money(t)):null})()
+                        ),
+                        g.items.map(it=>{
+                          let top=it.rows[it.rows.length-1],gap=vqEff(top)-it.min;
+                          return u.default.createElement("div",{key:it.name,style:{background:s.card,border:`1px solid ${s.line}`,borderRadius:10,padding:"11px 13px",marginBottom:9}},
+                            u.default.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:8,gap:8,flexWrap:"wrap"}},
+                              u.default.createElement("span",{style:{fontSize:13.5,color:s.ink}},it.name),
+                              u.default.createElement("span",{style:{fontSize:11,color:s.inkSoft}},it.rows.length," 家報價",
+                                (it.rows.length>1&&it.min>0)?`　·　最高差 ${HB_money(gap)}（${Math.round(gap/it.min*100)}%）`:"")
+                            ),
+                            u.default.createElement("div",{style:{overflowX:"auto"}},
+                              u.default.createElement("table",{style:{width:"100%",borderCollapse:"collapse",fontSize:12,minWidth:430}},
+                                u.default.createElement("thead",null,u.default.createElement("tr",null,
+                                  ["廠商","報價","價差","報價日",""].map((hd,hi)=>u.default.createElement("th",{key:hi,style:{textAlign:hi===1||hi===2?"right":"left",padding:"5px 7px",background:"#F7F5F0",color:s.inkSoft,fontWeight:400,whiteSpace:"nowrap"}},hd))
+                                )),
+                                u.default.createElement("tbody",null,it.rows.map((r,ri)=>{
+                                  let eff=vqEff(r),diff=eff-it.min,low=ri===0,ad=r.status==="adopted";
+                                  return u.default.createElement("tr",{key:r.id,style:{background:ad?"rgba(147,160,140,0.16)":(low?"rgba(124,106,86,0.06)":"transparent")}},
+                                    u.default.createElement("td",{style:{padding:"6px 7px",borderTop:`1px solid ${s.line}`}},r.vendor,
+                                      low?u.default.createElement("span",{style:{fontSize:9.5,color:s.ocean,border:`1px solid ${s.ocean}`,borderRadius:999,padding:"1px 6px",marginLeft:6,whiteSpace:"nowrap"}},"最低"):null,
+                                      ad?u.default.createElement("span",{style:{fontSize:9.5,color:"#fff",background:s.tree,borderRadius:999,padding:"1px 6px",marginLeft:6,whiteSpace:"nowrap"}},"已採用"):null),
+                                    u.default.createElement("td",{style:{padding:"6px 7px",borderTop:`1px solid ${s.line}`,textAlign:"right",whiteSpace:"nowrap"}},HB_money(eff),
+                                      u.default.createElement("span",{style:{fontSize:9.5,color:s.inkSoft,marginLeft:4}},r.taxIncluded?"含稅":(taxNorm?"已換算":"未稅"))),
+                                    u.default.createElement("td",{style:{padding:"6px 7px",borderTop:`1px solid ${s.line}`,textAlign:"right",whiteSpace:"nowrap",color:diff?s.danger:s.inkSoft}},diff?"+"+HB_money(diff):"—"),
+                                    u.default.createElement("td",{style:{padding:"6px 7px",borderTop:`1px solid ${s.line}`,color:s.inkSoft,whiteSpace:"nowrap"}},r.quotedAt||"—"),
+                                    u.default.createElement("td",{style:{padding:"6px 7px",borderTop:`1px solid ${s.line}`,textAlign:"right"}},
+                                      u.default.createElement("button",{onClick:()=>toggleAdopt(r.id,it.rows),style:{border:`1px solid ${ad?s.tree:s.line}`,background:ad?s.tree:"none",color:ad?"#fff":s.oceanDark,borderRadius:7,padding:"4px 10px",fontSize:11.5,cursor:"pointer",whiteSpace:"nowrap"}},ad?"已採用":"採用"))
+                                  )
+                                }))
+                              ))
+                          )
+                        })
+                      ))
+                )
+              : u.default.createElement(u.default.Fragment,null,
               u.default.createElement("div",{style:{marginBottom:16}},
                 u.default.createElement(ke,{label:"新增廠商資料夾",icon:"folder-plus",busy:false,onClick:()=>setShowNewFolder(true)})
               ),
@@ -4155,15 +4347,18 @@ function HbVendorQuoteHub({onBack,notify}){
                         return u.default.createElement("div",{key:folder.id,onClick:()=>setOpenFolder(folder.id),style:{background:s.card,borderRadius:8,padding:"14px 12px",border:`1px solid ${s.line}`,cursor:"pointer"}},
                           u.default.createElement(E,{name:"folder",size:22,color:s.ocean,style:{marginBottom:8}}),
                           u.default.createElement("div",{style:{fontSize:13,fontWeight:400,color:s.oceanDark,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},folder.name),
-                          u.default.createElement("div",{style:{fontSize:11.5,color:s.inkSoft,marginTop:2}},count," 筆")
+                          u.default.createElement("div",{style:{fontSize:11.5,color:s.inkSoft,marginTop:2}},count," 筆",(()=>{let t=adoptedTotalOf(folder.id);return t?u.default.createElement("span",{style:{color:s.tree,marginLeft:6}},"· 已採用 ",HB_money(t)):null})())
                         )
                       })
                     )
                   ))
-            )
+            ))
     ),
     showNewFolder && u.default.createElement(vqFolderModal,{projects,onCancel:()=>setShowNewFolder(false),onCreate:createFolder}),
-    showTextNote && u.default.createElement(vqTextModal,{onCancel:()=>setShowTextNote(false),onCreate:addTextNote})
+    showTextNote && u.default.createElement(vqTextModal,{onCancel:()=>setShowTextNote(false),onCreate:addTextNote}),
+    editQuote && u.default.createElement(vqQuoteInfoModal,{item:editQuote,workItems:allWorkItems,
+      onCancel:()=>setEditQuote(null),
+      onSave:async v=>{let ok=await saveQuoteInfo(editQuote.id,v);if(ok)setEditQuote(null)}})
   );
 }
 
