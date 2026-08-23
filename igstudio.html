@@ -6,59 +6,66 @@
 <title>赫柏 IG 貼文工作室</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Italiana&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@500;600;700&display=swap">
 
 <style>
 :root{
-  --ground:#EDEAE3;
-  --surface:#F7F5EF;
-  --panel:#FFFFFF;
-  --ink:#191813;
-  --ink-2:#413D33;
-  --muted:#736D5F;
-  --line:#D9D3C5;
-  --line-soft:#E7E2D7;
-  --accent:#8F7020;
-  --accent-2:#B08F2C;
-  --accent-soft:#F2E8C9;
-  --deep:#26343A;
-  --deep-ink:#E9E6DC;
-  --shadow:0 1px 2px rgba(25,24,19,.05), 0 8px 24px -14px rgba(25,24,19,.28);
-  --r:3px;
+  /* Daylight Ledger — 09 tones */
+  --ground:#EFEBE1;      /* 灰泥 LIME WASH */
+  --surface:#F4F0E6;
+  --panel:#FAF8F3;       /* 石灰 CHALK */
+  --ink:#1B1A17;         /* 石墨 GRAPHITE */
+  --ink-2:#3E3A31;
+  --muted:#6C6559;       /* 岩灰 SLATE */
+  --line:#DED7C7;        /* 界線 RULE */
+  --line-soft:#EAE4D6;
+  --accent:#A8761F;      /* 黃銅 BRASS（文字安全值） */
+  --accent-2:#C08A2E;    /* 黃銅 BRASS */
+  --accent-soft:#F4E9CF;
+  --clay:#A85A3C;        /* 陶土 CLAY — 訊號 */
+  --clay-soft:#F6E7DF;
+  --deep:#3B4B46;        /* 松蔭 PINE */
+  --deep-ink:#EFEBE1;
+  --shadow:none;
+  --r:0px;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    --ground:#14130E;
-    --surface:#1B1A14;
-    --panel:#23211A;
-    --ink:#EDEAE3;
-    --ink-2:#D0CABA;
-    --muted:#98917F;
-    --line:#37342B;
-    --line-soft:#2B2922;
-    --accent:#D9B75C;
-    --accent-2:#E6CB84;
-    --accent-soft:#3B3220;
-    --deep:#101A1D;
-    --deep-ink:#E9E6DC;
-    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -14px rgba(0,0,0,.7);
+    --ground:#141412;      /* 夜色 NIGHT */
+    --surface:#1D1C18;
+    --panel:#22201B;
+    --ink:#EFEBE1;
+    --ink-2:#D2CCBD;
+    --muted:#948D7D;
+    --line:#34312A;
+    --line-soft:#292720;
+    --accent:#DFB35F;
+    --accent-2:#EBC77F;
+    --accent-soft:#3A3120;
+    --clay:#D08464;
+    --clay-soft:#3A251C;
+    --deep:#2B3733;
+    --deep-ink:#EFEBE1;
+    --shadow:none;
   }
 }
 :root[data-theme="dark"]{
-  --ground:#14130E;
-  --surface:#1B1A14;
-  --panel:#23211A;
-  --ink:#EDEAE3;
-  --ink-2:#D0CABA;
-  --muted:#98917F;
-  --line:#37342B;
-  --line-soft:#2B2922;
-  --accent:#D9B75C;
-  --accent-2:#E6CB84;
-  --accent-soft:#3B3220;
-  --deep:#101A1D;
-  --deep-ink:#E9E6DC;
-  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -14px rgba(0,0,0,.7);
+  --ground:#141412;      /* 夜色 NIGHT */
+  --surface:#1D1C18;
+  --panel:#22201B;
+  --ink:#EFEBE1;
+  --ink-2:#D2CCBD;
+  --muted:#948D7D;
+  --line:#34312A;
+  --line-soft:#292720;
+  --accent:#DFB35F;
+  --accent-2:#EBC77F;
+  --accent-soft:#3A3120;
+  --clay:#D08464;
+  --clay-soft:#3A251C;
+  --deep:#2B3733;
+  --deep-ink:#EFEBE1;
+  --shadow:none;
 }
 
 *{box-sizing:border-box}
@@ -82,20 +89,41 @@ button,input,select,textarea{font:inherit;color:inherit}
   font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
   color:var(--muted);
 }
+/* ---------- notation marks ---------- */
+.ic{
+  width:15px;height:15px;flex:none;display:inline-block;vertical-align:-3px;
+  fill:none;stroke:currentColor;stroke-width:3.1;stroke-linecap:butt;stroke-linejoin:miter;
+}
+.ic.lg{width:17px;height:17px}
+.label .ic{color:var(--accent);vertical-align:-3px}
+.btn .ic{margin-right:7px;vertical-align:-3px}
 
 /* ---------- shell ---------- */
 .app{max-width:1360px;margin:0 auto;padding:0 20px 64px}
 .topbar{
+  display:flex;align-items:flex-end;justify-content:space-between;gap:16px;
+  padding:14px 0 16px;flex-wrap:wrap;border-top:1px solid var(--ink);margin-top:22px;
+}
+.masthead{
   display:flex;align-items:baseline;justify-content:space-between;gap:16px;
-  padding:26px 0 14px;flex-wrap:wrap;
+  font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.22em;
+  color:var(--muted);text-transform:uppercase;padding:10px 0 0;
 }
-.brand{display:flex;align-items:baseline;gap:12px;min-width:0}
+.spec{
+  font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.2em;
+  color:var(--muted);text-align:right;line-height:2;text-transform:uppercase;
+}
+.brand{display:flex;flex-direction:column;gap:7px;min-width:0}
 .mark{
-  font-family:"Noto Serif TC",serif;font-weight:700;font-size:22px;letter-spacing:.06em;
-  color:var(--ink);
+  font-family:"Noto Serif TC",serif;font-weight:600;font-size:26px;letter-spacing:.22em;
+  color:var(--ink);line-height:1.1;
 }
-.brand-sub{font-size:12.5px;color:var(--muted);letter-spacing:.04em}
-.topbar-tools{display:flex;gap:8px;align-items:center}
+.mark-en{
+  font-family:Italiana,"Noto Serif TC",serif;font-size:19px;letter-spacing:.34em;
+  color:var(--ink);text-transform:uppercase;
+}
+.brand-sub{font-size:12px;color:var(--muted);letter-spacing:.16em}
+.topbar-tools{display:flex;gap:14px;align-items:flex-end}
 
 .tickrule{height:11px;position:relative;border-top:1px solid var(--ink);opacity:.9}
 .tickrule::after{
@@ -106,20 +134,68 @@ button,input,select,textarea{font:inherit;color:inherit}
   mask-image:linear-gradient(to bottom,#000 0 5px,transparent 5px);
 }
 
+/* ---------- tone bar (plate register Ⅰ) ---------- */
+.tonewrap{margin-top:18px}
+.tonecap{
+  display:flex;align-items:baseline;justify-content:space-between;gap:12px;
+  border-top:1px solid var(--ink);padding-top:9px;margin-bottom:10px;
+}
+.tonecap .tc-l{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.34em;color:var(--ink);text-transform:uppercase}
+.tonecap .tc-l b{color:var(--accent);font-weight:400;letter-spacing:.2em;margin-right:10px}
+.tonecap .tc-r{font-size:11px;color:var(--muted);letter-spacing:.12em}
+.tonebar{
+  display:grid;grid-template-columns:repeat(9,1fr);height:40px;
+  border:1px solid var(--muted);
+}
+.tonebar i{display:block;position:relative;background:var(--c);border-left:1px solid var(--muted)}
+.tonebar i:first-child{border-left:0}
+.tonebar i::after{
+  content:"";position:absolute;left:0;right:0;top:0;height:5px;
+  background-image:repeating-linear-gradient(to right,var(--tk) 0 1px,transparent 1px 20px);
+  opacity:.45;
+}
+.tonelabels{
+  display:grid;grid-template-columns:repeat(9,1fr);gap:0;margin-top:6px;
+  font-size:10px;color:var(--muted);letter-spacing:.14em;
+}
+.tonelabels span{display:block}
+.tonelabels b{font-family:"IBM Plex Mono",monospace;font-size:9px;color:var(--accent);font-weight:400;margin-right:6px;letter-spacing:.1em}
+@media (max-width:760px){
+  .tonebar{height:26px}
+  .tonelabels{display:none}
+  .tonecap .tc-r{display:none}
+}
+
+/* ---------- register headings (plate) ---------- */
+.reg{
+  display:flex;align-items:baseline;gap:0 12px;flex-wrap:wrap;
+  border-top:1px solid var(--ink);padding-top:9px;margin-bottom:14px;
+}
+.reg .rn{
+  font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.2em;
+  color:var(--accent);min-width:16px;
+}
+.reg .rt{font-size:13px;letter-spacing:.34em;color:var(--ink);font-weight:500}
+.reg .rt.en{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.34em;text-transform:uppercase}
+.reg .rnote{margin-left:auto;font-size:11px;color:var(--muted);letter-spacing:.12em}
+.reg .ractions{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
+
 .layout{display:grid;grid-template-columns:340px minmax(0,1fr);gap:32px;margin-top:26px;align-items:start}
 @media (max-width:960px){.layout{grid-template-columns:1fr;gap:24px}}
 
 /* ---------- form panel ---------- */
 .form-panel{
-  background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
-  padding:20px 18px 22px;position:sticky;top:16px;box-shadow:var(--shadow);
+  background:transparent;border:0;border-right:1px solid var(--line);
+  padding:0 22px 22px 0;position:sticky;top:16px;
   max-height:calc(100vh - 32px);overflow:auto;
 }
+@media (max-width:960px){.form-panel{border-right:0;padding-right:0}}
 @media (max-width:960px){.form-panel{position:static;max-height:none}}
-.form-panel h2{font-size:16px;letter-spacing:.02em}
-.panel-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:14px}
+.form-panel h2{font-size:14px;letter-spacing:.28em;font-weight:500}
+.panel-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:16px;border-top:1px solid var(--ink);padding-top:9px}
 .field{display:flex;flex-direction:column;gap:5px;margin-bottom:13px}
-.field > .label{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.field > .label{display:flex;justify-content:flex-start;align-items:center;gap:7px}
+.field > .label .mono{margin-left:auto}
 .field input[type=text],.field input[type=number],.field select,.field textarea{
   width:100%;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);
   padding:7px 9px;font-size:13.5px;line-height:1.5;
@@ -132,7 +208,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 .chips{display:flex;flex-wrap:wrap;gap:5px}
 .chip{
   border:1px solid var(--line);background:var(--surface);color:var(--ink-2);
-  border-radius:999px;padding:3px 10px;font-size:12.5px;cursor:pointer;
+  border-radius:0;padding:4px 10px;font-size:12.5px;cursor:pointer;letter-spacing:.04em;
   transition:background .14s,border-color .14s,color .14s;
 }
 .chip:hover{border-color:var(--accent)}
@@ -140,7 +216,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 
 .btn{
   border:1px solid var(--ink);background:var(--ink);color:var(--ground);
-  border-radius:var(--r);padding:8px 14px;font-size:13.5px;font-weight:500;cursor:pointer;
+  border-radius:0;padding:8px 15px;font-size:13px;font-weight:500;cursor:pointer;letter-spacing:.1em;
   transition:opacity .14s,transform .06s;
 }
 .btn:hover{opacity:.86}
@@ -152,15 +228,19 @@ button,input,select,textarea{font:inherit;color:inherit}
 .btn-row .btn{flex:1}
 
 /* ---------- workspace ---------- */
-.tabs{display:flex;gap:2px;flex-wrap:wrap;border-bottom:1px solid var(--line);margin-bottom:22px}
+.tabs{display:flex;gap:0;flex-wrap:wrap;border-top:1px solid var(--ink);border-bottom:1px solid var(--line);margin-bottom:26px}
 .tab{
   background:transparent;border:0;border-bottom:2px solid transparent;
-  padding:9px 14px 8px;cursor:pointer;color:var(--muted);font-size:14px;
-  display:flex;align-items:baseline;gap:7px;
+  padding:11px 18px 10px;cursor:pointer;color:var(--muted);font-size:13px;letter-spacing:.2em;
+  display:flex;align-items:center;gap:9px;
 }
+.tab .tn{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.16em;color:var(--accent);opacity:.55}
+.tab[aria-selected="true"] .tn{opacity:1}
 .tab:hover{color:var(--ink)}
 .tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent);font-weight:500}
-.tab .tnum{font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--accent);letter-spacing:.08em}
+.tab .ic{opacity:.55;transition:opacity .15s}
+.tab:hover .ic{opacity:.85}
+.tab[aria-selected="true"] .ic{opacity:1;color:var(--accent)}
 .pane{display:none;animation:fade .22s ease both}
 .pane.on{display:block}
 @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
@@ -173,14 +253,17 @@ button,input,select,textarea{font:inherit;color:inherit}
 .empty strong{display:block;color:var(--ink);font-family:"Noto Serif TC",serif;font-size:17px;margin-bottom:6px;font-weight:600}
 
 .card{
-  background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
-  padding:18px 20px 20px;margin-bottom:16px;box-shadow:var(--shadow);
+  background:transparent;border:0;
+  padding:0 0 26px;margin-bottom:22px;
 }
+.card.framed{border:1px solid var(--line);padding:18px 20px 20px;background:var(--panel)}
 .card-head{
   display:flex;align-items:center;justify-content:space-between;gap:12px;
-  padding-bottom:10px;margin-bottom:14px;border-bottom:1px solid var(--line-soft);flex-wrap:wrap;
+  padding-top:9px;margin-bottom:16px;border-top:1px solid var(--ink);flex-wrap:wrap;
 }
-.card-head h3{font-size:15.5px}
+.card.framed > .card-head{border-top:0;padding-top:0;padding-bottom:10px;border-bottom:1px solid var(--line-soft)}
+.card-head h3{font-size:13px;letter-spacing:.3em;font-weight:500;display:flex;align-items:baseline;gap:12px}
+.card-head h3 .rn{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.2em;color:var(--accent)}
 .card-actions{display:flex;gap:6px;flex-wrap:wrap}
 
 .post-body{white-space:pre-wrap;font-size:14.5px;line-height:1.95;color:var(--ink)}
@@ -191,7 +274,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 
 .pill{
   display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);
-  border-radius:999px;padding:1px 9px;font-size:11px;color:var(--muted);
+  border-radius:0;padding:2px 9px;font-size:11px;color:var(--muted);
   font-family:"IBM Plex Mono",monospace;letter-spacing:.05em;
 }
 .pill.on{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
@@ -204,9 +287,9 @@ button,input,select,textarea{font:inherit;color:inherit}
   padding:22px;display:flex;justify-content:center;align-items:center;min-height:320px;
 }
 .stage canvas{max-width:100%;height:auto;box-shadow:0 10px 40px -18px rgba(0,0,0,.8);display:block}
-.side-stack{display:flex;flex-direction:column;gap:14px}
-.side-box{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px}
-.side-box h4{font-size:13px;margin-bottom:9px;font-family:"Noto Sans TC",sans-serif;font-weight:700}
+.side-stack{display:flex;flex-direction:column;gap:20px}
+.side-box{background:transparent;border:0;border-top:1px solid var(--ink);padding:9px 0 0}
+.side-box h4{font-size:11.5px;margin-bottom:10px;font-family:"Noto Sans TC",sans-serif;font-weight:500;letter-spacing:.3em;color:var(--ink)}
 .opt-list{display:flex;flex-direction:column;gap:4px}
 .opt{
   text-align:left;border:1px solid transparent;background:transparent;border-radius:var(--r);
@@ -224,14 +307,14 @@ button,input,select,textarea{font:inherit;color:inherit}
 .matcard{border:1px solid var(--line);border-radius:var(--r);background:var(--surface);padding:10px 11px}
 .matcard-h{display:flex;align-items:center;gap:8px;margin-bottom:7px}
 .matcard-h b{font-size:13px}
-.matcard-h .tagx{font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.08em;color:var(--accent);border:1px solid var(--accent);border-radius:99px;padding:1px 6px}
+.matcard-h .tagx{font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.08em;color:var(--clay);border:1px solid var(--clay);background:var(--clay-soft);border-radius:0;padding:1px 6px}
 .matcard-h .sp{margin-left:auto;display:flex;gap:6px}
 .matcard-h button{background:none;border:0;color:var(--muted);font-size:11px;cursor:pointer;padding:2px 4px;text-decoration:underline;text-underline-offset:2px}
 .matcard-h button:hover{color:var(--accent)}
 .matrow{display:grid;grid-template-columns:62px 1fr;align-items:start;gap:7px;margin-bottom:5px}
 .matrow span{font-size:11px;color:var(--muted);padding-top:7px;line-height:1.3}
 .matrow input,.matrow textarea{
-  width:100%;background:var(--panel);border:1px solid var(--line);border-radius:6px;
+  width:100%;background:var(--panel);border:1px solid var(--line);border-radius:0;
   padding:6px 8px;font-size:12.5px;line-height:1.5;color:var(--ink)
 }
 .matrow textarea{resize:vertical;min-height:36px}
@@ -270,8 +353,8 @@ button,input,select,textarea{font:inherit;color:inherit}
 @media (hover:none){.slide .sctl{opacity:1}}
 .slide-top .sctl button{background:none;border:0;color:var(--muted);font-size:12px;line-height:1;padding:4px 5px;cursor:pointer;border-radius:5px}
 .slide-top .sctl button:hover{background:var(--surface);color:var(--accent)}
-.slide-top .edited{font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:.06em;color:var(--accent);border:1px solid var(--accent);border-radius:99px;padding:1px 5px;white-space:nowrap}
-.s-in{width:100%;background:transparent;border:1px solid transparent;border-radius:6px;padding:4px 6px;color:inherit;display:block}
+.slide-top .edited{font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:.06em;color:var(--clay);border:1px solid var(--clay);background:var(--clay-soft);border-radius:0;padding:1px 5px;white-space:nowrap}
+.s-in{width:100%;background:transparent;border:1px solid transparent;border-radius:0;padding:4px 6px;color:inherit;display:block}
 .s-in:hover{border-color:var(--line-soft)}
 .s-in:focus{border-color:var(--accent);outline:none;background:var(--surface)}
 .s-t{font-family:"Noto Serif TC",serif;font-size:15.5px;font-weight:600;color:var(--ink)}
@@ -281,7 +364,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 .slide.over{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
 .slide.addcard{align-items:center;justify-content:center;border-style:dashed;cursor:pointer;color:var(--muted);font-size:13px;gap:4px}
 .slide.addcard:hover{border-color:var(--accent);color:var(--accent)}
-.carnote{display:flex;align-items:center;gap:10px;flex-wrap:wrap;border:1px solid var(--accent);background:var(--accent-soft);border-radius:var(--r);padding:9px 12px;font-size:12.5px;margin-top:12px;line-height:1.6}
+.carnote{display:flex;align-items:center;gap:10px;flex-wrap:wrap;border:1px solid var(--clay);background:var(--clay-soft);border-radius:var(--r);padding:9px 12px;font-size:12.5px;margin-top:12px;line-height:1.6}
 .carnote .sp{margin-left:auto;display:flex;gap:8px}
 
 /* ---------- calendar ---------- */
@@ -313,75 +396,117 @@ details.adv[open] summary{margin-bottom:12px}
 
 .toast{
   position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(12px);
-  background:var(--ink);color:var(--ground);padding:9px 18px;border-radius:999px;font-size:13px;
+  background:var(--ink);color:var(--ground);padding:9px 18px;border-radius:0;font-size:13px;letter-spacing:.08em;
   opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:50;box-shadow:var(--shadow);
 }
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 .hint{font-size:11.5px;color:var(--muted);margin-top:4px;line-height:1.6}
+.tickrule.foot{margin-top:8px}
+.plate-foot{
+  display:flex;align-items:baseline;justify-content:space-between;gap:20px;flex-wrap:wrap;
+  padding:18px 0 8px;
+}
+.foot-line{font-family:"Noto Serif TC",serif;font-size:17px;letter-spacing:.16em;color:var(--ink)}
+.foot-colophon{font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.2em;color:var(--muted);text-transform:uppercase}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 </style>
 
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute;overflow:hidden" aria-hidden="true" focusable="false"><defs>
+<symbol id="i-title" viewBox="-24 -24 48 48"><rect x="-20" y="-15" width="40" height="30"/><line x1="-20" y1="5" x2="20" y2="5"/><line x1="-5" y1="5" x2="-5" y2="15"/></symbol>
+<symbol id="i-north" viewBox="-24 -24 48 48"><path d="M0 -21 L7.5 3 L0 -4 L-7.5 3 Z"/><line x1="0" y1="-4" x2="0" y2="21"/><line x1="-9" y1="21" x2="9" y2="21"/></symbol>
+<symbol id="i-case" viewBox="-24 -24 48 48"><path d="M-20 -2 L0 -18 L20 -2"/><line x1="-15" y1="-6" x2="-15" y2="18"/><line x1="15" y1="-6" x2="15" y2="18"/><line x1="-19" y1="18" x2="19" y2="18"/></symbol>
+<symbol id="i-dim" viewBox="-24 -24 48 48"><line x1="-20" y1="-15" x2="-20" y2="15"/><line x1="20" y1="-15" x2="20" y2="15"/><line x1="-20" y1="0" x2="20" y2="0"/><line x1="-20" y1="0" x2="-12" y2="-4.5"/><line x1="-20" y1="0" x2="-12" y2="4.5"/><line x1="20" y1="0" x2="12" y2="-4.5"/><line x1="20" y1="0" x2="12" y2="4.5"/></symbol>
+<symbol id="i-plan" viewBox="-24 -24 48 48"><rect x="-20" y="-16" width="40" height="32"/><line x1="3" y1="-16" x2="3" y2="16"/><line x1="3" y1="1" x2="20" y2="1"/></symbol>
+<symbol id="i-style" viewBox="-24 -24 48 48"><path d="M-15.5 -8.5 L-8.14 4.25 L-22.86 4.25 Z"/><rect x="-6.5" y="-6.5" width="13" height="13"/><circle cx="16" cy="0" r="7"/></symbol>
+<symbol id="i-tone" viewBox="-24 -24 48 48"><circle cx="-9" cy="0" r="8.5"/><circle cx="0" cy="0" r="8.5"/><circle cx="9" cy="0" r="8.5"/></symbol>
+<symbol id="i-hatch" viewBox="-24 -24 48 48"><rect x="-18" y="-18" width="36" height="36"/><line x1="18" y1="0" x2="0" y2="-18"/><line x1="18" y1="12" x2="-12" y2="-18"/><line x1="-18" y1="-12" x2="12" y2="18"/><line x1="-18" y1="0" x2="0" y2="18"/></symbol>
+<symbol id="i-room" viewBox="-24 -24 48 48"><rect x="-20" y="-16" width="40" height="32"/><rect x="-8" y="-6" width="16" height="12"/><line x1="-20" y1="-16" x2="-8" y2="-6"/><line x1="20" y1="-16" x2="8" y2="-6"/><line x1="-20" y1="16" x2="-8" y2="6"/><line x1="20" y1="16" x2="8" y2="6"/></symbol>
+<symbol id="i-brief" viewBox="-24 -24 48 48"><line x1="-14" y1="-17" x2="-20" y2="-17"/><line x1="-20" y1="-17" x2="-20" y2="17"/><line x1="-20" y1="17" x2="-14" y2="17"/><line x1="-10" y1="-9" x2="20" y2="-9"/><line x1="-10" y1="0" x2="14" y2="0"/><line x1="-10" y1="9" x2="7" y2="9"/></symbol>
+<symbol id="i-voice" viewBox="-24 -24 48 48"><line x1="-17.5" y1="-7" x2="-17.5" y2="7"/><line x1="-12.5" y1="-15" x2="-12.5" y2="15"/><line x1="-7.5" y1="-21" x2="-7.5" y2="21"/><line x1="-2.5" y1="-12" x2="-2.5" y2="12"/><line x1="2.5" y1="-18" x2="2.5" y2="18"/><line x1="7.5" y1="-9" x2="7.5" y2="9"/><line x1="12.5" y1="-15" x2="12.5" y2="15"/><line x1="17.5" y1="-6" x2="17.5" y2="6"/></symbol>
+<symbol id="i-cta" viewBox="-24 -24 48 48"><circle cx="0" cy="0" r="19"/><line x1="-9" y1="0" x2="8" y2="0"/><line x1="2.5" y1="-5.5" x2="8" y2="0"/><line x1="2.5" y1="5.5" x2="8" y2="0"/></symbol>
+<symbol id="i-copy" viewBox="-24 -24 48 48"><line x1="-18" y1="-14" x2="18" y2="-14"/><line x1="-18" y1="-5" x2="18" y2="-5"/><line x1="-18" y1="4" x2="9" y2="4"/><line x1="-18" y1="13" x2="-1" y2="13"/></symbol>
+<symbol id="i-frame" viewBox="-24 -24 48 48"><rect x="-13" y="-16" width="26" height="32"/><line x1="-20" y1="-21" x2="-13" y2="-21"/><line x1="-20" y1="-21" x2="-20" y2="-14"/><line x1="20" y1="-21" x2="13" y2="-21"/><line x1="20" y1="-21" x2="20" y2="-14"/><line x1="-20" y1="21" x2="-13" y2="21"/><line x1="-20" y1="21" x2="-20" y2="14"/><line x1="20" y1="21" x2="13" y2="21"/><line x1="20" y1="21" x2="20" y2="14"/></symbol>
+<symbol id="i-carousel" viewBox="-24 -24 48 48"><rect x="-11" y="-17" width="22" height="34"/><rect x="-21" y="-10" width="5" height="20"/><rect x="16" y="-10" width="5" height="20"/></symbol>
+<symbol id="i-calendar" viewBox="-24 -24 48 48"><rect x="-20" y="-17" width="40" height="34"/><line x1="-20" y1="-6" x2="20" y2="-6"/><line x1="-11" y1="-17" x2="-11" y2="-13"/><line x1="11" y1="-17" x2="11" y2="-13"/><circle cx="-11" cy="2" r="2.2"/><circle cx="0" cy="2" r="2.2"/><circle cx="11" cy="2" r="2.2"/><circle cx="-11" cy="13" r="2.2"/><circle cx="0" cy="13" r="2.2"/><circle cx="11" cy="13" r="2.2"/></symbol>
+<symbol id="i-spark" viewBox="-24 -24 48 48"><line x1="8" y1="0" x2="20" y2="0"/><line x1="5.66" y1="5.66" x2="14.14" y2="14.14"/><line x1="0" y1="8" x2="0" y2="20"/><line x1="-5.66" y1="5.66" x2="-14.14" y2="14.14"/><line x1="-8" y1="0" x2="-20" y2="0"/><line x1="-5.66" y1="-5.66" x2="-14.14" y2="-14.14"/><line x1="0" y1="-8" x2="0" y2="-20"/><line x1="5.66" y1="-5.66" x2="14.14" y2="-14.14"/><circle cx="0" cy="0" r="3.6"/></symbol>
+<symbol id="i-aperture" viewBox="-24 -24 48 48"><path d="M0 -19 L16.45 -9.5 L16.45 9.5 L0 19 L-16.45 9.5 L-16.45 -9.5 Z"/><path d="M6.91 -3.99 L6.91 3.99 L0 7.98 L-6.91 3.99 L-6.91 -3.99 L0 -7.98 Z"/><line x1="0" y1="-19" x2="6.91" y2="-3.99"/><line x1="16.45" y1="-9.5" x2="6.91" y2="3.99"/><line x1="16.45" y1="9.5" x2="0" y2="7.98"/><line x1="0" y1="19" x2="-6.91" y2="3.99"/><line x1="-16.45" y1="9.5" x2="-6.91" y2="-3.99"/><line x1="-16.45" y1="-9.5" x2="0" y2="-7.98"/></symbol>
+<symbol id="i-export" viewBox="-24 -24 48 48"><line x1="0" y1="-19" x2="0" y2="8"/><line x1="-7" y1="1" x2="0" y2="8"/><line x1="7" y1="1" x2="0" y2="8"/><line x1="-16" y1="18" x2="16" y2="18"/></symbol>
+</defs></svg>
 <div class="app">
+  <div class="masthead">
+    <span>赫柏空間設計　HERFULSINS　·　INTERFACE SYSTEM</span>
+    <span>DAYLIGHT LEDGER</span>
+  </div>
   <header class="topbar">
     <div class="brand">
+      <span class="mark-en">Hebe Space Design</span>
       <span class="mark">赫柏空間設計</span>
-      <span class="brand-sub">IG 貼文工作室 · Instagram Content Studio</span>
+      <span class="brand-sub">IG 貼文工作室　Instagram Content Studio</span>
     </div>
     <div class="topbar-tools">
+      <span class="spec">09 TONES · 19 MARKS<br>REV. 2026.08</span>
       <button class="btn ghost small" id="themeBtn" type="button">深色模式</button>
     </div>
   </header>
   <div class="tickrule" aria-hidden="true"></div>
+  <div class="tonewrap">
+    <div class="tonecap">
+      <span class="tc-l"><b>Ⅰ</b>T O N E S</span>
+      <span class="tc-r">記錄，而非發明</span>
+    </div>
+    <div class="tonebar" role="img" aria-label="Daylight Ledger 九色系統"><i style="--c:#EFEBE1;--tk:#1B1A17" title="01　灰泥　LIME WASH　#EFEBE1"></i><i style="--c:#FAF8F3;--tk:#1B1A17" title="02　石灰　CHALK　#FAF8F3"></i><i style="--c:#DED7C7;--tk:#1B1A17" title="03　界線　RULE　#DED7C7"></i><i style="--c:#6C6559;--tk:#EFEBE1" title="04　岩灰　SLATE　#6C6559"></i><i style="--c:#1B1A17;--tk:#EFEBE1" title="05　石墨　GRAPHITE　#1B1A17"></i><i style="--c:#C08A2E;--tk:#1B1A17" title="06　黃銅　BRASS　#C08A2E"></i><i style="--c:#3B4B46;--tk:#EFEBE1" title="07　松蔭　PINE　#3B4B46"></i><i style="--c:#A85A3C;--tk:#EFEBE1" title="08　陶土　CLAY　#A85A3C"></i><i style="--c:#141412;--tk:#EFEBE1" title="09　夜色　NIGHT　#141412"></i></div>
+    <div class="tonelabels" aria-hidden="true"><span><b>01</b>灰泥</span><span><b>02</b>石灰</span><span><b>03</b>界線</span><span><b>04</b>岩灰</span><span><b>05</b>石墨</span><span><b>06</b>黃銅</span><span><b>07</b>松蔭</span><span><b>08</b>陶土</span><span><b>09</b>夜色</span></div>
+  </div>
 
   <main class="layout">
     <!-- ============ 左：專案設定 ============ -->
     <aside class="form-panel">
       <div class="panel-head">
         <h2>專案設定</h2>
-        <span class="label">Project brief</span>
+        <span class="label">Ⅰ　Project brief</span>
       </div>
 
       <div class="field">
-        <label class="label" for="f-name">案名</label>
+        <label class="label" for="f-name"><svg class="ic" aria-hidden="true"><use href="#i-title"/></svg>案名</label>
         <input type="text" id="f-name" value="日光之間" placeholder="例：日光之間、微風靜宅">
       </div>
 
       <div class="row2">
         <div class="field">
-          <label class="label" for="f-region">地區</label>
+          <label class="label" for="f-region"><svg class="ic" aria-hidden="true"><use href="#i-north"/></svg>地區</label>
           <select id="f-region"></select>
         </div>
         <div class="field">
-          <label class="label" for="f-case">案型</label>
+          <label class="label" for="f-case"><svg class="ic" aria-hidden="true"><use href="#i-case"/></svg>案型</label>
           <select id="f-case"></select>
         </div>
       </div>
 
       <div class="row2">
         <div class="field">
-          <label class="label" for="f-size">坪數</label>
+          <label class="label" for="f-size"><svg class="ic" aria-hidden="true"><use href="#i-dim"/></svg>坪數</label>
           <input type="number" id="f-size" value="32" min="3" max="500">
         </div>
         <div class="field">
-          <label class="label" for="f-layout">格局</label>
+          <label class="label" for="f-layout"><svg class="ic" aria-hidden="true"><use href="#i-plan"/></svg>格局</label>
           <input type="text" id="f-layout" value="3房2廳2衛" placeholder="3房2廳2衛">
         </div>
       </div>
 
       <div class="field">
-        <label class="label" for="f-style">設計風格</label>
+        <label class="label" for="f-style"><svg class="ic" aria-hidden="true"><use href="#i-style"/></svg>設計風格</label>
         <select id="f-style"></select>
       </div>
 
       <div class="field">
-        <label class="label" for="f-tone">色調</label>
+        <label class="label" for="f-tone"><svg class="ic" aria-hidden="true"><use href="#i-tone"/></svg>色調</label>
         <select id="f-tone"></select>
       </div>
 
       <div class="field">
-        <span class="label">主要材質 <span id="matCount" class="mono"></span></span>
+        <span class="label"><svg class="ic" aria-hidden="true"><use href="#i-hatch"/></svg>主要材質 <span id="matCount" class="mono"></span></span>
         <div class="chips" id="f-materials"></div>
         <div class="card-actions" style="margin-top:8px">
           <button class="btn ghost small" id="matEditBtn" type="button" aria-expanded="false">編輯材質文案</button>
@@ -391,23 +516,23 @@ details.adv[open] summary{margin-bottom:12px}
       </div>
 
       <div class="field">
-        <span class="label">亮點空間 <span id="spaceCount" class="mono"></span></span>
+        <span class="label"><svg class="ic" aria-hidden="true"><use href="#i-room"/></svg>亮點空間 <span id="spaceCount" class="mono"></span></span>
         <div class="chips" id="f-spaces"></div>
       </div>
 
       <div class="field">
-        <label class="label" for="f-needs">屋主需求關鍵字</label>
+        <label class="label" for="f-needs"><svg class="ic" aria-hidden="true"><use href="#i-brief"/></svg>屋主需求關鍵字</label>
         <textarea id="f-needs" placeholder="用頓號或逗號分隔">大量收納、在家工作、養貓、喜歡下廚</textarea>
         <span class="hint">越具體，文案越有畫面。</span>
       </div>
 
       <div class="row2">
         <div class="field">
-          <label class="label" for="f-voice">語氣</label>
+          <label class="label" for="f-voice"><svg class="ic" aria-hidden="true"><use href="#i-voice"/></svg>語氣</label>
           <select id="f-voice"></select>
         </div>
         <div class="field">
-          <label class="label" for="f-cta">行動呼籲</label>
+          <label class="label" for="f-cta"><svg class="ic" aria-hidden="true"><use href="#i-cta"/></svg>行動呼籲</label>
           <select id="f-cta"></select>
         </div>
       </div>
@@ -418,7 +543,7 @@ details.adv[open] summary{margin-bottom:12px}
       </div>
 
       <div class="btn-row">
-        <button class="btn" id="genBtn" type="button">產生內容</button>
+        <button class="btn" id="genBtn" type="button"><svg class="ic" aria-hidden="true"><use href="#i-spark"/></svg>產生內容</button>
         <button class="btn ghost" id="reshuffleBtn" type="button">換一組</button>
       </div>
       <p class="hint" id="savedHint"></p>
@@ -427,25 +552,23 @@ details.adv[open] summary{margin-bottom:12px}
     <!-- ============ 右：工作區 ============ -->
     <section class="workspace">
       <nav class="tabs" role="tablist">
-        <button class="tab" role="tab" aria-selected="true" data-pane="copy"><span class="tnum">A</span>貼文文案</button>
-        <button class="tab" role="tab" aria-selected="false" data-pane="image"><span class="tnum">B</span>版型圖</button>
-        <button class="tab" role="tab" aria-selected="false" data-pane="carousel"><span class="tnum">C</span>輪播企劃</button>
-        <button class="tab" role="tab" aria-selected="false" data-pane="calendar"><span class="tnum">D</span>發文行事曆</button>
-        <button class="tab" role="tab" aria-selected="false" data-pane="ai"><span class="tnum">E</span>AI 加強</button>
+        <button class="tab" role="tab" aria-selected="true" data-pane="copy"><span class="tn">Ⅰ</span><svg class="ic" aria-hidden="true"><use href="#i-copy"/></svg>貼文文案</button>
+        <button class="tab" role="tab" aria-selected="false" data-pane="image"><span class="tn">Ⅱ</span><svg class="ic" aria-hidden="true"><use href="#i-frame"/></svg>版型圖</button>
+        <button class="tab" role="tab" aria-selected="false" data-pane="carousel"><span class="tn">Ⅲ</span><svg class="ic" aria-hidden="true"><use href="#i-carousel"/></svg>輪播企劃</button>
+        <button class="tab" role="tab" aria-selected="false" data-pane="calendar"><span class="tn">Ⅳ</span><svg class="ic" aria-hidden="true"><use href="#i-calendar"/></svg>發文行事曆</button>
+        <button class="tab" role="tab" aria-selected="false" data-pane="ai"><span class="tn">Ⅴ</span><svg class="ic" aria-hidden="true"><use href="#i-spark"/></svg>AI 加強</button>
       </nav>
 
       <!-- 文案 -->
       <div class="pane on" id="pane-copy" role="tabpanel">
-        <div class="card" style="padding-bottom:14px">
-          <div class="card-head" style="border:0;margin:0;padding:0">
-            <div>
-              <span class="label">貼文類型</span>
-              <div class="chips" id="typePicker" style="margin-top:7px"></div>
-            </div>
-            <div class="card-actions">
-              <button class="btn ghost small" id="copyAllBtn" type="button">複製全部</button>
-            </div>
+        <div class="card" style="padding-bottom:18px">
+          <div class="reg">
+            <span class="rn">Ⅰ</span><span class="rt">貼文類型</span>
+            <span class="ractions">
+              <button class="btn ghost small" id="copyAllBtn" type="button"><svg class="ic" aria-hidden="true"><use href="#i-copy"/></svg>複製全部</button>
+            </span>
           </div>
+          <div class="chips" id="typePicker"></div>
         </div>
         <div id="copyOut"></div>
       </div>
@@ -456,9 +579,9 @@ details.adv[open] summary{margin-bottom:12px}
           <div>
             <div class="stage" id="stage"><canvas id="cv" width="1080" height="1080" style="width:440px"></canvas></div>
             <div class="card-actions" style="margin-top:14px">
-              <button class="btn" id="dlBtn" type="button">下載這張圖</button>
-              <button class="btn ghost" id="dlAllBtn" type="button">下載整組（輪播）</button>
-              <label class="btn ghost" style="cursor:pointer">上傳照片（可多選）<input type="file" id="photoIn" accept="image/*" multiple class="sr"></label>
+              <button class="btn" id="dlBtn" type="button"><svg class="ic" aria-hidden="true"><use href="#i-export"/></svg>下載這張圖</button>
+              <button class="btn ghost" id="dlAllBtn" type="button"><svg class="ic" aria-hidden="true"><use href="#i-export"/></svg>下載整組（輪播）</button>
+              <label class="btn ghost" style="cursor:pointer"><svg class="ic" aria-hidden="true"><use href="#i-aperture"/></svg>上傳照片（可多選）<input type="file" id="photoIn" accept="image/*" multiple class="sr"></label>
               <button class="btn ghost" id="clearPhoto" type="button">清空照片</button>
             </div>
             <p class="hint">照片只在你的瀏覽器裡處理，不會上傳到任何地方。可一次選多張，或直接把照片拖進上面的預覽框。</p>
@@ -493,10 +616,10 @@ details.adv[open] summary{margin-bottom:12px}
       <div class="pane" id="pane-carousel" role="tabpanel">
         <div class="card">
           <div class="card-head">
-            <h3 id="carTitle">輪播腳本</h3>
+            <h3><span class="rn">Ⅲ</span><span id="carTitle">輪播腳本</span></h3>
             <div class="card-actions">
               <span class="pill" id="carCount"></span>
-              <button class="btn ghost small" id="carCopy" type="button">複製腳本</button>
+              <button class="btn ghost small" id="carCopy" type="button"><svg class="ic" aria-hidden="true"><use href="#i-copy"/></svg>複製腳本</button>
             </div>
           </div>
           <p class="note" id="carNote"></p>
@@ -512,12 +635,12 @@ details.adv[open] summary{margin-bottom:12px}
       <div class="pane" id="pane-calendar" role="tabpanel">
         <div class="card">
           <div class="card-head">
-            <h3>發文行事曆</h3>
+            <h3><span class="rn">Ⅳ</span>發文行事曆</h3>
             <div class="card-actions">
               <select id="calFreq" style="border:1px solid var(--line);background:var(--surface);border-radius:3px;padding:4px 8px;font-size:12.5px"></select>
               <select id="calMonth" style="border:1px solid var(--line);background:var(--surface);border-radius:3px;padding:4px 8px;font-size:12.5px"></select>
               <button class="btn ghost small" id="calGen" type="button">重新排程</button>
-              <button class="btn ghost small" id="calCsv" type="button">匯出 CSV</button>
+              <button class="btn ghost small" id="calCsv" type="button"><svg class="ic" aria-hidden="true"><use href="#i-export"/></svg>匯出 CSV</button>
             </div>
           </div>
           <div class="tablewrap"><table id="calTable"><thead><tr>
@@ -553,6 +676,14 @@ details.adv[open] summary{margin-bottom:12px}
     </section>
   </main>
 </div>
+<div class="app">
+  <div class="tickrule foot" aria-hidden="true"></div>
+  <footer class="plate-foot">
+    <span class="foot-line">光落在材料上，顏色才會出現。</span>
+    <span class="foot-colophon">HERFULSINS ⁄ HEBE SPACE DESIGN　·　DAYLIGHT LEDGER REV. 2026.08</span>
+  </footer>
+</div>
+
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
@@ -1429,11 +1560,14 @@ function carouselText(){
 }
 
 /* ===================== 版型圖 ===================== */
+/* 版型圖配色 — Daylight Ledger */
 const PALETTES={
- plaster:{n:"米白石灰",bg:"#EDEAE3",ink:"#191813",sub:"#6B6558",acc:"#8F7020"},
- ink:{n:"墨色沉靜",bg:"#20272A",ink:"#EDEAE3",sub:"#9CA6A5",acc:"#D2AF57"},
- oak:{n:"暖橡木",bg:"#C3B096",ink:"#241E15",sub:"#5C503E",acc:"#FFFFFF"},
- photo:{n:"照片＋字",bg:"#111111",ink:"#FFFFFF",sub:"#D8D3C8",acc:"#E8C87A"}
+ plaster:{n:"灰泥米白",bg:"#EFEBE1",ink:"#1B1A17",sub:"#6C6559",acc:"#A8761F"},
+ oak:{n:"暖橡木",  bg:"#C7B393",ink:"#241E15",sub:"#5C503E",acc:"#FAF8F3"},
+ pine:{n:"松蔭綠",  bg:"#3B4B46",ink:"#EFEBE1",sub:"#A6B2AD",acc:"#C08A2E"},
+ clay:{n:"陶土紅",  bg:"#A85A3C",ink:"#FAF8F3",sub:"#EBD6CB",acc:"#F4E9CF"},
+ ink:{n:"石墨夜",   bg:"#1B1A17",ink:"#EFEBE1",sub:"#948D7D",acc:"#DFB35F"},
+ photo:{n:"照片＋字",bg:"#141412",ink:"#FAF8F3",sub:"#D8D3C8",acc:"#C08A2E"}
 };
 const LAYOUTS=[{k:"cover",n:"封面（主標＋副標）"},{k:"quote",n:"引言（一句話）"},{k:"list",n:"條列重點"},{k:"spec",n:"案件資訊卡"},{k:"cta",n:"結尾行動卡"}];
 const SIZES=[{k:"1x1",n:"1080 × 1080 方形",w:1080,h:1080},{k:"4x5",n:"1080 × 1350 直式",w:1080,h:1350}];
