@@ -2122,6 +2122,33 @@ async function callGemini(model,key,parts){
   if(!r.ok){const e=new Error((j.error&&j.error.message)||("HTTP "+r.status));e.api=j;throw e;}
   return j;
 }
+const AI_TRANSIENT=/high demand|overload|unavailable|resource_exhausted|rate limit|quota|timeout|try again|internal error|503|429/i;
+const aiSleep=ms=>new Promise(r=>setTimeout(r,ms));
+/* 忙線就等一下重試；同一支模型試三次還是不行，就往清單裡下一支退 */
+async function generateWithFallback(model,key,parts){
+  const all=[...$("#aiModel").options].map(o=>o.value).filter(Boolean);
+  const chain=[model,...all.filter(v=>v!==model)].slice(0,4);
+  let lastErr=null;
+  for(let i=0;i<chain.length;i++){
+    const m=chain[i], short=m.replace("models/","");
+    for(let a=1;a<=3;a++){
+      try{
+        if(i||a>1)aiSay(`用 ${short} 重試（第 ${a} 次）…`);
+        return {json:await callGemini(m,key,parts),used:m};
+      }catch(e){
+        lastErr=e;
+        const msg=e.message||"";
+        const sug=/use\s+(models\/[A-Za-z0-9._-]+)/.exec(msg);
+        if(sug){ const k=chain.indexOf(sug[1]); if(k>-1)chain.splice(k,1);
+                 chain.splice(i+1,0,sug[1]); break; }                                 // Google 指定替代模型，優先照做
+        if(!AI_TRANSIENT.test(msg))throw e;                                       // 不是暫時性問題就別瞎試
+        if(a<3){ aiSay(`${short} 忙線中，等一下再試（${a}/3）…`); await aiSleep(1800*a+Math.random()*600); }
+        else if(i<chain.length-1)aiSay(`${short} 持續忙線，改用 ${chain[i+1].replace("models/","")}…`);
+      }
+    }
+  }
+  throw lastErr||new Error("無法取得回應");
+}
 function pickModel(model){
   const sel=$("#aiModel");
   if(![...sel.options].some(o=>o.value===model)){
@@ -2142,24 +2169,18 @@ async function aiRun(){
   try{
     const parts=[{text:visionPrompt()}];
     for(const p of ready){ const ip=await photoToInline(p,1024); if(ip)parts.push(ip); }
-    let used=model, j;
-    try{ j=await callGemini(model,key,parts); }
-    catch(e1){
-      // Google 有時會在錯誤訊息裡指定該改用哪一支模型，直接照做重試一次
-      const sug=/use\s+(models\/[A-Za-z0-9._-]+)/.exec(e1.message||"");
-      if(!sug)throw e1;
-      used=sug[1];
-      aiSay(`${model.replace("models/","")} 已停用，改用 ${used.replace("models/","")} 重試…`);
-      j=await callGemini(used,key,parts);
-      pickModel(used);
-    }
+    const {json:j,used}=await generateWithFallback(model,key,parts);
+    if(used!==model)pickModel(used);
     const cand=(j.candidates||[])[0];
     if(!cand)throw new Error("AI 沒有回應內容"+(j.promptFeedback?("（"+JSON.stringify(j.promptFeedback)+"）"):"")+"。");
     const txt=(cand.content&&cand.content.parts||[]).map(x=>x.text||"").join("");
     applyAiResult(parseAiJson(txt));
     if(used!==model)toast("已改用 "+used.replace("models/",""));
   }catch(e){
-    aiSay("沒有成功：\n"+e.message+"\n\n可以改按「複製看圖指令」，把指令與圖片貼到 ChatGPT 或 Gemini。","err");
+    const busy=AI_TRANSIENT.test(e.message||"");
+    aiSay("沒有成功：\n"+e.message+"\n\n"+(busy
+      ?"這是 Google 那邊暫時的壅塞，不是你的金鑰有問題。清單裡的模型都試過了，過幾分鐘再按一次通常就好；或在上面的下拉選單改選 flash-lite 那支，比較不會塞車。"
+      :"可以改按「複製看圖指令」，把指令與圖片貼到 ChatGPT 或 Gemini。"),"err");
   }finally{ aiBusy=false; $("#aiRun").disabled=false; }
 }
 
