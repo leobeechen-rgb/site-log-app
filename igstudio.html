@@ -62,6 +62,7 @@
 }
 
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 body{
   margin:0;
   background:var(--ground);
@@ -261,6 +262,27 @@ button,input,select,textarea{font:inherit;color:inherit}
 .slide h4{font-family:"Noto Serif TC",serif;font-size:15.5px;font-weight:600}
 .slide p{margin:0;font-size:13.5px;color:var(--ink-2);line-height:1.8;white-space:pre-line}
 .slide .role{margin-top:auto;font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+.slide-top{display:flex;align-items:center;gap:6px;min-height:20px}
+.slide-top .sn{cursor:grab}
+.slide-top .sn:active{cursor:grabbing}
+.slide-top .sctl{margin-left:auto;display:flex;gap:1px;opacity:0;transition:opacity .14s}
+.slide:hover .sctl,.slide:focus-within .sctl{opacity:1}
+@media (hover:none){.slide .sctl{opacity:1}}
+.slide-top .sctl button{background:none;border:0;color:var(--muted);font-size:12px;line-height:1;padding:4px 5px;cursor:pointer;border-radius:5px}
+.slide-top .sctl button:hover{background:var(--surface);color:var(--accent)}
+.slide-top .edited{font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:.06em;color:var(--accent);border:1px solid var(--accent);border-radius:99px;padding:1px 5px;white-space:nowrap}
+.s-in{width:100%;background:transparent;border:1px solid transparent;border-radius:6px;padding:4px 6px;color:inherit;display:block}
+.s-in:hover{border-color:var(--line-soft)}
+.s-in:focus{border-color:var(--accent);outline:none;background:var(--surface)}
+.s-t{font-family:"Noto Serif TC",serif;font-size:15.5px;font-weight:600;color:var(--ink)}
+.s-x{font-size:13.5px;color:var(--ink-2);line-height:1.8;resize:none;overflow:hidden;min-height:30px;font-family:inherit}
+.s-r{margin-top:auto;font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--muted);letter-spacing:.08em;width:auto;max-width:130px}
+.slide.dragging{opacity:.4}
+.slide.over{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.slide.addcard{align-items:center;justify-content:center;border-style:dashed;cursor:pointer;color:var(--muted);font-size:13px;gap:4px}
+.slide.addcard:hover{border-color:var(--accent);color:var(--accent)}
+.carnote{display:flex;align-items:center;gap:10px;flex-wrap:wrap;border:1px solid var(--accent);background:var(--accent-soft);border-radius:var(--r);padding:9px 12px;font-size:12.5px;margin-top:12px;line-height:1.6}
+.carnote .sp{margin-left:auto;display:flex;gap:8px}
 
 /* ---------- calendar ---------- */
 .tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--panel)}
@@ -478,6 +500,10 @@ details.adv[open] summary{margin-bottom:12px}
             </div>
           </div>
           <p class="note" id="carNote"></p>
+          <div class="carnote" id="carDirtyBar" hidden>
+            <span>這份腳本你手動改過了，所以不會再跟著左側設定自動變動。</span>
+            <span class="sp"><button class="btn ghost small" id="carRegen" type="button">重新產生腳本</button></span>
+          </div>
           <div class="slides" id="carOut" style="margin-top:14px"></div>
         </div>
       </div>
@@ -1325,18 +1351,77 @@ function renderTypePicker(){
 }
 
 /* ===================== 輪播 ===================== */
-function renderCarousel(){
-  currentCarousel=TYPE_MAP[currentType].car(P).slice(0,10);
+/* ---- 輪播腳本：可直接編輯 ---- */
+let carDirty=false;
+function markCarDirty(){
+  carDirty=true;
+  const bar=$("#carDirtyBar");if(bar)bar.hidden=false;
+  saveCarousel();
+}
+function saveCarousel(){
+  try{store("hebe_car",carDirty?JSON.stringify({type:currentType,pages:currentCarousel}):"");}catch(e){}
+}
+function loadCarousel(){
+  try{
+    const raw=store("hebe_car");if(!raw)return false;
+    const d=JSON.parse(raw);
+    if(!d||d.type!==currentType||!Array.isArray(d.pages)||!d.pages.length)return false;
+    currentCarousel=d.pages.map(s=>({t:String(s.t||""),x:String(s.x||""),r:String(s.r||""),_e:!!s._e}));
+    carDirty=true;
+    return true;
+  }catch(e){return false;}
+}
+function renderCarousel(force){
+  if(force||!carDirty)currentCarousel=TYPE_MAP[currentType].car(P).slice(0,10);
+  if(force)carDirty=false;
+  paintCarousel();
+}
+function paintCarousel(){
   $("#carTitle").textContent=TYPE_MAP[currentType].n+"｜輪播腳本";
   $("#carCount").textContent=currentCarousel.length+" 頁";
-  $("#carNote").textContent="每一頁對應一張圖。第 1 頁決定停留率，最後一頁放行動呼籲。建議 6～8 頁，滑到底的人才是真客戶。";
+  $("#carNote").textContent="每一頁對應一張圖。第 1 頁決定停留率，最後一頁放行動呼籲。建議 6～8 頁，滑到底的人才是真客戶。標題與內容都可以直接點進去改。";
+  const bar=$("#carDirtyBar");if(bar)bar.hidden=!carDirty;
+  const n=currentCarousel.length;
   $("#carOut").innerHTML=currentCarousel.map((s,i)=>`
-    <article class="slide">
-      <span class="sn">${String(i+1).padStart(2,"0")} / ${String(currentCarousel.length).padStart(2,"0")}</span>
-      <h4>${esc(s.t)}</h4>
-      <p>${esc(s.x)}</p>
-      <span class="role">${esc(s.r)}</span>
-    </article>`).join("");
+    <article class="slide" data-i="${i}">
+      <div class="slide-top">
+        <span class="sn" draggable="true" title="拖曳這裡可以調整頁面順序">${String(i+1).padStart(2,"0")} / ${String(n).padStart(2,"0")}</span>
+        ${s._e?'<span class="edited">已手改</span>':""}
+        <span class="sctl">
+          <button type="button" data-act="up" aria-label="往前一頁" title="往前">◀</button>
+          <button type="button" data-act="down" aria-label="往後一頁" title="往後">▶</button>
+          <button type="button" data-act="add" aria-label="在後面插入一頁" title="插入一頁">＋</button>
+          <button type="button" data-act="del" aria-label="刪除這一頁" title="刪除">×</button>
+        </span>
+      </div>
+      <input class="s-in s-t" data-k="t" value="${esc(s.t)}" placeholder="標題">
+      <textarea class="s-in s-x" data-k="x" rows="2" placeholder="這一頁要說什麼">${esc(s.x)}</textarea>
+      <input class="s-in s-r" data-k="r" value="${esc(s.r)}" placeholder="角色">
+    </article>`).join("")
+    +`<article class="slide addcard" data-act="addend" tabindex="0" role="button">＋ 加一頁</article>`;
+  $$("#carOut .s-x").forEach(autoGrow);
+}
+function carMove(from,to){
+  if(to<0||to>=currentCarousel.length||from===to)return;
+  const [it]=currentCarousel.splice(from,1);
+  currentCarousel.splice(to,0,it);
+  markCarDirty();paintCarousel();
+}
+function carAdd(at){
+  if(currentCarousel.length>=12){toast("最多 12 頁，再多讀者滑不完");return;}
+  currentCarousel.splice(at,0,{t:"新的一頁",x:"",r:"自訂",_e:true});
+  markCarDirty();paintCarousel();
+  const el=$(`#carOut .slide[data-i="${at}"] .s-t`);if(el){el.focus();el.select();}
+}
+function carDel(i){
+  if(currentCarousel.length<=2){toast("至少要留兩頁");return;}
+  currentCarousel.splice(i,1);
+  markCarDirty();paintCarousel();
+}
+function carRegenGuard(){
+  if(!carDirty)return true;
+  if(confirm("輪播腳本你已經手動改過。\n重新產生會蓋掉這些修改，要繼續嗎？")){carDirty=false;saveCarousel();return true;}
+  return false;
 }
 function carouselText(){
   return `${P.name}｜${TYPE_MAP[currentType].n}　輪播腳本\n\n`+
@@ -1709,12 +1794,12 @@ function renderAi(){
 }
 
 /* ===================== 全部重繪 ===================== */
-function generateAll(reseed){
+function generateAll(reseed,forceCar){
   if(reseed)seed=Math.floor(Math.random()*100000);
   MAT_CACHE={};
   P=readBrief();
   renderCopy();
-  renderCarousel();
+  renderCarousel(forceCar);
   seedImageFields();
   redrawCanvas();
   renderCalendar();
@@ -1750,13 +1835,14 @@ function initEvents(){
   // 貼文類型
   $("#typePicker").addEventListener("click",e=>{
     const b=e.target.closest(".chip");if(!b)return;
+    if(b.dataset.type!==currentType&&!carRegenGuard())return;
     currentType=b.dataset.type;
     document.querySelectorAll("#typePicker .chip").forEach(c=>c.setAttribute("aria-pressed",c===b));
-    renderCopy();renderCarousel();renderCalendar();renderAi();
+    renderCopy();renderCarousel(true);renderCalendar();renderAi();
   });
 
-  $("#genBtn").addEventListener("click",()=>{generateAll(false);toast("已產生 "+TYPE_MAP[currentType].n);});
-  $("#reshuffleBtn").addEventListener("click",()=>{generateAll(true);toast("換了一組寫法");});
+  $("#genBtn").addEventListener("click",()=>{const f=carRegenGuard();generateAll(false,f);toast("已產生 "+TYPE_MAP[currentType].n);});
+  $("#reshuffleBtn").addEventListener("click",()=>{const f=carRegenGuard();generateAll(true,f);toast("換了一組寫法");});
 
   // 文案操作
   $("#copyOut").addEventListener("click",e=>{
@@ -1921,6 +2007,56 @@ function initEvents(){
 
   // 輪播
   $("#carCopy").addEventListener("click",()=>copyText(carouselText()));
+  $("#carRegen").addEventListener("click",()=>{
+    if(!confirm("重新產生會蓋掉你手改過的內容，要繼續嗎？"))return;
+    carDirty=false;saveCarousel();renderCarousel(true);toast("已重新產生腳本");
+  });
+  $("#carOut").addEventListener("input",e=>{
+    const t=e.target;if(!t.dataset.k)return;
+    const card=t.closest(".slide");if(!card)return;
+    const i=+card.dataset.i,s=currentCarousel[i];if(!s)return;
+    s[t.dataset.k]=t.value;s._e=true;
+    if(t.tagName==="TEXTAREA")autoGrow(t);
+    if(!card.querySelector(".edited"))card.querySelector(".sn").insertAdjacentHTML("afterend",'<span class="edited">已手改</span>');
+    markCarDirty();
+  });
+  $("#carOut").addEventListener("click",e=>{
+    const add=e.target.closest(".addcard");
+    if(add){carAdd(currentCarousel.length);return;}
+    const b=e.target.closest("button[data-act]");if(!b)return;
+    const i=+b.closest(".slide").dataset.i;
+    const a=b.dataset.act;
+    if(a==="up")carMove(i,i-1);
+    else if(a==="down")carMove(i,i+1);
+    else if(a==="add")carAdd(i+1);
+    else if(a==="del")carDel(i);
+  });
+  $("#carOut").addEventListener("keydown",e=>{
+    if(e.target.classList.contains("addcard")&&(e.key==="Enter"||e.key===" ")){e.preventDefault();carAdd(currentCarousel.length);}
+  });
+  let carDragI=null;
+  $("#carOut").addEventListener("dragstart",e=>{
+    const h=e.target.closest(".sn");
+    const c=h&&h.closest(".slide");
+    if(!c){e.preventDefault();return;}
+    carDragI=+c.dataset.i;c.classList.add("dragging");
+    try{e.dataTransfer.effectAllowed="move";e.dataTransfer.setData("text/plain",String(carDragI));}catch(_){}
+  });
+  $("#carOut").addEventListener("dragover",e=>{
+    if(carDragI===null)return;
+    e.preventDefault();
+    const c=e.target.closest(".slide:not(.addcard)");
+    $$("#carOut .slide").forEach(x=>x.classList.toggle("over",x===c));
+  });
+  $("#carOut").addEventListener("drop",e=>{
+    if(carDragI===null)return;
+    e.preventDefault();
+    const c=e.target.closest(".slide:not(.addcard)");
+    $$("#carOut .slide").forEach(x=>x.classList.remove("over","dragging"));
+    if(c)carMove(carDragI,+c.dataset.i);
+    carDragI=null;
+  });
+  $("#carOut").addEventListener("dragend",()=>{carDragI=null;$$("#carOut .slide").forEach(x=>x.classList.remove("over","dragging"));});
 
   // 行事曆
   $("#calGen").addEventListener("click",()=>{seed=Math.floor(Math.random()*100000);renderCalendar();toast("已重新排程");});
@@ -1964,6 +2100,7 @@ function init(){
 
   initEvents();
   generateAll(false);
+  if(loadCarousel())paintCarousel();
   if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>redrawCanvas());
 }
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init);else init();
