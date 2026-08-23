@@ -335,6 +335,8 @@ button,input,select,textarea{font:inherit;color:inherit}
   background:rgba(0,0,0,.62);color:#fff;padding:2px 5px;letter-spacing:.06em}
 .aiphotos .apc button{position:absolute;top:0;right:0;background:rgba(0,0,0,.62);color:#fff;border:0;
   font-size:13px;line-height:1;padding:3px 6px;cursor:pointer}
+.mixlab{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--muted);cursor:pointer}
+.mixlab input{accent-color:var(--accent)}
 .aiempty{border:1px dashed var(--line);padding:26px 18px;text-align:center;color:var(--muted);font-size:12.5px;width:100%}
 .airow{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .airow input[type=password],.airow input[type=text]{
@@ -529,6 +531,16 @@ details.adv[open] summary{margin-bottom:12px}
       </div>
 
       <div class="field">
+        <span class="label"><svg class="ic" aria-hidden="true"><use href="#i-carousel"/></svg>案子庫 <span id="caseCount" class="mono"></span></span>
+        <div class="airow">
+          <select id="caseSel"><option value="">（目前編輯中的案子）</option></select>
+          <button class="btn ghost small" id="caseSave" type="button">存起來</button>
+          <button class="btn ghost small" id="caseDel" type="button">刪除</button>
+        </div>
+        <span class="hint">存好幾個案子，發文行事曆就能輪流排，不會整個月都在講同一間房子。</span>
+      </div>
+
+      <div class="field">
         <label class="label" for="f-name"><svg class="ic" aria-hidden="true"><use href="#i-title"/></svg>案名</label>
         <input type="text" id="f-name" value="日光之間" placeholder="例：日光之間、微風靜宅">
       </div>
@@ -703,12 +715,15 @@ details.adv[open] summary{margin-bottom:12px}
             <div class="card-actions">
               <select id="calFreq" style="border:1px solid var(--line);background:var(--surface);border-radius:3px;padding:4px 8px;font-size:12.5px"></select>
               <select id="calMonth" style="border:1px solid var(--line);background:var(--surface);border-radius:3px;padding:4px 8px;font-size:12.5px"></select>
+              <label class="mixlab" title="讓案例、Before/After、選材、工地這類貼文輪流用不同案子">
+                <input type="checkbox" id="calMix"> 混合所有案子
+              </label>
               <button class="btn ghost small" id="calGen" type="button">重新排程</button>
               <button class="btn ghost small" id="calCsv" type="button"><svg class="ic" aria-hidden="true"><use href="#i-export"/></svg>匯出 CSV</button>
             </div>
           </div>
           <div class="tablewrap"><table id="calTable"><thead><tr>
-            <th>日期</th><th>星期</th><th>建議時間</th><th>類型</th><th>主題</th><th>開場首行</th>
+            <th>日期</th><th>星期</th><th>建議時間</th><th>類型</th><th>案子</th><th>主題</th><th>開場首行</th>
           </tr></thead><tbody></tbody></table></div>
           <p class="hint">預設時段依台灣受眾常見的高互動時間安排：平日午休與晚間、週末上午。</p>
         </div>
@@ -796,7 +811,7 @@ const REGIONS=[
 const REGION_ALIAS={"新竹":"新竹市","彰化":"彰化縣","宜蘭":"宜蘭縣","南投":"南投縣","苗栗":"苗栗縣",
  "雲林":"雲林縣","嘉義":"嘉義市","屏東":"屏東縣","花蓮":"花蓮縣","台東":"台東縣","基隆":"基隆市",
  "澎湖":"澎湖縣","金門":"金門縣","馬祖":"連江縣","連江":"連江縣"};
-const CASES=["新成屋","預售屋客變","老屋翻新","中古屋整修","商業空間","辦公空間","民宿／餐飲空間"];
+const CASES_TYPE=["新成屋","預售屋客變","老屋翻新","中古屋整修","商業空間","辦公空間","民宿／餐飲空間"];
 const STYLES=["現代簡約","無印日式","侘寂靜謐","北歐自然","溫潤木質","輕奢現代","工業風","當代混搭","美式古典"];
 const TONES=["溫潤木色","純白極簡","大地灰階","深色沉穩","明亮北歐","低彩莫蘭迪"];
 let MATERIALS=[];   // 於 MAT_INFO 定義後填入
@@ -2376,32 +2391,73 @@ async function aiRun(){
   }finally{ aiBusy=false; $("#aiRun").disabled=false; }
 }
 
+/* ===================== 案子庫 =====================
+   把整份專案設定存成一筆，行事曆就能在多個案子之間輪流排。 */
+let CASES=[];
+function loadCases(){
+  try{ const raw=store("hebe_cases"); CASES=raw?JSON.parse(raw):[]; if(!Array.isArray(CASES))CASES=[]; }
+  catch(e){ CASES=[]; }
+}
+function saveCases(){ try{ store("hebe_cases",JSON.stringify(CASES.slice(0,20))); }catch(e){} }
+function renderCases(sel){
+  const el=$("#caseSel"); if(!el)return;
+  el.innerHTML='<option value="">（目前編輯中的案子）</option>'+
+    CASES.map((c,i)=>`<option value="${i}">${esc(c.name)}　${esc(c.region)} ${esc(c.size)} 坪</option>`).join("");
+  if(sel!==undefined&&sel!==null)el.value=String(sel);
+  $("#caseCount").textContent=CASES.length?CASES.length+" 個":"";
+  $("#calMix").disabled=CASES.length<2;
+}
+function applyBrief(b){
+  $("#f-name").value=b.name||"";
+  if(REGIONS.includes(b.region))$("#f-region").value=b.region;
+  if(CASES_TYPE.includes(b.caseType))$("#f-case").value=b.caseType;
+  $("#f-size").value=b.size||"";
+  $("#f-layout").value=b.layout||"";
+  if(STYLES.includes(b.style))$("#f-style").value=b.style;
+  if(TONES.includes(b.tone))$("#f-tone").value=b.tone;
+  if(VOICES.includes(b.voice))$("#f-voice").value=b.voice;
+  if(CTAS.includes(b.cta))$("#f-cta").value=b.cta;
+  if(b.handle)$("#f-handle").value=b.handle;
+  if(Array.isArray(b.needs))$("#f-needs").value=b.needs.join("、");
+  if(Array.isArray(b.materials)){selMaterials.splice(0,selMaterials.length,...b.materials.filter(m=>MATERIALS.includes(m)));refreshMatChips();}
+  if(Array.isArray(b.spaces)){selSpaces.splice(0,selSpaces.length,...b.spaces.filter(x=>SPACES.includes(x)));buildChips("#f-spaces",SPACES,selSpaces,6,"#spaceCount");}
+}
+
 /* ===================== 行事曆 ===================== */
 const DAYSETS={2:[2,5],3:[1,3,5],4:[1,2,4,6],5:[1,2,3,4,5]};
 const WD=["日","一","二","三","四","五","六"];
 const MIX=["case","tip","case","ba","story","tip","case","material","qa","case","site","tip","review","case","budget","season"];
-function topicFor(k){
+const GENERIC_TYPES=/^(tip|qa|budget|season)$/;   // 這幾類跟哪個案子無關，不用綁案子
+function topicFor(k,month,B){
+  const C=B||P;
   const T=TYPE_MAP[k];
-  const h=T.hooks(P);
-  return {topic:{case:P.name+" 完工實景",ba:P.name+" Before / After",tip:(P._tip||TIPS[0]).t,story:"屋主需求："+P.needs[0],material:"選材筆記："+(P._mat||P.materials[0]),qa:(P._qa||QAS[0]).q,site:"工地日誌："+(P._stage||STAGES[0]).s,review:"入住後回訪",budget:"預算怎麼分配",season:(P._season||SEASON[new Date().getMonth()+1])[0]}[k],hook:pick(h)};
+  const h=T.hooks(C);
+  return {topic:{case:C.name+" 完工實景",ba:C.name+" Before / After",tip:(C._tip||TIPS[0]).t,story:"屋主需求："+C.needs[0],material:"選材筆記："+(C._mat||C.materials[0]),qa:(C._qa||QAS[0]).q,site:"工地日誌："+(C._stage||STAGES[0]).s,review:"入住後回訪",budget:"預算怎麼分配",season:(SEASON[month]||C._season||SEASON[new Date().getMonth()+1])[0]}[k],hook:pick(h),caseName:C.name};
 }
 function renderCalendar(){
   const freq=parseInt($("#calFreq").value,10);
   const [y,m]=$("#calMonth").value.split("-").map(Number);
   const days=DAYSETS[freq]||DAYSETS[3];
   const last=new Date(y,m,0).getDate();
-  const rows=[];let mi=0;
+  const rows=[];let mi=(m-1)*3;   // 每個月換一個輪替起點，三個月的排法才不會一樣
+  const mix=$("#calMix")&&$("#calMix").checked&&CASES.length>=2;
+  const pool=mix?CASES:[P];
+  let ci=(m-1)%pool.length;
   for(let d=1;d<=last;d++){
     const dt=new Date(y,m-1,d),w=dt.getDay();
     if(!days.includes(w))continue;
     const k=MIX[mi++%MIX.length];
-    const t=topicFor(k);
+    const generic=GENERIC_TYPES.test(k);
+    const C=generic?P:pool[ci++%pool.length];      // 跟案子有關的貼文才輪替
+    const t=topicFor(k,m,C);
     const time=(w===0||w===6)?"10:30":(mi%2?"12:30":"20:00");
-    rows.push({d:`${m}/${d}`,w:WD[w],time,k,name:TYPE_MAP[k].n,topic:t.topic,hook:t.hook});
+    rows.push({d:`${m}/${d}`,w:WD[w],time,k,name:TYPE_MAP[k].n,
+      cs:generic?"—":(t.caseName||""),topic:t.topic,hook:t.hook});
   }
   $("#calTable").querySelector("tbody").innerHTML=rows.map(r=>`<tr>
     <td class="d">${esc(r.d)}</td><td class="d">${esc(r.w)}</td><td class="d">${esc(r.time)}</td>
     <td><span class="badge" data-k="${r.k}">${esc(r.name)}</span></td>
+    <td class="d" style="color:var(--muted)">${esc(r.cs||"")}</td>
     <td class="t"><strong>${esc(r.topic)}</strong></td>
     <td style="color:var(--muted)">${esc(r.hook)}</td></tr>`).join("");
   $("#calTable")._rows=rows;
@@ -2409,8 +2465,8 @@ function renderCalendar(){
 function calendarCsv(){
   const rows=$("#calTable")._rows||[];
   const esc2=s=>'"'+String(s).replace(/"/g,'""')+'"';
-  return "﻿"+["日期,星期,時間,類型,主題,開場首行"].concat(
-    rows.map(r=>[r.d,r.w,r.time,r.name,r.topic,r.hook].map(esc2).join(","))).join("\n");
+  return "﻿"+["日期,星期,時間,類型,案子,主題,開場首行"].concat(
+    rows.map(r=>[r.d,r.w,r.time,r.name,r.cs||"",r.topic,r.hook].map(esc2).join(","))).join("\n");
 }
 
 /* ===================== AI 指令 ===================== */
@@ -2828,6 +2884,37 @@ function initEvents(){
   });
   $("#carOut").addEventListener("dragend",()=>{carDragI=null;$$("#carOut .slide").forEach(x=>x.classList.remove("over","dragging"));});
 
+  // 案子庫
+  $("#caseSave").addEventListener("click",()=>{
+    const b=readBrief();
+    if(!b.name||b.name==="未命名案例"){toast("先填一個案名再存");return;}
+    const at=CASES.findIndex(c=>c.name===b.name);
+    if(at>=0)CASES[at]=b; else CASES.unshift(b);
+    if(CASES.length>20)CASES.length=20;
+    saveCases();renderCases(CASES.findIndex(c=>c.name===b.name));
+    renderCalendar();
+    toast(at>=0?`已更新「${b.name}」`:`已存入案子庫，目前 ${CASES.length} 個`);
+  });
+  $("#caseSel").addEventListener("change",()=>{
+    const v=$("#caseSel").value;
+    if(v===""){toast("回到目前編輯中的案子");return;}
+    const c=CASES[+v];if(!c)return;
+    applyBrief(c);
+    aiVariants=null;aiPhotoOrder=null;aiObserved=[];
+    carDirty=false;saveCarousel();
+    generateAll(false,true);
+    toast(`已載入「${c.name}」`);
+  });
+  $("#caseDel").addEventListener("click",()=>{
+    const v=$("#caseSel").value;
+    if(v===""){toast("請先在上面選一個要刪的案子");return;}
+    const c=CASES[+v];if(!c)return;
+    if(!confirm(`確定要從案子庫刪掉「${c.name}」嗎？\n（只是刪掉這筆存檔，不影響你現在編輯中的內容）`))return;
+    CASES.splice(+v,1);saveCases();renderCases("");renderCalendar();
+    toast(`已刪除「${c.name}」`);
+  });
+  $("#calMix").addEventListener("change",()=>{renderCalendar();});
+
   // 行事曆
   $("#calGen").addEventListener("click",()=>{seed=Math.floor(Math.random()*100000);renderCalendar();toast("已重新排程");});
   $("#calFreq").addEventListener("change",renderCalendar);
@@ -2847,12 +2934,13 @@ function initEvents(){
 /* ===================== 初始化 ===================== */
 function init(){
   fillSelect("#f-region",REGIONS,"台北市");
-  fillSelect("#f-case",CASES,"新成屋");
+  fillSelect("#f-case",CASES_TYPE,"新成屋");
   fillSelect("#f-style",STYLES,"現代簡約");
   fillSelect("#f-tone",TONES,"溫潤木色");
   fillSelect("#f-voice",VOICES,"溫暖敘事");
   fillSelect("#f-cta",CTAS,CTAS[0]);
   loadMatUser();
+  loadCases();
   loadBrief();
   selMaterials=selMaterials.filter(m=>MATERIALS.includes(m));
   if(!selMaterials.length)selMaterials.push("白橡木");
@@ -2860,6 +2948,7 @@ function init(){
   buildChips("#f-spaces",SPACES,selSpaces,6,"#spaceCount");
   renderTypePicker();
   renderImgOptions();
+  renderCases();
 
   $("#calFreq").innerHTML=[2,3,4,5].map(n=>`<option value="${n}"${n===3?" selected":""}>每週 ${n} 篇</option>`).join("");
   const now=new Date();
