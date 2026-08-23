@@ -2048,6 +2048,16 @@ IG 帳號：${P.handle}
   "tags": ["#標籤", "..."]
 }`;
 }
+/* 模型排序：新版優先、flash 優先（免費額度用得到）、正式版優先於 preview */
+function modelScore(name){
+  const n=String(name).replace("models/","");
+  const mv=n.match(/gemini-(\d+)(?:\.(\d+))?/);
+  const ver=mv?parseInt(mv[1],10)*100+parseInt(mv[2]||"0",10):0;
+  let tier=0;
+  if(/flash-lite/.test(n))tier=2; else if(/flash/.test(n))tier=3; else if(/pro/.test(n))tier=1;
+  const clean=/preview|exp|thinking|tts|live|image|audio|native|learnlm/.test(n)?0:1;
+  return [tier,ver,clean];
+}
 async function aiListModels(){
   const key=$("#aiKey").value.trim();
   if(!key){aiSay("請先貼上金鑰。","err");return;}
@@ -2058,7 +2068,8 @@ async function aiListModels(){
     if(!r.ok)throw new Error((j.error&&j.error.message)||("HTTP "+r.status));
     const ms=(j.models||[]).filter(m=>(m.supportedGenerationMethods||[]).includes("generateContent")&&/gemini/i.test(m.name));
     if(!ms.length)throw new Error("這把金鑰沒有可用的 Gemini 模型。");
-    ms.sort((a,b)=>(/flash/i.test(b.name)-/flash/i.test(a.name))||a.name.localeCompare(b.name));
+    ms.sort((a,b)=>{const x=modelScore(a.name),y=modelScore(b.name);
+      return (y[0]-x[0])||(y[1]-x[1])||(y[2]-x[2])||a.name.localeCompare(b.name);});
     $("#aiModel").innerHTML=ms.map(m=>`<option value="${esc(m.name)}">${esc(m.name.replace("models/",""))}</option>`).join("");
     store("hebe_gk",key); store("hebe_gm",$("#aiModel").value);
     aiSay(`金鑰可用，找到 ${ms.length} 個模型，預設用 ${$("#aiModel").value.replace("models/","")}。`,"ok");
@@ -2101,6 +2112,24 @@ function applyAiResult(d){
     "ok");
   document.querySelector('.tab[data-pane="copy"]').click();
 }
+async function callGemini(model,key,parts){
+  const r=await fetch(`${GEMINI}/${model}:generateContent`,{
+    method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":key},
+    body:JSON.stringify({contents:[{role:"user",parts}],
+      generationConfig:{temperature:0.9,responseMimeType:"application/json"}})
+  });
+  const j=await r.json();
+  if(!r.ok){const e=new Error((j.error&&j.error.message)||("HTTP "+r.status));e.api=j;throw e;}
+  return j;
+}
+function pickModel(model){
+  const sel=$("#aiModel");
+  if(![...sel.options].some(o=>o.value===model)){
+    sel.insertAdjacentHTML("afterbegin",`<option value="${esc(model)}">${esc(model.replace("models/",""))}</option>`);
+  }
+  sel.value=model;
+  try{store("hebe_gm",model);}catch(_){}
+}
 async function aiRun(){
   if(aiBusy)return;
   const key=$("#aiKey").value.trim();
@@ -2113,18 +2142,22 @@ async function aiRun(){
   try{
     const parts=[{text:visionPrompt()}];
     for(const p of ready){ const ip=await photoToInline(p,1024); if(ip)parts.push(ip); }
-    const r=await fetch(`${GEMINI}/${model}:generateContent`,{
-      method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":key},
-      body:JSON.stringify({contents:[{role:"user",parts}],
-        generationConfig:{temperature:0.9,responseMimeType:"application/json"}})
-    });
-    const j=await r.json();
-    if(!r.ok)throw new Error((j.error&&j.error.message)||("HTTP "+r.status));
+    let used=model, j;
+    try{ j=await callGemini(model,key,parts); }
+    catch(e1){
+      // Google 有時會在錯誤訊息裡指定該改用哪一支模型，直接照做重試一次
+      const sug=/use\s+(models\/[A-Za-z0-9._-]+)/.exec(e1.message||"");
+      if(!sug)throw e1;
+      used=sug[1];
+      aiSay(`${model.replace("models/","")} 已停用，改用 ${used.replace("models/","")} 重試…`);
+      j=await callGemini(used,key,parts);
+      pickModel(used);
+    }
     const cand=(j.candidates||[])[0];
     if(!cand)throw new Error("AI 沒有回應內容"+(j.promptFeedback?("（"+JSON.stringify(j.promptFeedback)+"）"):"")+"。");
     const txt=(cand.content&&cand.content.parts||[]).map(x=>x.text||"").join("");
     applyAiResult(parseAiJson(txt));
-    store("hebe_gm",model);
+    if(used!==model)toast("已改用 "+used.replace("models/",""));
   }catch(e){
     aiSay("沒有成功：\n"+e.message+"\n\n可以改按「複製看圖指令」，把指令與圖片貼到 ChatGPT 或 Gemini。","err");
   }finally{ aiBusy=false; $("#aiRun").disabled=false; }
