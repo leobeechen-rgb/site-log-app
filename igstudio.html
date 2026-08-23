@@ -218,6 +218,25 @@ button,input,select,textarea{font:inherit;color:inherit}
 .thumb img{width:100%;display:block}
 .thumb figcaption{font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--muted);padding:4px 6px;text-align:left}
 
+/* ---------- material editor ---------- */
+.mated{margin-top:10px;display:flex;flex-direction:column;gap:10px}
+.matcard{border:1px solid var(--line);border-radius:var(--r);background:var(--surface);padding:10px 11px}
+.matcard-h{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.matcard-h b{font-size:13px}
+.matcard-h .tagx{font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.08em;color:var(--accent);border:1px solid var(--accent);border-radius:99px;padding:1px 6px}
+.matcard-h .sp{margin-left:auto;display:flex;gap:6px}
+.matcard-h button{background:none;border:0;color:var(--muted);font-size:11px;cursor:pointer;padding:2px 4px;text-decoration:underline;text-underline-offset:2px}
+.matcard-h button:hover{color:var(--accent)}
+.matrow{display:grid;grid-template-columns:62px 1fr;align-items:start;gap:7px;margin-bottom:5px}
+.matrow span{font-size:11px;color:var(--muted);padding-top:7px;line-height:1.3}
+.matrow input,.matrow textarea{
+  width:100%;background:var(--panel);border:1px solid var(--line);border-radius:6px;
+  padding:6px 8px;font-size:12.5px;line-height:1.5;color:var(--ink)
+}
+.matrow textarea{resize:vertical;min-height:36px}
+.matrow input:focus,.matrow textarea:focus{border-color:var(--accent);outline:none}
+.matnew{border:1px dashed var(--accent);background:var(--accent-soft)}
+
 /* ---------- photo tray ---------- */
 .ptray{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
 .ptray:empty{margin-top:0}
@@ -342,6 +361,11 @@ details.adv[open] summary{margin-bottom:12px}
       <div class="field">
         <span class="label">主要材質 <span id="matCount" class="mono"></span></span>
         <div class="chips" id="f-materials"></div>
+        <div class="card-actions" style="margin-top:8px">
+          <button class="btn ghost small" id="matEditBtn" type="button" aria-expanded="false">編輯材質文案</button>
+          <button class="btn ghost small" id="matAddBtn" type="button">新增自訂材質</button>
+        </div>
+        <div id="matEditor" class="mated" hidden></div>
       </div>
 
       <div class="field">
@@ -514,7 +538,7 @@ const REGIONS=["台北市","新北市","桃園市","新竹","台中市","彰化"
 const CASES=["新成屋","預售屋客變","老屋翻新","中古屋整修","商業空間","辦公空間","民宿／餐飲空間"];
 const STYLES=["現代簡約","無印日式","侘寂靜謐","北歐自然","溫潤木質","輕奢現代","工業風","當代混搭","美式古典"];
 const TONES=["溫潤木色","純白極簡","大地灰階","深色沉穩","明亮北歐","低彩莫蘭迪"];
-const MATERIALS=["白橡木","胡桃木","特殊塗料","微水泥","大理石","岩板","鐵件","玻璃磚","藤編","沖孔板","皮革","進口磚","水磨石","木紋美耐板"];
+let MATERIALS=[];   // 於 MAT_INFO 定義後填入
 const SPACES=["玄關","客廳","餐廚","中島","主臥","更衣室","衛浴","書房","兒童房","陽台","收納牆","走道"];
 const VOICES=["溫暖敘事","專業理性","俐落簡潔","親切口語"];
 const CTAS=["私訊預約免費丈量","留言索取平面圖","點主頁連結看完整案例","追蹤看更多完工實景","留言「材質」拿選材清單"];
@@ -597,21 +621,26 @@ function fillSelect(id,arr,def){
 let selMaterials=["白橡木","特殊塗料","鐵件"];
 let selSpaces=["客廳","餐廚","主臥"];
 
-function buildChips(id,list,selected,max,counterId){
+function buildChips(id,list,selected,max,counterId,onChange){
   const box=$(id);
   box.innerHTML=list.map(v=>`<button type="button" class="chip" aria-pressed="${selected.includes(v)}">${esc(v)}</button>`).join("");
   const upd=()=>{if(counterId)$(counterId).textContent=selected.length+"/"+max;};
-  box.addEventListener("click",e=>{
-    const b=e.target.closest(".chip");if(!b)return;
-    const v=b.textContent;
-    const i=selected.indexOf(v);
-    if(i>=0)selected.splice(i,1);
-    else{if(selected.length>=max){toast("最多選 "+max+" 項");return;}selected.push(v);}
-    b.setAttribute("aria-pressed",selected.includes(v));
-    upd();
-  });
+  if(!box._bound){
+    box._bound=true;
+    box.addEventListener("click",e=>{
+      const b=e.target.closest(".chip");if(!b)return;
+      const v=b.textContent;
+      const i=selected.indexOf(v);
+      if(i>=0)selected.splice(i,1);
+      else{if(selected.length>=max){toast("最多選 "+max+" 項");return;}selected.push(v);}
+      b.setAttribute("aria-pressed",selected.includes(v));
+      upd();
+      if(onChange)onChange();
+    });
+  }
   upd();
 }
+function refreshMatChips(){buildChips("#f-materials",MATERIALS,selMaterials,5,"#matCount",renderMatEditor);}
 
 function readBrief(){
   const needs=$("#f-needs").value.split(/[、,，\n;；]/).map(s=>s.trim()).filter(Boolean);
@@ -668,21 +697,296 @@ function applyVoice(text,voice){
 
 /* ===================== 內容知識庫 ===================== */
 const MAT_INFO={
- "白橡木":{f:"淺色直紋，木紋細緻均勻",g:"放大空間感，百搭不挑風格",w:"淺色系怕深色污漬，建議做防護塗裝",c:"乾布擦拭即可，避免大量水氣"},
- "胡桃木":{f:"深棕帶紫褐，紋理層次濃",g:"一放進空間就有重量與質感",w:"深色會吸光，需搭配足夠照明",c:"半年上一次保養油"},
- "特殊塗料":{f:"手作質感的礦物塗層，無接縫",g:"整面牆一氣呵成，光影變化細膩",w:"施工師傅的手感決定成敗",c:"髒污用橡皮擦或細砂輕磨"},
- "微水泥":{f:"薄塗水泥質感，可上牆也可上地",g:"無縫、耐磨，現代感強",w:"基底必須夠穩，否則容易細裂",c:"定期打蠟或補潑水劑"},
- "大理石":{f:"天然紋理，每一片都不一樣",g:"檯面與主牆的質感天花板",w:"怕酸怕油，廚房使用要慎選",c:"養護劑一年一次"},
- "岩板":{f:"高溫燒製，密度極高",g:"耐刮耐熱，廚房檯面首選",w:"轉角與開孔要靠工班經驗",c:"中性清潔劑就夠"},
- "鐵件":{f:"細支撐、大跨距",g:"讓層板與門框變得纖細俐落",w:"焊點與烤漆品質差異很大",c:"注意除濕，避免鏽點"},
- "玻璃磚":{f:"透光不透視",g:"把光帶進暗房，同時保有隱私",w:"施工要注意垂直與收邊",c:"玻璃清潔劑擦拭"},
- "藤編":{f:"手工編織的自然肌理",g:"替櫃體加上呼吸感與溫度",w:"潮濕環境容易變形",c:"避免陽光直曬"},
- "沖孔板":{f:"金屬洞洞板，可掛可收",g:"機能牆的最佳解，隨時重組",w:"孔徑要先確認掛勾規格",c:"擦拭即可"},
- "皮革":{f:"軟包或貼覆，觸感溫潤",g:"床頭與門片的高級感來源",w:"貓抓與尖銳物是天敵",c:"皮革保養乳三個月一次"},
- "進口磚":{f:"花色與尺寸選擇多",g:"用一片磚就能定調整個空間",w:"交期通常較長，要提早下單",c:"填縫劑選抗污款"},
- "水磨石":{f:"骨料嵌入水泥研磨而成",g:"復古又現代，耐用度極高",w:"重量較重，樓板要評估",c:"避免強酸清潔劑"},
- "木紋美耐板":{f:"仿木紋的耐磨貼面",g:"預算友善，耐刮好清潔",w:"轉角收邊處理決定質感",c:"一般清潔劑即可"}
+ "白橡木":{
+  f:["淺色直紋，木紋細緻均勻","北歐與日式最常用的淺色木皮","色溫偏暖、紋理安靜，最不挑風格的一支"],
+  g:["放大空間感，家具怎麼換都不會打架","把光反射回室內，白天幾乎不用開燈","淺色帶暖，看久了不會膩"],
+  w:["淺色怕深色污漬，建議先做防護塗裝","不同批號會有色差，同一空間要一次下料"],
+  c:["乾布擦拭即可，避免長時間水氣"],
+  u:"電視牆、櫃體門片、天花造型",p:"中"},
+ "胡桃木":{
+  f:["深棕帶紫褐，紋理層次濃","木皮界的重量級，質感一眼看得出來","色深、油脂感重，時間久了會更沉"],
+  g:["一放進空間就有重量與質感","小面積使用就能定調整個空間","跟金屬、石材都很好搭"],
+  w:["深色會吸光，需要搭配足夠照明","全室大量使用容易壓迫，建議只做重點面"],
+  c:["半年上一次保養油，維持油潤度"],
+  u:"電視主牆、書房、玄關端景",p:"中高"},
+ "梧桐木":{
+  f:["浮雕般的立體木紋，摸得到高低差","經過鋼刷處理，年輪紋路特別明顯","質輕、紋深，是侘寂與日式的常客"],
+  g:["同樣一面牆，光影一打就有表情","不用做造型，材質本身就是造型","比一般平滑木皮更有手感"],
+  w:["溝紋容易積灰，開放層板要慎用","質地較軟，邊角怕碰撞"],
+  c:["用軟毛刷順著紋理清灰塵"],
+  u:"床頭主牆、餐廳背牆、天花",p:"中"},
+ "實木皮":{
+  f:["真實木材薄切貼覆，紋理不重複","有木皮的真實感，又不必付實木的價","可染色，冷暖調都做得出來"],
+  g:["近看遠看都經得起，質感的下限很高","比美耐板真實，比實木好控制變形"],
+  w:["需上保護漆，否則容易吃色","拼花方向要事先確認，接縫最看功力"],
+  c:["中性清潔劑擰乾擦拭，避免溶劑"],
+  u:"櫃體門片、包樑、造型牆",p:"中"},
+ "超耐磨木地板":{
+  f:["高壓耐磨層加上木紋壓紋，仿真度高","卡扣式施工，不用釘不用膠","厚度多為 8～12mm，選擇非常多"],
+  g:["耐刮好清潔，養寵物與有小孩的家最實際","一種地板貫穿全室，視覺不被切斷","預算友善，坪效換得回來"],
+  w:["怕長時間積水，衛浴與陽台不建議","踩感與實木仍有差距，可挑厚一點的款"],
+  c:["半乾拖把即可，避免大量水沖洗"],
+  u:"客廳、臥室、書房全室地坪",p:"低中"},
+ "木紋美耐板":{
+  f:["仿木紋的高壓耐磨貼面","花色選擇極多，還能配到同色封邊","表面硬度高，是櫃體的常規解"],
+  g:["預算友善，耐刮好清潔","大面積使用不怕色差","小孩房、廚具門片的實用首選"],
+  w:["轉角收邊的處理決定質感","彎曲造型受限，弧形處理成本高"],
+  c:["一般中性清潔劑擦拭即可"],
+  u:"系統櫃門片、廚具、書桌檯面",p:"低"},
+ "木絲水泥板":{
+  f:["木纖維與水泥壓製，看得到細絲","質地粗獷，帶點工業與自然的中間值","防潮、防蟲，穩定性比純木好"],
+  g:["一片就有紋理，不必再做造型","跟鐵件、水泥粉光是天生一對"],
+  w:["邊緣易崩角，收邊要做金屬或木框","表面孔隙多，淺色容易吃髒"],
+  c:["先上潑水劑，之後乾擦為主"],
+  u:"玄關牆、餐廳背牆、天花局部",p:"中"},
+ "特殊塗料":{
+  f:["手作質感的礦物塗層，無接縫","一層一層批出來的厚度與筆觸","可調光澤度，從全霧到微光都做得到"],
+  g:["整面牆一氣呵成，光影變化細膩","沒有接縫，空間的線條會變乾淨","同一支塗料能做出完全不同的表情"],
+  w:["施工師傅的手感決定成敗，樣板一定要看","局部修補會有色差，建議整面重做"],
+  c:["髒污用橡皮擦或細砂輕磨即可"],
+  u:"客廳主牆、床頭、天花",p:"中高"},
+ "樂土":{
+  f:["以廢棄土製成的防水灰泥","水泥質感但可呼吸、不易起壁癌","顏色偏冷灰，帶自然的深淺不勻"],
+  g:["水泥味十足，卻比清水模好施作","抗壁癌，浴室與外牆也用得上"],
+  w:["色差是特色也是風險，接受度要先確認","表面偏粗，深色物品磨到會留痕"],
+  c:["乾擦或吸塵，避免強酸鹼清潔劑"],
+  u:"衛浴牆面、玄關、外露牆",p:"中"},
+ "微水泥":{
+  f:["薄塗的水泥質感，可上牆也可上地","厚度僅 2～3mm，不會吃掉樓高","無縫、可延續到踢腳與檯面"],
+  g:["現代感強，空間一次就收乾淨","地牆同材質，視覺完全連續"],
+  w:["基底必須夠穩，否則容易出現細裂","一定要做面漆封層，否則吃油吃色"],
+  c:["定期補潑水劑或打蠟"],
+  u:"衛浴、開放式客餐廳地坪、檯面",p:"中高"},
+ "珪藻土":{
+  f:["多孔的天然礦物塗料，會呼吸","表面霧面、觸感偏粉","可做平塗，也可做手感刮紋"],
+  g:["調濕除臭，潮濕的台灣很有感","霧面不反光，拍照特別柔"],
+  w:["硬度低，走道與床頭容易碰花","不耐水，衛浴內部不適合"],
+  c:["髒了用細砂紙輕磨，不要用水擦"],
+  u:"臥室、書房、更衣室牆面",p:"中"},
+ "大理石":{
+  f:["天然紋理，每一片都不一樣","可對紋、可書本翻，做出對稱山水","光澤深，是石材裡的表情擔當"],
+  g:["檯面與主牆的質感天花板","一片石就能撐起整個空間的層級"],
+  w:["怕酸怕油，廚房使用要慎選石種","毛細孔會吃色，紅酒醬油要立刻擦"],
+  c:["養護劑一年一次，日常用中性清潔劑"],
+  u:"電視主牆、中島檯面、衛浴檯面",p:"高"},
+ "石英石":{
+  f:["石英砂加樹脂高壓成型","硬度高、毛細孔極低","花色穩定，不會像天然石有大色差"],
+  g:["廚房檯面最實際的選擇，不太吃色","可做無縫接合，看起來像整塊"],
+  w:["不耐高溫，熱鍋要墊隔熱墊","轉角遇到重擊仍會崩角"],
+  c:["中性清潔劑即可，避免強酸鹼"],
+  u:"廚房檯面、中島、洗手檯",p:"中高"},
+ "人造石":{
+  f:["樹脂為主的實心板材，可熱彎塑形","無縫接合，接痕幾乎看不到","顏色均勻，純色選擇多"],
+  g:["造型自由度最高，弧形檯面也做得出來","有刮傷可以研磨翻新，等於能修"],
+  w:["硬度不如石英石，會刮也會吃色","高溫會變形，不能直接放熱鍋"],
+  c:["用菜瓜布加中性清潔劑輕刷即可"],
+  u:"洗手檯、櫃檯、造型檯面",p:"中"},
+ "岩板":{
+  f:["高溫燒製的大板磁磚，密度極高","可做到 3m 大板，接縫極少","厚度薄，也能貼櫃門與檯面"],
+  g:["耐刮耐熱，廚房檯面首選","不吃色、好清潔，用十年還是一樣"],
+  w:["轉角與開孔要靠工班經驗，崩了就報廢","大板搬運與施工費用不低"],
+  c:["中性清潔劑就夠，日常濕布擦拭"],
+  u:"廚房檯面、電視牆、中島",p:"中高"},
+ "水磨石":{
+  f:["骨料嵌入水泥研磨而成","可指定骨料顏色與粒徑，客製度高","現場澆置無縫，或用預製磚都可以"],
+  g:["復古又現代，耐用度極高","獨一無二的斑點，怎麼拍都好看"],
+  w:["現場澆置重量較重，樓板要先評估","養護與研磨工期較長"],
+  c:["避免強酸清潔劑，定期上養護劑"],
+  u:"玄關地坪、衛浴、樓梯",p:"中高"},
+ "進口磚":{
+  f:["花色與尺寸選擇多，質感差異大","從仿石、仿木到手工感全都有","表面處理可選霧面、柔光、亮面"],
+  g:["用一片磚就能定調整個空間","好清潔又耐用，長期成本最低"],
+  w:["交期通常較長，要提早下單","同款不同批會有色差，要一次備足"],
+  c:["填縫劑選抗污款，日常清水擦拭"],
+  u:"客餐廳地坪、衛浴、陽台",p:"中高"},
+ "六角磚":{
+  f:["蜂巢狀排列，線條本身就是圖案","可單色可撞色，變化空間大","小尺寸，畸零角落也貼得漂亮"],
+  g:["不用多做設計，地板自己會說話","是小空間最省力的記憶點"],
+  w:["填縫線多，淺色縫容易顯髒","切割耗損比方磚高"],
+  c:["填縫選深色或抗污款，刷子清縫"],
+  u:"衛浴、陽台、玄關落塵區",p:"中"},
+ "花磚":{
+  f:["帶圖騰的裝飾磚，復古或南洋皆有","可拼大面積，也可做局部腰帶","顏色飽和，是空間裡的亮點"],
+  g:["一小面就能讓空間有故事","跟素色櫃體搭配，層次立刻出來"],
+  w:["圖案強烈，面積過大容易膩","要先排版打樣，避免圖案被切斷"],
+  c:["日常擦拭即可，避免強酸傷釉"],
+  u:"廚房壁面、衛浴地坪、玄關",p:"中"},
+ "鐵件":{
+  f:["細支撐、大跨距","可焊接、可折可捲，形狀自由","烤漆色可完全客製"],
+  g:["讓層板與門框變得纖細俐落","同樣的收納，看起來輕一半","跟木頭、玻璃都是好搭檔"],
+  w:["焊點與烤漆品質差異很大，要看樣品","現場丈量誤差大就補救不了，需精準"],
+  c:["注意除濕，發現鏽點盡早補漆"],
+  u:"層板、玻璃門框、樓梯扶手",p:"中高"},
+ "不鏽鋼":{
+  f:["冷冽的金屬面，可拉絲可鏡面","耐鏽耐酸，硬度高","可做整片包覆，也可做細收邊"],
+  g:["用久了會有使用痕跡，反而更好看","廚房區域最耐操的一種選擇"],
+  w:["指紋很明顯，鏡面款要有心理準備","板材太薄會有波浪感，厚度要談清楚"],
+  c:["順著紋理用專用亮光劑擦拭"],
+  u:"廚房檯面、層架、門片包邊",p:"中高"},
+ "黃銅":{
+  f:["溫暖的金色調，會隨時間氧化","可拋光亮面，也可做仿古霧面","多用在細節：把手、收邊、燈具"],
+  g:["一點點就能提亮整個空間","隨使用產生的色澤變化是它的價值"],
+  w:["會變色，不喜歡的人要選鍍膜款","價格較高，建議只做點綴"],
+  c:["拋光款需定期上蠟，霧面款順其自然"],
+  u:"把手、踢腳收邊、鏡框、燈具",p:"高"},
+ "沖孔板":{
+  f:["金屬洞洞板，可掛可收","孔徑與板厚有多種規格","可烤漆成任何顏色"],
+  g:["機能牆的最佳解，隨時可以重組","通透不擋光，還能當隔屏"],
+  w:["孔徑要先確認掛勾規格，否則掛不上","大面積要加補強框，否則會凹"],
+  c:["擦拭即可，注意孔內積灰"],
+  u:"工作區牆面、玄關、廚房側牆",p:"中"},
+ "玻璃磚":{
+  f:["透光不透視","可實心可空心，厚度質感差很多","排列方式就是設計"],
+  g:["把光帶進暗房，同時保有隱私","做隔間卻不讓空間變小"],
+  w:["施工要注意垂直與收邊，歪一點很明顯","單價與工資都不低，面積要抓好"],
+  c:["玻璃清潔劑擦拭，注意縫隙"],
+  u:"隔間牆、衛浴、玄關屏風",p:"中高"},
+ "長虹玻璃":{
+  f:["直條紋壓花玻璃，光線會被拉長","半透光、影像模糊","可搭鐵件細框做門片"],
+  g:["隱私與採光一次解決","線條感強，是輕日式與現代風的常客"],
+  w:["紋路方向要先決定，橫直感覺完全不同","強化與否影響安全與價格"],
+  c:["順著紋理擦，避免布料卡在溝槽"],
+  u:"書房拉門、衛浴門、櫃體門片",p:"中"},
+ "茶玻／灰玻":{
+  f:["帶色玻璃，深淺可選","半透，內容物若隱若現","常搭鋁框或鐵件細框"],
+  g:["讓櫃體有層次，又不用怕裡面亂","降低反光，比清玻更沉穩"],
+  w:["顏色太深會顯暗，小空間要慎用","指紋明顯，深色款更明顯"],
+  c:["玻璃清潔劑加超細纖維布"],
+  u:"展示櫃門、拉門、隔間",p:"中"},
+ "鏡面":{
+  f:["可選清鏡、茶鏡、灰鏡、黑鏡","可做整面，也可切割拼貼","背漆品質決定會不會起黑邊"],
+  g:["小坪數放大空間最直接的手法","把光反射到暗處，走道會亮起來"],
+  w:["位置要算過，否則會照到不想照的地方","潮濕處要選防潮鏡，避免邊緣氧化"],
+  c:["專用玻璃清潔劑，避免水積在邊緣"],
+  u:"玄關、走道端景、更衣室",p:"中"},
+ "藤編":{
+  f:["手工編織的自然肌理","開放編法透氣，也能看見層次","可染色，深淺都做得到"],
+  g:["替櫃體加上呼吸感與溫度","一點點就能讓空間不那麼硬"],
+  w:["潮濕環境容易變形，衛浴不建議","編織面不好擦，油煙區要避開"],
+  c:["軟毛刷清灰，避免陽光直曬"],
+  u:"櫃門、床頭、屏風、拉門",p:"中"},
+ "皮革":{
+  f:["軟包或平貼，觸感溫潤","可做菱格、直條或素面","真皮與人造皮質感與價格差距大"],
+  g:["床頭與門片的高級感來源","有吸音效果，臥室會更安靜"],
+  w:["貓抓與尖銳物是天敵","接縫與轉角的車工決定成敗"],
+  c:["真皮三個月上一次保養乳，人造皮擰乾擦拭"],
+  u:"床頭、餐椅背牆、更衣室門片",p:"中高"},
+ "布紋板":{
+  f:["表面帶織紋的板材，摸起來像布","霧面不反光，指紋不明顯","色系多為低彩度大地色"],
+  g:["比平滑板材柔和，整室櫃體不會冷","耐刮好清潔，卻有布的溫度"],
+  w:["紋理方向要統一，否則反光不一致","深色款仍會顯灰塵"],
+  c:["乾布或微濕布順紋擦拭"],
+  u:"全室櫃體門片、電視櫃、書櫃",p:"中"}
 };
+
+MATERIALS=Object.keys(MAT_INFO);
+
+/* ---- 材質文案解析（可被使用者自訂覆寫） ---- */
+let MAT_USER={custom:[],edit:{}};
+let MAT_CACHE={};
+function loadMatUser(){
+  try{
+    const raw=store("hebe_mat");if(!raw)return;
+    const u=JSON.parse(raw);
+    if(u&&typeof u==="object"){
+      MAT_USER.custom=Array.isArray(u.custom)?u.custom.filter(x=>typeof x==="string"&&x.trim()):[];
+      MAT_USER.edit=(u.edit&&typeof u.edit==="object")?u.edit:{};
+    }
+    MAT_USER.custom.forEach(n=>{if(!MATERIALS.includes(n))MATERIALS.push(n);});
+  }catch(e){}
+}
+function saveMatUser(){try{store("hebe_mat",JSON.stringify(MAT_USER));}catch(e){}}
+function oneOf(v){return Array.isArray(v)?pick(v):(v||"");}
+function matOf(m){
+  if(MAT_CACHE[m])return MAT_CACHE[m];
+  const b=MAT_INFO[m]||{},e=MAT_USER.edit[m]||{};
+  const o={
+    f:(e.f||"").trim()||oneOf(b.f)||"值得認識的材質",
+    g:(e.g||"").trim()||oneOf(b.g)||"質感與耐用兼具",
+    w:(e.w||"").trim()||oneOf(b.w)||"施工品質影響很大",
+    c:(e.c||"").trim()||oneOf(b.c)||"依材質特性定期維護",
+    u:(e.u||"").trim()||b.u||"主牆與櫃體",
+    p:(e.p||"").trim()||b.p||"—"
+  };
+  MAT_CACHE[m]=o;return o;
+}
+function matLine(m){const i=matOf(m);return `・${m}｜${i.f} → ${i.g}`;}
+function isMatEdited(m){const e=MAT_USER.edit[m];return !!(e&&Object.keys(e).some(k=>(e[k]||"").trim()));}
+
+/* ---- 材質文案編輯器 ---- */
+const MAT_FIELDS=[["f","特色"],["g","為什麼選它"],["w","要注意"],["c","保養"],["u","常用在"],["p","價位帶"]];
+let matNewOpen=false;
+function matPlaceholder(m,k){const v=(MAT_INFO[m]||{})[k];return Array.isArray(v)?(v[0]||""):(v||"");}
+function autoGrow(t){t.style.height="auto";t.style.height=(t.scrollHeight+2)+"px";}
+function matCardHtml(m){
+  const e=MAT_USER.edit[m]||{};
+  const custom=MAT_USER.custom.includes(m);
+  const tag=custom?'<span class="tagx">自訂</span>':(isMatEdited(m)?'<span class="tagx">已改</span>':"");
+  return `<div class="matcard" data-m="${esc(m)}">
+    <div class="matcard-h"><b>${esc(m)}</b>${tag}<span class="sp">
+      ${isMatEdited(m)?'<button type="button" data-act="reset">還原預設</button>':""}
+      ${custom?'<button type="button" data-act="del">刪除</button>':""}
+    </span></div>
+    ${MAT_FIELDS.map(([k,n])=>`<div class="matrow"><span>${n}</span><textarea data-k="${k}" rows="1" placeholder="${esc(matPlaceholder(m,k)||"（未設定）")}">${esc(e[k]||"")}</textarea></div>`).join("")}
+  </div>`;
+}
+function renderMatEditor(){
+  const box=$("#matEditor");if(!box||box.hidden)return;
+  let html="";
+  if(matNewOpen){
+    html+=`<div class="matcard matnew">
+      <div class="matcard-h"><b>新增自訂材質</b><span class="sp"><button type="button" data-act="newcancel">取消</button></span></div>
+      <div class="matrow"><span>材質名稱</span><input id="matNewName" maxlength="12" placeholder="例如：訂製陶板"></div>
+      ${MAT_FIELDS.map(([k,n])=>`<div class="matrow"><span>${n}</span><textarea data-new="${k}" rows="1" placeholder="可以先留白，之後再補"></textarea></div>`).join("")}
+      <div class="card-actions" style="margin-top:9px"><button class="btn small" type="button" data-act="newsave">加入材質庫</button></div>
+    </div>`;
+  }
+  if(!selMaterials.length)html+=`<p class="hint">先在上面選幾個材質，這裡就會出現可以改的欄位。</p>`;
+  html+=selMaterials.map(matCardHtml).join("");
+  box.innerHTML=html;
+  box.querySelectorAll("textarea").forEach(autoGrow);
+}
+let matSaveTimer=null;
+function refreshMatHeads(){
+  $$("#matEditor .matcard[data-m]").forEach(card=>{
+    const m=card.dataset.m,custom=MAT_USER.custom.includes(m),h=card.querySelector(".matcard-h");
+    if(!h)return;
+    h.innerHTML=`<b>${esc(m)}</b>`+
+      (custom?'<span class="tagx">自訂</span>':(isMatEdited(m)?'<span class="tagx">已改</span>':""))+
+      `<span class="sp">${isMatEdited(m)?'<button type="button" data-act="reset">還原預設</button>':""}`+
+      `${custom?'<button type="button" data-act="del">刪除</button>':""}</span>`;
+  });
+}
+function matChanged(){
+  saveMatUser();
+  refreshMatHeads();
+  clearTimeout(matSaveTimer);
+  matSaveTimer=setTimeout(()=>{MAT_CACHE={};generateAll(false);},450);
+}
+function addCustomMaterial(name,vals){
+  name=(name||"").trim();
+  if(!name){toast("請先填材質名稱");return false;}
+  if(MATERIALS.includes(name)){toast("材質庫裡已經有「"+name+"」了");return false;}
+  MATERIALS.push(name);
+  MAT_USER.custom.push(name);
+  MAT_USER.edit[name]=vals;
+  if(selMaterials.length<5)selMaterials.push(name);
+  matNewOpen=false;
+  refreshMatChips();renderMatEditor();
+  saveMatUser();MAT_CACHE={};generateAll(false);
+  toast("已加入「"+name+"」");
+  return true;
+}
+function deleteCustomMaterial(m){
+  MATERIALS=MATERIALS.filter(x=>x!==m);
+  MAT_USER.custom=MAT_USER.custom.filter(x=>x!==m);
+  delete MAT_USER.edit[m];
+  const si=selMaterials.indexOf(m);if(si>=0)selMaterials.splice(si,1);
+  refreshMatChips();renderMatEditor();
+  saveMatUser();MAT_CACHE={};generateAll(false);
+  toast("已刪除「"+m+"」");
+}
+
 
 const TIPS=[
  {t:"插座別只算數量，要算位置",p:["床頭兩側各留雙孔＋USB，手機不用再爬地板","餐桌旁預留地插，火鍋、氣炸鍋都靠它","玄關留一組給掃地機器人，回充不擋路"],c:"插座是最便宜的設計，卻最常被漏掉。"},
@@ -751,7 +1055,7 @@ const TYPES=[
   {t:"屋主的三個願望",x:P.needs.slice(0,3).map(n=>"・"+n).join("\n"),r:"痛點"},
   {t:"原始屋況",x:`${P.caseType}，${P.layout}。動線繞、收納散、光進不來。`,r:"Before"},
   ...P.spaces.slice(0,4).map(sp=>({t:sp,x:spaceLine(sp),r:"亮點"})),
-  {t:"選材",x:P.materials.map(m=>"・"+m+"｜"+(MAT_INFO[m]?MAT_INFO[m].g:"質感與耐用兼具")).join("\n"),r:"材質"},
+  {t:"選材",x:P.materials.map(matLine).join("\n"),r:"材質"},
   {t:"想聊聊你家嗎",x:`${P.cta}　${P.handle}`,r:"CTA"}]},
 
 {k:"ba",n:"Before / After",
@@ -823,27 +1127,29 @@ const TYPES=[
   {t:"想從一句話開始嗎",x:`${P.cta}　${P.handle}`,r:"CTA"}]},
 
 {k:"material",n:"材質介紹",
- hooks:P=>{const m=pick(P.materials);P._mat=m;const info=MAT_INFO[m]||{};return[
+ hooks:P=>{const m=pick(P.materials);P._mat=m;const info=matOf(m);return[
   `${m}｜${info.f||"值得認識的材質"}`,
   `為什麼我們在 ${P.name} 用了${m}？`,
   `選材筆記：${m}`,
   `${m}好看，但你要先知道這三件事。`];},
- lead:P=>{const m=P._mat||P.materials[0];const i=MAT_INFO[m]||{};return[
+ lead:P=>{const m=P._mat||P.materials[0];const i=matOf(m);return[
   `${m}的特性是${i.f||"質感細緻"}，這也是它在${P.style}裡特別耐看的原因。`,
   `每一種材質都有它的個性。選材之前，先想清楚你家的使用習慣。`];},
- points:P=>{const m=P._mat||P.materials[0];const i=MAT_INFO[m]||{};return[
-  `・優點｜${i.g||"質感與耐用兼具"}`,
-  `・要注意｜${i.w||"施工品質影響很大"}`,
-  `・保養｜${i.c||"依材質特性定期維護"}`,
-  `・適合搭配｜${P.tone}的色調與${(P.materials.filter(x=>x!==m)[0])||"淺色木皮"}`];},
+ points:P=>{const m=P._mat||P.materials[0];const i=matOf(m);return[
+  `・優點｜${i.g}`,
+  `・要注意｜${i.w}`,
+  `・保養｜${i.c}`,
+  `・常用在｜${i.u}`,
+  `・價位帶｜${i.p}　適合搭配${P.tone}的色調與${(P.materials.filter(x=>x!==m)[0])||"淺色木皮"}`];},
  close:P=>[`材質沒有絕對的好壞，只有適不適合你家。`,`想知道哪一種材質，留言告訴我們。`,`預算有限時，把錢花在每天會摸到的地方。`],
- car:P=>{const m=P._mat||P.materials[0];const i=MAT_INFO[m]||{};return[
+ car:P=>{const m=P._mat||P.materials[0];const i=matOf(m);return[
   {t:m,x:"選材筆記",r:"封面"},
   {t:"它是什麼",x:i.f||"",r:"認識"},
   {t:"為什麼選它",x:i.g||"",r:"優點"},
   {t:"要注意",x:i.w||"",r:"風險"},
   {t:"怎麼保養",x:i.c||"",r:"維護"},
-  {t:"用在哪裡最好看",x:`${P.spaces[0]}與${P.spaces[1]||"主牆"}，搭配${P.tone}`,r:"應用"},
+  {t:"用在哪裡最好看",x:`${i.u}\n這個案子用在${P.spaces[0]}，搭配${P.tone}`,r:"應用"},
+  {t:"價位帶",x:`${i.p}　預算有限時，把錢花在每天會摸到的地方`,r:"預算"},
   {t:"還想認識哪種材質",x:`留言告訴我們　${P.handle}`,r:"CTA"}];}},
 
 {k:"qa",n:"常見問答",
@@ -1405,6 +1711,7 @@ function renderAi(){
 /* ===================== 全部重繪 ===================== */
 function generateAll(reseed){
   if(reseed)seed=Math.floor(Math.random()*100000);
+  MAT_CACHE={};
   P=readBrief();
   renderCopy();
   renderCarousel();
@@ -1470,6 +1777,49 @@ function initEvents(){
   });
   $("#copyAllBtn").addEventListener("click",()=>{
     copyText(currentVariants.map(v=>`【${v.name}】\n${v.full}`).join("\n\n──────────\n\n"));
+  });
+
+  // 材質文案編輯
+  $("#matEditBtn").addEventListener("click",()=>{
+    const box=$("#matEditor"),btn=$("#matEditBtn");
+    box.hidden=!box.hidden;
+    btn.setAttribute("aria-expanded",String(!box.hidden));
+    btn.textContent=box.hidden?"編輯材質文案":"收起編輯";
+    if(!box.hidden)renderMatEditor();
+  });
+  $("#matAddBtn").addEventListener("click",()=>{
+    const box=$("#matEditor");
+    matNewOpen=true;
+    if(box.hidden){box.hidden=false;$("#matEditBtn").setAttribute("aria-expanded","true");$("#matEditBtn").textContent="收起編輯";}
+    renderMatEditor();
+    const n=$("#matNewName");if(n)n.focus();
+  });
+  $("#matEditor").addEventListener("input",e=>{
+    const t=e.target;
+    if(t.tagName==="TEXTAREA")autoGrow(t);
+    if(t.dataset.new!==undefined||t.id==="matNewName")return;
+    const card=t.closest(".matcard");if(!card||!t.dataset.k)return;
+    const m=card.dataset.m;
+    MAT_USER.edit[m]=MAT_USER.edit[m]||{};
+    MAT_USER.edit[m][t.dataset.k]=t.value;
+    if(!Object.keys(MAT_USER.edit[m]).some(k=>(MAT_USER.edit[m][k]||"").trim())&&!MAT_USER.custom.includes(m))delete MAT_USER.edit[m];
+    matChanged();
+  });
+  $("#matEditor").addEventListener("click",e=>{
+    const b=e.target.closest("button[data-act]");if(!b)return;
+    const act=b.dataset.act;
+    if(act==="newcancel"){matNewOpen=false;renderMatEditor();return;}
+    if(act==="newsave"){
+      const box=$("#matEditor");
+      const vals={};
+      box.querySelectorAll("[data-new]").forEach(el=>{const v=el.value.trim();if(v)vals[el.dataset.new]=v;});
+      addCustomMaterial($("#matNewName").value,vals);
+      return;
+    }
+    const card=b.closest(".matcard");if(!card)return;
+    const m=card.dataset.m;
+    if(act==="reset"){delete MAT_USER.edit[m];renderMatEditor();matChanged();toast("已還原「"+m+"」的預設文案");}
+    else if(act==="del")deleteCustomMaterial(m);
   });
 
   // 版型圖
@@ -1596,8 +1946,11 @@ function init(){
   fillSelect("#f-tone",TONES,"溫潤木色");
   fillSelect("#f-voice",VOICES,"溫暖敘事");
   fillSelect("#f-cta",CTAS,CTAS[0]);
+  loadMatUser();
   loadBrief();
-  buildChips("#f-materials",MATERIALS,selMaterials,5,"#matCount");
+  selMaterials=selMaterials.filter(m=>MATERIALS.includes(m));
+  if(!selMaterials.length)selMaterials.push("白橡木");
+  refreshMatChips();
   buildChips("#f-spaces",SPACES,selSpaces,6,"#spaceCount");
   renderTypePicker();
   renderImgOptions();
