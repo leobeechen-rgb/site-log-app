@@ -406,6 +406,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 @media (hover:none){.slide .sctl{opacity:1}}
 .slide-top .sctl button{background:none;border:0;color:var(--muted);font-size:12px;line-height:1;padding:4px 5px;cursor:pointer;border-radius:5px}
 .slide-top .sctl button:hover{background:var(--surface);color:var(--accent)}
+.slide-top .edited.ai{color:var(--accent);border-color:var(--accent);background:var(--accent-soft)}
 .slide-top .edited{font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:.06em;color:var(--clay);border:1px solid var(--clay);background:var(--clay-soft);border-radius:0;padding:1px 5px;white-space:nowrap}
 .s-in{width:100%;background:transparent;border:1px solid transparent;border-radius:0;padding:4px 6px;color:inherit;display:block}
 .s-in:hover{border-color:var(--line-soft)}
@@ -680,7 +681,7 @@ details.adv[open] summary{margin-bottom:12px}
           </div>
           <p class="note" id="carNote"></p>
           <div class="carnote" id="carDirtyBar" hidden>
-            <span>這份腳本你手動改過了，所以不會再跟著左側設定自動變動。</span>
+            <span id="carDirtyMsg">這份腳本你手動改過了，所以不會再跟著左側設定自動變動。</span>
             <span class="sp"><button class="btn ghost small" id="carRegen" type="button">重新產生腳本</button></span>
           </div>
           <div class="slides" id="carOut" style="margin-top:14px"></div>
@@ -1591,7 +1592,7 @@ let aiVariants=null;          // AI 看圖寫文
   });
   $("#copyOut").addEventListener("click",e=>{
     if(e.target.id!=="aiBack")return;
-    aiVariants=null;renderCopy();toast("已回到模板文案");
+    aiVariants=null;aiPhotoOrder=null;renderCopy();toast("已回到模板文案");
   });
 
   // AI 看圖寫出來的文案；有值時優先顯示
@@ -1645,14 +1646,14 @@ function loadCarousel(){
     const raw=store("hebe_car");if(!raw)return false;
     const d=JSON.parse(raw);
     if(!d||d.type!==currentType||!Array.isArray(d.pages)||!d.pages.length)return false;
-    currentCarousel=d.pages.map(s=>({t:String(s.t||""),x:String(s.x||""),r:String(s.r||""),_e:!!s._e}));
+    currentCarousel=d.pages.map(s=>({t:String(s.t||""),x:String(s.x||""),r:String(s.r||""),_e:!!s._e,_ai:!!s._ai}));
     carDirty=true;
     return true;
   }catch(e){return false;}
 }
 function renderCarousel(force){
   if(force||!carDirty)currentCarousel=TYPE_MAP[currentType].car(P).slice(0,10);
-  if(force)carDirty=false;
+  if(force){carDirty=false;aiPhotoOrder=null;}
   paintCarousel();
 }
 function paintCarousel(){
@@ -1660,12 +1661,16 @@ function paintCarousel(){
   $("#carCount").textContent=currentCarousel.length+" 頁";
   $("#carNote").textContent="每一頁對應一張圖。第 1 頁決定停留率，最後一頁放行動呼籲。建議 6～8 頁，滑到底的人才是真客戶。標題與內容都可以直接點進去改。";
   const bar=$("#carDirtyBar");if(bar)bar.hidden=!carDirty;
+  const bmsg=$("#carDirtyMsg");
+  if(bmsg)bmsg.textContent=currentCarousel.some(x=>x._ai)&&!currentCarousel.some(x=>x._e)
+    ?"這份腳本是 AI 看你上傳的 3D 圖寫的，不會跟著左側設定變動。下載整組時會依 AI 指定的順序配圖。"
+    :"這份腳本你手動改過了，所以不會再跟著左側設定自動變動。";
   const n=currentCarousel.length;
   $("#carOut").innerHTML=currentCarousel.map((s,i)=>`
     <article class="slide" data-i="${i}">
       <div class="slide-top">
         <span class="sn" draggable="true" title="拖曳這裡可以調整頁面順序">${String(i+1).padStart(2,"0")} / ${String(n).padStart(2,"0")}</span>
-        ${s._e?'<span class="edited">已手改</span>':""}
+        ${s._e?'<span class="edited">已手改</span>':(s._ai?'<span class="edited ai">AI</span>':"")}
         <span class="sctl">
           <button type="button" data-act="up" aria-label="往前一頁" title="往前">◀</button>
           <button type="button" data-act="down" aria-label="往後一頁" title="往後">▶</button>
@@ -1969,6 +1974,7 @@ async function canvasBlob(cv){return new Promise(r=>cv.toBlob(r,"image/png"));}
 /* ===================== AI 看圖寫文 ===================== */
 const GEMINI = "https://generativelanguage.googleapis.com/v1beta";
 let aiBusy = false;
+let aiPhotoOrder = null;   // AI 指定的每頁配圖（下載整組時使用）
 
 function aiSay(msg, kind){
   const el=$("#aiStatus"); if(!el) return;
@@ -2008,7 +2014,8 @@ function photoToInline(p, max){
     res({inline_data:{mime_type:"image/jpeg",data:url.split(",")[1]}});
   });
 }
-function visionPrompt(){
+function visionPrompt(n){
+  const PHOTO_N=n||Math.max(1,imgState.photos.filter(p=>p.im).length);
   return `你是台灣室內設計公司「赫柏空間設計」的社群編輯。請用繁體中文（台灣用語），語氣${P.voice}，不要用中國大陸慣用詞，不要浮誇形容詞，不要用 emoji。
 
 我附上這個案子的 3D completion 示意圖。請先仔細看圖，再寫文案。
@@ -2026,6 +2033,11 @@ IG 帳號：${P.handle}
 只寫圖裡真的看得到的東西——具體描述取代形容詞，例如寫「電視牆做成整面收納，線材藏進背板」，不要寫「機能滿分」。
 不確定的細節就不要寫，寧可少寫也不要編造。
 
+【輪播腳本】
+我一共附了 ${PHOTO_N} 張圖，請規劃 ${PHOTO_N+2} 頁的輪播：第 1 頁封面、第 2 頁屋主的問題，
+中間每一張圖各一頁（用 photo 欄位標明那一頁對應第幾張圖，從 1 開始），最後一頁行動呼籲。
+封面與最後一頁的 photo 填 0。每頁標題 12 字內，圖說 30 字內。
+
 【寫作規則】
 1. 第一行是鉤子，20 字內，不要用「大家好」開場。
 2. 內文分段，每段 1～3 行，段與段之間空一行。
@@ -2040,6 +2052,9 @@ IG 帳號：${P.handle}
   "materials": ["看到的材質，2～5 個"],
   "spaces": ["圖中的空間，1～4 個"],
   "observed": ["從圖中看到、值得寫進文案的具體細節，3～6 條"],
+  "carousel": [
+    {"t":"標題 12 字內","x":"圖說 30 字內","r":"角色：封面／痛點／Before／亮點／材質／CTA","photo":1}
+  ],
   "variants": [
     {"name":"完整敘事版","body":"250～350 字，含換行"},
     {"name":"重點條列版","body":"150～250 字，含換行"},
@@ -2048,6 +2063,28 @@ IG 帳號：${P.handle}
   "tags": ["#標籤", "..."]
 }`;
 }
+/* AI 講的詞不一定跟清單一模一樣（「微水泥質感塗料」→「微水泥」），做一次寬鬆比對 */
+function matchOne(word, list){
+  const w=String(word||"").trim();
+  if(!w)return null;
+  if(list.includes(w))return w;
+  const hit=list.filter(x=>w.includes(x)||x.includes(w));
+  if(hit.length)return hit.sort((a,b)=>b.length-a.length)[0];
+  const chars=[...new Set(w)];
+  let best=null,score=0;
+  list.forEach(x=>{
+    const n=chars.filter(c=>x.includes(c)).length;
+    const r=n/Math.max(x.length,1);
+    if(n>=2&&r>score){score=r;best=x;}
+  });
+  return score>=0.5?best:null;
+}
+function matchMany(words, list, max){
+  const out=[];
+  (words||[]).forEach(w=>{const m=matchOne(w,list); if(m&&!out.includes(m))out.push(m);});
+  return out.slice(0,max);
+}
+
 /* 模型排序：新版優先、flash 優先（免費額度用得到）、正式版優先於 preview */
 function modelScore(name){
   const n=String(name).replace("models/","");
@@ -2093,22 +2130,43 @@ function applyAiResult(d){
   if(!vs.length)throw new Error("AI 沒有回傳可用的文案。");
   // 把看得出來的欄位回填到左側設定
   const applied=[];
-  if(d.style&&STYLES.includes(d.style)){$("#f-style").value=d.style;applied.push("風格");}
-  if(d.tone&&TONES.includes(d.tone)){$("#f-tone").value=d.tone;applied.push("色調");}
-  const ms=(d.materials||[]).filter(m=>MATERIALS.includes(m)).slice(0,5);
+  const st=matchOne(d.style,STYLES);   if(st){$("#f-style").value=st;applied.push("風格");}
+  const tn=matchOne(d.tone,TONES);     if(tn){$("#f-tone").value=tn;applied.push("色調");}
+  const ms=matchMany(d.materials,MATERIALS,5);
   if(ms.length){selMaterials.splice(0,selMaterials.length,...ms);refreshMatChips();applied.push("材質");}
-  const sp=(d.spaces||[]).filter(x=>SPACES.includes(x)).slice(0,6);
+  const sp=matchMany(d.spaces,SPACES,6);
   if(sp.length){selSpaces.splice(0,selSpaces.length,...sp);buildChips("#f-spaces",SPACES,selSpaces,6,"#spaceCount");applied.push("空間");}
   if(applied.length){const d=$("details.adv");if(d)d.open=true;}   // 讓使用者看得到 AI 改了什麼
   P=readBrief();
   aiVariants=vs;
   renderCopy();
+
+  // 輪播腳本：AI 也一起寫了就直接套用，並依 photo 欄位把圖排到對應頁
+  let carN=0;
+  const cs=(d.carousel||[]).filter(x=>x&&(x.t||x.x));
+  if(cs.length>=3){
+    currentCarousel=cs.slice(0,12).map(x=>({t:String(x.t||""),x:String(x.x||""),r:String(x.r||"AI"),_ai:true}));
+    carDirty=true; saveCarousel(); paintCarousel();
+    carN=currentCarousel.length;
+    // 讓「下載整組」的第 N 頁拿到 AI 指定的那張圖
+    const order=[];
+    cs.slice(0,12).forEach(x=>{
+      const k=parseInt(x.photo,10);
+      order.push(Number.isFinite(k)&&k>=1&&k<=imgState.photos.length?imgState.photos[k-1]:null);
+    });
+    if(order.some(Boolean))aiPhotoOrder=order;
+  }
+
+  // 版型圖的主標／副標改帶 AI 的鉤子
+  const hook=(vs[0].body.split("\n")[0]||"").trim();
+  if(hook){ $("#im-title").value=hook.slice(0,24); redrawCanvas(); }
+
   saveBrief();
   const seen=(d.observed||[]).slice(0,6);
   aiSay(
     `已寫好 ${vs.length} 個版本，切到「Ⅰ 貼文文案」看結果。`+
     (applied.length?`\n從圖片判斷並回填：${applied.join("、")}。`:"")+
-    (seen.length?`\n\nAI 從圖中看到：\n・`+seen.join("\n・"):""),
+    (carN?`\n輪播企劃也一起寫好了，共 ${carN} 頁。`:"")+(seen.length?`\n\nAI 從圖中看到：\n・`+seen.join("\n・"):""),
     "ok");
   document.querySelector('.tab[data-pane="copy"]').click();
 }
@@ -2167,7 +2225,7 @@ async function aiRun(){
   aiBusy=true; $("#aiRun").disabled=true;
   aiSay(`正在讀 ${ready.length} 張圖並寫文案，通常 10～30 秒…`);
   try{
-    const parts=[{text:visionPrompt()}];
+    const parts=[{text:visionPrompt(ready.length)}];
     for(const p of ready){ const ip=await photoToInline(p,1024); if(ip)parts.push(ip); }
     const {json:j,used}=await generateWithFallback(model,key,parts);
     if(used!==model)pickModel(used);
@@ -2484,7 +2542,7 @@ function initEvents(){
     for(let i=0;i<pages.length;i++){
       const p=pages[i];
       const layout=i===0?"cover":(i===pages.length-1?"cta":(p.x.includes("\n")?"list":"quote"));
-      const ph=photoAt(i);
+      const ph=(aiPhotoOrder&&aiPhotoOrder[i]&&aiPhotoOrder[i].im)?aiPhotoOrder[i].im:photoAt(i);
       const pal=(imgState.palette==="photo"&&!ph)?"ink":imgState.palette;
       drawCard(off,{
         layout,size:imgState.size,palette:pal,photo:ph,
@@ -2515,9 +2573,11 @@ function initEvents(){
     const t=e.target;if(!t.dataset.k)return;
     const card=t.closest(".slide");if(!card)return;
     const i=+card.dataset.i,s=currentCarousel[i];if(!s)return;
-    s[t.dataset.k]=t.value;s._e=true;
+    s[t.dataset.k]=t.value;s._e=true;s._ai=false;
     if(t.tagName==="TEXTAREA")autoGrow(t);
-    if(!card.querySelector(".edited"))card.querySelector(".sn").insertAdjacentHTML("afterend",'<span class="edited">已手改</span>');
+    const badge=card.querySelector(".edited");
+    if(!badge)card.querySelector(".sn").insertAdjacentHTML("afterend",'<span class="edited">已手改</span>');
+    else if(badge.classList.contains("ai")){badge.classList.remove("ai");badge.textContent="已手改";}
     markCarDirty();
   });
   $("#carOut").addEventListener("click",e=>{
