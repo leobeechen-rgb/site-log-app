@@ -735,7 +735,7 @@ details.adv[open] summary{margin-bottom:12px}
             <button class="btn ghost small" id="aiCheck" type="button">檢查金鑰</button>
             <button class="btn ghost small" id="aiForget" type="button">清除</button>
           </div>
-          <p class="hint">到 <b>aistudio.google.com</b> 免費申請一把金鑰貼進來即可。金鑰只寫在你自己的瀏覽器，除了 Google 的 API 之外不會送到任何地方；換一台電腦要重貼一次。</p>
+          <p class="hint">到 <b>aistudio.google.com</b> 免費申請一把金鑰貼進來即可。金鑰只寫在你自己的瀏覽器，除了 Google 的 API 之外不會送到任何地方；換一台電腦要重貼一次。<br>建議在 AI Studio 把這把金鑰的「網站限制」設成 <b>herfulsinsvip.com</b>，就算金鑰外流也無法在別的網站使用。</p>
         </div>
 
         <div class="card">
@@ -2053,7 +2053,7 @@ async function aiListModels(){
   if(!key){aiSay("請先貼上金鑰。","err");return;}
   aiSay("檢查中…");
   try{
-    const r=await fetch(`${GEMINI}/models?key=${encodeURIComponent(key)}`);
+    const r=await fetch(`${GEMINI}/models?pageSize=200`,{headers:{"x-goog-api-key":key}});
     const j=await r.json();
     if(!r.ok)throw new Error((j.error&&j.error.message)||("HTTP "+r.status));
     const ms=(j.models||[]).filter(m=>(m.supportedGenerationMethods||[]).includes("generateContent")&&/gemini/i.test(m.name));
@@ -2113,8 +2113,8 @@ async function aiRun(){
   try{
     const parts=[{text:visionPrompt()}];
     for(const p of ready){ const ip=await photoToInline(p,1024); if(ip)parts.push(ip); }
-    const r=await fetch(`${GEMINI}/${model}:generateContent?key=${encodeURIComponent(key)}`,{
-      method:"POST",headers:{"Content-Type":"application/json"},
+    const r=await fetch(`${GEMINI}/${model}:generateContent`,{
+      method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":key},
       body:JSON.stringify({contents:[{role:"user",parts}],
         generationConfig:{temperature:0.9,responseMimeType:"application/json"}})
     });
