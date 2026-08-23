@@ -5826,7 +5826,8 @@ function HbCompanyHub({onBack:l,onContracts:t,onQuotes:e,onReceipts:rc,onVendorR
     u.default.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12,marginTop:12}},
       u.default.createElement(HbCompanyGridCard,{icon:"users",title:"師傅出勤紀錄",desc:"記錄工班師傅每日出工天數，依師傅／月份統計應付工資",onClick:atd}),
       u.default.createElement(HbCompanyGridCard,{icon:"bookmark",title:"常用工項單價庫",desc:"常用工項的售價與廠商成本，報價時打字即時建議、一鍵帶入，並記錄價格歷史與漲價提醒",onClick:pb}),
-      u.default.createElement(HbCompanyGridCard,{icon:"clipboard-list",title:"設計需求問卷",desc:"產生專屬連結傳給業主，填完的需求直接回到這裡，初次接洽省掉很多來回",onClick:sv})
+      u.default.createElement(HbCompanyGridCard,{icon:"clipboard-list",title:"設計需求問卷",desc:"產生專屬連結傳給業主，填完的需求直接回到這裡，初次接洽省掉很多來回",onClick:sv}),
+      u.default.createElement(HbCompanyGridCard,{icon:"image",title:"IG 貼文工作室",desc:"填一次案件資料，產出貼文文案、Hashtag、輪播腳本、貼文圖與整月發文行事曆",onClick:()=>{try{window.open("./ig-studio.html","_blank","noopener")}catch(err){window.location.href="./ig-studio.html"}}})
     )
   )
 )}
