@@ -5817,17 +5817,15 @@ function HbCompanyHub({onBack:l,onContracts:t,onQuotes:e,onReceipts:rc,onVendorR
       u.default.createElement("h1",{style:{color:s.ink,fontSize:22,fontWeight:300,margin:0,letterSpacing:"0.08em",fontFamily:"'IansuiTitle',serif"}},"赫柏空間設計"),
       u.default.createElement("p",{style:{color:s.inkSoft,fontSize:12.5,marginTop:8,marginBottom:14,fontWeight:300,letterSpacing:"0.02em"}},"工地紀錄本 · 公司資料庫管理")
     ),
-    u.default.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12}},
+    u.default.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}},
       u.default.createElement(HbCompanyGridCard,{icon:"file-text",title:"設計合約",desc:"前期設計合約／指定案件工程合約的設計委任合約產生與紀錄",onClick:t}),
       u.default.createElement(HbCompanyGridCard,{icon:"pencil",title:"追加減帳單",desc:"工程變更現場開單，業主當場簽名才生效，簽完鎖定，結算時有憑有據",onClick:co}),
       u.default.createElement(HbCompanyGridCard,{icon:"file-output",title:"工程收據",desc:"依期別產生工程收據，A4直向每頁3筆款項",onClick:rc}),
-      u.default.createElement(HbCompanyGridCard,{icon:"pencil",title:"廠商領據",desc:"廠商工程款領據產生，A5橫向格式一張一筆",onClick:vr})
-    ),
-    u.default.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12,marginTop:12}},
+      u.default.createElement(HbCompanyGridCard,{icon:"pencil",title:"廠商領據",desc:"廠商工程款領據產生，A5橫向格式一張一筆",onClick:vr}),
       u.default.createElement(HbCompanyGridCard,{icon:"users",title:"師傅出勤紀錄",desc:"記錄工班師傅每日出工天數，依師傅／月份統計應付工資",onClick:atd}),
       u.default.createElement(HbCompanyGridCard,{icon:"bookmark",title:"常用工項單價庫",desc:"常用工項的售價與廠商成本，報價時打字即時建議、一鍵帶入，並記錄價格歷史與漲價提醒",onClick:pb}),
       u.default.createElement(HbCompanyGridCard,{icon:"clipboard-list",title:"設計需求問卷",desc:"產生專屬連結傳給業主，填完的需求直接回到這裡，初次接洽省掉很多來回",onClick:sv}),
-      u.default.createElement(HbCompanyGridCard,{icon:"image",title:"IG 貼文工作室",desc:"填一次案件資料，產出貼文文案、Hashtag、輪播腳本、貼文圖與整月發文行事曆",onClick:()=>{try{window.open("./igstudio.html","_blank","noopener")}catch(err){window.location.href="./igstudio.html"}}})
+      u.default.createElement(HbCompanyGridCard,{icon:"image",title:"IG 貼文工作室",desc:"填一次案件資料，產出貼文文案、Hashtag、輪播腳本與發文行事曆",onClick:()=>{try{window.open("./igstudio.html","_blank","noopener")}catch(err){window.location.href="./igstudio.html"}}})
     )
   )
 )}
