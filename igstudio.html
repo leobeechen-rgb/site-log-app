@@ -218,6 +218,20 @@ button,input,select,textarea{font:inherit;color:inherit}
 .thumb img{width:100%;display:block}
 .thumb figcaption{font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--muted);padding:4px 6px;text-align:left}
 
+/* ---------- photo tray ---------- */
+.ptray{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.ptray:empty{margin-top:0}
+.pcell{position:relative;width:78px;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--panel);cursor:pointer}
+.pcell.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.pcell.over{border-color:var(--accent);opacity:.6}
+.pcell img{width:100%;height:78px;object-fit:cover;display:block;pointer-events:none}
+.pcell .pno{position:absolute;top:0;left:0;font-family:"IBM Plex Mono",monospace;font-size:10px;background:rgba(0,0,0,.62);color:#fff;padding:2px 5px;letter-spacing:.06em}
+.pcell .px{position:absolute;top:0;right:0;background:rgba(0,0,0,.62);color:#fff;border:0;font-size:13px;line-height:1;padding:3px 6px;cursor:pointer}
+.pcell .pmv{position:absolute;left:0;right:0;bottom:0;display:flex;background:rgba(0,0,0,.55)}
+.pcell .pmv button{flex:1;background:none;border:0;color:#fff;font-size:11px;line-height:1;padding:4px 0;cursor:pointer}
+.pcell .pmv button:hover{background:rgba(255,255,255,.18)}
+.stage.dropping{outline:2px dashed var(--accent);outline-offset:6px}
+
 /* ---------- carousel ---------- */
 .slides{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}
 .slide{
@@ -394,14 +408,16 @@ details.adv[open] summary{margin-bottom:12px}
       <div class="pane" id="pane-image" role="tabpanel">
         <div class="studio">
           <div>
-            <div class="stage"><canvas id="cv" width="1080" height="1080" style="width:440px"></canvas></div>
+            <div class="stage" id="stage"><canvas id="cv" width="1080" height="1080" style="width:440px"></canvas></div>
             <div class="card-actions" style="margin-top:14px">
               <button class="btn" id="dlBtn" type="button">下載這張圖</button>
               <button class="btn ghost" id="dlAllBtn" type="button">下載整組（輪播）</button>
-              <label class="btn ghost" style="cursor:pointer">上傳照片<input type="file" id="photoIn" accept="image/*" class="sr"></label>
-              <button class="btn ghost" id="clearPhoto" type="button">移除照片</button>
+              <label class="btn ghost" style="cursor:pointer">上傳照片（可多選）<input type="file" id="photoIn" accept="image/*" multiple class="sr"></label>
+              <button class="btn ghost" id="clearPhoto" type="button">清空照片</button>
             </div>
-            <p class="hint">照片只在你的瀏覽器裡處理，不會上傳到任何地方。輪播整組圖會依「輪播企劃」的頁數產生。</p>
+            <p class="hint">照片只在你的瀏覽器裡處理，不會上傳到任何地方。可一次選多張，或直接把照片拖進上面的預覽框。</p>
+            <div class="ptray" id="ptray"></div>
+            <p class="hint" id="ptrayHint" hidden>點縮圖＝切換目前預覽的照片；◀ ▶ 或拖曳可調順序。「下載整組」時第 01 張照片配第 1 頁，依此類推；照片不夠的頁面會自動用純色版型。</p>
             <div class="thumbs" id="thumbs"></div>
           </div>
           <div class="side-stack">
@@ -539,6 +555,7 @@ function pick(a){return a[Math.floor(rng()*a.length)%a.length];}
 function pickN(a,n){const c=a.slice();const o=[];while(c.length&&o.length<n){o.push(c.splice(Math.floor(rng()*c.length),1)[0]);}return o;}
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
 function $(s){return document.querySelector(s);}
+function $$(s){return [...document.querySelectorAll(s)];}
 function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("on");clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("on"),1900);}
 function store(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v);}catch(e){return null;}}
 async function copyText(txt){
@@ -1029,7 +1046,72 @@ const PALETTES={
 };
 const LAYOUTS=[{k:"cover",n:"封面（主標＋副標）"},{k:"quote",n:"引言（一句話）"},{k:"list",n:"條列重點"},{k:"spec",n:"案件資訊卡"},{k:"cta",n:"結尾行動卡"}];
 const SIZES=[{k:"1x1",n:"1080 × 1080 方形",w:1080,h:1080},{k:"4x5",n:"1080 × 1350 直式",w:1080,h:1350}];
-let imgState={layout:"cover",size:"4x5",palette:"plaster",photo:null,pageNo:0,pageTotal:0};
+let imgState={layout:"cover",size:"4x5",palette:"plaster",photos:[],pi:0,pageNo:0,pageTotal:0};
+
+/* ---- 多張照片：載入／排序／刪除 ---- */
+function curPhoto(){const p=imgState.photos[imgState.pi];return p&&p.im?p.im:null;}
+function photoAt(i){const p=imgState.photos[i];return p&&p.im?p.im:null;}
+function addPhotos(files){
+  const list=[...(files||[])].filter(f=>f&&f.type&&f.type.indexOf("image/")===0);
+  if(!list.length){toast("沒有讀到可用的圖檔");return;}
+  const base=imgState.photos.length;
+  const slots=list.map(f=>({im:null,url:URL.createObjectURL(f),name:f.name||"photo"}));
+  imgState.photos.push(...slots);
+  let left=slots.length;
+  slots.forEach(s=>{
+    const im=new Image();
+    im.onload=()=>{s.im=im;fin();};
+    im.onerror=()=>{s.bad=true;fin();};
+    im.src=s.url;
+  });
+  function fin(){
+    if(--left)return;
+    const bad=imgState.photos.filter(p=>p.bad).length;
+    imgState.photos=imgState.photos.filter(p=>{if(p.bad){URL.revokeObjectURL(p.url);return false;}return true;});
+    if(imgState.photos.length){
+      imgState.pi=Math.min(base,imgState.photos.length-1);
+      imgState.palette="photo";
+    }
+    renderPhotoTray();renderImgOptions();redrawCanvas();
+    toast(bad?`載入 ${slots.length-bad} 張，有 ${bad} 張讀不到`:`已載入 ${slots.length} 張照片`);
+  }
+}
+function removePhoto(i){
+  const p=imgState.photos[i];if(!p)return;
+  URL.revokeObjectURL(p.url);
+  imgState.photos.splice(i,1);
+  if(imgState.pi>=imgState.photos.length)imgState.pi=Math.max(0,imgState.photos.length-1);
+  if(!imgState.photos.length&&imgState.palette==="photo")imgState.palette="plaster";
+  renderPhotoTray();renderImgOptions();redrawCanvas();
+}
+function movePhoto(from,to){
+  if(from===to||from<0||to<0||from>=imgState.photos.length||to>=imgState.photos.length)return;
+  const [it]=imgState.photos.splice(from,1);
+  imgState.photos.splice(to,0,it);
+  imgState.pi=to;
+  renderPhotoTray();redrawCanvas();
+}
+function clearPhotos(){
+  imgState.photos.forEach(p=>URL.revokeObjectURL(p.url));
+  imgState.photos=[];imgState.pi=0;
+  if(imgState.palette==="photo")imgState.palette="plaster";
+  renderPhotoTray();renderImgOptions();redrawCanvas();
+}
+function renderPhotoTray(){
+  const tr=$("#ptray"),hint=$("#ptrayHint");
+  if(!tr)return;
+  hint.hidden=!imgState.photos.length;
+  tr.innerHTML=imgState.photos.map((p,i)=>`
+    <div class="pcell${i===imgState.pi?" on":""}" data-i="${i}" draggable="true" title="${esc(p.name)}">
+      <img src="${p.url}" alt="">
+      <span class="pno">${String(i+1).padStart(2,"0")}</span>
+      <button type="button" class="px" data-act="del" data-i="${i}" aria-label="移除這張">×</button>
+      <span class="pmv">
+        <button type="button" data-act="left" data-i="${i}" aria-label="往前移">◀</button>
+        <button type="button" data-act="right" data-i="${i}" aria-label="往後移">▶</button>
+      </span>
+    </div>`).join("");
+}
 
 function wrapLines(ctx,text,maxW){
   const out=[];
@@ -1186,7 +1268,7 @@ function drawCard(cv,o){
 
 function currentImgOpts(){
   return {
-    layout:imgState.layout,size:imgState.size,palette:imgState.palette,photo:imgState.photo,
+    layout:imgState.layout,size:imgState.size,palette:imgState.palette,photo:curPhoto(),
     title:$("#im-title").value,sub:$("#im-sub").value,
     body:$("#im-body").value.split("\n").filter(Boolean),
     rows:[["坪數／格局",P.size+" 坪　"+P.layout],["案型",P.caseType],["風格",P.style],["色調",P.tone],["主要材質",P.materials.join("、")],["地區",P.region]],
@@ -1395,14 +1477,62 @@ function initEvents(){
   $("#sizeOpts").addEventListener("click",e=>{const b=e.target.closest(".opt");if(!b)return;imgState.size=b.dataset.size;renderImgOptions();redrawCanvas();});
   $("#paletteOpts").addEventListener("click",e=>{const b=e.target.closest(".opt");if(!b)return;imgState.palette=b.dataset.pal;renderImgOptions();redrawCanvas();});
   ["#im-title","#im-sub","#im-body"].forEach(s=>$(s).addEventListener("input",redrawCanvas));
-  $("#photoIn").addEventListener("change",e=>{
-    const f=e.target.files&&e.target.files[0];if(!f)return;
-    const im=new Image();
-    im.onload=()=>{imgState.photo=im;imgState.palette="photo";renderImgOptions();redrawCanvas();toast("照片已載入");};
-    im.onerror=()=>toast("這個圖檔讀不到，換一張試試");
-    im.src=URL.createObjectURL(f);
+  $("#photoIn").addEventListener("change",e=>{addPhotos(e.target.files);e.target.value="";});
+  $("#clearPhoto").addEventListener("click",clearPhotos);
+
+  // 照片列：選取／刪除／排序
+  $("#ptray").addEventListener("click",e=>{
+    const b=e.target.closest("button[data-act]");
+    if(b){
+      const i=+b.dataset.i;
+      if(b.dataset.act==="del")removePhoto(i);
+      else if(b.dataset.act==="left")movePhoto(i,i-1);
+      else movePhoto(i,i+1);
+      return;
+    }
+    const c=e.target.closest(".pcell");if(!c)return;
+    imgState.pi=+c.dataset.i;
+    if(imgState.palette!=="photo"){imgState.palette="photo";renderImgOptions();}
+    renderPhotoTray();redrawCanvas();
   });
-  $("#clearPhoto").addEventListener("click",()=>{imgState.photo=null;if(imgState.palette==="photo")imgState.palette="plaster";renderImgOptions();redrawCanvas();});
+  let dragI=null;
+  $("#ptray").addEventListener("dragstart",e=>{
+    const c=e.target.closest(".pcell");if(!c)return;
+    dragI=+c.dataset.i;
+    try{e.dataTransfer.effectAllowed="move";e.dataTransfer.setData("text/plain",String(dragI));}catch(_){}
+  });
+  $("#ptray").addEventListener("dragover",e=>{
+    if(dragI===null)return;
+    e.preventDefault();
+    const c=e.target.closest(".pcell");
+    $$("#ptray .pcell").forEach(x=>x.classList.toggle("over",x===c));
+  });
+  $("#ptray").addEventListener("dragleave",e=>{
+    if(!e.relatedTarget||!$("#ptray").contains(e.relatedTarget))$$("#ptray .pcell").forEach(x=>x.classList.remove("over"));
+  });
+  $("#ptray").addEventListener("drop",e=>{
+    if(dragI===null)return;
+    e.preventDefault();
+    const c=e.target.closest(".pcell");
+    $$("#ptray .pcell").forEach(x=>x.classList.remove("over"));
+    if(c)movePhoto(dragI,+c.dataset.i);
+    dragI=null;
+  });
+  $("#ptray").addEventListener("dragend",()=>{dragI=null;$$("#ptray .pcell").forEach(x=>x.classList.remove("over"));});
+
+  // 直接把照片拖進預覽框
+  const stage=$("#stage");
+  ["dragenter","dragover"].forEach(t=>stage.addEventListener(t,e=>{
+    if(dragI!==null)return;
+    e.preventDefault();stage.classList.add("dropping");
+  }));
+  ["dragleave","drop"].forEach(t=>stage.addEventListener(t,()=>stage.classList.remove("dropping")));
+  stage.addEventListener("drop",e=>{
+    if(dragI!==null)return;
+    e.preventDefault();
+    const fs=e.dataTransfer&&e.dataTransfer.files;
+    if(fs&&fs.length)addPhotos(fs);
+  });
   $("#dlBtn").addEventListener("click",async()=>{
     try{
       const blob=await canvasBlob($("#cv"));
@@ -1418,8 +1548,10 @@ function initEvents(){
     for(let i=0;i<pages.length;i++){
       const p=pages[i];
       const layout=i===0?"cover":(i===pages.length-1?"cta":(p.x.includes("\n")?"list":"quote"));
+      const ph=photoAt(i);
+      const pal=(imgState.palette==="photo"&&!ph)?"ink":imgState.palette;
       drawCard(off,{
-        layout,size:imgState.size,palette:imgState.palette,photo:i===0?imgState.photo:null,
+        layout,size:imgState.size,palette:pal,photo:ph,
         title:p.t,sub:p.x,body:p.x.split("\n"),
         rows:currentImgOpts().rows,handle:P.handle,pageNo:i+1,pageTotal:pages.length
       });
