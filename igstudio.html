@@ -319,7 +319,13 @@ button,input,select,textarea{font:inherit;color:inherit}
 .thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px;margin-top:16px}
 .thumb{border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--panel);cursor:pointer;padding:0;display:block}
 .thumb img{width:100%;display:block}
-.thumb figcaption{font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--muted);padding:4px 6px;text-align:left}
+.thumb figcaption{font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--muted);
+  padding:4px 6px;text-align:left;display:flex;align-items:center;gap:5px}
+.thumb figcaption .tdl{margin-left:auto;background:none;border:0;color:var(--muted);cursor:pointer;
+  font-size:13px;line-height:1;padding:1px 3px}
+.thumb figcaption .tdl:hover{color:var(--accent)}
+.thumb:hover{border-color:var(--accent)}
+.thumb.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
 
 /* ---------- AI 看圖寫文 ---------- */
 .aiphotos{display:flex;flex-wrap:wrap;gap:8px;min-height:4px}
@@ -637,11 +643,12 @@ details.adv[open] summary{margin-bottom:12px}
             <div class="stage" id="stage"><canvas id="cv" width="1080" height="1080" style="width:440px"></canvas></div>
             <div class="card-actions" style="margin-top:14px">
               <button class="btn" id="dlBtn" type="button"><svg class="ic" aria-hidden="true"><use href="#i-export"/></svg>下載這張圖</button>
+              <button class="btn ghost" id="prevAllBtn" type="button"><svg class="ic" aria-hidden="true"><use href="#i-carousel"/></svg>預覽整組</button>
               <button class="btn ghost" id="dlAllBtn" type="button"><svg class="ic" aria-hidden="true"><use href="#i-export"/></svg>下載整組（輪播）</button>
               <label class="btn ghost" style="cursor:pointer"><svg class="ic" aria-hidden="true"><use href="#i-aperture"/></svg>上傳照片（可多選）<input type="file" id="photoIn" accept="image/*" multiple class="sr"></label>
               <button class="btn ghost" id="clearPhoto" type="button">清空照片</button>
             </div>
-            <p class="hint">照片只在你的瀏覽器裡處理，不會上傳到任何地方，而且會暫存在這台裝置，重新整理後自動帶回。可一次選多張，或直接把照片拖進上面的預覽框。<br>「下載整組（輪播）」會打包成一個 zip，解開後 01.png、02.png 就是發文順序；也可以點下方縮圖單張下載。</p>
+            <p class="hint">照片只在你的瀏覽器裡處理，不會上傳到任何地方，而且會暫存在這台裝置，重新整理後自動帶回。可一次選多張，或直接把照片拖進上面的預覽框。<br>「預覽整組」會把每一頁畫出來但不下載；點縮圖可以把那一頁載回上方主畫面調整，點縮圖右下的 ⤓ 單張下載。<br>「下載整組（輪播）」會打包成一個 zip，裡面有 01.png、02.png⋯⋯（發文順序）以及貼文文案與輪播腳本的文字檔。</p>
             <div class="ptray" id="ptray"></div>
             <p class="hint" id="ptrayHint" hidden>點縮圖＝切換目前預覽的照片；◀ ▶ 或拖曳可調順序。「下載整組」時第 01 張照片配第 1 頁，依此類推；照片不夠的頁面會自動用純色版型。</p>
             <div class="thumbs" id="thumbs"></div>
@@ -1592,7 +1599,7 @@ let aiVariants=null;          // AI 看圖寫文
   });
   $("#copyOut").addEventListener("click",e=>{
     if(e.target.id!=="aiBack")return;
-    aiVariants=null;aiPhotoOrder=null;renderCopy();toast("已回到模板文案");
+    aiVariants=null;aiPhotoOrder=null;aiObserved=[];renderCopy();seedImageFields(imgState.layout);redrawCanvas();toast("已回到模板文案");
   });
 
   // AI 看圖寫出來的文案；有值時優先顯示
@@ -2030,10 +2037,31 @@ function renderImgOptions(){
   $("#sizeOpts").innerHTML=SIZES.map(s=>`<button type="button" class="opt" data-size="${s.k}" aria-pressed="${s.k===imgState.size}">${esc(s.n)}</button>`).join("");
   $("#paletteOpts").innerHTML=Object.keys(PALETTES).map(k=>`<button type="button" class="opt" data-pal="${k}" aria-pressed="${k===imgState.palette}">${esc(PALETTES[k].n)}</button>`).join("");
 }
-function seedImageFields(){
-  $("#im-title").value=P.name;
-  $("#im-sub").value=`${P.region}｜${P.size} 坪 ${P.layout}｜${P.style}`;
-  $("#im-body").value=P.spaces.slice(0,4).map(s=>s+"｜"+spaceLine(s)).join("\n");
+let aiObserved=[];              // AI 從圖中看到的重點，條列版型會用到
+let imgSeeded={t:"",s:"",b:""}; // 上次「自動帶入」的內容，用來判斷使用者有沒有手動改過
+function setImgFields(t,s,b){
+  $("#im-title").value=t;$("#im-sub").value=s;$("#im-body").value=b;
+  imgSeeded={t,s,b};
+}
+function imgFieldsUntouched(){
+  return $("#im-title").value===imgSeeded.t
+      && $("#im-sub").value===imgSeeded.s
+      && $("#im-body").value===imgSeeded.b;
+}
+/* 每個版型該放什麼，有 AI 文案就優先用 AI 的 */
+function seedImageFields(layout){
+  const L=layout||imgState.layout;
+  const ai=(aiVariants&&aiVariants.length)?aiVariants[0]:null;
+  const hook=ai?String(ai.body.split("\n")[0]||"").trim():"";
+  const spec=`${P.region}｜${P.size} 坪 ${P.layout}｜${P.style}`;
+  const bullets=aiObserved.length
+    ? aiObserved.slice(0,5).join("\n")
+    : P.spaces.slice(0,4).map(x=>x+"｜"+spaceLine(x)).join("\n");
+  if(L==="quote")     setImgFields(hook||P.name, spec, bullets);
+  else if(L==="cta")  setImgFields("想聊聊你家嗎", `${P.cta}　${P.handle}`, bullets);
+  else if(L==="list") setImgFields(hook||P.name, spec, bullets);
+  else if(L==="spec") setImgFields(P.name, spec, bullets);
+  else                setImgFields(P.name, spec, bullets);   // cover
 }
 /* ---- 把整組圖打包成一個 zip ----
    瀏覽器會擋掉連續多個下載，所以整組輪播只送出「一個」檔案最保險。
@@ -2263,8 +2291,9 @@ function applyAiResult(d){
   }
 
   // 版型圖的主標／副標改帶 AI 的鉤子
-  const hook=(vs[0].body.split("\n")[0]||"").trim();
-  if(hook){ $("#im-title").value=hook.slice(0,24); redrawCanvas(); }
+  aiObserved=(d.observed||[]).map(x=>String(x)).filter(Boolean);
+  seedImageFields(imgState.layout);
+  redrawCanvas();
 
   saveBrief();
   const seen=(d.observed||[]).slice(0,6);
@@ -2572,7 +2601,13 @@ function initEvents(){
   });
 
   // 版型圖
-  $("#layoutOpts").addEventListener("click",e=>{const b=e.target.closest(".opt");if(!b)return;imgState.layout=b.dataset.layout;renderImgOptions();redrawCanvas();});
+  $("#layoutOpts").addEventListener("click",e=>{
+    const b=e.target.closest(".opt");if(!b)return;
+    const fresh=imgFieldsUntouched();
+    imgState.layout=b.dataset.layout;
+    if(fresh)seedImageFields(imgState.layout);   // 沒手動改過才自動換內容，改過的就保留
+    renderImgOptions();redrawCanvas();
+  });
   $("#sizeOpts").addEventListener("click",e=>{const b=e.target.closest(".opt");if(!b)return;imgState.size=b.dataset.size;renderImgOptions();redrawCanvas();});
   $("#paletteOpts").addEventListener("click",e=>{const b=e.target.closest(".opt");if(!b)return;imgState.palette=b.dataset.pal;try{store("hebe_pal",imgState.palette);}catch(_){}renderImgOptions();redrawCanvas();});
   ["#im-title","#im-sub","#im-body"].forEach(s=>$(s).addEventListener("input",redrawCanvas));
@@ -2638,43 +2673,104 @@ function initEvents(){
       await saveFile(`${P.name}_${imgState.layout}.png`.replace(/\s+/g,""),blob);
     }catch(e){toast("儲存沒有完成，稍等一下再試一次");}
   });
-  $("#dlAllBtn").addEventListener("click",async()=>{
-    const pages=currentCarousel;
-    if(!pages.length){toast("先到「輪播企劃」產生腳本");return;}
-    const th=$("#thumbs");th.innerHTML="";
-    const off=document.createElement("canvas");
-    const blobs=[];
-    toast(`正在產生 ${pages.length} 張…`);
-    for(let i=0;i<pages.length;i++){
-      const p=pages[i];
-      const layout=i===0?"cover":(i===pages.length-1?"cta":(p.x.includes("\n")?"list":"quote"));
-      const ph=(aiPhotoOrder&&aiPhotoOrder[i]&&aiPhotoOrder[i].im)?aiPhotoOrder[i].im:photoAt(i);
-      const pal=(imgState.palette==="photo"&&!ph)?"ink":imgState.palette;
-      drawCard(off,{
-        layout,size:imgState.size,palette:pal,photo:ph,
-        title:p.t,sub:p.x,body:p.x.split("\n"),
-        rows:currentImgOpts().rows,handle:P.handle,pageNo:i+1,pageTotal:pages.length
-      });
-      const url=off.toDataURL("image/png");
-      const fig=document.createElement("figure");fig.className="thumb";
-      fig.innerHTML=`<img src="${url}" alt="第 ${i+1} 頁"><figcaption>${String(i+1).padStart(2,"0")} ${esc(p.r)}</figcaption>`;
-      fig.addEventListener("click",()=>fetch(url).then(r=>r.blob()).then(b=>saveFile(`${P.name}_${String(i+1).padStart(2,"0")}.png`.replace(/\s+/g,""),b)));
-      th.appendChild(fig);
+  let thumbUrls=[], carBlobs=[];
+  /* 每一頁只編碼「一次」PNG：同一份 blob 既當縮圖也拿去打包。
+     舊版 toDataURL + toBlob 各編一次，8 頁就是 16 次全尺寸編碼，
+     還把 8 段上百 KB 的 base64 塞進 DOM——那才是卡頓的來源。 */
+  function pageLayout(p,i,n){
+    const r=String(p.r||"");
+    if(i===0||/封面|cover/i.test(r))return "cover";
+    if(i===n-1||/CTA|行動|結尾/i.test(r))return "cta";
+    if(/規格|資訊|spec/i.test(r))return "spec";
+    return String(p.x||"").includes("\n")?"list":"quote";
+  }
+  function carPageOpts(i){
+    const pages=currentCarousel,p=pages[i];
+    const ph=(aiPhotoOrder&&aiPhotoOrder[i]&&aiPhotoOrder[i].im)?aiPhotoOrder[i].im:photoAt(i);
+    const pal=(imgState.palette==="photo"&&!ph)?"ink":imgState.palette;
+    return {layout:pageLayout(p,i,pages.length),size:imgState.size,palette:pal,photo:ph,
+      title:p.t,sub:p.x,body:String(p.x||"").split("\n"),
+      rows:currentImgOpts().rows,handle:P.handle,pageNo:i+1,pageTotal:pages.length};
+  }
+  async function buildCarousel(btn,label){
+    const off=document.createElement("canvas"),blobs=[];
+    for(let i=0;i<currentCarousel.length;i++){
+      if(btn)btn.textContent=`${label} ${i+1} / ${currentCarousel.length}`;
+      await new Promise(r=>requestAnimationFrame(()=>r()));   // 讓畫面有機會重繪，不會整個凍住
+      drawCard(off,carPageOpts(i));
       blobs.push(await canvasBlob(off));
     }
-    const base=`${P.name}_輪播`.replace(/\s+/g,"");
+    return blobs;
+  }
+  function paintThumbs(blobs){
+    const th=$("#thumbs");
+    thumbUrls.forEach(u=>URL.revokeObjectURL(u));thumbUrls=[];
+    th.innerHTML=blobs.map((b,i)=>{
+      const url=URL.createObjectURL(b);thumbUrls.push(url);
+      return `<figure class="thumb" data-i="${i}" title="點一下載回主畫面調整">
+        <img src="${url}" alt="第 ${i+1} 頁" loading="lazy">
+        <figcaption>${String(i+1).padStart(2,"0")} ${esc((currentCarousel[i]||{}).r||"")}
+          <button type="button" class="tdl" data-dl="${i}" title="下載這一張" aria-label="下載第 ${i+1} 張">⤓</button>
+        </figcaption></figure>`;
+    }).join("");
+  }
+  /* 把某一頁載回主畫面，就能直接微調再單張下載 */
+  function previewPage(i){
+    const p=currentCarousel[i];if(!p)return;
+    imgState.layout=pageLayout(p,i,currentCarousel.length);
+    imgState.pageNo=i+1;imgState.pageTotal=currentCarousel.length;
+    setImgFields(p.t,p.x,String(p.x||""));
+    const linked=(aiPhotoOrder&&aiPhotoOrder[i])?imgState.photos.indexOf(aiPhotoOrder[i]):i;
+    if(linked>=0&&linked<imgState.photos.length)imgState.pi=linked;
+    $$("#thumbs .thumb").forEach(x=>x.classList.toggle("on",+x.dataset.i===i));
+    renderPhotoTray();renderImgOptions();redrawCanvas();
+    toast(`載入第 ${i+1} 頁，可以直接改上面的文字`);
+  }
+  $("#thumbs").addEventListener("click",e=>{
+    const dl=e.target.closest(".tdl");
+    if(dl){const i=+dl.dataset.dl;
+      if(carBlobs[i])saveFile(`${P.name}_${String(i+1).padStart(2,"0")}.png`.replace(/\s+/g,""),carBlobs[i]);
+      return;}
+    const fig=e.target.closest(".thumb");if(!fig)return;
+    previewPage(+fig.dataset.i);
+  });
+
+  $("#prevAllBtn").addEventListener("click",async()=>{
+    if(!currentCarousel.length){toast("先到「輪播企劃」產生腳本");return;}
+    const btn=$("#prevAllBtn"),label=btn.innerHTML;
+    btn.disabled=true;
     try{
-      const zip=await zipStore(blobs.map((b,i)=>({name:`${String(i+1).padStart(2,"0")}.png`,blob:b})));
+      carBlobs=await buildCarousel(btn,"產生中");
+      paintThumbs(carBlobs);
+      toast(`已預覽 ${carBlobs.length} 頁，點縮圖可載回主畫面`);
+      $("#thumbs").scrollIntoView({behavior:"smooth",block:"nearest"});
+    }finally{ btn.disabled=false; btn.innerHTML=label; }
+  });
+
+  $("#dlAllBtn").addEventListener("click",async()=>{
+    if(!currentCarousel.length){toast("先到「輪播企劃」產生腳本");return;}
+    const btn=$("#dlAllBtn"),label=btn.innerHTML;
+    btn.disabled=true;
+    try{
+      carBlobs=await buildCarousel(btn,"產生中");
+      paintThumbs(carBlobs);
+      // 整包不只有圖，文案與腳本也一起放進去
+      const entries=carBlobs.map((b,i)=>({name:`${String(i+1).padStart(2,"0")}.png`,blob:b}));
+      const cap=(currentVariants||[]).map(v=>`【${v.name}】\n${v.full}`).join("\n\n──────────\n\n");
+      if(cap)entries.push({name:"貼文文案.txt",blob:new Blob(["﻿"+cap],{type:"text/plain;charset=utf-8"})});
+      entries.push({name:"輪播腳本.txt",blob:new Blob(["﻿"+carouselText()],{type:"text/plain;charset=utf-8"})});
+      btn.textContent="打包中…";
+      const base=`${P.name}_輪播`.replace(/\s+/g,"");
+      const zip=await zipStore(entries);
       const ok=await saveFile(`${base}.zip`,zip);
-      if(ok)toast(`已下載整組 ${pages.length} 張（${base}.zip）`);
+      if(ok)toast(`已下載 ${base}.zip（${carBlobs.length} 張圖＋文案）`);
     }catch(e){
-      // 萬一 zip 這條路不通，退回逐張存，並在每張之間留間隔避免被瀏覽器擋掉
       toast("改用逐張儲存，請允許瀏覽器的多檔下載");
-      for(let i=0;i<blobs.length;i++){
-        try{ await saveFile(`${P.name}_${String(i+1).padStart(2,"0")}.png`.replace(/\s+/g,""),blobs[i]); await wait(600); }
+      for(let i=0;i<carBlobs.length;i++){
+        try{ await saveFile(`${P.name}_${String(i+1).padStart(2,"0")}.png`.replace(/\s+/g,""),carBlobs[i]); await wait(600); }
         catch(e2){ toast("剩下的請點下方縮圖逐張下載"); break; }
       }
-    }
+    }finally{ btn.disabled=false; btn.innerHTML=label; }
   });
 
   // 輪播
