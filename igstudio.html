@@ -667,6 +667,11 @@ details.adv[open] summary{margin-bottom:12px}
           </div>
           <div class="side-stack">
             <div class="side-box">
+              <h4>這是第幾頁</h4>
+              <div class="field" style="margin:0"><select id="pageSel"></select></div>
+              <p class="hint" style="margin:8px 0 0">文字直接抓「輪播企劃」那一頁的內容，兩邊永遠一樣。在下面改字，輪播企劃也會同步更新。</p>
+            </div>
+            <div class="side-box">
               <h4>版型</h4>
               <div class="opt-list" id="layoutOpts"></div>
             </div>
@@ -1706,6 +1711,16 @@ function paintCarousel(){
     </article>`).join("")
     +`<article class="slide addcard" data-act="addend" tabindex="0" role="button">＋ 加一頁</article>`;
   $$("#carOut .s-x").forEach(autoGrow);
+  renderPageSel();syncImgFromCarousel();
+}
+/* 輪播腳本改了 → 版型圖跟著換（除非使用者在版型圖那邊自己改過字） */
+let imgSyncLock=false;
+function syncImgFromCarousel(){
+  if(imgSyncLock||imgBound<0)return;
+  if(imgBound>=currentCarousel.length){imgBound=-1;renderPageSel();return;}
+  if(!imgFieldsUntouched())return;
+  bindImgPage(imgBound,true);
+  renderImgOptions();redrawCanvas();
 }
 function carMove(from,to){
   if(to<0||to>=currentCarousel.length||from===to)return;
@@ -1942,18 +1957,27 @@ function drawCard(cv,o){
 
   const innerW=W-M*2;
   const L=o.layout||"cover";
+  // 內容安全區：頁眉下緣 → 頁腳上緣（用「高度」算，不用寬度推算）
+  const TOP=M*1.05+W*0.05;
+  const SAFE=H-M*0.85-Math.round(W*0.021)*1.6;
 
   if(L==="cover"){
     let fs=Math.round(W*0.105);
-    ctx.font=`700 ${fs}px "Noto Serif TC",serif`;
-    let lines=wrapLines(ctx,o.title||"",innerW);
-    while(lines.length>3&&fs>Math.round(W*0.055)){fs-=6;ctx.font=`700 ${fs}px "Noto Serif TC",serif`;lines=wrapLines(ctx,o.title||"",innerW);}
-    lines=lines.slice(0,4);
-    const subFs=Math.round(W*0.032);
-    ctx.font=`400 ${subFs}px "Noto Sans TC",sans-serif`;
-    const subs=o.sub?wrapLines(ctx,o.sub,innerW).slice(0,3):[];
-    const blockH=lines.length*fs*1.28+(subs.length?W*0.025+subs.length*W*0.05:0);
-    let y=H*0.80-blockH+fs;
+    const subFs0=Math.round(W*0.032);
+    let lines=[],subs=[],blockH=0;
+    const meas=()=>{
+      ctx.font=`700 ${fs}px "Noto Serif TC",serif`;
+      lines=wrapLines(ctx,o.title||"",innerW).slice(0,5);
+      ctx.font=`400 ${subFs0}px "Noto Sans TC",sans-serif`;
+      subs=o.sub?wrapLines(ctx,o.sub,innerW).slice(0,3):[];
+      blockH=lines.length*fs*1.28+(subs.length?W*0.025+subs.length*W*0.05:0);
+    };
+    meas();
+    // 太長就縮字級，直到整塊放得進安全區（含上方留白）
+    while(fs>Math.round(W*0.048)&&(lines.length>4||blockH>H*0.80-TOP-fs*0.2)){fs-=4;meas();}
+    lines=lines.slice(0,5);
+    const subFs=subFs0;
+    let y=Math.max(H*0.80-blockH+fs,TOP+fs);
     ctx.fillStyle=pal.acc;ctx.fillRect(M,y-fs*1.45,Math.round(W*0.09),3);
     ctx.fillStyle=pal.ink;ctx.font=`700 ${fs}px "Noto Serif TC",serif`;
     lines.forEach(l=>{ctx.fillText(l,M,y);y+=fs*1.28;});
@@ -1964,91 +1988,115 @@ function drawCard(cv,o){
     }
   }
   else if(L==="quote"){
+    const qy=Math.min(H*0.30,TOP+W*0.155);
     ctx.fillStyle=pal.acc;ctx.font=`700 ${Math.round(W*0.2)}px "Noto Serif TC",serif`;
-    ctx.fillText("「",M-Math.round(W*0.01),H*0.30);
-    ctx.fillStyle=pal.ink;
-    let fs=Math.round(W*0.078);
-    ctx.font=`600 ${fs}px "Noto Serif TC",serif`;
-    let lines=wrapLines(ctx,o.title||o.sub||"",innerW);
-    while(lines.length>5&&fs>Math.round(W*0.045)){fs-=5;ctx.font=`600 ${fs}px "Noto Serif TC",serif`;lines=wrapLines(ctx,o.title||"",innerW);}
-    lines=lines.slice(0,6);
-    let y=Math.max(H*0.40,(H-lines.length*fs*1.5)/2+fs);
+    ctx.fillText("「",M-Math.round(W*0.01),qy);
+    const txt=o.title||o.sub||"",hasSub=!!(o.sub&&o.title),sfs=Math.round(W*0.03);
+    const meas=f=>{
+      ctx.font=`600 ${f}px "Noto Serif TC",serif`;
+      const ls=wrapLines(ctx,txt,innerW).slice(0,7);
+      let ss=[];
+      if(hasSub){ctx.font=`400 ${sfs}px "Noto Sans TC",sans-serif`;ss=wrapLines(ctx,o.sub,innerW).slice(0,3);}
+      return {ls,ss,h:f+ls.length*f*1.5+(ss.length?W*0.02+ss.length*W*0.048:0)};
+    };
+    const regionTop=qy+W*0.03, AVAIL=SAFE-regionTop;
+    let fs=Math.round(W*0.078),m=meas(fs);
+    while(m.h>AVAIL&&fs>Math.round(W*0.036)){fs-=3;m=meas(fs);}
+    let lines=m.ls;
+    while(lines.length>1&&m.h>AVAIL){lines.pop();m={ls:lines,ss:m.ss,h:fs+lines.length*fs*1.5+(m.ss.length?W*0.02+m.ss.length*W*0.048:0)};}
+    let y=regionTop+fs+Math.max(0,AVAIL-m.h)*0.35;
+    ctx.fillStyle=pal.ink;ctx.font=`600 ${fs}px "Noto Serif TC",serif`;
     lines.forEach(l=>{ctx.fillText(l,M,y);y+=fs*1.5;});
-    if(o.sub&&o.title){
-      ctx.fillStyle=pal.sub;ctx.font=`400 ${Math.round(W*0.03)}px "Noto Sans TC",sans-serif`;
+    if(m.ss.length){
+      ctx.fillStyle=pal.sub;ctx.font=`400 ${sfs}px "Noto Sans TC",sans-serif`;
       y+=W*0.02;
-      wrapLines(ctx,o.sub,innerW).slice(0,3).forEach(l=>{ctx.fillText(l,M,y);y+=W*0.048;});
+      m.ss.forEach(l=>{ctx.fillText(l,M,y);y+=W*0.048;});
     }
   }
   else if(L==="list"){
-    const SAFE=H-M*1.5;                       // 頁腳上方的安全線，文字不能越過
+    const AVAIL=SAFE-TOP;
     let items=(o.body||[]).filter(Boolean).map(x=>String(x).replace(/^[・·•\-\s]+/,"")).slice(0,6);
-    // 標題先量，太長就縮字級
-    let tfs=Math.round(W*0.062);
-    ctx.font=`700 ${tfs}px "Noto Serif TC",serif`;
-    let tl=wrapLines(ctx,o.title||"",innerW);
-    while(tl.length>2&&tfs>Math.round(W*0.04)){tfs-=3;ctx.font=`700 ${tfs}px "Noto Serif TC",serif`;tl=wrapLines(ctx,o.title||"",innerW);}
-    tl=tl.slice(0,2);
-    const headTop=H*0.18, headBottom=headTop+tl.length*tfs*1.26+W*0.045;
-    // 條列自動縮排：先縮字級，真的塞不下才減少項目
-    const fit=(fs,lh,gap)=>{
-      ctx.font=`400 ${fs}px "Noto Sans TC",sans-serif`;
-      let yy=headBottom;
-      for(const it of items){
-        const n=Math.max(1,Math.min(3,wrapLines(ctx,it,innerW-W*0.09).length));
-        yy+=n*lh+gap;
-      }
-      return yy;
+    // 先量再畫：標題、條列一起換算，確保整塊塞得進安全區
+    const measure=(tfs,ifs,maxLn)=>{
+      const lh=ifs*1.46, gap=ifs*0.88;
+      ctx.font=`700 ${tfs}px "Noto Serif TC",serif`;
+      const tl=wrapLines(ctx,o.title||"",innerW).slice(0,3);
+      const headH=tl.length*tfs*1.26+W*0.045;
+      ctx.font=`400 ${ifs}px "Noto Sans TC",sans-serif`;
+      const rows=items.map(it=>wrapLines(ctx,it,innerW-W*0.09).slice(0,maxLn));
+      let listH=0;rows.forEach(r=>{listH+=r.length*lh+gap;});
+      if(rows.length)listH-=gap;                    // 最後一項不留尾間距
+      return {tl,tfs,rows,ifs,lh,gap,headH,listH,total:tfs+headH+listH+ifs*0.32};
     };
-    let ifs=Math.round(W*0.038), lh=W*0.056, gap=W*0.032;
-    while(fit(ifs,lh,gap)>SAFE&&ifs>Math.round(W*0.027)){ifs-=1;lh=ifs*1.48;gap=ifs*0.85;}
-    while(items.length>2&&fit(ifs,lh,gap)>SAFE)items.pop();
-    // 畫
+    const trial=(s,maxLn)=>measure(
+      Math.max(18,Math.round(W*0.062*Math.max(s,0.68))),
+      Math.max(15,Math.round(W*0.038*s)), maxLn);
+    let m=null;
+    for(const maxLn of [3,2]){                      // 先試三行，再試兩行
+      for(let s=1;s>=0.52;s-=0.02){
+        const t=trial(s,maxLn);
+        if(t.total<=AVAIL){m=t;break;}
+      }
+      if(m)break;
+    }
+    if(!m){                                          // 最小字級仍塞不下 → 逐條捨去
+      m=trial(0.52,2);
+      while(items.length>1&&m.total>AVAIL){items.pop();m=trial(0.52,2);}
+    }
+    const tfs=m.tfs, ifs=m.ifs, lh=m.lh, gap=m.gap;
+    const slack=Math.max(0,AVAIL-m.total);
+    let y=TOP+tfs+Math.min(slack*0.42,H*0.09);       // 有餘裕才往下讓一點
     ctx.fillStyle=pal.ink;ctx.font=`700 ${tfs}px "Noto Serif TC",serif`;
-    let y=headTop;
-    tl.forEach(l=>{ctx.fillText(l,M,y);y+=tfs*1.26;});
+    m.tl.forEach(l=>{ctx.fillText(l,M,y);y+=tfs*1.26;});
     ctx.strokeStyle=pal.acc;ctx.lineWidth=2;
     ctx.beginPath();ctx.moveTo(M,y-W*0.03);ctx.lineTo(M+W*0.09,y-W*0.03);ctx.stroke();
-    y=headBottom;
-    items.forEach((it,i)=>{
+    y+=W*0.045;
+    m.rows.forEach((ls,i)=>{
       ctx.fillStyle=pal.acc;ctx.font=`500 ${Math.round(ifs*0.7)}px "IBM Plex Mono",monospace`;
       ctx.fillText(String(i+1).padStart(2,"0"),M,y);
       ctx.fillStyle=pal.ink;ctx.font=`400 ${ifs}px "Noto Sans TC",sans-serif`;
-      const ls=wrapLines(ctx,it,innerW-W*0.09).slice(0,3);
       ls.forEach((l,j)=>{ctx.fillText(l,M+W*0.09,y+j*lh);});
       y+=ls.length*lh+gap;
     });
   }
   else if(L==="spec"){
-    ctx.fillStyle=pal.ink;ctx.font=`700 ${Math.round(W*0.07)}px "Noto Serif TC",serif`;
-    let y=H*0.22;
-    wrapLines(ctx,o.title||"",innerW).slice(0,2).forEach(l=>{ctx.fillText(l,M,y);y+=W*0.088;});
+    const tfs=Math.round(W*0.07);
+    ctx.font=`700 ${tfs}px "Noto Serif TC",serif`;
+    const tl=wrapLines(ctx,o.title||"",innerW).slice(0,2);
+    let y=Math.max(Math.min(H*0.22,SAFE*0.30),TOP+tfs);
+    ctx.fillStyle=pal.ink;
+    tl.forEach(l=>{ctx.fillText(l,M,y);y+=W*0.088;});
     y+=W*0.03;
     const rows=(o.rows||[]);
-    const SAFE=H-M*1.5, need=rows.length*(W*0.052+W*0.038);
+    const need=rows.length*(W*0.052+W*0.038);
     const sq=Math.min(1,(SAFE-y)/Math.max(need,1));   // 空間不夠就整體壓縮列高
     rows.forEach(r=>{
       ctx.strokeStyle=pal.ink;ctx.globalAlpha=.18;ctx.lineWidth=1;
       ctx.beginPath();ctx.moveTo(M,y-W*0.035);ctx.lineTo(W-M,y-W*0.035);ctx.stroke();ctx.globalAlpha=1;
       ctx.fillStyle=pal.sub;ctx.font=`500 ${Math.round(W*0.024)}px "IBM Plex Mono",monospace`;
       ctx.fillText(r[0],M,y);
-      ctx.fillStyle=pal.ink;ctx.font=`400 ${Math.round(W*0.038)}px "Noto Sans TC",sans-serif`;
+      ctx.fillStyle=pal.ink;ctx.font=`400 ${Math.round(W*0.038*Math.max(sq,0.8))}px "Noto Sans TC",sans-serif`;
       const ls=wrapLines(ctx,r[1],innerW-W*0.30);
-      ls.slice(0,2).forEach((l,j)=>ctx.fillText(l,M+W*0.30,y+j*W*0.052));
+      ls.slice(0,2).forEach((l,j)=>ctx.fillText(l,M+W*0.30,y+j*W*0.052*sq));
       y+=(Math.max(1,Math.min(2,ls.length))*W*0.052+W*0.038)*sq;
     });
   }
   else if(L==="cta"){
-    const fs=Math.round(W*0.085),subFs=Math.round(W*0.034);
-    ctx.font=`700 ${fs}px "Noto Serif TC",serif`;
-    const lines=wrapLines(ctx,o.title||"",innerW).slice(0,3);
-    ctx.font=`400 ${subFs}px "Noto Sans TC",sans-serif`;
-    const subs=wrapLines(ctx,o.sub||"",innerW).slice(0,3);
-    const blockH=lines.length*W*0.105+W*0.015+subs.length*W*0.054;
-    let y=(H-blockH)/2+fs*0.6;
+    let fs=Math.round(W*0.085);const subFs=Math.round(W*0.034);
+    let lines=[],subs=[],blockH=0;
+    const meas=()=>{
+      ctx.font=`700 ${fs}px "Noto Serif TC",serif`;
+      lines=wrapLines(ctx,o.title||"",innerW).slice(0,4);
+      ctx.font=`400 ${subFs}px "Noto Sans TC",sans-serif`;
+      subs=wrapLines(ctx,o.sub||"",innerW).slice(0,3);
+      blockH=lines.length*fs*1.24+W*0.015+subs.length*W*0.054;
+    };
+    meas();
+    while(blockH>SAFE-TOP-fs*1.6&&fs>Math.round(W*0.045)){fs-=4;meas();}
+    let y=Math.min(Math.max((H-blockH)/2+fs*0.6,TOP+fs*1.6),SAFE-blockH+fs);
     ctx.fillStyle=pal.acc;ctx.fillRect(M,y-fs*1.5,Math.round(W*0.12),3);
     ctx.fillStyle=pal.ink;ctx.font=`700 ${fs}px "Noto Serif TC",serif`;
-    lines.forEach(l=>{ctx.fillText(l,M,y);y+=W*0.105;});
+    lines.forEach(l=>{ctx.fillText(l,M,y);y+=fs*1.24;});
     ctx.fillStyle=pal.sub;ctx.font=`400 ${subFs}px "Noto Sans TC",sans-serif`;
     y+=W*0.015;
     subs.forEach(l=>{ctx.fillText(l,M,y);y+=W*0.054;});
@@ -2080,16 +2128,68 @@ let aiObserved=[];              // AI 從圖中看到的重點，條列版型會
 let imgSeeded={t:"",s:"",b:""}; // 上次「自動帶入」的內容，用來判斷使用者有沒有手動改過
 function setImgFields(t,s,b){
   $("#im-title").value=t;$("#im-sub").value=s;$("#im-body").value=b;
-  imgSeeded={t,s,b};
+  // 以「欄位實際存到的值」為準：單行輸入框會把換行吃掉，直接記 s 會誤判成使用者改過
+  imgSeeded={t:$("#im-title").value,s:$("#im-sub").value,b:$("#im-body").value};
 }
 function imgFieldsUntouched(){
   return $("#im-title").value===imgSeeded.t
       && $("#im-sub").value===imgSeeded.s
       && $("#im-body").value===imgSeeded.b;
 }
-/* 每個版型該放什麼，有 AI 文案就優先用 AI 的 */
+/* ---- 版型圖 ⇄ 輪播企劃：文字同一份 ----
+   imgBound = 目前綁在輪播腳本的第幾頁（-1 表示沒綁，用左側設定自動生成）。 */
+let imgBound=-1;      // 綁在輪播腳本的第幾頁
+let imgUnbound=false; // 使用者主動選了「不綁頁」，就不要再自動綁回去
+/* 每一頁該用哪個版型：第一頁封面、最後一頁 CTA，其餘看角色與內容 */
+function pageLayout(p,i,n){
+  const r=String(p.r||"");
+  if(i===0||/封面|cover/i.test(r))return "cover";
+  if(i===n-1||/CTA|行動|結尾/i.test(r))return "cta";
+  if(/規格|資訊|spec/i.test(r))return "spec";
+  return String(p.x||"").includes("\n")?"list":"quote";
+}
+function carIndexForLayout(L){
+  const n=currentCarousel.length;
+  for(let i=0;i<n;i++)if(pageLayout(currentCarousel[i],i,n)===L)return i;
+  return -1;
+}
+function bindImgPage(i,keepLayout){
+  const p=currentCarousel[i];if(!p)return false;
+  imgBound=i;
+  if(!keepLayout)imgState.layout=pageLayout(p,i,currentCarousel.length);
+  imgState.pageNo=i+1;imgState.pageTotal=currentCarousel.length;
+  setImgFields(p.t||"",p.x||"",String(p.x||""));
+  return true;
+}
+function renderPageSel(){
+  const sel=$("#pageSel");if(!sel)return;
+  const n=currentCarousel.length;
+  sel.innerHTML=currentCarousel.map((p,i)=>
+    `<option value="${i}">${String(i+1).padStart(2,"0")}　${esc(p.r||"")}｜${esc((p.t||"").slice(0,12))}</option>`
+  ).join("")+`<option value="-1">（不綁頁，用左側設定自動生成）</option>`;
+  sel.value=String(imgBound>=0&&imgBound<n?imgBound:-1);
+}
+/* 在版型圖改字 → 寫回輪播腳本那一頁，兩邊保持一致 */
+function pushImgToCarousel(){
+  if(imgBound<0)return;
+  const p=currentCarousel[imgBound];if(!p)return;
+  const t=$("#im-title").value;
+  const x=(imgState.layout==="list")?$("#im-body").value:$("#im-sub").value;
+  // 單行欄位吃掉換行時不要反過來把腳本的換行洗掉
+  if(p.t===t&&(p.x===x||p.x.replace(/\n/g,"")===x))return;
+  p.t=t;p.x=x;p._e=true;p._ai=false;
+  imgSeeded={t,s:$("#im-sub").value,b:$("#im-body").value};
+  imgSyncLock=true;
+  try{markCarDirty();paintCarousel();}finally{imgSyncLock=false;}
+}
+/* 每個版型該放什麼：優先用輪播腳本裡對應的那一頁，其次才是 AI 文案 */
 function seedImageFields(layout){
   const L=layout||imgState.layout;
+  if(!imgUnbound){
+    const idx=carIndexForLayout(L);
+    if(idx>=0&&bindImgPage(idx,true)){renderPageSel();return;}
+  }
+  imgBound=-1;renderPageSel();
   const ai=(aiVariants&&aiVariants.length)?aiVariants[0]:null;
   const hook=ai?String(ai.body.split("\n")[0]||"").trim():"";
   const spec=`${P.region}｜${P.size} 坪 ${P.layout}｜${P.style}`;
@@ -2700,9 +2800,19 @@ function initEvents(){
     if(fresh)seedImageFields(imgState.layout);   // 沒手動改過才自動換內容，改過的就保留
     renderImgOptions();redrawCanvas();
   });
+  $("#pageSel").addEventListener("change",e=>{
+    const i=+e.target.value;
+    if(i<0){imgBound=-1;imgUnbound=true;seedImageFields(imgState.layout);}
+    else{imgUnbound=false;bindImgPage(i,false);}
+    renderPageSel();renderImgOptions();redrawCanvas();
+  });
   $("#sizeOpts").addEventListener("click",e=>{const b=e.target.closest(".opt");if(!b)return;imgState.size=b.dataset.size;renderImgOptions();redrawCanvas();});
   $("#paletteOpts").addEventListener("click",e=>{const b=e.target.closest(".opt");if(!b)return;imgState.palette=b.dataset.pal;try{store("hebe_pal",imgState.palette);}catch(_){}renderImgOptions();redrawCanvas();});
-  ["#im-title","#im-sub","#im-body"].forEach(s=>$(s).addEventListener("input",redrawCanvas));
+  let pushT=null;
+  ["#im-title","#im-sub","#im-body"].forEach(s=>$(s).addEventListener("input",()=>{
+    redrawCanvas();
+    clearTimeout(pushT);pushT=setTimeout(pushImgToCarousel,350);   // 停手才寫回，避免每個字都重畫腳本
+  }));
   $("#photoIn").addEventListener("change",e=>{addPhotos(e.target.files);e.target.value="";});
   $("#clearPhoto").addEventListener("click",clearPhotos);
 
@@ -2769,13 +2879,6 @@ function initEvents(){
   /* 每一頁只編碼「一次」PNG：同一份 blob 既當縮圖也拿去打包。
      舊版 toDataURL + toBlob 各編一次，8 頁就是 16 次全尺寸編碼，
      還把 8 段上百 KB 的 base64 塞進 DOM——那才是卡頓的來源。 */
-  function pageLayout(p,i,n){
-    const r=String(p.r||"");
-    if(i===0||/封面|cover/i.test(r))return "cover";
-    if(i===n-1||/CTA|行動|結尾/i.test(r))return "cta";
-    if(/規格|資訊|spec/i.test(r))return "spec";
-    return String(p.x||"").includes("\n")?"list":"quote";
-  }
   function carPageOpts(i){
     const pages=currentCarousel,p=pages[i];
     const ph=(aiPhotoOrder&&aiPhotoOrder[i]&&aiPhotoOrder[i].im)?aiPhotoOrder[i].im:photoAt(i);
@@ -2809,9 +2912,7 @@ function initEvents(){
   /* 把某一頁載回主畫面，就能直接微調再單張下載 */
   function previewPage(i){
     const p=currentCarousel[i];if(!p)return;
-    imgState.layout=pageLayout(p,i,currentCarousel.length);
-    imgState.pageNo=i+1;imgState.pageTotal=currentCarousel.length;
-    setImgFields(p.t,p.x,String(p.x||""));
+    bindImgPage(i,false);renderPageSel();
     const linked=(aiPhotoOrder&&aiPhotoOrder[i])?imgState.photos.indexOf(aiPhotoOrder[i]):i;
     if(linked>=0&&linked<imgState.photos.length)imgState.pi=linked;
     $$("#thumbs .thumb").forEach(x=>x.classList.toggle("on",+x.dataset.i===i));
@@ -2881,6 +2982,7 @@ function initEvents(){
     if(!badge)card.querySelector(".sn").insertAdjacentHTML("afterend",'<span class="edited">已手改</span>');
     else if(badge.classList.contains("ai")){badge.classList.remove("ai");badge.textContent="已手改";}
     markCarDirty();
+    renderPageSel();syncImgFromCarousel();   // 版型圖那邊的文字跟著改
   });
   $("#carOut").addEventListener("click",e=>{
     const add=e.target.closest(".addcard");
