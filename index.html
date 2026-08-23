@@ -5795,7 +5795,7 @@ function HbAttendanceForm({onCancel,onCreate,projects,workerOptions,lastRateFor}
   )
 }
 
-function HbCompanyHub({onBack:l,onContracts:t,onQuotes:e,onReceipts:rc,onVendorReceipts:vr,onQuickQuote:qq,onGoHome:hbGoHome,onVendorQuotes:vq,onProposal:pg,onMarketingPhotos:mp,onBookings:bk,onOpenBooking:ob,onDrawings:dw,onAttendance:atd,onPriceBook:pb,onSurvey:sv}){return u.default.createElement("div",{style:{background:s.paper,minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink,position:"relative"}},
+function HbCompanyHub({onBack:l,onContracts:t,onQuotes:e,onReceipts:rc,onVendorReceipts:vr,onQuickQuote:qq,onGoHome:hbGoHome,onVendorQuotes:vq,onProposal:pg,onMarketingPhotos:mp,onBookings:bk,onOpenBooking:ob,onDrawings:dw,onAttendance:atd,onPriceBook:pb,onSurvey:sv,onChangeOrders:co}){return u.default.createElement("div",{style:{background:s.paper,minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink,position:"relative"}},
   u.default.createElement("style",null,`
     @keyframes iyBreatheA { 0%,100%{transform:scale(1);opacity:.7} 50%{transform:scale(1.3);opacity:1} }
     @keyframes iyBreatheB { 0%,100%{transform:scale(1);opacity:.7} 50%{transform:scale(1.3);opacity:1} }
@@ -5819,6 +5819,7 @@ function HbCompanyHub({onBack:l,onContracts:t,onQuotes:e,onReceipts:rc,onVendorR
     ),
     u.default.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12}},
       u.default.createElement(HbCompanyGridCard,{icon:"file-text",title:"設計合約",desc:"前期設計合約／指定案件工程合約的設計委任合約產生與紀錄",onClick:t}),
+      u.default.createElement(HbCompanyGridCard,{icon:"pencil",title:"追加減帳單",desc:"工程變更現場開單，業主當場簽名才生效，簽完鎖定，結算時有憑有據",onClick:co}),
       u.default.createElement(HbCompanyGridCard,{icon:"file-output",title:"工程收據",desc:"依期別產生工程收據，A4直向每頁3筆款項",onClick:rc}),
       u.default.createElement(HbCompanyGridCard,{icon:"pencil",title:"廠商領據",desc:"廠商工程款領據產生，A5橫向格式一張一筆",onClick:vr})
     ),
@@ -6349,7 +6350,7 @@ function Gy(){let[l,t]=(0,u.useState)(!0),[e,n]=(0,u.useState)(!1),[a,i]=(0,u.us
         }
         .fade-in { animation: fadeIn 0.2s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(4px);} to { opacity:1; transform:translateY(0);} }
-      `),u.default.createElement("div",{style:{height:"100%",overflowY:o==="landing"?"hidden":"auto",WebkitOverflowScrolling:"touch",paddingBottom:o==="landing"?0:92}},l?u.default.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh"}},u.default.createElement(E,{name:"loader",className:"animate-spin",size:28,color:s.ocean})):o==="landing"?u.default.createElement(HbLanding,{onCase:()=>f("home"),onCompany:()=>f("companyHub"),onManageStaff:()=>f("staff"),onQuickQuote:()=>f("estimateHub"),onProposal:()=>HB_openProposalSystem(),onMarketingPhotos:()=>f("marketingPhotos"),onBookings:()=>f("bookings"),onOpenBooking:()=>HB_openBookingSystem(),onDrawings:()=>f("drawings"),onLogout:()=>{try{localStorage.removeItem("sitelog_admin_unlocked"),localStorage.removeItem("sitelog_admin_username")}catch{}window.location.reload()}}):o==="companyHub"?u.default.createElement(HbCompanyHub,{onBack:()=>f("landing"),onContracts:()=>f("contracts"),onQuotes:()=>f("estimateHub"),onReceipts:()=>f("receipts"),onVendorReceipts:()=>f("vendorReceipts"),onQuickQuote:()=>f("estimateHub"),onGoHome:()=>f("home"),onVendorQuotes:()=>f("vendorQuotes"),onProposal:()=>HB_openProposalSystem(),onMarketingPhotos:()=>f("marketingPhotos"),onBookings:()=>f("bookings"),onOpenBooking:()=>HB_openBookingSystem(),onDrawings:()=>f("drawings"),onAttendance:()=>f("attendance"),onPriceBook:()=>f("priceBook"),onSurvey:()=>f("survey")}):o==="survey"?u.default.createElement(HbSurveyHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="priceBook"?u.default.createElement(HbPriceBookHub,{onBack:()=>f("companyHub"),notify:g}):o==="attendance"?u.default.createElement(HbAttendanceHub,{onBack:()=>f("companyHub"),notify:g}):o==="marketingPhotos"?u.default.createElement(HbMarketingPhotoHub,{onBack:()=>f("landing"),notify:g}):o==="bookings"?u.default.createElement(HbBookingsHub,{onBack:()=>f("landing"),notify:g}):o==="vendorQuotes"?u.default.createElement(HbVendorQuoteHub,{onBack:()=>f("companyHub"),notify:g}):o==="drawings"?u.default.createElement(HbDrawingHub,{onBack:()=>f("companyHub"),notify:g}):o==="receipts"?u.default.createElement(HbReceiptsHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="vendorReceipts"?u.default.createElement(HbVendorReceiptsHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="quoteImportPick"?u.default.createElement(Iy,{projects:a,onOpen:hbImportQuote,onNew:()=>h(!0),onRefresh:()=>{D(!0),y()},refreshing:e,storageUsedBytes:z,onManageStaff:()=>f("staff"),pickerMode:!0,progressRanges:hbProg,onBack:()=>f("companyHub")}):o==="estimateHub"?u.default.createElement(HerfulsinsEstimateHub,{project:null,notify:g,onClose:()=>f("companyHub")}):o==="home"?u.default.createElement(Iy,{projects:a,onOpen:T=>{r(T),hbSetOpenTab("photos"),f("detail")},onNew:()=>h(!0),onRefresh:()=>{D(!0),y()},refreshing:e,storageUsedBytes:z,onManageStaff:()=>f("staff"),progressRanges:hbProg,onBack:()=>f("landing"),onGoCompany:()=>f("companyHub")}):o==="staff"?u.default.createElement(Ky,{onBack:()=>f("landing")}):o==="contracts"?u.default.createElement(HerfulsinsContractsHub,{onBack:()=>f("landing"),notify:g}):o==="digitalCard"?u.default.createElement(HbDigitalCard,{onBack:()=>f("landing"),notify:g}):u.default.createElement(lh,{project:j,onBack:()=>f("home"),onUpdateMeta:S,onDelete:M,notify:g,initialTab:hbOpenTab})),d&&u.default.createElement(Py,{onCancel:()=>h(!1),onCreate:b}),m&&u.default.createElement("div",{className:"fade-in",style:{position:"fixed",bottom:20,left:"50%",transform:"translateX(-50%)",background:s.ink,color:s.card,padding:"10px 18px",borderRadius:8,fontSize:13,boxShadow:"0 4px 14px rgba(0,0,0,0.25)",zIndex:60}},m),u.default.createElement(HbBottomNav,{active:o,onNavigate:T=>f(T)}))}
+      `),u.default.createElement("div",{style:{height:"100%",overflowY:o==="landing"?"hidden":"auto",WebkitOverflowScrolling:"touch",paddingBottom:o==="landing"?0:92}},l?u.default.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh"}},u.default.createElement(E,{name:"loader",className:"animate-spin",size:28,color:s.ocean})):o==="landing"?u.default.createElement(HbLanding,{onCase:()=>f("home"),onCompany:()=>f("companyHub"),onManageStaff:()=>f("staff"),onQuickQuote:()=>f("estimateHub"),onProposal:()=>HB_openProposalSystem(),onMarketingPhotos:()=>f("marketingPhotos"),onBookings:()=>f("bookings"),onOpenBooking:()=>HB_openBookingSystem(),onDrawings:()=>f("drawings"),onLogout:()=>{try{localStorage.removeItem("sitelog_admin_unlocked"),localStorage.removeItem("sitelog_admin_username")}catch{}window.location.reload()}}):o==="companyHub"?u.default.createElement(HbCompanyHub,{onBack:()=>f("landing"),onContracts:()=>f("contracts"),onQuotes:()=>f("estimateHub"),onReceipts:()=>f("receipts"),onVendorReceipts:()=>f("vendorReceipts"),onQuickQuote:()=>f("estimateHub"),onGoHome:()=>f("home"),onVendorQuotes:()=>f("vendorQuotes"),onProposal:()=>HB_openProposalSystem(),onMarketingPhotos:()=>f("marketingPhotos"),onBookings:()=>f("bookings"),onOpenBooking:()=>HB_openBookingSystem(),onDrawings:()=>f("drawings"),onAttendance:()=>f("attendance"),onPriceBook:()=>f("priceBook"),onSurvey:()=>f("survey"),onChangeOrders:()=>f("changeOrders")}):o==="changeOrders"?u.default.createElement(HbChangeOrderHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="survey"?u.default.createElement(HbSurveyHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="priceBook"?u.default.createElement(HbPriceBookHub,{onBack:()=>f("companyHub"),notify:g}):o==="attendance"?u.default.createElement(HbAttendanceHub,{onBack:()=>f("companyHub"),notify:g}):o==="marketingPhotos"?u.default.createElement(HbMarketingPhotoHub,{onBack:()=>f("landing"),notify:g}):o==="bookings"?u.default.createElement(HbBookingsHub,{onBack:()=>f("landing"),notify:g}):o==="vendorQuotes"?u.default.createElement(HbVendorQuoteHub,{onBack:()=>f("companyHub"),notify:g}):o==="drawings"?u.default.createElement(HbDrawingHub,{onBack:()=>f("companyHub"),notify:g}):o==="receipts"?u.default.createElement(HbReceiptsHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="vendorReceipts"?u.default.createElement(HbVendorReceiptsHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="quoteImportPick"?u.default.createElement(Iy,{projects:a,onOpen:hbImportQuote,onNew:()=>h(!0),onRefresh:()=>{D(!0),y()},refreshing:e,storageUsedBytes:z,onManageStaff:()=>f("staff"),pickerMode:!0,progressRanges:hbProg,onBack:()=>f("companyHub")}):o==="estimateHub"?u.default.createElement(HerfulsinsEstimateHub,{project:null,notify:g,onClose:()=>f("companyHub")}):o==="home"?u.default.createElement(Iy,{projects:a,onOpen:T=>{r(T),hbSetOpenTab("photos"),f("detail")},onNew:()=>h(!0),onRefresh:()=>{D(!0),y()},refreshing:e,storageUsedBytes:z,onManageStaff:()=>f("staff"),progressRanges:hbProg,onBack:()=>f("landing"),onGoCompany:()=>f("companyHub")}):o==="staff"?u.default.createElement(Ky,{onBack:()=>f("landing")}):o==="contracts"?u.default.createElement(HerfulsinsContractsHub,{onBack:()=>f("landing"),notify:g}):o==="digitalCard"?u.default.createElement(HbDigitalCard,{onBack:()=>f("landing"),notify:g}):u.default.createElement(lh,{project:j,onBack:()=>f("home"),onUpdateMeta:S,onDelete:M,notify:g,initialTab:hbOpenTab})),d&&u.default.createElement(Py,{onCancel:()=>h(!1),onCreate:b}),m&&u.default.createElement("div",{className:"fade-in",style:{position:"fixed",bottom:20,left:"50%",transform:"translateX(-50%)",background:s.ink,color:s.card,padding:"10px 18px",borderRadius:8,fontSize:13,boxShadow:"0 4px 14px rgba(0,0,0,0.25)",zIndex:60}},m),u.default.createElement(HbBottomNav,{active:o,onNavigate:T=>f(T)}))}
 
 /* ===================================================================
    設計需求問卷：公司端建立連結 → 業主線上填 → 答案回到案件
@@ -6595,6 +6596,471 @@ function HbSurveyHub({onBack,notify,projects}){
                     h("div",{style:{fontSize:11,color:s.ocean,letterSpacing:"0.08em",marginBottom:2}},sec.g),rows);
                 })
               ):null)
+          );
+        }))
+    )
+  );
+}
+
+
+/* ===================================================================
+   追加減帳單（變更單）
+   現場開單 → 業主當場簽名 → 存檔。裝修糾紛第一名就是「不明費用增加」，
+   這張單的價值在於「簽了才算數」。
+   =================================================================== */
+var HB_CO_KINDS=[["add","追加"],["deduct","減帳"]];
+function HB_coUid(){return Math.random().toString(36).slice(2,10)}
+function HB_coNewItem(){return{id:HB_coUid(),kind:"add",name:"",spec:"",unit:"式",qty:"1",price:"",note:""}}
+function HB_coItemAmount(it){
+  var v=HB_num(it&&it.qty)*HB_num(it&&it.price);
+  return (it&&it.kind==="deduct")?-v:v;
+}
+function HB_coTotals(v){
+  var items=(v&&v.items)||[];
+  var add=items.filter(x=>x.kind!=="deduct").reduce((n,x)=>n+HB_num(x.qty)*HB_num(x.price),0);
+  var ded=items.filter(x=>x.kind==="deduct").reduce((n,x)=>n+HB_num(x.qty)*HB_num(x.price),0);
+  var amount=add-ded;
+  var rate=HB_num(v&&v.taxRate);
+  if(!isFinite(rate)||rate<0)rate=0;
+  var tax=Math.round(amount*rate/100);
+  var total=amount+tax;
+  var base=HB_num(v&&v.baseAmount);
+  return{add:add,ded:ded,amount:amount,rate:rate,tax:tax,total:total,base:base,after:base+total};
+}
+function HB_coMap(r){
+  return{id:r.id,projectId:r.project_id,no:r.no||"",title:r.title||"",reason:r.reason||"",
+    items:Array.isArray(r.items)?r.items:[],baseAmount:r.base_amount??"",amount:Number(r.amount)||0,
+    taxRate:r.tax_rate??"",total:Number(r.total)||0,status:r.status||"draft",ownerName:r.owner_name||"",
+    signatureUrl:r.signature_url||"",signaturePath:r.signature_path||"",signedAt:r.signed_at,
+    note:r.note||"",createdAt:r.created_at};
+}
+function HB_coNextNo(list){
+  var max=0;
+  (list||[]).forEach(function(x){
+    var m=/(\d+)\s*$/.exec(String(x.no||""));
+    if(m)max=Math.max(max,parseInt(m[1],10));
+  });
+  return "CO-"+String(max+1).padStart(3,"0");
+}
+try{window.HB_coTotals=HB_coTotals;window.HB_coItemAmount=HB_coItemAmount;window.HB_coNextNo=HB_coNextNo}catch(e){}
+
+function HB_buildChangeOrderHTML(v,projectName){
+  var e=HB_esc,T=HB_coTotals(v);
+  var r=HB_toROC(String(v.signedAt||v.createdAt||"").slice(0,10)||new Date().toISOString().slice(0,10));
+  var dateText=r.y?(r.y+"年"+r.m+"月"+r.d+"日"):"";
+  var no=0,rows="";
+  (v.items||[]).forEach(function(it){
+    if(!it.name&&!HB_num(it.price))return;
+    no++;
+    var amt=HB_coItemAmount(it),isDed=it.kind==="deduct";
+    rows+='<tr><td class="c">'+no+'</td>'
+      +'<td class="c '+(isDed?"ded":"add")+'">'+(isDed?"減帳":"追加")+'</td>'
+      +'<td>'+HB_escMultiline(it.name)+'</td>'
+      +'<td>'+e(it.spec)+'</td>'
+      +'<td class="c">'+e(it.unit)+'</td>'
+      +'<td class="c">'+e(it.qty)+'</td>'
+      +'<td class="r">'+HB_money(HB_num(it.price))+'</td>'
+      +'<td class="r '+(isDed?"ded":"")+'">'+(isDed?"-":"")+HB_money(Math.abs(amt))+'</td>'
+      +'<td>'+e(it.note)+'</td></tr>';
+  });
+  var stamp=HB_STAMP_B64?'<img class="stamp" src="data:image/png;base64,'+HB_STAMP_B64+'" />':"";
+  var sig=v.signatureUrl?'<img class="sig" src="'+e(v.signatureUrl)+'" />':'';
+  return '<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8" />'
+  +'<title>'+e(v.no||"追加減帳單")+' · '+e(projectName||"")+'</title><style>'
+  +'@page{size:A4 portrait;margin:14mm 12mm}'
+  +'*{box-sizing:border-box}'
+  +'body{font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;color:#1C1B18;max-width:880px;margin:0 auto;padding:22px;font-size:12.5px;line-height:1.5;background:#FAF9F6}'
+  +'@media print{.toolbar{display:none!important}body{padding:0;background:#fff}}'
+  +'.toolbar{position:sticky;top:0;background:rgba(28,27,24,.9);backdrop-filter:blur(10px);padding:11px 15px;display:flex;justify-content:space-between;border-radius:8px;margin-bottom:16px}'
+  +'.toolbar button{border:none;border-radius:7px;padding:8px 16px;font-size:13px;cursor:pointer}'
+  +'.toolbar .back{background:none;color:#F1EEE6;border:1px solid #F1EEE6!important}'
+  +'.toolbar .print{background:#7C6A56;color:#fff}'
+  +'.head{background:#1C1B18;color:#fff;padding:9px 14px;border-radius:6px 6px 0 0}'
+  +'.head-name{font-weight:700;font-size:15px;color:#CDA57E;letter-spacing:1px}'
+  +'.head-info{font-size:9px;color:#F1EEE6;margin-top:2px}'
+  +'h1{text-align:center;font-size:20px;letter-spacing:10px;margin:14px 0 4px}'
+  +'.sub{text-align:center;font-size:10px;color:#8C877D;letter-spacing:2px;margin-bottom:14px}'
+  +'table.meta{width:100%;border-collapse:collapse;margin-bottom:12px;font-size:12px}'
+  +'table.meta th,table.meta td{border:1px solid #E6E2D8;padding:5px 9px;text-align:left}'
+  +'table.meta th{background:#F2EFE8;width:88px;white-space:nowrap;font-weight:700}'
+  +'table.items{width:100%;border-collapse:collapse;font-size:11.5px}'
+  +'table.items th,table.items td{border:1px solid #E6E2D8;padding:4px 7px;vertical-align:top}'
+  +'table.items th{background:#1C1B18;color:#fff;font-weight:500;white-space:nowrap}'
+  +'td.c,th.c{text-align:center}td.r,th.r{text-align:right;white-space:nowrap}'
+  +'.add{color:#7C6A56}.ded{color:#8B1220}'
+  +'table.sum{width:100%;border-collapse:collapse;margin-top:10px;font-size:12.5px}'
+  +'table.sum td{border:1px solid #E6E2D8;padding:6px 10px}'
+  +'table.sum td.k{background:#F2EFE8;width:150px;text-align:right;font-weight:700}'
+  +'table.sum td.v{text-align:right;white-space:nowrap}'
+  +'table.sum tr.grand td{background:#1C1B18;color:#F1EEE6;font-weight:700;font-size:14px}'
+  +'.terms{margin-top:14px;font-size:10.5px;color:#5A544A;line-height:1.9}'
+  +'.signrow{display:flex;gap:16px;margin-top:18px}'
+  +'.signbox{flex:1;border:1px solid #E6E2D8;border-radius:6px;padding:10px 12px;min-height:110px;position:relative}'
+  +'.signbox .lbl{font-size:10.5px;color:#8C877D;margin-bottom:4px}'
+  +'.sig{max-width:200px;max-height:70px;display:block}'
+  +'.stamp{position:absolute;right:10px;bottom:8px;width:120px;opacity:.88}'
+  +'.footer{text-align:center;font-size:9.5px;color:#A8A196;margin-top:18px}'
+  +'</style></head><body>'
+  +'<div class="toolbar"><button class="back" onclick="window.close()">←</button>'
+  +'<button class="print" onclick="window.print()">列印 / 存 PDF</button></div>'
+  +'<div class="head"><div class="head-name">赫柏空間設計</div>'
+  +'<div class="head-info">地址:600 嘉義市西區湖內里新民路168號　電話:0987583978　統一編號：00351070</div></div>'
+  +'<h1>追加減帳單</h1><div class="sub">CHANGE ORDER</div>'
+  +'<table class="meta">'
+  +'<tr><th>單號</th><td>'+e(v.no)+'</td><th>日期</th><td>'+e(dateText)+'</td></tr>'
+  +'<tr><th>工程名稱</th><td colspan="3">'+e(projectName||"")+'</td></tr>'
+  +'<tr><th>變更名稱</th><td colspan="3">'+e(v.title)+'</td></tr>'
+  +(v.reason?'<tr><th>變更原因</th><td colspan="3">'+HB_escMultiline(v.reason)+'</td></tr>':'')
+  +'</table>'
+  +'<table class="items"><thead><tr>'
+  +'<th class="c">項次</th><th class="c">類別</th><th>項目</th><th>規格</th>'
+  +'<th class="c">單位</th><th class="c">數量</th><th class="r">單價</th><th class="r">金額</th><th>備註</th>'
+  +'</tr></thead><tbody>'+(rows||'<tr><td colspan="9" class="c">（無項目）</td></tr>')+'</tbody></table>'
+  +'<table class="sum">'
+  +(T.add?'<tr><td class="k">追加合計</td><td class="v add">+'+HB_money(T.add)+'</td></tr>':'')
+  +(T.ded?'<tr><td class="k">減帳合計</td><td class="v ded">-'+HB_money(T.ded)+'</td></tr>':'')
+  +'<tr><td class="k">本次變更小計</td><td class="v">'+(T.amount<0?"-":"")+HB_money(Math.abs(T.amount))+'</td></tr>'
+  +(T.rate?'<tr><td class="k">營業稅 '+e(T.rate)+'%</td><td class="v">'+(T.tax<0?"-":"")+HB_money(Math.abs(T.tax))+'</td></tr>':'')
+  +'<tr class="grand"><td class="k" style="background:#1C1B18;color:#F1EEE6">本次變更總額</td><td class="v">NT$ '+(T.total<0?"-":"")+HB_money(Math.abs(T.total))+'</td></tr>'
+  +(T.base?'<tr><td class="k">原合約金額</td><td class="v">'+HB_money(T.base)+'</td></tr>'
+    +'<tr class="grand"><td class="k" style="background:#1C1B18;color:#F1EEE6">變更後合約總額</td><td class="v">NT$ '+HB_money(T.after)+'</td></tr>':'')
+  +'</table>'
+  +'<div class="terms">'
+  +'<p>1. 本追加減帳單經雙方簽認後生效，並視為原工程合約之一部分，未簽認前不得逕行施作或計價。</p>'
+  +'<p>2. 本次變更之金額依上表計算，除本單所列項目外，原合約其餘條款不變。</p>'
+  +'<p>3. 因本次變更所生之工期影響，雙方另行議定。</p>'
+  +(v.note?'<p>4. '+HB_escMultiline(v.note)+'</p>':'')
+  +'</div>'
+  +'<div class="signrow">'
+  +'<div class="signbox"><div class="lbl">業主簽認</div>'+sig
+  +(v.ownerName?'<div style="font-size:11px;margin-top:4px">'+e(v.ownerName)+'</div>':'')
+  +(v.signedAt?'<div style="font-size:9.5px;color:#8C877D;margin-top:2px">簽署時間：'+e(String(v.signedAt).slice(0,19).replace("T"," "))+'</div>':'')
+  +'</div>'
+  +'<div class="signbox"><div class="lbl">承攬人簽認</div>'
+  +'<div style="font-size:11.5px;margin-top:6px">赫柏空間設計</div>'+stamp+'</div>'
+  +'</div>'
+  +'<p class="footer">本文件由赫柏空間設計工地紀錄本產生</p>'
+  +'</body></html>';
+}
+function HB_openChangeOrderPrint(v,projectName){
+  var w=window.open("","_blank");
+  if(!w)return!1;
+  w.document.open();w.document.write(HB_buildChangeOrderHTML(v,projectName));w.document.close();
+  return!0;
+}
+
+/* ---------- 簽名板 ---------- */
+function HbCoSignPad({onCancel,onDone}){
+  let h=u.default.createElement;
+  let ref=(0,u.useRef)(null),drawing=(0,u.useRef)(!1),last=(0,u.useRef)(null);
+  let[empty,setEmpty]=(0,u.useState)(!0);
+  let[name,setName]=(0,u.useState)("");
+  let[busy,setBusy]=(0,u.useState)(!1);
+  let pos=e=>{let c=ref.current,r=c.getBoundingClientRect();
+    return{x:(e.clientX-r.left)*(c.width/r.width),y:(e.clientY-r.top)*(c.height/r.height)}};
+  let start=e=>{let c=ref.current;if(!c)return;try{c.setPointerCapture(e.pointerId)}catch{}drawing.current=!0;last.current=pos(e)};
+  let move=e=>{if(!drawing.current)return;let c=ref.current,ctx=c.getContext("2d"),p=pos(e);
+    ctx.strokeStyle="#1C1B18";ctx.lineWidth=3.2;ctx.lineCap="round";ctx.lineJoin="round";
+    ctx.beginPath();ctx.moveTo(last.current.x,last.current.y);ctx.lineTo(p.x,p.y);ctx.stroke();
+    last.current=p;setEmpty(!1)};
+  let end=()=>{drawing.current=!1};
+  let clear=()=>{let c=ref.current;if(!c)return;c.getContext("2d").clearRect(0,0,c.width,c.height);setEmpty(!0)};
+  let confirm=async()=>{
+    if(empty)return;
+    setBusy(!0);
+    let blob=await new Promise(res=>ref.current.toBlob(res,"image/png"));
+    await onDone(blob,HB_pbClean(name));
+    setBusy(!1);
+  };
+  return h("div",{style:{position:"fixed",inset:0,background:"rgba(43,38,32,0.5)",display:"flex",alignItems:"center",justifyContent:"center",padding:16,zIndex:80}},
+    h("div",{className:"fade-in",style:{background:s.card,borderRadius:12,padding:20,width:"100%",maxWidth:460}},
+      h("h3",{style:{margin:"0 0 4px",fontSize:17,fontWeight:400,color:s.oceanDark}},"業主簽認"),
+      h("p",{style:{fontSize:11.5,color:s.inkSoft,margin:"0 0 12px",lineHeight:1.7}},
+        "請業主在下方簽名。簽名後這張單就會鎖定，金額不能再改。"),
+      h("input",{value:name,onChange:e=>setName(e.target.value),placeholder:"簽名者姓名（選填）",
+        style:{width:"100%",boxSizing:"border-box",border:`1px solid ${s.line}`,borderRadius:8,padding:"9px 11px",fontSize:14,marginBottom:10,background:"#fff",color:s.ink,fontFamily:"inherit"}}),
+      h("canvas",{ref:ref,width:900,height:340,onPointerDown:start,onPointerMove:move,onPointerUp:end,onPointerCancel:end,
+        style:{width:"100%",height:170,border:`1px dashed ${s.ocean}`,borderRadius:10,background:"#fff",touchAction:"none",display:"block",marginBottom:10}}),
+      h("div",{style:{display:"flex",gap:9}},
+        h("button",{onClick:onCancel,disabled:busy,style:{flex:1,background:"transparent",color:s.oceanDark,border:`1px solid ${s.ocean}`,borderRadius:8,padding:"11px 0",fontSize:14,cursor:"pointer",fontFamily:"inherit"}},"取消"),
+        h("button",{onClick:clear,disabled:busy,style:{border:`1px solid ${s.line}`,background:"none",color:s.inkSoft,borderRadius:8,padding:"11px 16px",fontSize:13.5,cursor:"pointer",fontFamily:"inherit"}},"清除"),
+        h("button",{onClick:confirm,disabled:empty||busy,style:{flex:2,background:s.lemon,color:s.oceanDark,border:"none",borderRadius:8,padding:"11px 0",fontSize:14,cursor:"pointer",opacity:(empty||busy)?.5:1,fontFamily:"inherit"}},busy?"儲存中…":"確認簽認"))
+    )
+  );
+}
+
+
+/* ---------- 追加減帳單：編輯器 ---------- */
+function HbChangeOrderForm({initial,projects,notify,onCancel,onSaved}){
+  let h=u.default.createElement;
+  let[v,setV]=(0,u.useState)(()=>({no:"",title:"",reason:"",projectId:"",items:[HB_coNewItem()],
+    baseAmount:"",taxRate:"",note:"",status:"draft",...(initial||{})}));
+  let[busy,setBusy]=(0,u.useState)(!1);
+  let[signing,setSigning]=(0,u.useState)(!1);
+  let[sug,setSug]=(0,u.useState)(null);
+  (0,u.useEffect)(()=>{HB_pbLoad(!1).catch(()=>{})},[]);
+
+  let locked=v.status==="signed";
+  let set=(k,val)=>setV(p=>({...p,[k]:val}));
+  let setItem=(id,k,val)=>setV(p=>({...p,items:p.items.map(x=>x.id===id?{...x,[k]:val}:x)}));
+  let addItem=()=>setV(p=>({...p,items:[...p.items,HB_coNewItem()]}));
+  let delItem=id=>setV(p=>({...p,items:p.items.length>1?p.items.filter(x=>x.id!==id):p.items}));
+  let T=HB_coTotals(v);
+  let projName=id=>{let x=(projects||[]).find(y=>y.id===id);return x?x.name:""};
+
+  let onType=(id,text,el)=>{
+    if(locked)return;
+    let kw=HB_pbClean(text);
+    if(kw.length<1){setSug(null);return}
+    let res=HB_pbSearch(kw,5);
+    if(!res.length){setSug(null);return}
+    let r=el&&el.getBoundingClientRect?el.getBoundingClientRect():null;
+    setSug({id:id,list:res,rect:r?{left:r.left,bottom:r.bottom,width:r.width}:null});
+  };
+  let applySug=(id,row)=>{
+    setV(p=>({...p,items:p.items.map(x=>x.id!==id?x:{...x,
+      name:row.name||x.name,spec:row.spec||x.spec,unit:row.unit||x.unit||"式",
+      price:(row.price!=null&&row.price!=="")?String(row.price):x.price})}));
+    setSug(null);
+  };
+
+  let save=async(extra)=>{
+    if(!v.projectId){notify("請先選擇案件");return null}
+    if(!String(v.title||"").trim()){notify("請填寫變更名稱");return null}
+    setBusy(!0);
+    let TT=HB_coTotals(v);
+    let payload={project_id:v.projectId,no:HB_pbClean(v.no),title:HB_pbClean(v.title),
+      reason:v.reason||"",items:v.items,base_amount:HB_num(v.baseAmount)||0,
+      amount:TT.amount,tax_rate:HB_num(v.taxRate)||0,total:TT.total,
+      note:v.note||"",status:v.status||"draft",updated_at:new Date().toISOString(),...(extra||{})};
+    let res=v.id
+      ? await q.from("sitelog_change_orders").update(payload).eq("id",v.id).select().single()
+      : await q.from("sitelog_change_orders").insert(payload).select().single();
+    setBusy(!1);
+    if(res.error){
+      notify(/relation|does not exist|42P01/i.test(String(res.error.message||""))
+        ?"還沒有追加減帳單資料表，請先到 Supabase 執行 change_orders.sql":"儲存失敗："+res.error.message);
+      return null;
+    }
+    let row=HB_coMap(res.data);
+    setV(p=>({...p,...row}));
+    onSaved(row);
+    return row;
+  };
+
+  let doSign=async(blob,name)=>{
+    let row=await save({});
+    if(!row){setSigning(!1);return}
+    try{
+      let path="change-orders/"+row.id+".png";
+      let url=await r2UploadSitelogFile("sitelog-quotes",path,blob,"image/png");
+      let res=await q.from("sitelog_change_orders").update({
+        signature_url:url,signature_path:path,owner_name:name||"",
+        signed_at:new Date().toISOString(),status:"signed",updated_at:new Date().toISOString()
+      }).eq("id",row.id).select().single();
+      if(res.error)throw res.error;
+      let r2=HB_coMap(res.data);
+      setV(p=>({...p,...r2}));
+      onSaved(r2);
+      setSigning(!1);
+      notify("已完成簽認，這張單已鎖定");
+    }catch(e){setSigning(!1);notify("簽認失敗："+(e.message||e))}
+  };
+
+  let fs={width:"100%",boxSizing:"border-box",border:`1px solid ${s.line}`,borderRadius:8,padding:"9px 11px",
+    fontSize:14,marginTop:4,marginBottom:11,background:locked?"#F7F5F0":"#fff",color:s.ink,fontFamily:"inherit"};
+  let lb={fontSize:12.5,color:s.inkSoft};
+  let cell={width:"100%",boxSizing:"border-box",border:`1px solid ${s.line}`,borderRadius:7,padding:"7px 9px",
+    fontSize:13.5,background:locked?"#F7F5F0":"#fff",color:s.ink,fontFamily:"inherit"};
+
+  return h("div",{style:{position:"fixed",inset:0,background:s.paper,zIndex:72,overflowY:"auto",fontFamily:"'Noto Sans TC', sans-serif"}},
+    h("div",{style:{maxWidth:720,margin:"0 auto",padding:"18px 16px 40px"}},
+      h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}},
+        h("button",{onClick:onCancel,style:{background:"none",border:"none",color:s.inkSoft,cursor:"pointer",fontSize:12,display:"flex",alignItems:"center",gap:4,padding:0,fontFamily:"inherit"}},h(E,{name:"arrow-left",size:14}),"返回"),
+        locked?h("span",{style:{fontSize:11,color:"#fff",background:s.tree,borderRadius:999,padding:"3px 11px"}},"已簽認 · 已鎖定"):null),
+
+      h("h1",{style:{fontSize:19,fontWeight:300,margin:"0 0 14px",letterSpacing:"0.05em"}},v.id?"編輯追加減帳單":"新增追加減帳單"),
+
+      h("div",{style:{display:"flex",gap:10}},
+        h("div",{style:{width:120}},h("label",{style:lb},"單號"),h("input",{value:v.no,onChange:e=>set("no",e.target.value),disabled:locked,style:fs})),
+        h("div",{style:{flex:1}},h("label",{style:lb},"案件"),
+          h("select",{value:v.projectId,onChange:e=>set("projectId",e.target.value),disabled:locked,style:fs},
+            h("option",{value:""},"請選擇"),
+            (projects||[]).map(p=>h("option",{key:p.id,value:p.id},p.name))))),
+
+      h("label",{style:lb},"變更名稱"),
+      h("input",{value:v.title,onChange:e=>set("title",e.target.value),disabled:locked,placeholder:"例：主臥增設更衣間隔間",style:fs}),
+
+      h("label",{style:lb},"變更原因"),
+      h("textarea",{value:v.reason,onChange:e=>set("reason",e.target.value),disabled:locked,rows:2,
+        placeholder:"例：業主現場提出，原設計未含",style:{...fs,resize:"vertical",lineHeight:1.6}}),
+
+      h("div",{style:{borderTop:`1px solid ${s.line}`,paddingTop:14,marginBottom:6}},
+        h("div",{style:{fontSize:13,color:s.oceanDark,marginBottom:10}},"變更項目")),
+
+      v.items.map((it,idx)=>{
+        let amt=HB_coItemAmount(it),ded=it.kind==="deduct";
+        return h("div",{key:it.id,style:{border:`1px solid ${s.line}`,borderRadius:10,padding:"11px 12px",marginBottom:10,background:s.card}},
+          h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:9,gap:8}},
+            h("div",{style:{display:"flex",gap:6}},
+              HB_CO_KINDS.map(([k,label])=>h("button",{key:k,onClick:()=>!locked&&setItem(it.id,"kind",k),
+                style:{border:`1px solid ${it.kind===k?(k==="deduct"?s.danger:s.ocean):s.line}`,
+                  background:it.kind===k?(k==="deduct"?"rgba(139,18,32,0.10)":"rgba(124,106,86,0.12)"):"none",
+                  color:it.kind===k?(k==="deduct"?s.danger:s.oceanDark):s.inkSoft,
+                  borderRadius:999,padding:"4px 14px",fontSize:12,cursor:locked?"default":"pointer",fontFamily:"inherit"}},label))),
+            h("div",{style:{display:"flex",alignItems:"center",gap:10}},
+              h("span",{style:{fontSize:13.5,color:ded?s.danger:s.oceanDark,whiteSpace:"nowrap"}},
+                ded?"-":"+",HB_money(Math.abs(amt))),
+              locked?null:h("button",{onClick:()=>delItem(it.id),style:{border:"none",background:"none",color:s.danger,cursor:"pointer",padding:"0 2px",display:"flex"}},h(E,{name:"x",size:15})))),
+          h("input",{value:it.name,disabled:locked,
+            onChange:e=>{setItem(it.id,"name",e.target.value);onType(it.id,e.target.value,e.target)},
+            onBlur:()=>setTimeout(()=>setSug(p=>(p&&p.id===it.id)?null:p),160),
+            placeholder:"項目名稱（打字會從單價庫建議）",style:{...cell,marginBottom:7}}),
+          h("div",{style:{display:"flex",gap:7,marginBottom:7}},
+            h("input",{value:it.spec,disabled:locked,onChange:e=>setItem(it.id,"spec",e.target.value),placeholder:"規格",style:{...cell,flex:2}}),
+            h("input",{value:it.unit,disabled:locked,onChange:e=>setItem(it.id,"unit",e.target.value),placeholder:"單位",style:{...cell,width:64,textAlign:"center"}})),
+          h("div",{style:{display:"flex",gap:7,marginBottom:7}},
+            h("input",{value:it.qty,disabled:locked,inputMode:"decimal",onChange:e=>setItem(it.id,"qty",e.target.value),placeholder:"數量",style:{...cell,flex:1,textAlign:"right"}}),
+            h("input",{value:it.price,disabled:locked,inputMode:"decimal",onChange:e=>setItem(it.id,"price",e.target.value),placeholder:"單價",style:{...cell,flex:2,textAlign:"right"}})),
+          h("input",{value:it.note,disabled:locked,onChange:e=>setItem(it.id,"note",e.target.value),placeholder:"備註（選填）",style:cell})
+        );
+      }),
+
+      locked?null:h("button",{onClick:addItem,style:{width:"100%",border:`1px dashed ${s.line}`,background:"none",borderRadius:9,padding:"10px 0",fontSize:13,color:s.oceanDark,cursor:"pointer",marginBottom:16,fontFamily:"inherit"}},"+ 新增變更項目"),
+
+      h("div",{style:{display:"flex",gap:10}},
+        h("div",{style:{flex:1}},h("label",{style:lb},"原合約金額（選填）"),
+          h("input",{value:v.baseAmount,disabled:locked,inputMode:"decimal",onChange:e=>set("baseAmount",e.target.value),placeholder:"填了才會算變更後總額",style:{...fs,textAlign:"right"}})),
+        h("div",{style:{width:110}},h("label",{style:lb},"稅率 %"),
+          h("input",{value:v.taxRate,disabled:locked,inputMode:"decimal",onChange:e=>set("taxRate",e.target.value),placeholder:"0",style:{...fs,textAlign:"right"}}))),
+
+      h("div",{style:{background:s.card,border:`1px solid ${s.line}`,borderRadius:10,padding:"12px 14px",marginBottom:16}},
+        [T.add?["追加合計","+"+HB_money(T.add),s.oceanDark]:null,
+         T.ded?["減帳合計","-"+HB_money(T.ded),s.danger]:null,
+         ["本次變更小計",(T.amount<0?"-":"")+HB_money(Math.abs(T.amount)),s.ink],
+         T.rate?["營業稅 "+T.rate+"%",(T.tax<0?"-":"")+HB_money(Math.abs(T.tax)),s.inkSoft]:null,
+         ["本次變更總額","NT$ "+(T.total<0?"-":"")+HB_money(Math.abs(T.total)),s.oceanDark],
+         T.base?["變更後合約總額","NT$ "+HB_money(T.after),s.tree]:null
+        ].filter(Boolean).map(([k,val,col],i)=>h("div",{key:k,style:{display:"flex",justifyContent:"space-between",alignItems:"baseline",padding:"3px 0"}},
+          h("span",{style:{fontSize:12,color:s.inkSoft}},k),
+          h("span",{style:{fontSize:k.indexOf("總額")>=0?15:13,color:col,whiteSpace:"nowrap"}},val)))),
+
+      h("label",{style:lb},"補充備註（會印在單據上）"),
+      h("input",{value:v.note,disabled:locked,onChange:e=>set("note",e.target.value),placeholder:"例：本項工期順延 3 個工作天",style:fs}),
+
+      v.signatureUrl?h("div",{style:{border:`1px solid ${s.tree}`,borderRadius:10,padding:"11px 13px",marginBottom:14,background:"#fff"}},
+        h("div",{style:{fontSize:11.5,color:s.inkSoft,marginBottom:6}},"業主簽認",
+          v.ownerName?"　"+v.ownerName:"",
+          v.signedAt?"　"+String(v.signedAt).slice(0,16).replace("T"," "):""),
+        h("img",{src:v.signatureUrl,alt:"",style:{maxWidth:200,maxHeight:70,display:"block"}})):null,
+
+      h("div",{style:{display:"flex",gap:9,flexWrap:"wrap"}},
+        locked?null:h("button",{onClick:()=>save({}),disabled:busy,
+          style:{flex:"1 1 120px",border:`1px solid ${s.ocean}`,background:"none",color:s.oceanDark,borderRadius:9,padding:"12px 0",fontSize:13.5,cursor:"pointer",fontFamily:"inherit"}},busy?"儲存中…":"暫存草稿"),
+        locked?null:h("button",{onClick:()=>setSigning(!0),disabled:busy,
+          style:{flex:"2 1 160px",background:s.ocean,color:s.lemon,border:"none",borderRadius:9,padding:"12px 0",fontSize:14,cursor:"pointer",fontFamily:"inherit"}},"業主簽認"),
+        h("button",{onClick:()=>{if(!HB_openChangeOrderPrint(v,projName(v.projectId)))notify("請允許彈出視窗")},
+          style:{flex:"1 1 110px",border:`1px solid ${s.line}`,background:"none",color:s.oceanDark,borderRadius:9,padding:"12px 0",fontSize:13.5,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6,fontFamily:"inherit"}},h(E,{name:"printer",size:14}),"列印／PDF")),
+
+      sug&&sug.list.length>0?h("div",{style:{position:"fixed",zIndex:90,width:300,maxHeight:250,overflowY:"auto",background:"#fff",
+        border:`1px solid ${s.ocean}`,borderRadius:10,boxShadow:"0 14px 34px -12px rgba(28,27,24,0.4)",
+        left:Math.max(8,Math.min(sug.rect?sug.rect.left:20,(typeof window!=="undefined"?window.innerWidth:400)-308)),
+        top:(sug.rect?sug.rect.bottom:80)+4}},
+        h("div",{style:{fontSize:10.5,color:s.inkSoft,padding:"7px 11px",borderBottom:`1px solid ${s.line}`}},"常用工項單價庫"),
+        sug.list.map((row,ri)=>h("div",{key:row.id||ri,onMouseDown:ev=>{ev.preventDefault();applySug(sug.id,row)},
+          style:{padding:"8px 11px",cursor:"pointer",borderBottom:ri<sug.list.length-1?`1px solid ${s.line}`:"none",display:"flex",justifyContent:"space-between",gap:8}},
+          h("span",{style:{fontSize:12.5,flex:1,minWidth:0}},row.name,row.spec?h("span",{style:{color:s.inkSoft}}," ／ ",row.spec):null),
+          h("span",{style:{fontSize:12.5,color:s.oceanDark,whiteSpace:"nowrap"}},row.price?HB_money(HB_num(row.price)):"—")))
+      ):null,
+
+      signing?h(HbCoSignPad,{onCancel:()=>setSigning(!1),onDone:doSign}):null
+    )
+  );
+}
+
+/* ---------- 追加減帳單：管理頁 ---------- */
+function HbChangeOrderHub({onBack,notify,projects}){
+  let h=u.default.createElement;
+  let[list,setList]=(0,u.useState)([]);
+  let[loading,setLoading]=(0,u.useState)(!0);
+  let[err,setErr]=(0,u.useState)(null);
+  let[editing,setEditing]=(0,u.useState)(null);
+  let[proj,setProj]=(0,u.useState)("");
+
+  let load=async()=>{
+    setLoading(!0);setErr(null);
+    let{data,error}=await q.from("sitelog_change_orders").select("*").order("created_at",{ascending:!1}).limit(500);
+    if(error)setErr(error.message); else setList((data||[]).map(HB_coMap));
+    setLoading(!1);
+  };
+  (0,u.useEffect)(()=>{load()},[]);
+
+  let projName=id=>{let x=(projects||[]).find(y=>y.id===id);return x?x.name:"未指定案件"};
+  let filtered=proj?list.filter(x=>x.projectId===proj):list;
+  let signed=filtered.filter(x=>x.status==="signed");
+  let sumSigned=signed.reduce((n,x)=>n+HB_num(x.total),0);
+
+  let onSaved=row=>setList(v=>{
+    let i=v.findIndex(x=>x.id===row.id);
+    return i>=0?v.map(x=>x.id===row.id?row:x):[row,...v];
+  });
+  let remove=async r=>{
+    if(r.status==="signed"&&!confirm(`「${r.title}」已經業主簽認，刪掉就沒有這份憑證了。確定要刪除嗎？`))return;
+    if(r.status!=="signed"&&!confirm(`確定要刪除「${r.title}」嗎？`))return;
+    let{error}=await q.from("sitelog_change_orders").delete().eq("id",r.id);
+    if(error){notify("刪除失敗："+error.message);return}
+    if(r.signaturePath)r2DeleteSitelogFile("sitelog-quotes",r.signaturePath);
+    setList(v=>v.filter(x=>x.id!==r.id));notify("已刪除");
+  };
+
+  if(editing)return h(HbChangeOrderForm,{initial:editing,projects,notify,
+    onCancel:()=>setEditing(null),onSaved:onSaved});
+
+  return h("div",{style:{background:s.paper,minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},
+    h("div",{style:{maxWidth:760,margin:"0 auto",padding:"18px 16px 112px"}},
+      h("button",{onClick:onBack,style:{background:"none",border:"none",color:s.inkSoft,cursor:"pointer",fontSize:11.5,display:"flex",alignItems:"center",gap:4,padding:0,marginBottom:14,fontFamily:"inherit"}},h(E,{name:"arrow-left",size:14}),"返回"),
+      h("h1",{style:{fontSize:20,fontWeight:300,margin:"0 0 4px",letterSpacing:"0.06em"}},"追加減帳單"),
+      h("p",{style:{fontSize:12,color:s.inkSoft,margin:"0 0 16px",lineHeight:1.7}},
+        "現場開單、業主當場簽名才生效。簽完會鎖定，金額不能再改，日後結算有憑有據。"),
+
+      h("button",{onClick:()=>setEditing({no:HB_coNextNo(list),projectId:proj||"",items:[HB_coNewItem()],status:"draft"}),
+        style:{width:"100%",background:s.ocean,color:s.lemon,border:"none",borderRadius:9,padding:"12px 0",fontSize:13.5,cursor:"pointer",marginBottom:14,fontFamily:"inherit"}},"+ 新增追加減帳單"),
+
+      (projects||[]).length>0?h("select",{value:proj,onChange:e=>setProj(e.target.value),
+        style:{width:"100%",boxSizing:"border-box",border:`1px solid ${s.line}`,borderRadius:9,padding:"10px 12px",fontSize:13.5,background:"#fff",color:s.ink,marginBottom:12,fontFamily:"inherit"}},
+        h("option",{value:""},"全部案件"),
+        (projects||[]).map(p=>h("option",{key:p.id,value:p.id},p.name))):null,
+
+      signed.length>0?h("div",{style:{background:s.card,border:`1px solid ${s.line}`,borderRadius:10,padding:"11px 14px",marginBottom:14,display:"flex",justifyContent:"space-between",alignItems:"baseline",gap:8,flexWrap:"wrap"}},
+        h("span",{style:{fontSize:12,color:s.inkSoft}},proj?projName(proj):"全部案件","　已簽認 ",signed.length," 張"),
+        h("span",{style:{fontSize:15,color:sumSigned<0?s.danger:s.oceanDark,whiteSpace:"nowrap"}},
+          "累計 NT$ ",(sumSigned<0?"-":"")+HB_money(Math.abs(sumSigned)))):null,
+
+      err?h("div",{style:{background:"#FDF3F3",border:`1px solid ${s.danger}`,borderRadius:8,padding:"10px 12px",fontSize:12,color:s.danger,marginBottom:14,lineHeight:1.7}},
+        "讀取失敗：",err,h("div",{style:{color:s.inkSoft,marginTop:5}},"第一次使用請先到 Supabase 執行 change_orders.sql")):null,
+
+      loading?h("div",{style:{textAlign:"center",padding:36}},h(E,{name:"loader",size:20,className:"animate-spin",color:s.ocean})):
+      filtered.length===0?h(He,{icon:"file-text",text:"還沒有任何追加減帳單"}):
+      h("div",{style:{display:"flex",flexDirection:"column",gap:9}},
+        filtered.map(r=>{
+          let done=r.status==="signed",neg=HB_num(r.total)<0;
+          return h("div",{key:r.id,style:{background:s.card,border:`1px solid ${done?s.tree:s.line}`,borderRadius:10,padding:"11px 13px"}},
+            h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"baseline",gap:8,flexWrap:"wrap"}},
+              h("span",{style:{fontSize:14}},
+                r.no?h("span",{className:"mono",style:{fontSize:11.5,color:s.inkSoft,marginRight:7}},r.no):null,
+                r.title||"（未命名）"),
+              h("span",{style:{fontSize:14.5,color:neg?s.danger:s.oceanDark,whiteSpace:"nowrap"}},
+                (neg?"-":"+")+HB_money(Math.abs(HB_num(r.total))))),
+            h("div",{style:{fontSize:11,color:s.inkSoft,marginTop:5,display:"flex",gap:10,flexWrap:"wrap",alignItems:"center"}},
+              h("span",null,projName(r.projectId)),
+              h("span",null,String(r.createdAt||"").slice(0,10)),
+              h("span",{style:{fontSize:10,color:done?"#fff":s.inkSoft,background:done?s.tree:"transparent",
+                border:done?"none":`1px solid ${s.line}`,borderRadius:999,padding:"2px 9px"}},done?"已簽認":"草稿")),
+            h("div",{style:{display:"flex",gap:8,marginTop:10}},
+              h("button",{onClick:()=>setEditing(r),style:{flex:1,border:`1px solid ${s.line}`,background:"none",borderRadius:7,padding:"8px 0",fontSize:12.5,color:s.oceanDark,cursor:"pointer",fontFamily:"inherit"}},done?"檢視":"編輯"),
+              h("button",{onClick:()=>{if(!HB_openChangeOrderPrint(r,projName(r.projectId)))notify("請允許彈出視窗")},
+                style:{border:`1px solid ${s.line}`,background:"none",borderRadius:7,padding:"8px 13px",fontSize:12.5,color:s.oceanDark,cursor:"pointer",fontFamily:"inherit"}},"PDF"),
+              h("button",{onClick:()=>remove(r),style:{border:"none",background:"none",color:s.danger,cursor:"pointer",padding:"8px 12px",fontSize:12.5,fontFamily:"inherit"}},"刪除"))
           );
         }))
     )
