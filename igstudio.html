@@ -1981,20 +1981,42 @@ function drawCard(cv,o){
     }
   }
   else if(L==="list"){
-    ctx.fillStyle=pal.ink;ctx.font=`700 ${Math.round(W*0.062)}px "Noto Serif TC",serif`;
-    let y=H*0.20;
-    wrapLines(ctx,o.title||"",innerW).slice(0,2).forEach(l=>{ctx.fillText(l,M,y);y+=W*0.078;});
+    const SAFE=H-M*1.5;                       // 頁腳上方的安全線，文字不能越過
+    let items=(o.body||[]).filter(Boolean).map(x=>String(x).replace(/^[・·•\-\s]+/,"")).slice(0,6);
+    // 標題先量，太長就縮字級
+    let tfs=Math.round(W*0.062);
+    ctx.font=`700 ${tfs}px "Noto Serif TC",serif`;
+    let tl=wrapLines(ctx,o.title||"",innerW);
+    while(tl.length>2&&tfs>Math.round(W*0.04)){tfs-=3;ctx.font=`700 ${tfs}px "Noto Serif TC",serif`;tl=wrapLines(ctx,o.title||"",innerW);}
+    tl=tl.slice(0,2);
+    const headTop=H*0.18, headBottom=headTop+tl.length*tfs*1.26+W*0.045;
+    // 條列自動縮排：先縮字級，真的塞不下才減少項目
+    const fit=(fs,lh,gap)=>{
+      ctx.font=`400 ${fs}px "Noto Sans TC",sans-serif`;
+      let yy=headBottom;
+      for(const it of items){
+        const n=Math.max(1,Math.min(3,wrapLines(ctx,it,innerW-W*0.09).length));
+        yy+=n*lh+gap;
+      }
+      return yy;
+    };
+    let ifs=Math.round(W*0.038), lh=W*0.056, gap=W*0.032;
+    while(fit(ifs,lh,gap)>SAFE&&ifs>Math.round(W*0.027)){ifs-=1;lh=ifs*1.48;gap=ifs*0.85;}
+    while(items.length>2&&fit(ifs,lh,gap)>SAFE)items.pop();
+    // 畫
+    ctx.fillStyle=pal.ink;ctx.font=`700 ${tfs}px "Noto Serif TC",serif`;
+    let y=headTop;
+    tl.forEach(l=>{ctx.fillText(l,M,y);y+=tfs*1.26;});
     ctx.strokeStyle=pal.acc;ctx.lineWidth=2;
     ctx.beginPath();ctx.moveTo(M,y-W*0.03);ctx.lineTo(M+W*0.09,y-W*0.03);ctx.stroke();
-    y+=W*0.045;
-    const items=(o.body||[]).filter(Boolean).slice(0,6);
+    y=headBottom;
     items.forEach((it,i)=>{
-      ctx.fillStyle=pal.acc;ctx.font=`500 ${Math.round(W*0.026)}px "IBM Plex Mono",monospace`;
+      ctx.fillStyle=pal.acc;ctx.font=`500 ${Math.round(ifs*0.7)}px "IBM Plex Mono",monospace`;
       ctx.fillText(String(i+1).padStart(2,"0"),M,y);
-      ctx.fillStyle=pal.ink;ctx.font=`400 ${Math.round(W*0.038)}px "Noto Sans TC",sans-serif`;
-      const ls=wrapLines(ctx,it.replace(/^[・·•\-\s]+/,""),innerW-W*0.09);
-      ls.slice(0,3).forEach((l,j)=>{ctx.fillText(l,M+W*0.09,y+j*W*0.056);});
-      y+=Math.max(1,Math.min(3,ls.length))*W*0.056+W*0.032;
+      ctx.fillStyle=pal.ink;ctx.font=`400 ${ifs}px "Noto Sans TC",sans-serif`;
+      const ls=wrapLines(ctx,it,innerW-W*0.09).slice(0,3);
+      ls.forEach((l,j)=>{ctx.fillText(l,M+W*0.09,y+j*lh);});
+      y+=ls.length*lh+gap;
     });
   }
   else if(L==="spec"){
@@ -2003,6 +2025,8 @@ function drawCard(cv,o){
     wrapLines(ctx,o.title||"",innerW).slice(0,2).forEach(l=>{ctx.fillText(l,M,y);y+=W*0.088;});
     y+=W*0.03;
     const rows=(o.rows||[]);
+    const SAFE=H-M*1.5, need=rows.length*(W*0.052+W*0.038);
+    const sq=Math.min(1,(SAFE-y)/Math.max(need,1));   // 空間不夠就整體壓縮列高
     rows.forEach(r=>{
       ctx.strokeStyle=pal.ink;ctx.globalAlpha=.18;ctx.lineWidth=1;
       ctx.beginPath();ctx.moveTo(M,y-W*0.035);ctx.lineTo(W-M,y-W*0.035);ctx.stroke();ctx.globalAlpha=1;
@@ -2011,7 +2035,7 @@ function drawCard(cv,o){
       ctx.fillStyle=pal.ink;ctx.font=`400 ${Math.round(W*0.038)}px "Noto Sans TC",sans-serif`;
       const ls=wrapLines(ctx,r[1],innerW-W*0.30);
       ls.slice(0,2).forEach((l,j)=>ctx.fillText(l,M+W*0.30,y+j*W*0.052));
-      y+=Math.max(1,Math.min(2,ls.length))*W*0.052+W*0.038;
+      y+=(Math.max(1,Math.min(2,ls.length))*W*0.052+W*0.038)*sq;
     });
   }
   else if(L==="cta"){
@@ -2164,51 +2188,63 @@ function photoToInline(p, max){
 }
 function visionPrompt(n){
   const PHOTO_N=n||Math.max(1,imgState.photos.filter(p=>p.im).length);
-  return `你是台灣室內設計公司「赫柏空間設計」的社群編輯。請用繁體中文（台灣用語），語氣${P.voice}，不要用中國大陸慣用詞，不要浮誇形容詞，不要用 emoji。
+  return `你是台灣室內設計公司「赫柏空間設計」的社群編輯，寫了十年室內設計的內容，文筆好、下筆準，讀者看完會想私訊你。
 
-我附上這個案子的 3D completion 示意圖。請先仔細看圖，再寫文案。
+我附上這個案子的 3D 完工示意圖 ${PHOTO_N} 張。請先把每一張圖看仔細，再開始寫。
 
 【圖片以外的已知資料】
-案名：${P.name}
-地區：${P.region}
-案型：${P.caseType}
+案名：${P.name}　地區：${P.region}　案型：${P.caseType}
 坪數／格局：${P.size} 坪，${P.layout}
-IG 帳號：${P.handle}
-行動呼籲：${P.cta}
+IG 帳號：${P.handle}　行動呼籲：${P.cta}
 
-【看圖要做的判斷】
-從圖中判斷設計風格、主要色調、看得到的主要材質、以及最值得寫的空間亮點。
-只寫圖裡真的看得到的東西——具體描述取代形容詞，例如寫「電視牆做成整面收納，線材藏進背板」，不要寫「機能滿分」。
-不確定的細節就不要寫，寧可少寫也不要編造。
+━━ 第一步：看圖，找出可以寫的具體事實 ━━
+逐張看，找出「做法」而不是「感覺」。每一條都要寫成「哪裡＋用了什麼＋帶來什麼差別」，20～34 字。
+好：電視牆用藝術塗料整面批到頂，接縫消失，光掃過去只剩一道漸層。
+壞：電視牆質感高級，營造出溫馨氛圍。
+只寫圖裡真的看得到的。看不清楚的就不要寫——寧可少寫三條，也不要編一條。
+
+━━ 第二步：把這些事實寫進文案 ━━
+這是最重要的一條規則：**observed 裡的每一條，都必須真的出現在文案裡**，不能只列在旁邊。
+完整敘事版至少要用到其中 4 條，並且要寫出材質「用在哪個位置、為什麼選它」，不是把材質名字列一排。
+
+【文筆要求】
+・長短句交錯。連續三句都是長句就改掉一句。
+・用具體名詞與數字說話：「退了 15 公分」「留 25 公分開放層」「兩側嵌入線形燈」。
+・一個段落只講一件事，1～3 行，段落之間空一行。
+・禁用這些公版詞：打造、營造、賦予、呈現、注入、坐擁、盡收眼底、質感滿分、機能滿分、完美詮釋、絕佳、極致。
+・不要連用四字成語，不要 emoji，不要中國大陸用語（視頻、屏幕、走心、高端大氣）。
+・開場不要用「在這個案子中」「大家好」「今天要來分享」。
+・結尾不要喊口號，用一句從這個案子長出來的觀察收尾，再接行動呼籲。
+
+【三個版本要寫成什麼樣】
+A 完整敘事版　320～420 字。結構：一個具體場景開場（20 字內的鉤子，單獨一行）→ 屋主原本的困擾 → 我們怎麼解（帶出材質與做法，這裡最實在）→ 住起來的差別 → 收尾與行動呼籲。
+B 重點條列版　180～260 字。開頭一句鉤子，接 4～5 條「空間｜做法與差別」，每條 18～30 字，最後一句收尾。
+C 短版　60～90 字。一個畫面、一個重點、一句行動呼籲。適合限時動態。
 
 【輪播腳本】
-我一共附了 ${PHOTO_N} 張圖，請規劃 ${PHOTO_N+2} 頁的輪播：第 1 頁封面、第 2 頁屋主的問題，
-中間每一張圖各一頁（用 photo 欄位標明那一頁對應第幾張圖，從 1 開始），最後一頁行動呼籲。
-封面與最後一頁的 photo 填 0。每頁標題 12 字內，圖說 30 字內。
+規劃 ${PHOTO_N+2} 頁：第 1 頁封面、第 2 頁屋主原本的困擾，中間每張圖各一頁（photo 欄位標明對應第幾張，從 1 開始），最後一頁行動呼籲。封面與最後一頁的 photo 填 0。
+標題 12 字內；圖說 30～45 字，要寫「做法＋帶來的差別」，不要只寫空間名稱。
 
-【寫作規則】
-1. 第一行是鉤子，20 字內，不要用「大家好」開場。
-2. 內文分段，每段 1～3 行，段與段之間空一行。
-3. 結尾帶出行動呼籲。
-4. hashtag 25～30 個，混合大流量、風格空間、以及地區與品牌（#赫柏空間設計）。
+【標籤】
+25～30 個，混合大流量（#室內設計 #居家佈置）、風格與空間、以及地區與品牌（#赫柏空間設計 #${P.region}室內設計）。
 
 【輸出格式】
-只輸出 JSON，不要有任何說明文字或程式碼框，結構如下：
+只輸出 JSON，不要任何說明文字或程式碼框：
 {
   "style": "從圖判斷的設計風格",
   "tone": "從圖判斷的色調",
   "materials": ["看到的材質，2～5 個"],
   "spaces": ["圖中的空間，1～4 個"],
-  "observed": ["從圖中看到、值得寫進文案的具體細節，3～6 條"],
+  "observed": ["哪裡＋用了什麼＋帶來什麼差別，20～34 字，4～6 條"],
   "carousel": [
-    {"t":"標題 12 字內","x":"圖說 30 字內","r":"角色：封面／痛點／Before／亮點／材質／CTA","photo":1}
+    {"t":"標題 12 字內","x":"圖說 30～45 字","r":"封面／痛點／亮點／材質／CTA","photo":1}
   ],
   "variants": [
-    {"name":"完整敘事版","body":"250～350 字，含換行"},
-    {"name":"重點條列版","body":"150～250 字，含換行"},
-    {"name":"短版（限動也能用）","body":"80 字內"}
+    {"name":"完整敘事版","body":"320～420 字，含換行"},
+    {"name":"重點條列版","body":"180～260 字，含換行"},
+    {"name":"短版（限動也能用）","body":"60～90 字"}
   ],
-  "tags": ["#標籤", "..."]
+  "tags": ["#標籤","..."]
 }`;
 }
 /* AI 講的詞不一定跟清單一模一樣（「微水泥質感塗料」→「微水泥」），做一次寬鬆比對 */
@@ -2323,7 +2359,7 @@ async function callGemini(model,key,parts){
   const r=await fetch(`${GEMINI}/${model}:generateContent`,{
     method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":key},
     body:JSON.stringify({contents:[{role:"user",parts}],
-      generationConfig:{temperature:0.9,responseMimeType:"application/json"}})
+      generationConfig:{temperature:0.85,topP:0.95,maxOutputTokens:8192,responseMimeType:"application/json"}})
   });
   const j=await r.json();
   if(!r.ok){const e=new Error((j.error&&j.error.message)||("HTTP "+r.status));e.api=j;throw e;}
