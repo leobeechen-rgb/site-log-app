@@ -205,6 +205,37 @@
   }
   .qty span{ min-width:18px; text-align:center; font-size:15px; font-weight:900; }
 
+  /* ---- 車程分級 ---- */
+  .zone-box{
+    background:var(--card-bg); border:1px solid rgba(43,36,30,0.08); border-radius:16px;
+    padding:22px 24px; margin-bottom:40px;
+    box-shadow:0 18px 40px -30px rgba(43,36,30,0.35);
+  }
+  .zone-box > label{
+    display:block; font-size:15px; font-weight:700; color:var(--olive); margin-bottom:4px;
+  }
+  .zone-box .hint{ font-size:12.5px; color:var(--muted); margin-bottom:14px; }
+  .zone-box select{
+    width:100%; border:1.5px solid var(--hair); border-radius:11px; padding:13px 15px;
+    font-family:inherit; font-size:15px; background:#fff; color:var(--ink);
+    appearance:none; cursor:pointer;
+    background-image:linear-gradient(45deg,transparent 50%,var(--olive) 50%),
+                     linear-gradient(135deg,var(--olive) 50%,transparent 50%);
+    background-position:calc(100% - 21px) 22px, calc(100% - 15px) 22px;
+    background-size:6px 6px, 6px 6px; background-repeat:no-repeat;
+  }
+  .zone-rows{ margin-top:16px; display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  @media (max-width:720px){ .zone-rows{ grid-template-columns:1fr; } }
+  .zone-row{
+    display:flex; align-items:center; gap:12px; background:#fff;
+    border:1px solid rgba(43,36,30,0.09); border-radius:12px; padding:13px 15px;
+  }
+  .zone-row .nm{ flex:1; font-size:13.5px; font-weight:700; }
+  .zone-row .nm i{
+    display:block; font-style:normal; font-weight:400; font-size:11.5px;
+    color:var(--muted); margin-top:2px;
+  }
+
   /* ---- 聯絡 ---- */
   .contact{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:40px; }
   @media (max-width:720px){ .contact{ grid-template-columns:1fr; } }
@@ -343,6 +374,30 @@
 
   <div class="addons" id="addons"></div>
 
+  <div class="zone-box">
+    <label for="zone">案場車程分級</label>
+    <div class="hint">以嘉義市出發之單程車程計算。山區道路依實際路況分級，並非以縣市界線認定。</div>
+    <select id="zone"></select>
+    <div class="zone-rows">
+      <div class="zone-row">
+        <span class="nm">丈量與會勘次數<i id="tripHint">設計階段預計前往案場的次數</i></span>
+        <div class="qty">
+          <button type="button" data-z="trips" data-step="-1">−</button>
+          <span id="qTrips">1</span>
+          <button type="button" data-z="trips" data-step="1">＋</button>
+        </div>
+      </div>
+      <div class="zone-row">
+        <span class="nm">需過夜天數<i>8,000 元／日，住宿實報實銷</i></span>
+        <div class="qty">
+          <button type="button" data-z="nights" data-step="-1">−</button>
+          <span id="qNights">0</span>
+          <button type="button" data-z="nights" data-step="1">＋</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="sec-head">
     <div class="eyebrow">STEP 03</div>
     <h2>留下聯絡方式</h2>
@@ -367,6 +422,8 @@
       <li>上列設計費均為未稅價，營業稅 5% 另計。</li>
       <li>付款依成圖進度分四期：簽約丈量 30%、平面確認 30%、效果圖確認 30%、水電圖確認 10%。</li>
       <li>修改意見請於各階段交付後 7 日內提出，超過方案所列次數者依加購項目計費。</li>
+      <li>交通差旅依案場單程車程分級計算，非以縣市界線認定；山區道路依實際路況歸級。</li>
+      <li>山區案件之全程監造以 6 次為限，超出部分每次 8,000 元另計。</li>
       <li>監造範圍不含結構、消防、機電等須由專業技師簽證之項目。</li>
     </ol>
   </div>
@@ -386,6 +443,7 @@
   <div class="lines">
     <div class="row"><span id="rBase">設計費</span><span id="vBase">—</span></div>
     <div class="row"><span>加購項目</span><span id="vAdd">0</span></div>
+    <div class="row"><span id="rTrip">交通差旅</span><span id="vTrip">0</span></div>
     <div class="row"><span>營業稅 5%</span><span id="vTax">0</span></div>
     <div class="row big"><span>總計</span><b id="vTotal">NT$ 0</b></div>
   </div>
@@ -401,7 +459,14 @@
    ============================================================ */
 var LINE_OA_ID = "@018bjrxo";
 
-var MIN_FEE = 50000, TAX = 0.05, DISCOUNT = 0.30;
+var MIN_FEE = 50000, TAX = 0.05, DISCOUNT = 0.30, NIGHT_FEE = 8000;
+
+var ZONES = [
+  { id:"z0", label:"嘉義市區・單程 30 分鐘內", eg:"嘉義市、太保、水上、民雄", price:0,    trips:1 },
+  { id:"z1", label:"單程 30～60 分鐘", eg:"嘉義縣平地、斗六、新營", price:2000, trips:2 },
+  { id:"z2", label:"單程 60～120 分鐘", eg:"台南市區、竹崎、番路、梅山", price:4000, trips:3 },
+  { id:"z3", label:"單程 120 分鐘以上或山區道路", eg:"阿里山、瑞里、太平、達邦", price:8000, trips:3 }
+];
 
 var PLANS = [
   { id:"A", name:"基礎・平面規劃", rate:2500, badge:"",
@@ -422,13 +487,12 @@ var ADDONS = [
   { id:"d3d",  name:"額外 3D 視覺圖",   sub:"方案內張數之外追加",           price:3000, unit:"張", qty:true },
   { id:"fix",  name:"超次修改・小修",   sub:"顏色、局部尺寸、單一材質",      price:1000, unit:"次", qty:true },
   { id:"big",  name:"超次修改・大修",   sub:"格局更改、房間位移、風格重定",   price:5000, unit:"次", qty:true },
-  { id:"trip", name:"跨縣市丈量與會勘", sub:"嘉義以外地區",                 price:2000, unit:"次", qty:true },
   { id:"color",name:"色彩計畫",         sub:"全室色彩配置與塗料指定",        price:8000, unit:"案", qty:false },
   { id:"soft", name:"軟裝採購代辦",     sub:"",                            price:0,    unit:"",   qty:false,
     note:"家具家飾選配下單，採購金額 10%，依實際結算" }
 ];
 
-var state = { ping:30, plan:"B", add:{} };
+var state = { ping:30, plan:"B", add:{}, zone:"z0", trips:1, nights:0, tripsTouched:false };
 ADDONS.forEach(function(a){ state.add[a.id] = 0; });
 
 function money(n){ return Math.round(n).toLocaleString("en-US"); }
@@ -466,6 +530,13 @@ $("addons").innerHTML = ADDONS.map(function(a){
     right + "</label>";
 }).join("");
 
+/* ---------- 車程下拉 ---------- */
+$("zone").innerHTML = ZONES.map(function(z){
+  return '<option value="' + z.id + '">' + z.label +
+         (z.price ? "　＋" + money(z.price) + " 元 / 次" : "　不加收") +
+         "（" + z.eg + "）</option>";
+}).join("");
+
 /* ---------- 計算 ---------- */
 function calc(){
   var p = PLANS.filter(function(x){ return x.id === state.plan; })[0];
@@ -478,9 +549,11 @@ function calc(){
     if (!state.add[a.id]) return;
     add += a.price * (a.qty ? state.add[a.id] : 1);
   });
-  var sub = base + add;
+  var z = ZONES.filter(function(x){ return x.id === state.zone; })[0];
+  var trip = z.price * state.trips + NIGHT_FEE * state.nights;
+  var sub = base + add + trip;
   var tax = Math.round(sub * TAX);
-  return { plan:p, eff:eff, raw:raw, base:base, floored:floored,
+  return { plan:p, eff:eff, raw:raw, base:base, floored:floored, zone:z, trip:trip,
            add:add, sub:sub, tax:tax, total:sub + tax };
 }
 
@@ -491,6 +564,15 @@ function paint(){
     : "設計費　" + c.eff + " 坪 × " + money(c.plan.rate);
   $("vBase").textContent = money(c.base);
   $("vAdd").textContent = money(c.add);
+  $("vTrip").textContent = money(c.trip);
+  $("rTrip").textContent = c.trip
+    ? "交通差旅　" + c.zone.label.replace("・", " ")
+    : "交通差旅";
+  $("qTrips").textContent = state.trips;
+  $("tripHint").textContent = state.trips === c.zone.trips
+    ? "建議 " + c.zone.trips + " 次：初測、放樣確認、交屋前查驗"
+    : "建議 " + c.zone.trips + " 次（目前 " + state.trips + " 次）";
+  $("qNights").textContent = state.nights;
   $("vTax").textContent = money(c.tax);
   $("vTotal").textContent = "NT$ " + money(c.total);
 
@@ -535,6 +617,16 @@ function summary(){
     });
   }
   L.push("");
+  L.push("案場車程：" + c.zone.label);
+  if (c.trip){
+    var tl = [];
+    if (c.zone.price) tl.push("丈量會勘 " + state.trips + " 次 × " + money(c.zone.price) + " 元");
+    if (state.nights) tl.push("過夜 " + state.nights + " 日 × " + money(NIGHT_FEE) + " 元");
+    L.push("交通差旅：" + tl.join("、") + " ＝ " + money(c.trip) + " 元");
+  } else {
+    L.push("交通差旅：不加收");
+  }
+  L.push("");
   L.push("小計（未稅）：" + money(c.sub) + " 元");
   L.push("營業稅 5%：" + money(c.tax) + " 元");
   L.push("總計：NT$ " + money(c.total));
@@ -573,6 +665,25 @@ $("addons").addEventListener("click", function(ev){
   ev.preventDefault();
   var aid = el.dataset.add;
   state.add[aid] = state.add[aid] ? 0 : 1;
+  paint();
+});
+
+$("zone").addEventListener("change", function(){
+  state.zone = this.value;
+  if (!state.tripsTouched){
+    var z = ZONES.filter(function(x){ return x.id === state.zone; })[0];
+    state.trips = z.trips;
+  }
+  paint();
+});
+
+document.querySelector(".zone-rows").addEventListener("click", function(ev){
+  var b = ev.target.closest("button[data-z]");
+  if (!b) return;
+  var k = b.dataset.z;
+  var v = state[k] + parseInt(b.dataset.step, 10);
+  state[k] = Math.max(k === "trips" ? 1 : 0, Math.min(30, v));
+  if (k === "trips") state.tripsTouched = true;
   paint();
 });
 
