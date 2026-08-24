@@ -198,8 +198,8 @@ function loadImg(src){return new Promise(res=>{const i=new Image();i.onload=()=>
 function setLS(ctx,px){ try{ ctx.letterSpacing=px+"px"; }catch(e){} }
 
 /* ───── 繪製 ───── */
-function drawOverlay(ctx,W,H){
-  ctx.clearRect(0,0,W,H);
+function drawOverlay(ctx,W,H,keep){
+  if(!keep) ctx.clearRect(0,0,W,H);   // keep=true：疊在既有內容上，不要清掉底圖
   const s=(W/1080)*state.scale;
   const col=state.color, light=col==="#FFFFFF";
   const mark=markTinted[col], word=wordTinted[col];
@@ -434,7 +434,7 @@ $("#dlOverlay").addEventListener("click",()=>{
 $("#dlFlat").addEventListener("click",()=>{
   if(!state.photo) return;
   const [W,H]=dims(); const c=document.createElement("canvas"); c.width=W;c.height=H;
-  const x=c.getContext("2d"); x.drawImage(state.photo,0,0,W,H); drawOverlay(x,W,H);
+  const x=c.getContext("2d"); x.drawImage(state.photo,0,0,W,H); drawOverlay(x,W,H,true);
   dl(c,`${slug()}_${W}x${H}.png`); toast("合成圖已下載");
 });
 window.addEventListener("resize",render);
