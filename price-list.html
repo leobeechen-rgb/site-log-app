@@ -16,23 +16,17 @@
     --tan-soft:#D6AC72;
     --muted:#8C8370;
     --card-bg:#FBF7EF;
+    --line-green:#06C755;
+    --hair:rgba(43,36,30,0.14);
   }
-  *{box-sizing:border-box;}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   body{
     margin:0;
     font-family:"Noto Serif TC","Noto Sans TC","PingFang TC","Microsoft JhengHei",serif;
     background:var(--cream);
     color:var(--ink);
     line-height:1.7;
-  }
-  .placeholder-banner{
-    background:var(--tan);
-    color:#2B241E;
-    text-align:center;
-    font-size:14px;
-    font-weight:700;
-    padding:10px 16px;
-    letter-spacing:0.02em;
+    padding-bottom:210px;
   }
   header{
     background:var(--olive);
@@ -62,14 +56,14 @@
   main{
     max-width:1040px;
     margin:-48px auto 0;
-    padding:0 20px 80px;
+    padding:0 20px 60px;
   }
 
   .cards{
     display:grid;
     grid-template-columns:repeat(3,1fr);
     gap:22px;
-    margin-bottom:40px;
+    margin-bottom:56px;
   }
   @media (max-width:860px){
     .cards{ grid-template-columns:1fr; }
@@ -93,81 +87,188 @@
   .card.c-rust h3{ color:var(--rust); border-left:4px solid var(--rust); }
   .card.c-tan h3{ color:#8A6A38; border-left:4px solid var(--tan); }
 
-  .card .desc{
-    font-size:13.5px;
-    color:var(--muted);
-    margin-bottom:18px;
-  }
-  .price-list{
-    list-style:none;
-    margin:0 0 18px;
-    padding:0;
-    flex-grow:1;
-  }
+  .card .desc{ font-size:13.5px; color:var(--muted); margin-bottom:18px; }
+  .price-list{ list-style:none; margin:0 0 18px; padding:0; flex-grow:1; }
   .price-list li{
-    display:flex;
-    justify-content:space-between;
-    align-items:baseline;
-    gap:12px;
-    padding:11px 0;
-    border-bottom:1px dashed rgba(43,36,30,0.15);
-    font-size:14.5px;
+    display:flex; justify-content:space-between; align-items:baseline; gap:12px;
+    padding:11px 0; border-bottom:1px dashed rgba(43,36,30,0.15); font-size:14.5px;
   }
   .price-list li:last-child{ border-bottom:none; }
-  .price-list .item-name{ color:var(--ink); }
-  .price-list .item-price{
-    font-weight:900;
-    white-space:nowrap;
-  }
+  .price-list .item-price{ font-weight:900; white-space:nowrap; }
   .card.c-olive .item-price{ color:var(--olive); }
   .card.c-rust .item-price{ color:var(--rust); }
   .card.c-tan .item-price{ color:#8A6A38; }
-
   .card .footnote{
-    font-size:12px;
-    color:var(--muted);
-    line-height:1.6;
-    padding-top:14px;
-    border-top:1px solid rgba(43,36,30,0.1);
+    font-size:12px; color:var(--muted); line-height:1.6;
+    padding-top:14px; border-top:1px solid rgba(43,36,30,0.1);
   }
+
+  /* ===================== 方案試算 ===================== */
+  .sec-head{ text-align:center; margin-bottom:26px; }
+  .sec-head .eyebrow{
+    font-size:12px; letter-spacing:0.26em; color:var(--rust); font-weight:700;
+  }
+  .sec-head h2{
+    font-size:clamp(23px,3.6vw,30px); color:var(--olive); margin:8px 0 10px; font-weight:900;
+  }
+  .sec-head p{ font-size:13.5px; color:var(--muted); max-width:520px; margin:0 auto; }
+
+  .ping-box{
+    background:var(--card-bg); border-radius:16px; padding:20px 24px;
+    border:1px solid rgba(43,36,30,0.08); display:flex; align-items:center;
+    gap:14px; flex-wrap:wrap; margin-bottom:14px;
+    box-shadow:0 18px 40px -30px rgba(43,36,30,0.35);
+  }
+  .ping-box label{ font-size:15px; font-weight:700; color:var(--olive); flex:1; min-width:180px; }
+  .ping-box input{
+    width:120px; border:1.5px solid var(--hair); border-radius:10px; padding:11px 13px;
+    font-family:inherit; font-size:19px; font-weight:900; text-align:right;
+    background:#fff; color:var(--ink);
+  }
+  .ping-box .u{ font-size:14px; color:var(--muted); font-weight:700; }
+  .ping-note{ font-size:12.5px; color:var(--muted); margin:0 0 26px; padding-left:4px; }
+
+  .plans{ display:grid; grid-template-columns:repeat(3,1fr); gap:18px; margin-bottom:44px; }
+  @media (max-width:860px){ .plans{ grid-template-columns:1fr; } }
+
+  .plan{
+    position:relative; display:flex; flex-direction:column; cursor:pointer;
+    background:var(--card-bg); border:1px solid rgba(43,36,30,0.08); border-radius:18px;
+    padding:30px 26px 26px; transition:.16s ease;
+    box-shadow:0 18px 40px -30px rgba(43,36,30,0.35);
+  }
+  .plan:hover{ transform:translateY(-2px); }
+  .plan.on{ border:2px solid var(--rust); background:#fff; }
+  .plan input{ position:absolute; opacity:0; pointer-events:none; }
+  .plan .badge{
+    position:absolute; top:-12px; left:50%; transform:translateX(-50%);
+    background:var(--rust); color:#FBF7EF; font-size:11.5px; font-weight:900;
+    letter-spacing:0.14em; padding:5px 16px; border-radius:999px; white-space:nowrap;
+  }
+  .plan .code{
+    font-size:13px; font-weight:900; letter-spacing:0.22em; color:var(--tan);
+  }
+  .plan h3{ font-size:19px; font-weight:900; margin:4px 0 4px; color:var(--olive); }
+  .plan .for{ font-size:12.5px; color:var(--muted); min-height:38px; }
+  .plan .rate{
+    margin:16px 0; padding:14px 0; text-align:center;
+    border-top:1px dashed var(--hair); border-bottom:1px dashed var(--hair);
+  }
+  .plan .rate b{ font-size:30px; font-weight:900; color:var(--rust); letter-spacing:0.01em; }
+  .plan .rate small{ display:block; font-size:12px; color:var(--muted); margin-top:2px; }
+  .plan ul{ list-style:none; margin:0; padding:0; font-size:13.5px; flex-grow:1; }
+  .plan ul li{ padding:5px 0 5px 18px; position:relative; color:var(--ink); }
+  .plan ul li::before{
+    content:""; position:absolute; left:0; top:14px; width:7px; height:7px;
+    border-radius:50%; background:var(--tan);
+  }
+  .plan ul li.off{ color:#B4AC9A; }
+  .plan ul li.off::before{ background:#D8D0BF; }
+  .plan .pick-hint{
+    margin-top:18px; text-align:center; font-size:13px; font-weight:900;
+    color:var(--muted); border:1.5px dashed var(--hair); border-radius:999px; padding:9px 0;
+  }
+  .plan.on .pick-hint{
+    background:var(--rust); color:#FBF7EF; border-color:var(--rust);
+  }
+
+  /* ---- 加購 ---- */
+  .addons{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:40px; }
+  @media (max-width:720px){ .addons{ grid-template-columns:1fr; } }
+  .add{
+    display:flex; align-items:center; gap:13px; cursor:pointer;
+    background:var(--card-bg); border:1px solid rgba(43,36,30,0.08);
+    border-radius:13px; padding:15px 17px; transition:.15s;
+  }
+  .add.on{ border-color:var(--tan); background:#fff; }
+  .add input{ position:absolute; opacity:0; pointer-events:none; }
+  .box{
+    width:21px; height:21px; flex:0 0 21px; border-radius:6px;
+    border:1.5px solid #C3BAA6; background:#fff; position:relative;
+  }
+  .add.on .box{ background:var(--rust); border-color:var(--rust); }
+  .add.on .box::after{
+    content:""; position:absolute; left:6.5px; top:2.5px; width:6px; height:11px;
+    border:solid #FBF7EF; border-width:0 2.5px 2.5px 0; transform:rotate(43deg);
+  }
+  .add .nm{ flex:1; font-size:14px; font-weight:700; }
+  .add .nm i{
+    display:block; font-style:normal; font-weight:400;
+    font-size:12px; color:var(--muted); margin-top:2px;
+  }
+  .add .pr{ font-size:13.5px; font-weight:900; color:var(--rust); white-space:nowrap; }
+  .qty{ display:flex; align-items:center; gap:9px; }
+  .qty button{
+    width:31px; height:31px; border-radius:9px; border:1.5px solid var(--hair);
+    background:var(--cream); font-size:17px; line-height:1; color:var(--olive);
+    cursor:pointer; font-family:inherit;
+  }
+  .qty span{ min-width:18px; text-align:center; font-size:15px; font-weight:900; }
+
+  /* ---- 聯絡 ---- */
+  .contact{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:40px; }
+  @media (max-width:720px){ .contact{ grid-template-columns:1fr; } }
+  .contact input{
+    width:100%; border:1px solid rgba(43,36,30,0.12); border-radius:12px;
+    padding:14px 16px; font-family:inherit; font-size:15px;
+    background:var(--card-bg); color:var(--ink);
+  }
+  .contact input::placeholder{ color:#B4AC9A; }
 
   .note-box{
-    background:var(--olive-soft);
-    color:#EDE9DC;
-    border-radius:18px;
-    padding:28px 32px;
-    font-size:13.5px;
-    margin-bottom:56px;
+    background:var(--olive-soft); color:#EDE9DC; border-radius:18px;
+    padding:28px 32px; font-size:13.5px; margin-bottom:24px;
   }
   .note-box strong{ color:var(--tan-soft); }
+  .note-box ol{ margin:12px 0 0; padding-left:20px; line-height:2; }
+
+  .discount{
+    background:var(--rust); color:#FBF7EF; border-radius:18px;
+    padding:24px 30px; margin-bottom:24px; text-align:center;
+  }
+  .discount b{ font-size:19px; font-weight:900; display:block; }
+  .discount span{ font-size:13px; color:#F6E3D4; }
 
   .cta{
-    text-align:center;
-    padding:48px 24px;
-    background:var(--card-bg);
-    border-radius:22px;
-    box-shadow:0 18px 40px -28px rgba(43,36,30,0.3);
+    text-align:center; padding:48px 24px; background:var(--card-bg);
+    border-radius:22px; box-shadow:0 18px 40px -28px rgba(43,36,30,0.3);
   }
   .cta h2{ color:var(--olive); font-size:24px; margin:0 0 10px; }
   .cta p{ color:var(--muted); font-size:14px; margin:0 0 26px; }
   .cta a{
-    display:inline-block;
-    background:var(--rust);
-    color:#FBF7EF;
-    font-weight:900;
-    text-decoration:none;
-    padding:16px 44px;
-    border-radius:999px;
-    font-size:16px;
+    display:inline-block; background:var(--rust); color:#FBF7EF; font-weight:900;
+    text-decoration:none; padding:16px 44px; border-radius:999px; font-size:16px;
     transition:transform .15s ease;
   }
   .cta a:hover{ transform:translateY(-2px); background:var(--rust-soft); }
 
-  footer{
-    text-align:center;
-    padding:32px 20px 48px;
-    color:var(--muted);
-    font-size:12.5px;
+  footer{ text-align:center; padding:32px 20px 40px; color:var(--muted); font-size:12.5px; }
+
+  /* ---- 固定合計列 ---- */
+  .bar{
+    position:fixed; left:0; right:0; bottom:0; z-index:60;
+    background:rgba(43,36,30,0.97);
+    padding:14px 20px calc(14px + env(safe-area-inset-bottom));
+    box-shadow:0 -14px 34px -22px rgba(0,0,0,.8);
+  }
+  .bar .in{ max-width:1040px; margin:0 auto; }
+  .bar .grid{ display:flex; gap:26px; align-items:flex-end; flex-wrap:wrap; }
+  .bar .lines{ flex:1; min-width:210px; }
+  .row{ display:flex; justify-content:space-between; font-size:13px; color:#BEB6A4; padding:1px 0; }
+  .row.big{
+    color:#F3EFE2; font-size:18px; font-weight:900; padding-top:7px; margin-top:6px;
+    border-top:1px solid rgba(243,239,226,0.22);
+  }
+  .row.big b{ color:var(--tan-soft); font-weight:900; }
+  .btns{ display:flex; flex-direction:column; gap:8px; min-width:250px; flex:0 0 auto; }
+  @media (max-width:720px){ .btns{ min-width:100%; } }
+  .send{
+    border:none; border-radius:999px; padding:15px 30px; background:var(--line-green);
+    color:#fff; font-family:inherit; font-size:16px; font-weight:900; cursor:pointer;
+  }
+  .copy{
+    border:1px solid rgba(243,239,226,0.32); border-radius:999px; padding:10px 30px;
+    background:none; color:#DCD5C4; font-family:inherit; font-size:13px; cursor:pointer;
   }
 </style>
 </head>
@@ -187,7 +288,7 @@
       <div class="desc">整體專案與各類空間裝潢設計費用</div>
       <ul class="price-list">
         <li><span class="item-name">整體專案接案金額</span><span class="item-price">150 萬元起</span></li>
-        <li><span class="item-name">設計費用</span><span class="item-price">4,000 元／坪起</span></li>
+        <li><span class="item-name">設計費用</span><span class="item-price">2,500 元／坪起</span></li>
         <li><span class="item-name">新成屋裝潢</span><span class="item-price">5 萬元／坪起</span></li>
         <li><span class="item-name">老屋翻新裝潢</span><span class="item-price">10 萬元／坪起</span></li>
       </ul>
@@ -217,8 +318,55 @@
 
   </div>
 
+  <!-- ===================== 方案試算 ===================== -->
+  <div class="sec-head">
+    <div class="eyebrow">STEP 01</div>
+    <h2>選擇設計方案</h2>
+    <p>設計費依室內面積計價，三個方案的差別在於圖說深度、3D 張數、修改次數與現場服務。</p>
+  </div>
+
+  <div class="ping-box">
+    <label for="ping">預計設計的室內面積</label>
+    <input id="ping" type="number" inputmode="decimal" value="30" min="0" step="0.5">
+    <span class="u">坪</span>
+  </div>
+  <p class="ping-note">未滿 20 坪者以 20 坪計。不確定坪數也沒關係，先填大概的數字即可。</p>
+
+  <div class="plans" id="plans"></div>
+
+  <div class="sec-head">
+    <div class="eyebrow">STEP 02</div>
+    <h2>加購項目</h2>
+    <p>沒有需要的話可以直接跳過，之後也能再加。</p>
+  </div>
+
+  <div class="addons" id="addons"></div>
+
+  <div class="sec-head">
+    <div class="eyebrow">STEP 03</div>
+    <h2>留下聯絡方式</h2>
+    <p>填好後按下方按鈕，明細會直接帶進 LINE 對話，送出即可。</p>
+  </div>
+
+  <div class="contact">
+    <input id="cname" placeholder="您的稱呼">
+    <input id="cphone" type="tel" inputmode="tel" placeholder="聯絡電話（選填）">
+    <input id="csite" placeholder="案場地點（選填）">
+  </div>
+
+  <div class="discount">
+    <b>後續工程由本公司承攬，設計費折抵 30%</b>
+    <span>簽訂《工程發包承攬合約》後，自工程款中扣抵</span>
+  </div>
+
   <div class="note-box">
     <strong>說明：</strong>以上費用為設計服務與工程管理相關費用參考範圍，正式報價將依現場丈量結果、空間條件與客製項目調整，實際金額以簽認之設計合約為準。
+    <ol>
+      <li>上列設計費均為未稅價，營業稅 5% 另計。</li>
+      <li>付款依成圖進度分四期：簽約丈量 30%、平面確認 30%、效果圖確認 30%、水電圖確認 10%。</li>
+      <li>修改意見請於各階段交付後 7 日內提出，超過方案所列次數者依加購項目計費。</li>
+      <li>監造範圍不含結構、消防、機電等須由專業技師簽證之項目。</li>
+    </ol>
   </div>
 
   <div class="cta">
@@ -231,6 +379,214 @@
 <footer>
   赫柏空間設計 HERFULSINS DESIGN
 </footer>
+
+<div class="bar"><div class="in"><div class="grid">
+  <div class="lines">
+    <div class="row"><span id="rBase">設計費</span><span id="vBase">—</span></div>
+    <div class="row"><span>加購項目</span><span id="vAdd">0</span></div>
+    <div class="row"><span>營業稅 5%</span><span id="vTax">0</span></div>
+    <div class="row big"><span>總計</span><b id="vTotal">NT$ 0</b></div>
+  </div>
+  <div class="btns">
+    <button class="send" id="send">用 LINE 傳送這份明細</button>
+    <button class="copy" id="copy">複製明細文字</button>
+  </div>
+</div></div></div>
+
+<script>
+/* ============================================================
+   LINE 官方帳號 ID
+   ============================================================ */
+var LINE_OA_ID = "@018bjrxo";
+
+var MIN_PING = 20, TAX = 0.05, DISCOUNT = 0.30;
+
+var PLANS = [
+  { id:"A", name:"基礎・平面規劃", rate:2500, badge:"",
+    forWho:"已有配合工班，或希望自行發包施工",
+    items:["現場丈量與放樣","平面配置圖","全室細部水電圖","修改 3 次"],
+    off:["3D 視覺效果圖","立面圖與材質計畫","現場監造"] },
+  { id:"B", name:"標準・完整設計", rate:4000, badge:"最多人選擇",
+    forWho:"一般住宅整案設計，圖說完整可直接發包",
+    items:["A 方案全部內容","立面圖與櫃體圖說","材質計畫與建材選配","主要空間 3D 各 3 張","修改 3 次","施工期間回訪"],
+    off:["全程監造"] },
+  { id:"C", name:"全案・設計監造", rate:4800, badge:"",
+    forWho:"希望一次到位、不想自己盯工地",
+    items:["B 方案全部內容","全室 3D（含次要空間）","燈光計畫","軟裝選配建議","修改 5 次","全程監造與進度回報"],
+    off:[] }
+];
+
+var ADDONS = [
+  { id:"d3d",  name:"額外 3D 視覺圖",   sub:"方案內張數之外追加",           price:3000, unit:"張", qty:true },
+  { id:"fix",  name:"超次修改・小修",   sub:"顏色、局部尺寸、單一材質",      price:1000, unit:"次", qty:true },
+  { id:"big",  name:"超次修改・大修",   sub:"格局更改、房間位移、風格重定",   price:5000, unit:"次", qty:true },
+  { id:"trip", name:"跨縣市丈量與會勘", sub:"嘉義以外地區",                 price:2000, unit:"次", qty:true },
+  { id:"color",name:"色彩計畫",         sub:"全室色彩配置與塗料指定",        price:8000, unit:"案", qty:false },
+  { id:"soft", name:"軟裝採購代辦",     sub:"",                            price:0,    unit:"",   qty:false,
+    note:"家具家飾選配下單，採購金額 10%，依實際結算" }
+];
+
+var state = { ping:30, plan:"B", add:{} };
+ADDONS.forEach(function(a){ state.add[a.id] = 0; });
+
+function money(n){ return Math.round(n).toLocaleString("en-US"); }
+function $(id){ return document.getElementById(id); }
+
+/* ---------- 方案卡 ---------- */
+$("plans").innerHTML = PLANS.map(function(p){
+  var li = p.items.map(function(i){ return "<li>" + i + "</li>"; }).join("") +
+           p.off.map(function(i){ return '<li class="off">' + i + "</li>"; }).join("");
+  return '<label class="plan" data-plan="' + p.id + '">' +
+    (p.badge ? '<span class="badge">' + p.badge + "</span>" : "") +
+    '<input type="radio" name="plan" value="' + p.id + '">' +
+    '<div class="code">PLAN ' + p.id + "</div>" +
+    "<h3>" + p.name + "</h3>" +
+    '<div class="for">' + p.forWho + "</div>" +
+    '<div class="rate"><b>' + money(p.rate) + "</b><small>元 / 坪（未稅）</small></div>" +
+    "<ul>" + li + "</ul>" +
+    '<div class="pick-hint">選擇這個方案</div>' +
+    "</label>";
+}).join("");
+
+/* ---------- 加購卡 ---------- */
+$("addons").innerHTML = ADDONS.map(function(a){
+  var right = a.qty
+    ? '<div class="qty"><button type="button" data-step="-1" data-id="' + a.id + '">−</button>' +
+      '<span id="q_' + a.id + '">0</span>' +
+      '<button type="button" data-step="1" data-id="' + a.id + '">＋</button></div>'
+    : '<span class="pr">' + (a.price ? money(a.price) + " 元" : "另計") + "</span>";
+  var sub = a.note || (a.sub + (a.qty || a.price ? "" : ""));
+  return '<label class="add" data-add="' + a.id + '">' +
+    '<input type="checkbox">' +
+    '<span class="box"></span>' +
+    '<span class="nm">' + a.name + "<i>" + sub +
+      (a.qty ? "　" + money(a.price) + " 元 / " + a.unit : "") + "</i></span>" +
+    right + "</label>";
+}).join("");
+
+/* ---------- 計算 ---------- */
+function calc(){
+  var p = PLANS.filter(function(x){ return x.id === state.plan; })[0];
+  var eff = Math.max(state.ping || 0, MIN_PING);
+  var base = eff * p.rate;
+  var add = 0;
+  ADDONS.forEach(function(a){
+    if (!state.add[a.id]) return;
+    add += a.price * (a.qty ? state.add[a.id] : 1);
+  });
+  var sub = base + add;
+  var tax = Math.round(sub * TAX);
+  return { plan:p, eff:eff, base:base, add:add, sub:sub, tax:tax, total:sub + tax };
+}
+
+function paint(){
+  var c = calc();
+  $("rBase").textContent = "設計費　" + c.eff + " 坪 × " + money(c.plan.rate);
+  $("vBase").textContent = money(c.base);
+  $("vAdd").textContent = money(c.add);
+  $("vTax").textContent = money(c.tax);
+  $("vTotal").textContent = "NT$ " + money(c.total);
+
+  Array.prototype.forEach.call(document.querySelectorAll(".plan"), function(el){
+    var on = el.dataset.plan === state.plan;
+    el.classList.toggle("on", on);
+    el.querySelector(".pick-hint").textContent = on ? "✓ 已選擇" : "選擇這個方案";
+  });
+  ADDONS.forEach(function(a){
+    var el = document.querySelector('[data-add="' + a.id + '"]');
+    el.classList.toggle("on", !!state.add[a.id]);
+    var q = $("q_" + a.id);
+    if (q) q.textContent = state.add[a.id] || 0;
+  });
+}
+
+/* ---------- 明細文字 ---------- */
+function summary(){
+  var c = calc();
+  var L = ["【設計費方案試算】"];
+  var nm = $("cname").value.trim(), ph = $("cphone").value.trim(), st = $("csite").value.trim();
+  if (nm) L.push("稱呼：" + nm);
+  if (ph) L.push("電話：" + ph);
+  if (st) L.push("案場：" + st);
+  L.push("");
+  L.push("方案：" + c.plan.id + " " + c.plan.name);
+  L.push("坪數：" + (state.ping || 0) + " 坪" +
+         (c.eff !== state.ping ? "（未滿 20 坪以 20 坪計）" : ""));
+  L.push("設計費：" + c.eff + " 坪 × " + money(c.plan.rate) + " ＝ " + money(c.base) + " 元");
+
+  var picked = ADDONS.filter(function(a){ return state.add[a.id]; });
+  if (picked.length){
+    L.push("");
+    L.push("加購：");
+    picked.forEach(function(a){
+      if (!a.price){ L.push("・" + a.name + "（依實際採購結算）"); return; }
+      var n = a.qty ? state.add[a.id] : 1;
+      L.push("・" + a.name + " ×" + n + "　" + money(a.price * n) + " 元");
+    });
+  }
+  L.push("");
+  L.push("小計（未稅）：" + money(c.sub) + " 元");
+  L.push("營業稅 5%：" + money(c.tax) + " 元");
+  L.push("總計：NT$ " + money(c.total));
+  L.push("");
+  L.push("※ 後續工程如由貴公司承攬，設計費折抵 30%（約 " + money(c.base * DISCOUNT) + " 元）");
+  L.push("※ 本試算為參考，實際以合約為準");
+  return L.join("\n");
+}
+
+/* ---------- 事件 ---------- */
+$("ping").addEventListener("input", function(){
+  state.ping = parseFloat(this.value) || 0;
+  paint();
+});
+
+$("plans").addEventListener("click", function(ev){
+  var el = ev.target.closest("[data-plan]");
+  if (!el) return;
+  ev.preventDefault();
+  state.plan = el.dataset.plan;
+  paint();
+});
+
+$("addons").addEventListener("click", function(ev){
+  var btn = ev.target.closest("button[data-step]");
+  if (btn){
+    ev.preventDefault(); ev.stopPropagation();
+    var id = btn.dataset.id;
+    var v = (state.add[id] || 0) + parseInt(btn.dataset.step, 10);
+    state.add[id] = Math.max(0, Math.min(20, v));
+    paint();
+    return;
+  }
+  var el = ev.target.closest("[data-add]");
+  if (!el) return;
+  ev.preventDefault();
+  var aid = el.dataset.add;
+  state.add[aid] = state.add[aid] ? 0 : 1;
+  paint();
+});
+
+$("send").addEventListener("click", function(){
+  var url = "https://line.me/R/oaMessage/" + encodeURIComponent(LINE_OA_ID) +
+            "/?" + encodeURIComponent(summary());
+  location.href = url;
+});
+
+$("copy").addEventListener("click", function(){
+  var t = summary(), b = $("copy");
+  var done = function(){
+    b.textContent = "已複製，可直接貼給我們";
+    setTimeout(function(){ b.textContent = "複製明細文字"; }, 2200);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(t).then(done, function(){ prompt("請手動複製：", t); });
+  } else {
+    prompt("請手動複製：", t);
+  }
+});
+
+paint();
+</script>
 
 </body>
 </html>
