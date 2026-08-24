@@ -65,6 +65,17 @@ input[type=range]{width:100%;accent-color:var(--ink)}
 .hint{font-size:12.5px;color:var(--dim);margin:12px 0 0;line-height:1.55}
 .drop{border:1px dashed var(--rule);border-radius:var(--radius);padding:11px;text-align:center;font-size:12.5px;color:var(--muted);cursor:pointer}
 .drop:hover{border-color:var(--ink);color:var(--ink)}
+.thumbs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px}
+.thumbs:empty{display:none}
+.thumb{position:relative;aspect-ratio:1;border:1px solid var(--rule);border-radius:var(--radius);overflow:hidden;background:#EDEBE7}
+.thumb.on{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block;cursor:pointer}
+.thumb .no{position:absolute;left:0;top:0;background:rgba(17,18,20,.78);color:#fff;font-size:10px;line-height:1;padding:3px 5px;pointer-events:none}
+.thumb .md{position:absolute;left:0;bottom:0;border:0;background:rgba(17,18,20,.78);color:#fff;font-size:10px;line-height:1;padding:4px 6px;border-top-right-radius:3px}
+.thumb .md:hover{background:var(--ink)}
+.thumb .rm{position:absolute;right:0;top:0;border:0;background:rgba(17,18,20,.6);color:#fff;font-size:12px;line-height:1;padding:3px 6px}
+.thumb .rm:hover{background:#B4382F}
+.rowbtn{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
 .toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,14px);background:var(--ink);color:#fff;padding:9px 18px;border-radius:99px;font-size:13.5px;opacity:0;pointer-events:none;transition:all .2s ease;z-index:50}
 .toast.show{opacity:1;transform:translate(-50%,0)}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
@@ -153,11 +164,29 @@ input[type=range]{width:100%;accent-color:var(--ink)}
             <option value="1080x1080">方形 1:1 · 1080×1080</option>
             <option value="1920x1080">橫式 16:9 · 1920×1080</option>
           </select></div>
+        <div class="field"><label for="fMaxSide">輸出大小（長邊上限）</label>
+          <select id="fMaxSide">
+            <option value="2048">2048 px · 社群足夠（建議）</option>
+            <option value="1440">1440 px · 檔案更小</option>
+            <option value="1080">1080 px · IG 原生</option>
+            <option value="3000">3000 px · 高畫質</option>
+            <option value="0">原始尺寸不縮</option>
+          </select></div>
+        <div class="field"><label for="fFmt">檔案格式</label>
+          <select id="fFmt">
+            <option value="jpg">JPG · 照片建議</option>
+            <option value="png">PNG · 檔案大、無損</option>
+          </select></div>
         <div class="field">
-          <div class="drop" id="dropZone">放一張照片進來，或點這裡選檔</div>
-          <input type="file" id="fPhoto" accept="image/*" hidden>
+          <div class="drop" id="dropZone">拖多張照片進來，或點這裡選檔（可複選）</div>
+          <input type="file" id="fPhoto" accept="image/*" multiple hidden>
+          <div class="thumbs" id="thumbs"></div>
+          <p class="hint" id="thumbHint" style="display:none">點縮圖切換預覽；左下角小字可切換這張要「卡／浮／無」；右上角 × 移除。</p>
         </div>
-        <button class="btn ghost" id="clearPhoto" style="width:100%" disabled>移除底圖</button>
+        <div class="rowbtn">
+          <button class="btn ghost" id="applyPan" disabled>裁切位置套用全部</button>
+          <button class="btn ghost" id="clearPhoto" disabled>清空全部</button>
+        </div>
       </div>
     </div>
 
@@ -167,7 +196,8 @@ input[type=range]{width:100%;accent-color:var(--ink)}
         <span class="t" id="dims">1080 × 1920</span>
         <span class="sp"></span>
         <button class="btn ghost" id="dlOverlay">下載透明 PNG</button>
-        <button class="btn" id="dlFlat" disabled>下載合成圖</button>
+        <button class="btn ghost" id="dlFlat" disabled>下載這張</button>
+        <button class="btn" id="dlZip" disabled>打包下載全部</button>
       </div>
       <div class="canvasbox">
         <div class="canvasstack" id="stack">
@@ -190,9 +220,11 @@ const WORD_MASK="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAArkAAABaCAAAAACZe
 const $=s=>document.querySelector(s);
 const state={
   mode:"plate", color:"#FFFFFF", pos:"tl", opacity:.92, scale:1,
-  back:"grad", backAmt:.55, ratio:[1080,1920], photo:null,
-  crop:"orig", pan:.5
+  back:"grad", backAmt:.55, ratio:[1080,1920],
+  photos:[], idx:0, crop:"orig", maxSide:2048, fmt:"jpg"
 };
+const MODES=["plate","mark","none"], MODELABEL={plate:"卡",mark:"浮",none:"無"};
+const cur=()=>state.photos[state.idx]||null;
 const RATIOS={"4:5":4/5,"1:1":1,"9:16":9/16,"16:9":16/9};
 let markTinted={}, wordTinted={}, ready=false;
 
@@ -212,8 +244,10 @@ function loadImg(src){return new Promise(res=>{const i=new Image();i.onload=()=>
 function setLS(ctx,px){ try{ ctx.letterSpacing=px+"px"; }catch(e){} }
 
 /* ───── 繪製 ───── */
-function drawOverlay(ctx,W,H,keep){
+function drawOverlay(ctx,W,H,keep,mode){
   if(!keep) ctx.clearRect(0,0,W,H);   // keep=true：疊在既有內容上，不要清掉底圖
+  mode=mode||state.mode;
+  if(mode==="none") return;
   const s=(W/1080)*state.scale;
   const col=state.color, light=col==="#FFFFFF";
   const mark=markTinted[col], word=wordTinted[col];
@@ -225,7 +259,7 @@ function drawOverlay(ctx,W,H,keep){
   else{ ctx.shadowColor="rgba(255,255,255,.55)"; ctx.shadowBlur=14*s; ctx.shadowOffsetY=1*s; }
 
   const M=58*s;
-  const plate=state.mode==="plate";
+  const plate=mode==="plate";
 
   /* 量測 */
   const markH=plate?44*s:34*s;
@@ -357,9 +391,9 @@ function drawOverlay(ctx,W,H,keep){
 }
 
 /* ───── 尺寸與裁切 ───── */
-function cropRect(){
-  const p=state.photo; if(!p) return null;
-  const pw=p.naturalWidth, ph=p.naturalHeight;
+function cropRect(p){
+  p=p||cur(); if(!p) return null;
+  const pw=p.img.naturalWidth, ph=p.img.naturalHeight;
   const r=RATIOS[state.crop];
   if(!r) return {sx:0,sy:0,sw:pw,sh:ph,axis:null};
   let sw,sh,axis;
@@ -367,55 +401,143 @@ function cropRect(){
   else       { sw=pw; sh=Math.round(pw/r); axis="y"; }   // 太高 → 上下裁
   const slackX=pw-sw, slackY=ph-sh;
   return {
-    sx:Math.round(slackX*state.pan), sy:Math.round(slackY*state.pan),
+    sx:Math.round(slackX*p.pan), sy:Math.round(slackY*p.pan),
     sw,sh, axis:(slackX>2||slackY>2)?axis:null
   };
 }
-function dims(){
-  if(state.photo){ const c=cropRect(); return [c.sw,c.sh]; }
-  return state.ratio;
+function fit(W,H){
+  const m=state.maxSide;
+  if(!m) return [W,H];
+  const k=Math.min(1,m/Math.max(W,H));
+  return [Math.max(1,Math.round(W*k)),Math.max(1,Math.round(H*k))];
 }
-function drawBase(ctx,W,H){
-  if(!state.photo){ ctx.fillStyle="#2A2B2E"; ctx.fillRect(0,0,W,H); return; }
-  const c=cropRect();
-  ctx.drawImage(state.photo,c.sx,c.sy,c.sw,c.sh,0,0,W,H);
+function outSize(p){
+  p=p||cur();
+  if(!p) return [state.ratio[0],state.ratio[1]];
+  const c=cropRect(p); return fit(c.sw,c.sh);
+}
+function modeOf(p){ return p? p.mode : state.mode; }
+function drawBase(ctx,W,H,p){
+  p=p||cur();
+  if(!p){ ctx.fillStyle="#2A2B2E"; ctx.fillRect(0,0,W,H); return; }
+  const c=cropRect(p);
+  ctx.imageSmoothingQuality="high";
+  ctx.drawImage(p.img,c.sx,c.sy,c.sw,c.sh,0,0,W,H);
+}
+let thumbKey="";
+function renderThumbs(){
+  const box=$("#thumbs");
+  const key=state.photos.map(p=>p.url+p.mode).join("|");
+  if(key===thumbKey){
+    [...box.children].forEach((el,i)=>el.classList.toggle("on",i===state.idx));
+    return;
+  }
+  thumbKey=key; box.innerHTML="";
+  state.photos.forEach((p,i)=>{
+    const d=document.createElement("div");
+    d.className="thumb"+(i===state.idx?" on":"");
+    const im=document.createElement("img"); im.src=p.url; im.alt="";
+    im.addEventListener("click",()=>{ state.idx=i; render(); });
+    const no=document.createElement("span"); no.className="no"; no.textContent=i+1;
+    const md=document.createElement("button"); md.className="md"; md.textContent=MODELABEL[p.mode];
+    md.title="切換這張要放什麼";
+    md.addEventListener("click",()=>{ p.mode=MODES[(MODES.indexOf(p.mode)+1)%3]; state.idx=i; render(); });
+    const rm=document.createElement("button"); rm.className="rm"; rm.textContent="×"; rm.title="移除這張";
+    rm.addEventListener("click",()=>{
+      URL.revokeObjectURL(p.url);
+      state.photos.splice(i,1);
+      if(state.idx>=state.photos.length) state.idx=Math.max(0,state.photos.length-1);
+      render();
+    });
+    d.append(im,no,md,rm); box.appendChild(d);
+  });
+  [...box.children].forEach((el,i)=>el.classList.toggle("on",i===state.idx));
+  const has=state.photos.length>0;
+  $("#thumbHint").style.display=has?"":"none";
+  $("#clearPhoto").disabled=!has;
+  $("#applyPan").disabled=state.photos.length<2;
+  $("#dlFlat").disabled=!has;
+  $("#dlZip").disabled=!has;
+  $("#dropZone").textContent=has? `已載入 ${state.photos.length} 張，再拖／點可繼續加` : "拖多張照片進來，或點這裡選檔（可複選）";
 }
 function syncCropUI(){
-  const has=!!state.photo;
+  const p=cur(), has=!!p;
   $("#cropRow").style.display=has?"":"none";
   $("#ratioRow").style.display=has?"none":"";
-  const c=has?cropRect():null;
+  const c=has?cropRect(p):null;
   const show=!!(c&&c.axis);
   $("#panRow").style.display=show?"":"none";
   if(show){
-    $("#panName").textContent=c.axis==="x"?"裁切位置（左右）":"裁切位置（上下）";
-    const v=Math.round(state.pan*100);
+    $("#panName").textContent=(c.axis==="x"?"裁切位置（左右）":"裁切位置（上下）")+`· 第 ${state.idx+1} 張`;
+    const v=Math.round(p.pan*100);
+    $("#fPan").value=v;
     $("#panLabel").textContent = v===50?"置中" : (c.axis==="x"?(v<50?"偏左":"偏右"):(v<50?"偏上":"偏下"));
   }
 }
 function render(){
   if(!ready) return;
-  const [W,H]=dims();
+  const p=cur();
+  const [W,H]=outSize(p);
   const base=$("#baseC"), ov=$("#overlayC");
   base.width=W; base.height=H; ov.width=W; ov.height=H;
   const bx=base.getContext("2d");
   bx.clearRect(0,0,W,H);
-  drawBase(bx,W,H);
+  drawBase(bx,W,H,p);
+  renderThumbs();
   syncCropUI();
   const maxH=Math.min(620,window.innerHeight*0.72);
   const disp=Math.min(1,maxH/H);
   $("#stack").style.width=(W*disp)+"px";
   base.style.width="100%"; base.style.height="auto";
-  drawOverlay(ov.getContext("2d"),W,H);
-  $("#dims").textContent=`${W} × ${H}`;
+  drawOverlay(ov.getContext("2d"),W,H,false,modeOf(p));
+  $("#dims").textContent=`${W} × ${H}`+(state.photos.length>1?`　·　${state.idx+1}/${state.photos.length}`:"");
 }
 
-function dl(canvas,name){
-  canvas.toBlob(b=>{
-    const u=URL.createObjectURL(b), a=document.createElement("a");
-    a.href=u; a.download=name; a.click();
-    setTimeout(()=>URL.revokeObjectURL(u),1000);
-  },"image/png");
+function saveBlob(b,name){
+  const u=URL.createObjectURL(b), a=document.createElement("a");
+  a.href=u; a.download=name; a.click();
+  setTimeout(()=>URL.revokeObjectURL(u),1000);
+}
+function dl(canvas,name){ canvas.toBlob(b=>saveBlob(b,name),"image/png"); }
+function toBlob(canvas,fmt){
+  return new Promise(r=>canvas.toBlob(r, fmt==="jpg"?"image/jpeg":"image/png", fmt==="jpg"?0.92:undefined));
+}
+
+/* ───── 極簡 ZIP（store，無壓縮；PNG／JPG 本來就壓過了） ───── */
+const CRCT=(()=>{const t=new Uint32Array(256);
+  for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1);t[n]=c>>>0;}
+  return t;})();
+function crc32(u8){let c=0xFFFFFFFF;for(let i=0;i<u8.length;i++)c=CRCT[(c^u8[i])&0xFF]^(c>>>8);return (c^0xFFFFFFFF)>>>0;}
+function makeZip(files){
+  const enc=new TextEncoder(), parts=[], central=[]; let off=0;
+  const d=new Date();
+  const dtime=((d.getHours()&31)<<11)|((d.getMinutes()&63)<<5)|(Math.floor(d.getSeconds()/2)&31);
+  const ddate=(((d.getFullYear()-1980)&127)<<9)|(((d.getMonth()+1)&15)<<5)|(d.getDate()&31);
+  files.forEach(f=>{
+    const nm=enc.encode(f.name), crc=crc32(f.data), sz=f.data.length;
+    const lh=new Uint8Array(30+nm.length), v=new DataView(lh.buffer);
+    v.setUint32(0,0x04034b50,true); v.setUint16(4,20,true); v.setUint16(6,0x0800,true);
+    v.setUint16(10,0,true); v.setUint16(12,dtime,true); v.setUint16(14-2,ddate,true);
+    v.setUint32(14,crc,true); v.setUint32(18,sz,true); v.setUint32(22,sz,true);
+    v.setUint16(26,nm.length,true);
+    lh.set(nm,30);
+    parts.push(lh,f.data);
+    const ch=new Uint8Array(46+nm.length), cv=new DataView(ch.buffer);
+    cv.setUint32(0,0x02014b50,true); cv.setUint16(4,20,true); cv.setUint16(6,20,true);
+    cv.setUint16(8,0x0800,true);
+    cv.setUint16(12,dtime,true); cv.setUint16(14,ddate,true);
+    cv.setUint32(16,crc,true); cv.setUint32(20,sz,true); cv.setUint32(24,sz,true);
+    cv.setUint16(28,nm.length,true); cv.setUint32(42,off,true);
+    ch.set(nm,46);
+    central.push(ch);
+    off+=lh.length+sz;
+  });
+  let clen=0; central.forEach(c=>clen+=c.length);
+  const eo=new Uint8Array(22), ev=new DataView(eo.buffer);
+  ev.setUint32(0,0x06054b50,true);
+  ev.setUint16(8,files.length,true); ev.setUint16(10,files.length,true);
+  ev.setUint32(12,clen,true); ev.setUint32(16,off,true);
+  return new Blob(parts.concat(central,[eo]),{type:"application/zip"});
 }
 function slug(){
   const n=($("#fEn").value||$("#fZh").value||"plate").trim().replace(/\s+/g,"-");
@@ -437,7 +559,9 @@ function segWire(sel,key,cast){
 }
 document.querySelectorAll("#segMode button").forEach(b=>b.addEventListener("click",()=>{
   document.querySelectorAll("#segMode button").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));
-  state.mode=b.dataset.mode; render();
+  state.mode=b.dataset.mode;
+  state.photos.forEach(p=>p.mode=state.mode);   // 全部套用；個別張可在縮圖上再改
+  render();
 }));
 document.querySelectorAll("#segColor button").forEach(b=>b.addEventListener("click",()=>{
   document.querySelectorAll("#segColor button").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));
@@ -456,35 +580,84 @@ document.querySelectorAll("#segBack button").forEach(b=>b.addEventListener("clic
 $("#fBackdrop").addEventListener("input",e=>{state.backAmt=e.target.value/100;$("#bdLabel").textContent=e.target.value+"%";render();});
 $("#fOpacity").addEventListener("input",e=>{state.opacity=e.target.value/100;$("#opLabel").textContent=e.target.value+"%";render();});
 $("#fScale").addEventListener("input",e=>{state.scale=e.target.value/100;$("#szLabel").textContent=e.target.value+"%";render();});
-$("#fCrop").addEventListener("change",e=>{state.crop=e.target.value;state.pan=.5;$("#fPan").value=50;render();});
-$("#fPan").addEventListener("input",e=>{state.pan=e.target.value/100;render();});
+$("#fCrop").addEventListener("change",e=>{
+  state.crop=e.target.value;
+  state.photos.forEach(p=>p.pan=.5); $("#fPan").value=50; render();
+});
+$("#fPan").addEventListener("input",e=>{ const p=cur(); if(p){p.pan=e.target.value/100; render();} });
+$("#fMaxSide").addEventListener("change",e=>{state.maxSide=+e.target.value;render();});
+$("#fFmt").addEventListener("change",e=>{state.fmt=e.target.value;});
+$("#applyPan").addEventListener("click",()=>{
+  const p=cur(); if(!p) return;
+  state.photos.forEach(q=>q.pan=p.pan);
+  toast("裁切位置已套用到全部"); render();
+});
 $("#fRatio").addEventListener("change",e=>{state.ratio=e.target.value.split("x").map(Number);render();});
 
-function loadPhoto(file){
-  if(!file||!file.type.startsWith("image/")) return;
-  const u=URL.createObjectURL(file), im=new Image();
-  im.onload=()=>{ state.photo=im; state.pan=.5; $("#fPan").value=50;
-    $("#clearPhoto").disabled=false; $("#dlFlat").disabled=false; render(); };
-  im.src=u;
+function loadPhotos(list){
+  const files=[...(list||[])].filter(f=>f.type.startsWith("image/"));
+  if(!files.length) return;
+  files.sort((a,b)=>a.name.localeCompare(b.name,"zh-Hant",{numeric:true}));
+  let pending=files.length;
+  files.forEach(f=>{
+    const url=URL.createObjectURL(f), im=new Image();
+    im.onload=()=>{
+      const first=state.photos.length===0;
+      state.photos.push({img:im,url,name:f.name,pan:.5,mode:first?state.mode:"mark"});
+      if(--pending===0){ render(); toast(`已載入 ${state.photos.length} 張`); }
+    };
+    im.onerror=()=>{ if(--pending===0) render(); };
+    im.src=url;
+  });
 }
 $("#dropZone").addEventListener("click",()=>$("#fPhoto").click());
-$("#fPhoto").addEventListener("change",e=>loadPhoto(e.target.files[0]));
+$("#fPhoto").addEventListener("change",e=>{loadPhotos(e.target.files); e.target.value="";});
 ["dragover","dragenter"].forEach(ev=>$("#dropZone").addEventListener(ev,e=>{e.preventDefault();}));
-$("#dropZone").addEventListener("drop",e=>{e.preventDefault();loadPhoto(e.dataTransfer.files[0]);});
+$("#dropZone").addEventListener("drop",e=>{e.preventDefault();loadPhotos(e.dataTransfer.files);});
 $("#clearPhoto").addEventListener("click",()=>{
-  state.photo=null; $("#clearPhoto").disabled=true; $("#dlFlat").disabled=true; $("#fPhoto").value=""; render();
+  state.photos.forEach(p=>URL.revokeObjectURL(p.url));
+  state.photos=[]; state.idx=0; $("#fPhoto").value=""; render();
 });
 
 $("#dlOverlay").addEventListener("click",()=>{
-  const [W,H]=dims(); const c=document.createElement("canvas"); c.width=W;c.height=H;
-  drawOverlay(c.getContext("2d"),W,H);
+  const p=cur(); const [W,H]=outSize(p);
+  const c=document.createElement("canvas"); c.width=W;c.height=H;
+  drawOverlay(c.getContext("2d"),W,H,false,modeOf(p));
   dl(c,`${slug()}_overlay_${W}x${H}.png`); toast("透明 PNG 已下載");
 });
-$("#dlFlat").addEventListener("click",()=>{
-  if(!state.photo) return;
-  const [W,H]=dims(); const c=document.createElement("canvas"); c.width=W;c.height=H;
-  const x=c.getContext("2d"); drawBase(x,W,H); drawOverlay(x,W,H,true);
-  dl(c,`${slug()}_${W}x${H}.png`); toast("合成圖已下載");
+async function renderOne(p){
+  const [W,H]=outSize(p);
+  const c=document.createElement("canvas"); c.width=W;c.height=H;
+  const x=c.getContext("2d");
+  drawBase(x,W,H,p); drawOverlay(x,W,H,true,modeOf(p));
+  return {canvas:c,W,H};
+}
+$("#dlFlat").addEventListener("click",async()=>{
+  const p=cur(); if(!p) return;
+  const {canvas,W,H}=await renderOne(p);
+  const b=await toBlob(canvas,state.fmt);
+  saveBlob(b,`${slug()}_${String(state.idx+1).padStart(2,"0")}_${W}x${H}.${state.fmt}`);
+  toast("已下載這張");
+});
+$("#dlZip").addEventListener("click",async()=>{
+  if(!state.photos.length) return;
+  const btn=$("#dlZip"), label=btn.textContent;
+  btn.disabled=true;
+  const files=[], n=state.photos.length;
+  for(let i=0;i<n;i++){
+    btn.textContent=`輸出中 ${i+1}/${n}`;
+    await new Promise(r=>requestAnimationFrame(r));
+    const p=state.photos[i];
+    const {canvas,W,H}=await renderOne(p);
+    const b=await toBlob(canvas,state.fmt);
+    files.push({name:`${String(i+1).padStart(2,"0")}_${slug()}_${W}x${H}.${state.fmt}`,
+                data:new Uint8Array(await b.arrayBuffer())});
+  }
+  btn.textContent="打包中…";
+  const zip=makeZip(files);
+  saveBlob(zip,`${slug()}_${n}張.zip`);
+  btn.textContent=label; btn.disabled=false;
+  toast(`${n} 張已打包下載`);
 });
 window.addEventListener("resize",render);
 
@@ -498,6 +671,8 @@ window.addEventListener("resize",render);
     await document.fonts.load('400 14px "Noto Sans TC"');
     await document.fonts.ready;
   }catch(e){}
+  $("#fMaxSide").value=String(state.maxSide);
+  $("#fFmt").value=state.fmt;
   ready=true; render();
 })();
 })();
