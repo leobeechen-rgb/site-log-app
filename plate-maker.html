@@ -75,6 +75,9 @@ input[type=range]{width:100%;accent-color:var(--ink)}
 .thumb .md:hover{background:var(--ink)}
 .thumb .rm{position:absolute;right:0;top:0;border:0;background:rgba(17,18,20,.6);color:#fff;font-size:12px;line-height:1;padding:3px 6px}
 .thumb .rm:hover{background:#B4382F}
+.thumb.drag{opacity:.35}
+.thumb.over{outline:2px solid var(--ink);outline-offset:-2px}
+.chk{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);margin-top:8px;cursor:pointer}
 .rowbtn{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
 .toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,14px);background:var(--ink);color:#fff;padding:9px 18px;border-radius:99px;font-size:13.5px;opacity:0;pointer-events:none;transition:all .2s ease;z-index:50}
 .toast.show{opacity:1;transform:translate(-50%,0)}
@@ -181,7 +184,8 @@ input[type=range]{width:100%;accent-color:var(--ink)}
           <div class="drop" id="dropZone">拖多張照片進來，或點這裡選檔（可複選）</div>
           <input type="file" id="fPhoto" accept="image/*" multiple hidden>
           <div class="thumbs" id="thumbs"></div>
-          <p class="hint" id="thumbHint" style="display:none">點縮圖切換預覽；左下角小字可切換這張要「卡／浮／無」；右上角 × 移除。</p>
+          <p class="hint" id="thumbHint" style="display:none">點縮圖切換預覽；<b>直接拖曳縮圖可調順序</b>；左下角小字切換「卡／浮／無」；右上角 × 移除。</p>
+          <label class="chk"><input type="checkbox" id="fSort" checked> 加入時依檔名排序（取消則照選取順序）</label>
         </div>
         <div class="rowbtn">
           <button class="btn ghost" id="applyPan" disabled>裁切位置套用全部</button>
@@ -221,7 +225,7 @@ const $=s=>document.querySelector(s);
 const state={
   mode:"plate", color:"#FFFFFF", pos:"tl", opacity:.92, scale:1,
   back:"grad", backAmt:.55, ratio:[1080,1920],
-  photos:[], idx:0, crop:"orig", maxSide:2048, fmt:"jpg"
+  photos:[], idx:0, crop:"orig", maxSide:2048, fmt:"jpg", sortByName:true
 };
 const MODES=["plate","mark","none"], MODELABEL={plate:"卡",mark:"浮",none:"無"};
 const cur=()=>state.photos[state.idx]||null;
@@ -424,7 +428,7 @@ function drawBase(ctx,W,H,p){
   ctx.imageSmoothingQuality="high";
   ctx.drawImage(p.img,c.sx,c.sy,c.sw,c.sh,0,0,W,H);
 }
-let thumbKey="";
+let thumbKey="", dragFrom=-1;
 function renderThumbs(){
   const box=$("#thumbs");
   const key=state.photos.map(p=>p.url+p.mode).join("|");
@@ -436,6 +440,18 @@ function renderThumbs(){
   state.photos.forEach((p,i)=>{
     const d=document.createElement("div");
     d.className="thumb"+(i===state.idx?" on":"");
+    d.draggable=true; d.dataset.i=i;
+    d.addEventListener("dragstart",e=>{ dragFrom=i; d.classList.add("drag"); e.dataTransfer.effectAllowed="move"; });
+    d.addEventListener("dragend",()=>{ dragFrom=-1; [...box.children].forEach(c=>c.classList.remove("drag","over")); });
+    d.addEventListener("dragover",e=>{ if(dragFrom>-1){ e.preventDefault(); d.classList.add("over"); } });
+    d.addEventListener("dragleave",()=>d.classList.remove("over"));
+    d.addEventListener("drop",e=>{
+      e.preventDefault(); e.stopPropagation();
+      if(dragFrom<0||dragFrom===i) return;
+      const moved=state.photos.splice(dragFrom,1)[0];
+      state.photos.splice(i,0,moved);
+      state.idx=i; dragFrom=-1; thumbKey=""; render();
+    });
     const im=document.createElement("img"); im.src=p.url; im.alt="";
     im.addEventListener("click",()=>{ state.idx=i; render(); });
     const no=document.createElement("span"); no.className="no"; no.textContent=i+1;
@@ -587,6 +603,7 @@ $("#fCrop").addEventListener("change",e=>{
 $("#fPan").addEventListener("input",e=>{ const p=cur(); if(p){p.pan=e.target.value/100; render();} });
 $("#fMaxSide").addEventListener("change",e=>{state.maxSide=+e.target.value;render();});
 $("#fFmt").addEventListener("change",e=>{state.fmt=e.target.value;});
+$("#fSort").addEventListener("change",e=>{state.sortByName=e.target.checked;});
 $("#applyPan").addEventListener("click",()=>{
   const p=cur(); if(!p) return;
   state.photos.forEach(q=>q.pan=p.pan);
@@ -597,16 +614,20 @@ $("#fRatio").addEventListener("change",e=>{state.ratio=e.target.value.split("x")
 function loadPhotos(list){
   const files=[...(list||[])].filter(f=>f.type.startsWith("image/"));
   if(!files.length) return;
-  files.sort((a,b)=>a.name.localeCompare(b.name,"zh-Hant",{numeric:true}));
+  if(state.sortByName) files.sort((a,b)=>a.name.localeCompare(b.name,"zh-Hant",{numeric:true}));
+  const slots=new Array(files.length).fill(null);   // 依索引填格，不按解碼完成順序
+  const wasEmpty=state.photos.length===0;
   let pending=files.length;
-  files.forEach(f=>{
+  const finish=()=>{
+    if(--pending>0) return;
+    slots.filter(Boolean).forEach(o=>state.photos.push(o));
+    if(wasEmpty&&state.photos.length) state.photos[0].mode=state.mode;
+    render(); toast(`已載入 ${state.photos.length} 張`);
+  };
+  files.forEach((f,i)=>{
     const url=URL.createObjectURL(f), im=new Image();
-    im.onload=()=>{
-      const first=state.photos.length===0;
-      state.photos.push({img:im,url,name:f.name,pan:.5,mode:first?state.mode:"mark"});
-      if(--pending===0){ render(); toast(`已載入 ${state.photos.length} 張`); }
-    };
-    im.onerror=()=>{ if(--pending===0) render(); };
+    im.onload=()=>{ slots[i]={img:im,url,name:f.name,pan:.5,mode:"mark"}; finish(); };
+    im.onerror=()=>{ URL.revokeObjectURL(url); finish(); };
     im.src=url;
   });
 }
@@ -614,6 +635,8 @@ $("#dropZone").addEventListener("click",()=>$("#fPhoto").click());
 $("#fPhoto").addEventListener("change",e=>{loadPhotos(e.target.files); e.target.value="";});
 ["dragover","dragenter"].forEach(ev=>$("#dropZone").addEventListener(ev,e=>{e.preventDefault();}));
 $("#dropZone").addEventListener("drop",e=>{e.preventDefault();loadPhotos(e.dataTransfer.files);});
+$("#thumbs").addEventListener("dragover",e=>{ if(dragFrom<0) e.preventDefault(); });
+$("#thumbs").addEventListener("drop",e=>{ if(dragFrom<0&&e.dataTransfer.files.length){ e.preventDefault(); loadPhotos(e.dataTransfer.files);} });
 $("#clearPhoto").addEventListener("click",()=>{
   state.photos.forEach(p=>URL.revokeObjectURL(p.url));
   state.photos=[]; state.idx=0; $("#fPhoto").value=""; render();
