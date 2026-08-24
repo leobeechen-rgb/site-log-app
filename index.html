@@ -2803,6 +2803,33 @@ function HB_VendorCostPicker({rows,quotes,onCancel,onApply}){
   )
 }
 
+/* ---------- 試算表模式：把 HB_SheetGrid 掛成全螢幕覆蓋層 ---------- */
+function HB_SheetOverlay({state,setState,onClose}){
+  let box=(0,u.useRef)(null);
+  (0,u.useEffect)(()=>{
+    if(!box.current)return;
+    if(!window.HB_SheetGrid){box.current.textContent="試算表元件未載入，請重新整理頁面";return}
+    let g=window.HB_SheetGrid.mount(box.current,{
+      categories:state.categories,
+      priceLib:window.HB_PRICE_LIB||[],
+      taxRate:HB_num(state.taxRate)||0,
+      discount:HB_num(state.discount)||0,
+      onChange:(cats,meta)=>setState(p=>({...p,categories:cats,
+        taxRate:String(meta.taxRate||""),discount:String(meta.discount||"")}))
+    });
+    return()=>g.destroy()
+  },[]);
+  return u.default.createElement("div",{style:{position:"fixed",inset:0,zIndex:9000,
+    background:"#FAF9F6",display:"flex",flexDirection:"column",padding:"12px 14px",overflow:"auto"}},
+    u.default.createElement("div",{style:{display:"flex",justifyContent:"space-between",
+      alignItems:"center",marginBottom:10,gap:10}},
+      u.default.createElement("div",{style:{fontSize:15,color:"#1F6E85"}},"試算表模式"),
+      u.default.createElement("button",{onClick:onClose,style:{border:"1px solid #D9D4C7",
+        background:"#fff",borderRadius:8,padding:"8px 16px",cursor:"pointer",
+        fontFamily:"inherit",fontSize:13,color:"#1F6E85"}},"完成，回到表單")),
+    u.default.createElement("div",{ref:box,style:{flex:1}}))
+}
+
 function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
   let[localToast,setLocalToast]=(0,u.useState)(null);
   let localToastTimerRef=(0,u.useRef)(null);
@@ -2818,6 +2845,7 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
   let[pasteOpen,setPasteOpen]=(0,u.useState)({});
   let[pasteText,setPasteText]=(0,u.useState)({});
   let[selectedItems,setSelectedItems]=(0,u.useState)({});
+  let[sheetMode,setSheetMode]=(0,u.useState)(!1);
 
   /* ===== 常用工項單價庫：打字即時建議 / 一鍵帶入 / 存回單價庫 ===== */
   let[pbSug,setPbSug]=(0,u.useState)(null);
@@ -3382,6 +3410,12 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
           )
         )
       ),
+      sheetMode?u.default.createElement(HB_SheetOverlay,{state:a,setState:i,
+        onClose:()=>setSheetMode(!1)}):null,
+      u.default.createElement("button",{onClick:()=>setSheetMode(!0),
+        style:{width:"100%",border:`1px dashed ${s.ocean}`,background:"none",color:s.oceanDark,
+        borderRadius:9,padding:"10px 0",fontSize:13,cursor:"pointer",fontFamily:"inherit",
+        marginBottom:10}},"⊞ 試算表模式（整片編輯、公式、分類小計）"),
       a.categories.map(cat=>u.default.createElement("div",{key:cat.id,style:{background:s.card,borderRadius:8,padding:12,marginBottom:10}},
         u.default.createElement("div",{style:{display:"flex",gap:6,marginBottom:7,alignItems:"center"}},
           u.default.createElement("input",{placeholder:"大項名稱（如：裝修工程）",value:cat.name,onChange:v=>setCat(cat.id,"name",v.target.value),style:{...inputStyle,flex:1,fontWeight:400}}),
@@ -9034,6 +9068,572 @@ react-dom/cjs/react-dom-client.production.js:
     });
   }
 })();
+</script>
+
+<!-- ===== 網頁版試算表（估價單） ===== -->
+<script>
+/* ============================================================
+   赫柏空間設計 · 網頁版試算表（估價單）
+   ------------------------------------------------------------
+   純 DOM，不依賴 React，可以直接掛在任何 div 上。
+   相依：HB_num（已有）；匯出用已載入的 ExcelJS（可有可無）。
+
+   用法：
+     var grid = HB_SheetGrid.mount(el, {
+       categories: a.categories,              // 你原本的資料結構
+       priceLib: [{name,spec,unit,price,cost}],   // 選填，單價庫
+       taxRate: 5,
+       discount: 0,
+       onChange: function (categories, meta) { ... }  // 每次改動回拋
+     });
+     grid.getCategories();   // 取回目前資料
+     grid.destroy();
+   ============================================================ */
+(function (global) {
+  "use strict";
+
+  var num = function (v) {
+    if (global.HB_num) return global.HB_num(v);
+    var n = parseFloat(String(v == null ? "" : v).replace(/,/g, ""));
+    return isNaN(n) ? 0 : n;
+  };
+  var money = function (n) {
+    if (!isFinite(n)) return "";
+    return Math.round(n).toLocaleString("en-US");
+  };
+  var esc = function (s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (m) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m];
+    });
+  };
+  var uid = function () {
+    return "r" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  };
+
+  var CATS = ["裝修工程","拆除工程","泥作工程","水電工程","油漆工程","空調工程",
+              "衛浴設備","鋁窗工程","系統櫃工程","燈具工程","窗簾工程","玻璃工程",
+              "清潔工程","其他"];
+  var UNITS = ["式","米","才","坪","樘","組","盞","支","個","只","台","處","批"];
+
+  /* 欄位定義：edit=可編輯，calc=公式欄 */
+  var COLS = [
+    { key: "cat",         label: "分類",   w: 104, kind: "select", opts: CATS },
+    { key: "name",        label: "項目",   w: 230, kind: "text" },
+    { key: "spec",        label: "規格",   w: 130, kind: "text" },
+    { key: "unit",        label: "單位",   w: 62,  kind: "select", opts: UNITS, align: "center" },
+    { key: "qty",         label: "數量",   w: 68,  kind: "num", align: "center" },
+    { key: "price",       label: "單價",   w: 96,  kind: "num", align: "right" },
+    { key: "amount",      label: "複價",   w: 108, kind: "calc", align: "right" },
+    { key: "note",        label: "備註",   w: 150, kind: "text" },
+    { key: "vendorPrice", label: "廠商單價", w: 96, kind: "num", align: "right", cost: true },
+    { key: "profit",      label: "淨利",   w: 96,  kind: "calc", align: "right", cost: true }
+  ];
+  var EDITABLE = COLS.map(function (c, i) { return c.kind === "calc" ? -1 : i; })
+                     .filter(function (i) { return i >= 0; });
+
+  /* ---------- 公式：只允許數字與 + - * / ( ) . % ---------- */
+  function evalFormula(expr) {
+    var body = String(expr).slice(1).replace(/[，]/g, ",").replace(/×/g, "*").replace(/÷/g, "/");
+    if (!/^[0-9+\-*/(). %]*$/.test(body)) return null;
+    body = body.replace(/(\d+(?:\.\d+)?)%/g, "($1/100)");
+    try {
+      var v = Function('"use strict";return (' + body + ")")();
+      return typeof v === "number" && isFinite(v) ? v : null;
+    } catch (e) { return null; }
+  }
+
+  function rowAmount(r) { return num(r.qty) * num(r.price); }
+  function rowProfit(r) {
+    if (r.vendorPrice === "" || r.vendorPrice == null) return null;
+    return rowAmount(r) - num(r.qty) * num(r.vendorPrice);
+  }
+
+  var CSS_ID = "hb-sheet-css";
+  var CSS = [
+    ".hbs{font-family:inherit;color:#1C1B18;font-size:13px}",
+    ".hbs-bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px}",
+    ".hbs-bar button{border:1px solid #D9D4C7;background:#fff;border-radius:7px;padding:7px 13px;font-size:12.5px;cursor:pointer;font-family:inherit;color:#1F6E85}",
+    ".hbs-bar button:hover{background:#F2EFE8}",
+    ".hbs-wrap{overflow:auto;max-height:62vh;border:1px solid #CCC;border-radius:8px;background:#fff}",
+    ".hbs table{border-collapse:separate;border-spacing:0;width:max-content;min-width:100%}",
+    ".hbs th,.hbs td{border-right:1px solid #DDD;border-bottom:1px solid #DDD;padding:0;background:#fff}",
+    ".hbs thead th{position:sticky;top:0;z-index:3;background:#1F6E85;color:#fff;font-weight:500;",
+      "font-size:12px;padding:7px 6px;white-space:nowrap;text-align:center}",
+    ".hbs thead th.cost{background:#8A6D00}",
+    ".hbs th.rn,.hbs td.rn{position:sticky;left:0;z-index:2;background:#F2EFE8;color:#8C877D;",
+      "font-size:11px;text-align:center;width:42px;min-width:42px;user-select:none}",
+    ".hbs thead th.rn{z-index:4;background:#1F6E85;color:#fff}",
+    ".hbs td input,.hbs td select{width:100%;border:none;background:transparent;font:inherit;",
+      "font-size:13px;padding:6px 7px;box-sizing:border-box;color:#1C1B18;outline:none}",
+    ".hbs td select{appearance:none;cursor:pointer;color:#5A544A}",
+    ".hbs td.calc{padding:6px 7px;text-align:right;color:#1C1B18;background:#FAFAF7;white-space:nowrap}",
+    ".hbs td.calc.neg{color:#B0413E}",
+    ".hbs td.calc.pos{color:#2E7D32}",
+    ".hbs td.sel{background:rgba(31,110,133,0.12)}",
+    ".hbs td.cur{box-shadow:inset 0 0 0 2px #1F6E85}",
+    ".hbs .hbs-sum{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px}",
+    ".hbs .hbs-box{border:1px solid #E6E2D8;border-radius:8px;padding:10px 12px;min-width:210px;background:#fff}",
+    ".hbs .hbs-box h4{margin:0 0 7px;font-size:12px;font-weight:500;color:#1F6E85;letter-spacing:.05em}",
+    ".hbs .hbs-line{display:flex;justify-content:space-between;gap:14px;font-size:12.5px;padding:2px 0}",
+    ".hbs .hbs-line b{font-variant-numeric:tabular-nums}",
+    ".hbs .hbs-line.total{border-top:1px solid #E6E2D8;margin-top:5px;padding-top:6px;font-size:14px}",
+    ".hbs .hbs-line input{width:78px;border:1px solid #E6E2D8;border-radius:5px;padding:2px 5px;",
+      "text-align:right;font:inherit;font-size:12.5px}",
+    ".hbs .hbs-hint{font-size:11px;color:#999;margin-top:7px;line-height:1.7}"
+  ].join("");
+
+  function injectCSS() {
+    if (document.getElementById(CSS_ID)) return;
+    var st = document.createElement("style");
+    st.id = CSS_ID; st.textContent = CSS;
+    document.head.appendChild(st);
+  }
+
+  /* ---------- categories <-> flat rows ---------- */
+  function flatten(categories) {
+    var rows = [];
+    (categories || []).forEach(function (c) {
+      (c.items || []).forEach(function (it) {
+        rows.push({
+          id: it.id || uid(),
+          cat: c.name || "",
+          name: it.name || "", spec: it.spec || "", unit: it.unit || "",
+          qty: it.qty === 0 || it.qty ? String(it.qty) : "",
+          price: it.price === 0 || it.price ? String(it.price) : "",
+          note: it.note || "",
+          vendorPrice: it.vendorPrice === 0 || it.vendorPrice ? String(it.vendorPrice) : ""
+        });
+      });
+    });
+    return rows;
+  }
+  function unflatten(rows) {
+    var order = [], map = {};
+    rows.forEach(function (r) {
+      var key = r.cat || "未分類";
+      if (!map[key]) { map[key] = { id: "c_" + key, name: key, items: [] }; order.push(key); }
+      map[key].items.push({
+        id: r.id, name: r.name, spec: r.spec, unit: r.unit,
+        qty: r.qty, price: r.price, note: r.note, vendorPrice: r.vendorPrice
+      });
+    });
+    return order.map(function (k) { return map[k]; });
+  }
+
+  function blankRow(cat) {
+    return { id: uid(), cat: cat || "", name: "", spec: "", unit: "", qty: "",
+             price: "", note: "", vendorPrice: "" };
+  }
+
+  /* ============================================================ */
+  function mount(el, opts) {
+    injectCSS();
+    opts = opts || {};
+    var rows = flatten(opts.categories);
+    var priceLib = opts.priceLib || [];
+    var taxRate = opts.taxRate == null ? 5 : opts.taxRate;
+    var discount = opts.discount || 0;
+    var MIN_ROWS = 12;
+    while (rows.length < MIN_ROWS) rows.push(blankRow(rows.length ? rows[rows.length - 1].cat : ""));
+
+    var sel = { r0: 0, c0: 0, r1: 0, c1: 0 };
+    var dragging = false;
+
+    el.className = (el.className || "") + " hbs";
+    el.innerHTML =
+      '<div class="hbs-bar">' +
+        '<button data-act="addrow">＋ 新增一列</button>' +
+        '<button data-act="addfive">＋ 五列</button>' +
+        '<button data-act="delrow">刪除選取列</button>' +
+        '<button data-act="fill">向下填滿</button>' +
+        '<button data-act="clear">清空選取</button>' +
+        '<button data-act="xlsx">下載 .xlsx</button>' +
+      '</div>' +
+      '<div class="hbs-wrap"><table><thead></thead><tbody></tbody></table></div>' +
+      '<div class="hbs-sum"></div>' +
+      '<div class="hbs-hint">儲存格可直接輸入公式，例如 <b>=1200*3</b> 或 <b>=45000*0.9</b>，離開格子就換成計算結果。' +
+      'Tab／Enter／方向鍵移動，拖曳可框選整片，Ctrl+C／Ctrl+V 可與 Excel 互貼。</div>';
+
+    var thead = el.querySelector("thead"),
+        tbody = el.querySelector("tbody"),
+        sumEl = el.querySelector(".hbs-sum");
+
+    /* ---------- 表頭 ---------- */
+    (function () {
+      var tr = document.createElement("tr");
+      tr.innerHTML = '<th class="rn">#</th>' + COLS.map(function (c) {
+        return '<th class="' + (c.cost ? "cost" : "") + '" style="min-width:' + c.w + 'px">' +
+               esc(c.label) + "</th>";
+      }).join("");
+      thead.appendChild(tr);
+    })();
+
+    /* ---------- 合計 ---------- */
+    function totals() {
+      var net = 0, cost = 0, byCat = {};
+      rows.forEach(function (r) {
+        if (!r.name && !num(r.price)) return;
+        var a = rowAmount(r);
+        net += a;
+        cost += num(r.qty) * num(r.vendorPrice);
+        var k = r.cat || "未分類";
+        byCat[k] = (byCat[k] || 0) + a;
+      });
+      var afterDisc = net - num(discount);
+      var tax = Math.round(afterDisc * num(taxRate) / 100);
+      return { net: net, afterDisc: afterDisc, tax: tax, total: afterDisc + tax,
+               cost: cost, profit: afterDisc - cost, byCat: byCat };
+    }
+
+    function renderSum() {
+      var T = totals();
+      var catLines = Object.keys(T.byCat).map(function (k) {
+        return '<div class="hbs-line"><span>' + esc(k) + "</span><b>" + money(T.byCat[k]) + "</b></div>";
+      }).join("") || '<div class="hbs-line"><span style="color:#999">還沒有資料</span></div>';
+
+      sumEl.innerHTML =
+        '<div class="hbs-box"><h4>金額</h4>' +
+          '<div class="hbs-line"><span>小計（未稅）</span><b>' + money(T.net) + "</b></div>" +
+          '<div class="hbs-line"><span>折讓</span><input data-in="discount" value="' + esc(discount) + '"></div>' +
+          '<div class="hbs-line"><span>稅率 %</span><input data-in="tax" value="' + esc(taxRate) + '"></div>' +
+          '<div class="hbs-line"><span>營業稅</span><b>' + money(T.tax) + "</b></div>" +
+          '<div class="hbs-line total"><span>總計</span><b>NT$ ' + money(T.total) + "</b></div>" +
+        "</div>" +
+        '<div class="hbs-box"><h4>成本（僅內部）</h4>' +
+          '<div class="hbs-line"><span>成本合計</span><b>' + money(T.cost) + "</b></div>" +
+          '<div class="hbs-line"><span>預估淨利</span><b style="color:' +
+            (T.profit < 0 ? "#B0413E" : "#2E7D32") + '">' + money(T.profit) + "</b></div>" +
+          '<div class="hbs-line"><span>毛利率</span><b>' +
+            (T.afterDisc ? (T.profit / T.afterDisc * 100).toFixed(1) + "%" : "—") + "</b></div>" +
+        "</div>" +
+        '<div class="hbs-box"><h4>分類小計</h4>' + catLines + "</div>";
+    }
+
+    /* ---------- 表身 ---------- */
+    function cellHTML(r, ri, c, ci) {
+      var v = r[c.key];
+      if (c.kind === "calc") {
+        var n = c.key === "amount" ? rowAmount(r) : rowProfit(r);
+        var cls = "calc" + (n == null ? "" : n < 0 ? " neg" : c.key === "profit" ? " pos" : "");
+        return '<td class="' + cls + '" data-r="' + ri + '" data-c="' + ci + '">' +
+               (n == null ? "" : money(n)) + "</td>";
+      }
+      if (c.kind === "select") {
+        var o = ['<option value=""></option>'].concat(c.opts.map(function (x) {
+          return '<option value="' + esc(x) + '"' + (x === v ? " selected" : "") + ">" + esc(x) + "</option>";
+        })).join("");
+        return '<td data-r="' + ri + '" data-c="' + ci + '"><select data-cell="1">' + o + "</select></td>";
+      }
+      return '<td data-r="' + ri + '" data-c="' + ci + '">' +
+             '<input data-cell="1" style="text-align:' + (c.align || "left") + '" value="' + esc(v) + '"></td>';
+    }
+
+    function render() {
+      tbody.innerHTML = rows.map(function (r, ri) {
+        return "<tr>" + '<td class="rn">' + (ri + 1) + "</td>" +
+               COLS.map(function (c, ci) { return cellHTML(r, ri, c, ci); }).join("") + "</tr>";
+      }).join("");
+      paintSel();
+      renderSum();
+    }
+
+    function repaintRow(ri) {
+      var tr = tbody.children[ri];
+      if (!tr) return;
+      COLS.forEach(function (c, ci) {
+        if (c.kind !== "calc") return;
+        var td = tr.children[ci + 1];
+        var n = c.key === "amount" ? rowAmount(rows[ri]) : rowProfit(rows[ri]);
+        td.textContent = n == null ? "" : money(n);
+        td.className = "calc" + (n == null ? "" : n < 0 ? " neg" : c.key === "profit" ? " pos" : "");
+      });
+    }
+
+    function paintSel() {
+      var rmin = Math.min(sel.r0, sel.r1), rmax = Math.max(sel.r0, sel.r1);
+      var cmin = Math.min(sel.c0, sel.c1), cmax = Math.max(sel.c0, sel.c1);
+      Array.prototype.forEach.call(tbody.querySelectorAll("td[data-r]"), function (td) {
+        var r = +td.dataset.r, c = +td.dataset.c;
+        var inSel = r >= rmin && r <= rmax && c >= cmin && c <= cmax;
+        td.classList.toggle("sel", inSel && !(r === sel.r0 && c === sel.c0));
+        td.classList.toggle("cur", r === sel.r0 && c === sel.c0);
+      });
+    }
+
+    function cellEl(r, c) {
+      var tr = tbody.children[r];
+      return tr ? tr.children[c + 1] : null;
+    }
+    function focusCell(r, c) {
+      if (r < 0 || c < 0 || c >= COLS.length) return;
+      while (r >= rows.length) { rows.push(blankRow(rows[rows.length - 1].cat)); render(); }
+      var td = cellEl(r, c);
+      if (!td) return;
+      sel = { r0: r, c0: c, r1: r, c1: c };
+      paintSel();
+      var f = td.querySelector("input,select");
+      if (f) { f.focus(); if (f.select) f.select(); }
+      else td.scrollIntoView({ block: "nearest", inline: "nearest" });
+    }
+    function nextEditable(c, dir) {
+      var i = EDITABLE.indexOf(c);
+      if (i < 0) i = 0;
+      return EDITABLE[i + dir];
+    }
+
+    function commit() {
+      if (opts.onChange) {
+        opts.onChange(unflatten(rows.filter(function (r) {
+          return r.name || r.spec || num(r.price) || num(r.qty);
+        })), { taxRate: taxRate, discount: discount, totals: totals() });
+      }
+    }
+
+    /* ---------- 事件 ---------- */
+    function onInput(ev) {
+      var f = ev.target;
+      if (!f.dataset.cell) return;
+      var td = f.closest("td");
+      var r = +td.dataset.r, c = +td.dataset.c;
+      rows[r][COLS[c].key] = f.value;
+      repaintRow(r);
+      renderSum();
+    }
+
+    function onBlur(ev) {
+      var f = ev.target;
+      if (!f.dataset || !f.dataset.cell) return;
+      var td = f.closest("td");
+      if (!td) return;
+      var r = +td.dataset.r, c = +td.dataset.c, col = COLS[c];
+      var val = f.value;
+
+      if (typeof val === "string" && val.charAt(0) === "=") {
+        var got = evalFormula(val);
+        if (got != null) { val = String(Math.round(got * 100) / 100); f.value = val; }
+      }
+      rows[r][col.key] = val;
+
+      /* 打完項目名稱，若單價還空著就從單價庫帶入 */
+      if (col.key === "name" && val && priceLib.length) {
+        var hit = null;
+        for (var i = 0; i < priceLib.length; i++) {
+          if (priceLib[i].name === val) { hit = priceLib[i]; break; }
+        }
+        if (hit) {
+          if (!rows[r].price && hit.price != null) rows[r].price = String(hit.price);
+          if (!rows[r].unit && hit.unit) rows[r].unit = hit.unit;
+          if (!rows[r].vendorPrice && hit.cost != null) rows[r].vendorPrice = String(hit.cost);
+          render();
+        }
+      }
+      repaintRow(r);
+      renderSum();
+      commit();
+    }
+
+    function onKeyDown(ev) {
+      var f = ev.target;
+      if (!f.dataset || !f.dataset.cell) return;
+      var td = f.closest("td");
+      var r = +td.dataset.r, c = +td.dataset.c;
+
+      if (ev.key === "Tab") {
+        ev.preventDefault();
+        var nc = nextEditable(c, ev.shiftKey ? -1 : 1), nr = r;
+        if (nc == null) { nc = ev.shiftKey ? EDITABLE[EDITABLE.length - 1] : EDITABLE[0]; nr = r + (ev.shiftKey ? -1 : 1); }
+        if (nr < 0) return;
+        focusCell(nr, nc);
+      } else if (ev.key === "Enter") {
+        ev.preventDefault();
+        focusCell(r + (ev.shiftKey ? -1 : 1), c);
+      } else if (ev.key === "ArrowDown" || ev.key === "ArrowUp") {
+        if (f.tagName === "INPUT" && f.selectionStart !== f.selectionEnd) return;
+        ev.preventDefault();
+        focusCell(r + (ev.key === "ArrowDown" ? 1 : -1), c);
+      } else if (ev.key === "Escape") {
+        f.blur();
+      }
+    }
+
+    function onMouseDown(ev) {
+      var td = ev.target.closest && ev.target.closest("td[data-r]");
+      if (!td) return;
+      dragging = true;
+      sel = { r0: +td.dataset.r, c0: +td.dataset.c, r1: +td.dataset.r, c1: +td.dataset.c };
+      paintSel();
+    }
+    function onMouseOver(ev) {
+      if (!dragging) return;
+      var td = ev.target.closest && ev.target.closest("td[data-r]");
+      if (!td) return;
+      sel.r1 = +td.dataset.r; sel.c1 = +td.dataset.c;
+      paintSel();
+    }
+    function onMouseUp() { dragging = false; }
+
+    function bounds() {
+      return {
+        rmin: Math.min(sel.r0, sel.r1), rmax: Math.max(sel.r0, sel.r1),
+        cmin: Math.min(sel.c0, sel.c1), cmax: Math.max(sel.c0, sel.c1)
+      };
+    }
+    function cellText(r, c) {
+      var col = COLS[c];
+      if (col.kind === "calc") {
+        var n = col.key === "amount" ? rowAmount(rows[r]) : rowProfit(rows[r]);
+        return n == null ? "" : String(Math.round(n));
+      }
+      return rows[r][col.key] == null ? "" : String(rows[r][col.key]);
+    }
+
+    function onCopy(ev) {
+      if (!el.contains(document.activeElement)) return;
+      var b = bounds();
+      if (b.rmin === b.rmax && b.cmin === b.cmax) return;
+      var lines = [];
+      for (var r = b.rmin; r <= b.rmax; r++) {
+        var vals = [];
+        for (var c = b.cmin; c <= b.cmax; c++) vals.push(cellText(r, c));
+        lines.push(vals.join("\t"));
+      }
+      ev.clipboardData.setData("text/plain", lines.join("\n"));
+      ev.preventDefault();
+    }
+
+    function onPaste(ev) {
+      if (!el.contains(document.activeElement)) return;
+      var text = (ev.clipboardData || global.clipboardData).getData("text/plain");
+      if (!text) return;
+      var lines = text.replace(/\r/g, "").split("\n");
+      while (lines.length && lines[lines.length - 1] === "") lines.pop();
+      if (!lines.length) return;
+      if (lines.length === 1 && lines[0].indexOf("\t") < 0) return;  // 單格照常貼
+      ev.preventDefault();
+      var b = bounds();
+      lines.forEach(function (line, ri) {
+        var cols = line.split("\t");
+        var tr = b.rmin + ri;
+        while (tr >= rows.length) rows.push(blankRow(rows[rows.length - 1].cat));
+        cols.forEach(function (v, ci) {
+          var col = COLS[b.cmin + ci];
+          if (!col || col.kind === "calc") return;
+          rows[tr][col.key] = v.trim();
+        });
+      });
+      render();
+      commit();
+    }
+
+    function onBar(ev) {
+      var b = ev.target.closest("button");
+      if (!b) return;
+      var act = b.dataset.act, bd = bounds();
+      if (act === "addrow" || act === "addfive") {
+        var n = act === "addfive" ? 5 : 1;
+        for (var i = 0; i < n; i++) rows.push(blankRow(rows.length ? rows[rows.length - 1].cat : ""));
+        render(); commit();
+      } else if (act === "delrow") {
+        if (rows.length - (bd.rmax - bd.rmin + 1) < 1) return;
+        rows.splice(bd.rmin, bd.rmax - bd.rmin + 1);
+        sel = { r0: bd.rmin, c0: sel.c0, r1: bd.rmin, c1: sel.c0 };
+        render(); commit();
+      } else if (act === "fill") {
+        for (var c = bd.cmin; c <= bd.cmax; c++) {
+          var col = COLS[c];
+          if (col.kind === "calc") continue;
+          var src = rows[bd.rmin][col.key];
+          for (var r = bd.rmin + 1; r <= bd.rmax; r++) rows[r][col.key] = src;
+        }
+        render(); commit();
+      } else if (act === "clear") {
+        for (var r2 = bd.rmin; r2 <= bd.rmax; r2++)
+          for (var c2 = bd.cmin; c2 <= bd.cmax; c2++)
+            if (COLS[c2].kind !== "calc") rows[r2][COLS[c2].key] = "";
+        render(); commit();
+      } else if (act === "xlsx") {
+        exportXlsx();
+      }
+    }
+
+    function onSumInput(ev) {
+      var f = ev.target;
+      if (!f.dataset || !f.dataset.in) return;
+      if (f.dataset.in === "discount") discount = num(f.value);
+      else taxRate = num(f.value);
+      renderSum();
+      commit();
+    }
+
+    /* ---------- 下載 xlsx ---------- */
+    async function exportXlsx() {
+      if (!global.ExcelJS) { alert("Excel 元件未載入"); return; }
+      var T = totals();
+      var wb = new global.ExcelJS.Workbook();
+      var ws = wb.addWorksheet("估價單");
+      ws.columns = COLS.map(function (c) { return { width: Math.round(c.w / 7) + 2 }; });
+      var head = ws.addRow(COLS.map(function (c) { return c.label; }));
+      head.eachCell(function (c) {
+        c.font = { bold: true, color: { argb: "FFFFFFFF" } };
+        c.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF1F6E85" } };
+        c.alignment = { horizontal: "center" };
+      });
+      rows.forEach(function (r) {
+        if (!r.name && !num(r.price)) return;
+        var n = ws.rowCount + 1;
+        var row = ws.addRow([r.cat, r.name, r.spec, r.unit, num(r.qty) || "", num(r.price) || "",
+          { formula: "E" + n + "*F" + n, result: rowAmount(r) }, r.note,
+          r.vendorPrice === "" ? null : num(r.vendorPrice),
+          { formula: 'IF(I' + n + '="","",G' + n + "-E" + n + "*I" + n + ")",
+            result: rowProfit(r) == null ? "" : rowProfit(r) }]);
+        [6, 7, 9, 10].forEach(function (i) { row.getCell(i).numFmt = "#,##0"; });
+      });
+      ws.addRow([]);
+      [["小計（未稅）", T.net], ["折讓", num(discount)], ["營業稅 " + taxRate + "%", T.tax],
+       ["總計", T.total]].forEach(function (p) {
+        var r = ws.addRow(["", "", "", "", "", p[0], p[1]]);
+        r.getCell(6).font = { bold: true };
+        r.getCell(7).numFmt = "#,##0"; r.getCell(7).font = { bold: true };
+      });
+      var buf = await wb.xlsx.writeBuffer();
+      var blob = new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+      if (global.HB_downloadBlob) global.HB_downloadBlob(blob, "赫柏空間_估價單.xlsx");
+      else {
+        var u = URL.createObjectURL(blob), a = document.createElement("a");
+        a.href = u; a.download = "赫柏空間_估價單.xlsx"; a.click(); URL.revokeObjectURL(u);
+      }
+    }
+
+    /* ---------- 綁定 ---------- */
+    el.addEventListener("input", onInput);
+    el.addEventListener("focusout", onBlur, true);
+    el.addEventListener("keydown", onKeyDown);
+    tbody.addEventListener("mousedown", onMouseDown);
+    tbody.addEventListener("mouseover", onMouseOver);
+    el.querySelector(".hbs-bar").addEventListener("click", onBar);
+    sumEl.addEventListener("change", onSumInput);
+    global.addEventListener("mouseup", onMouseUp);
+    document.addEventListener("copy", onCopy);
+    document.addEventListener("paste", onPaste);
+
+    render();
+
+    return {
+      getCategories: function () { return unflatten(rows); },
+      getMeta: function () { return { taxRate: taxRate, discount: discount, totals: totals() }; },
+      setPriceLib: function (lib) { priceLib = lib || []; },
+      destroy: function () {
+        global.removeEventListener("mouseup", onMouseUp);
+        document.removeEventListener("copy", onCopy);
+        document.removeEventListener("paste", onPaste);
+        el.innerHTML = "";
+      }
+    };
+  }
+
+  global.HB_SheetGrid = { mount: mount, CATS: CATS, UNITS: UNITS };
+})(typeof window !== "undefined" ? window : this);
+
 </script>
 
 </body>
