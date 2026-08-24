@@ -1,0 +1,714 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>南台灣裝潢廣告觀察台</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#EFF1EC; --card:#FCFDFB; --ink:#16232A; --muted:#6B7A7C; --dim:#9AA39F;
+  --rule:#D5DAD1; --rule-soft:#E4E8E0;
+  --live:#1B7A63; --live-soft:#DCEDE7;
+  --flag:#2A4B9B; --flag-soft:#DFE5F5;
+  --off:#B3B9B2; --warn:#8A5A12; --warn-soft:#F5EDDC;
+  --radius:3px; --pad:clamp(16px,4vw,40px);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--paper);color:var(--ink);font-family:"Noto Sans TC",system-ui,-apple-system,sans-serif;font-size:15px;line-height:1.65;-webkit-font-smoothing:antialiased}
+.mono{font-family:"IBM Plex Mono","Noto Sans TC",monospace;font-variant-numeric:tabular-nums}
+button{font-family:inherit;font-size:inherit;cursor:pointer}
+input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
+a{color:inherit}
+.wrap{max-width:1040px;margin:0 auto;padding:0 var(--pad) 96px}
+
+/* masthead */
+.masthead{border-bottom:1.5px solid var(--ink);padding:28px 0 0;margin-bottom:22px}
+.mast-top{display:flex;flex-wrap:wrap;align-items:flex-end;gap:16px;padding-bottom:14px}
+.title-block{flex:1 1 260px;min-width:0}
+.eyebrow{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin:0 0 6px}
+h1{margin:0;font-size:clamp(25px,4.6vw,38px);font-weight:900;letter-spacing:-.02em;line-height:1.12}
+.tagline{margin:8px 0 0;font-size:13.5px;color:var(--muted);max-width:46ch}
+.mast-actions{display:flex;gap:8px;flex-wrap:wrap}
+.tabs{display:flex;gap:0}
+.tab{border:0;background:none;padding:9px 2px;margin-right:24px;font-size:14px;font-weight:700;color:var(--dim);border-bottom:2px solid transparent;margin-bottom:-1.5px}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--ink)}
+
+.btn{border:1.5px solid var(--ink);background:var(--ink);color:var(--card);padding:9px 16px;border-radius:var(--radius);font-weight:700;letter-spacing:.02em;transition:opacity .15s ease}
+.btn:hover{opacity:.84}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--rule)}
+.btn.ghost:hover{border-color:var(--ink);opacity:1}
+.btn.tiny{padding:5px 10px;font-size:12.5px;font-weight:500}
+.btn:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible,.chip:focus-visible,.tab:focus-visible,a:focus-visible{outline:2px solid var(--flag);outline-offset:2px}
+
+/* readout */
+.readout{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--rule);background:var(--card);border-radius:var(--radius);margin-bottom:26px;overflow:hidden}
+.readout div{padding:12px 14px;border-right:1px solid var(--rule-soft)}
+.readout div:last-child{border-right:0}
+.readout .n{font-family:"IBM Plex Mono",monospace;font-size:23px;font-weight:600;line-height:1.1;display:block}
+.readout .k{font-size:11.5px;color:var(--muted);letter-spacing:.06em}
+.readout .n.hi{color:var(--live)}
+.readout .n.flagged{color:var(--flag)}
+@media(max-width:620px){
+  .readout{grid-template-columns:repeat(2,1fr)}
+  .readout div:nth-child(2){border-right:0}
+  .readout div:nth-child(-n+2){border-bottom:1px solid var(--rule-soft)}
+}
+
+/* section heads */
+.sec-head{display:flex;align-items:baseline;gap:12px;border-bottom:1px solid var(--rule);padding-bottom:7px;margin:0 0 16px}
+.sec-head h2{margin:0;font-size:14px;font-weight:900;letter-spacing:.06em}
+.sec-head .note{font-size:12px;color:var(--muted);margin-left:auto;text-align:right}
+.sec{margin-bottom:42px}
+.sec-num{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--dim);letter-spacing:.1em}
+
+/* rank */
+.rank-row{display:grid;grid-template-columns:minmax(88px,150px) 1fr 62px;align-items:center;gap:12px;padding:7px 0;border-bottom:1px solid var(--rule-soft)}
+.rank-row:last-child{border-bottom:0}
+.rank-name{font-size:13.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rank-name .star{color:var(--flag);font-size:11px;margin-right:3px}
+.bar-track{height:15px;position:relative}
+.bar{height:100%;background:var(--off);border-radius:1px;display:flex;align-items:center;width:0;transition:width .7s cubic-bezier(.2,.7,.3,1)}
+.bar.live{background:var(--live)}
+.bar.worth{background:var(--flag)}
+.bar-label{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:#fff;padding-left:6px;white-space:nowrap;opacity:.9}
+.rank-days{font-family:"IBM Plex Mono",monospace;font-size:14px;text-align:right;font-weight:600}
+.rank-days small{font-size:10px;color:var(--muted);font-weight:400}
+
+/* filters */
+.filters{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:16px;align-items:center}
+.chip{border:1px solid var(--rule);background:var(--card);padding:5px 12px;border-radius:99px;font-size:12.5px;color:var(--muted)}
+.chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--card);font-weight:500}
+select.chip{padding:6px 10px;border-radius:99px;color:var(--ink);max-width:190px}
+
+/* cards */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.card{background:var(--card);border:1px solid var(--rule);border-radius:var(--radius);padding:15px 16px 13px;display:flex;flex-direction:column;gap:9px}
+.card.worth{border-color:var(--flag);box-shadow:inset 3px 0 0 var(--flag)}
+.card-top{display:flex;align-items:flex-start;gap:10px}
+.card-name{font-weight:700;font-size:15.5px;line-height:1.3;flex:1;min-width:0}
+.status{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.08em;padding:2px 7px;border-radius:99px;white-space:nowrap;background:#EDEEEB;color:var(--muted)}
+.status.live{background:var(--live-soft);color:var(--live)}
+.days-line{font-family:"IBM Plex Mono",monospace;font-size:12.5px;color:var(--muted)}
+.days-line b{font-size:17px;color:var(--ink);font-weight:600}
+.verdict{font-size:11.5px;font-weight:700;letter-spacing:.04em}
+.v-worth{color:var(--flag)} .v-watch{color:var(--warn)} .v-skip{color:var(--dim)}
+.hook{font-size:14px;line-height:1.55;border-left:2px solid var(--rule);padding-left:10px;color:#25353B}
+.meta{display:flex;flex-wrap:wrap;gap:5px}
+.tag{font-size:11.5px;border:1px solid var(--rule);border-radius:2px;padding:2px 7px;color:var(--muted);background:#F6F7F4}
+.tag.sig{border-color:var(--flag);color:var(--flag);background:var(--flag-soft)}
+.tag.num{border-color:var(--warn);color:var(--warn);background:var(--warn-soft)}
+.card-note{font-size:12.5px;color:var(--muted);line-height:1.55}
+.card-foot{display:flex;gap:6px;margin-top:2px;padding-top:9px;border-top:1px solid var(--rule-soft)}
+.card-foot .spacer{flex:1}
+.linkish{background:none;border:0;color:var(--muted);font-size:12.5px;padding:2px 4px;text-decoration:underline;text-underline-offset:2px}
+.linkish:hover{color:var(--ink)}
+.linkish.danger:hover{color:#A63A20}
+
+.empty{border:1px dashed var(--rule);border-radius:var(--radius);padding:34px 22px;text-align:center;color:var(--muted);background:var(--card)}
+.empty p{margin:0 0 4px}
+.empty .lead{color:var(--ink);font-weight:700;font-size:16px;margin-bottom:8px}
+
+/* handbook */
+.lede{font-size:15px;color:var(--muted);margin:0 0 18px;max-width:62ch}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:700px){.two{grid-template-columns:1fr}}
+.panelbox{background:var(--card);border:1px solid var(--rule);border-radius:var(--radius);padding:15px 17px}
+.panelbox h3{margin:0 0 10px;font-size:14px;font-weight:900}
+.panelbox ul{margin:0;padding:0;list-style:none}
+.panelbox li{padding:5px 0 5px 22px;position:relative;font-size:13.5px;line-height:1.55;border-bottom:1px solid var(--rule-soft)}
+.panelbox li:last-child{border-bottom:0}
+.panelbox.yes li::before{content:"✓";position:absolute;left:0;color:var(--live);font-weight:700}
+.panelbox.no li::before{content:"✕";position:absolute;left:0;color:#A63A20}
+
+.steps{border-top:1px solid var(--rule)}
+.step{display:grid;grid-template-columns:64px 1fr;gap:16px;padding:14px 0;border-bottom:1px solid var(--rule-soft)}
+.step-t{font-family:"IBM Plex Mono",monospace;font-size:12.5px;color:var(--flag);padding-top:2px}
+.step h4{margin:0 0 3px;font-size:14.5px;font-weight:700}
+.step p{margin:0;font-size:13.5px;color:var(--muted);line-height:1.6}
+
+.kwgroup{margin-bottom:16px}
+.kwgroup .kwhead{display:flex;align-items:baseline;gap:9px;margin-bottom:7px}
+.kwgroup .kwhead strong{font-size:13.5px}
+.kwgroup .kwhead span{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+.kwlist{display:flex;flex-wrap:wrap;gap:6px}
+.kw{display:inline-block;border:1px solid var(--rule);background:var(--card);border-radius:99px;padding:5px 13px;font-size:13px;text-decoration:none;transition:all .14s ease}
+.kw:hover{border-color:var(--flag);color:var(--flag);background:var(--flag-soft)}
+.kw::after{content:"↗";font-size:10px;margin-left:5px;color:var(--dim)}
+.kw:hover::after{color:var(--flag)}
+
+.verdicts{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:12px}
+.vcard{background:var(--card);border:1px solid var(--rule);border-radius:var(--radius);padding:13px 15px;border-top:3px solid var(--rule)}
+.vcard.a{border-top-color:var(--flag)} .vcard.b{border-top-color:var(--live)}
+.vcard.c{border-top-color:var(--warn)} .vcard.d{border-top-color:var(--off)}
+.vcard h4{margin:0 0 2px;font-size:13.5px;font-weight:900}
+.vcard .cond{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--muted);display:block;margin-bottom:7px}
+.vcard p{margin:0;font-size:13px;color:var(--muted);line-height:1.55}
+
+/* calculator */
+.calc{display:grid;grid-template-columns:1fr 1fr;gap:20px;background:var(--card);border:1px solid var(--rule);border-radius:var(--radius);padding:18px}
+@media(max-width:700px){.calc{grid-template-columns:1fr}}
+.calc-in .field{margin-bottom:12px}
+.calc-out{border-left:1px solid var(--rule-soft);padding-left:20px;display:flex;flex-direction:column;justify-content:center}
+@media(max-width:700px){.calc-out{border-left:0;border-top:1px solid var(--rule-soft);padding-left:0;padding-top:16px}}
+.bignum{font-family:"IBM Plex Mono",monospace;font-size:clamp(34px,7vw,50px);font-weight:600;line-height:1;color:var(--flag);letter-spacing:-.02em}
+.bignum small{font-size:16px;color:var(--muted);font-weight:400;margin-right:4px}
+.bigcap{font-size:12.5px;color:var(--muted);letter-spacing:.05em;margin:6px 0 16px}
+.outrow{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--rule-soft);font-size:13.5px}
+.outrow:last-of-type{border-bottom:0}
+.outrow span:last-child{font-family:"IBM Plex Mono",monospace;font-weight:600}
+.calcnote{font-size:12.5px;color:var(--dim);margin:14px 0 0;line-height:1.55}
+
+.traps{counter-reset:trap}
+.trap{display:grid;grid-template-columns:34px 1fr;gap:12px;padding:13px 0;border-bottom:1px solid var(--rule-soft)}
+.trap::before{counter-increment:trap;content:"0" counter(trap);font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--dim);padding-top:3px}
+.trap h4{margin:0 0 3px;font-size:14.5px;font-weight:700}
+.trap p{margin:0;font-size:13.5px;color:var(--muted);line-height:1.6}
+
+.disclaimer{font-size:12px;color:var(--dim);line-height:1.6;border-top:1px solid var(--rule);padding-top:14px;margin-top:32px}
+
+/* panel */
+.scrim{position:fixed;inset:0;background:rgba(22,35,42,.34);opacity:0;pointer-events:none;transition:opacity .2s ease;z-index:40}
+.scrim.open{opacity:1;pointer-events:auto}
+.panel{position:fixed;top:0;right:0;height:100dvh;width:min(460px,100%);background:var(--paper);border-left:1px solid var(--rule);transform:translateX(100%);transition:transform .26s cubic-bezier(.3,.8,.3,1);z-index:50;display:flex;flex-direction:column}
+.panel.open{transform:translateX(0)}
+.panel-head{padding:18px 20px 12px;border-bottom:1px solid var(--rule);display:flex;align-items:center;gap:12px}
+.panel-head h3{margin:0;font-size:17px;font-weight:900;flex:1}
+.panel-body{flex:1;overflow-y:auto;padding:16px 20px 24px}
+.panel-foot{padding:12px 20px;border-top:1px solid var(--rule);display:flex;gap:8px;background:var(--card)}
+.panel-foot .btn{flex:1;text-align:center}
+.field{margin-bottom:15px}
+.field>label{display:block;font-size:12px;letter-spacing:.05em;color:var(--muted);margin-bottom:5px;font-weight:500}
+.field input[type=text],.field input[type=date],.field input[type=number],.field select,.field textarea{width:100%;padding:9px 11px;background:var(--card);border:1px solid var(--rule);border-radius:var(--radius)}
+.field textarea{resize:vertical;min-height:62px;line-height:1.5}
+.field .hint{font-size:11.5px;color:var(--dim);margin-top:4px;line-height:1.45}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.checks{display:flex;flex-direction:column;gap:3px}
+.checks label{display:flex;gap:8px;align-items:flex-start;font-size:13.5px;padding:4px 0;cursor:pointer}
+.checks input{margin-top:4px;accent-color:var(--flag)}
+.switch{display:flex;align-items:center;gap:9px;font-size:14px;border:1px solid var(--rule);background:var(--card);padding:10px 12px;border-radius:var(--radius);cursor:pointer}
+.switch input{accent-color:var(--live);width:17px;height:17px}
+
+.toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,14px);background:var(--ink);color:var(--card);padding:9px 18px;border-radius:99px;font-size:13.5px;opacity:0;pointer-events:none;transition:all .22s ease;z-index:60}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.footnote{margin-top:34px;padding-top:14px;border-top:1px solid var(--rule);font-size:12px;color:var(--dim);display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.footnote .spacer{flex:1}
+[hidden]{display:none!important}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="mast-top">
+      <div class="title-block">
+        <p class="eyebrow">Meta Ad Library · Competitive Watch</p>
+        <h1>南台灣裝潢廣告觀察台</h1>
+        <p class="tagline">看同業真正在花錢跑的廣告。每週一 20 分鐘，抄結構、不抄句子。</p>
+      </div>
+      <div class="mast-actions">
+        <button class="btn ghost" id="openLibrary">開檔案庫</button>
+        <button class="btn" id="openNew">記一則</button>
+      </div>
+    </div>
+    <nav class="tabs" role="tablist">
+      <button class="tab" role="tab" id="tabLog" aria-selected="true" aria-controls="viewLog">紀錄</button>
+      <button class="tab" role="tab" id="tabBook" aria-selected="false" aria-controls="viewBook">手冊</button>
+    </nav>
+  </header>
+
+  <!-- ══════════ 紀錄 ══════════ -->
+  <div id="viewLog" role="tabpanel" aria-labelledby="tabLog">
+
+    <div class="readout">
+      <div><span class="n mono" id="statTotal">0</span><span class="k">已記錄</span></div>
+      <div><span class="n mono" id="statFirms">0</span><span class="k">同業家數</span></div>
+      <div><span class="n mono hi" id="statLive">0</span><span class="k">仍在投放</span></div>
+      <div><span class="n mono flagged" id="statWorth">0</span><span class="k">值得研究</span></div>
+    </div>
+
+    <section class="sec" id="rankSection">
+      <div class="sec-head"><h2>續投排行</h2><span class="note">長度＝天數 · 藍＝值得研究 · 灰＝已停止</span></div>
+      <div id="rankList"></div>
+    </section>
+
+    <section class="sec">
+      <div class="sec-head"><h2>紀錄</h2><span class="note" id="listCount"></span></div>
+      <div class="filters">
+        <button class="chip" data-filter="all" aria-pressed="true">全部</button>
+        <button class="chip" data-filter="live" aria-pressed="false">進行中</button>
+        <button class="chip" data-filter="worth" aria-pressed="false">值得研究</button>
+        <button class="chip" data-filter="off" aria-pressed="false">已停止</button>
+        <select class="chip" id="firmFilter"><option value="">全部同業</option></select>
+      </div>
+      <div class="grid" id="cardGrid"></div>
+      <div class="empty" id="emptyState" hidden>
+        <p class="lead">還沒有任何紀錄</p>
+        <p>去「手冊」頁點一個關鍵字，檔案庫會直接開在那個字上。</p>
+        <p>挑一則跑超過 30 天、狀態還在進行中的，回來按「記一則」。</p>
+      </div>
+    </section>
+
+    <div class="footnote">
+      <span id="saveState">資料存在這台裝置</span>
+      <span class="spacer"></span>
+      <button class="linkish" id="exportBtn">匯出 JSON</button>
+      <button class="linkish" id="csvBtn">匯出 CSV</button>
+      <button class="linkish" id="importBtn">匯入</button>
+      <input type="file" id="importFile" accept="application/json,.json" hidden>
+    </div>
+  </div>
+
+  <!-- ══════════ 手冊 ══════════ -->
+  <div id="viewBook" role="tabpanel" aria-labelledby="tabBook" hidden>
+
+    <section class="sec">
+      <div class="sec-head"><span class="sec-num">01</span><h2>檔案庫給你什麼、不給你什麼</h2></div>
+      <p class="lede">這一步不能跳。多數人誤判競品策略，都是因為把「看不到的」自己補了想像。</p>
+      <div class="two">
+        <div class="panelbox yes">
+          <h3>看得到</h3>
+          <ul>
+            <li>完整素材：圖片、影片、輪播，可直接播放</li>
+            <li>廣告文案、標題、CTA 按鈕文字</li>
+            <li>首次投放日期（判斷成效的關鍵）</li>
+            <li>廣告狀態：進行中／已停止</li>
+            <li>投放平台：FB、IG、Messenger、Audience Network</li>
+            <li>同一支廣告的素材版本數量</li>
+          </ul>
+        </div>
+        <div class="panelbox no">
+          <h3>看不到</h3>
+          <ul>
+            <li>花了多少錢</li>
+            <li>曝光、點擊、CTR</li>
+            <li>來了幾張名單、成交幾件</li>
+            <li>受眾設定與投放地區</li>
+            <li>到達頁後的轉換狀況</li>
+          </ul>
+        </div>
+      </div>
+      <p class="calcnote">一般商業廣告只有這個程度。任何「他一個月花 30 萬」的說法都是猜的——包括你自己的猜測。</p>
+    </section>
+
+    <section class="sec">
+      <div class="sec-head"><span class="sec-num">02</span><h2>每週一的 20 分鐘</h2></div>
+      <p class="lede">固定節奏比看得深重要。一次看兩小時然後三個月不看，等於沒看。</p>
+      <div class="steps">
+        <div class="step"><span class="step-t">05 min</span><div>
+          <h4>用關鍵字反查，不用公司名</h4>
+          <p>搜關鍵字回傳的就是「現在真的在投這個字」的同業，比你憑印象列名單準得多，也會撈到你沒聽過的新對手。</p></div></div>
+        <div class="step"><span class="step-t">08 min</span><div>
+          <h4>只挑投放超過 30 天、還在進行中的</h4>
+          <p>短命廣告是測試中，看了會學到錯的東西。長命的那幾支是唯一免費、可信的成效訊號。</p></div></div>
+        <div class="step"><span class="step-t">05 min</span><div>
+          <h4>按「記一則」抄回來</h4>
+          <p>重點抄結構：鉤子怎麼開場、有沒有具體數字、CTA 導去哪裡。不要整段複製文案。</p></div></div>
+        <div class="step"><span class="step-t">02 min</span><div>
+          <h4>決定這週要測哪一組</h4>
+          <p>一週只驗證一個變數。這週測鉤子就固定主視覺，下週測主視覺就固定文案，否則測完不知道是哪個在動。</p></div></div>
+      </div>
+    </section>
+
+    <section class="sec">
+      <div class="sec-head"><span class="sec-num">03</span><h2>關鍵字獵捕清單</h2><span class="note">點了直接開檔案庫</span></div>
+      <p class="lede">每個都預設「台灣 · 所有廣告 · 刊登中」。</p>
+      <div id="kwZone"></div>
+    </section>
+
+    <section class="sec">
+      <div class="sec-head"><span class="sec-num">04</span><h2>怎麼判讀你看到的東西</h2></div>
+      <div class="verdicts">
+        <div class="vcard a"><h4>值得研究</h4><span class="cond">≥ 30 天 · 進行中</span>
+          <p>沒有人會持續付錢跑賠錢的廣告。這支的鉤子和主視覺已經被市場驗證過，拆解它的結構。</p></div>
+        <div class="vcard b"><h4>已驗證素材</h4><span class="cond">同一主視覺 · 3 組以上文案</span>
+          <p>主視覺過關了，對方正在測文案。可以參考那個主視覺的類型——不是抄圖，是抄拍法。</p></div>
+        <div class="vcard c"><h4>先觀察</h4><span class="cond">7 – 29 天</span>
+          <p>還在學習期，成效未定。記下來，下週回來看它活不活著，這比看一次有用得多。</p></div>
+        <div class="vcard d"><h4>別學</h4><span class="cond">&lt; 7 天 · 或一週內整批停掉</span>
+          <p>這是亂槍打鳥，不是策略。看了只會把別人的失敗抄進自己的帳戶。</p></div>
+      </div>
+    </section>
+
+    <section class="sec">
+      <div class="sec-head"><span class="sec-num">05</span><h2>你的 CPL 天花板</h2></div>
+      <p class="lede">判斷自己的廣告貴不貴不能靠感覺。裝潢是高單價低件數，一張名單三千塊可能還很便宜。</p>
+      <div class="calc">
+        <div class="calc-in">
+          <div class="field"><label for="cJob">平均案件金額（萬元）</label><input type="number" id="cJob" value="150" min="1" step="10"></div>
+          <div class="field"><label for="cMargin">毛利率 %</label><input type="number" id="cMargin" value="25" min="1" max="90"></div>
+          <div class="field"><label for="cClose">名單 → 成交率 %</label><input type="number" id="cClose" value="3" min="0.1" max="100" step="0.5">
+            <p class="hint">沒統計過就先用 3%。廣告名單的成交率通常低於轉介紹，別用轉介紹的經驗值代入。</p></div>
+          <div class="field"><label for="cShare">行銷可佔毛利 %</label><input type="number" id="cShare" value="30" min="1" max="100"></div>
+        </div>
+        <div class="calc-out">
+          <div class="bignum"><small>NT$</small><span id="oCpl">3,375</span></div>
+          <p class="bigcap">可容忍 CPL 上限</p>
+          <div class="outrow"><span>每件毛利</span><span id="oGross">—</span></div>
+          <div class="outrow"><span>每成交需要名單</span><span id="oLeads">—</span></div>
+          <div class="outrow"><span>每件可分配行銷費</span><span id="oBudget">—</span></div>
+          <p class="calcnote">超過這個數就是在賠錢買名單，不管後台看起來多漂亮。低於一半，代表你該加預算。</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="sec">
+      <div class="sec-head"><span class="sec-num">06</span><h2>四個會讓你白看的誤判</h2></div>
+      <div class="traps">
+        <div class="trap"><div><h4>廣告數量多 ≠ 成效好</h4>
+          <p>有些公司把預算交給代操，代操為了交報告一次上幾十支素材。素材多只代表花得多。看天數，不看支數。</p></div></div>
+        <div class="trap"><div><h4>抄句子不抄結構</h4>
+          <p>把對方文案改幾個字通常沒效——有效的是「具體數字＋讓人對照自己條件」這個結構。看到「32 坪老屋，預算 148 萬」，要抄的是這個格式，填你自己的案子。</p></div></div>
+        <div class="trap"><div><h4>盯台北的大公司</h4>
+          <p>台北的客層、單價、屋型跟台南高雄差距很大，他們的鉤子在南部常常無效。優先看台南、高雄、嘉義在投的。</p></div></div>
+        <div class="trap"><div><h4>從檔案庫推測對方的花費</h4>
+          <p>一般商業廣告的花費與成效不公開。所有「競品月投多少」都是估算模型，不是事實。你能確定的只有：投了多久、還在不在跑。</p></div></div>
+      </div>
+    </section>
+
+    <p class="disclaimer">資料來源：Meta 官方廣告檔案庫 facebook.com/ads/library。檔案庫的篩選項目與可見欄位由 Meta 調整，操作介面可能與本頁描述略有差異；花費與成效數據對一般商業廣告不公開。CPL 為毛利回推模型，實際可容忍值請以自家帳務為準。</p>
+  </div>
+</div>
+
+<div class="scrim" id="scrim"></div>
+
+<aside class="panel" id="panel" role="dialog" aria-modal="true" aria-labelledby="panelTitle">
+  <div class="panel-head">
+    <h3 id="panelTitle">記一則廣告</h3>
+    <button class="btn ghost tiny" id="closePanel">關閉</button>
+  </div>
+  <div class="panel-body">
+    <div class="field"><label for="fFirm">廣告主名稱</label>
+      <input type="text" id="fFirm" list="firmList" placeholder="記粉專名稱，不是公司名" autocomplete="off">
+      <datalist id="firmList"></datalist>
+      <p class="hint">同一家可能有多個粉專分開投。</p></div>
+    <div class="row2">
+      <div class="field"><label for="fStart">首次投放日</label><input type="date" id="fStart">
+        <p class="hint">檔案庫每則都有寫</p></div>
+      <div class="field"><label for="fSeen">最後確認日</label><input type="date" id="fSeen"></div>
+    </div>
+    <div class="field"><label class="switch" for="fLive"><input type="checkbox" id="fLive" checked><span>今天還看得到（進行中）</span></label></div>
+    <div class="field"><label for="fHook">文案第一行</label>
+      <textarea id="fHook" placeholder="鉤子。這是整支廣告最值得研究的一句"></textarea></div>
+    <div class="field"><label for="fVisual">主視覺內容</label>
+      <input type="text" id="fVisual" placeholder="前後對比？完工照？屋主人臉？施工現場？"></div>
+    <div class="row2">
+      <div class="field"><label for="fFormat">素材形式</label>
+        <select id="fFormat">
+          <option>前後對比</option><option>短影音走拍</option><option>工地實錄</option>
+          <option>單圖完工照</option><option>輪播案例</option><option>3D 示意圖</option>
+          <option>設計師出鏡</option><option>純文字／圖卡</option>
+        </select></div>
+      <div class="field"><label for="fVariants">素材版本數</label><input type="number" id="fVariants" min="1" step="1" value="1"></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label for="fCta">CTA 按鈕</label>
+        <select id="fCta"><option>了解詳情</option><option>傳送訊息</option><option>立即預約</option>
+          <option>索取資料</option><option>領取優惠</option><option>撥打電話</option><option>沒有按鈕</option></select></div>
+      <div class="field"><label for="fLanding">到達位置</label>
+        <select id="fLanding"><option>Meta 原生表單</option><option>私訊 Messenger／DM</option>
+          <option>LINE 官方帳號</option><option>官網首頁</option><option>案例頁／文章</option><option>試算工具</option></select></div>
+    </div>
+    <div class="field"><label class="switch" for="fNums"><input type="checkbox" id="fNums"><span>文案有具體數字（坪數／預算／屋齡）</span></label></div>
+    <div class="field"><label>文案裡有沒有篩選條件</label>
+      <div class="checks" id="fSignals">
+        <label><input type="checkbox" value="有寫接案區域"><span>有寫接案區域</span></label>
+        <label><input type="checkbox" value="有坪數門檻"><span>有坪數門檻</span></label>
+        <label><input type="checkbox" value="有預算起跳"><span>有預算起跳／價格錨點</span></label>
+        <label><input type="checkbox" value="有案件類型限制"><span>有案件類型限制（老屋／商空…）</span></label>
+        <label><input type="checkbox" value="有時程條件"><span>有時程條件（已交屋／半年內動工）</span></label>
+      </div>
+      <p class="hint">一個都沒勾，代表他也在收雜名單。</p></div>
+    <div class="field"><label for="fNote">備註</label>
+      <textarea id="fNote" placeholder="值得偷的一句話、留言區在問什麼、他怎麼回"></textarea></div>
+    <div class="field"><label for="fLink">廣告連結</label>
+      <input type="text" id="fLink" placeholder="貼上檔案庫網址（選填）"></div>
+  </div>
+  <div class="panel-foot">
+    <button class="btn ghost" id="cancelBtn">取消</button>
+    <button class="btn" id="saveBtn">存起來</button>
+  </div>
+</aside>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+  const KEY="nantai-ad-watch:v2", WORTH_DAYS=30;
+  let items=[], editingId=null, filter="all", firmFilter="";
+  const $=s=>document.querySelector(s);
+  const todayISO=()=>new Date().toISOString().slice(0,10);
+  const nf=n=>n.toLocaleString("en-US");
+
+  const KEYWORDS=[
+    {label:"老屋翻新",en:"Renovation",words:["老屋翻新","老屋翻修","中古屋翻新","透天翻新","舊屋翻新","老屋改造"]},
+    {label:"新成屋 / 預售屋",en:"New Build",words:["預售屋客變","客變","新成屋裝潢","交屋裝潢","系統櫃","毛胚屋"]},
+    {label:"商業空間",en:"Commercial",words:["商空設計","店面設計","辦公室裝潢","餐廳設計","民宿設計"]},
+    {label:"在地對手",en:"Local",words:["台南室內設計","高雄室內設計","嘉義室內設計","台南裝潢","高雄裝潢"]},
+    {label:"名單鉤子",en:"Lead Hooks",words:["免費丈量","免費報價","裝潢預算","一坪多少","設計費"]}
+  ];
+  const libURL=q=>"https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=TW&media_type=all&search_type=keyword_unordered&q="+encodeURIComponent(q);
+
+  const SEED=[
+    {id:"s1",firm:"馬來獏專業驗屋",start:"2025-07-01",seen:"2026-08-24",live:true,
+     hook:"#鄰語堂5 全方位專業驗屋服務／現場說明缺失項目和建商討論如何修繕，歡迎預約檔期",
+     visual:"驗屋人員在建案現場實拍拼貼",format:"工地實錄",variants:1,cta:"領取優惠",
+     landing:"LINE 官方帳號",nums:false,signals:["有寫接案區域","有案件類型限制"],
+     note:"一個建案名一支廣告，文案模板完全複製，只換 hashtag。跑最久的一支。",link:""},
+    {id:"s2",firm:"馬來獏專業驗屋",start:"2025-11-19",seen:"2026-08-24",live:true,
+     hook:"#品睿寬居 全方位專業驗屋服務／協助客戶在交屋前做全方位家的房屋檢測",
+     visual:"驗屋人員在建案現場實拍拼貼",format:"工地實錄",variants:2,cta:"領取優惠",
+     landing:"LINE 官方帳號",nums:false,signals:["有寫接案區域","有案件類型限制","有時程條件"],
+     note:"同一創意跑 2 則。訴求綁在「交屋前」這個時間點上。",link:""},
+    {id:"s3",firm:"馬來獏專業驗屋",start:"2026-06-30",seen:"2026-08-24",live:true,
+     hook:"#綠塵院 今日在高雄市建案服務／團隊秉持專業、誠信、用心的服務",
+     visual:"驗屋人員在建案現場實拍拼貼",format:"工地實錄",variants:1,cta:"領取優惠",
+     landing:"LINE 官方帳號",nums:false,signals:["有寫接案區域","有案件類型限制"],
+     note:"寫「今日在高雄市」，把在地即時感當素材。",link:""},
+    {id:"s4",firm:"馬來獏專業驗屋",start:"2026-07-23",seen:"2026-08-24",live:true,
+     hook:"#和立堡晴川 全方位專業驗屋服務／杜絕重金買房卻落得日後無盡修繕的窘境",
+     visual:"驗屋人員在建案現場實拍拼貼",format:"工地實錄",variants:1,cta:"領取優惠",
+     landing:"LINE 官方帳號",nums:false,signals:["有寫接案區域","有案件類型限制"],
+     note:"最新一支，換成恐懼訴求測試。",link:""},
+    {id:"s5",firm:"添心設計 X 添興家具",start:"2026-05-08",seen:"2026-08-24",live:true,
+     hook:"#第548位【我的北歐風收納大解密】小空間也能住出大享受／當初決定裝潢時，我最大的擔心就是——東西沒地方放！",
+     visual:"ROOMTOUR 室內走拍影片，屋主視角",format:"短影音走拍",variants:1,cta:"傳送訊息",
+     landing:"私訊 Messenger／DM",nums:false,signals:[],
+     note:"屋主第一人稱口吻。編號「第548位」＝把累積案件數當社會證明。文案沒有任何篩選條件。",link:""}
+  ];
+
+  const store={
+    async load(){
+      try{ if(window.storage&&window.storage.get){const r=await window.storage.get(KEY); if(r&&r.value) return JSON.parse(r.value); return [];} }catch(e){}
+      try{ const raw=window.localStorage.getItem(KEY); return raw?JSON.parse(raw):[]; }catch(e){ return []; }
+    },
+    async save(d){
+      const s=JSON.stringify(d);
+      try{ if(window.storage&&window.storage.set){ await window.storage.set(KEY,s); return true; } }catch(e){}
+      try{ window.localStorage.setItem(KEY,s); return true; }catch(e){ return false; }
+    }
+  };
+
+  const daysRun=it=>{
+    if(!it.start) return 0;
+    const end=it.live?todayISO():(it.seen||todayISO());
+    return Math.max(0,Math.round((new Date(end)-new Date(it.start))/86400000));
+  };
+  const isWorth=it=>daysRun(it)>=WORTH_DAYS&&(it.signals||[]).length>0;
+  function verdict(it){
+    const d=daysRun(it);
+    if(!it.live&&d>=WORTH_DAYS) return {t:"跑完一輪，仍可拆",c:"v-watch"};
+    if(d>=WORTH_DAYS) return {t:"值得研究",c:"v-worth"};
+    if(d>=7) return {t:"先觀察，下週回來看",c:"v-watch"};
+    return {t:"別學，還在測",c:"v-skip"};
+  }
+  const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("show"),2000);}
+
+  function renderKeywords(){
+    $("#kwZone").innerHTML=KEYWORDS.map(g=>`<div class="kwgroup">
+      <div class="kwhead"><strong>${esc(g.label)}</strong><span>${esc(g.en)}</span></div>
+      <div class="kwlist">${g.words.map(w=>`<a class="kw" href="${libURL(w)}" target="_blank" rel="noopener">${esc(w)}</a>`).join("")}</div>
+    </div>`).join("");
+  }
+
+  function render(){
+    const sorted=items.slice().sort((a,b)=>daysRun(b)-daysRun(a));
+    $("#statTotal").textContent=items.length;
+    $("#statFirms").textContent=new Set(items.map(i=>i.firm).filter(Boolean)).size;
+    $("#statLive").textContent=items.filter(i=>i.live).length;
+    $("#statWorth").textContent=items.filter(isWorth).length;
+
+    const firms=[...new Set(items.map(i=>i.firm).filter(Boolean))].sort();
+    $("#firmFilter").innerHTML='<option value="">全部同業</option>'+firms.map(f=>`<option value="${esc(f)}"${f===firmFilter?" selected":""}>${esc(f)}</option>`).join("");
+    $("#firmList").innerHTML=firms.map(f=>`<option value="${esc(f)}">`).join("");
+
+    const top=sorted.slice(0,12), max=Math.max(1,...top.map(daysRun));
+    $("#rankSection").hidden=items.length===0;
+    $("#rankList").innerHTML=top.map(it=>{
+      const d=daysRun(it), w=Math.max(2,Math.round(d/max*100));
+      const cls=isWorth(it)?"worth":(it.live?"live":"");
+      return `<div class="rank-row">
+        <span class="rank-name">${isWorth(it)?'<span class="star">★</span>':""}${esc(it.firm||"未命名")}</span>
+        <span class="bar-track"><span class="bar ${cls}" data-w="${w}"><span class="bar-label">${esc(it.format||"")}</span></span></span>
+        <span class="rank-days">${d}<small> 天</small></span></div>`;
+    }).join("");
+    requestAnimationFrame(()=>document.querySelectorAll(".bar").forEach(b=>b.style.width=b.dataset.w+"%"));
+
+    const shown=sorted.filter(it=>{
+      if(firmFilter&&it.firm!==firmFilter) return false;
+      if(filter==="live") return it.live;
+      if(filter==="off") return !it.live;
+      if(filter==="worth") return isWorth(it);
+      return true;
+    });
+    $("#listCount").textContent=shown.length?`顯示 ${shown.length} 則`:"";
+    $("#emptyState").hidden=items.length!==0;
+    $("#cardGrid").innerHTML=shown.map(it=>{
+      const d=daysRun(it), v=verdict(it);
+      const sig=(it.signals||[]).map(s=>`<span class="tag sig">${esc(s)}</span>`).join("");
+      return `<article class="card${isWorth(it)?" worth":""}">
+        <div class="card-top"><span class="card-name">${esc(it.firm||"未命名")}</span>
+          <span class="status${it.live?" live":""}">${it.live?"進行中":"已停止"}</span></div>
+        <div class="days-line">續投 <b>${d}</b> 天${it.variants>1?` · ${it.variants} 個版本`:""}</div>
+        <div class="verdict ${v.c}">${v.t}</div>
+        ${it.hook?`<p class="hook">${esc(it.hook)}</p>`:""}
+        ${it.visual?`<div class="card-note">主視覺：${esc(it.visual)}</div>`:""}
+        <div class="meta">
+          ${it.format?`<span class="tag">${esc(it.format)}</span>`:""}
+          ${it.cta?`<span class="tag">CTA ${esc(it.cta)}</span>`:""}
+          ${it.landing?`<span class="tag">→ ${esc(it.landing)}</span>`:""}
+          ${it.nums?`<span class="tag num">有具體數字</span>`:""}
+        </div>
+        ${sig?`<div class="meta">${sig}</div>`:`<div class="card-note">文案沒有任何篩選條件</div>`}
+        ${it.note?`<p class="card-note">${esc(it.note)}</p>`:""}
+        <div class="card-foot">${it.link?`<a class="linkish" href="${esc(it.link)}" target="_blank" rel="noopener">看廣告</a>`:""}
+          <span class="spacer"></span>
+          <button class="linkish" data-edit="${it.id}">編輯</button>
+          <button class="linkish danger" data-del="${it.id}">刪除</button></div>
+      </article>`;
+    }).join("");
+  }
+
+  async function persist(){
+    const ok=await store.save(items);
+    $("#saveState").textContent=ok?"資料存在這台裝置":"無法自動儲存，請匯出 JSON 備份";
+  }
+
+  function openPanel(id){
+    editingId=id||null;
+    const it=id?items.find(x=>x.id===id):null;
+    $("#panelTitle").textContent=it?"編輯紀錄":"記一則廣告";
+    $("#fFirm").value=it?it.firm||"":"";
+    $("#fStart").value=it?it.start||"":"";
+    $("#fSeen").value=it?(it.seen||todayISO()):todayISO();
+    $("#fLive").checked=it?!!it.live:true;
+    $("#fHook").value=it?it.hook||"":"";
+    $("#fVisual").value=it?it.visual||"":"";
+    $("#fFormat").value=it?it.format||"前後對比":"前後對比";
+    $("#fVariants").value=it?it.variants||1:1;
+    $("#fCta").value=it?it.cta||"了解詳情":"了解詳情";
+    $("#fLanding").value=it?it.landing||"Meta 原生表單":"Meta 原生表單";
+    $("#fNums").checked=it?!!it.nums:false;
+    document.querySelectorAll("#fSignals input").forEach(c=>c.checked=it?(it.signals||[]).includes(c.value):false);
+    $("#fNote").value=it?it.note||"":"";
+    $("#fLink").value=it?it.link||"":"";
+    $("#panel").classList.add("open");$("#scrim").classList.add("open");
+    setTimeout(()=>$("#fFirm").focus(),240);
+  }
+  function closePanel(){$("#panel").classList.remove("open");$("#scrim").classList.remove("open");editingId=null;}
+
+  async function save(){
+    const firm=$("#fFirm").value.trim();
+    if(!firm){$("#fFirm").focus();toast("先填廣告主名稱");return;}
+    const start=$("#fStart").value;
+    if(!start){$("#fStart").focus();toast("首次投放日是這裡最關鍵的欄位");return;}
+    const rec={
+      id:editingId||(Date.now().toString(36)+Math.random().toString(36).slice(2,6)),
+      firm,start,seen:$("#fSeen").value||todayISO(),live:$("#fLive").checked,
+      hook:$("#fHook").value.trim(),visual:$("#fVisual").value.trim(),
+      format:$("#fFormat").value,variants:Math.max(1,parseInt($("#fVariants").value,10)||1),
+      cta:$("#fCta").value,landing:$("#fLanding").value,nums:$("#fNums").checked,
+      signals:[...document.querySelectorAll("#fSignals input:checked")].map(c=>c.value),
+      note:$("#fNote").value.trim(),link:$("#fLink").value.trim()
+    };
+    if(editingId){items=items.map(x=>x.id===editingId?rec:x);toast("已更新");}
+    else{items.unshift(rec);toast(`已記錄 · 續投 ${daysRun(rec)} 天`);}
+    await persist();closePanel();render();
+  }
+
+  function calc(){
+    const job=(parseFloat($("#cJob").value)||0)*10000;
+    const m=(parseFloat($("#cMargin").value)||0)/100;
+    const cl=(parseFloat($("#cClose").value)||0)/100;
+    const sh=(parseFloat($("#cShare").value)||0)/100;
+    const gross=job*m, budget=gross*sh;
+    const leads=cl>0?1/cl:0, cpl=leads>0?budget/leads:0;
+    $("#oCpl").textContent=nf(Math.round(cpl));
+    $("#oGross").textContent="NT$ "+nf(Math.round(gross));
+    $("#oLeads").textContent=leads?Math.ceil(leads)+" 張":"—";
+    $("#oBudget").textContent="NT$ "+nf(Math.round(budget));
+  }
+
+  function download(name,text,type){
+    const url=URL.createObjectURL(new Blob([text],{type}));
+    const a=document.createElement("a");a.href=url;a.download=name;a.click();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+  }
+  function toCSV(){
+    const head=["廣告主","首次投放日","最後確認日","進行中","已投天數","判讀","素材形式","主視覺","素材版本數","文案第一行","有具體數字","CTA","到達位置","篩選條件","備註","連結"];
+    const rows=items.slice().sort((a,b)=>daysRun(b)-daysRun(a)).map(it=>[
+      it.firm,it.start,it.seen,it.live?"是":"否",daysRun(it),verdict(it).t,it.format,it.visual,
+      it.variants,it.hook,it.nums?"Y":"N",it.cta,it.landing,(it.signals||[]).join(" / "),it.note,it.link]);
+    const q=v=>'"'+String(v==null?"":v).replace(/"/g,'""')+'"';
+    return "\uFEFF"+[head,...rows].map(r=>r.map(q).join(",")).join("\r\n");
+  }
+
+  // tabs
+  function showTab(which){
+    const log=which==="log";
+    $("#tabLog").setAttribute("aria-selected",String(log));
+    $("#tabBook").setAttribute("aria-selected",String(!log));
+    $("#viewLog").hidden=!log; $("#viewBook").hidden=log;
+    window.scrollTo({top:0,behavior:"smooth"});
+    if(log) requestAnimationFrame(()=>document.querySelectorAll(".bar").forEach(b=>b.style.width=b.dataset.w+"%"));
+  }
+  $("#tabLog").addEventListener("click",()=>showTab("log"));
+  $("#tabBook").addEventListener("click",()=>showTab("book"));
+
+  $("#openNew").addEventListener("click",()=>openPanel(null));
+  $("#closePanel").addEventListener("click",closePanel);
+  $("#cancelBtn").addEventListener("click",closePanel);
+  $("#scrim").addEventListener("click",closePanel);
+  $("#saveBtn").addEventListener("click",save);
+  document.addEventListener("keydown",e=>{if(e.key==="Escape"&&$("#panel").classList.contains("open"))closePanel();});
+  $("#openLibrary").addEventListener("click",()=>window.open("https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=TW","_blank","noopener"));
+  document.querySelectorAll(".chip[data-filter]").forEach(b=>b.addEventListener("click",()=>{
+    filter=b.dataset.filter;
+    document.querySelectorAll(".chip[data-filter]").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));
+    render();
+  }));
+  $("#firmFilter").addEventListener("change",e=>{firmFilter=e.target.value;render();});
+  $("#cardGrid").addEventListener("click",async e=>{
+    const ed=e.target.closest("[data-edit]"), dl=e.target.closest("[data-del]");
+    if(ed) openPanel(ed.dataset.edit);
+    if(dl){
+      const it=items.find(x=>x.id===dl.dataset.del);
+      if(it&&confirm(`刪除「${it.firm}」這則紀錄？`)){
+        items=items.filter(x=>x.id!==dl.dataset.del);
+        await persist();render();toast("已刪除");
+      }
+    }
+  });
+  ["cJob","cMargin","cClose","cShare"].forEach(id=>$("#"+id).addEventListener("input",calc));
+  $("#exportBtn").addEventListener("click",()=>download(`廣告觀察台_${todayISO()}.json`,JSON.stringify(items,null,2),"application/json"));
+  $("#csvBtn").addEventListener("click",()=>download(`廣告觀察台_${todayISO()}.csv`,toCSV(),"text/csv;charset=utf-8"));
+  $("#importBtn").addEventListener("click",()=>$("#importFile").click());
+  $("#importFile").addEventListener("change",async e=>{
+    const f=e.target.files[0]; if(!f) return;
+    try{
+      const data=JSON.parse(await f.text());
+      if(!Array.isArray(data)) throw new Error();
+      const ids=new Set(items.map(i=>i.id));
+      const add=data.filter(d=>d&&d.firm&&!ids.has(d.id));
+      items=items.concat(add); await persist(); render(); toast(`匯入 ${add.length} 則`);
+    }catch(err){ toast("這個檔案讀不出來，需要本站匯出的 JSON"); }
+    e.target.value="";
+  });
+
+  (async function(){
+    renderKeywords(); calc();
+    items=await store.load();
+    if(!Array.isArray(items)) items=[];
+    if(items.length===0){ items=SEED.slice(); await persist(); }
+    render();
+  })();
+})();
+</script>
+</body>
+</html>
