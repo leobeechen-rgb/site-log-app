@@ -9636,5 +9636,178 @@ react-dom/cjs/react-dom-client.production.js:
 
 </script>
 
+
+<!--
+  =====================================================================
+  hb-tools v1 — 行銷工具（廣告觀察台 / 作品資訊卡）
+  作法：在既有側邊列 .hb-rail 追加兩顆按鈕，點擊開全螢幕 iframe，
+        不改任何 React 程式碼，也不動 hb-rail 原本的邏輯
+  需要：同目錄放 ad-watch.html 與 plate-maker.html
+  排錯：console 輸入 __hbToolsStatus()
+  =====================================================================
+-->
+<script>
+(function () {
+  if (window.__HB_TOOLS__) return;
+  window.__HB_TOOLS__ = true;
+
+  var TOOLS = [
+    {
+      key: 'adwatch',
+      label: '廣告觀察台',
+      src: './ad-watch.html',
+      svg: '<circle cx="11" cy="11" r="6"/><path d="m20 20-4.4-4.4"/><path d="M11 8.5v2.5l1.8 1.1"/>'
+    },
+    {
+      key: 'plate',
+      label: '作品資訊卡',
+      src: './plate-maker.html',
+      svg: '<rect x="3.5" y="5" width="17" height="14" rx="1.5"/><path d="M6.5 9h6M6.5 12h4"/><path d="m14 16 2.5-3 4 3"/>'
+    }
+  ];
+
+  if (document.body) boot();
+  else document.addEventListener('DOMContentLoaded', boot);
+
+  function boot() {
+
+    /* ---- 樣式 ---- */
+    var css = document.createElement('style');
+    css.textContent = [
+      '.hb-tool-sheet{position:fixed;inset:0;z-index:60;display:none;',
+      '  background:#FAF9F6;flex-direction:column;}',
+      '.hb-tool-sheet[data-open="1"]{display:flex;}',
+      '.hb-tool-bar{flex:0 0 auto;display:flex;align-items:center;gap:10px;',
+      '  padding:10px 14px;border-bottom:1px solid #E6E2D8;background:#FFFDF9;',
+      '  font-family:"Noto Sans TC","PingFang TC",sans-serif;}',
+      '.hb-tool-bar__t{font-size:14px;font-weight:500;color:#1C1B18;letter-spacing:.06em;flex:1;',
+      '  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
+      '.hb-tool-bar button{border:1px solid #E6E2D8;background:#fff;color:#6E695E;',
+      '  padding:6px 13px;border-radius:3px;font:inherit;font-size:13px;cursor:pointer;',
+      '  -webkit-tap-highlight-color:transparent;}',
+      '.hb-tool-bar button:hover{border-color:#1C1B18;color:#1C1B18;}',
+      '.hb-tool-bar button:focus-visible{outline:1px solid #7C6A56;outline-offset:1px;}',
+      '.hb-tool-sheet iframe{flex:1 1 auto;width:100%;border:0;display:block;background:#FAF9F6;}',
+      '@supports (padding:env(safe-area-inset-top)){',
+      '  .hb-tool-bar{padding-top:calc(10px + env(safe-area-inset-top));}}'
+    ].join('');
+    (document.head || document.documentElement).appendChild(css);
+
+    /* ---- 全螢幕面板 ---- */
+    var sheet = document.createElement('div');
+    sheet.className = 'hb-tool-sheet';
+    sheet.setAttribute('role', 'dialog');
+    sheet.setAttribute('aria-modal', 'true');
+    sheet.setAttribute('aria-label', '行銷工具');
+
+    var bar = document.createElement('div');
+    bar.className = 'hb-tool-bar';
+    var title = document.createElement('span');
+    title.className = 'hb-tool-bar__t';
+    var openNew = document.createElement('button');
+    openNew.type = 'button';
+    openNew.textContent = '另開分頁';
+    var close = document.createElement('button');
+    close.type = 'button';
+    close.textContent = '關閉';
+    bar.appendChild(title);
+    bar.appendChild(openNew);
+    bar.appendChild(close);
+
+    var frame = document.createElement('iframe');
+    frame.setAttribute('title', '行銷工具');
+    frame.setAttribute('allow', 'clipboard-write');
+
+    sheet.appendChild(bar);
+    sheet.appendChild(frame);
+    document.body.appendChild(sheet);
+
+    var current = null;
+    var lastFocus = null;
+
+    function open(tool) {
+      current = tool;
+      lastFocus = document.activeElement;
+      title.textContent = tool.label;
+      if (frame.getAttribute('data-key') !== tool.key) {
+        frame.src = tool.src;                 // 只在切換工具時重載，回來時保留狀態
+        frame.setAttribute('data-key', tool.key);
+      }
+      sheet.setAttribute('data-open', '1');
+      document.documentElement.style.overflow = 'hidden';
+      syncActive();
+      close.focus();
+    }
+    function shut() {
+      sheet.removeAttribute('data-open');
+      document.documentElement.style.overflow = '';
+      current = null;
+      syncActive();
+      if (lastFocus && lastFocus.focus) lastFocus.focus();
+    }
+
+    close.addEventListener('click', shut);
+    openNew.addEventListener('click', function () {
+      if (current) window.open(current.src, '_blank', 'noopener');
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && sheet.hasAttribute('data-open')) shut();
+    });
+
+    /* ---- 追加到側邊列 ---- */
+    var made = [];
+
+    function makeItem(tool) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'hb-rail__item hb-rail__tool';
+      b.setAttribute('aria-label', tool.label);
+      b.setAttribute('data-tool', tool.key);
+      b.innerHTML =
+        '<span class="hb-rail__ico"><svg viewBox="0 0 24 24" aria-hidden="true">' + tool.svg + '</svg></span>' +
+        '<span class="hb-rail__txt">' + tool.label + '</span>';
+      b.addEventListener('click', function () { open(tool); });
+      return b;
+    }
+
+    function syncActive() {
+      made.forEach(function (m) {
+        if (current && current.key === m.key) m.el.setAttribute('aria-current', 'page');
+        else m.el.removeAttribute('aria-current');
+      });
+    }
+
+    function attach() {
+      var box = document.querySelector('.hb-rail__items');
+      if (!box) return false;
+      if (box.querySelector('.hb-rail__tool')) return true;   // 已經掛過
+      var top = box.querySelector('.hb-rail__top');           // 「回到頂端」永遠留在最後
+      TOOLS.forEach(function (tool) {
+        var el = makeItem(tool);
+        if (top) box.insertBefore(el, top);
+        else box.appendChild(el);
+        made.push({ key: tool.key, el: el });
+      });
+      return true;
+    }
+
+    if (!attach()) {
+      var tries = 0;
+      var timer = setInterval(function () {
+        if (attach() || ++tries > 100) clearInterval(timer);   // 最多等 20 秒
+      }, 200);
+    }
+
+    window.__hbToolsStatus = function () {
+      return {
+        railFound: !!document.querySelector('.hb-rail__items'),
+        buttons: made.length,
+        open: current ? current.key : null
+      };
+    };
+  }
+})();
+</script>
+
 </body>
 </html>
