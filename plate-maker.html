@@ -134,7 +134,19 @@ input[type=range]{width:100%;accent-color:var(--ink)}
 
       <div class="grp">
         <h2>畫布</h2>
-        <div class="field"><label for="fRatio">比例（沒有底圖時）</label>
+        <div class="field" id="cropRow" style="display:none"><label for="fCrop">輸出比例（裁切底圖）</label>
+          <select id="fCrop">
+            <option value="orig">照片原始比例</option>
+            <option value="4:5">直式 4:5 · FB／IG 貼文</option>
+            <option value="1:1">方形 1:1</option>
+            <option value="9:16">直式 9:16 · 限動／短影音</option>
+            <option value="16:9">橫式 16:9</option>
+          </select>
+          <p class="hint">多圖貼文的第一張會被裁成直式，封面用 4:5 才不會切到卡片。</p></div>
+        <div class="field" id="panRow" style="display:none">
+          <div class="rangerow"><span id="panName">裁切位置</span><b id="panLabel">置中</b></div>
+          <input type="range" id="fPan" min="0" max="100" value="50"></div>
+        <div class="field" id="ratioRow"><label for="fRatio">比例（沒有底圖時）</label>
           <select id="fRatio">
             <option value="1080x1920">直式影片 9:16 · 1080×1920</option>
             <option value="1080x1350">IG 貼文 4:5 · 1080×1350</option>
@@ -178,8 +190,10 @@ const WORD_MASK="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAArkAAABaCAAAAACZe
 const $=s=>document.querySelector(s);
 const state={
   mode:"plate", color:"#FFFFFF", pos:"tl", opacity:.92, scale:1,
-  back:"grad", backAmt:.55, ratio:[1080,1920], photo:null
+  back:"grad", backAmt:.55, ratio:[1080,1920], photo:null,
+  crop:"orig", pan:.5
 };
+const RATIOS={"4:5":4/5,"1:1":1,"9:16":9/16,"16:9":16/9};
 let markTinted={}, wordTinted={}, ready=false;
 
 function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("show"),1900);}
@@ -342,10 +356,42 @@ function drawOverlay(ctx,W,H,keep){
   ctx.restore();
 }
 
-/* ───── 尺寸與渲染 ───── */
+/* ───── 尺寸與裁切 ───── */
+function cropRect(){
+  const p=state.photo; if(!p) return null;
+  const pw=p.naturalWidth, ph=p.naturalHeight;
+  const r=RATIOS[state.crop];
+  if(!r) return {sx:0,sy:0,sw:pw,sh:ph,axis:null};
+  let sw,sh,axis;
+  if(pw/ph>r){ sh=ph; sw=Math.round(ph*r); axis="x"; }   // 太寬 → 左右裁
+  else       { sw=pw; sh=Math.round(pw/r); axis="y"; }   // 太高 → 上下裁
+  const slackX=pw-sw, slackY=ph-sh;
+  return {
+    sx:Math.round(slackX*state.pan), sy:Math.round(slackY*state.pan),
+    sw,sh, axis:(slackX>2||slackY>2)?axis:null
+  };
+}
 function dims(){
-  if(state.photo) return [state.photo.naturalWidth,state.photo.naturalHeight];
+  if(state.photo){ const c=cropRect(); return [c.sw,c.sh]; }
   return state.ratio;
+}
+function drawBase(ctx,W,H){
+  if(!state.photo){ ctx.fillStyle="#2A2B2E"; ctx.fillRect(0,0,W,H); return; }
+  const c=cropRect();
+  ctx.drawImage(state.photo,c.sx,c.sy,c.sw,c.sh,0,0,W,H);
+}
+function syncCropUI(){
+  const has=!!state.photo;
+  $("#cropRow").style.display=has?"":"none";
+  $("#ratioRow").style.display=has?"none":"";
+  const c=has?cropRect():null;
+  const show=!!(c&&c.axis);
+  $("#panRow").style.display=show?"":"none";
+  if(show){
+    $("#panName").textContent=c.axis==="x"?"裁切位置（左右）":"裁切位置（上下）";
+    const v=Math.round(state.pan*100);
+    $("#panLabel").textContent = v===50?"置中" : (c.axis==="x"?(v<50?"偏左":"偏右"):(v<50?"偏上":"偏下"));
+  }
 }
 function render(){
   if(!ready) return;
@@ -354,8 +400,8 @@ function render(){
   base.width=W; base.height=H; ov.width=W; ov.height=H;
   const bx=base.getContext("2d");
   bx.clearRect(0,0,W,H);
-  if(state.photo){ bx.drawImage(state.photo,0,0,W,H); }
-  else{ bx.fillStyle="#2A2B2E"; bx.fillRect(0,0,W,H); }
+  drawBase(bx,W,H);
+  syncCropUI();
   const maxH=Math.min(620,window.innerHeight*0.72);
   const disp=Math.min(1,maxH/H);
   $("#stack").style.width=(W*disp)+"px";
@@ -410,12 +456,15 @@ document.querySelectorAll("#segBack button").forEach(b=>b.addEventListener("clic
 $("#fBackdrop").addEventListener("input",e=>{state.backAmt=e.target.value/100;$("#bdLabel").textContent=e.target.value+"%";render();});
 $("#fOpacity").addEventListener("input",e=>{state.opacity=e.target.value/100;$("#opLabel").textContent=e.target.value+"%";render();});
 $("#fScale").addEventListener("input",e=>{state.scale=e.target.value/100;$("#szLabel").textContent=e.target.value+"%";render();});
+$("#fCrop").addEventListener("change",e=>{state.crop=e.target.value;state.pan=.5;$("#fPan").value=50;render();});
+$("#fPan").addEventListener("input",e=>{state.pan=e.target.value/100;render();});
 $("#fRatio").addEventListener("change",e=>{state.ratio=e.target.value.split("x").map(Number);render();});
 
 function loadPhoto(file){
   if(!file||!file.type.startsWith("image/")) return;
   const u=URL.createObjectURL(file), im=new Image();
-  im.onload=()=>{ state.photo=im; $("#clearPhoto").disabled=false; $("#dlFlat").disabled=false; render(); };
+  im.onload=()=>{ state.photo=im; state.pan=.5; $("#fPan").value=50;
+    $("#clearPhoto").disabled=false; $("#dlFlat").disabled=false; render(); };
   im.src=u;
 }
 $("#dropZone").addEventListener("click",()=>$("#fPhoto").click());
@@ -434,7 +483,7 @@ $("#dlOverlay").addEventListener("click",()=>{
 $("#dlFlat").addEventListener("click",()=>{
   if(!state.photo) return;
   const [W,H]=dims(); const c=document.createElement("canvas"); c.width=W;c.height=H;
-  const x=c.getContext("2d"); x.drawImage(state.photo,0,0,W,H); drawOverlay(x,W,H,true);
+  const x=c.getContext("2d"); drawBase(x,W,H); drawOverlay(x,W,H,true);
   dl(c,`${slug()}_${W}x${H}.png`); toast("合成圖已下載");
 });
 window.addEventListener("resize",render);
