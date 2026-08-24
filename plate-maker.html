@@ -108,6 +108,15 @@ input[type=range]{width:100%;accent-color:var(--ink)}
             <button data-color="#FFFFFF" aria-pressed="true">白字</button>
             <button data-color="#111214" aria-pressed="false">黑字</button>
           </div></div>
+        <div class="field"><label>襯底（讓字浮出來）</label>
+          <div class="seg" id="segBack">
+            <button data-back="grad" aria-pressed="true">漸層</button>
+            <button data-back="block" aria-pressed="false">色塊</button>
+            <button data-back="none" aria-pressed="false">無</button>
+          </div></div>
+        <div class="field" id="bdRow">
+          <div class="rangerow"><span>襯底濃度</span><b id="bdLabel">55%</b></div>
+          <input type="range" id="fBackdrop" min="10" max="90" value="55"></div>
         <div class="field"><label>位置</label>
           <div class="corners" id="segPos">
             <button data-pos="tl" aria-pressed="true">左上</button>
@@ -169,7 +178,7 @@ const WORD_MASK="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAArkAAABaCAAAAACZe
 const $=s=>document.querySelector(s);
 const state={
   mode:"plate", color:"#FFFFFF", pos:"tl", opacity:.92, scale:1,
-  ratio:[1080,1920], photo:null
+  back:"grad", backAmt:.55, ratio:[1080,1920], photo:null
 };
 let markTinted={}, wordTinted={}, ready=false;
 
@@ -198,7 +207,8 @@ function drawOverlay(ctx,W,H){
 
   ctx.save();
   ctx.globalAlpha=state.opacity;
-  if(light){ ctx.shadowColor="rgba(0,0,0,.45)"; ctx.shadowBlur=10*s; ctx.shadowOffsetY=1*s; }
+  if(light){ ctx.shadowColor="rgba(0,0,0,.55)"; ctx.shadowBlur=14*s; ctx.shadowOffsetY=1*s; }
+  else{ ctx.shadowColor="rgba(255,255,255,.55)"; ctx.shadowBlur=14*s; ctx.shadowOffsetY=1*s; }
 
   const M=58*s;
   const plate=state.mode==="plate";
@@ -231,6 +241,35 @@ function drawOverlay(ctx,W,H){
   const bottom=state.pos==="bl"||state.pos==="br";
   const x0=right? W-M-blockW : M;
   const y0=bottom? H-M-blockH : M;
+
+  /* — 襯底 — */
+  if(state.back!=="none" && state.backAmt>0){
+    ctx.save();
+    ctx.shadowColor="transparent"; ctx.shadowBlur=0; ctx.shadowOffsetY=0;
+    ctx.globalAlpha=1;
+    const base=light?"0,0,0":"255,255,255";
+    const a=state.backAmt;
+    if(state.back==="grad"){
+      // 從所在角落斜向淡出，只壓住卡片附近
+      const cx=right?W:0, cy=bottom?H:0;
+      const reach=Math.max(blockW,blockH)+300*s;
+      const ex=right?W-reach:reach, ey=bottom?H-reach:reach;
+      const g=ctx.createLinearGradient(cx,cy,ex,ey);
+      g.addColorStop(0,`rgba(${base},${a})`);
+      g.addColorStop(.45,`rgba(${base},${a*.55})`);
+      g.addColorStop(1,`rgba(${base},0)`);
+      ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+    }else{
+      const px=30*s, py=26*s;
+      const bx=x0-px, by=y0-py, bw=blockW+px*2, bh=blockH+py*2;
+      ctx.fillStyle=`rgba(${base},${a})`;
+      ctx.beginPath();
+      if(ctx.roundRect) ctx.roundRect(bx,by,bw,bh,4*s);
+      else ctx.rect(bx,by,bw,bh);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
 
   /* — 品牌列 — */
   ctx.drawImage(mark,x0,y0,markW,markH);
@@ -362,6 +401,13 @@ document.querySelectorAll("#segPos button").forEach(b=>b.addEventListener("click
   document.querySelectorAll("#segPos button").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));
   state.pos=b.dataset.pos; render();
 }));
+document.querySelectorAll("#segBack button").forEach(b=>b.addEventListener("click",()=>{
+  document.querySelectorAll("#segBack button").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));
+  state.back=b.dataset.back;
+  $("#bdRow").style.display=state.back==="none"?"none":"";
+  render();
+}));
+$("#fBackdrop").addEventListener("input",e=>{state.backAmt=e.target.value/100;$("#bdLabel").textContent=e.target.value+"%";render();});
 $("#fOpacity").addEventListener("input",e=>{state.opacity=e.target.value/100;$("#opLabel").textContent=e.target.value+"%";render();});
 $("#fScale").addEventListener("input",e=>{state.scale=e.target.value/100;$("#szLabel").textContent=e.target.value+"%";render();});
 $("#fRatio").addEventListener("change",e=>{state.ratio=e.target.value.split("x").map(Number);render();});
