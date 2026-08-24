@@ -289,6 +289,7 @@
       <ul class="price-list">
         <li><span class="item-name">整體專案接案金額</span><span class="item-price">150 萬元起</span></li>
         <li><span class="item-name">設計費用</span><span class="item-price">2,500 元／坪起</span></li>
+        <li><span class="item-name">最低設計費</span><span class="item-price">50,000 元</span></li>
         <li><span class="item-name">新成屋裝潢</span><span class="item-price">5 萬元／坪起</span></li>
         <li><span class="item-name">老屋翻新裝潢</span><span class="item-price">10 萬元／坪起</span></li>
       </ul>
@@ -330,7 +331,7 @@
     <input id="ping" type="number" inputmode="decimal" value="30" min="0" step="0.5">
     <span class="u">坪</span>
   </div>
-  <p class="ping-note">未滿 20 坪者以 20 坪計。不確定坪數也沒關係，先填大概的數字即可。</p>
+  <p class="ping-note">設計費最低收費 <b>50,000 元</b>（未稅）；試算金額未達此門檻者，以最低收費計。不確定坪數也沒關係，先填大概的數字即可。</p>
 
   <div class="plans" id="plans"></div>
 
@@ -362,6 +363,7 @@
   <div class="note-box">
     <strong>說明：</strong>以上費用為設計服務與工程管理相關費用參考範圍，正式報價將依現場丈量結果、空間條件與客製項目調整，實際金額以簽認之設計合約為準。
     <ol>
+      <li>設計費最低收費 50,000 元（未稅），試算未達此金額者以最低收費計。</li>
       <li>上列設計費均為未稅價，營業稅 5% 另計。</li>
       <li>付款依成圖進度分四期：簽約丈量 30%、平面確認 30%、效果圖確認 30%、水電圖確認 10%。</li>
       <li>修改意見請於各階段交付後 7 日內提出，超過方案所列次數者依加購項目計費。</li>
@@ -399,7 +401,7 @@
    ============================================================ */
 var LINE_OA_ID = "@018bjrxo";
 
-var MIN_PING = 20, TAX = 0.05, DISCOUNT = 0.30;
+var MIN_FEE = 50000, TAX = 0.05, DISCOUNT = 0.30;
 
 var PLANS = [
   { id:"A", name:"基礎・平面規劃", rate:2500, badge:"",
@@ -467,8 +469,10 @@ $("addons").innerHTML = ADDONS.map(function(a){
 /* ---------- 計算 ---------- */
 function calc(){
   var p = PLANS.filter(function(x){ return x.id === state.plan; })[0];
-  var eff = Math.max(state.ping || 0, MIN_PING);
-  var base = eff * p.rate;
+  var eff = state.ping || 0;
+  var raw = eff * p.rate;
+  var base = Math.max(raw, MIN_FEE);
+  var floored = base > raw;
   var add = 0;
   ADDONS.forEach(function(a){
     if (!state.add[a.id]) return;
@@ -476,12 +480,15 @@ function calc(){
   });
   var sub = base + add;
   var tax = Math.round(sub * TAX);
-  return { plan:p, eff:eff, base:base, add:add, sub:sub, tax:tax, total:sub + tax };
+  return { plan:p, eff:eff, raw:raw, base:base, floored:floored,
+           add:add, sub:sub, tax:tax, total:sub + tax };
 }
 
 function paint(){
   var c = calc();
-  $("rBase").textContent = "設計費　" + c.eff + " 坪 × " + money(c.plan.rate);
+  $("rBase").textContent = c.floored
+    ? "設計費（最低收費）"
+    : "設計費　" + c.eff + " 坪 × " + money(c.plan.rate);
   $("vBase").textContent = money(c.base);
   $("vAdd").textContent = money(c.add);
   $("vTax").textContent = money(c.tax);
@@ -510,9 +517,12 @@ function summary(){
   if (st) L.push("案場：" + st);
   L.push("");
   L.push("方案：" + c.plan.id + " " + c.plan.name);
-  L.push("坪數：" + (state.ping || 0) + " 坪" +
-         (c.eff !== state.ping ? "（未滿 20 坪以 20 坪計）" : ""));
-  L.push("設計費：" + c.eff + " 坪 × " + money(c.plan.rate) + " ＝ " + money(c.base) + " 元");
+  L.push("坪數：" + (state.ping || 0) + " 坪");
+  if (c.floored){
+    L.push("設計費：" + money(c.base) + " 元（適用最低收費 " + money(MIN_FEE) + " 元）");
+  } else {
+    L.push("設計費：" + c.eff + " 坪 × " + money(c.plan.rate) + " ＝ " + money(c.base) + " 元");
+  }
 
   var picked = ADDONS.filter(function(a){ return state.add[a.id]; });
   if (picked.length){
