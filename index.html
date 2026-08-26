@@ -874,6 +874,48 @@ function HbMarketingTagModal({tags,photos,onClose,onRename,onDelete,onToggleType
   );
 }
 
+/* ===== 預約成功訊息產生器 ===== */
+var HB_BK_SIGN="赫柏空間設計 HERFULSINS";
+var HB_BK_OFFICE="赫柏空間設計工作室";
+function HB_bkDateLabel(d){
+  if(!d)return "";
+  var p=String(d).split("-");
+  if(p.length!==3)return String(d);
+  var dt=new Date(+p[0],+p[1]-1,+p[2]);
+  var w=["日","一","二","三","四","五","六"][dt.getDay()];
+  return (+p[0])+"年"+(+p[1])+"月"+(+p[2])+"日（週"+w+"）";
+}
+function HB_buildBookingMsg(b){
+  if(!b)return "";
+  var svc=b.service_type||"諮詢";
+  var isHome=svc.indexOf("到府")>=0;
+  var L=[];
+  L.push((b.name||"")+" 您好：");
+  L.push("");
+  L.push("這裡是赫柏空間設計，您的「"+svc+"」預約已完成確認 ✅");
+  L.push("");
+  L.push("\ud83d\udcc5 日期｜"+HB_bkDateLabel(b.date));
+  L.push("\ud83d\udd51 時間｜"+(b.time||""));
+  L.push("\ud83d\udccd 地點｜"+(isHome?(b.address||"（現場地址）"):HB_BK_OFFICE));
+  L.push("⏱ 預估｜約 "+(isHome?"40–60":"60")+" 分鐘");
+  if(b.note)L.push("\ud83d\udcdd 備註｜"+b.note);
+  L.push("");
+  if(isHome){
+    L.push("當天我們會拍照、記錄尺寸與現況管線位置，也會現場聽您說明想調整的地方。麻煩協助：");
+    L.push("・現場保持可通行，方便拍照與量測");
+    L.push("・如為社區大樓，請先協助登記訪客或告知門禁方式");
+  }else{
+    L.push("當天將由設計師與您討論需求、格局與預算方向，並說明後續設計流程。方便的話可先準備：");
+    L.push("・現況格局圖或平面圖（有的話）");
+    L.push("・喜歡的風格參考圖 2–3 張");
+    L.push("・預計預算範圍與入住時間");
+  }
+  L.push("");
+  L.push("如需改期或有任何問題，直接回覆這則訊息即可，期待與您見面！");
+  L.push("");
+  L.push(HB_BK_SIGN);
+  return L.join("\n");
+}
 function HB_openQuoteSystem(){window.open("https://leobeechen-rgb.github.io/site-log-app/quote.html","_blank")}function HB_openProposalSystem(){window.open("https://leobeechen-rgb.github.io/site-log-app/proposal.html","_blank")}var HB_BOOKING_PAGE_URL="https://leobeechen-rgb.github.io/site-log-app/booking.html";
 function HB_openBookingSystem(){window.open(HB_BOOKING_PAGE_URL,"_blank")}
 function HB_copyBookingLink(){
@@ -5106,7 +5148,9 @@ function HbBookingsHub({onBack:l,notify:g}){
       [scNote,setScNote]=(0,u.useState)(""),
       [scEditId,setScEditId]=(0,u.useState)(null),
       [scListening,setScListening]=(0,u.useState)(false),
-      [scHeard,setScHeard]=(0,u.useState)("");
+      [scHeard,setScHeard]=(0,u.useState)(""),
+      [msgBk,setMsgBk]=(0,u.useState)(null),
+      [msgTxt,setMsgTxt]=(0,u.useState)("");
 
   let load=async()=>{
     setLoading(true);
@@ -5411,11 +5455,24 @@ function HbBookingsHub({onBack:l,notify:g}){
                 u.default.createElement("div",{style:{fontSize:14,fontWeight:400,color:s.oceanDark}},Tl(b.date)," ",b.time),
                 u.default.createElement("div",{style:{display:"flex",gap:6}},
                   b.status==="pending"&&u.default.createElement("button",{onClick:()=>confirmBooking(b.id),style:{...at,color:s.tree}},u.default.createElement(E,{name:"check",size:16})),
+                  b.status!=="cancelled"&&u.default.createElement("button",{onClick:()=>{setMsgTxt(HB_buildBookingMsg(b));setMsgBk(b)},title:"預約成功訊息",style:{...at,color:s.ocean}},u.default.createElement(E,{name:"message-circle",size:16})),
                   b.status!=="cancelled"&&u.default.createElement("button",{onClick:()=>startEdit(b),style:{...at}},u.default.createElement(E,{name:"pencil",size:16})),
                   b.status!=="cancelled"&&u.default.createElement("button",{onClick:()=>cancelBooking(b.id),style:{...at,color:s.danger}},u.default.createElement(E,{name:"x",size:16}))
                 )
               )
           ))
+        ),
+        msgBk&&u.default.createElement("div",{onClick:()=>setMsgBk(null),style:{position:"fixed",inset:0,background:"rgba(43,38,32,0.5)",display:"flex",alignItems:"center",justifyContent:"center",padding:16,zIndex:70}},
+          u.default.createElement("div",{className:"fade-in",onClick:ev=>ev.stopPropagation(),style:{background:s.card,borderRadius:10,padding:18,width:"100%",maxWidth:430,maxHeight:"88vh",display:"flex",flexDirection:"column"}},
+            u.default.createElement("h3",{style:{margin:"0 0 2px",fontSize:16,fontWeight:400,color:s.oceanDark}},"預約成功訊息"),
+            u.default.createElement("div",{style:{fontSize:12,color:s.inkSoft,marginBottom:10}},(msgBk.name||"")+" · "+(msgBk.service_type||"")+" · "+Tl(msgBk.date)+" "+(msgBk.time||"")),
+            u.default.createElement("textarea",{value:msgTxt,onChange:ev=>setMsgTxt(ev.target.value),style:{width:"100%",flex:1,minHeight:250,border:`1px solid ${s.line}`,borderRadius:8,padding:10,fontSize:13,lineHeight:1.65,color:s.ink,background:s.paper,resize:"vertical",fontFamily:"inherit",boxSizing:"border-box"}}),
+            u.default.createElement("div",{style:{display:"flex",gap:8,marginTop:12}},
+              u.default.createElement("button",{onClick:()=>setMsgBk(null),style:{...ll,flex:1,padding:"10px 0"}},"關閉"),
+              u.default.createElement("button",{onClick:()=>{window.open("https://line.me/R/share?text="+encodeURIComponent(msgTxt),"_blank")},style:{...ll,flex:1,padding:"10px 0"}},"LINE 傳送"),
+              u.default.createElement("button",{onClick:()=>{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(msgTxt).then(()=>g("訊息已複製")).catch(()=>window.prompt("請手動複製：",msgTxt))}else{window.prompt("請手動複製：",msgTxt)}},style:{...Dl,flex:1.3,padding:"10px 0"}},"複製訊息")
+            )
+          )
         ),
         schedule.filter(visibleSchedule).length>0&&u.default.createElement("div",{style:{borderTop:`1px solid ${s.line}`,paddingTop:20,marginBottom:8}},
           u.default.createElement("h3",{style:{fontSize:15,fontWeight:300,margin:"0 0 12px",color:s.oceanDark}},"行程"),
