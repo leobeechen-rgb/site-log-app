@@ -9934,7 +9934,7 @@ react-dom/cjs/react-dom-client.production.js:
 
   var SB_URL = "https://rqndozhhvuimqjqtmeli.supabase.co";
   var SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxbmRvemhodnVpbXFqcXRtZWxpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5Njc1ODIsImV4cCI6MjA5OTU0MzU4Mn0.meaGT1veRt9acHCl4Dcrpk9jxjNzrkFKWfs_96C6qLw";
-  var VAPID_PUBLIC = "BBc8IgP0R87FeELKZumEksOg2CAldvEgrPvmBu2UBH5m2nZV7ID_KrmkxZSArWhUQGR55BJUET6Es6QTJxjG2DI";
+  var VAPID_PUBLIC = "BBc8IgP0R87FeELKZumEksOg2CAldvEgrPvmBu2UBH5m2nZV7ID_KrmkxZSArWhUQGR55BJUET6Es6QTJxjG2DI";   // 行程提醒
 
   var C = { paper:"#FAF9F6", card:"#FFFFFF", ink:"#1C1B18", soft:"#8C877D",
             cane:"#7C6A56", line:"#E6E2D8", tree:"#93A08C", danger:"#8B1220" };
@@ -9946,7 +9946,17 @@ react-dom/cjs/react-dom-client.production.js:
   if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) return;
   if (new URLSearchParams(location.search).has("owner")) return;  // 業主端不顯示
 
-  var sb = window.supabase.createClient(SB_URL, SB_KEY);
+  // 用到才建立。supabase-js 是從 CDN 載的，如果這段比它先跑，
+  // 直接 createClient 會整段當掉，鈴鐺就不會出現。
+  var _sb = null;
+  function sb() {
+    if (!_sb) {
+      if (!window.supabase || !window.supabase.createClient)
+        throw new Error("Supabase 尚未載入，稍後再試");
+      _sb = window.supabase.createClient(SB_URL, SB_KEY);
+    }
+    return _sb;
+  }
 
   function prefs() {
     var d = { hour:8, days:1, today:true, types:["consult","site"], label:"" };
@@ -10002,7 +10012,7 @@ react-dom/cjs/react-dom-client.production.js:
       enabled: true,
       last_seen: new Date().toISOString()
     };
-    var r = await sb.from("sitelog_push_subs").upsert(row, { onConflict: "endpoint" });
+    var r = await sb().from("sitelog_push_subs").upsert(row, { onConflict: "endpoint" });
     if (r.error) throw r.error;
   }
 
@@ -10010,7 +10020,7 @@ react-dom/cjs/react-dom-client.production.js:
     var reg = await navigator.serviceWorker.ready;
     var sub = await reg.pushManager.getSubscription();
     if (sub) {
-      await sb.from("sitelog_push_subs").delete().eq("endpoint", sub.endpoint);
+      await sb().from("sitelog_push_subs").delete().eq("endpoint", sub.endpoint);
       await sub.unsubscribe();
     }
   }
@@ -10182,5 +10192,422 @@ react-dom/cjs/react-dom-client.production.js:
   }).catch(function () {});
 })();
 </script>
+
+<!-- ============================================================
+     朔望　（長按首頁 logo 三秒開啟）
+     貼在 index.html 的 </body> 前面，放在行程提醒那段之後。
+     資料只存在這支瀏覽器的 localStorage，不上傳。
+     ============================================================ -->
+<script>
+(function () {
+  "use strict";
+
+  var SB_URL = "https://rqndozhhvuimqjqtmeli.supabase.co";
+  var SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxbmRvemhodnVpbXFqcXRtZWxpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5Njc1ODIsImV4cCI6MjA5OTU0MzU4Mn0.meaGT1veRt9acHCl4Dcrpk9jxjNzrkFKWfs_96C6qLw";  // legacy anon key（已自動填入）
+  var VAPID_PUBLIC = "BBc8IgP0R87FeELKZumEksOg2CAldvEgrPvmBu2UBH5m2nZV7ID_KrmkxZSArWhUQGR55BJUET6Es6QTJxjG2DI";   // 朔望
+  var LS = "moon.v1";
+
+  if (new URLSearchParams(location.search).has("owner")) return;  // 業主端不載入
+
+  var DEF = { cycle:28, plen:5, before:2, onday:true, fert:false, hour:9 };
+  var db = { starts: [], set: Object.assign({}, DEF) };
+
+  function load() {
+    try {
+      var r = JSON.parse(localStorage.getItem(LS) || "{}");
+      if (r.starts) db.starts = r.starts;
+      if (r.set) db.set = Object.assign({}, DEF, r.set);
+    } catch (e) {}
+  }
+  function save() {
+    localStorage.setItem(LS, JSON.stringify({ starts: db.starts, set: db.set }));
+    sync();
+  }
+  load();
+
+  /* ── 日期 ─────────────────────────────── */
+  function iso(d) { var t=new Date(d); t.setMinutes(t.getMinutes()-t.getTimezoneOffset());
+                    return t.toISOString().slice(0,10); }
+  function parse(s){ var a=s.split("-"); return new Date(+a[0], +a[1]-1, +a[2]); }
+  function addD(s,n){ var d=parse(s); d.setDate(d.getDate()+n); return iso(d); }
+  function diff(a,b){ return Math.round((parse(b)-parse(a))/864e5); }
+  function today(){ return iso(new Date()); }
+  function fmt(s){ var d=parse(s); return (d.getMonth()+1)+"/"+d.getDate(); }
+
+  function gaps() {
+    var s = db.starts.slice().sort(), g = [];
+    for (var i=1;i<s.length;i++){ var d=diff(s[i-1],s[i]); if(d>=18&&d<=45) g.push(d); }
+    return g;
+  }
+  function avgCycle() {
+    var g = gaps().slice(-6);
+    if (!g.length) return db.set.cycle;
+    return Math.round(g.reduce(function(a,b){return a+b;},0) / g.length);
+  }
+  function state() {
+    var s = db.starts.slice().sort();
+    if (!s.length) return null;
+    var last = s[s.length-1], cyc = avgCycle(), next = addD(last, cyc);
+    while (diff(next, today()) > Math.max(cyc,10)) next = addD(next, cyc);
+    var base = addD(next, -cyc);
+    return { last:last, cyc:cyc, next:next, base:base,
+             day:diff(base,today())+1, left:diff(today(),next), stale:base!==last };
+  }
+
+  /* 未來要提醒的項目 */
+  function plan() {
+    var st = state(); if (!st) return [];
+    var out = [], n = st.next;
+    for (var i=0;i<6;i++) {
+      if (db.set.before>0) out.push({ date:addD(n,-db.set.before), kind:"pre",
+        title:"月經快到了", body:"預估 "+fmt(n)+" 開始，還有 "+db.set.before+" 天。" });
+      if (db.set.onday) out.push({ date:n, kind:"day",
+        title:"預估今天開始", body:"如果來了，記得回來按一下。" });
+      if (db.set.fert) { var ov = addD(n,-14);
+        out.push({ date:ov, kind:"ov", title:"預估排卵日", body:fmt(ov)+" 前後為易孕期。" }); }
+      n = addD(n, st.cyc);
+    }
+    return out.sort(function(a,b){ return a.date<b.date?-1:1; });
+  }
+
+  /* ── 同步到 SW 與 Supabase ─────────────── */
+  function sync() {
+    if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage(
+        { type:"moon-schedule", items:plan() });
+    }
+    clearTimeout(sync._t);
+    sync._t = setTimeout(pushSub, 900);
+  }
+
+  function sbHead() {
+    return { "apikey":SB_KEY, "Authorization":"Bearer "+SB_KEY,
+             "Content-Type":"application/json", "Prefer":"return=minimal" };
+  }
+  function b64ToU8(s) {
+    var pad = "=".repeat((4 - s.length % 4) % 4);
+    var raw = atob((s+pad).replace(/-/g,"+").replace(/_/g,"/"));
+    return Uint8Array.from([].map.call(raw, function(c){ return c.charCodeAt(0); }));
+  }
+
+  var pushState = "off";
+  async function pushSub() {
+    if (!SB_KEY || !VAPID_PUBLIC) return;
+    if (!("PushManager" in window) || Notification.permission !== "granted") return;
+    if (!db.starts.length) return;   // 還沒紀錄就不用訂閱
+    try {
+      var reg = await navigator.serviceWorker.ready;
+      var sub = await reg.pushManager.getSubscription();
+      if (!sub) sub = await reg.pushManager.subscribe(
+        { userVisibleOnly:true, applicationServerKey:b64ToU8(VAPID_PUBLIC) });
+
+      var j = sub.toJSON();
+      var dates = plan().map(function(x){ return x.date; })
+                        .filter(function(d){ return d >= today(); });
+      dates = dates.filter(function(d,i){ return dates.indexOf(d)===i; });
+
+      var url = SB_URL + "/rest/v1/moon_push_subs";
+      // 先刪後增，不用 upsert —— upsert 需要 SELECT 權限，
+      // 開了就等於讓拿到 anon key 的人讀得到所有訂閱端點。
+      await fetch(url + "?endpoint=eq." + encodeURIComponent(sub.endpoint),
+        { method:"DELETE", headers:sbHead() });
+      var r = await fetch(url, { method:"POST", headers:sbHead(),
+        body: JSON.stringify({
+          endpoint: sub.endpoint,
+          p256dh: j.keys && j.keys.p256dh,
+          auth: j.keys && j.keys.auth,
+          tz_offset: new Date().getTimezoneOffset(),
+          remind_hour: db.set.hour,
+          dates: dates,
+          enabled: true
+        }) });
+      pushState = r.ok ? "ok" : "fail";
+    } catch (e) { pushState = "fail"; }
+  }
+
+  /* ── 樣式 ─────────────────────────────── */
+  var css = document.createElement("style");
+  css.textContent = [
+    "#mnWrap{position:fixed;inset:0;z-index:9995;background:#12151F;color:#EDE8DE;",
+      "text-align:left;line-height:1.7;",
+      "font-family:'Noto Sans TC',sans-serif;font-weight:300;overflow-y:auto;",
+      "padding:max(22px,env(safe-area-inset-top)) 20px calc(40px + env(safe-area-inset-bottom))}",
+    "#mnIn{max-width:440px;margin:0 auto}",
+    "#mnX{position:absolute;top:14px;right:16px;font-size:26px;line-height:1;",
+      "color:#8A93A8;background:none;border:0;cursor:pointer;padding:6px 10px}",
+    "#mnDial{position:relative;width:min(280px,72vw);margin:6px auto 2px}",
+    "#mnDial svg{display:block;width:100%;height:auto;overflow:visible}",
+    "#mnCen{position:absolute;inset:0;display:flex;flex-direction:column;",
+      "align-items:center;justify-content:center;text-align:center;pointer-events:none}",
+    "#mnDay{font-family:Georgia,serif;font-weight:300;font-size:clamp(46px,15vw,60px);",
+      "line-height:1;font-variant-numeric:tabular-nums}",
+    "#mnDay small{font-size:.3em;color:#8A93A8;margin-left:.3em;font-family:inherit}",
+    "#mnPh{margin-top:8px;font-size:13.5px;color:#8A93A8}",
+    "#mnNext{text-align:center;margin:16px 0 26px;font-size:14.5px;color:#8A93A8}",
+    "#mnNext b{font-weight:400;color:#EDE8DE}",
+    ".mnBtn{display:block;width:100%;padding:14px;border-radius:13px;font-size:15.5px;",
+      "border:0;cursor:pointer;font-family:inherit;font-weight:300}",
+    ".mnGo{background:#A4485F;color:#fff}",
+    ".mnGh{background:none;border:1px solid #2B3244;color:#8A93A8;margin-top:9px}",
+    "#mnWrap h4{font-size:12.5px;font-weight:400;color:#8A93A8;letter-spacing:.04em;",
+      "margin:30px 0 0;padding-bottom:8px;border-bottom:1px solid #2B3244}",
+    ".mnRow{display:flex;align-items:center;justify-content:space-between;gap:14px;",
+      "padding:12px 0;border-bottom:1px solid #2B3244;font-size:14.5px}",
+    ".mnRow small{display:block;font-size:12px;color:#8A93A8;line-height:1.5}",
+    "#mnWrap input[type=number],#mnWrap input[type=date]{font:inherit;font-size:14.5px;",
+      "background:#1B2030;color:#EDE8DE;border:1px solid #2B3244;border-radius:9px;padding:8px 10px}",
+    "#mnWrap input[type=number]{width:64px;text-align:center}",
+    "#mnWrap input[type=date]{width:100%}",
+    "#mnWrap input[type=checkbox]{width:20px;height:20px;accent-color:#6E9C88}",
+    ".mnLog{display:flex;align-items:baseline;justify-content:space-between;",
+      "padding:10px 0;border-bottom:1px solid #2B3244;font-size:14px}",
+    ".mnLog b{font-family:Georgia,serif;font-weight:400;font-size:16px}",
+    ".mnLog span{color:#8A93A8;font-size:12.5px}",
+    ".mnLog button{background:none;border:0;color:#8A93A8;font-size:12.5px;cursor:pointer}",
+    "#mnNote{margin-top:30px;font-size:12px;color:#8A93A8;line-height:1.75;",
+      "border-top:1px solid #2B3244;padding-top:14px}",
+    "#mnOpen{position:fixed;right:16px;bottom:calc(76px + env(safe-area-inset-bottom));",
+      "z-index:40;width:46px;height:46px;border-radius:50%;border:1px solid #E6E2D8;",
+      "background:#FFFFFF;color:#7C6A56;display:flex;align-items:center;justify-content:center;",
+      "cursor:pointer;box-shadow:0 2px 10px rgba(28,27,24,.10);transition:transform .15s}",
+    "#mnOpen:active{transform:scale(.93)}",
+    "#mnToast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,16px);",
+      "background:#1B2030;border:1px solid #2B3244;color:#EDE8DE;padding:10px 17px;",
+      "border-radius:99px;font-size:13.5px;opacity:0;transition:.25s;pointer-events:none;z-index:9996}",
+    "#mnToast.on{opacity:1;transform:translate(-50%,0)}"
+  ].join("");
+  document.head.appendChild(css);
+
+  /* ── 面板 ─────────────────────────────── */
+  var wrap = null;
+  function toast(t) {
+    var e = document.getElementById("mnToast");
+    if (!e) { e = document.createElement("div"); e.id = "mnToast"; document.body.appendChild(e); }
+    e.textContent = t; e.classList.add("on");
+    clearTimeout(e._t); e._t = setTimeout(function(){ e.classList.remove("on"); }, 1900);
+  }
+
+  function open() {
+    if (wrap) return;
+    wrap = document.createElement("div");
+    wrap.id = "mnWrap";
+    wrap.innerHTML =
+      '<button id="mnX">&times;</button>' +
+      '<div id="mnIn">' +
+        '<div id="mnDial"><svg viewBox="0 0 240 240" aria-hidden="true">' +
+          '<circle cx="120" cy="120" r="100" fill="none" stroke="rgba(237,232,222,.09)" stroke-width="9"/>' +
+          '<circle id="mnArcF" cx="120" cy="120" r="100" fill="none" stroke="#A4485F" stroke-width="9" ' +
+            'stroke-linecap="round" transform="rotate(-90 120 120)"/>' +
+          '<circle id="mnArcV" cx="120" cy="120" r="100" fill="none" stroke="#6E9C88" stroke-width="9" ' +
+            'stroke-linecap="round" opacity=".75"/>' +
+          '<circle id="mnHalo" cx="120" cy="20" r="13" fill="#EDE8DE" opacity=".18"/>' +
+          '<circle id="mnDot" cx="120" cy="20" r="5.5" fill="#EDE8DE"/>' +
+        '</svg><div id="mnCen"><div id="mnDay">—</div><div id="mnPh"></div></div></div>' +
+        '<p id="mnNext"></p>' +
+        '<button class="mnBtn mnGo" id="mnToday">記錄今天是第一天</button>' +
+        '<button class="mnBtn mnGh" id="mnOther">補記其他日期</button>' +
+        '<div id="mnPick" style="display:none;margin-top:9px">' +
+          '<input type="date" id="mnDate">' +
+          '<button class="mnBtn mnGh" id="mnSaveD" style="margin-top:8px">存入這一天</button></div>' +
+        '<h4>提醒</h4>' +
+        '<div class="mnRow"><span>開啟通知<small id="mnPerm"></small></span>' +
+          '<button class="mnBtn mnGh" id="mnAsk" style="width:auto;padding:8px 15px;margin:0">允許</button></div>' +
+        '<div class="mnRow"><span>提前提醒<small>預估日的前幾天</small></span>' +
+          '<span><input type="number" id="mnBef" min="0" max="7"> 天</span></div>' +
+        '<div class="mnRow"><span>當天也提醒</span><input type="checkbox" id="mnOn"></div>' +
+        '<div class="mnRow"><span>提醒時間<small>24 小時制</small></span>' +
+          '<span><input type="number" id="mnHr" min="0" max="23"> 點</span></div>' +
+        '<div class="mnRow"><span>易孕期提醒<small>預估排卵日前後</small></span>' +
+          '<input type="checkbox" id="mnFert"></div>' +
+        '<button class="mnBtn mnGh" id="mnIcs" style="margin-top:12px">匯出未來 12 期到行事曆</button>' +
+        '<h4>週期</h4>' +
+        '<div class="mnRow"><span>平均週期<small id="mnCycSub"></small></span>' +
+          '<b id="mnCyc" style="font-family:Georgia,serif;font-weight:400;font-size:17px"></b></div>' +
+        '<div class="mnRow"><span>經期長度<small>用來畫圖與估算</small></span>' +
+          '<span><input type="number" id="mnPlen" min="2" max="10"> 天</span></div>' +
+        '<h4>紀錄</h4><div id="mnLogs"></div>' +
+        '<p id="mnNote">這裡的日期都是根據過去紀錄推算的估計值，會受作息、壓力、生病影響而偏移。' +
+          '身體狀況上的疑問，還是找醫師談。<br>所有資料只存在這支手機的瀏覽器裡，不會上傳。</p>' +
+      '</div>';
+    document.body.appendChild(wrap);
+    document.body.style.overflow = "hidden";
+    bind();
+    render();
+  }
+  function close() {
+    if (!wrap) return;
+    wrap.remove(); wrap = null;
+    document.body.style.overflow = "";
+  }
+
+  function bind() {
+    document.getElementById("mnX").onclick = close;
+
+    document.getElementById("mnToday").onclick = function(){ add(today()); };
+    document.getElementById("mnOther").onclick = function(){
+      var p = document.getElementById("mnPick");
+      p.style.display = p.style.display === "none" ? "block" : "none";
+      document.getElementById("mnDate").value = today();
+    };
+    document.getElementById("mnSaveD").onclick = function(){
+      var v = document.getElementById("mnDate").value;
+      if (!v) return toast("先選一個日期");
+      if (v > today()) return toast("不能選未來的日期");
+      add(v); document.getElementById("mnPick").style.display = "none";
+    };
+
+    var bef=document.getElementById("mnBef"), on=document.getElementById("mnOn"),
+        hr=document.getElementById("mnHr"), ft=document.getElementById("mnFert"),
+        pl=document.getElementById("mnPlen");
+    bef.value=db.set.before; on.checked=db.set.onday; hr.value=db.set.hour;
+    ft.checked=db.set.fert; pl.value=db.set.plen;
+    bef.onchange=function(){ db.set.before=Math.max(0,Math.min(7,+bef.value||0)); bef.value=db.set.before; save(); };
+    on.onchange =function(){ db.set.onday=on.checked; save(); };
+    hr.onchange =function(){ db.set.hour=Math.max(0,Math.min(23,+hr.value||9)); hr.value=db.set.hour; save(); };
+    ft.onchange =function(){ db.set.fert=ft.checked; save(); render(); };
+    pl.onchange =function(){ db.set.plen=Math.max(2,Math.min(10,+pl.value||5)); pl.value=db.set.plen; save(); render(); };
+
+    document.getElementById("mnAsk").onclick = async function(){
+      var p = await Notification.requestPermission();
+      perm();
+      if (p === "granted") { toast("通知已開啟"); pushSub(); }
+    };
+    document.getElementById("mnIcs").onclick = ics;
+    perm();
+  }
+
+  function perm() {
+    var t = document.getElementById("mnPerm"), b = document.getElementById("mnAsk");
+    if (!t) return;
+    var p = ("Notification" in window) ? Notification.permission : "unsupported";
+    var tail = (SB_KEY && VAPID_PUBLIC)
+      ? (pushState === "ok" ? "，背景推播已連線"
+        : pushState === "fail" ? "，背景推播連不上" : "")
+      : "";
+    t.textContent = p === "granted" ? "已允許" + (tail || "，開啟時會補發")
+      : p === "denied" ? "已被封鎖，要到瀏覽器設定開啟"
+      : p === "unsupported" ? "這個瀏覽器不支援" : "尚未允許";
+    b.style.display = p === "default" ? "" : "none";
+  }
+
+  function add(d) {
+    if (db.starts.indexOf(d) >= 0) return toast("這天已經記過了");
+    db.starts.push(d); db.starts.sort(); save(); render(); toast("已記錄 " + fmt(d));
+  }
+
+  /* ── 繪製 ─────────────────────────────── */
+  var C = 2 * Math.PI * 100;
+  function render() {
+    if (!wrap) return;
+    var st = state(), plen = db.set.plen;
+    var aF=document.getElementById("mnArcF"), aV=document.getElementById("mnArcV"),
+        dot=document.getElementById("mnDot"), halo=document.getElementById("mnHalo");
+
+    if (!st) {
+      // 長度設 0 時圓頭線帽會留下小圓點，要一併藏起來
+      aF.style.opacity = aV.style.opacity = 0;
+      dot.style.opacity = halo.style.opacity = 0;
+      document.getElementById("mnDay").textContent = "—";
+      document.getElementById("mnPh").textContent = "還沒有紀錄";
+      document.getElementById("mnNext").textContent = "記錄一次月經開始日，就會開始推算。";
+    } else {
+      var cyc = st.cyc;
+      var lf = C * Math.min(plen, cyc) / cyc;
+      aF.style.opacity = 1;
+      aF.style.strokeDasharray = lf + " 999";
+      var ovS = Math.max(plen, cyc-19), ovE = cyc-13;
+      if (db.set.fert && ovE > ovS) {
+        aV.style.opacity = .75;
+        aV.style.strokeDasharray = (C*(ovE-ovS)/cyc) + " 999";
+        aV.setAttribute("transform", "rotate(" + (-90 + 360*ovS/cyc) + " 120 120)");
+      } else aV.style.opacity = 0;
+
+      dot.style.opacity = halo.style.opacity = 1;
+      var pos = ((st.day - .5) % cyc + cyc) % cyc;
+      var a = (pos/cyc) * 2*Math.PI - Math.PI/2;
+      var x = 120 + 100*Math.cos(a), y = 120 + 100*Math.sin(a);
+      dot.setAttribute("cx",x); dot.setAttribute("cy",y);
+      halo.setAttribute("cx",x); halo.setAttribute("cy",y);
+
+      document.getElementById("mnDay").innerHTML = st.day + "<small>天</small>";
+      document.getElementById("mnPh").textContent = st.stale ? "紀錄有點久了"
+        : st.day <= plen ? "經期"
+        : st.left <= 0 ? "已超過預估日"
+        : st.left <= 3 ? "快到了"
+        : (st.day >= cyc-19 && st.day <= cyc-13) ? "易孕期" : "平常";
+      document.getElementById("mnNext").innerHTML = st.left > 0
+        ? "下次預估 <b>"+fmt(st.next)+"</b>，還有 <b>"+st.left+"</b> 天"
+        : st.left === 0 ? "預估就是 <b>今天</b>"
+        : "已超過預估日 <b>"+(-st.left)+"</b> 天";
+    }
+
+    document.getElementById("mnCyc").textContent = avgCycle() + " 天";
+    var g = gaps();
+    document.getElementById("mnCycSub").textContent = g.length
+      ? "取最近 " + Math.min(g.length,6) + " 次的間隔平均" : "尚無資料，先用預設值";
+
+    var s = db.starts.slice().sort().reverse(), box = document.getElementById("mnLogs");
+    box.innerHTML = s.length ? s.map(function(d,i){
+      var gp = i < s.length-1 ? diff(s[i+1], d) : null;
+      return '<div class="mnLog"><b>'+d.slice(5).replace("-","/")+'</b>' +
+             '<span>'+(gp ? "間隔 "+gp+" 天" : "最早一筆")+'</span>' +
+             '<button data-d="'+d+'">刪除</button></div>';
+    }).join("") : '<p style="color:#8A93A8;font-size:14px;padding:6px 0">還沒有任何紀錄。</p>';
+    [].forEach.call(box.querySelectorAll("[data-d]"), function(b){
+      b.onclick = function(){
+        db.starts = db.starts.filter(function(x){ return x !== b.dataset.d; });
+        save(); render(); toast("已刪除");
+      };
+    });
+  }
+
+  /* ── 行事曆匯出 ───────────────────────── */
+  function ics() {
+    var st = state(); if (!st) return toast("先記錄一次開始日");
+    var pad = function(n){ return String(n).padStart(2,"0"); };
+    var stamp = new Date().toISOString().replace(/[-:]/g,"").split(".")[0] + "Z";
+    var n = st.next, L = ["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//moon//cycle//ZH","CALSCALE:GREGORIAN"];
+    for (var i=0;i<12;i++) {
+      var al = [];
+      if (db.set.before>0) al.push("BEGIN:VALARM\nTRIGGER:-P"+db.set.before+"D\nACTION:DISPLAY\nDESCRIPTION:還有 "+db.set.before+" 天\nEND:VALARM");
+      if (db.set.onday)    al.push("BEGIN:VALARM\nTRIGGER:PT0S\nACTION:DISPLAY\nDESCRIPTION:預估開始日\nEND:VALARM");
+      var d = n.replace(/-/g,"");
+      L.push("BEGIN:VEVENT\nUID:moon-"+n+"-"+i+"@local\nDTSTAMP:"+stamp+
+             "\nDTSTART:"+d+"T"+pad(db.set.hour)+"0000\nDTEND:"+d+"T"+pad(db.set.hour)+"1500"+
+             "\nSUMMARY:預估開始日\nDESCRIPTION:依平均週期 "+st.cyc+" 天推算，僅供參考。\n"+
+             al.join("\n")+"\nEND:VEVENT");
+      n = addD(n, st.cyc);
+    }
+    L.push("END:VCALENDAR");
+    var b = new Blob([L.join("\r\n").replace(/\n/g,"\r\n")], {type:"text/calendar;charset=utf-8"});
+    var u = URL.createObjectURL(b), a = document.createElement("a");
+    a.href = u; a.download = "cycle.ics"; a.click();
+    setTimeout(function(){ URL.revokeObjectURL(u); }, 3000);
+    toast("已匯出，打開檔案即可加入行事曆");
+  }
+
+  /* ── 入口按鈕 ─────────────────────────── */
+  var btn = document.createElement("button");
+  btn.id = "mnOpen";
+  btn.title = "朔望";
+  btn.setAttribute("aria-label", "朔望");
+  btn.innerHTML =
+    '<svg width="21" height="21" viewBox="0 0 24 24" fill="none" aria-hidden="true">' +
+      '<circle cx="12" cy="12" r="8.6" stroke="currentColor" stroke-width="1.7"/>' +
+      '<circle cx="5.9" cy="18.1" r="2.1" fill="currentColor"/>' +
+    '</svg>';
+  btn.onclick = open;
+  document.body.appendChild(btn);
+
+  // 備用入口：網址加 ?almanac
+  if (new URLSearchParams(location.search).has("almanac")) setTimeout(open, 800);
+
+  // 開啟 App 時把排程同步一次
+  if (navigator.serviceWorker) {
+    navigator.serviceWorker.ready.then(function(){ sync(); }).catch(function(){});
+  }
+})();
+</script>
+
 </body>
 </html>
