@@ -9924,4 +9924,263 @@ react-dom/cjs/react-dom-client.production.js:
 </script>
 
 </body>
+<!-- ============================================================
+     工地紀錄本　行程提醒
+     把這整段貼在 index.html 的 </body> 前面。
+     完全獨立，不用動到 React 打包的那一大塊。
+     ============================================================ -->
+<script>
+(function () {
+  "use strict";
+
+  var SB_URL = "https://rqndozhhvuimqjqtmeli.supabase.co";
+  var SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxbmRvemhodnVpbXFqcXRtZWxpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5Njc1ODIsImV4cCI6MjA5OTU0MzU4Mn0.meaGT1veRt9acHCl4Dcrpk9jxjNzrkFKWfs_96C6qLw";
+  var VAPID_PUBLIC = "";   // ← 貼上 keygen 產生的公鑰，留空則整個功能不啟用
+
+  var C = { paper:"#FAF9F6", card:"#FFFFFF", ink:"#1C1B18", soft:"#8C877D",
+            cane:"#7C6A56", line:"#E6E2D8", tree:"#93A08C", danger:"#8B1220" };
+  var LS = "hb_push_prefs";
+  var TYPES = [["consult","諮詢預約"],["site","案件行程"],
+               ["personal","私人行程"],["other","其他"]];
+
+  if (!VAPID_PUBLIC) return;
+  if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) return;
+  if (new URLSearchParams(location.search).has("owner")) return;  // 業主端不顯示
+
+  var sb = window.supabase.createClient(SB_URL, SB_KEY);
+
+  function prefs() {
+    var d = { hour:8, days:1, today:true, types:["consult","site"], label:"" };
+    try { return Object.assign(d, JSON.parse(localStorage.getItem(LS) || "{}")); }
+    catch (e) { return d; }
+  }
+  function savePrefs(p) { localStorage.setItem(LS, JSON.stringify(p)); }
+
+  function b64ToU8(s) {
+    var pad = "=".repeat((4 - s.length % 4) % 4);
+    var raw = atob((s + pad).replace(/-/g, "+").replace(/_/g, "/"));
+    return Uint8Array.from([].map.call(raw, function (c) { return c.charCodeAt(0); }));
+  }
+  function keyOf(sub, name) {
+    var k = sub.getKey(name);
+    return k ? btoa(String.fromCharCode.apply(null, new Uint8Array(k)))
+                 .replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"") : "";
+  }
+
+  var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  var standalone = window.matchMedia("(display-mode: standalone)").matches
+                   || window.navigator.standalone === true;
+
+  /* ── 訂閱／退訂 ─────────────────────────── */
+  async function subscribe() {
+    var perm = await Notification.requestPermission();
+    if (perm !== "granted") throw new Error("你剛才沒有允許通知");
+
+    var reg = await navigator.serviceWorker.ready;
+    var sub = await reg.pushManager.getSubscription();
+    if (!sub) {
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: b64ToU8(VAPID_PUBLIC)
+      });
+    }
+    await push(sub);
+    return sub;
+  }
+
+  async function push(sub) {
+    var p = prefs();
+    var row = {
+      endpoint: sub.endpoint,
+      p256dh: keyOf(sub, "p256dh"),
+      auth: keyOf(sub, "auth"),
+      label: p.label || null,
+      tz_offset: new Date().getTimezoneOffset(),
+      remind_hour: p.hour,
+      days_before: p.days,
+      remind_today: !!p.today,
+      types: p.types.length ? p.types : ["site"],
+      enabled: true,
+      last_seen: new Date().toISOString()
+    };
+    var r = await sb.from("sitelog_push_subs").upsert(row, { onConflict: "endpoint" });
+    if (r.error) throw r.error;
+  }
+
+  async function unsubscribe() {
+    var reg = await navigator.serviceWorker.ready;
+    var sub = await reg.pushManager.getSubscription();
+    if (sub) {
+      await sb.from("sitelog_push_subs").delete().eq("endpoint", sub.endpoint);
+      await sub.unsubscribe();
+    }
+  }
+
+  /* ── 介面 ──────────────────────────────── */
+  var css = document.createElement("style");
+  css.textContent = [
+    "#hbPushBtn{position:fixed;right:16px;bottom:calc(20px + env(safe-area-inset-bottom));",
+      "z-index:40;width:46px;height:46px;border-radius:50%;border:1px solid " + C.line + ";",
+      "background:" + C.card + ";color:" + C.cane + ";display:flex;align-items:center;",
+      "justify-content:center;cursor:pointer;box-shadow:0 2px 10px rgba(28,27,24,.10);",
+      "transition:transform .15s}",
+    "#hbPushBtn:active{transform:scale(.93)}",
+    "#hbPushBtn.on{background:" + C.tree + ";color:#fff;border-color:" + C.tree + "}",
+    "#hbPushWrap{position:fixed;inset:0;z-index:9990;background:rgba(43,38,32,.45);",
+      "display:flex;align-items:center;justify-content:center;padding:20px}",
+    "#hbPushCard{background:" + C.paper + ";border-radius:14px;padding:22px;width:100%;",
+      "max-width:340px;font-family:'Noto Sans TC',sans-serif;color:" + C.ink + ";",
+      "max-height:86vh;overflow-y:auto}",
+    "#hbPushCard h3{margin:0 0 4px;font-size:17px;font-weight:400}",
+    "#hbPushCard .sub{font-size:12.5px;color:" + C.soft + ";line-height:1.65;margin:0 0 16px}",
+    "#hbPushCard label.row{display:flex;align-items:center;justify-content:space-between;",
+      "gap:12px;padding:11px 0;border-bottom:1px solid " + C.line + ";font-size:14.5px}",
+    "#hbPushCard input[type=number],#hbPushCard input[type=text]{font:inherit;font-size:14.5px;",
+      "border:1px solid " + C.line + ";border-radius:8px;padding:7px 9px;background:" + C.card + ";",
+      "color:" + C.ink + ";width:70px;text-align:center}",
+    "#hbPushCard input[type=text]{width:130px;text-align:left}",
+    "#hbPushCard .types{display:flex;flex-wrap:wrap;gap:7px;padding:13px 0}",
+    "#hbPushCard .chip{font-size:13px;padding:6px 12px;border-radius:999px;cursor:pointer;",
+      "border:1px solid " + C.line + ";background:" + C.card + ";color:" + C.soft + "}",
+    "#hbPushCard .chip.sel{background:" + C.cane + ";border-color:" + C.cane + ";color:#fff}",
+    "#hbPushCard .btns{display:flex;gap:9px;margin-top:18px}",
+    "#hbPushCard button{font:inherit;font-size:14.5px;flex:1;padding:11px;border-radius:9px;",
+      "border:1px solid " + C.line + ";background:" + C.card + ";color:" + C.ink + ";cursor:pointer}",
+    "#hbPushCard button.go{background:" + C.cane + ";border-color:" + C.cane + ";color:#fff}",
+    "#hbPushCard button.off{color:" + C.danger + "}",
+    "#hbPushCard .msg{font-size:12.5px;color:" + C.soft + ";margin-top:12px;line-height:1.6}"
+  ].join("");
+  document.head.appendChild(css);
+
+  var BELL = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+             'stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">' +
+             '<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>' +
+             '<path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>';
+
+  var btn = document.createElement("button");
+  btn.id = "hbPushBtn";
+  btn.title = "行程提醒";
+  btn.innerHTML = BELL;
+  document.body.appendChild(btn);
+
+  async function refreshBtn() {
+    try {
+      var reg = await navigator.serviceWorker.ready;
+      var sub = await reg.pushManager.getSubscription();
+      btn.classList.toggle("on", !!sub && Notification.permission === "granted");
+    } catch (e) {}
+  }
+
+  btn.onclick = openPanel;
+
+  function openPanel() {
+    var p = prefs();
+    var wrap = document.createElement("div");
+    wrap.id = "hbPushWrap";
+    var on = btn.classList.contains("on");
+
+    var hint = "";
+    if (isIOS && !standalone) {
+      hint = "iPhone 要先把這個網站「加入主畫面」，從主畫面的圖示打開才收得到推播。在 Safari 分頁裡按是沒有用的。";
+    } else if (!on) {
+      hint = "打開後，行程開始前會自動跳通知，App 沒開著也會響。";
+    } else {
+      hint = "已開啟。設定改完記得按儲存。";
+    }
+
+    wrap.innerHTML =
+      '<div id="hbPushCard">' +
+        '<h3>行程提醒</h3>' +
+        '<p class="sub">' + hint + '</p>' +
+        '<label class="row"><span>提前幾天提醒</span>' +
+          '<span><input type="number" id="hbD" min="0" max="14" value="' + p.days + '"> 天</span></label>' +
+        '<label class="row"><span>當天也提醒</span>' +
+          '<input type="checkbox" id="hbT"' + (p.today ? " checked" : "") + '></label>' +
+        '<label class="row"><span>提醒時間</span>' +
+          '<span><input type="number" id="hbH" min="0" max="23" value="' + p.hour + '"> 點</span></label>' +
+        '<label class="row"><span>這支手機是</span>' +
+          '<input type="text" id="hbL" placeholder="例如：奕菁" value="' +
+            String(p.label).replace(/"/g, "&quot;") + '"></label>' +
+        '<div class="types" id="hbTy">' +
+          TYPES.map(function (t) {
+            return '<span class="chip' + (p.types.indexOf(t[0]) >= 0 ? " sel" : "") +
+                   '" data-t="' + t[0] + '">' + t[1] + '</span>';
+          }).join("") +
+        '</div>' +
+        '<div class="btns">' +
+          '<button class="go" id="hbSave">' + (on ? "儲存" : "開啟提醒") + '</button>' +
+          '<button id="hbClose">關閉</button>' +
+        '</div>' +
+        (on ? '<div class="btns"><button class="off" id="hbOff">停用這支手機的提醒</button></div>' : "") +
+        '<p class="msg" id="hbMsg"></p>' +
+      '</div>';
+
+    document.body.appendChild(wrap);
+    wrap.addEventListener("click", function (e) { if (e.target === wrap) close(); });
+    function close() { wrap.remove(); }
+    document.getElementById("hbClose").onclick = close;
+
+    var tyBox = document.getElementById("hbTy");
+    tyBox.addEventListener("click", function (e) {
+      var c = e.target.closest(".chip");
+      if (c) c.classList.toggle("sel");
+    });
+
+    var msg = document.getElementById("hbMsg");
+
+    document.getElementById("hbSave").onclick = async function () {
+      var sel = [].slice.call(tyBox.querySelectorAll(".chip.sel"))
+                  .map(function (c) { return c.dataset.t; });
+      if (!sel.length) { msg.textContent = "至少要選一種行程類型。"; return; }
+
+      savePrefs({
+        hour:  Math.max(0, Math.min(23, +document.getElementById("hbH").value || 8)),
+        days:  Math.max(0, Math.min(14, +document.getElementById("hbD").value || 0)),
+        today: document.getElementById("hbT").checked,
+        label: document.getElementById("hbL").value.trim(),
+        types: sel
+      });
+
+      this.disabled = true;
+      msg.textContent = "處理中…";
+      try {
+        var reg = await navigator.serviceWorker.ready;
+        var sub = await reg.pushManager.getSubscription();
+        if (sub && Notification.permission === "granted") await push(sub);
+        else await subscribe();
+        await refreshBtn();
+        msg.textContent = "已儲存。";
+        setTimeout(close, 700);
+      } catch (err) {
+        msg.textContent = "沒有成功：" + (err.message || err);
+        this.disabled = false;
+      }
+    };
+
+    var off = document.getElementById("hbOff");
+    if (off) off.onclick = async function () {
+      this.disabled = true;
+      msg.textContent = "處理中…";
+      try {
+        await unsubscribe();
+        await refreshBtn();
+        msg.textContent = "已停用。";
+        setTimeout(close, 700);
+      } catch (err) {
+        msg.textContent = "沒有成功：" + (err.message || err);
+        this.disabled = false;
+      }
+    };
+  }
+
+  // 每次開啟 App 時回報一次時區與最後上線時間，時區才不會在出國後失準
+  navigator.serviceWorker.ready.then(async function (reg) {
+    await refreshBtn();
+    try {
+      var sub = await reg.pushManager.getSubscription();
+      if (sub && Notification.permission === "granted") await push(sub);
+    } catch (e) {}
+  }).catch(function () {});
+})();
+</script>
 </html>
