@@ -9944,7 +9944,17 @@ react-dom/cjs/react-dom-client.production.js:
 
   if (!VAPID_PUBLIC) return;
   if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) return;
-  if (new URLSearchParams(location.search).has("owner")) return;  // 業主端不顯示
+
+  // 只有「管理者已登入」時才顯示。
+  // 業主端登入後身分存在 localStorage，網址上不會有 ?owner，
+  // 所以不能只看網址參數。登入頁尚未登入，同樣不顯示。
+  function hbIsAdmin() {
+    try {
+      if (new URLSearchParams(location.search).has("owner")) return false;
+      if (localStorage.getItem("sitelog_owner_project_id")) return false;
+      return localStorage.getItem("sitelog_admin_unlocked") === "true";
+    } catch (e) { return false; }
+  }
 
   // 用到才建立。supabase-js 是從 CDN 載的，如果這段比它先跑，
   // 直接 createClient 會整段當掉，鈴鐺就不會出現。
@@ -10070,7 +10080,17 @@ react-dom/cjs/react-dom-client.production.js:
   btn.id = "hbPushBtn";
   btn.title = "行程提醒";
   btn.innerHTML = BELL;
+  btn.style.display = "none";
   document.body.appendChild(btn);
+
+  // SPA 登入／登出不會重新載入頁面，所以要持續確認身分
+  function hbSync() {
+    var ok = hbIsAdmin();
+    btn.style.display = ok ? "" : "none";
+    if (!ok) { var w = document.getElementById("hbPushWrap"); if (w) w.remove(); }
+  }
+  hbSync();
+  setInterval(hbSync, 1500);
 
   async function refreshBtn() {
     try {
@@ -10207,7 +10227,17 @@ react-dom/cjs/react-dom-client.production.js:
   var VAPID_PUBLIC = "BBc8IgP0R87FeELKZumEksOg2CAldvEgrPvmBu2UBH5m2nZV7ID_KrmkxZSArWhUQGR55BJUET6Es6QTJxjG2DI";   // 朔望
   var LS = "moon.v1";
 
-  if (new URLSearchParams(location.search).has("owner")) return;  // 業主端不載入
+
+  // 只有「管理者已登入」時才顯示。
+  // 業主端登入後身分存在 localStorage，網址上不會有 ?owner，
+  // 所以不能只看網址參數。登入頁尚未登入，同樣不顯示。
+  function mnIsAdmin() {
+    try {
+      if (new URLSearchParams(location.search).has("owner")) return false;
+      if (localStorage.getItem("sitelog_owner_project_id")) return false;
+      return localStorage.getItem("sitelog_admin_unlocked") === "true";
+    } catch (e) { return false; }
+  }
 
   var DEF = { cycle:28, plen:5, before:2, onday:true, fert:false, hour:9 };
   var db = { starts: [], set: Object.assign({}, DEF) };
@@ -10597,10 +10627,19 @@ react-dom/cjs/react-dom-client.production.js:
       '<circle cx="5.9" cy="18.1" r="2.1" fill="currentColor"/>' +
     '</svg>';
   btn.onclick = open;
+  btn.style.display = "none";
   document.body.appendChild(btn);
 
+  function mnSync() {
+    var ok = mnIsAdmin();
+    btn.style.display = ok ? "" : "none";
+    if (!ok) close();
+  }
+  mnSync();
+  setInterval(mnSync, 1500);
+
   // 備用入口：網址加 ?almanac
-  if (new URLSearchParams(location.search).has("almanac")) setTimeout(open, 800);
+  if (mnIsAdmin() && new URLSearchParams(location.search).has("almanac")) setTimeout(open, 800);
 
   // 開啟 App 時把排程同步一次
   if (navigator.serviceWorker) {
