@@ -7581,39 +7581,95 @@ function Py({onCancel:l,onCreate:t}){let[e,n]=(0,u.useState)(""),[a,i]=(0,u.useS
   );
 }
 /* ===== 六大階段工程進度 v1：內部可勾選、客戶端唯讀 ===== */
-var HB_STAGE_DEFS=[
-  {k:"s1",no:"01",title:"諮詢與委託",desc:"初步需求溝通、預算評估、風格確認"},
-  {k:"s2",no:"02",title:"現場丈量",desc:"實地勘查、測量尺寸、拍攝現況"},
-  {k:"s3",no:"03",title:"付訂與簽約",desc:"支付設計訂金，進行初步平面規劃"},
-  {k:"s4",no:"04",title:"設計討論",desc:"修改平面圖、立面圖、材質確認、3D 示意圖"},
-  {k:"s5",no:"05",title:"報價與簽約",desc:"工程預算表確認、工程合約簽訂"},
-  {k:"s6",no:"06",title:"委託工程",desc:"進場施工、監工、驗收、交屋"}
+var HB_STAGE_GROUPS=[
+  {g:"design",name:"\u8A2D\u8A08\u671F",items:[
+    {k:"measure",title:"\u4E08\u91CF",desc:"\u5BE6\u5730\u52D8\u67E5\u3001\u6E2C\u91CF\u5C3A\u5BF8\u3001\u62CD\u651D\u73FE\u6CC1"},
+    {k:"plan",title:"\u5E73\u9762",desc:"\u5E73\u9762\u914D\u7F6E\u898F\u5283\u8207\u4FEE\u6539\u78BA\u8A8D"},
+    {k:"render",title:"\u6E32\u67D3\u5716",desc:"3D \u793A\u610F\u5716\u78BA\u8A8D\u98A8\u683C\u8207\u6750\u8CEA"},
+    {k:"mepdwg",title:"\u6C34\u96FB\u5716",desc:"\u63D2\u5EA7\u3001\u958B\u95DC\u3001\u7D66\u6392\u6C34\u4F4D\u7F6E\u5B9A\u6848"},
+    {k:"quote",title:"\u5831\u50F9",desc:"\u5DE5\u7A0B\u9810\u7B97\u8868\u78BA\u8A8D\u3001\u5DE5\u7A0B\u5408\u7D04\u7C3D\u8A02"}
+  ]},
+  {g:"build",name:"\u5DE5\u7A0B\u671F",items:[
+    {k:"demo",title:"\u62C6\u9664",desc:"\u820A\u6709\u9694\u9593\u3001\u5730\u576A\u3001\u8A2D\u5099\u62C6\u9664\u6E05\u904B"},
+    {k:"mep1",title:"\u6C34\u96FB\u914D\u7BA1",desc:"\u7BA1\u7DDA\u914D\u7F6E\u3001\u958B\u5B54\u3001\u914D\u96FB\u7BB1"},
+    {k:"masonry",title:"\u6CE5\u4F5C",desc:"\u780C\u7246\u3001\u7C89\u5149\u3001\u8CBC\u78DA\u3001\u9632\u6C34"},
+    {k:"carpentry",title:"\u6728\u4F5C",desc:"\u5929\u82B1\u3001\u9694\u9593\u3001\u6ADD\u9AD4\u3001\u9020\u578B"},
+    {k:"paint",title:"\u6CB9\u6F06",desc:"\u6279\u571F\u3001\u7814\u78E8\u3001\u9762\u6F06"},
+    {k:"cabinet",title:"\u7CFB\u7D71\u6ADD",desc:"\u7CFB\u7D71\u6ADD\u9032\u5834\u7D44\u88DD"},
+    {k:"glass",title:"\u73BB\u7483",desc:"\u6DCB\u6D74\u62C9\u9580\u3001\u93E1\u9762\u3001\u73BB\u7483\u9694\u9593"},
+    {k:"mep2",title:"\u6C34\u96FB\u6536\u5C3E",desc:"\u9762\u677F\u3001\u958B\u95DC\u63D2\u5EA7\u3001\u885B\u6D74\u8A2D\u5099\u5B89\u88DD"},
+    {k:"light",title:"\u71C8\u5177",desc:"\u71C8\u5177\u5B89\u88DD\u8207\u8A66\u71C8"},
+    {k:"curtain",title:"\u7A97\u7C3E",desc:"\u4E08\u91CF\u5F8C\u88FD\u4F5C\u5B89\u88DD"},
+    {k:"clean",title:"\u7D30\u6E05",desc:"\u5168\u5BA4\u7D30\u90E8\u6E05\u6F54"},
+    {k:"handover",title:"\u9A57\u6536\u4EA4\u5C4B",desc:"\u7F3A\u5931\u8907\u67E5\u3001\u9EDE\u4EA4\u3001\u4FDD\u56FA\u8AAA\u660E"}
+  ]}
 ];
+var HB_STAGE_DEFS=[];
+HB_STAGE_GROUPS.forEach(function(gp){gp.items.forEach(function(it){HB_STAGE_DEFS.push({k:it.k,title:it.title,desc:it.desc,g:gp.g})})});
+var HB_STAGE_TPL={
+  full:{name:"\u5168\u6848\u7FFB\u4FEE",off:[]},
+  light:{name:"\u5C40\u90E8\u88DD\u4FEE",off:["demo","masonry","glass","curtain"]},
+  design:{name:"\u7D14\u8A2D\u8A08\u4E0D\u542B\u5DE5\u7A0B",off:["demo","mep1","masonry","carpentry","paint","cabinet","glass","mep2","light","curtain","clean","handover"]}
+};
+var HB_STAGE_LEGACY={s2:["measure"],s4:["plan","render"],s5:["quote"],s6:["handover"]};
+function HB_stageMigrate(d){
+  if(!d||typeof d!=="object")return{};
+  if(HB_STAGE_DEFS.some(function(x){return d[x.k]}))return d;
+  var out={},any=!1;
+  Object.keys(HB_STAGE_LEGACY).forEach(function(ok){
+    if(d[ok]&&d[ok].done){any=!0;HB_STAGE_LEGACY[ok].forEach(function(nk){out[nk]={done:!0,at:d[ok].at||null}})}
+  });
+  return any?out:d;
+}
 var HB_STAGE_SQL='alter table public.sitelog_projects add column if not exists stage_progress jsonb not null default \'{}\'::jsonb;';
 function HB_stageToday(){let d=new Date(),p=n=>String(n).padStart(2,"0");return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())}
 function HB_stageFmt(v){return v?String(v).slice(0,10).replace(/-/g,"/"):""}
 function HbStageProgress({projectId:pid,readOnly:ro,notify:nf}){
-  let[data,setData]=(0,u.useState)({}),[st,setSt]=(0,u.useState)("loading"),[busy,setBusy]=(0,u.useState)(null),[errMsg,setErrMsg]=(0,u.useState)("");
+  let[data,setData]=(0,u.useState)({}),[st,setSt]=(0,u.useState)("loading"),[busy,setBusy]=(0,u.useState)(null),[errMsg,setErrMsg]=(0,u.useState)(""),[gOpen,setGOpen]=(0,u.useState)({design:!0,build:!0}),[tplOpen,setTplOpen]=(0,u.useState)(!1);
   let say=m=>{nf?nf(m):alert(m)};
   (0,u.useEffect)(()=>{let alive=!0;(async()=>{
     if(!pid){setSt("ready");return}
     let{data:row,error:err}=await q.from("sitelog_projects").select("stage_progress").eq("id",pid).maybeSingle();
     if(!alive)return;
     if(err){setErrMsg(err.message||"");setSt(/stage_progress/.test(String(err.message||""))?"nocol":"error");return}
-    setData(row&&row.stage_progress&&typeof row.stage_progress==="object"?row.stage_progress:{});setSt("ready");
+    setData(HB_stageMigrate(row&&row.stage_progress&&typeof row.stage_progress==="object"?row.stage_progress:{}));setSt("ready");
   })();return()=>{alive=!1}},[pid]);
+  let persist=async(next,msg)=>{
+    let{error}=await q.from("sitelog_projects").update({stage_progress:next}).eq("id",pid);
+    if(error){say("\u5132\u5B58\u5931\u6557\uFF1A"+(error.message||error));return!1}
+    setData(next);if(msg)say(msg);return!0;
+  };
   let toggle=async k=>{
     if(ro||busy)return;
+    if(data[k]&&data[k].skip)return;
     setBusy(k);
     let done=!!(data[k]&&data[k].done),next={...data};
     if(done)delete next[k];else next[k]={done:!0,at:HB_stageToday()};
-    let{error}=await q.from("sitelog_projects").update({stage_progress:next}).eq("id",pid);
-    if(error){say("儲存失敗："+(error.message||error))}else{setData(next);say(done?"已取消勾選":"已完成："+((HB_STAGE_DEFS.find(x=>x.k===k)||{}).title||""))}
+    await persist(next,done?"\u5DF2\u53D6\u6D88\u52FE\u9078":"\u5DF2\u5B8C\u6210\uFF1A"+((HB_STAGE_DEFS.find(x=>x.k===k)||{}).title||""));
     setBusy(null);
   };
-  let doneCount=HB_STAGE_DEFS.filter(x=>data[x.k]&&data[x.k].done).length;
-  let pct=Math.round(doneCount/HB_STAGE_DEFS.length*100);
-  let currentIdx=(()=>{for(let i=HB_STAGE_DEFS.length-1;i>=0;i--){if(data[HB_STAGE_DEFS[i].k]&&data[HB_STAGE_DEFS[i].k].done)return Math.min(i+1,HB_STAGE_DEFS.length-1)}return 0})();
+  let toggleSkip=async k=>{
+    if(ro||busy)return;
+    setBusy(k);
+    let next={...data};
+    if(next[k]&&next[k].skip)delete next[k];else next[k]={skip:!0};
+    await persist(next,null);
+    setBusy(null);
+  };
+  let applyTpl=async tk=>{
+    if(ro||busy)return;
+    let off=(HB_STAGE_TPL[tk]||{}).off||[],next={...data};
+    HB_STAGE_DEFS.forEach(x=>{if(next[x.k]&&next[x.k].skip)delete next[x.k]});
+    off.forEach(k=>{if(!(next[k]&&next[k].done))next[k]={skip:!0}});
+    setBusy("_tpl");
+    await persist(next,"\u5DF2\u5957\u7528\u7BC4\u672C\uFF1A"+((HB_STAGE_TPL[tk]||{}).name||""));
+    setBusy(null);
+  };
+  let liveDefs=HB_STAGE_DEFS.filter(x=>!(data[x.k]&&data[x.k].skip));
+  let doneCount=liveDefs.filter(x=>data[x.k]&&data[x.k].done).length;
+  let pct=liveDefs.length?Math.round(doneCount/liveDefs.length*100):0;
+  let currentK=(function(){for(let i=0;i<liveDefs.length;i++){let r=data[liveDefs[i].k];if(!(r&&r.done))return liveDefs[i].k}return null})();
+  let currentDef=currentK?(HB_STAGE_DEFS.find(x=>x.k===currentK)||null):null;
   if(st==="loading")return u.default.createElement("div",{style:{textAlign:"center",padding:40}},u.default.createElement(E,{name:"loader",className:"animate-spin",size:22,color:s.ocean}));
   if(st==="nocol")return u.default.createElement("div",{style:{background:s.card,border:`1px solid ${s.line}`,borderRadius:10,padding:"18px 16px"}},
     ro?u.default.createElement("p",{style:{color:s.inkSoft,fontSize:13.5,margin:0,textAlign:"center",lineHeight:1.7}},"工程進度整理中，稍後即可查看。"):
@@ -7627,39 +7683,63 @@ function HbStageProgress({projectId:pid,readOnly:ro,notify:nf}){
   if(st==="error")return u.default.createElement("div",{style:{background:s.card,border:`1px solid ${s.line}`,borderRadius:10,padding:"18px 16px",textAlign:"center"}},
     u.default.createElement("p",{style:{color:s.inkSoft,fontSize:13,margin:0}},ro?"進度暫時無法顯示，請稍後再試。":"讀取失敗："+errMsg));
   return u.default.createElement("div",null,
-    u.default.createElement("div",{style:{background:s.card,border:`1px solid ${s.line}`,borderRadius:10,padding:"14px 16px",marginBottom:14}},
+    u.default.createElement("div",{style:{background:s.card,border:`1px solid ${s.line}`,borderRadius:10,padding:"14px 16px",marginBottom:12}},
       u.default.createElement("div",{style:{display:"flex",alignItems:"baseline",justifyContent:"space-between",marginBottom:8}},
-        u.default.createElement("div",{style:{fontSize:13.5,fontWeight:500,color:s.ink,letterSpacing:"0.02em"}},"六大階段服務流程"),
-        u.default.createElement("div",{className:"mono",style:{fontSize:12,color:s.ocean}},doneCount+" / "+HB_STAGE_DEFS.length)
+        u.default.createElement("div",{style:{fontSize:13.5,fontWeight:500,color:s.ink,letterSpacing:"0.02em"}},"\u5DE5\u7A0B\u968E\u6BB5"),
+        u.default.createElement("div",{className:"mono",style:{fontSize:12,color:s.ocean}},doneCount+" / "+liveDefs.length)
       ),
       u.default.createElement("div",{style:{height:6,borderRadius:99,background:s.line,overflow:"hidden"}},
         u.default.createElement("div",{style:{width:pct+"%",height:"100%",background:s.ocean,borderRadius:99,transition:"width .35s ease"}})
       ),
       u.default.createElement("div",{style:{fontSize:11.5,color:s.inkSoft,marginTop:7,fontWeight:300}},
-        doneCount===HB_STAGE_DEFS.length?"全部階段皆已完成":"目前進行中："+HB_STAGE_DEFS[currentIdx].no+"｜"+HB_STAGE_DEFS[currentIdx].title)
+        currentDef?"\u76EE\u524D\u9032\u884C\u4E2D\uFF1A"+currentDef.title:"\u5168\u90E8\u968E\u6BB5\u7686\u5DF2\u5B8C\u6210"),
+      ro?null:u.default.createElement("button",{onClick:()=>setTplOpen(v=>!v),style:{marginTop:11,background:"none",border:`1px solid ${s.line}`,borderRadius:8,padding:"5px 12px",fontSize:11.5,color:s.inkSoft,cursor:"pointer",fontFamily:"inherit"}},tplOpen?"\u6536\u8D77\u8A2D\u5B9A":"\u8A2D\u5B9A\u9019\u500B\u6848\u5B50\u505A\u54EA\u4E9B\u5DE5\u7A0B"),
+      (!ro&&tplOpen)?u.default.createElement("div",{style:{marginTop:11,paddingTop:11,borderTop:`1px solid ${s.line}`}},
+        u.default.createElement("div",{style:{fontSize:11.5,color:s.inkSoft,marginBottom:8,fontWeight:300,lineHeight:1.7}},"\u5148\u5957\u7BC4\u672C\uFF0C\u518D\u5230\u4E0B\u9762\u9010\u9805\u5FAE\u8ABF\u3002\u6A19\u6210\u300C\u4E0D\u9069\u7528\u300D\u7684\u5DE5\u9805\u4E0D\u5217\u5165\u9032\u5EA6\u5206\u6BCD\uFF0C\u4E5F\u4E0D\u6703\u986F\u793A\u7D66\u696D\u4E3B\u3002"),
+        u.default.createElement("div",{style:{display:"flex",gap:6,flexWrap:"wrap"}},
+          Object.keys(HB_STAGE_TPL).map(tk=>u.default.createElement("button",{key:tk,onClick:()=>applyTpl(tk),disabled:busy==="_tpl",style:{background:"none",border:`1px solid ${s.line}`,borderRadius:99,padding:"4px 13px",fontSize:11.5,color:s.oceanDark,cursor:"pointer",fontFamily:"inherit"}},HB_STAGE_TPL[tk].name))
+        )
+      ):null
     ),
-    u.default.createElement("div",{style:{display:"flex",flexDirection:"column",gap:0}},
-      HB_STAGE_DEFS.map((sg,idx)=>{
-        let rec=data[sg.k]||{},isDone=!!rec.done,isNow=!isDone&&idx===currentIdx&&doneCount<HB_STAGE_DEFS.length;
-        return u.default.createElement("div",{key:sg.k,style:{display:"flex",gap:12,alignItems:"flex-start"}},
-          u.default.createElement("div",{style:{display:"flex",flexDirection:"column",alignItems:"center",alignSelf:"stretch",width:30,flexShrink:0}},
-            u.default.createElement("button",{onClick:()=>toggle(sg.k),disabled:!!ro||busy===sg.k,style:{width:26,height:26,borderRadius:"50%",flexShrink:0,border:isDone?`1px solid ${s.ocean}`:`1px solid ${s.line}`,background:isDone?s.ocean:"transparent",color:isDone?"#fff":s.inkSoft,display:"flex",alignItems:"center",justifyContent:"center",cursor:ro?"default":"pointer",fontSize:10.5,fontWeight:500,padding:0,marginTop:12}},
-              busy===sg.k?u.default.createElement(E,{name:"loader",size:13,className:"animate-spin"}):isDone?u.default.createElement(E,{name:"check",size:14}):sg.no),
-            idx<HB_STAGE_DEFS.length-1?u.default.createElement("div",{style:{flex:1,width:1,background:isDone?s.ocean:s.line,opacity:isDone?.6:1,marginTop:2,minHeight:18}}):null
-          ),
-          u.default.createElement("div",{onClick:()=>{if(!ro)toggle(sg.k)},style:{flex:1,padding:"12px 0 10px",cursor:ro?"default":"pointer",borderBottom:idx<HB_STAGE_DEFS.length-1?`1px solid ${s.line}`:"none"}},
-            u.default.createElement("div",{style:{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}},
-              u.default.createElement("span",{style:{fontSize:13.5,fontWeight:500,color:isDone?s.ink:isNow?s.oceanDark:s.inkSoft}},"階段"+sg.no+"｜"+sg.title),
-              isNow?u.default.createElement("span",{style:{fontSize:10.5,color:s.ocean,border:`1px solid ${s.ocean}`,borderRadius:99,padding:"1px 8px",fontWeight:400}},"進行中"):null
-            ),
-            u.default.createElement("div",{style:{fontSize:12,color:s.inkSoft,marginTop:3,fontWeight:300,lineHeight:1.65}},sg.desc),
-            isDone?u.default.createElement("div",{className:"mono",style:{fontSize:11,color:s.tree,marginTop:5}},"✓ 完成於 "+HB_stageFmt(rec.at)):null
-          )
-        );
-      })
-    ),
-    ro?u.default.createElement("p",{style:{fontSize:11.5,color:s.inkSoft,textAlign:"center",marginTop:18,fontWeight:300,lineHeight:1.8}},"進度由赫柏空間設計依實際作業更新，如有疑問歡迎與我們聯繫。"):
-      u.default.createElement("p",{style:{fontSize:11.5,color:s.inkSoft,textAlign:"center",marginTop:18,fontWeight:300,lineHeight:1.8}},"點一下即可勾選／取消，完成日期會自動記錄，客戶端「工程進度」同步顯示。")
+    HB_STAGE_GROUPS.map(function(gp){
+      let liveIn=gp.items.filter(x=>!(data[x.k]&&data[x.k].skip));
+      let doneIn=liveIn.filter(x=>data[x.k]&&data[x.k].done).length;
+      let skipIn=gp.items.length-liveIn.length;
+      let shown=(ro||!tplOpen)?liveIn:gp.items;
+      let isOpen=!!gOpen[gp.g],active=gp.items.some(x=>x.k===currentK);
+      if(shown.length===0)return null;
+      return u.default.createElement("div",{key:gp.g,style:{background:s.card,border:`1px solid ${s.line}`,borderRadius:10,marginBottom:10,overflow:"hidden"}},
+        u.default.createElement("button",{onClick:()=>setGOpen(v=>({...v,[gp.g]:!v[gp.g]})),style:{width:"100%",display:"flex",alignItems:"center",gap:8,background:"none",border:"none",padding:"12px 16px",cursor:"pointer",fontFamily:"inherit",textAlign:"left"}},
+          u.default.createElement(E,{name:isOpen?"chevron-up":"chevron-down",size:15,color:s.inkSoft}),
+          u.default.createElement("span",{style:{fontSize:13.5,fontWeight:500,color:active?s.oceanDark:s.ink}},gp.name),
+          u.default.createElement("span",{className:"mono",style:{marginLeft:"auto",fontSize:11.5,color:active?s.ocean:s.inkSoft}},doneIn+" / "+liveIn.length+((skipIn&&!ro)?"\u3000\u7565\u904E "+skipIn:""))
+        ),
+        isOpen?u.default.createElement("div",{style:{padding:"0 16px 12px"}},
+          shown.map(function(sg,idx){
+            let rec=data[sg.k]||{},isDone=!!rec.done,isSkip=!!rec.skip,isNow=sg.k===currentK,last=idx===shown.length-1;
+            return u.default.createElement("div",{key:sg.k,style:{display:"flex",gap:11,alignItems:"flex-start",opacity:isSkip?.45:1}},
+              u.default.createElement("div",{style:{display:"flex",flexDirection:"column",alignItems:"center",alignSelf:"stretch",width:26,flexShrink:0}},
+                u.default.createElement("button",{onClick:()=>toggle(sg.k),disabled:!!ro||isSkip||busy===sg.k,style:{width:24,height:24,borderRadius:"50%",flexShrink:0,border:isDone?`1px solid ${s.ocean}`:isSkip?`1px dashed ${s.line}`:isNow?`2px solid ${s.ocean}`:`1px solid ${s.line}`,background:isDone?s.ocean:"transparent",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",cursor:(ro||isSkip)?"default":"pointer",padding:0,marginTop:10}},
+                  busy===sg.k?u.default.createElement(E,{name:"loader",size:12,className:"animate-spin"}):isDone?u.default.createElement(E,{name:"check",size:13}):null),
+                last?null:u.default.createElement("div",{style:{flex:1,width:1,background:isDone?s.ocean:s.line,opacity:isDone?.6:1,marginTop:2,minHeight:14}})
+              ),
+              u.default.createElement("div",{style:{flex:1,padding:"9px 0 8px",borderBottom:last?"none":`1px solid ${s.line}`}},
+                u.default.createElement("div",{style:{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}},
+                  u.default.createElement("span",{onClick:()=>{if(!ro&&!isSkip)toggle(sg.k)},style:{fontSize:13.5,fontWeight:500,color:isDone?s.ink:isNow?s.oceanDark:s.inkSoft,textDecoration:isSkip?"line-through":"none",cursor:(ro||isSkip)?"default":"pointer"}},sg.title),
+                  isNow?u.default.createElement("span",{style:{fontSize:10.5,color:s.ocean,border:`1px solid ${s.ocean}`,borderRadius:99,padding:"1px 8px",fontWeight:400}},"\u9032\u884C\u4E2D"):null,
+                  isSkip?u.default.createElement("span",{style:{fontSize:10.5,color:s.inkSoft,border:`1px dashed ${s.line}`,borderRadius:99,padding:"1px 8px",fontWeight:400}},"\u4E0D\u9069\u7528"):null,
+                  (!ro&&tplOpen)?u.default.createElement("button",{onClick:()=>toggleSkip(sg.k),disabled:busy===sg.k,style:{marginLeft:"auto",background:"none",border:"none",color:s.inkSoft,fontSize:11,cursor:"pointer",fontFamily:"inherit",textDecoration:"underline",padding:0}},isSkip?"\u6539\u70BA\u8981\u505A":"\u6A19\u70BA\u4E0D\u9069\u7528"):null
+                ),
+                isSkip?null:u.default.createElement("div",{style:{fontSize:12,color:s.inkSoft,marginTop:3,fontWeight:300,lineHeight:1.6}},sg.desc),
+                isDone?u.default.createElement("div",{className:"mono",style:{fontSize:11,color:s.tree,marginTop:4}},"\u2713 \u5B8C\u6210\u65BC "+HB_stageFmt(rec.at)):null
+              )
+            );
+          })
+        ):null
+      );
+    }),
+    ro?u.default.createElement("p",{style:{fontSize:11.5,color:s.inkSoft,textAlign:"center",marginTop:18,fontWeight:300,lineHeight:1.8}},"\u9032\u5EA6\u7531\u8D6B\u67CF\u7A7A\u9593\u8A2D\u8A08\u4F9D\u5BE6\u969B\u4F5C\u696D\u66F4\u65B0\uFF0C\u5982\u6709\u7591\u554F\u6B61\u8FCE\u8207\u6211\u5011\u806F\u7E6B\u3002"):
+      u.default.createElement("p",{style:{fontSize:11.5,color:s.inkSoft,textAlign:"center",marginTop:18,fontWeight:300,lineHeight:1.8}},"\u9EDE\u4E00\u4E0B\u5373\u53EF\u52FE\u9078\uFF0F\u53D6\u6D88\uFF0C\u5B8C\u6210\u65E5\u671F\u6703\u81EA\u52D5\u8A18\u9304\uFF0C\u5BA2\u6236\u7AEF\u300C\u5DE5\u7A0B\u9032\u5EA6\u300D\u540C\u6B65\u986F\u793A\u3002")
   );
 }
 
