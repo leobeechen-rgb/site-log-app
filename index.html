@@ -7361,7 +7361,7 @@ function HbCaseNav({active:act,onPick:pick,counts:cnt}){
   };
   return u.default.createElement("div",{className:"hb-nav"},
     u.default.createElement("style",null,`
-      .hb-shell{display:flex;flex-direction:column}
+      .hb-shell{display:flex;flex-direction:column;width:100%;box-sizing:border-box;min-width:0;flex:1 1 auto}
       .hb-nav-list{display:flex;gap:2px;overflow-x:auto;padding:0 12px;border-bottom:1px solid ${s.line};scrollbar-width:none;-ms-overflow-style:none}
       .hb-nav-list::-webkit-scrollbar{display:none}
       .hb-tab{position:relative;flex:0 0 auto;display:flex;align-items:center;gap:6px;background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-1px;padding:9px 11px 10px;font:inherit;font-size:13px;color:${s.inkSoft};cursor:pointer;white-space:nowrap}
@@ -7374,8 +7374,10 @@ function HbCaseNav({active:act,onPick:pick,counts:cnt}){
       .hb-bk{color:${s.oceanDark}}
       .hb-book{display:none}
       @media (min-width:900px){
-        .hb-shell{display:grid;grid-template-columns:206px minmax(0,1fr);gap:22px;align-items:start;padding:14px 20px 0}
-        .hb-nav{position:sticky;top:14px}
+        .hb-shell{flex-direction:row;align-items:flex-start;gap:22px;padding:14px 20px 0}
+        .hb-nav{flex:0 0 206px}
+        .hb-content{flex:1 1 auto}
+        .hb-nav{position:sticky;top:14px;flex:0 0 206px}
         .hb-nav-list{flex-direction:column;overflow:visible;border-bottom:none;padding:0;gap:1px}
         .hb-tab{width:100%;justify-content:flex-start;border-bottom:none;border-left:2px solid transparent;margin:0;padding:9px 12px;border-radius:0 4px 4px 0;font-size:13.5px}
         .hb-tab.on{border-left-color:${s.ocean};background:rgba(185,136,104,0.10)}
@@ -7383,7 +7385,7 @@ function HbCaseNav({active:act,onPick:pick,counts:cnt}){
         .hb-bk{display:none}
         .hb-book{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;margin-top:14px;padding:9px 0;border:1px solid ${s.line};border-radius:6px;background:none;font:inherit;font-size:13px;color:${s.oceanDark};cursor:pointer}
         .hb-book:hover{border-color:${s.ocean}}
-        .hb-content{padding:0 0 72px !important}
+        .hb-content{padding:0 0 72px !important;min-width:0;overflow-x:auto;flex:1 1 auto}
         .hb-mark{display:none}
       }
     `),
