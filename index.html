@@ -7615,9 +7615,9 @@ function HbCaseNav({active:cur,onPick:pick,counts:cnt}){
   let co=cnt||{};
   return u.default.createElement("div",{className:"hb-navwrap"},
     u.default.createElement("style",null,`
-      .hb-navwrap{position:sticky;top:0;z-index:45;background:${s.paper};padding:2px 0 0}.hb-navrow{display:flex;gap:2px;overflow-x:auto;padding:0 14px;border-bottom:1px solid ${s.line};scrollbar-width:none;-ms-overflow-style:none;overscroll-behavior-x:contain;scroll-snap-type:x proximity;scroll-padding-left:14px;-webkit-overflow-scrolling:touch}
+      .hb-navwrap{position:sticky;top:0;z-index:45;background:${s.paper};padding:2px 0 0;transform:translateZ(0);-webkit-transform:translateZ(0);backface-visibility:hidden;-webkit-backface-visibility:hidden}.hb-navrow{display:flex;gap:2px;overflow-x:auto;padding:0 14px;border-bottom:1px solid ${s.line};scrollbar-width:none;-ms-overflow-style:none;overscroll-behavior-x:contain}
       .hb-navrow::-webkit-scrollbar{display:none}
-      .hb-tab{scroll-snap-align:start;flex:0 0 auto;display:flex;align-items:center;gap:6px;background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-1px;padding:9px 10px 10px;font:inherit;font-size:13px;color:${s.inkSoft};cursor:pointer;white-space:nowrap}
+      .hb-tab{flex:0 0 auto;display:flex;align-items:center;gap:6px;background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-1px;padding:9px 10px 10px;font:inherit;font-size:13px;color:${s.inkSoft};cursor:pointer;white-space:nowrap}
       .hb-tab:hover{color:${s.ink}}
       .hb-tab.on{color:${s.ink};font-weight:500;border-bottom-color:${s.ocean}}
       .hb-tab:focus-visible{outline:2px solid ${s.ocean};outline-offset:-3px}
