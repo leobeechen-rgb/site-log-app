@@ -115,7 +115,9 @@
   var URLS={
     JSZip:"https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js",
     XLSX:"https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js",
-    ExcelJS:"https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"
+    ExcelJS:"https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js",
+    pdfjsLib:"https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js",
+    PDFLib:"https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"
   };
   var P={};
   window.HB_loadLib=function(name){
@@ -5943,7 +5945,7 @@ function HbAttendanceForm({onCancel,onCreate,projects,workerOptions,lastRateFor}
   )
 }
 
-function HbCompanyHub({onBack:l,onContracts:t,onQuotes:e,onReceipts:rc,onVendorReceipts:vr,onQuickQuote:qq,onGoHome:hbGoHome,onVendorQuotes:vq,onProposal:pg,onMarketingPhotos:mp,onBookings:bk,onOpenBooking:ob,onDrawings:dw,onAttendance:atd,onPriceBook:pb,onSurvey:sv,onChangeOrders:co}){return u.default.createElement("div",{style:{background:s.paper,minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink,position:"relative"}},
+function HbCompanyHub({onBack:l,onContracts:t,onQuotes:e,onReceipts:rc,onVendorReceipts:vr,onQuickQuote:qq,onGoHome:hbGoHome,onVendorQuotes:vq,onProposal:pg,onMarketingPhotos:mp,onBookings:bk,onOpenBooking:ob,onDrawings:dw,onAttendance:atd,onPriceBook:pb,onSurvey:sv,onChangeOrders:co,onPdfRotate:pr}){return u.default.createElement("div",{style:{background:s.paper,minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink,position:"relative"}},
   u.default.createElement("style",null,`
     @keyframes iyBreatheA { 0%,100%{transform:scale(1);opacity:.7} 50%{transform:scale(1.3);opacity:1} }
     @keyframes iyBreatheB { 0%,100%{transform:scale(1);opacity:.7} 50%{transform:scale(1.3);opacity:1} }
@@ -5972,6 +5974,7 @@ function HbCompanyHub({onBack:l,onContracts:t,onQuotes:e,onReceipts:rc,onVendorR
       u.default.createElement(HbCompanyGridCard,{icon:"pencil",title:"廠商領據",desc:"廠商工程款領據產生，A5橫向格式一張一筆",onClick:vr}),
       u.default.createElement(HbCompanyGridCard,{icon:"users",title:"師傅出勤紀錄",desc:"記錄工班師傅每日出工天數，依師傅／月份統計應付工資",onClick:atd}),
       u.default.createElement(HbCompanyGridCard,{icon:"bookmark",title:"常用工項單價庫",desc:"常用工項的售價與廠商成本，報價時打字即時建議、一鍵帶入，並記錄價格歷史與漲價提醒",onClick:pb}),
+      u.default.createElement(HbCompanyGridCard,{icon:"refresh",title:"圖面轉正",desc:"CAD 匯出的 PDF 方向不對時丟進來，自動判斷角度轉回正的，可多檔批次。只改旋轉屬性，線條尺寸不動",onClick:pr}),
       u.default.createElement(HbCompanyGridCard,{icon:"clipboard-list",title:"設計需求問卷",desc:"產生專屬連結傳給業主，填完的需求直接回到這裡，初次接洽省掉很多來回",onClick:sv}),
       u.default.createElement(HbCompanyGridCard,{icon:"image",title:"IG 貼文工作室",desc:"填一次案件資料，產出貼文文案、Hashtag、輪播腳本與發文行事曆",onClick:()=>{try{window.open("./igstudio.html","_blank","noopener")}catch(err){window.location.href="./igstudio.html"}}})
     )
@@ -6497,7 +6500,7 @@ function Gy(){let[l,t]=(0,u.useState)(!0),[e,n]=(0,u.useState)(!1),[a,i]=(0,u.us
         }
         .fade-in { animation: fadeIn 0.2s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(4px);} to { opacity:1; transform:translateY(0);} }
-      `),u.default.createElement("div",{style:{height:"100%",overflowY:o==="landing"?"hidden":"auto",WebkitOverflowScrolling:"touch",paddingBottom:o==="landing"?0:92}},l?u.default.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh"}},u.default.createElement(E,{name:"loader",className:"animate-spin",size:28,color:s.ocean})):o==="landing"?u.default.createElement(HbLanding,{onCase:()=>f("home"),onCompany:()=>f("companyHub"),onManageStaff:()=>f("staff"),onQuickQuote:()=>f("estimateHub"),onProposal:()=>HB_openProposalSystem(),onMarketingPhotos:()=>f("marketingPhotos"),onBookings:()=>f("bookings"),onOpenBooking:()=>HB_openBookingSystem(),onDrawings:()=>f("drawings"),onLogout:()=>{try{localStorage.removeItem("sitelog_admin_unlocked"),localStorage.removeItem("sitelog_admin_username")}catch{}window.location.reload()}}):o==="companyHub"?u.default.createElement(HbCompanyHub,{onBack:()=>f("landing"),onContracts:()=>f("contracts"),onQuotes:()=>f("estimateHub"),onReceipts:()=>f("receipts"),onVendorReceipts:()=>f("vendorReceipts"),onQuickQuote:()=>f("estimateHub"),onGoHome:()=>f("home"),onVendorQuotes:()=>f("vendorQuotes"),onProposal:()=>HB_openProposalSystem(),onMarketingPhotos:()=>f("marketingPhotos"),onBookings:()=>f("bookings"),onOpenBooking:()=>HB_openBookingSystem(),onDrawings:()=>f("drawings"),onAttendance:()=>f("attendance"),onPriceBook:()=>f("priceBook"),onSurvey:()=>f("survey"),onChangeOrders:()=>f("changeOrders")}):o==="changeOrders"?u.default.createElement(HbChangeOrderHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="survey"?u.default.createElement(HbSurveyHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="priceBook"?u.default.createElement(HbPriceBookHub,{onBack:()=>f("companyHub"),notify:g}):o==="attendance"?u.default.createElement(HbAttendanceHub,{onBack:()=>f("companyHub"),notify:g}):o==="marketingPhotos"?u.default.createElement(HbMarketingPhotoHub,{onBack:()=>f("landing"),notify:g}):o==="bookings"?u.default.createElement(HbBookingsHub,{onBack:()=>f("landing"),notify:g}):o==="vendorQuotes"?u.default.createElement(HbVendorQuoteHub,{onBack:()=>f("companyHub"),notify:g}):o==="drawings"?u.default.createElement(HbDrawingHub,{onBack:()=>f("companyHub"),notify:g}):o==="receipts"?u.default.createElement(HbReceiptsHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="vendorReceipts"?u.default.createElement(HbVendorReceiptsHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="quoteImportPick"?u.default.createElement(Iy,{projects:a,onOpen:hbImportQuote,onNew:()=>h(!0),onRefresh:()=>{D(!0),y()},refreshing:e,storageUsedBytes:z,onManageStaff:()=>f("staff"),pickerMode:!0,progressRanges:hbProg,onBack:()=>f("companyHub")}):o==="estimateHub"?u.default.createElement(HerfulsinsEstimateHub,{project:null,notify:g,onClose:()=>f("companyHub")}):o==="home"?u.default.createElement(Iy,{projects:a,onOpen:T=>{r(T),hbSetOpenTab("photos"),f("detail")},onNew:()=>h(!0),onRefresh:()=>{D(!0),y()},refreshing:e,storageUsedBytes:z,onManageStaff:()=>f("staff"),progressRanges:hbProg,onBack:()=>f("landing"),onGoCompany:()=>f("companyHub")}):o==="staff"?u.default.createElement(Ky,{onBack:()=>f("landing")}):o==="contracts"?u.default.createElement(HerfulsinsContractsHub,{onBack:()=>f("landing"),notify:g}):o==="digitalCard"?u.default.createElement(HbDigitalCard,{onBack:()=>f("landing"),notify:g}):u.default.createElement(lh,{project:j,onBack:()=>f("home"),onUpdateMeta:S,onDelete:M,notify:g,initialTab:hbOpenTab})),d&&u.default.createElement(Py,{onCancel:()=>h(!1),onCreate:b}),m&&u.default.createElement("div",{className:"fade-in",style:{position:"fixed",bottom:20,left:"50%",transform:"translateX(-50%)",background:s.ink,color:s.card,padding:"10px 18px",borderRadius:8,fontSize:13,boxShadow:"0 4px 14px rgba(0,0,0,0.25)",zIndex:60}},m),u.default.createElement(HbBottomNav,{active:o,onNavigate:T=>f(T)}))}
+      `),u.default.createElement("div",{style:{height:"100%",overflowY:o==="landing"?"hidden":"auto",WebkitOverflowScrolling:"touch",paddingBottom:o==="landing"?0:92}},l?u.default.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh"}},u.default.createElement(E,{name:"loader",className:"animate-spin",size:28,color:s.ocean})):o==="landing"?u.default.createElement(HbLanding,{onCase:()=>f("home"),onCompany:()=>f("companyHub"),onManageStaff:()=>f("staff"),onQuickQuote:()=>f("estimateHub"),onProposal:()=>HB_openProposalSystem(),onMarketingPhotos:()=>f("marketingPhotos"),onBookings:()=>f("bookings"),onOpenBooking:()=>HB_openBookingSystem(),onDrawings:()=>f("drawings"),onLogout:()=>{try{localStorage.removeItem("sitelog_admin_unlocked"),localStorage.removeItem("sitelog_admin_username")}catch{}window.location.reload()}}):o==="companyHub"?u.default.createElement(HbCompanyHub,{onBack:()=>f("landing"),onContracts:()=>f("contracts"),onQuotes:()=>f("estimateHub"),onReceipts:()=>f("receipts"),onVendorReceipts:()=>f("vendorReceipts"),onQuickQuote:()=>f("estimateHub"),onGoHome:()=>f("home"),onVendorQuotes:()=>f("vendorQuotes"),onProposal:()=>HB_openProposalSystem(),onMarketingPhotos:()=>f("marketingPhotos"),onBookings:()=>f("bookings"),onOpenBooking:()=>HB_openBookingSystem(),onDrawings:()=>f("drawings"),onAttendance:()=>f("attendance"),onPriceBook:()=>f("priceBook"),onSurvey:()=>f("survey"),onChangeOrders:()=>f("changeOrders"),onPdfRotate:()=>f("pdfRotate")}):o==="changeOrders"?u.default.createElement(HbChangeOrderHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="survey"?u.default.createElement(HbSurveyHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="priceBook"?u.default.createElement(HbPriceBookHub,{onBack:()=>f("companyHub"),notify:g}):o==="attendance"?u.default.createElement(HbAttendanceHub,{onBack:()=>f("companyHub"),notify:g}):o==="marketingPhotos"?u.default.createElement(HbMarketingPhotoHub,{onBack:()=>f("landing"),notify:g}):o==="bookings"?u.default.createElement(HbBookingsHub,{onBack:()=>f("landing"),notify:g}):o==="vendorQuotes"?u.default.createElement(HbVendorQuoteHub,{onBack:()=>f("companyHub"),notify:g}):o==="drawings"?u.default.createElement(HbDrawingHub,{onBack:()=>f("companyHub"),notify:g}):o==="receipts"?u.default.createElement(HbReceiptsHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="vendorReceipts"?u.default.createElement(HbVendorReceiptsHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="quoteImportPick"?u.default.createElement(Iy,{projects:a,onOpen:hbImportQuote,onNew:()=>h(!0),onRefresh:()=>{D(!0),y()},refreshing:e,storageUsedBytes:z,onManageStaff:()=>f("staff"),pickerMode:!0,progressRanges:hbProg,onBack:()=>f("companyHub")}):o==="estimateHub"?u.default.createElement(HerfulsinsEstimateHub,{project:null,notify:g,onClose:()=>f("companyHub")}):o==="home"?u.default.createElement(Iy,{projects:a,onOpen:T=>{r(T),hbSetOpenTab("photos"),f("detail")},onNew:()=>h(!0),onRefresh:()=>{D(!0),y()},refreshing:e,storageUsedBytes:z,onManageStaff:()=>f("staff"),progressRanges:hbProg,onBack:()=>f("landing"),onGoCompany:()=>f("companyHub")}):o==="staff"?u.default.createElement(Ky,{onBack:()=>f("landing")}):o==="pdfRotate"?u.default.createElement(HbPdfRotate,{onBack:()=>f("companyHub"),notify:g}):o==="contracts"?u.default.createElement(HerfulsinsContractsHub,{onBack:()=>f("landing"),notify:g}):o==="digitalCard"?u.default.createElement(HbDigitalCard,{onBack:()=>f("landing"),notify:g}):u.default.createElement(lh,{project:j,onBack:()=>f("home"),onUpdateMeta:S,onDelete:M,notify:g,initialTab:hbOpenTab})),d&&u.default.createElement(Py,{onCancel:()=>h(!1),onCreate:b}),m&&u.default.createElement("div",{className:"fade-in",style:{position:"fixed",bottom:20,left:"50%",transform:"translateX(-50%)",background:s.ink,color:s.card,padding:"10px 18px",borderRadius:8,fontSize:13,boxShadow:"0 4px 14px rgba(0,0,0,0.25)",zIndex:60}},m),u.default.createElement(HbBottomNav,{active:o,onNavigate:T=>f(T)}))}
 
 /* ===================================================================
    設計需求問卷：公司端建立連結 → 業主線上填 → 答案回到案件
@@ -7609,6 +7612,212 @@ function HbMeetings({projectId:pid,readOnly:ro,notify:nf}){
         ):null
       );
     })
+  );
+}
+/* ===================================================================
+   圖面轉正：CAD 匯出的 PDF 方向不對時，讀文字角度自動轉回來
+   只改頁面的 /Rotate 屬性，不重繪內容，線條與尺寸完全保留
+   =================================================================== */
+var HB_PDFROT_WORKER="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js";
+
+async function HB_pdfLibs(){
+  let [pjs,plib]=await Promise.all([window.HB_loadLib("pdfjsLib"),window.HB_loadLib("PDFLib")]);
+  try{pjs.GlobalWorkerOptions.workerSrc=HB_PDFROT_WORKER}catch(e){}
+  return {pjs,plib};
+}
+
+/* 讀頁面文字的變換矩陣，取字數最多的角度當基準 */
+async function HB_pdfPageAngle(page){
+  let b={0:0,90:0,180:0,270:0},flip=0,up=0;
+  try{
+    let tc=await page.getTextContent();
+    for(let it of tc.items){
+      let w=(it.str||"").trim().length; if(!w)continue;
+      let[a,bb,c,d]=it.transform;
+      let deg=Math.atan2(bb,a)*180/Math.PI;
+      deg=((Math.round(deg/90)*90)%360+360)%360;
+      b[deg]+=w;
+      (a*d-bb*c)<0?flip+=w:up+=w;
+    }
+  }catch(e){}
+  let tot=b[0]+b[90]+b[180]+b[270];
+  if(tot<4)return{sug:page.rotate||0,ok:!1,mirror:!1};
+  let dom=0; for(let k of[90,180,270])if(b[k]>b[dom])dom=+k;
+  return{sug:(360-dom)%360,ok:b[dom]/tot>0.5,mirror:flip>up};
+}
+
+function HbPdfRotate({onBack:back,notify:nf}){
+  let say=m=>{nf?nf(m):alert(m)};
+  let[,tick]=(0,u.useState)(0);
+  let rer=()=>tick(v=>v+1);
+  let box=(0,u.useRef)([]);
+  let seq=(0,u.useRef)(0);
+  let[busy,setBusy]=(0,u.useState)("");
+  let[over,setOver]=(0,u.useState)(!1);
+  let pick=(0,u.useRef)(null);
+  HB_ctaCss();
+
+  let take=async list=>{
+    let pdfs=[...list].filter(f=>/\.pdf$/i.test(f.name)||f.type==="application/pdf");
+    if(!pdfs.length){say("請選 PDF 檔");return}
+    setBusy("讀取中");
+    let libs;
+    try{libs=await HB_pdfLibs()}catch(e){setBusy("");say("PDF 元件載入失敗，請檢查網路後再試");return}
+    for(let f of pdfs){
+      let rec={id:++seq.current,name:f.name,buf:null,pages:[],err:null};
+      box.current.push(rec);
+      try{
+        rec.buf=await f.arrayBuffer();
+        let doc=await libs.pjs.getDocument({data:rec.buf.slice(0)}).promise;
+        rec.total=doc.numPages;
+        let n=Math.min(doc.numPages,120);
+        for(let i=1;i<=n;i++){
+          let pg=await doc.getPage(i);
+          let r=await HB_pdfPageAngle(pg);
+          rec.pages.push({no:i,pg,rot:r.sug,sug:r.sug,ok:r.ok,mirror:r.mirror,thumb:null,at:-1});
+        }
+      }catch(e){rec.err="這個檔讀不開，可能有密碼保護或檔案毀損"}
+      rer();
+    }
+    setBusy("");
+  };
+
+  /* 縮圖：只重畫角度變過的那些 */
+  (0,u.useEffect)(()=>{
+    let dead=!1;
+    (async()=>{
+      let changed=!1;
+      for(let f of box.current){
+        for(let p of f.pages){
+          if(dead)return;
+          if(p.at===p.rot)continue;
+          try{
+            let v0=p.pg.getViewport({scale:1,rotation:p.rot});
+            let sc=Math.min(150/v0.width,170/v0.height);
+            let v=p.pg.getViewport({scale:sc,rotation:p.rot});
+            let cv=document.createElement("canvas");
+            cv.width=Math.max(1,Math.floor(v.width));cv.height=Math.max(1,Math.floor(v.height));
+            await p.pg.render({canvasContext:cv.getContext("2d"),viewport:v}).promise;
+            p.thumb=cv.toDataURL("image/png");p.at=p.rot;changed=!0;
+          }catch(e){p.at=p.rot}
+        }
+      }
+      if(changed&&!dead)rer();
+    })();
+    return()=>{dead=!0};
+  });
+
+  let turn=(f,p,v)=>{
+    let list=p?[p]:f.pages;
+    list.forEach(x=>{x.rot=v==="auto"?x.sug:((x.rot+Number(v))%360+360)%360});
+    rer();
+  };
+  let drop=(blob,name)=>{
+    let url=URL.createObjectURL(blob),a=document.createElement("a");
+    a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),4000);
+  };
+  let outName=n=>n.replace(/\.pdf$/i,"")+"-轉正.pdf";
+  let build=async f=>{
+    let{plib}=await HB_pdfLibs();
+    let doc=await plib.PDFDocument.load(f.buf,{ignoreEncryption:!0});
+    let all=doc.getPages();
+    f.pages.forEach(p=>{let t=all[p.no-1];if(t)t.setRotation(plib.degrees(p.rot))});
+    return doc.save();
+  };
+  let saveOne=async f=>{
+    setBusy("輸出中");
+    try{drop(new Blob([await build(f)],{type:"application/pdf"}),outName(f.name))}
+    catch(e){say("輸出失敗："+(e.message||e))}
+    setBusy("");
+  };
+  let saveAll=async()=>{
+    let ok=box.current.filter(f=>!f.err);
+    if(!ok.length)return;
+    if(ok.length===1)return saveOne(ok[0]);
+    setBusy("打包中");
+    try{
+      let Z=await window.HB_loadLib("JSZip");
+      let zip=new Z();
+      for(let f of ok)zip.file(outName(f.name),await build(f));
+      drop(await zip.generateAsync({type:"blob"}),"轉正圖面.zip");
+    }catch(e){say("打包失敗："+(e.message||e))}
+    setBusy("");
+  };
+
+  let files=box.current;
+  let pageCount=files.reduce((a,f)=>a+f.pages.length,0);
+
+  return u.default.createElement("div",{style:{background:s.paper,minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},
+    u.default.createElement("div",{style:{background:s.paper,padding:"20px 16px 14px",borderBottom:`1px solid ${s.line}`}},
+      u.default.createElement("button",{onClick:back,style:{background:"none",border:"none",color:s.inkSoft,cursor:"pointer",padding:0,marginBottom:10,display:"flex",alignItems:"center",gap:5,fontFamily:"inherit",fontSize:13}},
+        u.default.createElement(E,{name:"arrow-left",size:16}),"返回"),
+      u.default.createElement("div",{style:{fontSize:20,fontWeight:500}},"圖面轉正"),
+      u.default.createElement("p",{style:{fontSize:12.5,color:s.inkSoft,margin:"4px 0 0",lineHeight:1.7,maxWidth:520}},
+        "讀 PDF 裡文字的角度判斷圖面被轉了幾度，再把頁面轉回來。只改頁面的旋轉屬性、不重繪內容，線條與尺寸完全不動，檔案大小也不變。")
+    ),
+
+    u.default.createElement("div",{style:{padding:"16px 16px 90px"}},
+
+      u.default.createElement("div",{
+        onClick:()=>pick.current&&pick.current.click(),
+        onDragOver:e=>{e.preventDefault();setOver(!0)},
+        onDragLeave:e=>{e.preventDefault();setOver(!1)},
+        onDrop:e=>{e.preventDefault();setOver(!1);take(e.dataTransfer.files)},
+        style:{border:`1.5px dashed ${over?s.action:s.line}`,borderRadius:10,background:over?s.cardAlt:s.card,
+          padding:"30px 20px",textAlign:"center",cursor:"pointer",transition:"border-color .15s,background .15s"}},
+        u.default.createElement(E,{name:"upload",size:22,color:s.inkSoft}),
+        u.default.createElement("div",{style:{fontSize:14.5,marginTop:8}},"把 CAD 匯出的 PDF 拖進來"),
+        u.default.createElement("div",{style:{fontSize:12.5,color:s.inkSoft,marginTop:3}},"或點這裡選檔，可以一次選多個")
+      ),
+      u.default.createElement("input",{ref:pick,type:"file",accept:"application/pdf,.pdf",multiple:!0,
+        style:{display:"none"},onChange:e=>{take(e.target.files);e.target.value=""}}),
+
+      busy?u.default.createElement("div",{style:{textAlign:"center",padding:"14px 0",color:s.inkSoft,fontSize:13}},
+        u.default.createElement(E,{name:"loader",size:15,className:"animate-spin"})," ",busy):null,
+
+      files.length?u.default.createElement("div",{style:{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap",margin:"16px 0 10px"}},
+        u.default.createElement("span",{style:{fontSize:13,color:s.inkSoft}},files.length+" 個檔案 · "+pageCount+" 頁"),
+        u.default.createElement("button",{onClick:()=>{box.current.forEach(f=>turn(f,null,"auto"));},className:"hb-tb hb-tb-gho"},"回到建議值"),
+        u.default.createElement("button",{onClick:()=>{box.current=[];rer()},className:"hb-tb hb-tb-gho"},"清空"),
+        u.default.createElement("button",{onClick:saveAll,disabled:!!busy,className:"hb-cta"},
+          u.default.createElement(E,{name:"download",size:15}),files.filter(f=>!f.err).length>1?"下載全部（ZIP）":"下載")
+      ):null,
+
+      files.map(f=>u.default.createElement("div",{key:f.id,style:{background:s.card,border:`1px solid ${s.line}`,borderRadius:10,marginBottom:10,overflow:"hidden"}},
+        u.default.createElement("div",{style:{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap",padding:"11px 14px",borderBottom:`1px solid ${s.line}`}},
+          u.default.createElement("span",{style:{fontSize:13.5,fontWeight:500,flex:"1 1 160px",overflowWrap:"anywhere"}},f.name),
+          f.err?null:u.default.createElement("span",{style:{fontSize:12,color:s.inkSoft}},f.total+" 頁"+(f.total>f.pages.length?"（只處理前 "+f.pages.length+" 頁）":"")),
+          f.err?null:u.default.createElement("span",{style:{display:"flex",gap:10}},
+            u.default.createElement("button",{onClick:()=>turn(f,null,-90),className:"hb-tb hb-tb-gho"},"↺"),
+            u.default.createElement("button",{onClick:()=>turn(f,null,90),className:"hb-tb hb-tb-gho"},"↻"),
+            u.default.createElement("button",{onClick:()=>turn(f,null,180),className:"hb-tb hb-tb-gho"},"180°"),
+            u.default.createElement("button",{onClick:()=>saveOne(f),className:"hb-tb hb-tb-sec"},"下載"),
+            u.default.createElement("button",{onClick:()=>{box.current=box.current.filter(x=>x.id!==f.id);rer()},className:"hb-tb hb-tb-dgr"},"移除"))
+        ),
+        f.err?u.default.createElement("div",{style:{padding:"14px",color:s.danger,fontSize:13}},f.err)
+        :u.default.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:12,padding:14,background:"#14171A"}},
+          f.pages.map(p=>u.default.createElement("div",{key:p.no,style:{width:152}},
+            u.default.createElement("div",{style:{height:172,background:"#fff",border:"1px solid #2A2F34",borderRadius:3,display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden"}},
+              p.thumb?u.default.createElement("img",{src:p.thumb,alt:"",style:{maxWidth:"100%",maxHeight:"100%",display:"block"}})
+                     :u.default.createElement("span",{style:{color:"#5D666E",fontSize:12}},"讀取中")),
+            u.default.createElement("div",{style:{display:"flex",alignItems:"center",gap:6,marginTop:6,fontSize:11.5,color:"#C9CFD4"}},
+              u.default.createElement("span",{style:{color:"#7E8890"}},"第 "+p.no+" 頁"),
+              u.default.createElement("span",{style:{border:"1px solid "+(p.ok?"#4F6B4E":"#5A4326"),color:p.ok?"#8FBF8E":"#D6A46A",borderRadius:3,padding:"1px 6px"}},
+                p.ok?"自動 "+p.rot+"°":"請自行確認")),
+            u.default.createElement("div",{style:{display:"flex",gap:4,marginTop:5}},
+              ["-90","180","90"].map(v=>u.default.createElement("button",{key:v,onClick:()=>turn(f,p,v),
+                style:{flex:1,background:"transparent",border:"1px solid #333B43",color:"#C9CFD4",borderRadius:4,padding:"3px 0",fontSize:12.5,cursor:"pointer",fontFamily:"inherit"}},
+                v==="-90"?"↺":v==="90"?"↻":"180°"))),
+            p.mirror?u.default.createElement("div",{style:{color:"#D6A46A",fontSize:11.5,marginTop:5,lineHeight:1.5}},"看起來是鏡像，轉不回來，要回 CAD 出圖端處理"):null
+          ))
+        )
+      )),
+
+      files.length?null:u.default.createElement("div",{style:{marginTop:20,paddingLeft:12,borderLeft:`2px solid ${s.line}`,color:s.inkSoft,fontSize:12.5,lineHeight:1.85,maxWidth:560}},
+        u.default.createElement("div",{style:{color:s.ink,fontWeight:500,marginBottom:5}},"要根治的話，回 AutoCAD 這樣改"),
+        "整份倒過來 → PAGESETUP 裡的「上下顛倒列印」取消勾選。躺成 90 度 → 圖紙尺寸的長寬方向和「圖面方向」設成一致。只有圖歪、紙是正的 → 問題在視埠內，用 UCS 歸零。調好存成具名頁面設定或寫進 .dwt 範本，以後就不用每張圖重設。")
+    )
   );
 }
 function HbCaseNav({active:cur,onPick:pick,counts:cnt}){
