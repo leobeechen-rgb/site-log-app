@@ -7613,6 +7613,10 @@ function HbMeetings({projectId:pid,readOnly:ro,notify:nf}){
 }
 function HbCaseNav({active:cur,onPick:pick,counts:cnt}){
   let co=cnt||{};
+  let[navOpen,setNavOpen]=(0,u.useState)(!1);
+  let curDef=HB_NAV.find(x=>x.k===cur)||HB_NAV[0];
+  let pendDef=co.defects||0;
+  let go=k=>{setNavOpen(!1);pick(k)};
   return u.default.createElement("div",{className:"hb-navwrap"},
     u.default.createElement("style",null,`
       .hb-navwrap{background:${s.paper};padding:2px 0 0}@media (min-width:700px){.hb-navwrap{position:sticky;top:0;z-index:45}}.hb-navrow{display:flex;gap:2px;overflow-x:auto;padding:0 14px;border-bottom:1px solid ${s.line};scrollbar-width:none;-ms-overflow-style:none;overscroll-behavior-x:contain}
@@ -7621,11 +7625,32 @@ function HbCaseNav({active:cur,onPick:pick,counts:cnt}){
       .hb-tab:hover{color:${s.ink}}
       .hb-tab.on{color:${s.ink};font-weight:500;border-bottom-color:${s.ocean}}
       .hb-tab:focus-visible{outline:2px solid ${s.ocean};outline-offset:-3px}
-      .hb-tab.act{margin-left:auto;color:${s.oceanDark}}@media (max-width:700px){.hb-navrow{gap:0}.hb-tab.act{margin-left:6px;border-left:1px solid ${s.line};padding-left:14px}}
+      .hb-tab.act{margin-left:auto;color:${s.oceanDark}}.hb-sel{display:none}@media (max-width:700px){.hb-navrow{display:none}.hb-sel{display:block;border-bottom:1px solid ${s.line}}.hb-sel-cur{display:flex;align-items:center;gap:9px;width:100%;padding:11px 14px;background:none;border:none;font-family:inherit;font-size:13.5px;color:${s.ink};text-align:left;cursor:pointer}.hb-sel-cur b{font-weight:500}.hb-sel-ar{margin-left:auto;display:flex;align-items:center;gap:8px;color:${s.inkSoft}}.hb-sel-ar svg{transition:transform .16s ease}.hb-sel.open .hb-sel-ar svg{transform:rotate(180deg)}.hb-sel-list{display:none;border-top:1px solid ${s.line};background:${s.card};padding:2px 0 4px}.hb-sel.open .hb-sel-list{display:block}.hb-sel-it{display:flex;align-items:center;gap:10px;width:100%;padding:10px 14px;background:none;border:none;font-family:inherit;font-size:13.5px;color:${s.inkSoft};text-align:left;cursor:pointer}.hb-sel-it.on{color:${s.ink};font-weight:500;background:${s.cardAlt}}.hb-sel-it .hb-pill{margin-left:auto}.hb-dot{width:7px;height:7px;border-radius:50%;background:${s.danger};display:inline-block}}
       .hb-pill{min-width:17px;padding:0 5px;border-radius:99px;background:${s.line};color:${s.inkSoft};font-size:10.5px;line-height:17px;text-align:center;font-family:'JetBrains Mono',monospace}
       .hb-tab.on .hb-pill{background:${s.ocean};color:#fff}
       .hb-pill.alert{background:${s.danger};color:#fff}
     `),
+    u.default.createElement("div",{className:"hb-sel"+(navOpen?" open":"")},
+      u.default.createElement("button",{className:"hb-sel-cur",onClick:()=>setNavOpen(v=>!v),"aria-expanded":navOpen?"true":"false"},
+        u.default.createElement(E,{name:curDef.icon,size:17}),
+        u.default.createElement("b",null,curDef.label),
+        (curDef.c&&co[curDef.c])?u.default.createElement("span",{className:"hb-pill"+(curDef.alert?" alert":"")},co[curDef.c]):null,
+        u.default.createElement("span",{className:"hb-sel-ar"},
+          (pendDef>0&&cur!=="defects")?u.default.createElement("span",{className:"hb-dot","aria-label":"有未處理缺失"}):null,
+          u.default.createElement(E,{name:"chevron-down",size:16}))
+      ),
+      u.default.createElement("div",{className:"hb-sel-list"},
+        HB_NAV.map(t=>{
+          let n=t.c?co[t.c]:0;
+          return u.default.createElement("button",{key:t.k,onClick:()=>go(t.k),
+            className:"hb-sel-it"+(cur===t.k?" on":"")},
+            u.default.createElement(E,{name:t.icon,size:17}),t.label,
+            n?u.default.createElement("span",{className:"hb-pill"+(t.alert?" alert":"")},n>99?"99+":n):null);
+        }),
+        u.default.createElement("button",{key:"_bk",onClick:()=>go("booking"),className:"hb-sel-it"},
+          u.default.createElement(E,{name:"users",size:17}),"預約面談")
+      )
+    ),
     u.default.createElement("div",{className:"hb-navrow"},
       HB_NAV.map(t=>{
         let n=t.c?co[t.c]:0;
