@@ -2930,7 +2930,18 @@ function HB_SheetOverlay({state,setState,onClose}){
     u.default.createElement("div",{ref:box,style:{flex:1}}))
 }
 
+/* 估價單專用的冷調淺藍色票：鍵名與 s 相同，元件內部改用 sc */
+var HB_COLD={
+  paper:"#F7FAFC", card:"#FFFFFF", cardAlt:"#F1F6F9",
+  ink:"#16232B", inkSoft:"#566873",
+  ocean:"#3C5D75", oceanDark:"#16232B",
+  lemon:"#F2F7FA", lemonDeep:"#D7E4EC",
+  tree:"#41695C", shoal:"#F1F6F9", cane:"#8A5A1E",
+  line:"#E2EAEF", danger:"#8B1220",
+  action:"#3C5D75", actionDeep:"#2F4A5E"
+};
 function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
+  let sc=HB_COLD;
   let[localToast,setLocalToast]=(0,u.useState)(null);
   let localToastTimerRef=(0,u.useRef)(null);
   let notify=msg=>{
@@ -3294,10 +3305,10 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
     if(sync&&sheetId)await doPull(sheetId);
     setEmbedOpen(!1)
   };
-  let inputStyle={width:"100%",padding:"7px 9px",borderRadius:6,border:`1px solid ${s.line}`,fontSize:13,boxSizing:"border-box",fontFamily:"inherit"};
-  let thStyle={border:`1px solid ${s.line}`,background:s.cardAlt,color:s.oceanDark,fontWeight:400,fontSize:12,padding:"8px 7px",whiteSpace:"nowrap"};
-  let tdStyle={border:`1px solid ${s.line}`,padding:"4px 5px",verticalAlign:"top"};
-  let cellInputStyle={width:"100%",border:"none",background:"transparent",fontSize:13,padding:"5px 6px",fontFamily:"inherit",boxSizing:"border-box",color:s.ink};
+  let inputStyle={width:"100%",padding:"7px 9px",borderRadius:6,border:`1px solid ${sc.line}`,fontSize:13,boxSizing:"border-box",fontFamily:"inherit"};
+  let thStyle={border:`1px solid ${sc.line}`,background:sc.cardAlt,color:sc.oceanDark,fontWeight:400,fontSize:12,padding:"8px 7px",whiteSpace:"nowrap"};
+  let tdStyle={border:`1px solid ${sc.line}`,padding:"4px 5px",verticalAlign:"top"};
+  let cellInputStyle={width:"100%",border:"none",background:"transparent",fontSize:13,padding:"5px 6px",fontFamily:"inherit",boxSizing:"border-box",color:sc.ink};
   let autoGrow=el=>{if(el){el.style.height="auto";el.style.height=el.scrollHeight+"px"}};
   let HB_CELL_COLS=["name","spec","unit","qty","price","note","vendorPrice"];
   let[cellSel,setCellSel]=(0,u.useState)(null);
@@ -3443,7 +3454,7 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
     notify("已將 "+calcDisplay+" 帶入「"+calcSelLabel+"」欄位");
     setCalcOpen(!1)
   };
-  let calcBtn=(label,onClick,extra)=>u.default.createElement("button",{key:label+Math.random(),onClick,style:{border:`1px solid ${s.line}`,background:s.card,color:s.ink,borderRadius:8,padding:"12px 0",fontSize:15,cursor:"pointer",...(extra||{})}},label);
+  let calcBtn=(label,onClick,extra)=>u.default.createElement("button",{key:label+Math.random(),onClick,style:{border:`1px solid ${sc.line}`,background:sc.card,color:sc.ink,borderRadius:8,padding:"12px 0",fontSize:15,cursor:"pointer",...(extra||{})}},label);
   (0,u.useEffect)(()=>{
     if(!calcOpen)return;
     let onKey=ev=>{
@@ -3459,44 +3470,44 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
     window.addEventListener("keydown",onKey);
     return()=>window.removeEventListener("keydown",onKey)
   },[calcOpen,calcDisplay,calcAcc,calcOp,calcWaiting]);
-  return u.default.createElement("div",{style:{position:"fixed",inset:0,background:s.paper,zIndex:71,overflowY:"auto",display:"flex",flexDirection:"column"}},
+  return u.default.createElement("div",{style:{position:"fixed",inset:0,background:sc.paper,zIndex:71,overflowY:"auto",display:"flex",flexDirection:"column"}},
     vqPick&&u.default.createElement(HB_VendorCostPicker,{rows:vqPick.rows,quotes:vqPick.quotes,onCancel:()=>setVqPick(null),onApply:applyVendorCosts}),
     pbSug&&pbSug.list&&pbSug.list.length>0&&u.default.createElement("div",{
       style:{position:"fixed",zIndex:95,width:330,maxHeight:290,overflowY:"auto",background:"#fff",
-        border:`1px solid ${s.ocean}`,borderRadius:10,boxShadow:"0 14px 34px -12px rgba(28,27,24,0.4)",
+        border:`1px solid ${sc.ocean}`,borderRadius:10,boxShadow:"0 14px 34px -12px rgba(22,35,43,0.4)",
         left:Math.max(8,Math.min((pbSug.rect?pbSug.rect.left:20),(typeof window!=="undefined"?window.innerWidth:400)-338)),
         top:(pbSug.rect?pbSug.rect.bottom:80)+4}},
-      u.default.createElement("div",{style:{fontSize:10.5,color:s.inkSoft,padding:"7px 11px",borderBottom:`1px solid ${s.line}`,display:"flex",justifyContent:"space-between",position:"sticky",top:0,background:"#fff"}},
+      u.default.createElement("div",{style:{fontSize:10.5,color:sc.inkSoft,padding:"7px 11px",borderBottom:`1px solid ${sc.line}`,display:"flex",justifyContent:"space-between",position:"sticky",top:0,background:"#fff"}},
         u.default.createElement("span",null,"常用工項單價庫　·　點一下帶入"),
-        u.default.createElement("span",{onMouseDown:ev=>{ev.preventDefault();setPbSug(null)},style:{cursor:"pointer",color:s.oceanDark}},"關閉")),
+        u.default.createElement("span",{onMouseDown:ev=>{ev.preventDefault();setPbSug(null)},style:{cursor:"pointer",color:sc.oceanDark}},"關閉")),
       pbSug.list.map((row,ri)=>{
         let tr=HB_pbTrend(row,"c"), mg=HB_pbMargin(row);
         return u.default.createElement("div",{key:row.id||("pb"+ri),
           onMouseDown:ev=>{ev.preventDefault();pbApply(pbSug.catId,pbSug.itemId,row)},
-          style:{padding:"8px 11px",cursor:"pointer",borderBottom:ri<pbSug.list.length-1?`1px solid ${s.line}`:"none",display:"flex",gap:8,alignItems:"flex-start"}},
+          style:{padding:"8px 11px",cursor:"pointer",borderBottom:ri<pbSug.list.length-1?`1px solid ${sc.line}`:"none",display:"flex",gap:8,alignItems:"flex-start"}},
           u.default.createElement("div",{style:{flex:1,minWidth:0}},
-            u.default.createElement("div",{style:{fontSize:12.5,color:s.ink,lineHeight:1.4}},row.name,row.spec?u.default.createElement("span",{style:{color:s.inkSoft}}," ／ ",row.spec):null),
-            u.default.createElement("div",{style:{fontSize:10.5,color:s.inkSoft,marginTop:2}},
+            u.default.createElement("div",{style:{fontSize:12.5,color:sc.ink,lineHeight:1.4}},row.name,row.spec?u.default.createElement("span",{style:{color:sc.inkSoft}}," ／ ",row.spec):null),
+            u.default.createElement("div",{style:{fontSize:10.5,color:sc.inkSoft,marginTop:2}},
               (row.category||"未分類")+"　"+(row.unit||"式")+"　用過 "+(row.use_count||0)+" 次"+(row.last_used_at?"　"+String(row.last_used_at).slice(0,10):""))),
           u.default.createElement("div",{style:{textAlign:"right",whiteSpace:"nowrap"}},
-            u.default.createElement("div",{style:{fontSize:12.5,color:s.oceanDark}},row.price?HB_money(HB_num(row.price)):"—"),
-            u.default.createElement("div",{style:{fontSize:10,color:s.inkSoft,marginTop:1}},"單位成本 ",row.vendor_price?HB_money(HB_num(row.vendor_price)):"—",mg!=null?"　"+mg+"%":""),
-            tr&&tr.pct>0?u.default.createElement("div",{style:{fontSize:9.5,color:s.danger,marginTop:1}},"▲ 成本漲 ",tr.pct,"%"):null))
+            u.default.createElement("div",{style:{fontSize:12.5,color:sc.oceanDark}},row.price?HB_money(HB_num(row.price)):"—"),
+            u.default.createElement("div",{style:{fontSize:10,color:sc.inkSoft,marginTop:1}},"單位成本 ",row.vendor_price?HB_money(HB_num(row.vendor_price)):"—",mg!=null?"　"+mg+"%":""),
+            tr&&tr.pct>0?u.default.createElement("div",{style:{fontSize:9.5,color:sc.danger,marginTop:1}},"▲ 成本漲 ",tr.pct,"%"):null))
       })
     ),
-    localToast&&u.default.createElement("div",{className:"fade-in",style:{position:"fixed",bottom:20,left:"50%",transform:"translateX(-50%)",background:s.ink,color:s.card,padding:"10px 18px",borderRadius:8,fontSize:13,boxShadow:"0 4px 14px rgba(0,0,0,0.35)",zIndex:99,maxWidth:"90vw",textAlign:"center"}},localToast),
-    u.default.createElement("div",{style:{background:"rgba(250,249,246,0.94)",backdropFilter:"blur(14px)",WebkitBackdropFilter:"blur(14px)",padding:"13px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0,borderBottom:`1px solid ${s.line}`}},
-      u.default.createElement("button",{onClick:n,style:{background:"none",border:"none",color:s.inkSoft,cursor:"pointer",display:"flex",alignItems:"center",gap:4,fontSize:12.5}},u.default.createElement(E,{name:"arrow-left",size:15})),
-      u.default.createElement("h2",{style:{color:s.ink,fontSize:16,margin:0,fontWeight:500}},t?"編輯估價單":"快速新增估價單"),
-      u.default.createElement("button",{onClick:()=>setCalcOpen(!0),title:"計算機",style:{background:"none",border:"none",color:"#C7B8A0",cursor:"pointer",display:"flex",alignItems:"center",padding:0}},u.default.createElement(E,{name:"calculator",size:17}))
+    localToast&&u.default.createElement("div",{className:"fade-in",style:{position:"fixed",bottom:20,left:"50%",transform:"translateX(-50%)",background:sc.ink,color:sc.card,padding:"10px 18px",borderRadius:8,fontSize:13,boxShadow:"0 4px 14px rgba(0,0,0,0.35)",zIndex:99,maxWidth:"90vw",textAlign:"center"}},localToast),
+    u.default.createElement("div",{style:{background:"rgba(247,250,252,0.94)",backdropFilter:"blur(14px)",WebkitBackdropFilter:"blur(14px)",padding:"13px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0,borderBottom:`1px solid ${sc.line}`}},
+      u.default.createElement("button",{onClick:n,style:{background:"none",border:"none",color:sc.inkSoft,cursor:"pointer",display:"flex",alignItems:"center",gap:4,fontSize:12.5}},u.default.createElement(E,{name:"arrow-left",size:15})),
+      u.default.createElement("h2",{style:{color:sc.ink,fontSize:16,margin:0,fontWeight:500}},t?"編輯估價單":"快速新增估價單"),
+      u.default.createElement("button",{onClick:()=>setCalcOpen(!0),title:"計算機",style:{background:"none",border:"none",color:sc.inkSoft,cursor:"pointer",display:"flex",alignItems:"center",padding:0}},u.default.createElement(E,{name:"calculator",size:17}))
     ),
     u.default.createElement("input",{ref:importFileRef,type:"file",accept:".xlsx,.xls,.csv",hidden:!0,onChange:handleFileImport}),
     u.default.createElement("input",{ref:wholeFileRef,type:"file",accept:".xlsx,.xls,.csv",hidden:!0,onChange:handleWholeFileImport}),
     u.default.createElement("input",{ref:vendorFileRef,type:"file",accept:"image/*,.pdf,.doc,.docx,.xls,.xlsx",hidden:!0,onChange:handleVendorFile}),
     u.default.createElement("div",{style:{flex:1,overflowY:"auto",padding:"14px 20px 20px"}},
     u.default.createElement("div",{style:{maxWidth:1240,margin:"0 auto"}},
-      u.default.createElement("div",{style:{background:s.card,borderRadius:8,marginBottom:12,overflow:"hidden"}},
-        u.default.createElement("button",{onClick:()=>setShowBasic(x=>!x),style:{width:"100%",background:"none",border:"none",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 13px",cursor:"pointer",fontSize:13,fontWeight:400,color:s.oceanDark}},
+      u.default.createElement("div",{style:{background:sc.card,borderRadius:8,marginBottom:12,overflow:"hidden"}},
+        u.default.createElement("button",{onClick:()=>setShowBasic(x=>!x),style:{width:"100%",background:"none",border:"none",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 13px",cursor:"pointer",fontSize:13,fontWeight:400,color:sc.oceanDark}},
           u.default.createElement("span",null,"基本資料",!showBasic&&a.engName?"　"+a.engName:""),
           u.default.createElement(E,{name:showBasic?"chevron-up":"chevron-down",size:15})
         ),
@@ -3513,37 +3524,37 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
       sheetMode?u.default.createElement(HB_SheetOverlay,{state:a,setState:i,
         onClose:()=>setSheetMode(!1)}):null,
       u.default.createElement("button",{onClick:()=>setSheetMode(!0),
-        style:{width:"100%",border:`1px dashed ${s.ocean}`,background:"none",color:s.oceanDark,
+        style:{width:"100%",border:`1px dashed ${sc.ocean}`,background:"none",color:sc.oceanDark,
         borderRadius:9,padding:"10px 0",fontSize:13,cursor:"pointer",fontFamily:"inherit",
         marginBottom:10}},"⊞ 試算表模式（整片編輯、公式、分類小計）"),
-      a.categories.map(cat=>u.default.createElement("div",{key:cat.id,style:{background:s.card,borderRadius:8,padding:12,marginBottom:10}},
+      a.categories.map(cat=>u.default.createElement("div",{key:cat.id,style:{background:sc.card,borderRadius:8,padding:12,marginBottom:10}},
         u.default.createElement("div",{style:{display:"flex",gap:6,marginBottom:7,alignItems:"center"}},
           u.default.createElement("input",{placeholder:"大項名稱（如：裝修工程）",value:cat.name,onChange:v=>setCat(cat.id,"name",v.target.value),style:{...inputStyle,flex:1,fontWeight:400}}),
-          u.default.createElement("button",{onClick:()=>setPasteOpen(p=>({...p,[cat.id]:!p[cat.id]})),title:"從 Excel 貼上匯入多列",style:{border:"none",background:"none",color:s.oceanDark,cursor:"pointer",padding:"0 4px"}},u.default.createElement(E,{name:"clipboard-paste",size:16})),
-          u.default.createElement("button",{onClick:()=>openFileImport(cat.id),title:"上傳 Excel 檔案匯入",style:{border:"none",background:"none",color:s.oceanDark,cursor:"pointer",padding:"0 4px"}},u.default.createElement(E,{name:"upload",size:16})),
-          u.default.createElement("button",{onClick:()=>copySelectedItems(cat.id),disabled:!(selectedItems[cat.id]&&selectedItems[cat.id].size),title:"複製已勾選的項目（可貼到 Excel 或其他大項）",style:{border:"none",background:"none",color:selectedItems[cat.id]&&selectedItems[cat.id].size?s.oceanDark:s.inkSoft,cursor:selectedItems[cat.id]&&selectedItems[cat.id].size?"pointer":"default",padding:"0 4px",opacity:selectedItems[cat.id]&&selectedItems[cat.id].size?1:.45}},u.default.createElement(E,{name:"copy",size:16})),
-          u.default.createElement("button",{onClick:()=>removeCat(cat.id),style:{border:"none",background:"none",color:s.danger,cursor:"pointer",padding:"0 4px"}},u.default.createElement(E,{name:"trash",size:16}))
+          u.default.createElement("button",{onClick:()=>setPasteOpen(p=>({...p,[cat.id]:!p[cat.id]})),title:"從 Excel 貼上匯入多列",style:{border:"none",background:"none",color:sc.oceanDark,cursor:"pointer",padding:"0 4px"}},u.default.createElement(E,{name:"clipboard-paste",size:16})),
+          u.default.createElement("button",{onClick:()=>openFileImport(cat.id),title:"上傳 Excel 檔案匯入",style:{border:"none",background:"none",color:sc.oceanDark,cursor:"pointer",padding:"0 4px"}},u.default.createElement(E,{name:"upload",size:16})),
+          u.default.createElement("button",{onClick:()=>copySelectedItems(cat.id),disabled:!(selectedItems[cat.id]&&selectedItems[cat.id].size),title:"複製已勾選的項目（可貼到 Excel 或其他大項）",style:{border:"none",background:"none",color:selectedItems[cat.id]&&selectedItems[cat.id].size?sc.oceanDark:sc.inkSoft,cursor:selectedItems[cat.id]&&selectedItems[cat.id].size?"pointer":"default",padding:"0 4px",opacity:selectedItems[cat.id]&&selectedItems[cat.id].size?1:.45}},u.default.createElement(E,{name:"copy",size:16})),
+          u.default.createElement("button",{onClick:()=>removeCat(cat.id),style:{border:"none",background:"none",color:sc.danger,cursor:"pointer",padding:"0 4px"}},u.default.createElement(E,{name:"trash",size:16}))
         ),
         u.default.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:5,marginBottom:9}},
-          HB_EST_CATEGORY_PRESETS.map(p=>u.default.createElement("button",{key:p,onClick:()=>setCat(cat.id,"name",p),style:{border:`1px solid ${s.line}`,background:cat.name===p?s.cardAlt:"none",borderRadius:14,padding:"3px 10px",fontSize:11.5,color:s.oceanDark,cursor:"pointer"}},p))
+          HB_EST_CATEGORY_PRESETS.map(p=>u.default.createElement("button",{key:p,onClick:()=>setCat(cat.id,"name",p),style:{border:`1px solid ${sc.line}`,background:cat.name===p?sc.cardAlt:"none",borderRadius:14,padding:"3px 10px",fontSize:11.5,color:sc.oceanDark,cursor:"pointer"}},p))
         ),
         u.default.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:8,alignItems:"flex-start",marginBottom:9}},
           (cat.vendorFiles||[]).map(vf=>u.default.createElement("div",{key:vf.id,style:{position:"relative"}},
-            vf.kind==="image"?u.default.createElement("img",{src:vf.url,alt:"",onClick:()=>window.open(vf.url,"_blank"),style:{width:52,height:52,borderRadius:6,objectFit:"cover",cursor:"pointer",border:`1px solid ${s.line}`,display:"block"}}):vf.kind==="file"?u.default.createElement("div",{onClick:()=>window.open(vf.url,"_blank"),title:vf.name,style:{width:52,height:52,borderRadius:6,cursor:"pointer",border:`1px solid ${s.line}`,background:s.cardAlt,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:2}},u.default.createElement(E,{name:"file-text",size:16,color:s.ocean}),u.default.createElement("span",{style:{fontSize:8.5,color:s.inkSoft,marginTop:2,maxWidth:46,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},vf.name)):u.default.createElement("div",{title:vf.text,style:{width:110,minHeight:52,borderRadius:6,border:`1px solid ${s.line}`,background:"#FFFBEF",padding:5,fontSize:10.5,color:s.ink,overflow:"hidden",whiteSpace:"pre-wrap"}},vf.text),
-            u.default.createElement("button",{onClick:()=>removeCatFile(cat.id,vf.id),title:"移除",style:{position:"absolute",top:-6,right:-6,width:16,height:16,borderRadius:"50%",border:"none",background:s.cane,color:"#fff",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0}},u.default.createElement(E,{name:"x",size:10}))
+            vf.kind==="image"?u.default.createElement("img",{src:vf.url,alt:"",onClick:()=>window.open(vf.url,"_blank"),style:{width:52,height:52,borderRadius:6,objectFit:"cover",cursor:"pointer",border:`1px solid ${sc.line}`,display:"block"}}):vf.kind==="file"?u.default.createElement("div",{onClick:()=>window.open(vf.url,"_blank"),title:vf.name,style:{width:52,height:52,borderRadius:6,cursor:"pointer",border:`1px solid ${sc.line}`,background:sc.cardAlt,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:2}},u.default.createElement(E,{name:"file-text",size:16,color:sc.ocean}),u.default.createElement("span",{style:{fontSize:8.5,color:sc.inkSoft,marginTop:2,maxWidth:46,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},vf.name)):u.default.createElement("div",{title:vf.text,style:{width:110,minHeight:52,borderRadius:6,border:`1px solid ${sc.line}`,background:"#FFF8E8",padding:5,fontSize:10.5,color:sc.ink,overflow:"hidden",whiteSpace:"pre-wrap"}},vf.text),
+            u.default.createElement("button",{onClick:()=>removeCatFile(cat.id,vf.id),title:"移除",style:{position:"absolute",top:-6,right:-6,width:16,height:16,borderRadius:"50%",border:"none",background:sc.cane,color:"#fff",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0}},u.default.createElement(E,{name:"x",size:10}))
           )),
-          u.default.createElement("button",{type:"button",onClick:()=>openVendorFilePicker(cat.id),disabled:uploadingVendorCat===cat.id,title:"上傳廠商報價單／圖片",style:{width:52,height:52,borderRadius:6,border:`1px dashed ${s.line}`,background:"none",color:s.inkSoft,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},uploadingVendorCat===cat.id?u.default.createElement(E,{name:"loader",size:16,className:"animate-spin"}):u.default.createElement(E,{name:"paperclip",size:16})),
-          u.default.createElement("button",{type:"button",onClick:()=>addCatTextNote(cat.id),title:"新增文字備註",style:{width:52,height:52,borderRadius:6,border:`1px dashed ${s.line}`,background:"none",color:s.inkSoft,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:400,flexShrink:0}},"Aa")
+          u.default.createElement("button",{type:"button",onClick:()=>openVendorFilePicker(cat.id),disabled:uploadingVendorCat===cat.id,title:"上傳廠商報價單／圖片",style:{width:52,height:52,borderRadius:6,border:`1px dashed ${sc.line}`,background:"none",color:sc.inkSoft,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},uploadingVendorCat===cat.id?u.default.createElement(E,{name:"loader",size:16,className:"animate-spin"}):u.default.createElement(E,{name:"paperclip",size:16})),
+          u.default.createElement("button",{type:"button",onClick:()=>addCatTextNote(cat.id),title:"新增文字備註",style:{width:52,height:52,borderRadius:6,border:`1px dashed ${sc.line}`,background:"none",color:sc.inkSoft,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:400,flexShrink:0}},"Aa")
         ),
-        pasteOpen[cat.id]&&u.default.createElement("div",{style:{background:s.cardAlt,borderRadius:7,padding:10,marginBottom:9}},
-          u.default.createElement("p",{style:{fontSize:11.5,color:s.inkSoft,margin:"0 0 6px"}},"從 Excel 複製多列貼上，欄位順序：項目、規格、單位、數量、單價、廠商單價、備註（Tab 或逗號分隔，一行一項）"),
+        pasteOpen[cat.id]&&u.default.createElement("div",{style:{background:sc.cardAlt,borderRadius:7,padding:10,marginBottom:9}},
+          u.default.createElement("p",{style:{fontSize:11.5,color:sc.inkSoft,margin:"0 0 6px"}},"從 Excel 複製多列貼上，欄位順序：項目、規格、單位、數量、單價、廠商單價、備註（Tab 或逗號分隔，一行一項）"),
           u.default.createElement("textarea",{value:pasteText[cat.id]||"",onChange:v=>setPasteText(p=>({...p,[cat.id]:v.target.value})),rows:3,placeholder:"例：拆除隔間　式　1　8000　5000",style:{...inputStyle,resize:"vertical",marginBottom:8}}),
           u.default.createElement("div",{style:{display:"flex",gap:8}},
-            u.default.createElement("button",{onClick:()=>setPasteOpen(p=>({...p,[cat.id]:!1})),style:{flex:1,border:`1px solid ${s.line}`,background:"none",borderRadius:7,padding:"7px 0",fontSize:12.5,color:s.oceanDark,cursor:"pointer"}},"取消"),
+            u.default.createElement("button",{onClick:()=>setPasteOpen(p=>({...p,[cat.id]:!1})),style:{flex:1,border:`1px solid ${sc.line}`,background:"none",borderRadius:7,padding:"7px 0",fontSize:12.5,color:sc.oceanDark,cursor:"pointer"}},"取消"),
             u.default.createElement("button",{onClick:()=>importPaste(cat.id),className:"hb-cta"},"解析並加入")
           )
         ),
-        u.default.createElement("div",{style:{overflowX:"auto",marginBottom:8,border:`1px solid ${s.line}`,borderRadius:6}},
+        u.default.createElement("div",{style:{overflowX:"auto",marginBottom:8,border:`1px solid ${sc.line}`,borderRadius:6}},
           u.default.createElement("table",{style:{width:"100%",borderCollapse:"collapse",fontSize:13,minWidth:840}},
             u.default.createElement("thead",null,
               u.default.createElement("tr",null,
@@ -3556,7 +3567,7 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
                 u.default.createElement("th",{style:{...thStyle,width:78}},"單價"),
                 u.default.createElement("th",{style:{...thStyle,width:82}},"複價"),
                 u.default.createElement("th",{style:{...thStyle,minWidth:90}},"備註"),
-                u.default.createElement("th",{style:{...thStyle,width:78,borderLeft:`2px solid ${s.lemon}`}},"廠商單價"),
+                u.default.createElement("th",{style:{...thStyle,width:78,borderLeft:`2px solid ${sc.lemon}`}},"廠商單價"),
                 u.default.createElement("th",{style:{...thStyle,width:78}},"淨利"),
                 u.default.createElement("th",{style:{...thStyle,width:88}},"")
               )
@@ -3566,124 +3577,124 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
                 let rowProfit=HB_num(it.qty)*HB_num(it.price)-HB_num(it.vendorPrice);
                 return u.default.createElement("tr",{key:it.id,"data-hbcat":cat.id,"data-hbid":it.id,style:it.highlighted?{background:"#FFF3B0"}:null},
                   u.default.createElement("td",{style:{...tdStyle,textAlign:"center"}},u.default.createElement("input",{type:"checkbox",checked:(selectedItems[cat.id]||new Set()).has(it.id),onChange:()=>toggleSelectItem(cat.id,it.id),style:{width:14,height:14,verticalAlign:"middle"}})),
-                  u.default.createElement("td",{className:"hb-draghandle",title:"按住序號可拖曳調整順序",style:{...tdStyle,textAlign:"center",color:s.inkSoft,fontSize:11.5}},idx+1),
+                  u.default.createElement("td",{className:"hb-draghandle",title:"按住序號可拖曳調整順序",style:{...tdStyle,textAlign:"center",color:sc.inkSoft,fontSize:11.5}},idx+1),
                   u.default.createElement("td",{style:tdStyle},
                     u.default.createElement("textarea",{ref:el=>{if(el){refs["name_"+it.id]=el;autoGrow(el)}},placeholder:"項目（可換行輸入多行）",value:it.name,onChange:v=>{setItem(cat.id,it.id,"name",v.target.value);pbOnType(cat.id,it.id,v.target.value,v.target)},onInput:v=>autoGrow(v.target),onMouseDown:()=>cellDown(cat.id,idx,0),onMouseEnter:()=>cellEnter(cat.id,idx,0),onBlur:()=>{setTimeout(()=>setPbSug(p=>(p&&p.itemId===it.id)?null:p),160)},onKeyDown:v=>{if(v.key==="Escape"){setPbSug(null);return}cellNav(v,cat.id,idx,0)},"data-hbcell":"1",rows:1,style:{...cellInputStyle,resize:"none",overflow:"hidden",lineHeight:1.45,display:"block",background:cellInSel(cat.id,idx,0)?selBg:"transparent"}}),
-                    pbHint[it.id]?u.default.createElement("div",{style:{fontSize:10.5,color:s.danger,lineHeight:1.45,marginTop:2,display:"flex",gap:4,alignItems:"flex-start"}},u.default.createElement(E,{name:"alert-triangle",size:11}),u.default.createElement("span",{style:{flex:1}},pbHint[it.id]),u.default.createElement("span",{onClick:()=>setPbHint(p=>{let n={...p};delete n[it.id];return n}),style:{cursor:"pointer",color:s.inkSoft}},"✕")):null
+                    pbHint[it.id]?u.default.createElement("div",{style:{fontSize:10.5,color:sc.danger,lineHeight:1.45,marginTop:2,display:"flex",gap:4,alignItems:"flex-start"}},u.default.createElement(E,{name:"alert-triangle",size:11}),u.default.createElement("span",{style:{flex:1}},pbHint[it.id]),u.default.createElement("span",{onClick:()=>setPbHint(p=>{let n={...p};delete n[it.id];return n}),style:{cursor:"pointer",color:sc.inkSoft}},"✕")):null
                   ),
                   u.default.createElement("td",{style:tdStyle},u.default.createElement("input",{ref:el=>{if(el)refs["spec_"+it.id]=el},placeholder:"規格",value:it.spec,onChange:v=>setItem(cat.id,it.id,"spec",v.target.value),onMouseDown:()=>cellDown(cat.id,idx,1),onMouseEnter:()=>cellEnter(cat.id,idx,1),onKeyDown:v=>cellNav(v,cat.id,idx,1),"data-hbcell":"1",style:{...cellInputStyle,background:cellInSel(cat.id,idx,1)?selBg:"transparent"}})),
                   u.default.createElement("td",{style:tdStyle},u.default.createElement("input",{ref:el=>{if(el)refs["unit_"+it.id]=el},placeholder:"式",value:it.unit,onChange:v=>setItem(cat.id,it.id,"unit",v.target.value),onMouseDown:()=>cellDown(cat.id,idx,2),onMouseEnter:()=>cellEnter(cat.id,idx,2),onKeyDown:v=>cellNav(v,cat.id,idx,2),"data-hbcell":"1",style:{...cellInputStyle,textAlign:"center",background:cellInSel(cat.id,idx,2)?selBg:"transparent"}})),
                   u.default.createElement("td",{style:tdStyle},u.default.createElement("input",{ref:el=>{if(el)refs["qty_"+it.id]=el},type:"text",inputMode:window.HB_COARSE?"decimal":void 0,autoCapitalize:"off",autoCorrect:"off",spellCheck:!1,value:it.qty,onChange:v=>setItem(cat.id,it.id,"qty",v.target.value),onMouseDown:()=>cellDown(cat.id,idx,3),onMouseEnter:()=>cellEnter(cat.id,idx,3),onKeyDown:v=>cellNav(v,cat.id,idx,3),"data-hbcell":"1",style:{...cellInputStyle,textAlign:"right",background:cellInSel(cat.id,idx,3)?selBg:"transparent",opacity:it.hidePrice?.4:1,textDecoration:it.hidePrice?"line-through":"none"}})),
                   u.default.createElement("td",{style:tdStyle},u.default.createElement("input",{ref:el=>{if(el)refs["price_"+it.id]=el},type:"text",inputMode:window.HB_COARSE?"decimal":void 0,autoCapitalize:"off",autoCorrect:"off",spellCheck:!1,placeholder:"單價",value:it.price,onChange:v=>setItem(cat.id,it.id,"price",v.target.value),onMouseDown:()=>cellDown(cat.id,idx,4),onMouseEnter:()=>cellEnter(cat.id,idx,4),onKeyDown:v=>cellNav(v,cat.id,idx,4),"data-hbcell":"1",style:{...cellInputStyle,textAlign:"right",background:cellInSel(cat.id,idx,4)?selBg:"transparent",opacity:it.hidePrice?.4:1,textDecoration:it.hidePrice?"line-through":"none"}})),
-                  u.default.createElement("td",{style:{...tdStyle,textAlign:"right",whiteSpace:"nowrap",paddingRight:6,color:s.oceanDark,fontWeight:400}},HB_money(HB_num(it.qty)*HB_num(it.price))),
+                  u.default.createElement("td",{style:{...tdStyle,textAlign:"right",whiteSpace:"nowrap",paddingRight:6,color:sc.oceanDark,fontWeight:400}},HB_money(HB_num(it.qty)*HB_num(it.price))),
                   u.default.createElement("td",{style:tdStyle},u.default.createElement("input",{ref:el=>{if(el)refs["note_"+it.id]=el},placeholder:"備註",value:it.note,onChange:v=>setItem(cat.id,it.id,"note",v.target.value),onMouseDown:()=>cellDown(cat.id,idx,5),onMouseEnter:()=>cellEnter(cat.id,idx,5),onKeyDown:v=>cellNav(v,cat.id,idx,5),"data-hbcell":"1",style:{...cellInputStyle,background:cellInSel(cat.id,idx,5)?selBg:"transparent"}})),
-                  u.default.createElement("td",{style:{...tdStyle,borderLeft:`2px solid ${s.lemon}`}},u.default.createElement("input",{ref:el=>{if(el)refs["vendorPrice_"+it.id]=el},type:"text",inputMode:window.HB_COARSE?"decimal":void 0,autoCapitalize:"off",autoCorrect:"off",spellCheck:!1,placeholder:"成本",title:it.vqSource?("來源："+it.vqSource):void 0,value:it.vendorPrice,onChange:v=>setItem(cat.id,it.id,"vendorPrice",v.target.value),onMouseDown:()=>cellDown(cat.id,idx,6),onMouseEnter:()=>cellEnter(cat.id,idx,6),onKeyDown:v=>cellNav(v,cat.id,idx,6),"data-hbcell":"1",style:{...cellInputStyle,textAlign:"right",background:cellInSel(cat.id,idx,6)?selBg:"#FFFBEF"}})),
-                  u.default.createElement("td",{style:{...tdStyle,textAlign:"right",whiteSpace:"nowrap",paddingRight:6,color:it.vendorPrice===""?s.inkSoft:rowProfit>=0?s.tree:s.cane,fontSize:11.5}},it.vendorPrice===""?"—":HB_money(rowProfit)),
+                  u.default.createElement("td",{style:{...tdStyle,borderLeft:`2px solid ${sc.lemon}`}},u.default.createElement("input",{ref:el=>{if(el)refs["vendorPrice_"+it.id]=el},type:"text",inputMode:window.HB_COARSE?"decimal":void 0,autoCapitalize:"off",autoCorrect:"off",spellCheck:!1,placeholder:"成本",title:it.vqSource?("來源："+it.vqSource):void 0,value:it.vendorPrice,onChange:v=>setItem(cat.id,it.id,"vendorPrice",v.target.value),onMouseDown:()=>cellDown(cat.id,idx,6),onMouseEnter:()=>cellEnter(cat.id,idx,6),onKeyDown:v=>cellNav(v,cat.id,idx,6),"data-hbcell":"1",style:{...cellInputStyle,textAlign:"right",background:cellInSel(cat.id,idx,6)?selBg:"#FFF8E8"}})),
+                  u.default.createElement("td",{style:{...tdStyle,textAlign:"right",whiteSpace:"nowrap",paddingRight:6,color:it.vendorPrice===""?sc.inkSoft:rowProfit>=0?sc.tree:sc.cane,fontSize:11.5}},it.vendorPrice===""?"—":HB_money(rowProfit)),
                   u.default.createElement("td",{style:{...tdStyle,textAlign:"center",whiteSpace:"nowrap"}},
-                    u.default.createElement("button",{onClick:()=>moveItem(cat.id,it.id,-1),disabled:idx===0,title:"上移",style:{border:"none",background:"none",color:idx===0?s.line:s.oceanDark,cursor:idx===0?"default":"pointer",padding:"0 2px"}},u.default.createElement(E,{name:"chevron-up",size:13})),
-                    u.default.createElement("button",{onClick:()=>moveItem(cat.id,it.id,1),disabled:idx===cat.items.length-1,title:"下移",style:{border:"none",background:"none",color:idx===cat.items.length-1?s.line:s.oceanDark,cursor:idx===cat.items.length-1?"default":"pointer",padding:"0 2px"}},u.default.createElement(E,{name:"chevron-down",size:13})),
-                    u.default.createElement("button",{onClick:()=>setItem(cat.id,it.id,"highlighted",!it.highlighted),title:it.highlighted?"取消螢光標記":"螢光標記本列",style:{border:"none",background:"none",color:it.highlighted?"#E0A800":s.inkSoft,cursor:"pointer",padding:"0 2px"}},u.default.createElement(E,{name:"zap",size:13})),
-                    u.default.createElement("button",{onClick:()=>dupItem(cat.id,it.id),title:"複製本項",style:{border:"none",background:"none",color:s.oceanDark,cursor:"pointer",padding:"0 2px"}},u.default.createElement(E,{name:"copy",size:13})),
-                    u.default.createElement("button",{onClick:()=>pbStore(cat.id,it.id),title:"把這一列存進常用工項單價庫",style:{border:"none",background:"none",color:s.ocean,cursor:"pointer",padding:"0 2px"}},u.default.createElement(E,{name:"bookmark",size:13})),
-                    u.default.createElement("button",{onClick:()=>setItem(cat.id,it.id,"hidePrice",!it.hidePrice),title:it.hidePrice?"目前隱藏單價：客戶看到的報價單只顯示這項總價（點一下恢復）":"隱藏這一列的單價與數量（防比價），客戶只會看到總價",style:{border:"none",background:"none",color:it.hidePrice?"#B5622C":s.inkSoft,cursor:"pointer",padding:"0 2px"}},u.default.createElement(E,{name:"lock",size:13})),
-                    u.default.createElement("button",{onClick:()=>removeItem(cat.id,it.id),title:"刪除本項",style:{border:"none",background:"none",color:s.danger,cursor:"pointer",padding:"0 2px"}},u.default.createElement(E,{name:"x",size:14}))
+                    u.default.createElement("button",{onClick:()=>moveItem(cat.id,it.id,-1),disabled:idx===0,title:"上移",style:{border:"none",background:"none",color:idx===0?sc.line:sc.oceanDark,cursor:idx===0?"default":"pointer",padding:"0 2px"}},u.default.createElement(E,{name:"chevron-up",size:13})),
+                    u.default.createElement("button",{onClick:()=>moveItem(cat.id,it.id,1),disabled:idx===cat.items.length-1,title:"下移",style:{border:"none",background:"none",color:idx===cat.items.length-1?sc.line:sc.oceanDark,cursor:idx===cat.items.length-1?"default":"pointer",padding:"0 2px"}},u.default.createElement(E,{name:"chevron-down",size:13})),
+                    u.default.createElement("button",{onClick:()=>setItem(cat.id,it.id,"highlighted",!it.highlighted),title:it.highlighted?"取消螢光標記":"螢光標記本列",style:{border:"none",background:"none",color:it.highlighted?"#E0A800":sc.inkSoft,cursor:"pointer",padding:"0 2px"}},u.default.createElement(E,{name:"zap",size:13})),
+                    u.default.createElement("button",{onClick:()=>dupItem(cat.id,it.id),title:"複製本項",style:{border:"none",background:"none",color:sc.oceanDark,cursor:"pointer",padding:"0 2px"}},u.default.createElement(E,{name:"copy",size:13})),
+                    u.default.createElement("button",{onClick:()=>pbStore(cat.id,it.id),title:"把這一列存進常用工項單價庫",style:{border:"none",background:"none",color:sc.ocean,cursor:"pointer",padding:"0 2px"}},u.default.createElement(E,{name:"bookmark",size:13})),
+                    u.default.createElement("button",{onClick:()=>setItem(cat.id,it.id,"hidePrice",!it.hidePrice),title:it.hidePrice?"目前隱藏單價：客戶看到的報價單只顯示這項總價（點一下恢復）":"隱藏這一列的單價與數量（防比價），客戶只會看到總價",style:{border:"none",background:"none",color:it.hidePrice?sc.cane:sc.inkSoft,cursor:"pointer",padding:"0 2px"}},u.default.createElement(E,{name:"lock",size:13})),
+                    u.default.createElement("button",{onClick:()=>removeItem(cat.id,it.id),title:"刪除本項",style:{border:"none",background:"none",color:sc.danger,cursor:"pointer",padding:"0 2px"}},u.default.createElement(E,{name:"x",size:14}))
                   )
                 )
               })
             )
           )
         ),
-        u.default.createElement("button",{onClick:()=>addItem(cat.id,!0),style:{border:`1px dashed ${s.line}`,background:"none",borderRadius:7,padding:"7px 0",width:"100%",fontSize:12.5,color:s.oceanDark,cursor:"pointer",marginBottom:6}},"+ 新增項目（於單價按 Enter 可快速新增下一項）"),
-        u.default.createElement("p",{style:{textAlign:"right",fontSize:12.5,fontWeight:400,color:s.oceanDark,margin:0}},(cat.name||"本項")+" 小計：NT$ ",HB_money(HB_estCatSubtotal(cat))),
-        HB_estCatCost(cat)>0&&u.default.createElement("p",{style:{textAlign:"right",fontSize:11,fontWeight:400,color:s.tree,margin:"3px 0 0"}},(cat.name||"本項")+" 淨利：NT$ ",HB_money(HB_estCatSubtotal(cat)-HB_estCatCost(cat)))
+        u.default.createElement("button",{onClick:()=>addItem(cat.id,!0),style:{border:`1px dashed ${sc.line}`,background:"none",borderRadius:7,padding:"7px 0",width:"100%",fontSize:12.5,color:sc.oceanDark,cursor:"pointer",marginBottom:6}},"+ 新增項目（於單價按 Enter 可快速新增下一項）"),
+        u.default.createElement("p",{style:{textAlign:"right",fontSize:12.5,fontWeight:400,color:sc.oceanDark,margin:0}},(cat.name||"本項")+" 小計：NT$ ",HB_money(HB_estCatSubtotal(cat))),
+        HB_estCatCost(cat)>0&&u.default.createElement("p",{style:{textAlign:"right",fontSize:11,fontWeight:400,color:sc.tree,margin:"3px 0 0"}},(cat.name||"本項")+" 淨利：NT$ ",HB_money(HB_estCatSubtotal(cat)-HB_estCatCost(cat)))
       )),
-      u.default.createElement("button",{onClick:()=>addCat(""),style:{border:`1px solid ${s.line}`,background:"none",borderRadius:9,padding:"10px 0",width:"100%",fontSize:13,fontWeight:400,color:s.oceanDark,cursor:"pointer",marginBottom:10}},"+ 新增大項分類"),
-      u.default.createElement("button",{onClick:pbStoreAll,disabled:pbBusy,style:{border:`1px dashed ${s.ocean}`,background:"none",borderRadius:9,padding:"10px 0",width:"100%",fontSize:12.5,fontWeight:400,color:s.oceanDark,cursor:pbBusy?"default":"pointer",marginBottom:8,display:"flex",alignItems:"center",justifyContent:"center",gap:7,opacity:pbBusy?.6:1}},
+      u.default.createElement("button",{onClick:()=>addCat(""),style:{border:`1px solid ${sc.line}`,background:"none",borderRadius:9,padding:"10px 0",width:"100%",fontSize:13,fontWeight:400,color:sc.oceanDark,cursor:"pointer",marginBottom:10}},"+ 新增大項分類"),
+      u.default.createElement("button",{onClick:pbStoreAll,disabled:pbBusy,style:{border:`1px dashed ${sc.ocean}`,background:"none",borderRadius:9,padding:"10px 0",width:"100%",fontSize:12.5,fontWeight:400,color:sc.oceanDark,cursor:pbBusy?"default":"pointer",marginBottom:8,display:"flex",alignItems:"center",justifyContent:"center",gap:7,opacity:pbBusy?.6:1}},
         pbBusy?u.default.createElement(E,{name:"loader",size:14,className:"animate-spin"}):u.default.createElement(E,{name:"bookmark",size:14}),
         pbBusy?"存入中…":"把這張估價單的工項存進常用單價庫"),
-      u.default.createElement("button",{onClick:openVendorCost,disabled:vqLoading,style:{border:`1px dashed ${s.ocean}`,background:"none",borderRadius:9,padding:"10px 0",width:"100%",fontSize:12.5,fontWeight:400,color:s.oceanDark,cursor:vqLoading?"default":"pointer",marginBottom:14,display:"flex",alignItems:"center",justifyContent:"center",gap:7,opacity:vqLoading?.6:1}},
+      u.default.createElement("button",{onClick:openVendorCost,disabled:vqLoading,style:{border:`1px dashed ${sc.ocean}`,background:"none",borderRadius:9,padding:"10px 0",width:"100%",fontSize:12.5,fontWeight:400,color:sc.oceanDark,cursor:vqLoading?"default":"pointer",marginBottom:14,display:"flex",alignItems:"center",justifyContent:"center",gap:7,opacity:vqLoading?.6:1}},
         vqLoading?u.default.createElement(E,{name:"loader",size:14,className:"animate-spin"}):u.default.createElement(E,{name:"package",size:14}),
         vqLoading?"讀取中…":"從廠商報價帶入成本"),
       u.default.createElement("textarea",{placeholder:"付款/訂金條件備註",value:a.depositNote,onChange:v=>set("depositNote",v.target.value),rows:2,style:{...inputStyle,resize:"vertical"}})
     )),
-    u.default.createElement("div",{style:{position:"sticky",bottom:"var(--hb-overlay-gap, 0px)",flexShrink:0,zIndex:50,background:"rgba(250,249,246,0.96)",backdropFilter:"blur(14px)",WebkitBackdropFilter:"blur(14px)",padding:"9px 16px 12px",borderTop:`1px solid ${s.line}`,boxShadow:"0 -3px 12px rgba(28,27,24,0.05)"}},
+    u.default.createElement("div",{style:{position:"sticky",bottom:"var(--hb-overlay-gap, 0px)",flexShrink:0,zIndex:50,background:"rgba(247,250,252,0.96)",backdropFilter:"blur(14px)",WebkitBackdropFilter:"blur(14px)",padding:"9px 16px 12px",borderTop:`1px solid ${sc.line}`,boxShadow:"0 -3px 12px rgba(22,35,43,0.05)"}},
       u.default.createElement("div",{style:{maxWidth:1240,margin:"0 auto"}},
       u.default.createElement("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:6,flexWrap:"wrap"}},
-        u.default.createElement("span",{style:{color:s.inkSoft,fontSize:10.5}},"折讓"),
+        u.default.createElement("span",{style:{color:sc.inkSoft,fontSize:10.5}},"折讓"),
         u.default.createElement("input",{value:a.discount??"",onChange:v=>set("discount",v.target.value),inputMode:"decimal",placeholder:"0",
-          style:{width:86,border:`1px solid ${s.line}`,background:s.card,color:s.ink,borderRadius:7,padding:"5px 8px",fontSize:12,textAlign:"right",fontFamily:"inherit"}}),
-        u.default.createElement("span",{style:{color:s.inkSoft,fontSize:10.5,marginLeft:4}},"稅率"),
+          style:{width:86,border:`1px solid ${sc.line}`,background:sc.card,color:sc.ink,borderRadius:7,padding:"5px 8px",fontSize:12,textAlign:"right",fontFamily:"inherit"}}),
+        u.default.createElement("span",{style:{color:sc.inkSoft,fontSize:10.5,marginLeft:4}},"稅率"),
         u.default.createElement("input",{value:a.taxRate??"",onChange:v=>set("taxRate",v.target.value),inputMode:"decimal",placeholder:"0",
-          style:{width:52,border:`1px solid ${s.line}`,background:s.card,color:s.ink,borderRadius:7,padding:"5px 8px",fontSize:12,textAlign:"right",fontFamily:"inherit"}}),
-        u.default.createElement("span",{style:{color:s.inkSoft,fontSize:10.5}},"%"),
+          style:{width:52,border:`1px solid ${sc.line}`,background:sc.card,color:sc.ink,borderRadius:7,padding:"5px 8px",fontSize:12,textAlign:"right",fontFamily:"inherit"}}),
+        u.default.createElement("span",{style:{color:sc.inkSoft,fontSize:10.5}},"%"),
         u.default.createElement("button",{onClick:()=>set("taxRate",HB_num(a.taxRate)===5?"":"5"),
-          style:{border:`1px solid ${s.line}`,background:HB_num(a.taxRate)===5?s.cardAlt:"none",color:s.ink,borderRadius:7,padding:"5px 10px",fontSize:11,cursor:"pointer"}},"營業稅 5%")
+          style:{border:`1px solid ${sc.line}`,background:HB_num(a.taxRate)===5?sc.cardAlt:"none",color:sc.ink,borderRadius:7,padding:"5px 10px",fontSize:11,cursor:"pointer"}},"營業稅 5%")
       ),
       !estT.plain&&u.default.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:1}},
-        u.default.createElement("span",{style:{color:"#8C8577",fontSize:10.5}},"合計"),
-        u.default.createElement("span",{style:{color:s.inkSoft,fontSize:12}},HB_money(estT.sub))
+        u.default.createElement("span",{style:{color:sc.inkSoft,fontSize:10.5}},"合計"),
+        u.default.createElement("span",{style:{color:sc.inkSoft,fontSize:12}},HB_money(estT.sub))
       ),
       estT.discount>0&&u.default.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:1}},
-        u.default.createElement("span",{style:{color:"#8C8577",fontSize:10.5}},"折讓"),
-        u.default.createElement("span",{style:{color:s.inkSoft,fontSize:12}},"-",HB_money(estT.discount))
+        u.default.createElement("span",{style:{color:sc.inkSoft,fontSize:10.5}},"折讓"),
+        u.default.createElement("span",{style:{color:sc.inkSoft,fontSize:12}},"-",HB_money(estT.discount))
       ),
       estT.rate>0&&u.default.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:1}},
-        u.default.createElement("span",{style:{color:"#8C8577",fontSize:10.5}},"營業稅 ",estT.rate,"%"),
-        u.default.createElement("span",{style:{color:s.inkSoft,fontSize:12}},HB_money(estT.tax))
+        u.default.createElement("span",{style:{color:sc.inkSoft,fontSize:10.5}},"營業稅 ",estT.rate,"%"),
+        u.default.createElement("span",{style:{color:sc.inkSoft,fontSize:12}},HB_money(estT.tax))
       ),
       u.default.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:2}},
-        u.default.createElement("span",{style:{color:s.inkSoft,fontSize:11.5}},estT.plain?"總價（未含營業稅5%）":(estT.rate>0?"總計（含稅）":"總計（未含營業稅）")),
-        u.default.createElement("span",{style:{color:s.ink,fontWeight:500,fontSize:17}},"NT$ ",HB_money(estT.total))
+        u.default.createElement("span",{style:{color:sc.inkSoft,fontSize:11.5}},estT.plain?"總價（未含營業稅5%）":(estT.rate>0?"總計（含稅）":"總計（未含營業稅）")),
+        u.default.createElement("span",{style:{color:sc.ink,fontWeight:500,fontSize:17}},"NT$ ",HB_money(estT.total))
       ),
       grandCost>0&&u.default.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:7}},
-        u.default.createElement("span",{style:{color:s.inkSoft,fontSize:10.5}},estT.discount>0?"預估淨利（已扣折讓，僅您可見）":"預估淨利（僅您可見，不會出現在PDF/Excel）",
-          lockedCount>0?u.default.createElement("span",{style:{color:"#D8A06A",marginLeft:8}},"· 已鎖住 ",lockedCount," 項單價"):null),
-        u.default.createElement("span",{style:{color:s.inkSoft,fontWeight:400,fontSize:12.5}},"NT$ ",HB_money(grandProfit))
+        u.default.createElement("span",{style:{color:sc.inkSoft,fontSize:10.5}},estT.discount>0?"預估淨利（已扣折讓，僅您可見）":"預估淨利（僅您可見，不會出現在PDF/Excel）",
+          lockedCount>0?u.default.createElement("span",{style:{color:sc.cane,marginLeft:8}},"· 已鎖住 ",lockedCount," 項單價"):null),
+        u.default.createElement("span",{style:{color:sc.inkSoft,fontWeight:400,fontSize:12.5}},"NT$ ",HB_money(grandProfit))
       ),
       u.default.createElement("div",{style:{display:"flex",gap:7,marginBottom:7}},
-        u.default.createElement("button",{onClick:openWholeFileImport,disabled:localImportBusy,style:{flex:1,border:`1px solid ${s.line}`,background:"none",borderRadius:9,padding:"9px 0",fontSize:12,color:s.ink,cursor:"pointer",opacity:localImportBusy?.6:1}},localImportBusy?"載入中…":"↓ 從 Excel 檔案載入")
+        u.default.createElement("button",{onClick:openWholeFileImport,disabled:localImportBusy,style:{flex:1,border:`1px solid ${sc.line}`,background:"none",borderRadius:9,padding:"9px 0",fontSize:12,color:sc.ink,cursor:"pointer",opacity:localImportBusy?.6:1}},localImportBusy?"載入中…":"↓ 從 Excel 檔案載入")
       ),
       u.default.createElement("div",{style:{display:"flex",gap:7,marginTop:grandCost>0?0:8,flexWrap:"wrap"}},
-        u.default.createElement("button",{onClick:save,disabled:o,style:{flex:2,minWidth:120,background:s.action,color:"#F2F4F1",border:"none",borderRadius:9,padding:"11px 0",fontWeight:300,fontSize:13.5,cursor:"pointer",opacity:o?.6:1}},o?"儲存中…":"儲存估價單"),
-        u.default.createElement("button",{onClick:()=>HB_openEstimatePrint(a),style:{flex:1,minWidth:70,border:`1px solid ${s.line}`,background:"none",borderRadius:9,padding:"10px 0",fontSize:12.5,color:s.ink,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:5}},u.default.createElement(E,{name:"printer",size:14}),"PDF"),
-        u.default.createElement("button",{onClick:()=>HB_generateEstimateExcel(a),style:{flex:1,minWidth:70,border:`1px solid ${s.line}`,background:"none",borderRadius:9,padding:"10px 0",fontSize:12.5,color:s.ink,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:5}},u.default.createElement(E,{name:"file-output",size:14}),"Excel")
+        u.default.createElement("button",{onClick:save,disabled:o,style:{flex:2,minWidth:120,background:sc.action,color:"#F2F4F1",border:"none",borderRadius:9,padding:"11px 0",fontWeight:300,fontSize:13.5,cursor:"pointer",opacity:o?.6:1}},o?"儲存中…":"儲存估價單"),
+        u.default.createElement("button",{onClick:()=>HB_openEstimatePrint(a),style:{flex:1,minWidth:70,border:`1px solid ${sc.line}`,background:"none",borderRadius:9,padding:"10px 0",fontSize:12.5,color:sc.ink,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:5}},u.default.createElement(E,{name:"printer",size:14}),"PDF"),
+        u.default.createElement("button",{onClick:()=>HB_generateEstimateExcel(a),style:{flex:1,minWidth:70,border:`1px solid ${sc.line}`,background:"none",borderRadius:9,padding:"10px 0",fontSize:12.5,color:sc.ink,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:5}},u.default.createElement(E,{name:"file-output",size:14}),"Excel")
       )
       )
     ),
-    calcOpen&&u.default.createElement("div",{onClick:()=>setCalcOpen(!1),style:{position:"fixed",inset:0,background:"rgba(28,27,24,0.55)",display:"flex",alignItems:"center",justifyContent:"center",padding:20,zIndex:98}},
-      u.default.createElement("div",{onClick:ev=>ev.stopPropagation(),className:"fade-in",style:{background:s.card,borderRadius:14,padding:16,width:"100%",maxWidth:300,boxShadow:"0 12px 40px rgba(0,0,0,0.35)"}},
+    calcOpen&&u.default.createElement("div",{onClick:()=>setCalcOpen(!1),style:{position:"fixed",inset:0,background:"rgba(22,35,43,0.55)",display:"flex",alignItems:"center",justifyContent:"center",padding:20,zIndex:98}},
+      u.default.createElement("div",{onClick:ev=>ev.stopPropagation(),className:"fade-in",style:{background:sc.card,borderRadius:14,padding:16,width:"100%",maxWidth:300,boxShadow:"0 12px 40px rgba(0,0,0,0.35)"}},
         u.default.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}},
-          u.default.createElement("span",{style:{fontSize:13,color:s.oceanDark,display:"flex",alignItems:"center",gap:5}},u.default.createElement(E,{name:"calculator",size:15}),"計算機"),
-          u.default.createElement("button",{onClick:()=>setCalcOpen(!1),style:{border:"none",background:"none",color:s.inkSoft,cursor:"pointer",padding:0}},u.default.createElement(E,{name:"x",size:16}))
+          u.default.createElement("span",{style:{fontSize:13,color:sc.oceanDark,display:"flex",alignItems:"center",gap:5}},u.default.createElement(E,{name:"calculator",size:15}),"計算機"),
+          u.default.createElement("button",{onClick:()=>setCalcOpen(!1),style:{border:"none",background:"none",color:sc.inkSoft,cursor:"pointer",padding:0}},u.default.createElement(E,{name:"x",size:16}))
         ),
-        cellSel&&u.default.createElement("div",{style:{fontSize:11,color:s.oceanDark,background:s.cardAlt,borderRadius:6,padding:"5px 8px",marginBottom:8}},"目前選取欄位："+calcSelLabel),
-        u.default.createElement("div",{style:{background:s.paper,border:`1px solid ${s.line}`,borderRadius:8,padding:"10px 12px",marginBottom:10,textAlign:"right"}},
-          u.default.createElement("div",{style:{fontSize:11,color:s.inkSoft,minHeight:14}},calcExprText),
-          u.default.createElement("div",{className:"mono",style:{fontSize:26,color:s.ink,wordBreak:"break-all"}},calcDisplay)
+        cellSel&&u.default.createElement("div",{style:{fontSize:11,color:sc.oceanDark,background:sc.cardAlt,borderRadius:6,padding:"5px 8px",marginBottom:8}},"目前選取欄位："+calcSelLabel),
+        u.default.createElement("div",{style:{background:sc.paper,border:`1px solid ${sc.line}`,borderRadius:8,padding:"10px 12px",marginBottom:10,textAlign:"right"}},
+          u.default.createElement("div",{style:{fontSize:11,color:sc.inkSoft,minHeight:14}},calcExprText),
+          u.default.createElement("div",{className:"mono",style:{fontSize:26,color:sc.ink,wordBreak:"break-all"}},calcDisplay)
         ),
         u.default.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:7,marginBottom:10}},
-          calcBtn("C",calcClear,{color:s.danger}),
+          calcBtn("C",calcClear,{color:sc.danger}),
           calcBtn("⌫",calcBackspace),
           calcBtn("%",calcPercent),
-          calcBtn("÷",()=>calcOperator("\xF7"),{background:s.action,color:"#fff",borderColor:s.action}),
+          calcBtn("÷",()=>calcOperator("\xF7"),{background:sc.action,color:"#fff",borderColor:sc.action}),
           calcBtn("7",()=>calcDigit("7")),
           calcBtn("8",()=>calcDigit("8")),
           calcBtn("9",()=>calcDigit("9")),
-          calcBtn("×",()=>calcOperator("\xD7"),{background:s.action,color:"#fff",borderColor:s.action}),
+          calcBtn("×",()=>calcOperator("\xD7"),{background:sc.action,color:"#fff",borderColor:sc.action}),
           calcBtn("4",()=>calcDigit("4")),
           calcBtn("5",()=>calcDigit("5")),
           calcBtn("6",()=>calcDigit("6")),
-          calcBtn("−",()=>calcOperator("-"),{background:s.action,color:"#fff",borderColor:s.action}),
+          calcBtn("−",()=>calcOperator("-"),{background:sc.action,color:"#fff",borderColor:sc.action}),
           calcBtn("1",()=>calcDigit("1")),
           calcBtn("2",()=>calcDigit("2")),
           calcBtn("3",()=>calcDigit("3")),
-          calcBtn("+",()=>calcOperator("+"),{background:s.action,color:"#fff",borderColor:s.action}),
+          calcBtn("+",()=>calcOperator("+"),{background:sc.action,color:"#fff",borderColor:sc.action}),
           calcBtn("±",calcToggleSign),
           calcBtn("0",()=>calcDigit("0")),
           calcBtn(".",calcDot),
-          calcBtn("=",calcEquals,{background:s.lemon,color:s.oceanDark,borderColor:s.lemon})
+          calcBtn("=",calcEquals,{background:sc.lemon,color:sc.oceanDark,borderColor:sc.lemon})
         ),
-        u.default.createElement("button",{onClick:applyCalcToCell,disabled:!cellSel,style:{width:"100%",border:"none",background:cellSel?s.oceanDark:s.line,color:"#fff",borderRadius:9,padding:"10px 0",fontSize:13,cursor:cellSel?"pointer":"default",opacity:cellSel?1:.6}},cellSel?"帶入「"+calcSelLabel+"」欄位":"請先點選表格中的欄位")
+        u.default.createElement("button",{onClick:applyCalcToCell,disabled:!cellSel,style:{width:"100%",border:"none",background:cellSel?sc.oceanDark:sc.line,color:"#fff",borderRadius:9,padding:"10px 0",fontSize:13,cursor:cellSel?"pointer":"default",opacity:cellSel?1:.6}},cellSel?"帶入「"+calcSelLabel+"」欄位":"請先點選表格中的欄位")
       )
     )
   )
