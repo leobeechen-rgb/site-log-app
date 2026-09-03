@@ -3485,9 +3485,9 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
       })
     ),
     localToast&&u.default.createElement("div",{className:"fade-in",style:{position:"fixed",bottom:20,left:"50%",transform:"translateX(-50%)",background:s.ink,color:s.card,padding:"10px 18px",borderRadius:8,fontSize:13,boxShadow:"0 4px 14px rgba(0,0,0,0.35)",zIndex:99,maxWidth:"90vw",textAlign:"center"}},localToast),
-    u.default.createElement("div",{style:{background:"rgba(28,27,24,0.82)",backdropFilter:"blur(14px)",WebkitBackdropFilter:"blur(14px)",padding:"16px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}},
-      u.default.createElement("button",{onClick:n,style:{background:"none",border:"none",color:"#C7B8A0",cursor:"pointer",display:"flex",alignItems:"center",gap:4,fontSize:12.5}},u.default.createElement(E,{name:"arrow-left",size:15})),
-      u.default.createElement("h2",{style:{color:s.card,fontSize:16,margin:0}},t?"編輯估價單":"快速新增估價單"),
+    u.default.createElement("div",{style:{background:"rgba(250,249,246,0.94)",backdropFilter:"blur(14px)",WebkitBackdropFilter:"blur(14px)",padding:"13px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0,borderBottom:`1px solid ${s.line}`}},
+      u.default.createElement("button",{onClick:n,style:{background:"none",border:"none",color:s.inkSoft,cursor:"pointer",display:"flex",alignItems:"center",gap:4,fontSize:12.5}},u.default.createElement(E,{name:"arrow-left",size:15})),
+      u.default.createElement("h2",{style:{color:s.ink,fontSize:16,margin:0,fontWeight:500}},t?"編輯估價單":"快速新增估價單"),
       u.default.createElement("button",{onClick:()=>setCalcOpen(!0),title:"計算機",style:{background:"none",border:"none",color:"#C7B8A0",cursor:"pointer",display:"flex",alignItems:"center",padding:0}},u.default.createElement(E,{name:"calculator",size:17}))
     ),
     u.default.createElement("input",{ref:importFileRef,type:"file",accept:".xlsx,.xls,.csv",hidden:!0,onChange:handleFileImport}),
@@ -3606,47 +3606,47 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
         vqLoading?"讀取中…":"從廠商報價帶入成本"),
       u.default.createElement("textarea",{placeholder:"付款/訂金條件備註",value:a.depositNote,onChange:v=>set("depositNote",v.target.value),rows:2,style:{...inputStyle,resize:"vertical"}})
     )),
-    u.default.createElement("div",{style:{position:"sticky",bottom:"var(--hb-overlay-gap, 0px)",flexShrink:0,zIndex:50,background:"rgba(28,27,24,0.94)",backdropFilter:"blur(14px)",WebkitBackdropFilter:"blur(14px)",padding:"9px 16px 12px",boxShadow:"0 -4px 14px rgba(185,136,104,0.18)"}},
+    u.default.createElement("div",{style:{position:"sticky",bottom:"var(--hb-overlay-gap, 0px)",flexShrink:0,zIndex:50,background:"rgba(250,249,246,0.96)",backdropFilter:"blur(14px)",WebkitBackdropFilter:"blur(14px)",padding:"9px 16px 12px",borderTop:`1px solid ${s.line}`,boxShadow:"0 -3px 12px rgba(28,27,24,0.05)"}},
       u.default.createElement("div",{style:{maxWidth:1240,margin:"0 auto"}},
       u.default.createElement("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:6,flexWrap:"wrap"}},
-        u.default.createElement("span",{style:{color:"#C7B8A0",fontSize:10.5}},"折讓"),
+        u.default.createElement("span",{style:{color:s.inkSoft,fontSize:10.5}},"折讓"),
         u.default.createElement("input",{value:a.discount??"",onChange:v=>set("discount",v.target.value),inputMode:"decimal",placeholder:"0",
-          style:{width:86,border:"1px solid rgba(255,255,255,0.35)",background:"rgba(255,255,255,0.08)",color:"#fff",borderRadius:7,padding:"5px 8px",fontSize:12,textAlign:"right",fontFamily:"inherit"}}),
-        u.default.createElement("span",{style:{color:"#C7B8A0",fontSize:10.5,marginLeft:4}},"稅率"),
+          style:{width:86,border:`1px solid ${s.line}`,background:s.card,color:s.ink,borderRadius:7,padding:"5px 8px",fontSize:12,textAlign:"right",fontFamily:"inherit"}}),
+        u.default.createElement("span",{style:{color:s.inkSoft,fontSize:10.5,marginLeft:4}},"稅率"),
         u.default.createElement("input",{value:a.taxRate??"",onChange:v=>set("taxRate",v.target.value),inputMode:"decimal",placeholder:"0",
-          style:{width:52,border:"1px solid rgba(255,255,255,0.35)",background:"rgba(255,255,255,0.08)",color:"#fff",borderRadius:7,padding:"5px 8px",fontSize:12,textAlign:"right",fontFamily:"inherit"}}),
-        u.default.createElement("span",{style:{color:"#C7B8A0",fontSize:10.5}},"%"),
+          style:{width:52,border:`1px solid ${s.line}`,background:s.card,color:s.ink,borderRadius:7,padding:"5px 8px",fontSize:12,textAlign:"right",fontFamily:"inherit"}}),
+        u.default.createElement("span",{style:{color:s.inkSoft,fontSize:10.5}},"%"),
         u.default.createElement("button",{onClick:()=>set("taxRate",HB_num(a.taxRate)===5?"":"5"),
-          style:{border:"1px solid rgba(255,255,255,0.35)",background:HB_num(a.taxRate)===5?"rgba(241,238,230,0.22)":"none",color:"#fff",borderRadius:7,padding:"5px 10px",fontSize:11,cursor:"pointer"}},"營業稅 5%")
+          style:{border:`1px solid ${s.line}`,background:HB_num(a.taxRate)===5?s.cardAlt:"none",color:s.ink,borderRadius:7,padding:"5px 10px",fontSize:11,cursor:"pointer"}},"營業稅 5%")
       ),
       !estT.plain&&u.default.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:1}},
         u.default.createElement("span",{style:{color:"#8C8577",fontSize:10.5}},"合計"),
-        u.default.createElement("span",{style:{color:"#C7B8A0",fontSize:12}},HB_money(estT.sub))
+        u.default.createElement("span",{style:{color:s.inkSoft,fontSize:12}},HB_money(estT.sub))
       ),
       estT.discount>0&&u.default.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:1}},
         u.default.createElement("span",{style:{color:"#8C8577",fontSize:10.5}},"折讓"),
-        u.default.createElement("span",{style:{color:"#C7B8A0",fontSize:12}},"-",HB_money(estT.discount))
+        u.default.createElement("span",{style:{color:s.inkSoft,fontSize:12}},"-",HB_money(estT.discount))
       ),
       estT.rate>0&&u.default.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:1}},
         u.default.createElement("span",{style:{color:"#8C8577",fontSize:10.5}},"營業稅 ",estT.rate,"%"),
-        u.default.createElement("span",{style:{color:"#C7B8A0",fontSize:12}},HB_money(estT.tax))
+        u.default.createElement("span",{style:{color:s.inkSoft,fontSize:12}},HB_money(estT.tax))
       ),
       u.default.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:2}},
-        u.default.createElement("span",{style:{color:"#C7B8A0",fontSize:11.5}},estT.plain?"總價（未含營業稅5%）":(estT.rate>0?"總計（含稅）":"總計（未含營業稅）")),
-        u.default.createElement("span",{style:{color:s.lemon,fontWeight:300,fontSize:17}},"NT$ ",HB_money(estT.total))
+        u.default.createElement("span",{style:{color:s.inkSoft,fontSize:11.5}},estT.plain?"總價（未含營業稅5%）":(estT.rate>0?"總計（含稅）":"總計（未含營業稅）")),
+        u.default.createElement("span",{style:{color:s.ink,fontWeight:500,fontSize:17}},"NT$ ",HB_money(estT.total))
       ),
       grandCost>0&&u.default.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:7}},
-        u.default.createElement("span",{style:{color:"#8FB8C9",fontSize:10.5}},estT.discount>0?"預估淨利（已扣折讓，僅您可見）":"預估淨利（僅您可見，不會出現在PDF/Excel）",
+        u.default.createElement("span",{style:{color:s.inkSoft,fontSize:10.5}},estT.discount>0?"預估淨利（已扣折讓，僅您可見）":"預估淨利（僅您可見，不會出現在PDF/Excel）",
           lockedCount>0?u.default.createElement("span",{style:{color:"#D8A06A",marginLeft:8}},"· 已鎖住 ",lockedCount," 項單價"):null),
-        u.default.createElement("span",{style:{color:"#C7B8A0",fontWeight:400,fontSize:12.5}},"NT$ ",HB_money(grandProfit))
+        u.default.createElement("span",{style:{color:s.inkSoft,fontWeight:400,fontSize:12.5}},"NT$ ",HB_money(grandProfit))
       ),
       u.default.createElement("div",{style:{display:"flex",gap:7,marginBottom:7}},
-        u.default.createElement("button",{onClick:openWholeFileImport,disabled:localImportBusy,style:{flex:1,border:"1px solid rgba(255,255,255,0.4)",background:"none",borderRadius:9,padding:"9px 0",fontSize:12,color:"#fff",cursor:"pointer",opacity:localImportBusy?.6:1}},localImportBusy?"載入中…":"↓ 從 Excel 檔案載入")
+        u.default.createElement("button",{onClick:openWholeFileImport,disabled:localImportBusy,style:{flex:1,border:`1px solid ${s.line}`,background:"none",borderRadius:9,padding:"9px 0",fontSize:12,color:s.ink,cursor:"pointer",opacity:localImportBusy?.6:1}},localImportBusy?"載入中…":"↓ 從 Excel 檔案載入")
       ),
       u.default.createElement("div",{style:{display:"flex",gap:7,marginTop:grandCost>0?0:8,flexWrap:"wrap"}},
-        u.default.createElement("button",{onClick:save,disabled:o,style:{flex:2,minWidth:120,background:s.lemon,color:s.oceanDark,border:"none",borderRadius:9,padding:"11px 0",fontWeight:300,fontSize:13.5,cursor:"pointer",opacity:o?.6:1}},o?"儲存中…":"儲存估價單"),
-        u.default.createElement("button",{onClick:()=>HB_openEstimatePrint(a),style:{flex:1,minWidth:70,border:"1px solid rgba(255,255,255,0.4)",background:"none",borderRadius:9,padding:"10px 0",fontSize:12.5,color:"#fff",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:5}},u.default.createElement(E,{name:"printer",size:14}),"PDF"),
-        u.default.createElement("button",{onClick:()=>HB_generateEstimateExcel(a),style:{flex:1,minWidth:70,border:"1px solid rgba(255,255,255,0.4)",background:"none",borderRadius:9,padding:"10px 0",fontSize:12.5,color:"#fff",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:5}},u.default.createElement(E,{name:"file-output",size:14}),"Excel")
+        u.default.createElement("button",{onClick:save,disabled:o,style:{flex:2,minWidth:120,background:s.action,color:"#F2F4F1",border:"none",borderRadius:9,padding:"11px 0",fontWeight:300,fontSize:13.5,cursor:"pointer",opacity:o?.6:1}},o?"儲存中…":"儲存估價單"),
+        u.default.createElement("button",{onClick:()=>HB_openEstimatePrint(a),style:{flex:1,minWidth:70,border:`1px solid ${s.line}`,background:"none",borderRadius:9,padding:"10px 0",fontSize:12.5,color:s.ink,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:5}},u.default.createElement(E,{name:"printer",size:14}),"PDF"),
+        u.default.createElement("button",{onClick:()=>HB_generateEstimateExcel(a),style:{flex:1,minWidth:70,border:`1px solid ${s.line}`,background:"none",borderRadius:9,padding:"10px 0",fontSize:12.5,color:s.ink,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:5}},u.default.createElement(E,{name:"file-output",size:14}),"Excel")
       )
       )
     ),
