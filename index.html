@@ -9863,6 +9863,8 @@ react-dom/cjs/react-dom-client.production.js:
     ".hbs td input,.hbs td select{width:100%;border:none;background:transparent;font:inherit;",
       "font-size:13px;padding:6px 7px;box-sizing:border-box;color:#1C1B18;outline:none}",
     ".hbs td select{appearance:none;cursor:pointer;color:#5A544A}",
+    /* Edge／輸入法會在聚焦的輸入框右側塞語音鈕，把右邊讓出來，數字才不會被蓋住 */
+    ".hbs td input:focus{padding-right:30px}",
     ".hbs td.calc{padding:6px 7px;text-align:right;color:#1C1B18;background:#FAFAF7;white-space:nowrap}",
     ".hbs td.calc.neg{color:#B0413E}",
     ".hbs td.calc.pos{color:#2E7D32}",
