@@ -328,46 +328,105 @@
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-/* 標籤插圖：室內元素線稿，之後換成手繪只要替換這一段 */
+/* 標籤插圖：室內元素線稿。手繪版畫好之後，替換 A 裡的 path 即可 */
 (function(){
   var A={
-    chair:'<path pathLength="1" d="M46 140 V96 q0-22 20-22 h38 q20 0 20 22 v44"/>'
-      +'<path pathLength="1" class="d2" d="M40 140 q-9 0-9-12 v-20 q0-10 9-10 h90 q9 0 9 10 v20 q0 12-9 12 Z"/>'
-      +'<path pathLength="1" class="d3" d="M50 140 v12 M120 140 v12"/>'
+    chair:'<path pathLength="1" d="M46 138 V96 q0-22 20-22 h38 q20 0 20 22 v42"/>'
+      +'<path pathLength="1" class="d2" d="M40 138 q-9 0-9-12 v-20 q0-10 9-10 h90 q9 0 9 10 v20 q0 12-9 12 Z"/>'
+      +'<path pathLength="1" class="d3" d="M50 138 v12 M120 138 v12"/>'
       +'<path pathLength="1" class="d4" d="M68 74 q17-8 34 0"/>'
-      +'<path pathLength="1" class="d5" d="M34 154 q51 7 102 0"/>',
-    lamp:'<path pathLength="1" d="M85 18 V58"/>'
+      +'<path pathLength="1" class="d5" d="M34 152 q51 7 102 0"/>',
+    sofa:'<path pathLength="1" d="M30 132 V100 q0-14 14-14 h82 q14 0 14 14 v32"/>'
+      +'<path pathLength="1" class="d2" d="M24 132 q-8 0-8-10 v-16 q0-8 8-8 h122 q8 0 8 8 v16 q0 10-8 10 Z"/>'
+      +'<path pathLength="1" class="d3" d="M85 86 v12"/>'
+      +'<path pathLength="1" class="d4" d="M36 132 v12 M134 132 v12"/>'
+      +'<path pathLength="1" class="d5" d="M24 152 q61 7 122 0"/>',
+    pendant:'<path pathLength="1" d="M85 18 V58"/>'
       +'<path pathLength="1" class="d2" d="M56 58 h58 l16 40 h-90 Z"/>'
       +'<path pathLength="1" class="d3" d="M40 98 q45 11 90 0"/>'
       +'<path pathLength="1" class="d4" d="M85 98 v10"/>'
       +'<path pathLength="1" class="d5" d="M62 126 l-8 14 M85 130 v16 M108 126 l8 14"/>',
+    floorlamp:'<path pathLength="1" d="M85 62 V138"/>'
+      +'<path pathLength="1" class="d2" d="M60 62 h50 l-9 -32 h-32 Z"/>'
+      +'<path pathLength="1" class="d3" d="M69 30 h32"/>'
+      +'<path pathLength="1" class="d4" d="M68 142 q17 6 34 0 M74 138 h22"/>'
+      +'<path pathLength="1" class="d5" d="M44 152 q41 6 82 0"/>',
     window:'<path pathLength="1" d="M38 26 h94 v106 h-94 Z"/>'
       +'<path pathLength="1" class="d2" d="M85 26 v106 M38 79 h94"/>'
       +'<path pathLength="1" class="d3" d="M132 26 q20 38 0 106"/>'
       +'<path pathLength="1" class="d4" d="M38 26 q-20 38 0 106"/>'
       +'<path pathLength="1" class="d5" d="M52 146 h66"/>',
+    door:'<path pathLength="1" d="M58 26 h56 v118 h-56 Z"/>'
+      +'<path pathLength="1" class="d2" d="M70 42 h32 v38 h-32 Z"/>'
+      +'<circle pathLength="1" class="d3" cx="105" cy="98" r="3.6"/>'
+      +'<path pathLength="1" class="d4" d="M114 144 q-4 -54 -58 -60"/>'
+      +'<path pathLength="1" class="d5" d="M30 148 h110"/>',
     cabinet:'<path pathLength="1" d="M42 132 V42 q0-14 14-14 h58 q14 0 14 14 v90"/>'
       +'<path pathLength="1" class="d2" d="M42 76 h86"/>'
       +'<circle pathLength="1" class="d3" cx="110" cy="96" r="4.5"/>'
       +'<path pathLength="1" class="d4" d="M42 132 h86 M110 56 h10"/>'
-      +'<path pathLength="1" class="d5" d="M56 132 v14 M114 132 v14"/>'
+      +'<path pathLength="1" class="d5" d="M56 132 v14 M114 132 v14"/>',
+    shelf:'<path pathLength="1" d="M38 30 h94 M38 76 h94 M38 122 h94"/>'
+      +'<path pathLength="1" class="d2" d="M38 26 v100 M132 26 v100"/>'
+      +'<path pathLength="1" class="d3" d="M50 76 v-24 h7 v24 M60 76 v-20 h7 v20 M70 76 v-27 h7 v27"/>'
+      +'<path pathLength="1" class="d4" d="M100 30 v-16 q0-8 8-8 h6 q8 0 8 8 v16"/>'
+      +'<path pathLength="1" class="d5" d="M34 148 h102"/>',
+    table:'<path pathLength="1" d="M28 80 h114"/>'
+      +'<path pathLength="1" class="d2" d="M42 80 v56 M128 80 v56"/>'
+      +'<path pathLength="1" class="d3" d="M58 80 v42 M112 80 v42"/>'
+      +'<path pathLength="1" class="d4" d="M72 80 q13 -16 26 0"/>'
+      +'<path pathLength="1" class="d5" d="M28 150 h114"/>',
+    tile:'<path pathLength="1" d="M40 46 h80 v80 h-80 Z"/>'
+      +'<path pathLength="1" class="d2" d="M80 46 v80 M40 86 h80"/>'
+      +'<path pathLength="1" class="d3" d="M50 56 h20 v20 h-20 Z M90 96 h20 v20 h-20 Z"/>'
+      +'<path pathLength="1" class="d4" d="M120 46 l16 -12 v80 l-16 12"/>'
+      +'<path pathLength="1" class="d5" d="M36 148 h100"/>',
+    plant:'<path pathLength="1" d="M62 104 h46 l-7 36 h-32 Z"/>'
+      +'<path pathLength="1" class="d2" d="M85 104 V62"/>'
+      +'<path pathLength="1" class="d3" d="M85 80 q-28 -4 -32 -30 q28 2 32 26"/>'
+      +'<path pathLength="1" class="d4" d="M85 90 q28 -8 32 -34 q-28 4 -32 30"/>'
+      +'<path pathLength="1" class="d5" d="M48 150 q37 5 74 0"/>',
+    mirror:'<path pathLength="1" d="M85 26 C113 26 123 48 123 74 C123 100 113 120 85 120 C57 120 47 100 47 74 C47 48 57 26 85 26 Z"/>'
+      +'<path pathLength="1" class="d2" d="M85 120 v22"/>'
+      +'<path pathLength="1" class="d3" d="M66 142 h38"/>'
+      +'<path pathLength="1" class="d4" d="M62 54 q10 -16 26 -18"/>'
+      +'<path pathLength="1" class="d5" d="M46 152 q39 5 78 0"/>',
+    bed:'<path pathLength="1" d="M30 130 V94 h108 v36"/>'
+      +'<path pathLength="1" class="d2" d="M30 94 V54 q0-8 8-8 h12 q8 0 8 8 v40"/>'
+      +'<path pathLength="1" class="d3" d="M66 92 q16 -14 32 0"/>'
+      +'<path pathLength="1" class="d4" d="M34 130 v14 M134 130 v14"/>'
+      +'<path pathLength="1" class="d5" d="M26 150 h116"/>',
+    stairs:'<path pathLength="1" d="M34 144 v-20 h22 v-20 h22 v-20 h22 v-20 h22 v-20 h20"/>'
+      +'<path pathLength="1" class="d2" d="M38 118 L142 40"/>'
+      +'<path pathLength="1" class="d3" d="M38 118 v-12 M90 79 v-12 M142 40 v-12"/>'
+      +'<path pathLength="1" class="d4" d="M56 144 v-20 M78 144 v-40 M100 144 v-60"/>'
+      +'<path pathLength="1" class="d5" d="M28 150 h116"/>',
+    tub:'<path pathLength="1" d="M34 88 h100 v28 q0 20 -20 20 h-60 q-20 0 -20 -20 Z"/>'
+      +'<path pathLength="1" class="d2" d="M48 104 h72"/>'
+      +'<path pathLength="1" class="d3" d="M120 88 V66 q0-8 -8 -8 h-10"/>'
+      +'<path pathLength="1" class="d4" d="M50 136 v10 M118 136 v10"/>'
+      +'<path pathLength="1" class="d5" d="M30 152 h108"/>'
   };
-  var K=["chair","lamp","window","cabinet"];
+  var K=["chair","sofa","pendant","floorlamp","window","door","cabinet",
+         "shelf","table","tile","plant","mirror","bed","stairs","tub"];
   window.HB_ART=function(k){
     var body=A[k]||A.chair;
     return '<svg class="hb-art" viewBox="0 0 170 170" aria-hidden="true">'+body
-      +'<ellipse class="wash" cx="85" cy="154" rx="46" ry="3.5"/></svg>';
+      +'<ellipse class="wash" cx="85" cy="155" rx="46" ry="3.5"/></svg>';
   };
   window.HB_ART_FOR=function(seed){
     var n=0,t=String(seed||"");
-    for(var i=0;i<t.length;i++) n=(n*31+t.charCodeAt(i))>>>0;
-    return window.HB_ART(K[n%4]);
+    for(var i=0;i<t.length;i++) n=(n*131+t.charCodeAt(i)*7)>>>0;
+    return window.HB_ART(K[n%K.length]);
   };
   window.HB_ART_ICON=function(icon){
-    var m={folder:"cabinet","folder-plus":"cabinet","file-text":"cabinet",
-           "clipboard-list":"cabinet",camera:"window",image:"window",
-           calculator:"lamp","alert-triangle":"lamp",users:"chair",calendar:"chair"};
-    return window.HB_ART(m[icon]||"chair");
+    var m={folder:"cabinet","folder-plus":"cabinet","file-text":"shelf",
+           "clipboard-list":"shelf",camera:"window",image:"window",
+           calculator:"table","alert-triangle":"door",users:"sofa",
+           calendar:"table",package:"tile",box:"tile",wrench:"tub",
+           "map-pin":"stairs","dollar-sign":"table","message-square":"sofa",
+           "check-square":"shelf",lightbulb:"pendant",home:"door"};
+    return window.HB_ART(m[icon]||"plant");
   };
 })();
 /* 完工印章：狀態第一次變成「工程已完工」時落章，每案一次，不擋操作 */
