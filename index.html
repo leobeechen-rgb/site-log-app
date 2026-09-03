@@ -3498,10 +3498,23 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
       })
     ),
     localToast&&u.default.createElement("div",{className:"fade-in",style:{position:"fixed",bottom:20,left:"50%",transform:"translateX(-50%)",background:sc.ink,color:sc.card,padding:"10px 18px",borderRadius:99,fontSize:13,boxShadow:"0 4px 14px rgba(0,0,0,0.35)",zIndex:99,maxWidth:"90vw",textAlign:"center"}},localToast),
-    u.default.createElement("div",{style:{background:"rgba(247,250,252,0.94)",backdropFilter:"blur(14px)",WebkitBackdropFilter:"blur(14px)",padding:"13px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0,borderBottom:`1px solid ${sc.line}`}},
+    u.default.createElement("div",{style:{background:"rgba(247,250,252,0.94)",position:"relative",zIndex:2,backdropFilter:"blur(14px)",WebkitBackdropFilter:"blur(14px)",padding:"13px 20px",display:"flex",alignItems:"center",gap:6,flexShrink:0,borderBottom:"none"}},
       u.default.createElement("button",{onClick:n,style:{background:"none",border:"none",color:sc.inkSoft,cursor:"pointer",display:"flex",alignItems:"center",gap:4,fontSize:12.5}},u.default.createElement(E,{name:"arrow-left",size:15})),
-      u.default.createElement("h2",{style:{color:sc.ink,fontSize:16,margin:0,fontWeight:500}},t?"編輯估價單":"快速新增估價單"),
+      u.default.createElement("div",{style:{flex:1,display:"flex",alignItems:"center",gap:13,minWidth:0,marginLeft:4}},
+        u.default.createElement("div",{"aria-hidden":"true",style:{width:44,height:44,borderRadius:"50%",flex:"none",position:"relative",overflow:"hidden",background:sc.card,boxShadow:"0 2px 10px rgba(30,60,80,.10)"}},
+          u.default.createElement("div",{style:{position:"absolute",left:0,right:0,bottom:0,height:"56%",opacity:.72,background:"linear-gradient(180deg,#DCE9F1,"+sc.ocean+")"}})),
+        u.default.createElement("div",{style:{minWidth:0}},
+          u.default.createElement("div",{style:{fontSize:10,letterSpacing:"0.18em",color:sc.inkSoft,opacity:.75}},"HERFULSINS"),
+          u.default.createElement("div",{style:{fontSize:19,fontWeight:300,color:sc.ink,lineHeight:1.25,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},a.engName||(t?"編輯估價單":"快速新增估價單")),
+          u.default.createElement("div",{style:{fontSize:11.5,color:sc.inkSoft,fontWeight:300}},(t?"工程估價單":"快速新增")+(a.clientName?" · "+a.clientName:""))
+        )
+      ),
       u.default.createElement("button",{onClick:()=>setCalcOpen(!0),title:"計算機",style:{background:"none",border:"none",color:sc.inkSoft,cursor:"pointer",display:"flex",alignItems:"center",padding:0}},u.default.createElement(E,{name:"calculator",size:17}))
+    ),
+    u.default.createElement("div",{"aria-hidden":"true",style:{flexShrink:0,height:24,marginTop:-1,position:"relative",zIndex:1,lineHeight:0}},
+      u.default.createElement("svg",{viewBox:"0 0 1000 24",preserveAspectRatio:"none",style:{display:"block",width:"100%",height:"100%"}},
+        u.default.createElement("path",{d:"M0,24 L0,17 Q500,-13 1000,17 L1000,24 Z",fill:sc.paper}),
+        u.default.createElement("path",{d:"M0,17 Q500,-13 1000,17",fill:"none",stroke:sc.line,strokeWidth:1}))
     ),
     u.default.createElement("input",{ref:importFileRef,type:"file",accept:".xlsx,.xls,.csv",hidden:!0,onChange:handleFileImport}),
     u.default.createElement("input",{ref:wholeFileRef,type:"file",accept:".xlsx,.xls,.csv",hidden:!0,onChange:handleWholeFileImport}),
@@ -3649,7 +3662,14 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
         u.default.createElement("span",{style:{color:sc.ink,fontWeight:500,fontSize:17}},"NT$ ",HB_money(estT.total))
       ),
       grandCost>0&&u.default.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:7}},
-        u.default.createElement("span",{style:{color:sc.inkSoft,fontSize:10.5}},estT.discount>0?"預估淨利（已扣折讓，僅您可見）":"預估淨利（僅您可見，不會出現在PDF/Excel）",
+        u.default.createElement("span",{style:{display:"flex",alignItems:"center",gap:9,color:sc.inkSoft,fontSize:10.5}},
+          (function(){var gm=estT.net>0?Math.max(0,Math.min(100,Math.round(grandProfit/estT.net*100))):0;var C=2*Math.PI*15;
+            return u.default.createElement("svg",{width:36,height:36,viewBox:"0 0 36 36","aria-label":"毛利率 "+gm+"%"},
+              u.default.createElement("circle",{cx:18,cy:18,r:15,fill:"none",stroke:sc.cardAlt,strokeWidth:4.5}),
+              u.default.createElement("circle",{cx:18,cy:18,r:15,fill:"none",stroke:sc.ocean,strokeWidth:4.5,strokeLinecap:"round",strokeDasharray:(C*gm/100)+" "+C,transform:"rotate(-90 18 18)"}),
+              u.default.createElement("text",{x:18,y:21,textAnchor:"middle",fontSize:9.5,fill:sc.inkSoft,fontFamily:"JetBrains Mono, monospace"},gm));
+          })(),
+          u.default.createElement("span",null,estT.discount>0?"預估淨利（已扣折讓，僅您可見）":"預估淨利（僅您可見，不會出現在PDF/Excel）"),
           lockedCount>0?u.default.createElement("span",{style:{color:sc.cane,marginLeft:8}},"· 已鎖住 ",lockedCount," 項單價"):null),
         u.default.createElement("span",{style:{color:sc.inkSoft,fontWeight:400,fontSize:12.5}},"NT$ ",HB_money(grandProfit))
       ),
