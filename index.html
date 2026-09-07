@@ -4133,7 +4133,7 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
           )
         ),
         u.default.createElement("div",{style:{overflowX:"auto",marginBottom:8,border:`1px solid ${sc.line}`,borderRadius:14}},
-          u.default.createElement("table",{style:{width:"100%",borderCollapse:"collapse",fontSize:13,minWidth:952}},
+          u.default.createElement("table",{className:"hb-qt",style:{width:"100%",borderCollapse:"collapse",fontSize:13,minWidth:952}},
             u.default.createElement("thead",null,
               u.default.createElement("tr",null,
                 u.default.createElement("th",{style:{...thStyle,width:22}},u.default.createElement("input",{type:"checkbox",checked:cat.items.length>0&&cat.items.every(it=>(selectedItems[cat.id]||new Set()).has(it.id)),onChange:()=>toggleSelectAllItems(cat.id,cat.items.map(it=>it.id)),style:{width:14,height:14,verticalAlign:"middle"}})),
@@ -11847,6 +11847,103 @@ react-dom/cjs/react-dom-client.production.js:
   if (navigator.serviceWorker) {
     navigator.serviceWorker.ready.then(function(){ sync(); }).catch(function(){});
   }
+})();
+</script>
+
+<script>
+/* ===== 估價單欄寬：拖表頭右緣調整，記在這台電腦上 =====================
+   用獨立的 <style> 覆蓋 React 寫在元素上的寬度，React 重繪不會蓋掉。
+   桌機滑鼠限定；手機要留給橫向捲動。 */
+(function(){
+  if (window.__HB_QTCOL__) return;
+  window.__HB_QTCOL__ = true;
+
+  var KEY = "hb_qt_cols_v1";
+  var EDGE = 7, MINW = 46, MAXW = 520;
+
+  var sheet = document.createElement("style");
+  sheet.id = "hb-qt-cols";
+  (document.head || document.documentElement).appendChild(sheet);
+
+  var base = document.createElement("style");
+  base.textContent =
+    ".hb-qt thead th{position:relative;}" +
+    ".hb-qt thead th.hb-col-edge{cursor:col-resize;}" +
+    ".hb-qt thead th.hb-col-edge::after{content:'';position:absolute;top:0;right:0;" +
+    "  bottom:0;width:2px;background:#22392F;opacity:.55;}" +
+    "body.hb-col-resizing{cursor:col-resize;user-select:none;-webkit-user-select:none;}";
+  (document.head || document.documentElement).appendChild(base);
+
+  var widths = {};
+  try { widths = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) {}
+
+  function paint() {
+    var out = [];
+    for (var k in widths) {
+      var w = widths[k];
+      if (!w) continue;
+      out.push(".hb-qt th:nth-child(" + k + "),.hb-qt td:nth-child(" + k + ")" +
+               "{width:" + w + "px!important;min-width:" + w + "px!important;" +
+               "max-width:" + w + "px!important;}");
+    }
+    sheet.textContent = out.join("\n");
+  }
+  function save(){ try{ localStorage.setItem(KEY, JSON.stringify(widths)); }catch(e){} }
+  paint();
+
+  function thAt(e){
+    var el = e.target;
+    return (el && el.closest) ? el.closest(".hb-qt thead th") : null;
+  }
+  function nearEdge(th, x){ return (th.getBoundingClientRect().right - x) <= EDGE; }
+  function indexOf(th){ var i=0,n=th; while(n){ i++; n=n.previousElementSibling; } return i; }
+
+  var drag = null;
+
+  document.addEventListener("pointermove", function(e){
+    if (drag) {
+      var w = Math.max(MINW, Math.min(MAXW, Math.round(drag.w0 + (e.clientX - drag.x0))));
+      widths[drag.idx] = w; paint(); e.preventDefault(); return;
+    }
+    if (e.pointerType && e.pointerType !== "mouse") return;
+    var th = thAt(e);
+    var hot = document.querySelector(".hb-qt thead th.hb-col-edge");
+    if (hot && hot !== th) hot.classList.remove("hb-col-edge");
+    if (!th) return;
+    if (nearEdge(th, e.clientX)) th.classList.add("hb-col-edge");
+    else th.classList.remove("hb-col-edge");
+  }, true);
+
+  document.addEventListener("pointerdown", function(e){
+    if (e.pointerType && e.pointerType !== "mouse") return;
+    var th = thAt(e);
+    if (!th || !nearEdge(th, e.clientX)) return;
+    drag = { idx: indexOf(th), x0: e.clientX, w0: th.getBoundingClientRect().width };
+    document.body.classList.add("hb-col-resizing");
+    e.preventDefault(); e.stopPropagation();
+  }, true);
+
+  document.addEventListener("pointerup", function(){
+    if (!drag) return;
+    drag = null;
+    document.body.classList.remove("hb-col-resizing");
+    save();
+  }, true);
+
+  /* 在把手上點兩下 → 這一欄還原成預設寬度 */
+  document.addEventListener("dblclick", function(e){
+    var th = thAt(e);
+    if (!th || !nearEdge(th, e.clientX)) return;
+    delete widths[indexOf(th)];
+    paint(); save();
+    e.preventDefault(); e.stopPropagation();
+  }, true);
+
+  /* 全部還原：主控台輸入 HB_resetQuoteCols() */
+  window.HB_resetQuoteCols = function(){
+    widths = {}; paint(); save();
+    if (window.HB_note) window.HB_note("\u6B04\u5BEC\u5DF2\u9084\u539F");
+  };
 })();
 </script>
 
