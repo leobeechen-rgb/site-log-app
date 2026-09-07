@@ -4083,7 +4083,7 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
     u.default.createElement("input",{ref:wholeFileRef,type:"file",accept:".xlsx,.xls,.csv",hidden:!0,onChange:handleWholeFileImport}),
     u.default.createElement("input",{ref:vendorFileRef,type:"file",accept:"image/*,.pdf,.doc,.docx,.xls,.xlsx",hidden:!0,onChange:handleVendorFile}),
     u.default.createElement("div",{style:{flex:1,overflowY:"auto",padding:"14px 20px 20px"}},
-    u.default.createElement("div",{style:{maxWidth:1240,margin:"0 auto",paddingRight:calcDock&&calcOpen?322:0,transition:"padding-right .2s ease"}},
+    u.default.createElement("div",{style:{maxWidth:1560,margin:"0 auto",paddingRight:calcDock&&calcOpen?322:0,transition:"padding-right .2s ease"}},
       u.default.createElement("div",{style:{background:sc.card,borderRadius:16,marginBottom:12,overflow:"hidden"}},
         u.default.createElement("button",{onClick:()=>setShowBasic(x=>!x),style:{width:"100%",background:"none",border:"none",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 13px",cursor:"pointer",fontSize:13,fontWeight:400,color:sc.oceanDark}},
           u.default.createElement("span",null,"基本資料",!showBasic&&a.engName?"　"+a.engName:""),
@@ -4196,7 +4196,7 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
       u.default.createElement("textarea",{placeholder:"付款/訂金條件備註",value:a.depositNote,onChange:v=>set("depositNote",v.target.value),rows:2,style:{...inputStyle,resize:"vertical"}})
     )),
     u.default.createElement("div",{style:{position:"sticky",bottom:"var(--hb-overlay-gap, 0px)",flexShrink:0,zIndex:50,background:"rgba(247,250,252,0.96)",backdropFilter:"blur(14px)",WebkitBackdropFilter:"blur(14px)",padding:"9px 16px 12px",borderTop:`1px solid ${sc.line}`,boxShadow:"0 -3px 12px rgba(22,35,43,0.05)"}},
-      u.default.createElement("div",{style:{maxWidth:1240,margin:"0 auto",paddingRight:calcDock&&calcOpen?322:0,transition:"padding-right .2s ease"}},
+      u.default.createElement("div",{style:{maxWidth:1560,margin:"0 auto",paddingRight:calcDock&&calcOpen?322:0,transition:"padding-right .2s ease"}},
       u.default.createElement("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:6,flexWrap:"wrap"}},
         u.default.createElement("span",{style:{color:sc.inkSoft,fontSize:10.5}},"折讓"),
         u.default.createElement("input",{value:a.discount??"",onChange:v=>set("discount",v.target.value),inputMode:"decimal",placeholder:"0",
