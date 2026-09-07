@@ -3861,7 +3861,7 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
   let inputStyle={width:"100%",padding:"8px 12px",borderRadius:12,border:`1px solid ${sc.line}`,fontSize:13,boxSizing:"border-box",fontFamily:"inherit"};
   let thStyle={border:`1px solid ${sc.line}`,background:sc.cardAlt,color:sc.oceanDark,fontWeight:400,fontSize:12,padding:"8px 7px",whiteSpace:"nowrap"};
   let tdStyle={border:`1px solid ${sc.line}`,padding:"4px 5px",verticalAlign:"top"};
-  let cellInputStyle={width:"100%",border:"none",background:"transparent",fontSize:13,padding:"5px 6px",fontFamily:"inherit",boxSizing:"border-box",color:sc.ink};
+  let cellInputStyle={width:"100%",border:"none",background:"transparent",fontSize:13,padding:"5px 4px",fontFamily:"inherit",boxSizing:"border-box",color:sc.ink,fontVariantNumeric:"tabular-nums"};
   let autoGrow=el=>{if(el){el.style.height="auto";el.style.height=el.scrollHeight+"px"}};
   let HB_CELL_COLS=["name","spec","unit","qty","price","note","vendorPrice"];
   let[cellSel,setCellSel]=(0,u.useState)(null);
@@ -4013,6 +4013,14 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
   (0,u.useEffect)(()=>{
     if(!calcOpen)return;
     let onKey=ev=>{
+      /* 游標在輸入格裡時，鍵盤屬於那一格，計算機不攔截。
+         否則 Backspace 會被計算機吃掉，格子裡的字刪不掉。
+         Escape 例外，任何時候都能收起計算機。 */
+      if(ev.key!=="Escape"){
+        let t=ev.target;
+        if(t&&(t.tagName==="INPUT"||t.tagName==="TEXTAREA"||t.tagName==="SELECT"||t.isContentEditable))return;
+        if(ev.ctrlKey||ev.metaKey||ev.altKey)return;
+      }
       if(ev.key>="0"&&ev.key<="9"){calcDigit(ev.key);ev.preventDefault();return}
       if(ev.key==="."){calcDot();ev.preventDefault();return}
       if(ev.key==="+"||ev.key==="-"){calcOperator(ev.key);ev.preventDefault();return}
@@ -4125,7 +4133,7 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
           )
         ),
         u.default.createElement("div",{style:{overflowX:"auto",marginBottom:8,border:`1px solid ${sc.line}`,borderRadius:14}},
-          u.default.createElement("table",{style:{width:"100%",borderCollapse:"collapse",fontSize:13,minWidth:840}},
+          u.default.createElement("table",{style:{width:"100%",borderCollapse:"collapse",fontSize:13,minWidth:952}},
             u.default.createElement("thead",null,
               u.default.createElement("tr",null,
                 u.default.createElement("th",{style:{...thStyle,width:22}},u.default.createElement("input",{type:"checkbox",checked:cat.items.length>0&&cat.items.every(it=>(selectedItems[cat.id]||new Set()).has(it.id)),onChange:()=>toggleSelectAllItems(cat.id,cat.items.map(it=>it.id)),style:{width:14,height:14,verticalAlign:"middle"}})),
@@ -4134,11 +4142,11 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
                 u.default.createElement("th",{style:{...thStyle,minWidth:90}},"規格"),
                 u.default.createElement("th",{style:{...thStyle,width:44}},"單位"),
                 u.default.createElement("th",{style:{...thStyle,width:56}},"數量"),
-                u.default.createElement("th",{style:{...thStyle,width:78}},"單價"),
-                u.default.createElement("th",{style:{...thStyle,width:82}},"複價"),
+                u.default.createElement("th",{style:{...thStyle,width:108}},"單價"),
+                u.default.createElement("th",{style:{...thStyle,width:112}},"複價"),
                 u.default.createElement("th",{style:{...thStyle,minWidth:90}},"備註"),
-                u.default.createElement("th",{style:{...thStyle,width:78,borderLeft:`2px solid ${sc.lemon}`}},"廠商單價"),
-                u.default.createElement("th",{style:{...thStyle,width:78}},"淨利"),
+                u.default.createElement("th",{style:{...thStyle,width:104,borderLeft:`2px solid ${sc.lemon}`}},"廠商單價"),
+                u.default.createElement("th",{style:{...thStyle,width:100}},"淨利"),
                 u.default.createElement("th",{style:{...thStyle,width:88}},"")
               )
             ),
