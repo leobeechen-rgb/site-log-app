@@ -1647,6 +1647,7 @@ function HB_downloadBlankEngContract(){
 /* ---------- PDF（可列印）合約 ---------- */
 function HB_buildContractHTML(v){
   let e=HB_esc;
+  let fb=(val,w)=>{let t2=(val===0||val)?String(val).trim():"";return t2?'<span class="blank">'+e(t2)+'</span>':'<span class="fillin" style="width:'+(w||110)+'px"></span>'};
   let total=HB_num(v.totalPrice);
   let stageRow=(no,title,pct)=>`<tr><td class="c">${no}</td><td>${title}</td><td class="c">${pct}%</td><td class="c">${total?HB_money(total*pct/100):""}</td><td></td></tr>`;
   let accs=(v.accounts||[]).filter(Boolean);
@@ -1665,6 +1666,7 @@ function HB_buildContractHTML(v){
   h2 { font-size:15px; border-bottom:3px solid #1F6E85; padding-bottom:6px; margin:24px 0 10px; color:#1F6E85; }
   p { margin:6px 0; }
   .blank { text-decoration:underline; padding:0 4px; }
+  .fillin { display:inline-block; border-bottom:1px solid #1A1A1A; height:1.15em; vertical-align:text-bottom; margin:0 4px; }
   .quote { color:#E6A212; font-style:italic; font-weight:700; }
   table.partyline { width:auto; border-collapse:collapse; background:transparent; margin:6px 0; }
   table.partyline td { border:none; padding:2px 0; background:transparent; white-space:nowrap; vertical-align:baseline; }
@@ -1704,8 +1706,8 @@ function HB_buildContractHTML(v){
 <p>茲因甲方委託乙方辦理室內設計事宜，經雙方本於誠實信用原則共同議定本合約條款如下，以資雙方共同遵守：</p>
 
 <h2>第一條：設計案名稱與地點</h2>
-<p>\u2756 設計案名稱：<span class="blank">${e(v.designName)}</span></p>
-<p>\u2756 設計案地點：<span class="blank">${e(v.designLocation)}</span></p>
+<p>\u2756 設計案名稱：${fb(v.designName,260)}</p>
+<p>\u2756 設計案地點：${fb(v.designLocation,300)}</p>
 
 <h2>第二條：設計服務內容與範圍</h2>
 <p>1. 甲方委託乙方擔任本設計案之專案設計師，負責規劃設計、施工圖說繪製及協助廠商發包文件之準備。</p>
@@ -1730,9 +1732,9 @@ function HB_buildContractHTML(v){
 <p>2. 各階段工作成果經甲方確認簽字後，始得進入下一階段之設計程序。</p>
 
 <h2>第五條：設計費計算與付款進度</h2>
-<p>1. 設計面積：經雙方議定，本案設計建築室內面積合計為 <span class="blank">${e(v.areaPing)}</span> 坪。</p>
-<p>2. 計費標準：每坪設計費為新臺幣 <span class="blank">${e(v.pricePerPing)}</span> 元整（營業稅 5% 另計）。</p>
-<p>3. 合約總價：設計費合計為新臺幣 <span class="blank">${e(v.totalPrice)}</span> 元整（營業稅 5% 另計）。</p>
+<p>1. 設計面積：經雙方議定，本案設計建築室內面積合計為 ${fb(v.areaPing,80)} 坪。</p>
+<p>2. 計費標準：每坪設計費為新臺幣 ${fb(v.pricePerPing?HB_money(HB_num(v.pricePerPing)):"",100)} 元整（營業稅 5% 另計）。</p>
+<p>3. 合約總價：設計費合計為新臺幣 ${fb(total?HB_money(total):"",140)} 元整（營業稅 5% 另計）。</p>
 <p>4. 支付方式：甲方應以電匯或現金方式支付予乙方。</p>
 <p>5. 付款期程：甲方同意依下列成圖進度與比例支付設計費：</p>
 <table class="pay">
@@ -1801,14 +1803,14 @@ ${accountsHtml}
 <h2 style="border:none;padding:0;text-align:center;color:#1A1A1A;">立合約書人簽章欄位</h2>
 <table class="sign">
 <tr><td><strong>甲方（委託人）簽章</strong></td><td><strong>乙方（受託人）簽章</strong></td></tr>
-<tr><td>單位名稱：${e(v.partyAName)}（簽章）</td><td>單位名稱：赫柏空間設計 (HERFULSINS)（簽章）</td></tr>
-<tr><td>負責人：${e(v.partyARep)}</td><td>負責人：陳奕蒨</td></tr>
-<tr><td>地址：${e(v.partyAAddress)}</td><td>地址：嘉義市新民路168號</td></tr>
-<tr><td>聯絡電話：${e(v.partyAPhone)}</td><td>聯絡電話：0987583978</td></tr>
-<tr><td>身分證字號 / 統一編號：${e(v.partyAId)}</td><td>身分證字號 / 統一編號：00351070</td></tr>
+<tr><td>單位名稱：${fb(v.partyAName,150)}（簽章）</td><td>單位名稱：赫柏空間設計 (HERFULSINS)（簽章）</td></tr>
+<tr><td>負責人：${fb(v.partyARep,170)}</td><td>負責人：陳奕蒨</td></tr>
+<tr><td>地址：${fb(v.partyAAddress,190)}</td><td>地址：嘉義市新民路168號</td></tr>
+<tr><td>聯絡電話：${fb(v.partyAPhone,170)}</td><td>聯絡電話：0987583978</td></tr>
+<tr><td>身分證字號 / 統一編號：${fb(v.partyAId,120)}</td><td>身分證字號 / 統一編號：00351070</td></tr>
 </table>
 </div>
-<p style="text-align:center;margin-top:20px;">簽署日期：中華民國　${e(v.contractYear)}　年　${e(v.contractMonth)}　月　${e(v.contractDay)}　日</p>
+<p style="text-align:center;margin-top:20px;">簽署日期：中華民國　${fb(v.contractYear,54)}　年　${fb(v.contractMonth,40)}　月　${fb(v.contractDay,40)}　日</p>
 
 <p class="footer">本文件由赫柏空間設計工地紀錄本產生，內容以雙方正式簽署之書面合約為準</p>
 <script>
@@ -2069,30 +2071,31 @@ function HerfulsinsContractForm({category:l,projects:t,accounts:e,defaultProject
   return u.default.createElement("div",{style:{position:"fixed",inset:0,background:"rgba(43,38,32,0.55)",display:"flex",alignItems:"center",justifyContent:"center",padding:20,zIndex:65,overflowY:"auto"}},
     u.default.createElement("div",{className:"fade-in",style:{background:s.card,borderRadius:10,padding:20,width:"100%",maxWidth:420,maxHeight:"90vh",overflowY:"auto"}},
       u.default.createElement("h3",{style:{margin:"0 0 14px",fontSize:16,color:s.oceanDark}},isEditing?(isEng?"編輯工程合約":"編輯設計合約"):(isEng?"新增工程合約":"新增設計合約")),
+      !isEng&&u.default.createElement("p",{style:{margin:"-6px 0 14px",fontSize:11.5,lineHeight:1.65,color:s.inkSoft,background:s.cardAlt,borderRadius:7,padding:"9px 11px"}},"只有「設計案名稱」必填。其餘欄位留白，列印出來會是可手寫的底線，直接帶到現場簽約時填寫即可。"),
       isEng&&u.default.createElement("div",{style:{marginBottom:12}},
         u.default.createElement("label",{style:{fontSize:12.5,color:s.inkSoft,display:"block",marginBottom:4}},"所屬案件"),
         u.default.createElement("select",{value:o,onChange:v=>f(v.target.value),style:{width:"100%",padding:"9px 10px",borderRadius:7,border:`1px solid ${s.line}`,fontSize:14}},
           t.map(v=>u.default.createElement("option",{key:v.id,value:v.id},v.name))
         )
       ),
-      field(isEng?"工程名稱":"設計案名稱","designName"),
-      field(isEng?"工程地點":"設計案地點","designLocation"),
+      field(isEng?"工程名稱":"設計案名稱（必填，用於辨識）","designName"),
+      field(isEng?"工程地點":"設計案地點（選填）","designLocation"),
       field("甲方姓名/名稱（選填，可留白由業主現場簽名）","partyAName"),
       field("甲方代表人（選填，預設同姓名）","partyARep"),
-      field("甲方地址","partyAAddress"),
-      field("甲方電話","partyAPhone"),
+      field(isEng?"甲方地址":"甲方地址（選填）","partyAAddress"),
+      field(isEng?"甲方電話":"甲方電話（選填）","partyAPhone"),
       field("甲方身分證字號（選填）","partyAId"),
       !isEng&&u.default.createElement("div",{style:{display:"flex",gap:10}},
-        u.default.createElement("div",{style:{flex:1}},field("設計面積（坪）","areaPing")),
-        u.default.createElement("div",{style:{flex:1}},field("每坪設計費（元）","pricePerPing"))
+        u.default.createElement("div",{style:{flex:1}},field("設計面積（坪．選填）","areaPing")),
+        u.default.createElement("div",{style:{flex:1}},field("每坪設計費（元．選填）","pricePerPing"))
       ),
       u.default.createElement("div",{style:{display:"flex",gap:8,alignItems:"flex-end"}},
-        u.default.createElement("div",{style:{flex:1}},field(isEng?"工程總價（元）":"合約總價（元）","totalPrice")),
+        u.default.createElement("div",{style:{flex:1}},field(isEng?"工程總價（元）":"合約總價（元．選填）","totalPrice")),
         !isEng&&u.default.createElement("button",{onClick:calcTotal,style:{border:`1px solid ${s.line}`,background:"none",borderRadius:7,padding:"9px 12px",fontSize:12.5,color:s.oceanDark,cursor:"pointer",marginBottom:12,whiteSpace:"nowrap"}},"自動計算")
       ),
       isEng&&c.totalPrice&&u.default.createElement("p",{style:{fontSize:12,color:s.inkSoft,marginTop:-6,marginBottom:12}},"大寫：",HB_toChineseMoney(c.totalPrice)),
       isEng&&field("工程期限（工作天，選填，留白則簽約時填寫）","durationDays"),
-      field("簽約日期","contractDate",{type:"date"}),
+      field(isEng?"簽約日期":"簽約日期（選填，留白則現場填寫）","contractDate",{type:"date"}),
       isEng&&u.default.createElement("div",{style:{marginBottom:14}},
         u.default.createElement("label",{style:{fontSize:12.5,color:s.inkSoft,display:"block",marginBottom:6}},"付款辦法（期數與項目，最多 4 期）"),
         c.paymentStages.map((st,idx)=>u.default.createElement("div",{key:idx,style:{background:s.cardAlt,borderRadius:7,padding:"8px 10px",marginBottom:6}},
@@ -2109,7 +2112,7 @@ function HerfulsinsContractForm({category:l,projects:t,accounts:e,defaultProject
         c.paymentStages.length<4&&u.default.createElement("button",{onClick:addStage,style:{border:`1px dashed ${s.line}`,background:"none",borderRadius:7,padding:"7px 0",width:"100%",fontSize:12.5,color:s.oceanDark,cursor:"pointer"}},"+ 新增期數")
       ),
       u.default.createElement("div",{style:{marginBottom:14}},
-        u.default.createElement("label",{style:{fontSize:12.5,color:s.inkSoft,display:"block",marginBottom:6}},"付款帳戶／轉帳銀行（可複選）"),
+        u.default.createElement("label",{style:{fontSize:12.5,color:s.inkSoft,display:"block",marginBottom:6,fontWeight:isEng?400:700}},isEng?"付款帳戶／轉帳銀行（可複選）":"付款帳戶／轉帳銀行（可複選，建議先勾選）"),
         e.length===0?u.default.createElement("p",{style:{fontSize:12,color:s.inkSoft}},"尚未設定帳戶，請至帳戶管理新增"):u.default.createElement("div",{style:{display:"flex",flexDirection:"column",gap:6}},
           e.map(v=>u.default.createElement("label",{key:v.id,style:{display:"flex",alignItems:"center",gap:8,fontSize:13,background:s.cardAlt,borderRadius:7,padding:"7px 10px",cursor:"pointer"}},
             u.default.createElement("input",{type:"checkbox",checked:c.accountIds.includes(v.id),onChange:()=>toggleAccount(v.id)}),
