@@ -3750,6 +3750,26 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
     if(degraded){notify("已儲存，但折讓與稅率沒能存入雲端。請先到 Supabase 執行 estimates_discount_tax.sql");return}
     notify("已儲存估價單"),n()
   };
+  let hbMakeClientLink=async()=>{
+    if(!t||!t.id){notify("請先儲存估價單，才能產生客戶連結");return}
+    let{data,error}=await q.from("sitelog_estimates")
+      .select("share_token,share_expires_at,signed_at,signer_name").eq("id",t.id).maybeSingle();
+    if(error){notify("讀取失敗："+error.message);return}
+    if(data&&data.signed_at)notify("此報價已由 "+(data.signer_name||"客戶")+" 確認");
+    let tok=data&&data.share_token,exp=data&&data.share_expires_at,now=Date.now();
+    if(!tok||!exp||new Date(exp).getTime()<now){
+      tok=HB_estShareToken();
+      exp=new Date(now+30*864e5).toISOString();
+      let up=await q.from("sitelog_estimates").update({share_token:tok,share_expires_at:exp}).eq("id",t.id);
+      if(up.error){notify("產生連結失敗（請先執行 estimates_share.sql）："+up.error.message);return}
+    }
+    let url=location.origin+location.pathname+"?est="+tok;
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(url)
+        .then(()=>notify("已複製客戶連結，有效至 "+HB_estFmtDate(exp)))
+        .catch(()=>window.prompt("客戶確認連結（有效至 "+HB_estFmtDate(exp)+"）",url));
+    }else window.prompt("客戶確認連結（有效至 "+HB_estFmtDate(exp)+"）",url);
+  };
   let[localImportBusy,setLocalImportBusy]=(0,u.useState)(!1);
   let wholeFileRef=(0,u.useRef)(null);
   let openWholeFileImport=()=>{wholeFileRef.current&&wholeFileRef.current.click()};
@@ -4241,6 +4261,7 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
       ),
       u.default.createElement("div",{style:{display:"flex",gap:7,marginTop:grandCost>0?0:8,flexWrap:"wrap"}},
         u.default.createElement("button",{onClick:save,disabled:o,style:{flex:2,minWidth:120,background:sc.action,color:"#F2F4F1",border:"none",borderRadius:99,padding:"11px 0",fontWeight:300,fontSize:13.5,cursor:"pointer",opacity:o?.6:1}},o?"儲存中…":"儲存估價單"),
+        u.default.createElement("button",{onClick:hbMakeClientLink,style:{flex:1,minWidth:132,background:"#22392F",color:"#EDEAE0",border:"none",borderRadius:99,padding:"11px 0",fontWeight:300,fontSize:13.5,cursor:"pointer",fontFamily:"inherit"}},"客戶確認連結"),
         u.default.createElement("button",{onClick:()=>HB_openEstimatePrint(a),style:{flex:1,minWidth:70,border:`1px solid ${sc.line}`,background:"none",borderRadius:99,padding:"10px 0",fontSize:12.5,color:sc.ink,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:5}},u.default.createElement(E,{name:"printer",size:14}),"PDF"),
         u.default.createElement("button",{onClick:()=>HB_generateEstimateExcel(a),style:{flex:1,minWidth:70,border:`1px solid ${sc.line}`,background:"none",borderRadius:99,padding:"10px 0",fontSize:12.5,color:sc.ink,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:5}},u.default.createElement(E,{name:"file-output",size:14}),"Excel")
       )
@@ -7812,7 +7833,116 @@ function HbChangeOrderHub({onBack,notify,projects}){
   );
 }
 
-function Ly(){let l=new URLSearchParams(window.location.search);let sv=l.get("survey");if(sv)return u.default.createElement(HbSurveyPublic,{token:sv});return l.has("owner")||l.has("share")?u.default.createElement(Wy,null):u.default.createElement(SSOEntry,null)}function Zy(){let[l,t]=(0,u.useState)(()=>{try{return localStorage.getItem("sitelog_admin_unlocked")==="true"}catch{return!1}});return l?u.default.createElement(Gy,null):u.default.createElement(Vy,{onSuccess:e=>{try{localStorage.setItem("sitelog_admin_unlocked","true"),localStorage.setItem("sitelog_admin_username",e)}catch{}t(!0)}})}function Vy({onSuccess:l}){let[t,e]=(0,u.useState)(""),[n,a]=(0,u.useState)(""),[i,o]=(0,u.useState)(""),[f,c]=(0,u.useState)(!1),r=async()=>{if(!(!t.trim()||!n.trim())){c(!0),o("");try{let{data:d,error:h}=await q.from("sitelog_staff").select("username, password").eq("username",t.trim()).maybeSingle();if(h){o("\u7121\u6CD5\u9A57\u8B49\u5E33\u865F\uFF0C\u8ACB\u78BA\u8A8D\u7DB2\u8DEF\u9023\u7DDA\u5F8C\u518D\u8A66\u4E00\u6B21");return}d&&n===d.password?l(d.username):o("\u5E33\u865F\u6216\u5BC6\u78BC\u4E0D\u6B63\u78BA")}catch(d){o("\u767C\u751F\u932F\u8AA4\uFF1A"+(d.message||d))}finally{c(!1)}}};return u.default.createElement("div",{style:{background:s.paper,minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",padding:20,fontFamily:"'Noto Sans TC', sans-serif"}},u.default.createElement("style",null,"@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap');@keyframes hbLoginLogoIn{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:scale(1)}}.hb-login-logo{animation:hbLoginLogoIn .9s ease-out}"),u.default.createElement("div",{style:{width:"100%",maxWidth:360}},u.default.createElement("div",{style:{textAlign:"center",marginBottom:28}},u.default.createElement("img",{className:"hb-login-logo",src:HB_LOGO_MARK,alt:"\u8D6B\u67CF\u7A7A\u9593\u8A2D\u8A08",style:{width:56,height:56,display:"block",margin:"0 auto 16px",objectFit:"contain"}}),u.default.createElement("div",{className:"mono",style:{color:s.ocean,fontSize:10.5,letterSpacing:3,fontWeight:400,marginBottom:12}},"HERFULSINS INTERIOR DESIGN"),u.default.createElement("h1",{style:{fontSize:22,fontWeight:300,color:s.ink,margin:"0 0 6px",letterSpacing:"0.08em"}},"\u8D6B\u67CF\u7A7A\u9593\u8A2D\u8A08"),u.default.createElement("p",{style:{fontSize:12.5,color:s.inkSoft,margin:0,fontWeight:300,letterSpacing:"0.03em"}},"\u5DE5\u5730\u7D00\u9304\u672C\u3000\u00B7\u3000\u54E1\u5DE5\u767B\u5165")),u.default.createElement("div",{style:{borderTop:`1px solid ${s.line}`,paddingTop:28}},u.default.createElement("label",{style:{fontSize:12.5,color:s.inkSoft}},"\u5E33\u865F"),u.default.createElement("input",{value:t,onChange:d=>e(d.target.value),onKeyDown:d=>d.key==="Enter"&&r(),style:el,autoFocus:!0}),u.default.createElement("label",{style:{fontSize:12.5,color:s.inkSoft}},"\u5BC6\u78BC"),u.default.createElement("input",{type:"password",value:n,onChange:d=>a(d.target.value),onKeyDown:d=>d.key==="Enter"&&r(),style:el}),i&&u.default.createElement("p",{style:{color:s.danger,fontSize:12.5,margin:"0 0 10px"}},i),u.default.createElement("button",{onClick:r,disabled:!t.trim()||!n.trim()||f,style:{...Dl,width:"100%",marginTop:6,opacity:t.trim()&&n.trim()&&!f?1:.5,display:"flex",alignItems:"center",justifyContent:"center",gap:6}},f?u.default.createElement(E,{name:"loader",size:15,className:"animate-spin"}):null," \u767B\u5165"))))}
+/* ===================================================================
+   估價單客戶確認頁　?est=<token>
+   唯讀顯示估價單（沿用列印用的 HB_buildEstimateHTML），客戶簽名後回寫。
+   連結 30 天到期；已簽過就不再開放重簽。
+   =================================================================== */
+function HB_estShareToken(){
+  return "e"+Math.random().toString(36).slice(2,10)
+          +Math.random().toString(36).slice(2,10)
+          +Date.now().toString(36);
+}
+function HB_estPubMap(r){
+  return{clientName:r.client_name||"",contactName:r.contact_name||"",
+    engName:r.eng_name||"",siteAddress:r.site_address||"",
+    quoteDate:r.quote_date||"",validDays:r.valid_days||"",
+    depositNote:r.deposit_note||"",categories:r.categories||[],
+    discount:r.discount||0,taxRate:r.tax_rate||0};
+}
+function HB_estFmtDate(x){
+  if(!x)return"";
+  var d=new Date(x); if(isNaN(d))return"";
+  return d.getFullYear()+"年"+(d.getMonth()+1)+"月"+d.getDate()+"日";
+}
+function HbEstimatePublic({token}){
+  let h=u.default.createElement;
+  let[st,setSt]=(0,u.useState)("loading");
+  let[row,setRow]=(0,u.useState)(null);
+  let[pad,setPad]=(0,u.useState)(!1);
+  let[err,setErr]=(0,u.useState)("");
+
+  (0,u.useEffect)(()=>{(async()=>{
+    let{data,error}=await q.from("sitelog_estimates").select("*").eq("share_token",token).maybeSingle();
+    if(error||!data){setSt("bad");return}
+    setRow(data);
+    if(data.signed_at){setSt("done");return}
+    if(data.share_expires_at&&new Date(data.share_expires_at).getTime()<Date.now()){setSt("expired");return}
+    setSt("form");
+  })()},[token]);
+
+  let box=(title,msg)=>h("div",{style:{minHeight:"100vh",background:s.paper,color:s.ink,
+      display:"flex",alignItems:"center",justifyContent:"center",padding:24,
+      fontFamily:"'Noto Sans TC', sans-serif"}},
+    h("div",{style:{textAlign:"center",maxWidth:340}},
+      h("p",{style:{fontSize:18,fontWeight:300,letterSpacing:".08em",margin:"0 0 10px"}},title),
+      msg?h("p",{style:{fontSize:13,color:s.inkSoft,lineHeight:2,margin:0}},msg):null));
+
+  if(st==="loading")return box("載入中…","");
+  if(st==="bad")return box("找不到這份報價","連結可能已失效，請聯絡報價方重新提供。");
+  if(st==="expired")return box("這個連結已過期","請聯絡報價方重新產生連結。");
+
+  let v=HB_estPubMap(row);
+  let onDone=async(blob,name)=>{
+    if(!name){setErr("請填寫簽署人姓名");return}
+    setErr("");
+    let dataUrl=await new Promise(res=>{let fr=new FileReader();fr.onload=()=>res(fr.result);fr.readAsDataURL(blob)});
+    let at=new Date().toISOString();
+    let{error}=await q.from("sitelog_estimates")
+      .update({signed_at:at,signer_name:name,signature:dataUrl})
+      .eq("share_token",token);
+    if(error){setErr("送出失敗："+error.message);return}
+    setRow(pv=>({...pv,signed_at:at,signer_name:name,signature:dataUrl}));
+    setPad(!1);setSt("done");
+  };
+
+  return h("div",{style:{minHeight:"100vh",background:s.paper,color:s.ink,
+      fontFamily:"'Noto Sans TC', sans-serif"}},
+    h("div",{style:{maxWidth:900,margin:"0 auto",padding:"16px 16px 60px"}},
+
+      h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",
+          gap:12,marginBottom:14}},
+        h("div",null,
+          h("p",{style:{fontSize:13,letterSpacing:".16em",color:"#22392F",margin:0}},"客戶瀏覽"),
+          h("p",{style:{fontSize:11.5,color:s.inkSoft,margin:"5px 0 0"}},
+            st==="done"
+              ? "已於 "+HB_estFmtDate(row.signed_at)+" 確認"
+              : "連結有效至 "+HB_estFmtDate(row.share_expires_at))),
+        h("button",{onClick:()=>HB_openEstimatePrint(v),
+          style:{border:"1px solid "+s.line,background:s.card,color:s.ink,borderRadius:8,
+            padding:"8px 14px",fontSize:12.5,cursor:"pointer",fontFamily:"inherit",
+            whiteSpace:"nowrap"}},"列印 / PDF")),
+
+      h("iframe",{title:"報價內容",srcDoc:HB_buildEstimateHTML(v),
+        style:{width:"100%",height:"74vh",border:"1px solid "+s.line,borderRadius:10,
+          background:"#fff",display:"block"}}),
+
+      st==="done"
+        ? h("div",{style:{background:s.card,border:"1px solid "+s.line,borderRadius:12,
+            padding:"20px 18px",marginTop:14,textAlign:"center"}},
+            h("p",{style:{fontSize:15,fontWeight:400,margin:"0 0 4px",color:"#22392F"}},"已確認此報價"),
+            h("p",{style:{fontSize:12,color:s.inkSoft,margin:"0 0 14px"}},
+              (row.signer_name||"")+"　"+HB_estFmtDate(row.signed_at)),
+            row.signature?h("img",{src:row.signature,alt:"簽名",
+              style:{maxWidth:280,width:"100%",height:"auto",
+                border:"1px solid "+s.line,borderRadius:8,background:"#fff"}}):null)
+        : h("div",{style:{background:s.card,border:"1px solid "+s.line,borderRadius:12,
+            padding:"20px 18px",marginTop:14}},
+            h("p",{style:{fontSize:13.5,margin:"0 0 4px"}},"請詳閱上方報價內容，確認無誤後簽名。"),
+            h("p",{style:{fontSize:11.5,color:s.inkSoft,margin:"0 0 14px",lineHeight:1.9}},
+              "簽名送出後就不能在這裡修改，若需變更請直接聯絡報價方。"),
+            err?h("p",{style:{fontSize:12,color:s.danger,margin:"0 0 10px"}},err):null,
+            h("button",{onClick:()=>setPad(!0),
+              style:{background:"#22392F",color:"#EDEAE0",border:"none",borderRadius:99,
+                padding:"11px 24px",fontSize:13.5,cursor:"pointer",fontFamily:"inherit"}},
+              "簽名確認此報價")),
+
+      h("p",{style:{textAlign:"center",fontSize:11,color:s.inkSoft,marginTop:22}},
+        "此頁面為唯讀。若需修改內容請聯絡報價方。")
+    ),
+    pad?h(HbCoSignPad,{onCancel:()=>setPad(!1),onDone:onDone}):null);
+}
+function Ly(){let l=new URLSearchParams(window.location.search);let sv=l.get("survey");if(sv)return u.default.createElement(HbSurveyPublic,{token:sv});let ev=l.get("est");if(ev)return u.default.createElement(HbEstimatePublic,{token:ev});return l.has("owner")||l.has("share")?u.default.createElement(Wy,null):u.default.createElement(SSOEntry,null)}function Zy(){let[l,t]=(0,u.useState)(()=>{try{return localStorage.getItem("sitelog_admin_unlocked")==="true"}catch{return!1}});return l?u.default.createElement(Gy,null):u.default.createElement(Vy,{onSuccess:e=>{try{localStorage.setItem("sitelog_admin_unlocked","true"),localStorage.setItem("sitelog_admin_username",e)}catch{}t(!0)}})}function Vy({onSuccess:l}){let[t,e]=(0,u.useState)(""),[n,a]=(0,u.useState)(""),[i,o]=(0,u.useState)(""),[f,c]=(0,u.useState)(!1),r=async()=>{if(!(!t.trim()||!n.trim())){c(!0),o("");try{let{data:d,error:h}=await q.from("sitelog_staff").select("username, password").eq("username",t.trim()).maybeSingle();if(h){o("\u7121\u6CD5\u9A57\u8B49\u5E33\u865F\uFF0C\u8ACB\u78BA\u8A8D\u7DB2\u8DEF\u9023\u7DDA\u5F8C\u518D\u8A66\u4E00\u6B21");return}d&&n===d.password?l(d.username):o("\u5E33\u865F\u6216\u5BC6\u78BC\u4E0D\u6B63\u78BA")}catch(d){o("\u767C\u751F\u932F\u8AA4\uFF1A"+(d.message||d))}finally{c(!1)}}};return u.default.createElement("div",{style:{background:s.paper,minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",padding:20,fontFamily:"'Noto Sans TC', sans-serif"}},u.default.createElement("style",null,"@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap');@keyframes hbLoginLogoIn{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:scale(1)}}.hb-login-logo{animation:hbLoginLogoIn .9s ease-out}"),u.default.createElement("div",{style:{width:"100%",maxWidth:360}},u.default.createElement("div",{style:{textAlign:"center",marginBottom:28}},u.default.createElement("img",{className:"hb-login-logo",src:HB_LOGO_MARK,alt:"\u8D6B\u67CF\u7A7A\u9593\u8A2D\u8A08",style:{width:56,height:56,display:"block",margin:"0 auto 16px",objectFit:"contain"}}),u.default.createElement("div",{className:"mono",style:{color:s.ocean,fontSize:10.5,letterSpacing:3,fontWeight:400,marginBottom:12}},"HERFULSINS INTERIOR DESIGN"),u.default.createElement("h1",{style:{fontSize:22,fontWeight:300,color:s.ink,margin:"0 0 6px",letterSpacing:"0.08em"}},"\u8D6B\u67CF\u7A7A\u9593\u8A2D\u8A08"),u.default.createElement("p",{style:{fontSize:12.5,color:s.inkSoft,margin:0,fontWeight:300,letterSpacing:"0.03em"}},"\u5DE5\u5730\u7D00\u9304\u672C\u3000\u00B7\u3000\u54E1\u5DE5\u767B\u5165")),u.default.createElement("div",{style:{borderTop:`1px solid ${s.line}`,paddingTop:28}},u.default.createElement("label",{style:{fontSize:12.5,color:s.inkSoft}},"\u5E33\u865F"),u.default.createElement("input",{value:t,onChange:d=>e(d.target.value),onKeyDown:d=>d.key==="Enter"&&r(),style:el,autoFocus:!0}),u.default.createElement("label",{style:{fontSize:12.5,color:s.inkSoft}},"\u5BC6\u78BC"),u.default.createElement("input",{type:"password",value:n,onChange:d=>a(d.target.value),onKeyDown:d=>d.key==="Enter"&&r(),style:el}),i&&u.default.createElement("p",{style:{color:s.danger,fontSize:12.5,margin:"0 0 10px"}},i),u.default.createElement("button",{onClick:r,disabled:!t.trim()||!n.trim()||f,style:{...Dl,width:"100%",marginTop:6,opacity:t.trim()&&n.trim()&&!f?1:.5,display:"flex",alignItems:"center",justifyContent:"center",gap:6}},f?u.default.createElement(E,{name:"loader",size:15,className:"animate-spin"}):null," \u767B\u5165"))))}
 function SSOEntry(){
   let[staffOn,setStaffOn]=(0,u.useState)(()=>{try{return localStorage.getItem("sitelog_admin_unlocked")==="true"}catch{return!1}}),
       [ownerPid,setOwnerPid]=(0,u.useState)(()=>{try{return localStorage.getItem("sitelog_owner_project_id")}catch{return null}});
