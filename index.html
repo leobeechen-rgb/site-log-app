@@ -267,16 +267,13 @@
   .hb-landing-bg::after{
     content:""; position:fixed; inset:0; z-index:-1; pointer-events:none;
     background-image:
-      linear-gradient(to top, #2E2724 0px, #2E2724 80px, rgba(46,39,36,0) 80px),
       linear-gradient(90deg, transparent calc(50% - 566px), rgba(94,26,38,.17) calc(50% - 566px), rgba(94,26,38,.17) calc(50% - 565px), transparent calc(50% - 565px)),
       linear-gradient(90deg, transparent calc(50% - 561px), rgba(94,26,38,.09) calc(50% - 561px), rgba(94,26,38,.09) calc(50% - 560px), transparent calc(50% - 560px)),
       linear-gradient(90deg, transparent calc(50% + 560px), rgba(94,26,38,.09) calc(50% + 560px), rgba(94,26,38,.09) calc(50% + 561px), transparent calc(50% + 561px)),
       linear-gradient(90deg, transparent calc(50% + 565px), rgba(94,26,38,.17) calc(50% + 565px), rgba(94,26,38,.17) calc(50% + 566px), transparent calc(50% + 566px));
   }
   @media (max-width: 1200px){
-    .hb-landing-bg::after{
-      background-image: linear-gradient(to top, #2E2724 0px, #2E2724 80px, rgba(46,39,36,0) 80px);
-    }
+    .hb-landing-bg::after{ background-image: none; }
   }
 
   /* ===== 資料庫入口卡（首頁／公司資料庫共用） ===== */
@@ -4505,7 +4502,7 @@ function HbLanding({onCase:l,onCompany:t,onManageStaff:e,onLogout:n,onQuickQuote
       @media (max-width: 620px) { .hb-landing-tri { grid-template-columns: 1fr; } }
     `),
 
-    u.default.createElement("div",{className:"hb-scroll",style:{maxWidth:1080,margin:"0 auto",height:"100%",overflowY:"auto",padding:"30px 24px 130px"}},
+    u.default.createElement("div",{className:"hb-scroll",style:{maxWidth:1080,margin:"0 auto",height:"100%",overflowY:"auto",padding:"30px 24px 80px"}},
 
       u.default.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:22}},
         u.default.createElement("span",{style:{fontSize:11.5,color:s.inkSoft,fontWeight:300,letterSpacing:"0.02em"}},"\u6b61\u8fce\u56de\u4f86\uff0c\u4eca\u5929\u4e5f\u8981\u597d\u597d\u7167\u9867\u6bcf\u500b\u5de5\u5730"),
@@ -6738,7 +6735,7 @@ function HbAttendanceForm({onCancel,onCreate,projects,workerOptions,lastRateFor}
   )
 }
 
-function HbCompanyHub({onBack:l,onContracts:t,onQuotes:e,onReceipts:rc,onVendorReceipts:vr,onQuickQuote:qq,onGoHome:hbGoHome,onVendorQuotes:vq,onProposal:pg,onMarketingPhotos:mp,onBookings:bk,onOpenBooking:ob,onDrawings:dw,onAttendance:atd,onPriceBook:pb,onSurvey:sv,onChangeOrders:co,onPdfRotate:pr}){return u.default.createElement("div",{className:"hb-landing-bg",style:{minHeight:"100vh",paddingBottom:110,fontFamily:"'Noto Sans TC', sans-serif",color:s.ink,position:"relative"}},
+function HbCompanyHub({onBack:l,onContracts:t,onQuotes:e,onReceipts:rc,onVendorReceipts:vr,onQuickQuote:qq,onGoHome:hbGoHome,onVendorQuotes:vq,onProposal:pg,onMarketingPhotos:mp,onBookings:bk,onOpenBooking:ob,onDrawings:dw,onAttendance:atd,onPriceBook:pb,onSurvey:sv,onChangeOrders:co,onPdfRotate:pr}){return u.default.createElement("div",{className:"hb-landing-bg",style:{minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink,position:"relative"}},
   u.default.createElement("style",null,`
     @keyframes iyBreatheA { 0%,100%{transform:scale(1);opacity:.7} 50%{transform:scale(1.3);opacity:1} }
     @keyframes iyBreatheB { 0%,100%{transform:scale(1);opacity:.7} 50%{transform:scale(1.3);opacity:1} }
