@@ -7150,7 +7150,7 @@ function HbDigitalCard({onBack,notify}){
     u.default.createElement("iframe",{srcDoc:cardHtml,title:"\u96FB\u5B50\u540D\u7247",style:{flex:1,minHeight:0,border:"none",width:"100%",background:"#EDE3D0"}})
   );
 }
-function Gy(){let[l,t]=(0,u.useState)(!0),[e,n]=(0,u.useState)(!1),[a,i]=(0,u.useState)([]),[o,f]=(0,u.useState)(()=>{try{let v=sessionStorage.getItem("hb_last_view");return v&&v!=="quoteImportPick"?v:"landing"}catch{return"landing"}}),[c,r]=(0,u.useState)(()=>{try{return sessionStorage.getItem("hb_last_project")||null}catch{return null}}),[d,h]=(0,u.useState)(!1),[m,p]=(0,u.useState)(null),[z,C]=(0,u.useState)(null),[hbOpenTab,hbSetOpenTab]=(0,u.useState)(()=>{try{return sessionStorage.getItem("hb_last_tab")||"photos"}catch{return"photos"}}),[hbQuoteImport,hbSetQuoteImport]=(0,u.useState)(null),[hbProg,hbSetProg]=(0,u.useState)({}),D=async T=>{T?n(!0):t(!0);try{let{data:k,error:H}=await q.from("sitelog_projects").select("*, sitelog_photos(count), sitelog_quotes(count)").order("created_at",{ascending:!1});if(H){g("讀取案件失敗："+H.message);T||i([])}else i((k||[]).map(cm))}catch(k){g("讀取案件失敗："+(k.message||k))}finally{T?n(!1):t(!1)}},hbLoadProg=async()=>{try{let{data:ev}=await q.from("sitelog_schedule_events").select("project_id,project_name,start_date,end_date").eq("type","site").neq("status","cancelled");if(!ev)return;let by={};for(let x of ev){let st=x.start_date;if(!st)continue;let en=x.end_date||st;for(let k2 of [x.project_id,x.project_name?"name:"+x.project_name:null]){if(!k2)continue;let cur=by[k2];if(!cur){by[k2]={s:st,e:en}}else{if(st<cur.s)cur.s=st;if(en>cur.e)cur.e=en}}}hbSetProg(by)}catch{}},y=async()=>{let[T,k,H,B]=await Promise.all([q.from("sitelog_photos").select("size"),q.from("sitelog_quotes").select("size"),q.from("sitelog_files").select("size"),q.from("sitelog_materials").select("photo_size")]);if(T.error||k.error||H.error||B.error)return;let nl=(ql,je)=>(ql||[]).reduce((Ml,te)=>Ml+(Number(te[je])||0),0),hl=nl(T.data,"size")+nl(k.data,"size")+nl(H.data,"size")+nl(B.data,"photo_size");C(hl)};(0,u.useEffect)(()=>{D(!1),y(),hbLoadProg()},[]);(0,u.useEffect)(()=>{try{o&&o!=="quoteImportPick"&&sessionStorage.setItem("hb_last_view",o);c?sessionStorage.setItem("hb_last_project",c):sessionStorage.removeItem("hb_last_project");sessionStorage.setItem("hb_last_tab",hbOpenTab)}catch{}},[o,c,hbOpenTab]);(0,u.useEffect)(()=>{let hbMsg=T=>{T?.data&&T.data.type==="hb-quote-import"&&(hbSetQuoteImport(T.data),f("quoteImportPick"))};return window.addEventListener("message",hbMsg),()=>window.removeEventListener("message",hbMsg)},[]);let g=(0,u.useCallback)(T=>{p(T),setTimeout(()=>p(null),2600)},[]),hbImportQuote=async T=>{if(!hbQuoteImport)return;try{let{blob:k,filename:H,meta:B}=hbQuoteImport,mt=k.type||"text/html",sl=`${T.id}/${Be()}.${mt==="application/json"?"json":"html"}`,X=await r2UploadSitelogFile("sitelog-quotes",sl,k,mt);let{error:dl}=await q.from("sitelog_quotes").insert({project_id:T.id,name:H,mime:mt,size:k.size,url:X,path:sl,folder_id:null});if(dl)throw dl;i(ql=>ql.map(je=>je.id===T.id?{...je,quoteCount:(je.quoteCount||0)+1}:je)),hbSetQuoteImport(null),r(T),hbSetOpenTab("quotes"),f("detail"),g(`\u5DF2\u5C07\u5831\u50F9\u55AE\u300C${B?.qClient||H}\u300D\u5B58\u5165\u6848\u4EF6`)}catch(k){g("\u5B58\u6A94\u5931\u6557\uFF1A"+(k.message||k))}},b=async(T,k,H,B)=>{let{data:nl,error:hl}=await q.from("sitelog_projects").insert({name:T,address:k,lat:H??null,lng:B??null,status:fn[0]}).select().single();if(hl){g("\u5EFA\u7ACB\u5931\u6557\uFF1A"+hl.message);return}i(ql=>[cm(nl),...ql]),h(!1),g("\u6848\u4EF6\u5DF2\u5EFA\u7ACB")},S=async(T,k)=>{i(hl=>hl.map(ql=>ql.id===T?{...ql,...k,updatedAt:new Date().toISOString()}:ql));let H={name:"name",address:"address",lat:"lat",lng:"lng",status:"status",ownerPassword:"owner_password"},B={};for(let hl of Object.keys(H))hl in k&&(B[H[hl]]=k[hl]);if(Object.keys(B).length===0)return;B.updated_at=new Date().toISOString();let{error:nl}=await q.from("sitelog_projects").update(B).eq("id",T);nl&&g("\u66F4\u65B0\u5931\u6557\uFF1A"+nl.message)},M=async T=>{let{error:k}=await q.from("sitelog_projects").delete().eq("id",T);if(k){g("\u522A\u9664\u5931\u6557\uFF1A"+k.message);return}i(H=>H.filter(B=>B.id!==T)),f("home"),g("\u6848\u4EF6\u5DF2\u522A\u9664")},j=a.find(T=>T.id===c);return u.default.createElement("div",{className:"hb-shell",style:{background:s.paper,height:"100vh",overflow:"hidden",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},u.default.createElement("style",null,`
+function Gy(){let[l,t]=(0,u.useState)(!0),[e,n]=(0,u.useState)(!1),[a,i]=(0,u.useState)([]),[o,f]=(0,u.useState)(()=>{try{let v=sessionStorage.getItem("hb_last_view");return v&&v!=="quoteImportPick"?v:"landing"}catch{return"landing"}}),[c,r]=(0,u.useState)(()=>{try{return sessionStorage.getItem("hb_last_project")||null}catch{return null}}),[d,h]=(0,u.useState)(!1),[m,p]=(0,u.useState)(null),[z,C]=(0,u.useState)(null),[hbOpenTab,hbSetOpenTab]=(0,u.useState)(()=>{try{return sessionStorage.getItem("hb_last_tab")||"overview"}catch{return"overview"}}),[hbQuoteImport,hbSetQuoteImport]=(0,u.useState)(null),[hbProg,hbSetProg]=(0,u.useState)({}),D=async T=>{T?n(!0):t(!0);try{let{data:k,error:H}=await q.from("sitelog_projects").select("*, sitelog_photos(count), sitelog_quotes(count)").order("created_at",{ascending:!1});if(H){g("讀取案件失敗："+H.message);T||i([])}else i((k||[]).map(cm))}catch(k){g("讀取案件失敗："+(k.message||k))}finally{T?n(!1):t(!1)}},hbLoadProg=async()=>{try{let{data:ev}=await q.from("sitelog_schedule_events").select("project_id,project_name,start_date,end_date").eq("type","site").neq("status","cancelled");if(!ev)return;let by={};for(let x of ev){let st=x.start_date;if(!st)continue;let en=x.end_date||st;for(let k2 of [x.project_id,x.project_name?"name:"+x.project_name:null]){if(!k2)continue;let cur=by[k2];if(!cur){by[k2]={s:st,e:en}}else{if(st<cur.s)cur.s=st;if(en>cur.e)cur.e=en}}}hbSetProg(by)}catch{}},y=async()=>{let[T,k,H,B]=await Promise.all([q.from("sitelog_photos").select("size"),q.from("sitelog_quotes").select("size"),q.from("sitelog_files").select("size"),q.from("sitelog_materials").select("photo_size")]);if(T.error||k.error||H.error||B.error)return;let nl=(ql,je)=>(ql||[]).reduce((Ml,te)=>Ml+(Number(te[je])||0),0),hl=nl(T.data,"size")+nl(k.data,"size")+nl(H.data,"size")+nl(B.data,"photo_size");C(hl)};(0,u.useEffect)(()=>{D(!1),y(),hbLoadProg()},[]);(0,u.useEffect)(()=>{try{o&&o!=="quoteImportPick"&&sessionStorage.setItem("hb_last_view",o);c?sessionStorage.setItem("hb_last_project",c):sessionStorage.removeItem("hb_last_project");sessionStorage.setItem("hb_last_tab",hbOpenTab)}catch{}},[o,c,hbOpenTab]);(0,u.useEffect)(()=>{let hbMsg=T=>{T?.data&&T.data.type==="hb-quote-import"&&(hbSetQuoteImport(T.data),f("quoteImportPick"))};return window.addEventListener("message",hbMsg),()=>window.removeEventListener("message",hbMsg)},[]);let g=(0,u.useCallback)(T=>{p(T),setTimeout(()=>p(null),2600)},[]),hbImportQuote=async T=>{if(!hbQuoteImport)return;try{let{blob:k,filename:H,meta:B}=hbQuoteImport,mt=k.type||"text/html",sl=`${T.id}/${Be()}.${mt==="application/json"?"json":"html"}`,X=await r2UploadSitelogFile("sitelog-quotes",sl,k,mt);let{error:dl}=await q.from("sitelog_quotes").insert({project_id:T.id,name:H,mime:mt,size:k.size,url:X,path:sl,folder_id:null});if(dl)throw dl;i(ql=>ql.map(je=>je.id===T.id?{...je,quoteCount:(je.quoteCount||0)+1}:je)),hbSetQuoteImport(null),r(T),hbSetOpenTab("quotes"),f("detail"),g(`\u5DF2\u5C07\u5831\u50F9\u55AE\u300C${B?.qClient||H}\u300D\u5B58\u5165\u6848\u4EF6`)}catch(k){g("\u5B58\u6A94\u5931\u6557\uFF1A"+(k.message||k))}},b=async(T,k,H,B)=>{let{data:nl,error:hl}=await q.from("sitelog_projects").insert({name:T,address:k,lat:H??null,lng:B??null,status:fn[0]}).select().single();if(hl){g("\u5EFA\u7ACB\u5931\u6557\uFF1A"+hl.message);return}i(ql=>[cm(nl),...ql]),h(!1),g("\u6848\u4EF6\u5DF2\u5EFA\u7ACB")},S=async(T,k)=>{i(hl=>hl.map(ql=>ql.id===T?{...ql,...k,updatedAt:new Date().toISOString()}:ql));let H={name:"name",address:"address",lat:"lat",lng:"lng",status:"status",ownerPassword:"owner_password"},B={};for(let hl of Object.keys(H))hl in k&&(B[H[hl]]=k[hl]);if(Object.keys(B).length===0)return;B.updated_at=new Date().toISOString();let{error:nl}=await q.from("sitelog_projects").update(B).eq("id",T);nl&&g("\u66F4\u65B0\u5931\u6557\uFF1A"+nl.message)},M=async T=>{let{error:k}=await q.from("sitelog_projects").delete().eq("id",T);if(k){g("\u522A\u9664\u5931\u6557\uFF1A"+k.message);return}i(H=>H.filter(B=>B.id!==T)),f("home"),g("\u6848\u4EF6\u5DF2\u522A\u9664")},j=a.find(T=>T.id===c);return u.default.createElement("div",{className:"hb-shell",style:{background:s.paper,height:"100vh",overflow:"hidden",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},u.default.createElement("style",null,`
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap');
         @media (min-width: 860px) {
           html, body { background: #DCE4E1; }
@@ -7169,7 +7169,7 @@ function Gy(){let[l,t]=(0,u.useState)(!0),[e,n]=(0,u.useState)(!1),[a,i]=(0,u.us
         }
         .fade-in { animation: hbFadeIn .2s var(--hb-ease-out) both; }
         @media (prefers-reduced-motion: reduce){ .fade-in { animation-name: hbFadeInSoft; } }
-      `),u.default.createElement("div",{style:{height:"100%",overflowY:o==="landing"?"hidden":"auto",WebkitOverflowScrolling:"touch",paddingBottom:o==="landing"?0:92}},l?u.default.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh"}},u.default.createElement(E,{name:"loader",className:"animate-spin",size:28,color:s.ocean})):o==="landing"?u.default.createElement(HbLanding,{onCase:()=>f("home"),onCompany:()=>f("companyHub"),onManageStaff:()=>f("staff"),onQuickQuote:()=>f("estimateHub"),onProposal:()=>HB_openProposalSystem(),onMarketingPhotos:()=>f("marketingPhotos"),onBookings:()=>f("bookings"),onOpenBooking:()=>HB_openBookingSystem(),onDrawings:()=>f("drawings"),onLogout:()=>{try{localStorage.removeItem("sitelog_admin_unlocked"),localStorage.removeItem("sitelog_admin_username")}catch{}window.location.reload()}}):o==="companyHub"?u.default.createElement(HbCompanyHub,{onBack:()=>f("landing"),onContracts:()=>f("contracts"),onQuotes:()=>f("estimateHub"),onReceipts:()=>f("receipts"),onVendorReceipts:()=>f("vendorReceipts"),onQuickQuote:()=>f("estimateHub"),onGoHome:()=>f("home"),onVendorQuotes:()=>f("vendorQuotes"),onProposal:()=>HB_openProposalSystem(),onMarketingPhotos:()=>f("marketingPhotos"),onBookings:()=>f("bookings"),onOpenBooking:()=>HB_openBookingSystem(),onDrawings:()=>f("drawings"),onAttendance:()=>f("attendance"),onPriceBook:()=>f("priceBook"),onSurvey:()=>f("survey"),onChangeOrders:()=>f("changeOrders"),onPdfRotate:()=>f("pdfRotate")}):o==="changeOrders"?u.default.createElement(HbChangeOrderHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="survey"?u.default.createElement(HbSurveyHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="priceBook"?u.default.createElement(HbPriceBookHub,{onBack:()=>f("companyHub"),notify:g}):o==="attendance"?u.default.createElement(HbAttendanceHub,{onBack:()=>f("companyHub"),notify:g}):o==="marketingPhotos"?u.default.createElement(HbMarketingPhotoHub,{onBack:()=>f("landing"),notify:g}):o==="bookings"?u.default.createElement(HbBookingsHub,{onBack:()=>f("landing"),notify:g}):o==="vendorQuotes"?u.default.createElement(HbVendorQuoteHub,{onBack:()=>f("companyHub"),notify:g}):o==="drawings"?u.default.createElement(HbDrawingHub,{onBack:()=>f("companyHub"),notify:g}):o==="receipts"?u.default.createElement(HbReceiptsHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="vendorReceipts"?u.default.createElement(HbVendorReceiptsHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="quoteImportPick"?u.default.createElement(Iy,{projects:a,onOpen:hbImportQuote,onNew:()=>h(!0),onRefresh:()=>{D(!0),y()},refreshing:e,storageUsedBytes:z,onManageStaff:()=>f("staff"),pickerMode:!0,progressRanges:hbProg,onBack:()=>f("companyHub")}):o==="estimateHub"?u.default.createElement(HerfulsinsEstimateHub,{project:null,notify:g,onClose:()=>f("companyHub")}):o==="home"?u.default.createElement(Iy,{projects:a,onOpen:T=>{r(T),hbSetOpenTab("photos"),f("detail")},onNew:()=>h(!0),onRefresh:()=>{D(!0),y()},refreshing:e,storageUsedBytes:z,onManageStaff:()=>f("staff"),progressRanges:hbProg,onBack:()=>f("landing"),onGoCompany:()=>f("companyHub")}):o==="staff"?u.default.createElement(Ky,{onBack:()=>f("landing")}):o==="pdfRotate"?u.default.createElement(HbPdfRotate,{onBack:()=>f("companyHub"),notify:g}):o==="contracts"?u.default.createElement(HerfulsinsContractsHub,{onBack:()=>f("landing"),notify:g}):o==="digitalCard"?u.default.createElement(HbDigitalCard,{onBack:()=>f("landing"),notify:g}):u.default.createElement(lh,{project:j,onBack:()=>f("home"),onUpdateMeta:S,onDelete:M,notify:g,initialTab:hbOpenTab})),d&&u.default.createElement(Py,{onCancel:()=>h(!1),onCreate:b}),m&&u.default.createElement("div",{className:"hb-toast",style:{position:"fixed",bottom:20,left:"50%",background:s.ink,color:s.card,padding:"10px 18px",borderRadius:8,fontSize:13,boxShadow:"0 4px 14px rgba(0,0,0,0.25)",zIndex:60}},m),u.default.createElement(HbBottomNav,{active:o,onNavigate:T=>f(T)}))}
+      `),u.default.createElement("div",{style:{height:"100%",overflowY:o==="landing"?"hidden":"auto",WebkitOverflowScrolling:"touch",paddingBottom:o==="landing"?0:92}},l?u.default.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh"}},u.default.createElement(E,{name:"loader",className:"animate-spin",size:28,color:s.ocean})):o==="landing"?u.default.createElement(HbLanding,{onCase:()=>f("home"),onCompany:()=>f("companyHub"),onManageStaff:()=>f("staff"),onQuickQuote:()=>f("estimateHub"),onProposal:()=>HB_openProposalSystem(),onMarketingPhotos:()=>f("marketingPhotos"),onBookings:()=>f("bookings"),onOpenBooking:()=>HB_openBookingSystem(),onDrawings:()=>f("drawings"),onLogout:()=>{try{localStorage.removeItem("sitelog_admin_unlocked"),localStorage.removeItem("sitelog_admin_username")}catch{}window.location.reload()}}):o==="companyHub"?u.default.createElement(HbCompanyHub,{onBack:()=>f("landing"),onContracts:()=>f("contracts"),onQuotes:()=>f("estimateHub"),onReceipts:()=>f("receipts"),onVendorReceipts:()=>f("vendorReceipts"),onQuickQuote:()=>f("estimateHub"),onGoHome:()=>f("home"),onVendorQuotes:()=>f("vendorQuotes"),onProposal:()=>HB_openProposalSystem(),onMarketingPhotos:()=>f("marketingPhotos"),onBookings:()=>f("bookings"),onOpenBooking:()=>HB_openBookingSystem(),onDrawings:()=>f("drawings"),onAttendance:()=>f("attendance"),onPriceBook:()=>f("priceBook"),onSurvey:()=>f("survey"),onChangeOrders:()=>f("changeOrders"),onPdfRotate:()=>f("pdfRotate")}):o==="changeOrders"?u.default.createElement(HbChangeOrderHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="survey"?u.default.createElement(HbSurveyHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="priceBook"?u.default.createElement(HbPriceBookHub,{onBack:()=>f("companyHub"),notify:g}):o==="attendance"?u.default.createElement(HbAttendanceHub,{onBack:()=>f("companyHub"),notify:g}):o==="marketingPhotos"?u.default.createElement(HbMarketingPhotoHub,{onBack:()=>f("landing"),notify:g}):o==="bookings"?u.default.createElement(HbBookingsHub,{onBack:()=>f("landing"),notify:g}):o==="vendorQuotes"?u.default.createElement(HbVendorQuoteHub,{onBack:()=>f("companyHub"),notify:g}):o==="drawings"?u.default.createElement(HbDrawingHub,{onBack:()=>f("companyHub"),notify:g}):o==="receipts"?u.default.createElement(HbReceiptsHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="vendorReceipts"?u.default.createElement(HbVendorReceiptsHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="quoteImportPick"?u.default.createElement(Iy,{projects:a,onOpen:hbImportQuote,onNew:()=>h(!0),onRefresh:()=>{D(!0),y()},refreshing:e,storageUsedBytes:z,onManageStaff:()=>f("staff"),pickerMode:!0,progressRanges:hbProg,onBack:()=>f("companyHub")}):o==="estimateHub"?u.default.createElement(HerfulsinsEstimateHub,{project:null,notify:g,onClose:()=>f("companyHub")}):o==="home"?u.default.createElement(Iy,{projects:a,onOpen:T=>{r(T),hbSetOpenTab("photos"),f("detail")},onNew:()=>h(!0),onRefresh:()=>{D(!0),y()},refreshing:e,storageUsedBytes:z,onManageStaff:()=>f("staff"),progressRanges:hbProg,onBack:()=>f("landing"),onGoCompany:()=>f("companyHub")}):o==="staff"?u.default.createElement(Ky,{onBack:()=>f("landing")}):o==="pdfRotate"?u.default.createElement(HbPdfRotate,{onBack:()=>f("companyHub"),notify:g}):o==="contracts"?u.default.createElement(HerfulsinsContractsHub,{onBack:()=>f("landing"),notify:g}):o==="digitalCard"?u.default.createElement(HbDigitalCard,{onBack:()=>f("landing"),notify:g}):u.default.createElement(lh,{project:j,onBack:()=>f("home"),onUpdateMeta:S,onDelete:M,notify:g,initialTab:"overview"})),d&&u.default.createElement(Py,{onCancel:()=>h(!1),onCreate:b}),m&&u.default.createElement("div",{className:"hb-toast",style:{position:"fixed",bottom:20,left:"50%",background:s.ink,color:s.card,padding:"10px 18px",borderRadius:8,fontSize:13,boxShadow:"0 4px 14px rgba(0,0,0,0.25)",zIndex:60}},m),u.default.createElement(HbBottomNav,{active:o,onNavigate:T=>f(T)}))}
 
 /* ===================================================================
    設計需求問卷：公司端建立連結 → 業主線上填 → 答案回到案件
@@ -8127,43 +8127,42 @@ function Ky({onBack:l}){let[t,e]=(0,u.useState)([]),[n,a]=(0,u.useState)(!0),[i,
 function HbOverviewHub({project:pj,stage:st,photos:ph,materials:mt,appliances:ap,files:fl,defects:df,schedule:sc,onGo:go,owner:isOwn}){
   let C=u.default.createElement;
   let today=HB_stageToday();
-  let doneN=st?HB_STAGE_DEFS.filter(x=>st[x.k]&&st[x.k].done).length:0;
+  let doneN=st?HB_STAGE_DEFS.filter(function(x){return st[x.k]&&st[x.k].done}).length:0;
   let pct=st?Math.round(doneN/HB_STAGE_DEFS.length*100):null;
-  let curIdx=st?HB_STAGE_DEFS.findIndex(x=>!(st[x.k]&&st[x.k].done)):-1;
+  let curIdx=st?HB_STAGE_DEFS.findIndex(function(x){return!(st[x.k]&&st[x.k].done)}):-1;
   let cur=curIdx>=0?HB_STAGE_DEFS[curIdx]:null;
   let nxt=curIdx>=0?HB_STAGE_DEFS[curIdx+1]:null;
   let anchor=curIdx<0?HB_STAGE_DEFS.length:curIdx;
   let tl=st?HB_STAGE_DEFS.slice(Math.max(0,anchor-2),Math.max(0,anchor-2)+6).map(function(x){
     return{k:x.k,title:x.title,done:!!(st[x.k]&&st[x.k].done),at:(st[x.k]||{}).at,cur:cur&&x.k===cur.k}}):[];
   let matList=(mt||[]);
-  let matDone=matList.filter(function(v){return v.deliveredAt&&String(v.deliveredAt).slice(0,10)<=today}).length;
+  let arrived=function(v){return!!(v.deliveredAt&&String(v.deliveredAt).slice(0,10)<=today)};
+  let matDone=matList.filter(arrived).length;
   let matPct=matList.length?Math.round(matDone/matList.length*100):0;
   let openDf=(df||[]).filter(function(v){return!v.completed});
   let hero=(ph||[])[0]||null;
   let nextSch=(sc||[]).filter(function(v){return(v.startDate||"")>=today})[0]||null;
+
   let card={background:s.card,border:"1px solid "+s.line,borderRadius:10,padding:16};
-  let head={display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12};
+  let head={display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:13};
   let ttl={fontSize:14,fontWeight:400,color:s.ink,letterSpacing:"0.04em"};
-  let tile=function(key,icon,label,value,sub){
-    return C("button",{key:key,onClick:function(){go(key)},className:"hb-hubtile",
-      style:{background:s.card,border:"1px solid "+s.line,borderRadius:10,padding:"14px 15px",textAlign:"left",
-        cursor:"pointer",fontFamily:"inherit",display:"flex",flexDirection:"column",gap:2,minWidth:0}},
-      C("div",{style:{display:"flex",alignItems:"center",gap:7,marginBottom:6}},
-        C(E,{name:icon,size:14,color:s.ocean}),
-        C("div",{style:{fontSize:11.5,color:s.inkSoft,letterSpacing:"0.08em"}},label),
-        C("div",{style:{marginLeft:"auto",fontSize:11,color:s.inkSoft,opacity:.6}},"\u2192")),
-      C("div",{className:"mono",style:{fontSize:20,color:s.ink,lineHeight:1.1}},value),
-      C("div",{style:{fontSize:11.5,color:s.inkSoft,marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},sub||"\u00A0")
-    );
-  };
+  let more=function(k,label){return C("button",{onClick:function(){go(k)},
+    style:{background:"none",border:"none",color:s.inkSoft,fontSize:11.5,cursor:"pointer",fontFamily:"inherit"}},(label||"\u67E5\u770B\u5168\u90E8")+" \u2192")};
+  let empty=function(txt){return C("div",{style:{fontSize:12.5,color:s.inkSoft,padding:"4px 0"}},txt)};
+  let thumb=function(url,size){return url
+    ?C("div",{style:{width:"100%",aspectRatio:"1",borderRadius:6,background:'center/cover no-repeat url("'+url+'")',border:"1px solid "+s.line}})
+    :C("div",{style:{width:"100%",aspectRatio:"1",borderRadius:6,background:s.cardAlt,border:"1px solid "+s.line}})};
+  let dot=function(ok){return C("span",{style:{width:6,height:6,borderRadius:"50%",display:"inline-block",flexShrink:0,background:ok?s.tree:s.cane}})};
+
   return C(u.default.Fragment,null,
+    /* ── 第一列：現場照片 ／ 專案時程＋材料進度 ── */
     C("div",{className:"hb-ovw"},
       C("div",null,
         C("div",{onClick:function(){go("photos")},
-          style:{position:"relative",borderRadius:10,overflow:"hidden",minHeight:300,cursor:"pointer",
+          style:{position:"relative",borderRadius:10,overflow:"hidden",minHeight:320,cursor:"pointer",
             background:hero?'center/cover no-repeat url("'+hero.url+'")':s.cardAlt,border:"1px solid "+s.line}},
-          C("div",{style:{position:"absolute",inset:0,background:"linear-gradient(180deg,rgba(28,27,24,0) 30%,rgba(28,27,24,.82) 100%)"}}),
-          C("div",{style:{position:"relative",padding:"18px 20px",minHeight:300,display:"flex",flexDirection:"column",justifyContent:"flex-end"}},
+          C("div",{style:{position:"absolute",inset:0,background:"linear-gradient(180deg,rgba(28,27,24,0) 30%,rgba(28,27,24,.84) 100%)"}}),
+          C("div",{style:{position:"relative",padding:"18px 20px",minHeight:320,display:"flex",flexDirection:"column",justifyContent:"flex-end"}},
             C("div",{className:"mono",style:{fontSize:10,letterSpacing:"0.16em",color:"#EDEAE0",opacity:.75}},"\u65BD\u5DE5\u9032\u5EA6"),
             C("div",{className:"mono",style:{fontSize:44,lineHeight:1,color:"#fff",fontWeight:300}},pct==null?"\u2014":pct+"%"),
             C("div",{style:{height:3,borderRadius:2,background:"rgba(255,255,255,.25)",margin:"12px 0 14px",maxWidth:320,overflow:"hidden"}},
@@ -8172,14 +8171,18 @@ function HbOverviewHub({project:pj,stage:st,photos:ph,materials:mt,appliances:ap
               cur?cur.title:(st?"\u5168\u90E8\u5DE5\u9805\u5DF2\u5B8C\u6210":"\u5C1A\u672A\u52FE\u9078\u5DE5\u9805")),
             nxt?C("div",{style:{fontSize:12,color:"#EDEAE0",opacity:.8,marginTop:5}},"\u4E0B\u4E00\u968E\u6BB5\uFF1A"+nxt.title):null,
             nextSch?C("div",{style:{fontSize:12,color:"#EDEAE0",opacity:.8,marginTop:2}},"\u6700\u8FD1\u6392\u7A0B\uFF1A"+(nextSch.title||"")+"  "+Tl(nextSch.startDate)):null,
-            hero?C("div",{className:"mono",style:{fontSize:10,color:"#EDEAE0",opacity:.65,marginTop:10}},
-              (hero.note?hero.note+"  \u00B7  ":"")+Tl(hero.uploadedAt)+" \u62CD\u651D"):null))
+            C("div",{style:{display:"flex",alignItems:"flex-end",justifyContent:"space-between",gap:12,marginTop:10}},
+              C("div",{className:"mono",style:{fontSize:10,color:"#EDEAE0",opacity:.65}},
+                hero?(hero.note?hero.note+"  \u00B7  ":"")+Tl(hero.uploadedAt)+" \u62CD\u651D":"\u5C1A\u672A\u4E0A\u50B3\u7167\u7247"),
+              C("div",{className:"mono",style:{fontSize:11,color:"#EDEAE0",opacity:.8,flexShrink:0}},
+                (ph||[]).length?"01 / "+String((ph||[]).length).padStart(2,"0"):"")))),
+        (ph||[]).length>1?C("div",{style:{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:8,marginTop:8}},
+          (ph||[]).slice(1,6).map(function(v){return C("div",{key:v.id,onClick:function(){go("photos")},style:{cursor:"pointer"}},thumb(v.url))})):null
       ),
       C("div",null,
         C("div",{style:card},
-          C("div",{style:head},C("div",{style:ttl},"\u5C08\u6848\u6642\u7A0B"),
-            C("button",{onClick:function(){go("progress")},style:{background:"none",border:"none",color:s.inkSoft,fontSize:11.5,cursor:"pointer",fontFamily:"inherit"}},"\u67E5\u770B\u5B8C\u6574\u6642\u7A0B \u2192")),
-          tl.length===0?C("div",{style:{fontSize:12.5,color:s.inkSoft}},"\u5C1A\u672A\u8B80\u5230\u5DE5\u7A0B\u968E\u6BB5")
+          C("div",{style:head},C("div",{style:ttl},"\u5C08\u6848\u6642\u7A0B"),more("progress","\u67E5\u770B\u8A73\u60C5")),
+          tl.length===0?empty("\u5C1A\u672A\u8B80\u5230\u5DE5\u7A0B\u968E\u6BB5")
           :C("div",null,tl.map(function(x){
             return C("div",{key:x.k,style:{display:"flex",alignItems:"center",gap:11,padding:"7px 0"}},
               C("span",{style:{width:11,height:11,borderRadius:"50%",flexShrink:0,
@@ -8187,36 +8190,84 @@ function HbOverviewHub({project:pj,stage:st,photos:ph,materials:mt,appliances:ap
                 border:x.done?"none":"2px solid "+(x.cur?s.danger:s.line),
                 boxShadow:x.cur?"0 0 0 3px rgba(139,18,32,0.12)":"none"}}),
               C("div",{style:{flex:"1 1 auto",minWidth:0,fontSize:13,color:x.done||x.cur?s.ink:s.inkSoft,fontWeight:x.cur?500:400}},x.title),
-              C("div",{className:"mono",style:{fontSize:11,color:s.inkSoft,flexShrink:0}},x.at?Tl(x.at):""))}))),
-        C("div",{style:card},
-          C("div",{style:head},C("div",{style:ttl},"\u6750\u6599\u9032\u5EA6"),
-            C("div",{className:"mono",style:{fontSize:11.5,color:s.inkSoft}},"\u5DF2\u9032\u5834 "+matDone+" / "+matList.length+" \u9805")),
+              C("div",{className:"mono",style:{fontSize:11,color:x.cur?s.danger:s.inkSoft,flexShrink:0}},
+                x.cur?"\u9032\u884C\u4E2D":(x.at?Tl(x.at):"")))}))),
+        C("div",{style:Object.assign({},card,{marginTop:16})},
+          C("div",{style:head},C("div",{style:ttl},"\u6750\u6599\u5230\u8CA8"),more("materials")),
+          C("div",{style:{display:"flex",alignItems:"baseline",gap:18,marginBottom:11}},
+            C("div",null,C("span",{className:"mono",style:{fontSize:22,color:s.ink}},matDone),
+              C("span",{className:"mono",style:{fontSize:13,color:s.inkSoft}}," / "+matList.length),
+              C("div",{style:{fontSize:11,color:s.inkSoft,marginTop:2}},"\u5DF2\u9032\u5834")),
+            C("div",null,C("span",{className:"mono",style:{fontSize:22,color:s.cane}},matList.length-matDone),
+              C("div",{style:{fontSize:11,color:s.inkSoft,marginTop:2}},"\u5F85\u9032\u5834"))),
           C("div",{style:{display:"flex",alignItems:"center",gap:11}},
             C("div",{style:{flex:"1 1 auto",height:6,borderRadius:3,background:s.cardAlt,overflow:"hidden"}},
               C("div",{style:{height:"100%",width:matPct+"%",background:s.tree,transition:"width .45s ease"}})),
             C("div",{className:"mono",style:{fontSize:14,color:s.ink,flexShrink:0}},matPct+"%")))
       )
     ),
-    C("div",{className:"hb-hub"},
-      tile("photos","camera","\u73FE\u5834\u7167\u7247",(ph||[]).length+" \u5F35",hero?Tl(hero.uploadedAt)+" \u6700\u65B0":""),
-      tile("progress","check","\u65BD\u5DE5\u9032\u5EA6",pct==null?"\u2014":pct+"%",cur?"\u76EE\u524D\uFF1A"+cur.title:""),
-      tile("materials","package","\u6750\u6599",matDone+" / "+matList.length,"\u5DF2\u9032\u5834\u9805\u6578"),
-      tile("appliances","zap","\u8A2D\u5099",(ap||[]).length+" \u9805",""),
-      tile("files","paperclip","\u5716\u9762\u6587\u4EF6",(fl||[]).length+" \u4EFD",""),
-      tile("defects","alert-triangle","\u5F85\u8655\u7406\u4E8B\u9805",openDf.length+" \u4EF6",openDf.length?"\u5C1A\u672A\u8655\u7406":"\u76EE\u524D\u6C92\u6709"),
-      tile("meetings","clipboard-list","\u6703\u8B70\u7D00\u9304","","\u9EDE\u5165\u67E5\u770B")
+
+    /* ── 第二列：材料選用 ／ 現場待處理事項 ── */
+    C("div",{className:"hb-ovw",style:{marginTop:16}},
+      C("div",null,C("div",{style:card},
+        C("div",{style:head},C("div",{style:ttl},"\u6750\u6599\u9078\u7528"),more("materials")),
+        matList.length===0?empty("\u5C1A\u672A\u767B\u9304\u6750\u6599")
+        :C("div",{style:{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12}},
+          matList.slice(0,4).map(function(v){
+            return C("div",{key:v.id,onClick:function(){go("materials")},style:{cursor:"pointer",minWidth:0}},
+              thumb(v.photoUrl),
+              C("div",{style:{fontSize:12.5,color:s.ink,marginTop:7,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},v.itemName),
+              C("div",{style:{display:"flex",alignItems:"center",gap:5,marginTop:3}},dot(arrived(v)),
+                C("span",{style:{fontSize:11,color:s.inkSoft,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},
+                  (v.quantity!=null?v.quantity+(v.unit||"")+" \u00B7 ":"")+(arrived(v)?"\u5DF2\u9032\u5834":"\u5F85\u9032\u5834"))))}))
+      )),
+      C("div",null,C("div",{style:card},
+        C("div",{style:head},C("div",{style:ttl},"\u73FE\u5834\u5F85\u8655\u7406\u4E8B\u9805"),more("defects")),
+        openDf.length===0?empty("\u76EE\u524D\u6C92\u6709\u672A\u8655\u7406\u7684\u4E8B\u9805")
+        :C("div",null,openDf.slice(0,4).map(function(v,vi){
+          return C("div",{key:v.id,onClick:function(){go("defects")},
+            style:{display:"flex",alignItems:"flex-start",gap:11,padding:"9px 0",cursor:"pointer",borderTop:vi===0?"none":"1px solid "+s.line}},
+            C("span",{style:{width:20,height:20,borderRadius:"50%",flexShrink:0,marginTop:1,background:vi===0?s.danger:s.cane,
+              color:"#fff",fontSize:12,display:"flex",alignItems:"center",justifyContent:"center"}},"!"),
+            C("div",{style:{flex:"1 1 auto",minWidth:0}},
+              C("div",{style:{fontSize:13,color:s.ink,lineHeight:1.5}},v.description),
+              v.location?C("div",{style:{fontSize:11.5,color:s.inkSoft,marginTop:2}},v.location):null),
+            C("div",{className:"mono",style:{fontSize:11,color:s.inkSoft,flexShrink:0,paddingTop:2}},Tl(v.createdAt)))}))
+      ))
     ),
-    openDf.length>0?C("div",{style:Object.assign({},card,{marginTop:16})},
-      C("div",{style:head},C("div",{style:ttl},"\u73FE\u5834\u5F85\u8655\u7406\u4E8B\u9805"),
-        C("button",{onClick:function(){go("defects")},style:{background:"none",border:"none",color:s.inkSoft,fontSize:11.5,cursor:"pointer",fontFamily:"inherit"}},"\u67E5\u770B\u5168\u90E8 \u2192")),
-      C("div",null,openDf.slice(0,5).map(function(v,vi){
-        return C("div",{key:v.id,style:{display:"flex",alignItems:"flex-start",gap:10,padding:"8px 0",borderTop:vi===0?"none":"1px solid "+s.line}},
-          C("span",{className:"mono",style:{fontSize:11,color:s.inkSoft,flexShrink:0,paddingTop:2,minWidth:18}},String(vi+1).padStart(2,"0")),
-          C("div",{style:{flex:"1 1 auto",minWidth:0}},
-            C("div",{style:{fontSize:13,color:s.ink,lineHeight:1.5}},v.description),
-            v.location?C("div",{style:{fontSize:11.5,color:s.inkSoft,marginTop:2}},v.location):null),
-          C("div",{className:"mono",style:{fontSize:11,color:s.inkSoft,flexShrink:0,paddingTop:2}},Tl(v.createdAt)))}))
-    ):null
+
+    /* ── 第三列：圖面文件 ／ 設備 ── */
+    C("div",{className:"hb-ovw",style:{marginTop:16}},
+      C("div",null,C("div",{style:card},
+        C("div",{style:head},C("div",{style:ttl},"\u5716\u9762\u6587\u4EF6"),more("files")),
+        (fl||[]).length===0?empty("\u5C1A\u672A\u4E0A\u50B3\u6A94\u6848")
+        :C("div",null,(fl||[]).slice(0,4).map(function(v,vi){
+          return C("div",{key:v.id,onClick:function(){go("files")},
+            style:{display:"flex",alignItems:"center",gap:11,padding:"9px 0",cursor:"pointer",borderTop:vi===0?"none":"1px solid "+s.line}},
+            C(E,{name:"file-text",size:15,color:s.ocean}),
+            C("div",{style:{flex:"1 1 auto",minWidth:0,fontSize:13,color:s.ink,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},v.name),
+            C("div",{className:"mono",style:{fontSize:11,color:s.inkSoft,flexShrink:0}},Tl(v.uploadedAt)))}))
+      )),
+      C("div",null,C("div",{style:card},
+        C("div",{style:head},C("div",{style:ttl},"\u8A2D\u5099"),more("appliances")),
+        (ap||[]).length===0?empty("\u5C1A\u672A\u767B\u9304\u8A2D\u5099")
+        :C("div",{style:{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12}},
+          (ap||[]).slice(0,4).map(function(v){
+            return C("div",{key:v.id,onClick:function(){go("appliances")},style:{cursor:"pointer",minWidth:0}},
+              thumb(v.photoUrl),
+              C("div",{style:{fontSize:12.5,color:s.ink,marginTop:7,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},v.name),
+              C("div",{className:"mono",style:{fontSize:11,color:s.inkSoft,marginTop:3,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},
+                [v.widthCm!=null?"W"+v.widthCm:null,v.heightCm!=null?"H"+v.heightCm:null,v.depthCm!=null?"D"+v.depthCm:null].filter(Boolean).join("\u00D7")||"\u00A0"))}))
+      ))
+    ),
+
+    /* ── 第四列：會議紀錄 ── */
+    C("button",{onClick:function(){go("meetings")},
+      style:{width:"100%",marginTop:16,background:s.card,border:"1px solid "+s.line,borderRadius:10,
+        padding:"14px 16px",display:"flex",alignItems:"center",gap:10,cursor:"pointer",fontFamily:"inherit",textAlign:"left"}},
+      C(E,{name:"clipboard-list",size:15,color:s.ocean}),
+      C("div",{style:{fontSize:13.5,color:s.ink}},"\u6703\u8B70\u7D00\u9304"),
+      C("div",{style:{marginLeft:"auto",fontSize:11.5,color:s.inkSoft}},"\u9EDE\u5165\u67E5\u770B \u2192"))
   );
 }
 
