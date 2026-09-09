@@ -495,6 +495,13 @@
   @media (max-width:1080px){ .hb-dossier .hb-dosHead{ padding:20px 30px 22px; } }
   @media (max-width:860px){ .hb-dossier .hb-dosHead{ padding:18px 22px 20px; } }
 
+  .hb-dosEmpty{ text-align:center; color:#8C8279; margin-top:44px; font-size:13.5px; letter-spacing:.06em; }
+  .hb-dosCheck{
+    display:inline-flex; align-items:center; gap:7px; margin-top:8px; cursor:pointer;
+    font-size:12.5px; color:#7A716A; letter-spacing:.03em;
+  }
+  .hb-dosCheck input{ accent-color:#703B42; }
+
   /* 單欄版（沒有分類索引的子頁） */
   .hb-dosSolo{ border-top: 1px solid rgba(57,51,47,.14); padding: 22px 0 60px; }
   .hb-dosAmt{
@@ -5603,6 +5610,7 @@ function HB_openVendorPrint(v){
 /* ---------- 工程收據 UI ---------- */
 function HbReceiptsHub({onBack,notify,projects}){
   let[batches,setBatches]=(0,u.useState)([]);
+  let[hbMenu,hbSetMenu]=(0,u.useState)(null);
   let[loading,setLoading]=(0,u.useState)(true);
   let[creating,setCreating]=(0,u.useState)(false);
   let[noStamp,setNoStamp]=(0,u.useState)(()=>new Set());
@@ -5630,41 +5638,58 @@ function HbReceiptsHub({onBack,notify,projects}){
   let toVals=row=>({clientName:row.client_name,siteAddress:row.site_address,paymentMethod:row.payment_method,dateStr:row.receipt_date,periods:row.periods||[],showStamp:!noStamp.has(row.id)});
   let genWord=row=>HB_generateReceiptDocx(toVals(row)).catch(err=>notify("產生失敗："+(err?.message||err)));
   let genPdf=row=>{let ok=HB_openReceiptPrint(toVals(row));if(!ok)notify("請允許瀏覽器彈出視窗以產生 PDF")};
-  return u.default.createElement("div",{className:"hb-archive hb-dossier",style:{minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},
-    u.default.createElement("style",null,`
-      @keyframes iyBreatheA { 0%,100%{transform:scale(1);opacity:.7} 50%{transform:scale(1.3);opacity:1} }
-      @keyframes iyBreatheB { 0%,100%{transform:scale(1);opacity:.7} 50%{transform:scale(1.3);opacity:1} }
-      .iy-breathe-a { animation: iyBreatheA 3.8s ease-in-out infinite; transform-origin:center; }
-      .iy-breathe-b { animation: iyBreatheB 4.6s ease-in-out infinite; animation-delay:1s; transform-origin:center; }
-    `),
-    u.default.createElement("div",{style:{maxWidth:1180,margin:"0 auto",padding:"18px 20px 4px",position:"relative"}},
-      u.default.createElement("button",{onClick:onBack,style:{background:"none",border:"none",color:s.inkSoft,cursor:"pointer",fontSize:11.5,display:"flex",alignItems:"center",gap:4,padding:0,marginBottom:8}},u.default.createElement(E,{name:"arrow-left",size:14})),
-      u.default.createElement("header",{className:"hb-dosHead"},u.default.createElement("div",{className:"hb-dosLabel"},"Reçus de Chantier"),u.default.createElement("h1",{className:"hb-dosTitle"},"工程收據"),u.default.createElement("p",{className:"hb-dosLede"},"依期別產生工程收據，A4 直向每頁列印 3 筆款項"))
-    ),
-    u.default.createElement("div",{style:{maxWidth:1180,margin:"0 auto",padding:"16px 16px 112px"}},
-      u.default.createElement("button",{onClick:()=>setCreating(!0),style:{...Dl,width:"100%",marginBottom:16}},"＋ 新增工程收據"),
-      loading?u.default.createElement("div",{style:{textAlign:"center",padding:30}},u.default.createElement(E,{name:"loader",className:"animate-spin",size:22,color:s.ocean})):
-      batches.length===0?u.default.createElement("p",{style:{textAlign:"center",color:s.inkSoft,marginTop:40,fontSize:13.5}},"尚未有工程收據紀錄"):
-      u.default.createElement("div",{style:{display:"flex",flexDirection:"column",gap:12}},
-        batches.map(b=>{
-          let periods=b.periods||[];
-          let total=periods.reduce((sum,p)=>sum+(HB_num(p.amount)||0),0);
-          return u.default.createElement("div",{key:b.id,style:{background:s.card,border:`1px solid ${s.line}`,borderRadius:10,padding:"14px 16px"}},
-            u.default.createElement("div",{style:{fontSize:15,fontWeight:400,color:s.oceanDark}},b.client_name),
-            u.default.createElement("div",{style:{fontSize:12.5,color:s.inkSoft,marginTop:2}},b.site_address),
-            u.default.createElement("div",{style:{fontSize:12.5,color:s.inkSoft,marginTop:6}},periods.length,"筆款項　合計 NT$ ",HB_money(total)),
-            u.default.createElement("label",{style:{display:"flex",alignItems:"center",gap:6,fontSize:12.5,color:s.inkSoft,marginTop:8,cursor:"pointer"}},
-              u.default.createElement("input",{type:"checkbox",checked:!noStamp.has(b.id),onChange:()=>toggleStamp(b.id)}),"列印時蓋發票章"
-            ),
-            u.default.createElement("div",{style:{display:"flex",gap:8,marginTop:12}},
-              u.default.createElement("button",{onClick:()=>genWord(b),style:{...ll,flex:1,fontSize:12.5,padding:"8px 0"}},"產生 Word"),
-              u.default.createElement("button",{onClick:()=>genPdf(b),style:{...ll,flex:1,fontSize:12.5,padding:"8px 0"}},"產生 PDF"),
-              u.default.createElement("button",{onClick:()=>deleteBatch(b.id),style:{...at,color:s.danger}},u.default.createElement(E,{name:"trash",size:16}))
-            )
-          )
-        })
-      )
-    ),
+  return u.default.createElement("div",{className:"hb-archive hb-dossier",style:{minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:"#39332F"},
+    onClick:()=>hbSetMenu(null)},
+    u.default.createElement("div",{className:"hb-dosWrap"},
+
+      u.default.createElement("header",{className:"hb-dosHead"},
+        u.default.createElement("button",{onClick:onBack,className:"hb-arcBack"},
+          u.default.createElement(E,{name:"arrow-left",size:15}),
+          u.default.createElement("span",null,"返回公司資料庫")),
+        u.default.createElement("div",{className:"hb-dosLabel"},"Reçus de Chantier"),
+        u.default.createElement("h1",{className:"hb-dosTitle"},"工程收據"),
+        u.default.createElement("p",{className:"hb-dosLede"},"依期別產生工程收據，A4 直向每頁列印 3 筆款項。可選擇列印時是否蓋上發票章。")),
+
+      u.default.createElement("div",{className:"hb-dosSolo"},
+        u.default.createElement("div",{className:"hb-dosBar"},
+          u.default.createElement("div",{className:"hb-dosCount"}, batches.length>0? batches.length+" 筆收據":"尚無資料"),
+          u.default.createElement("button",{onClick:()=>setCreating(!0),className:"hb-dosNew"},"新增工程收據")),
+
+        loading?u.default.createElement("div",{style:{textAlign:"center",padding:40}},
+            u.default.createElement(E,{name:"loader",className:"animate-spin",size:22,color:"#703B42"})):
+        batches.length===0?u.default.createElement("p",{className:"hb-dosEmpty"},"尚未有工程收據紀錄"):
+        u.default.createElement("ul",{className:"hb-dosList"},
+          batches.map((b,bi)=>{
+            let periods=b.periods||[];
+            let total=periods.reduce((sum,pp)=>sum+(HB_num(pp.amount)||0),0);
+            return u.default.createElement("li",{key:b.id,className:"hb-dosItem"},
+              u.default.createElement("span",{className:"hb-dosNo"},String(bi+1).padStart(2,"0")),
+              u.default.createElement("div",{className:"hb-dosBody"},
+                u.default.createElement("div",{className:"hb-dosName"},b.client_name),
+                u.default.createElement("div",{className:"hb-dosMeta"},
+                  (b.site_address||"—")+"　·　"+periods.length+" 筆款項"),
+                u.default.createElement("label",{className:"hb-dosCheck"},
+                  u.default.createElement("input",{type:"checkbox",checked:!noStamp.has(b.id),onChange:()=>toggleStamp(b.id)}),
+                  u.default.createElement("span",null,"列印時蓋發票章"))),
+              u.default.createElement("span",{className:"hb-dosAmt"},"NT$ "+HB_money(total)),
+              u.default.createElement("div",{className:"hb-dosActs"},
+                u.default.createElement("button",{onClick:()=>genWord(b),className:"hb-dosAct"},
+                  u.default.createElement(E,{name:"file-output",size:13}),u.default.createElement("span",null,"Word")),
+                u.default.createElement("button",{onClick:()=>genPdf(b),className:"hb-dosAct"},
+                  u.default.createElement(E,{name:"printer",size:13}),u.default.createElement("span",null,"PDF")),
+                u.default.createElement("div",{className:"hb-dosMore"},
+                  u.default.createElement("button",{className:"hb-dosAct ico","aria-haspopup":"true",
+                    "aria-expanded":hbMenu===b.id?"true":"false",title:"更多",
+                    onClick:ev=>{ev.stopPropagation();hbSetMenu(hbMenu===b.id?null:b.id)}},
+                    u.default.createElement(E,{name:"more-vertical",size:15})),
+                  hbMenu===b.id&&u.default.createElement("div",{className:"hb-dosMenu",onClick:ev=>ev.stopPropagation()},
+                    u.default.createElement("button",{className:"del",onClick:()=>{
+                      hbSetMenu(null);
+                      if(window.confirm("確定要刪除「"+(b.client_name||"這筆收據")+"」？此動作無法復原。")) deleteBatch(b.id)
+                    }},"刪除")))))
+          }))
+      )),
+
     creating&&u.default.createElement(HbReceiptForm,{onCancel:()=>setCreating(!1),onCreate:createBatch,projects:projects||[]})
   )
 }
@@ -5725,6 +5750,7 @@ function HbReceiptForm({onCancel,onCreate,projects}){
 /* ---------- 廠商領據 UI ---------- */
 function HbVendorReceiptsHub({onBack,notify,projects}){
   let[list,setList]=(0,u.useState)([]);
+  let[hbMenu,hbSetMenu]=(0,u.useState)(null);
   let[loading,setLoading]=(0,u.useState)(true);
   let[creating,setCreating]=(0,u.useState)(false);
   let[noStamp,setNoStamp]=(0,u.useState)(()=>new Set());
@@ -5752,37 +5778,54 @@ function HbVendorReceiptsHub({onBack,notify,projects}){
   let toVals=row=>({vendorName:row.vendor_name,siteLocation:row.site_location,amount:row.amount,idNumber:row.id_number,address:row.address,phone:row.phone,dateStr:row.receipt_date,receiptNo:row.receipt_no,showStamp:!noStamp.has(row.id)});
   let genWord=row=>HB_generateVendorDocx(toVals(row)).catch(err=>notify("產生失敗："+(err?.message||err)));
   let genPdf=row=>{let ok=HB_openVendorPrint(toVals(row));if(!ok)notify("請允許瀏覽器彈出視窗以產生 PDF")};
-  return u.default.createElement("div",{className:"hb-archive hb-dossier",style:{minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},
-    u.default.createElement("style",null,`
-      @keyframes iyBreatheA { 0%,100%{transform:scale(1);opacity:.7} 50%{transform:scale(1.3);opacity:1} }
-      @keyframes iyBreatheB { 0%,100%{transform:scale(1);opacity:.7} 50%{transform:scale(1.3);opacity:1} }
-      .iy-breathe-a { animation: iyBreatheA 3.8s ease-in-out infinite; transform-origin:center; }
-      .iy-breathe-b { animation: iyBreatheB 4.6s ease-in-out infinite; animation-delay:1s; transform-origin:center; }
-    `),
-    u.default.createElement("div",{style:{maxWidth:1180,margin:"0 auto",padding:"18px 20px 4px",position:"relative"}},
-      u.default.createElement("button",{onClick:onBack,style:{background:"none",border:"none",color:s.inkSoft,cursor:"pointer",fontSize:11.5,display:"flex",alignItems:"center",gap:4,padding:0,marginBottom:8}},u.default.createElement(E,{name:"arrow-left",size:14})),
-      u.default.createElement("header",{className:"hb-dosHead"},u.default.createElement("div",{className:"hb-dosLabel"},"Reçus Fournisseurs"),u.default.createElement("h1",{className:"hb-dosTitle"},"廠商領據"),u.default.createElement("p",{className:"hb-dosLede"},"廠商工程款領據產生，A5 橫向格式一張一筆"))
-    ),
-    u.default.createElement("div",{style:{maxWidth:1180,margin:"0 auto",padding:"16px 16px 112px"}},
-      u.default.createElement("button",{onClick:()=>setCreating(!0),style:{...Dl,width:"100%",marginBottom:16}},"＋ 新增廠商領據"),
-      loading?u.default.createElement("div",{style:{textAlign:"center",padding:30}},u.default.createElement(E,{name:"loader",className:"animate-spin",size:22,color:s.ocean})):
-      list.length===0?u.default.createElement("p",{style:{textAlign:"center",color:s.inkSoft,marginTop:40,fontSize:13.5}},"尚未有廠商領據紀錄"):
-      u.default.createElement("div",{style:{display:"flex",flexDirection:"column",gap:12}},
-        list.map(v=>u.default.createElement("div",{key:v.id,style:{background:s.card,border:`1px solid ${s.line}`,borderRadius:10,padding:"14px 16px"}},
-          u.default.createElement("div",{style:{fontSize:15,fontWeight:400,color:s.oceanDark}},v.vendor_name),
-          u.default.createElement("div",{style:{fontSize:12.5,color:s.inkSoft,marginTop:2}},v.site_location),
-          u.default.createElement("div",{style:{fontSize:12.5,color:s.inkSoft,marginTop:6}},"NT$ ",HB_money(HB_num(v.amount))),
-          u.default.createElement("label",{style:{display:"flex",alignItems:"center",gap:6,fontSize:12.5,color:s.inkSoft,marginTop:8,cursor:"pointer"}},
-            u.default.createElement("input",{type:"checkbox",checked:!noStamp.has(v.id),onChange:()=>toggleStamp(v.id)}),"列印時蓋發票章"
-          ),
-          u.default.createElement("div",{style:{display:"flex",gap:8,marginTop:12}},
-            u.default.createElement("button",{onClick:()=>genWord(v),style:{...ll,flex:1,fontSize:12.5,padding:"8px 0"}},"產生 Word"),
-            u.default.createElement("button",{onClick:()=>genPdf(v),style:{...ll,flex:1,fontSize:12.5,padding:"8px 0"}},"產生 PDF"),
-            u.default.createElement("button",{onClick:()=>deleteOne(v.id),style:{...at,color:s.danger}},u.default.createElement(E,{name:"trash",size:16}))
-          )
-        ))
-      )
-    ),
+  return u.default.createElement("div",{className:"hb-archive hb-dossier",style:{minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:"#39332F"},
+    onClick:()=>hbSetMenu(null)},
+    u.default.createElement("div",{className:"hb-dosWrap"},
+
+      u.default.createElement("header",{className:"hb-dosHead"},
+        u.default.createElement("button",{onClick:onBack,className:"hb-arcBack"},
+          u.default.createElement(E,{name:"arrow-left",size:15}),
+          u.default.createElement("span",null,"返回公司資料庫")),
+        u.default.createElement("div",{className:"hb-dosLabel"},"Reçus Fournisseurs"),
+        u.default.createElement("h1",{className:"hb-dosTitle"},"廠商領據"),
+        u.default.createElement("p",{className:"hb-dosLede"},"廠商工程款領據產生，A5 橫向格式一張一筆。可選擇列印時是否蓋上發票章。")),
+
+      u.default.createElement("div",{className:"hb-dosSolo"},
+        u.default.createElement("div",{className:"hb-dosBar"},
+          u.default.createElement("div",{className:"hb-dosCount"}, list.length>0? list.length+" 筆領據":"尚無資料"),
+          u.default.createElement("button",{onClick:()=>setCreating(!0),className:"hb-dosNew"},"新增廠商領據")),
+
+        loading?u.default.createElement("div",{style:{textAlign:"center",padding:40}},
+            u.default.createElement(E,{name:"loader",className:"animate-spin",size:22,color:"#703B42"})):
+        list.length===0?u.default.createElement("p",{className:"hb-dosEmpty"},"尚未有廠商領據紀錄"):
+        u.default.createElement("ul",{className:"hb-dosList"},
+          list.map((v,vi)=>u.default.createElement("li",{key:v.id,className:"hb-dosItem"},
+            u.default.createElement("span",{className:"hb-dosNo"},String(vi+1).padStart(2,"0")),
+            u.default.createElement("div",{className:"hb-dosBody"},
+              u.default.createElement("div",{className:"hb-dosName"},v.vendor_name),
+              u.default.createElement("div",{className:"hb-dosMeta"},v.site_location||"—"),
+              u.default.createElement("label",{className:"hb-dosCheck"},
+                u.default.createElement("input",{type:"checkbox",checked:!noStamp.has(v.id),onChange:()=>toggleStamp(v.id)}),
+                u.default.createElement("span",null,"列印時蓋發票章"))),
+            u.default.createElement("span",{className:"hb-dosAmt"},"NT$ "+HB_money(HB_num(v.amount))),
+            u.default.createElement("div",{className:"hb-dosActs"},
+              u.default.createElement("button",{onClick:()=>genWord(v),className:"hb-dosAct"},
+                u.default.createElement(E,{name:"file-output",size:13}),u.default.createElement("span",null,"Word")),
+              u.default.createElement("button",{onClick:()=>genPdf(v),className:"hb-dosAct"},
+                u.default.createElement(E,{name:"printer",size:13}),u.default.createElement("span",null,"PDF")),
+              u.default.createElement("div",{className:"hb-dosMore"},
+                u.default.createElement("button",{className:"hb-dosAct ico","aria-haspopup":"true",
+                  "aria-expanded":hbMenu===v.id?"true":"false",title:"更多",
+                  onClick:ev=>{ev.stopPropagation();hbSetMenu(hbMenu===v.id?null:v.id)}},
+                  u.default.createElement(E,{name:"more-vertical",size:15})),
+                hbMenu===v.id&&u.default.createElement("div",{className:"hb-dosMenu",onClick:ev=>ev.stopPropagation()},
+                  u.default.createElement("button",{className:"del",onClick:()=>{
+                    hbSetMenu(null);
+                    if(window.confirm("確定要刪除「"+(v.vendor_name||"這筆領據")+"」？此動作無法復原。")) deleteOne(v.id)
+                  }},"刪除"))))))
+        )
+      )),
+
     creating&&u.default.createElement(HbVendorReceiptForm,{onCancel:()=>setCreating(!1),onCreate:createOne,projects:projects||[],vendorOptions:[...new Set(list.map(x=>x.vendor_name).filter(Boolean))]})
   )
 }
