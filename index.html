@@ -488,6 +488,41 @@
     .hb-entry-tail{ display: none; }
   }
 
+  /* ===== 檔案冊子頁：共用紙材底與法式頁尾 ===== */
+  .hb-archive{
+    position: relative;
+    padding-bottom: 80px;
+    background-color: #F4F1EA;
+    background-image: var(--hb-paper-page);
+    background-size: 900px auto;
+    background-repeat: repeat;
+    background-position: center top;
+  }
+  .hb-archive::before,
+  .hb-archive::after{
+    position: absolute; bottom: 0; height: 80px;
+    display: flex; align-items: center;
+    font-family: "Cormorant Garamond", serif; font-size: 10px;
+    letter-spacing: .3em; text-transform: uppercase; color: var(--fm-soft);
+    pointer-events: none; white-space: nowrap;
+  }
+  .hb-archive::before{
+    content: "HERFULSINS \00B7 MAISON D\2019INT\00C9RIEUR";
+    left: 0; right: 0; padding-left: 58px;
+    border-top: 1px solid var(--fm-line);
+    background-color: #EFEBE1;
+    background-image: var(--hb-paper-page);
+    background-size: 900px auto; background-repeat: repeat;
+  }
+  .hb-archive::after{
+    content: "DES DOCUMENTS, DES D\00C9CISIONS, UNE VISION CLAIRE.";
+    right: 58px;
+  }
+  @media (max-width: 760px){
+    .hb-archive::before{ padding-left: 22px; font-size: 8.5px; letter-spacing: .2em; }
+    .hb-archive::after{ display: none; }
+  }
+
   /* ===== 資料庫頁：頁首 ＋ 敘事欄 ＋ 頁尾分隔帶 ===== */
   .hb-pagehead{
     position: relative; z-index: 1;
@@ -2880,14 +2915,14 @@ function HerfulsinsContractsHub({onBack:l,notify:t}){
   let[selectedProject,setSelectedProject]=(0,u.useState)(null);
   let caseProjects=c;
   let filtered=e==="company"?a.filter(v=>v.category==="company"):a.filter(v=>v.category==="case"&&(!selectedProject||v.project_id===selectedProject));
-  return u.default.createElement("div",{style:{background:s.paper,minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},
+  return u.default.createElement("div",{className:"hb-archive",style:{minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},
     u.default.createElement("style",null,`
       @keyframes iyBreatheA { 0%,100%{transform:scale(1);opacity:.7} 50%{transform:scale(1.3);opacity:1} }
       @keyframes iyBreatheB { 0%,100%{transform:scale(1);opacity:.7} 50%{transform:scale(1.3);opacity:1} }
       .iy-breathe-a { animation: iyBreatheA 3.8s ease-in-out infinite; transform-origin:center; }
       .iy-breathe-b { animation: iyBreatheB 4.6s ease-in-out infinite; animation-delay:1s; transform-origin:center; }
     `),
-    u.default.createElement("div",{style:{maxWidth:720,margin:"0 auto",padding:"18px 20px 4px",position:"relative",zIndex:1}},
+    u.default.createElement("div",{style:{maxWidth:1180,margin:"0 auto",padding:"18px 20px 4px",position:"relative",zIndex:1}},
       u.default.createElement("button",{onClick:l,style:{background:"none",border:"none",color:s.inkSoft,cursor:"pointer",fontSize:11.5,display:"flex",alignItems:"center",gap:4,padding:0,marginBottom:8}},u.default.createElement(E,{name:"arrow-left",size:14})),
       u.default.createElement("div",{style:{textAlign:"center",padding:"8px 0 18px"}},
         u.default.createElement("img",{className:"hb-logo-mark",src:HB_LOGO_MARK,alt:"赫柏空間設計",style:{width:40,height:40,display:"block",margin:"0 auto 8px",objectFit:"contain"}}),
@@ -2896,10 +2931,10 @@ function HerfulsinsContractsHub({onBack:l,notify:t}){
         u.default.createElement("p",{style:{color:s.inkSoft,fontSize:12.5,marginTop:8,fontWeight:300,letterSpacing:"0.02em"}},"僅公司內部可見，獨立於案件資料之外")
       )
     ),
-    u.default.createElement("div",{style:{maxWidth:720,margin:"0 auto",display:"flex",background:s.card,borderBottom:`1px solid ${s.line}`,borderRadius:12,overflow:"hidden",border:`1px solid ${s.line}`}},
+    u.default.createElement("div",{style:{maxWidth:1180,margin:"0 auto",display:"flex",background:s.card,borderBottom:`1px solid ${s.line}`,borderRadius:12,overflow:"hidden",border:`1px solid ${s.line}`}},
       [{k:"company",label:"前期設計合約"},{k:"case",label:"指定案件工程合約"}].map(v=>u.default.createElement("button",{key:v.k,onClick:()=>{n(v.k),setSelectedProject(null)},style:{flex:1,background:"none",border:"none",padding:"13px 0",cursor:"pointer",fontWeight:400,fontSize:13.5,color:e===v.k?s.oceanDark:s.inkSoft,borderBottom:e===v.k?`3px solid ${s.ocean}`:"3px solid transparent"}},v.label))
     ),
-    u.default.createElement("div",{style:{maxWidth:720,margin:"0 auto",padding:"16px 16px 112px"}},
+    u.default.createElement("div",{style:{maxWidth:1180,margin:"0 auto",padding:"16px 16px 112px"}},
       e==="case"&&u.default.createElement("div",{style:{marginBottom:14}},
         u.default.createElement("label",{style:{fontSize:12.5,color:s.inkSoft,display:"block",marginBottom:4}},"選擇案件"),
         u.default.createElement("select",{value:selectedProject||"",onChange:v=>setSelectedProject(v.target.value||null),style:{width:"100%",padding:"9px 10px",borderRadius:7,border:`1px solid ${s.line}`,fontSize:14}},
@@ -5283,14 +5318,14 @@ function HbReceiptsHub({onBack,notify,projects}){
   let toVals=row=>({clientName:row.client_name,siteAddress:row.site_address,paymentMethod:row.payment_method,dateStr:row.receipt_date,periods:row.periods||[],showStamp:!noStamp.has(row.id)});
   let genWord=row=>HB_generateReceiptDocx(toVals(row)).catch(err=>notify("產生失敗："+(err?.message||err)));
   let genPdf=row=>{let ok=HB_openReceiptPrint(toVals(row));if(!ok)notify("請允許瀏覽器彈出視窗以產生 PDF")};
-  return u.default.createElement("div",{style:{background:s.paper,minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},
+  return u.default.createElement("div",{className:"hb-archive",style:{minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},
     u.default.createElement("style",null,`
       @keyframes iyBreatheA { 0%,100%{transform:scale(1);opacity:.7} 50%{transform:scale(1.3);opacity:1} }
       @keyframes iyBreatheB { 0%,100%{transform:scale(1);opacity:.7} 50%{transform:scale(1.3);opacity:1} }
       .iy-breathe-a { animation: iyBreatheA 3.8s ease-in-out infinite; transform-origin:center; }
       .iy-breathe-b { animation: iyBreatheB 4.6s ease-in-out infinite; animation-delay:1s; transform-origin:center; }
     `),
-    u.default.createElement("div",{style:{maxWidth:720,margin:"0 auto",padding:"18px 20px 4px",position:"relative"}},
+    u.default.createElement("div",{style:{maxWidth:1180,margin:"0 auto",padding:"18px 20px 4px",position:"relative"}},
       u.default.createElement("button",{onClick:onBack,style:{background:"none",border:"none",color:s.inkSoft,cursor:"pointer",fontSize:11.5,display:"flex",alignItems:"center",gap:4,padding:0,marginBottom:8}},u.default.createElement(E,{name:"arrow-left",size:14})),
       u.default.createElement("div",{style:{textAlign:"center",padding:"8px 0 18px"}},
         u.default.createElement("img",{className:"hb-logo-mark",src:HB_LOGO_MARK,alt:"赫柏空間設計",style:{width:40,height:40,display:"block",margin:"0 auto 8px",objectFit:"contain"}}),
@@ -5299,7 +5334,7 @@ function HbReceiptsHub({onBack,notify,projects}){
         u.default.createElement("p",{style:{color:s.inkSoft,fontSize:12.5,marginTop:8,fontWeight:300,letterSpacing:"0.02em"}},"依期別產生工程收據，A4 直向每頁列印 3 筆款項")
       )
     ),
-    u.default.createElement("div",{style:{maxWidth:720,margin:"0 auto",padding:"16px 16px 112px"}},
+    u.default.createElement("div",{style:{maxWidth:1180,margin:"0 auto",padding:"16px 16px 112px"}},
       u.default.createElement("button",{onClick:()=>setCreating(!0),style:{...Dl,width:"100%",marginBottom:16}},"＋ 新增工程收據"),
       loading?u.default.createElement("div",{style:{textAlign:"center",padding:30}},u.default.createElement(E,{name:"loader",className:"animate-spin",size:22,color:s.ocean})):
       batches.length===0?u.default.createElement("p",{style:{textAlign:"center",color:s.inkSoft,marginTop:40,fontSize:13.5}},"尚未有工程收據紀錄"):
@@ -5410,14 +5445,14 @@ function HbVendorReceiptsHub({onBack,notify,projects}){
   let toVals=row=>({vendorName:row.vendor_name,siteLocation:row.site_location,amount:row.amount,idNumber:row.id_number,address:row.address,phone:row.phone,dateStr:row.receipt_date,receiptNo:row.receipt_no,showStamp:!noStamp.has(row.id)});
   let genWord=row=>HB_generateVendorDocx(toVals(row)).catch(err=>notify("產生失敗："+(err?.message||err)));
   let genPdf=row=>{let ok=HB_openVendorPrint(toVals(row));if(!ok)notify("請允許瀏覽器彈出視窗以產生 PDF")};
-  return u.default.createElement("div",{style:{background:s.paper,minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},
+  return u.default.createElement("div",{className:"hb-archive",style:{minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},
     u.default.createElement("style",null,`
       @keyframes iyBreatheA { 0%,100%{transform:scale(1);opacity:.7} 50%{transform:scale(1.3);opacity:1} }
       @keyframes iyBreatheB { 0%,100%{transform:scale(1);opacity:.7} 50%{transform:scale(1.3);opacity:1} }
       .iy-breathe-a { animation: iyBreatheA 3.8s ease-in-out infinite; transform-origin:center; }
       .iy-breathe-b { animation: iyBreatheB 4.6s ease-in-out infinite; animation-delay:1s; transform-origin:center; }
     `),
-    u.default.createElement("div",{style:{maxWidth:720,margin:"0 auto",padding:"18px 20px 4px",position:"relative"}},
+    u.default.createElement("div",{style:{maxWidth:1180,margin:"0 auto",padding:"18px 20px 4px",position:"relative"}},
       u.default.createElement("button",{onClick:onBack,style:{background:"none",border:"none",color:s.inkSoft,cursor:"pointer",fontSize:11.5,display:"flex",alignItems:"center",gap:4,padding:0,marginBottom:8}},u.default.createElement(E,{name:"arrow-left",size:14})),
       u.default.createElement("div",{style:{textAlign:"center",padding:"8px 0 18px"}},
         u.default.createElement("img",{className:"hb-logo-mark",src:HB_LOGO_MARK,alt:"赫柏空間設計",style:{width:40,height:40,display:"block",margin:"0 auto 8px",objectFit:"contain"}}),
@@ -5426,7 +5461,7 @@ function HbVendorReceiptsHub({onBack,notify,projects}){
         u.default.createElement("p",{style:{color:s.inkSoft,fontSize:12.5,marginTop:8,fontWeight:300,letterSpacing:"0.02em"}},"廠商工程款領據產生，A5 橫向格式一張一筆")
       )
     ),
-    u.default.createElement("div",{style:{maxWidth:720,margin:"0 auto",padding:"16px 16px 112px"}},
+    u.default.createElement("div",{style:{maxWidth:1180,margin:"0 auto",padding:"16px 16px 112px"}},
       u.default.createElement("button",{onClick:()=>setCreating(!0),style:{...Dl,width:"100%",marginBottom:16}},"＋ 新增廠商領據"),
       loading?u.default.createElement("div",{style:{textAlign:"center",padding:30}},u.default.createElement(E,{name:"loader",className:"animate-spin",size:22,color:s.ocean})):
       list.length===0?u.default.createElement("p",{style:{textAlign:"center",color:s.inkSoft,marginTop:40,fontSize:13.5}},"尚未有廠商領據紀錄"):
@@ -6079,14 +6114,14 @@ function HbVendorQuoteHub({onBack,notify}){
     return entries;
   })();
 
-  return u.default.createElement("div",{style:{background:s.paper,minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},
+  return u.default.createElement("div",{className:"hb-archive",style:{minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},
     u.default.createElement("style",null,`
       @keyframes iyBreatheA { 0%,100%{transform:scale(1);opacity:.7} 50%{transform:scale(1.3);opacity:1} }
       @keyframes iyBreatheB { 0%,100%{transform:scale(1);opacity:.7} 50%{transform:scale(1.3);opacity:1} }
       .iy-breathe-a { animation: iyBreatheA 3.8s ease-in-out infinite; transform-origin:center; }
       .iy-breathe-b { animation: iyBreatheB 4.6s ease-in-out infinite; animation-delay:1s; transform-origin:center; }
     `),
-    u.default.createElement("div",{style:{maxWidth:720,margin:"0 auto",padding:"18px 20px 4px",position:"relative"}},
+    u.default.createElement("div",{style:{maxWidth:1180,margin:"0 auto",padding:"18px 20px 4px",position:"relative"}},
       u.default.createElement("button",{onClick:openFolder?()=>setOpenFolder(null):onBack,style:{background:"none",border:"none",color:s.inkSoft,cursor:"pointer",fontSize:11.5,display:"flex",alignItems:"center",gap:4,padding:0,marginBottom:8}},
         u.default.createElement(E,{name:"arrow-left",size:14})
       ),
@@ -6097,7 +6132,7 @@ function HbVendorQuoteHub({onBack,notify}){
         u.default.createElement("p",{style:{color:s.inkSoft,fontSize:12.5,marginTop:8,fontWeight:300,letterSpacing:"0.02em"}},"依廠商分類管理報價檔案（Excel／圖片）")
       )
     ),
-    u.default.createElement("div",{style:{maxWidth:720,margin:"0 auto",padding:16}},
+    u.default.createElement("div",{style:{maxWidth:1180,margin:"0 auto",padding:16}},
       loading
         ? u.default.createElement("div",{style:{textAlign:"center",padding:40}},u.default.createElement(E,{name:"loader",className:"animate-spin",size:22,color:s.ocean}))
         : openFolder
@@ -7068,14 +7103,14 @@ function HbAttendanceHub({onBack,notify}){
     byWorker[k].pay+=HB_num(r.days)*HB_num(r.daily_rate);
   });
   let workerEntries=Object.entries(byWorker).sort((a,b)=>b[1].days-a[1].days);
-  return u.default.createElement("div",{style:{background:s.paper,minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},
+  return u.default.createElement("div",{className:"hb-archive",style:{minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},
     u.default.createElement("style",null,`
       @keyframes iyBreatheA { 0%,100%{transform:scale(1);opacity:.7} 50%{transform:scale(1.3);opacity:1} }
       @keyframes iyBreatheB { 0%,100%{transform:scale(1);opacity:.7} 50%{transform:scale(1.3);opacity:1} }
       .iy-breathe-a { animation: iyBreatheA 3.8s ease-in-out infinite; transform-origin:center; }
       .iy-breathe-b { animation: iyBreatheB 4.6s ease-in-out infinite; animation-delay:1s; transform-origin:center; }
     `),
-    u.default.createElement("div",{style:{maxWidth:720,margin:"0 auto",padding:"18px 20px 4px",position:"relative"}},
+    u.default.createElement("div",{style:{maxWidth:1180,margin:"0 auto",padding:"18px 20px 4px",position:"relative"}},
       u.default.createElement("button",{onClick:onBack,style:{background:"none",border:"none",color:s.inkSoft,cursor:"pointer",fontSize:11.5,display:"flex",alignItems:"center",gap:4,padding:0,marginBottom:8}},u.default.createElement(E,{name:"arrow-left",size:14})),
       u.default.createElement("div",{style:{textAlign:"center",padding:"8px 0 18px"}},
         u.default.createElement("img",{className:"hb-logo-mark",src:HB_LOGO_MARK,alt:"赫柏空間設計",style:{width:40,height:40,display:"block",margin:"0 auto 8px",objectFit:"contain"}}),
@@ -7084,7 +7119,7 @@ function HbAttendanceHub({onBack,notify}){
         u.default.createElement("p",{style:{color:s.inkSoft,fontSize:12.5,marginTop:8,fontWeight:300,letterSpacing:"0.02em"}},"記錄工班師傅每日出工天數，依師傅統計工資")
       )
     ),
-    u.default.createElement("div",{style:{maxWidth:720,margin:"0 auto",padding:"16px 16px 112px"}},
+    u.default.createElement("div",{style:{maxWidth:1180,margin:"0 auto",padding:"16px 16px 112px"}},
       u.default.createElement("div",{style:{marginBottom:14}},
         u.default.createElement("input",{type:"month",value:filterMonth,onChange:e=>setFilterMonth(e.target.value),style:{...el,marginBottom:0}})
       ),
@@ -7507,13 +7542,13 @@ function HbDrawingHub({onBack,notify}){
 
   let viewingDrawing=drawings.find(d=>d.id===versionModalId);
 
-  return u.default.createElement("div",{style:{background:s.paper,minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},
-    u.default.createElement("div",{style:{maxWidth:720,margin:"0 auto",padding:"18px 20px 4px"}},
+  return u.default.createElement("div",{className:"hb-archive",style:{minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},
+    u.default.createElement("div",{style:{maxWidth:1180,margin:"0 auto",padding:"18px 20px 4px"}},
       u.default.createElement("button",{onClick:onBack,style:{background:"none",border:"none",color:s.inkSoft,cursor:"pointer",fontSize:11.5,display:"flex",alignItems:"center",gap:4,padding:0,marginBottom:8}},u.default.createElement(E,{name:"arrow-left",size:14})),
       u.default.createElement("h1",{style:{color:s.ink,fontSize:20,fontWeight:300,margin:0}},"圖面管理"),
       u.default.createElement("p",{style:{color:s.inkSoft,fontSize:12.5,marginTop:3,fontWeight:300}},"依資料夾管理施工圖面，支援子資料夾與版本紀錄")
     ),
-    u.default.createElement("div",{style:{maxWidth:720,margin:"0 auto",padding:"16px 16px 112px"}},
+    u.default.createElement("div",{style:{maxWidth:1180,margin:"0 auto",padding:"16px 16px 112px"}},
       u.default.createElement("div",{style:{display:"flex",flexWrap:"wrap",alignItems:"center",gap:4,fontSize:12.5,color:s.inkSoft,marginBottom:14}},
         u.default.createElement("span",{onClick:()=>setCurrentFolderId(null),style:{cursor:"pointer",color:currentFolderId?s.inkSoft:s.oceanDark}},"圖面總覽"),
         breadcrumb.map(f=>u.default.createElement(u.default.Fragment,{key:f.id},
@@ -9420,7 +9455,7 @@ function HbPdfRotate({onBack:back,notify:nf}){
   let files=box.current;
   let pageCount=files.reduce((a,f)=>a+f.pages.length,0);
 
-  return u.default.createElement("div",{style:{background:s.paper,minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},
+  return u.default.createElement("div",{className:"hb-archive",style:{minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},
     u.default.createElement("div",{style:{background:s.paper,padding:"20px 16px 14px",borderBottom:`1px solid ${s.line}`}},
       u.default.createElement("button",{onClick:back,style:{background:"none",border:"none",color:s.inkSoft,cursor:"pointer",padding:0,marginBottom:10,display:"flex",alignItems:"center",gap:5,fontFamily:"inherit",fontSize:13}},
         u.default.createElement(E,{name:"arrow-left",size:16}),"返回"),
