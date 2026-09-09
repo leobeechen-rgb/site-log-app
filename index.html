@@ -3758,11 +3758,11 @@ function HbPriceBookHub({onBack,notify}){
 
   let chip=(label,active,onClick)=>h("button",{key:label,onClick,style:{border:`1px solid ${active?s.ocean:s.line}`,background:active?"rgba(46,74,60,0.10)":"none",color:active?s.oceanDark:s.inkSoft,borderRadius:999,padding:"5px 12px",fontSize:11.5,cursor:"pointer",whiteSpace:"nowrap"}},label);
 
-  return h("div",{style:{background:s.paper,minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},
-    h("div",{style:{maxWidth:900,margin:"0 auto",padding:"18px 16px 112px"}},
-      h("button",{onClick:onBack,style:{background:"none",border:"none",color:s.inkSoft,cursor:"pointer",fontSize:11.5,display:"flex",alignItems:"center",gap:4,padding:0,marginBottom:14}},h(E,{name:"arrow-left",size:14}),"返回"),
-      h("h1",{style:{fontSize:20,fontWeight:300,margin:"0 0 4px",letterSpacing:"0.06em"}},"常用工項單價庫"),
-      h("p",{style:{fontSize:12,color:s.inkSoft,margin:"0 0 16px"}},"報價時打字就會自動建議，售價與廠商成本一起帶入。成本以「單位成本」儲存，帶入估價單時自動乘上數量。共 ",list.length," 筆工項。"),
+  return h("div",{className:"hb-archive hb-dossier",style:{minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},
+    h("div",{style:{maxWidth:1180,margin:"0 auto",padding:"0 58px 112px"}},
+      h("button",{onClick:onBack,className:"hb-arcBack"},h(E,{name:"arrow-left",size:15}),h("span",null,"返回公司資料庫")),
+      h("div",{className:"hb-dosLabel"},"Barème des Tarifs"),h("h1",{className:"hb-dosTitle"},"常用工項單價庫"),
+      h("p",{className:"hb-dosLede"},"報價時打字就會自動建議，售價與廠商成本一起帶入。成本以「單位成本」儲存，帶入估價單時自動乘上數量。共 ",list.length," 筆工項。"),
 
       h("div",{style:{display:"flex",gap:8,marginBottom:10,flexWrap:"wrap"}},
         h("button",{onClick:()=>setEditRow({category:cat||"",name:"",spec:"",unit:"式",price:"",vendorPrice:"",note:""}),className:"hb-cta"},"+ 新增工項"),
@@ -7878,12 +7878,12 @@ function HbDrawingHub({onBack,notify}){
   let viewingDrawing=drawings.find(d=>d.id===versionModalId);
 
   return u.default.createElement("div",{className:"hb-archive hb-dossier",style:{minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},
-    u.default.createElement("div",{style:{maxWidth:1180,margin:"0 auto",padding:"18px 20px 4px"}},
-      u.default.createElement("button",{onClick:onBack,style:{background:"none",border:"none",color:s.inkSoft,cursor:"pointer",fontSize:11.5,display:"flex",alignItems:"center",gap:4,padding:0,marginBottom:8}},u.default.createElement(E,{name:"arrow-left",size:14})),
-      u.default.createElement("h1",{style:{color:s.ink,fontSize:20,fontWeight:300,margin:0}},"圖面管理"),
-      u.default.createElement("p",{style:{color:s.inkSoft,fontSize:12.5,marginTop:3,fontWeight:300}},"依資料夾管理施工圖面，支援子資料夾與版本紀錄")
+    u.default.createElement("div",{className:"hb-dosWrap"},
+      u.default.createElement("button",{onClick:onBack,className:"hb-arcBack"},u.default.createElement(E,{name:"arrow-left",size:15}),u.default.createElement("span",null,"返回公司資料庫")),
+      u.default.createElement("div",{className:"hb-dosLabel"},"Gestion des Plans"),u.default.createElement("h1",{className:"hb-dosTitle"},"圖面管理"),
+      u.default.createElement("p",{className:"hb-dosLede"},"依資料夾管理施工圖面，支援子資料夾與版本紀錄回溯。")
     ),
-    u.default.createElement("div",{style:{maxWidth:1180,margin:"0 auto",padding:"16px 16px 112px"}},
+    u.default.createElement("div",{style:{maxWidth:1180,margin:"0 auto",padding:"6px 58px 112px"}},
       u.default.createElement("div",{style:{display:"flex",flexWrap:"wrap",alignItems:"center",gap:4,fontSize:12.5,color:s.inkSoft,marginBottom:14}},
         u.default.createElement("span",{onClick:()=>setCurrentFolderId(null),style:{cursor:"pointer",color:currentFolderId?s.inkSoft:s.oceanDark}},"圖面總覽"),
         breadcrumb.map(f=>u.default.createElement(u.default.Fragment,{key:f.id},
@@ -8420,11 +8420,11 @@ function HbSurveyHub({onBack,notify,projects}){
   };
   let projName=id=>{let p=(projects||[]).find(x=>x.id===id);return p?p.name:""};
 
-  return h("div",{style:{background:s.paper,minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},
-    h("div",{style:{maxWidth:1180,margin:"0 auto",padding:"18px 16px 112px"}},
-      h("button",{onClick:onBack,style:{background:"none",border:"none",color:s.inkSoft,cursor:"pointer",fontSize:11.5,display:"flex",alignItems:"center",gap:4,padding:0,marginBottom:14}},h(E,{name:"arrow-left",size:14}),"返回"),
-      h("h1",{style:{fontSize:20,fontWeight:300,margin:"0 0 4px",letterSpacing:"0.06em"}},"設計需求問卷"),
-      h("p",{style:{fontSize:12,color:s.inkSoft,margin:"0 0 18px",lineHeight:1.7}},
+  return h("div",{className:"hb-archive hb-dossier",style:{minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},
+    h("div",{style:{maxWidth:1180,margin:"0 auto",padding:"0 58px 112px"}},
+      h("button",{onClick:onBack,className:"hb-arcBack"},h(E,{name:"arrow-left",size:15}),h("span",null,"返回公司資料庫")),
+      h("div",{className:"hb-dosLabel"},"Questionnaire Client"),h("h1",{className:"hb-dosTitle"},"設計需求問卷"),
+      h("p",{className:"hb-dosLede"},
         "產生一個專屬連結傳給業主，他填完你這邊就看得到。初次接洽時先發一份，可以省掉很多來回。"),
 
       h("div",{style:{background:s.card,border:`1px solid ${s.line}`,borderRadius:10,padding:"14px 15px",marginBottom:18}},
@@ -8904,11 +8904,11 @@ function HbChangeOrderHub({onBack,notify,projects}){
   if(editing)return h(HbChangeOrderForm,{initial:editing,projects,notify,
     onCancel:()=>setEditing(null),onSaved:onSaved});
 
-  return h("div",{style:{background:s.paper,minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},
-    h("div",{style:{maxWidth:1180,margin:"0 auto",padding:"18px 16px 112px"}},
-      h("button",{onClick:onBack,style:{background:"none",border:"none",color:s.inkSoft,cursor:"pointer",fontSize:11.5,display:"flex",alignItems:"center",gap:4,padding:0,marginBottom:14,fontFamily:"inherit"}},h(E,{name:"arrow-left",size:14}),"返回"),
-      h("h1",{style:{fontSize:20,fontWeight:300,margin:"0 0 4px",letterSpacing:"0.06em"}},"追加減帳單"),
-      h("p",{style:{fontSize:12,color:s.inkSoft,margin:"0 0 16px",lineHeight:1.7}},
+  return h("div",{className:"hb-archive hb-dossier",style:{minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},
+    h("div",{style:{maxWidth:1180,margin:"0 auto",padding:"0 58px 112px"}},
+      h("button",{onClick:onBack,className:"hb-arcBack"},h(E,{name:"arrow-left",size:15}),h("span",null,"返回公司資料庫")),
+      h("div",{className:"hb-dosLabel"},"Avenants au Contrat"),h("h1",{className:"hb-dosTitle"},"追加減帳單"),
+      h("p",{className:"hb-dosLede"},
         "現場開單、業主當場簽名才生效。簽完會鎖定，金額不能再改，日後結算有憑有據。"),
 
       h("button",{onClick:()=>setEditing({no:HB_coNextNo(list),projectId:proj||"",items:[HB_coNewItem()],status:"draft"}),
@@ -9791,11 +9791,11 @@ function HbPdfRotate({onBack:back,notify:nf}){
   let pageCount=files.reduce((a,f)=>a+f.pages.length,0);
 
   return u.default.createElement("div",{className:"hb-archive hb-dossier",style:{minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},
-    u.default.createElement("div",{style:{background:s.paper,padding:"20px 16px 14px",borderBottom:`1px solid ${s.line}`}},
-      u.default.createElement("button",{onClick:back,style:{background:"none",border:"none",color:s.inkSoft,cursor:"pointer",padding:0,marginBottom:10,display:"flex",alignItems:"center",gap:5,fontFamily:"inherit",fontSize:13}},
-        u.default.createElement(E,{name:"arrow-left",size:16}),"返回"),
-      u.default.createElement("div",{style:{fontSize:20,fontWeight:500}},"圖面轉正"),
-      u.default.createElement("p",{style:{fontSize:12.5,color:s.inkSoft,margin:"4px 0 0",lineHeight:1.7,maxWidth:520}},
+    u.default.createElement("div",{className:"hb-dosWrap"},
+      u.default.createElement("button",{onClick:back,className:"hb-arcBack"},
+        u.default.createElement(E,{name:"arrow-left",size:15}),u.default.createElement("span",null,"返回公司資料庫")),
+      u.default.createElement("div",{className:"hb-dosLabel"},"Redressement des Plans"),u.default.createElement("h1",{className:"hb-dosTitle"},"圖面轉正"),
+      u.default.createElement("p",{className:"hb-dosLede"},
         "讀 PDF 裡文字的角度判斷圖面被轉了幾度，再把頁面轉回來。只改頁面的旋轉屬性、不重繪內容，線條與尺寸完全不動，檔案大小也不變。")
     ),
 
