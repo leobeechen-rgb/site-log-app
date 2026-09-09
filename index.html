@@ -495,6 +495,24 @@
   @media (max-width:1080px){ .hb-dossier .hb-dosHead{ padding:0 0 22px; } }
   @media (max-width:860px){ .hb-dossier .hb-dosHead{ padding:0 0 20px; } }
 
+  .hb-dosFolder{
+    background: rgba(255,255,255,.55); border: 1px solid rgba(57,51,47,.14); border-radius: 2px;
+    padding: 16px 14px; cursor: pointer; transition: border-color .2s ease, background .2s ease;
+  }
+  .hb-dosFolder:hover{ background: rgba(255,255,255,.9); border-color: rgba(112,59,66,.35); }
+  .hb-dosGroup{
+    display:flex; align-items:center; gap:8px; cursor:pointer; margin-bottom:12px;
+    font-size:12.5px; letter-spacing:.12em; color:#6B625B;
+    border-bottom:1px solid rgba(57,51,47,.12); padding-bottom:8px;
+  }
+  .hb-dosGroup input{ accent-color:#703B42; }
+  .hb-dosFilter{ display:flex; align-items:center; gap:18px; flex-wrap:wrap; margin:16px 0 4px; }
+  .hb-dosSum{ font-size:12.5px; color:#7A716A; letter-spacing:.04em; }
+  .hb-dosChip{
+    display:inline-block; margin-left:10px; font-size:10.5px; letter-spacing:.1em;
+    border:1px solid rgba(57,51,47,.2); border-radius:2px; padding:2px 8px; color:#8C8279;
+  }
+  .hb-dosChip.on{ border-color:#5E6B58; color:#5E6B58; }
   .hb-dosEmpty{ text-align:center; color:#8C8279; margin-top:44px; font-size:13.5px; letter-spacing:.06em; }
   .hb-dosCheck{
     display:inline-flex; align-items:center; gap:7px; margin-top:8px; cursor:pointer;
@@ -3845,7 +3863,7 @@ function HbPriceBookHub({onBack,notify}){
     }catch(e){notify&&notify("儲存失敗："+(e.message||e))}
   };
 
-  let chip=(label,active,onClick)=>h("button",{key:label,onClick,style:{border:`1px solid ${active?s.ocean:s.line}`,background:active?"rgba(46,74,60,0.10)":"none",color:active?s.oceanDark:s.inkSoft,borderRadius:999,padding:"5px 12px",fontSize:11.5,cursor:"pointer",whiteSpace:"nowrap"}},label);
+  let chip=(label,active,onClick)=>h("button",{key:label,onClick,style:{border:`1px solid ${active?"#703B42":s.line}`,background:active?"rgba(46,74,60,0.10)":"none",color:active?"#39332F":s.inkSoft,borderRadius:999,padding:"5px 12px",fontSize:11.5,cursor:"pointer",whiteSpace:"nowrap"}},label);
 
   return h("div",{className:"hb-archive hb-dossier",style:{minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},
     h("div",{style:{maxWidth:1180,margin:"0 auto",padding:"0 58px 112px"}},
@@ -3855,20 +3873,20 @@ function HbPriceBookHub({onBack,notify}){
 
       h("div",{style:{display:"flex",gap:8,marginBottom:10,flexWrap:"wrap"}},
         h("button",{onClick:()=>setEditRow({category:cat||"",name:"",spec:"",unit:"式",price:"",vendorPrice:"",note:""}),className:"hb-cta"},"+ 新增工項"),
-        h("button",{onClick:doScan,disabled:!!scanning,style:{flex:"1 1 180px",border:`1px solid ${s.line}`,background:"none",borderRadius:9,padding:"10px 8px",fontSize:12.5,color:s.oceanDark,cursor:scanning?"default":"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6,opacity:scanning?.6:1}},
+        h("button",{onClick:doScan,disabled:!!scanning,style:{flex:"1 1 180px",border:`1px solid ${s.line}`,background:"none",borderRadius:2,padding:"10px 8px",fontSize:12.5,color:"#39332F",cursor:scanning?"default":"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6,opacity:scanning?.6:1}},
           scanning?h(E,{name:"loader",size:14,className:"animate-spin"}):h(E,{name:"zap",size:14}),
           scanning?(scanning.total?`建庫中 ${scanning.done}/${scanning.total}`:"掃描中…"):"從歷史估價單建庫"),
-        h("button",{onClick:()=>fileRef.current&&fileRef.current.click(),disabled:!!reading,style:{border:`1px solid ${s.ocean}`,background:"none",borderRadius:9,padding:"10px 14px",fontSize:12.5,color:s.oceanDark,cursor:reading?"default":"pointer",display:"flex",alignItems:"center",gap:6,opacity:reading?.6:1}},
+        h("button",{onClick:()=>fileRef.current&&fileRef.current.click(),disabled:!!reading,style:{border:`1px solid ${"#703B42"}`,background:"none",borderRadius:2,padding:"10px 14px",fontSize:12.5,color:"#39332F",cursor:reading?"default":"pointer",display:"flex",alignItems:"center",gap:6,opacity:reading?.6:1}},
           reading?h(E,{name:"loader",size:14,className:"animate-spin"}):h(E,{name:"upload",size:14}),reading?"讀取中…":"匯入 Excel／CSV"),
-        h("button",{onClick:()=>HB_pbExportCsv(filtered),title:"把目前篩選出來的清單匯出成 CSV",style:{border:`1px solid ${s.line}`,background:"none",borderRadius:9,padding:"10px 14px",fontSize:12.5,color:s.oceanDark,cursor:"pointer",display:"flex",alignItems:"center",gap:6}},h(E,{name:"download",size:14}),"匯出"),
-        h("button",{onClick:()=>reload(!0),style:{border:`1px solid ${s.line}`,background:"none",borderRadius:9,padding:"10px 12px",color:s.oceanDark,cursor:"pointer"}},h(E,{name:"refresh",size:14})),
+        h("button",{onClick:()=>HB_pbExportCsv(filtered),title:"把目前篩選出來的清單匯出成 CSV",style:{border:`1px solid ${s.line}`,background:"none",borderRadius:2,padding:"10px 14px",fontSize:12.5,color:"#39332F",cursor:"pointer",display:"flex",alignItems:"center",gap:6}},h(E,{name:"download",size:14}),"匯出"),
+        h("button",{onClick:()=>reload(!0),style:{border:`1px solid ${s.line}`,background:"none",borderRadius:2,padding:"10px 12px",color:"#39332F",cursor:"pointer"}},h(E,{name:"refresh",size:14})),
         h("input",{ref:fileRef,type:"file",accept:".csv,.xlsx,.xlsm,.xls,text/csv",style:{display:"none"},onChange:onPickFile})
       ),
       h("p",{style:{fontSize:11,color:s.inkSoft,margin:"-2px 0 10px",lineHeight:1.6}},
         "手上已經有單價表？直接按「匯入 Excel／CSV」，欄位可以自己對應，不用先整理格式。",
-        h("span",{onClick:HB_pbDownloadTemplate,style:{color:s.ocean,cursor:"pointer",textDecoration:"underline",marginLeft:6}},"下載匯入範本")),
+        h("span",{onClick:HB_pbDownloadTemplate,style:{color:"#703B42",cursor:"pointer",textDecoration:"underline",marginLeft:6}},"下載匯入範本")),
 
-      h("input",{value:kw,onChange:v=>setKw(v.target.value),placeholder:"搜尋項目、規格或備註…",style:{width:"100%",boxSizing:"border-box",border:`1px solid ${s.line}`,borderRadius:9,padding:"10px 12px",fontSize:14,background:"#fff",color:s.ink,marginBottom:10}}),
+      h("input",{value:kw,onChange:v=>setKw(v.target.value),placeholder:"搜尋項目、規格或備註…",style:{width:"100%",boxSizing:"border-box",border:`1px solid ${s.line}`,borderRadius:2,padding:"10px 12px",fontSize:14,background:"#fff",color:s.ink,marginBottom:10}}),
 
       h("div",{style:{display:"flex",gap:6,overflowX:"auto",paddingBottom:8,marginBottom:4}},
         chip("全部分類",!cat,()=>setCat("")),
@@ -3881,22 +3899,22 @@ function HbPriceBookHub({onBack,notify}){
         chip("依名稱",sort==="name",()=>setSort("name"))
       ),
 
-      err&&h("div",{style:{background:"#FDF3F3",border:`1px solid ${s.danger}`,borderRadius:8,padding:"10px 12px",fontSize:12,color:s.danger,marginBottom:12,lineHeight:1.6}},
+      err&&h("div",{style:{background:"#FDF3F3",border:`1px solid ${s.danger}`,borderRadius:2,padding:"10px 12px",fontSize:12,color:s.danger,marginBottom:12,lineHeight:1.6}},
         "讀取單價庫失敗：",err,
         h("div",{style:{color:s.inkSoft,marginTop:6}},"如果是第一次使用，請先到 Supabase 的 SQL Editor 執行 sitelog_price_items.sql 建立資料表。")),
 
-      filtered.length>0&&h("div",{style:{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",marginBottom:9,border:`1px solid ${s.line}`,borderRadius:9,background:s.card,flexWrap:"wrap"}},
-        h("label",{style:{display:"flex",alignItems:"center",gap:6,fontSize:12.5,color:s.oceanDark,cursor:"pointer"}},
+      filtered.length>0&&h("div",{style:{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",marginBottom:9,border:`1px solid ${s.line}`,borderRadius:2,background:"rgba(255,255,255,.6)",flexWrap:"wrap"}},
+        h("label",{style:{display:"flex",alignItems:"center",gap:6,fontSize:12.5,color:"#39332F",cursor:"pointer"}},
           h("input",{type:"checkbox",checked:allSelected,onChange:toggleAll,style:{width:15,height:15}}),
           allSelected?"取消全選":`全選目前 ${filtered.length} 筆`),
         h("div",{style:{flex:1}}),
         selCount>0?h("span",{style:{fontSize:12,color:s.inkSoft}},"已選 ",selCount," 筆"):null,
-        selCount>0?h("button",{onClick:doDeleteSelected,disabled:!!bulkBusy,style:{border:"none",background:s.danger,color:"#fff",borderRadius:7,padding:"7px 14px",fontSize:12.5,cursor:bulkBusy?"default":"pointer",opacity:bulkBusy?.6:1}},
+        selCount>0?h("button",{onClick:doDeleteSelected,disabled:!!bulkBusy,style:{border:"none",background:s.danger,color:"#fff",borderRadius:2,padding:"7px 14px",fontSize:12.5,cursor:bulkBusy?"default":"pointer",opacity:bulkBusy?.6:1}},
           bulkBusy?`刪除中 ${bulkBusy.done}/${bulkBusy.total}`:`刪除選取的 ${selCount} 筆`):null,
-        h("button",{onClick:doClearAll,disabled:!!bulkBusy,style:{border:`1px solid ${s.danger}`,background:"none",color:s.danger,borderRadius:7,padding:"7px 12px",fontSize:12,cursor:bulkBusy?"default":"pointer",opacity:bulkBusy?.6:1}},"清空整個單價庫")
+        h("button",{onClick:doClearAll,disabled:!!bulkBusy,style:{border:`1px solid ${s.danger}`,background:"none",color:s.danger,borderRadius:2,padding:"7px 12px",fontSize:12,cursor:bulkBusy?"default":"pointer",opacity:bulkBusy?.6:1}},"清空整個單價庫")
       ),
 
-      loading&&list.length===0?h("div",{style:{textAlign:"center",padding:40}},h(E,{name:"loader",size:22,className:"animate-spin",color:s.ocean})):
+      loading&&list.length===0?h("div",{style:{textAlign:"center",padding:40}},h(E,{name:"loader",size:22,className:"animate-spin",color:"#703B42"})):
       filtered.length===0?h("div",{style:{textAlign:"center",padding:"46px 20px",color:s.inkSoft,fontSize:13,lineHeight:1.8}},
         list.length===0?"單價庫還是空的。按上面的「從歷史估價單建庫」，可以把你過去報過的工項一次全部匯進來。":"沒有符合的工項"):
       h("div",{style:{display:"flex",flexDirection:"column",gap:8}},
@@ -3905,7 +3923,7 @@ function HbPriceBookHub({onBack,notify}){
           let trend=HB_pbTrend(row,"c");
           let open=openId===row.id;
           let hist=(Array.isArray(row.price_history)?row.price_history:[]).slice().reverse();
-          return h("div",{key:row.id,style:{background:s.card,border:`1px solid ${s.line}`,borderRadius:10,overflow:"hidden"}},
+          return h("div",{key:row.id,style:{background:"rgba(255,255,255,.55)",border:"1px solid rgba(57,51,47,.12)",borderRadius:2,overflow:"hidden"}},
             h("div",{onClick:()=>setOpenId(open?null:row.id),style:{padding:"11px 13px",cursor:"pointer",display:"flex",gap:10,alignItems:"flex-start",background:sel.has(row.id)?"rgba(46,74,60,0.07)":"transparent"}},
               h("input",{type:"checkbox",checked:sel.has(row.id),onChange:()=>toggleOne(row.id),onClick:ev=>ev.stopPropagation(),style:{width:15,height:15,marginTop:2,flexShrink:0,cursor:"pointer"}}),
               h("div",{style:{flex:1,minWidth:0}},
@@ -3919,7 +3937,7 @@ function HbPriceBookHub({onBack,notify}){
                 )
               ),
               h("div",{style:{textAlign:"right",whiteSpace:"nowrap"}},
-                h("div",{style:{fontSize:14,color:s.oceanDark}},row.price?"NT$ "+HB_money(HB_num(row.price)):"—"),
+                h("div",{style:{fontSize:14,color:"#39332F"}},row.price?"NT$ "+HB_money(HB_num(row.price)):"—"),
                 h("div",{style:{fontSize:11,color:s.inkSoft,marginTop:2}},"單位成本 ",row.vendor_price?HB_money(HB_num(row.vendor_price)):"—",
                   margin!=null?h("span",{style:{color:margin>=0?s.tree:s.danger,marginLeft:6}},"毛利 ",margin,"%"):null),
                 trend?h("div",{style:{fontSize:10.5,marginTop:3,color:trend.pct>0?s.danger:s.tree}},trend.pct>0?"▲ 成本漲 ":"▼ 成本降 ",Math.abs(trend.pct),"%"):null
@@ -3939,7 +3957,7 @@ function HbPriceBookHub({onBack,notify}){
                     h("span",null,"售 ",x.p?HB_money(Number(x.p)):"—","　單位成本 ",x.c?HB_money(Number(x.c)):"—")))
                 )),
               h("div",{style:{display:"flex",gap:8}},
-                h("button",{onClick:()=>setEditRow({id:row.id,category:row.category||"",name:row.name||"",spec:row.spec||"",unit:row.unit||"式",price:row.price??"",vendorPrice:row.vendor_price??"",note:row.note||""}),style:{flex:1,border:`1px solid ${s.line}`,background:"none",borderRadius:7,padding:"8px 0",fontSize:12.5,color:s.oceanDark,cursor:"pointer"}},"編輯"),
+                h("button",{onClick:()=>setEditRow({id:row.id,category:row.category||"",name:row.name||"",spec:row.spec||"",unit:row.unit||"式",price:row.price??"",vendorPrice:row.vendor_price??"",note:row.note||""}),style:{flex:1,border:`1px solid ${s.line}`,background:"none",borderRadius:2,padding:"8px 0",fontSize:12.5,color:"#39332F",cursor:"pointer"}},"編輯"),
                 h("button",{onClick:()=>doDelete(row),style:{border:"none",background:"none",color:s.danger,cursor:"pointer",padding:"8px 14px",fontSize:12.5}},"刪除")
               )
             )
@@ -6761,26 +6779,26 @@ function HbVendorQuoteHub({onBack,notify}){
               u.default.createElement("div",{style:{marginBottom:16}},
                 u.default.createElement(ke,{label:"新增廠商資料夾",icon:"folder-plus",busy:false,onClick:()=>setShowNewFolder(true)})
               ),
-              u.default.createElement("div",{style:{display:"flex",gap:8,marginBottom:16}},
-                u.default.createElement("button",{onClick:downloadAllZip,disabled:zipping,style:{...ll,flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:6,fontSize:13}},
+              u.default.createElement("div",{className:"hb-dosBar",style:{justifyContent:"flex-start",gap:12,borderBottom:"none",paddingBottom:0,marginBottom:18}},
+                u.default.createElement("button",{onClick:downloadAllZip,disabled:zipping,className:"hb-dosAct"},
                   zipping?u.default.createElement(E,{name:"loader",size:14,className:"animate-spin"}):u.default.createElement(E,{name:"download",size:14}),
                   zipping?"打包中…":"打包下載全部"
                 ),
-                u.default.createElement("button",{onClick:exportPdf,style:{...ll,flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:6,fontSize:13}},
+                u.default.createElement("button",{onClick:exportPdf,className:"hb-dosAct"},
                   u.default.createElement(E,{name:"file-output",size:14}),"匯出 PDF 清單"
                 )
               ),
               folders.length===0
                 ? u.default.createElement(He,{icon:"folder-plus",text:"尚未建立任何廠商資料夾"})
                 : grouped.map(group=>u.default.createElement("div",{key:group.key,style:{marginBottom:20}},
-                    u.default.createElement("label",{style:{display:"flex",alignItems:"center",gap:6,fontSize:12.5,fontWeight:400,color:s.oceanDark,marginBottom:8,cursor:"pointer"}},
+                    u.default.createElement("label",{className:"hb-dosGroup"},
                       u.default.createElement("input",{type:"checkbox",checked:isProjSelected(group.key),onChange:e=>setSelectedProjects(prev=>{let base=prev===null?new Set(grouped.map(g=>g.key)):new Set(prev);e.target.checked?base.add(group.key):base.delete(group.key);return base}),style:{width:15,height:15,accentColor:s.ocean}}),
                       group.label
                     ),
-                    u.default.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(230px,1fr))",gap:16}},
+                    u.default.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(210px,1fr))",gap:14}},
                       group.list.map(folder=>{
                         let count=files.filter(f=>f.folderId===folder.id).length;
-                        return u.default.createElement("div",{key:folder.id,onClick:()=>setOpenFolder(folder.id),style:{background:s.card,borderRadius:8,padding:"14px 12px",border:`1px solid ${s.line}`,cursor:"pointer"}},
+                        return u.default.createElement("div",{key:folder.id,onClick:()=>setOpenFolder(folder.id),className:"hb-dosFolder"},
                           u.default.createElement(E,{name:"folder",size:22,color:s.ocean,style:{marginBottom:8}}),
                           u.default.createElement("div",{style:{fontSize:13,fontWeight:400,color:s.oceanDark,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},folder.name),
                           u.default.createElement("div",{style:{fontSize:11.5,color:s.inkSoft,marginTop:2}},count," 筆",(()=>{let t=adoptedTotalOf(folder.id);return t?u.default.createElement("span",{style:{color:s.tree,marginLeft:6}},"· 已採用 ",HB_money(t)):null})())
@@ -7545,11 +7563,11 @@ function HbAttendanceHub({onBack,notify}){
       u.default.createElement("div",{style:{marginBottom:14}},
         u.default.createElement("input",{type:"month",value:filterMonth,onChange:e=>setFilterMonth(e.target.value),style:{...el,marginBottom:0}})
       ),
-      u.default.createElement("div",{style:{background:s.card,border:`1px solid ${s.line}`,borderRadius:10,padding:"14px 16px",marginBottom:12}},
+      u.default.createElement("div",{style:{background:"rgba(255,255,255,.55)",border:"1px solid rgba(57,51,47,.12)",borderRadius:2,padding:"14px 16px",marginBottom:12}},
         u.default.createElement("div",{onClick:()=>setShowSiteManage(!showSiteManage),style:{display:"flex",justifyContent:"space-between",alignItems:"center",cursor:"pointer"}},
           u.default.createElement("div",{style:{display:"flex",alignItems:"center",gap:8}},
-            u.default.createElement(E,{name:"map-pin",size:16,color:s.ocean}),
-            u.default.createElement("div",{style:{fontSize:14,fontWeight:600,color:s.oceanDark}},"工地管理")
+            u.default.createElement(E,{name:"map-pin",size:16,color:"#703B42"}),
+            u.default.createElement("div",{style:{fontSize:14,fontWeight:600,color:"#39332F"}},"工地管理")
           ),
           u.default.createElement(E,{name:showSiteManage?"chevron-up":"chevron-down",size:18,color:s.inkSoft})
         ),
@@ -7562,7 +7580,7 @@ function HbAttendanceHub({onBack,notify}){
           ),
           activeSites.length===0?u.default.createElement("div",{style:{fontSize:12.5,color:s.inkSoft,textAlign:"center",padding:"8px 0"}},"目前沒有進行中的工地"):
           u.default.createElement("div",{style:{display:"flex",flexDirection:"column",gap:8}},
-            activeSites.map(p=>u.default.createElement("div",{key:p.id,style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 10px",background:s.paper,borderRadius:8}},
+            activeSites.map(p=>u.default.createElement("div",{key:p.id,style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 10px",background:s.paper,borderRadius:2}},
               u.default.createElement("div",null,
                 u.default.createElement("div",{style:{fontSize:13.5,fontWeight:500}},p.name),
                 p.address&&u.default.createElement("div",{style:{fontSize:11.5,color:s.inkSoft,marginTop:2}},p.address)
@@ -7576,7 +7594,7 @@ function HbAttendanceHub({onBack,notify}){
           siteList.filter(p=>!p.active).length>0&&u.default.createElement("div",{style:{marginTop:14,paddingTop:12,borderTop:`1px solid ${s.line}`}},
             u.default.createElement("div",{style:{fontSize:11.5,fontWeight:600,color:s.inkSoft,marginBottom:8}},"已完工（不會出現在新增紀錄的工地選單）"),
             u.default.createElement("div",{style:{display:"flex",flexDirection:"column",gap:8}},
-              siteList.filter(p=>!p.active).map(p=>u.default.createElement("div",{key:p.id,style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 10px",background:s.paper,borderRadius:8,opacity:.55}},
+              siteList.filter(p=>!p.active).map(p=>u.default.createElement("div",{key:p.id,style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 10px",background:s.paper,borderRadius:2,opacity:.55}},
                 u.default.createElement("div",{style:{fontSize:13.5,fontWeight:500}},p.name),
                 u.default.createElement("div",{style:{display:"flex",gap:6}},
                   u.default.createElement("button",{onClick:()=>reactivateSite(p.id),style:{...ll,padding:"5px 10px",fontSize:11.5}},"重新啟用"),
@@ -7587,11 +7605,11 @@ function HbAttendanceHub({onBack,notify}){
           )
         )
       ),
-      u.default.createElement("div",{style:{background:s.card,border:`1px solid ${s.line}`,borderRadius:10,padding:"14px 16px",marginBottom:16}},
+      u.default.createElement("div",{style:{background:"rgba(255,255,255,.55)",border:"1px solid rgba(57,51,47,.12)",borderRadius:2,padding:"14px 16px",marginBottom:16}},
         u.default.createElement("div",{onClick:()=>setShowManage(!showManage),style:{display:"flex",justifyContent:"space-between",alignItems:"center",cursor:"pointer"}},
           u.default.createElement("div",{style:{display:"flex",alignItems:"center",gap:8}},
-            u.default.createElement(E,{name:"users",size:16,color:s.ocean}),
-            u.default.createElement("div",{style:{fontSize:14,fontWeight:600,color:s.oceanDark}},"師傅名單管理")
+            u.default.createElement(E,{name:"users",size:16,color:"#703B42"}),
+            u.default.createElement("div",{style:{fontSize:14,fontWeight:600,color:"#39332F"}},"師傅名單管理")
           ),
           u.default.createElement(E,{name:showManage?"chevron-up":"chevron-down",size:18,color:s.inkSoft})
         ),
@@ -7603,7 +7621,7 @@ function HbAttendanceHub({onBack,notify}){
           ),
           masterWorkers.length===0?u.default.createElement("div",{style:{fontSize:12.5,color:s.inkSoft,textAlign:"center",padding:"8px 0"}},"尚未新增任何師傅"):
           u.default.createElement("div",{style:{display:"flex",flexDirection:"column",gap:8}},
-            masterWorkers.map(w=>u.default.createElement("div",{key:w.id,style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 10px",background:s.paper,borderRadius:8,opacity:w.active?1:.45}},
+            masterWorkers.map(w=>u.default.createElement("div",{key:w.id,style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 10px",background:s.paper,borderRadius:2,opacity:w.active?1:.45}},
               u.default.createElement("div",{style:{fontSize:13.5,fontWeight:500}},w.name),
               u.default.createElement("div",{style:{display:"flex",gap:6}},
                 u.default.createElement("button",{onClick:()=>toggleWorkerActive(w),style:{...ll,padding:"5px 10px",fontSize:11.5}},w.active?"停用":"啟用"),
@@ -7613,12 +7631,12 @@ function HbAttendanceHub({onBack,notify}){
           )
         )
       ),
-      u.default.createElement("div",{style:{background:s.oceanDark,color:"#fff",borderRadius:10,padding:"16px 18px",marginBottom:16}},
+      u.default.createElement("div",{style:{background:"#39332F",color:"#fff",borderRadius:2,padding:"16px 18px",marginBottom:16}},
         u.default.createElement("div",{style:{fontSize:11,opacity:.75,letterSpacing:1}},filterMonth,"　合計出工 ",totalDays," 天"),
         u.default.createElement("div",{style:{fontSize:24,fontWeight:400,marginTop:4}},"NT$ ",HB_money(totalPay)),
         u.default.createElement("div",{style:{fontSize:11.5,opacity:.7,marginTop:6}},filtered.length," 筆紀錄")
       ),
-      workerEntries.length>0&&u.default.createElement("div",{style:{background:s.card,border:`1px solid ${s.line}`,borderRadius:10,padding:"12px 16px",marginBottom:16}},
+      workerEntries.length>0&&u.default.createElement("div",{style:{background:"rgba(255,255,255,.55)",border:"1px solid rgba(57,51,47,.12)",borderRadius:2,padding:"12px 16px",marginBottom:16}},
         u.default.createElement("div",{style:{fontSize:11.5,fontWeight:600,color:s.inkSoft,letterSpacing:.5,marginBottom:6}},"依師傅統計"),
         workerEntries.map(([name,v])=>u.default.createElement("div",{key:name,style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"7px 0",borderBottom:`1px solid ${s.line}`}},
           u.default.createElement("div",{style:{fontSize:13.5}},name),
@@ -7626,16 +7644,16 @@ function HbAttendanceHub({onBack,notify}){
         ))
       ),
       u.default.createElement("button",{onClick:()=>setCreating(!0),style:{...Dl,width:"100%",marginBottom:16}},"＋ 新增出勤紀錄"),
-      loading?u.default.createElement("div",{style:{textAlign:"center",padding:30}},u.default.createElement(E,{name:"loader",className:"animate-spin",size:22,color:s.ocean})):
+      loading?u.default.createElement("div",{style:{textAlign:"center",padding:30}},u.default.createElement(E,{name:"loader",className:"animate-spin",size:22,color:"#703B42"})):
       filtered.length===0?u.default.createElement("p",{style:{textAlign:"center",color:s.inkSoft,marginTop:40,fontSize:13.5}},"這個月份還沒有出勤紀錄"):
       u.default.createElement("div",{style:{display:"flex",flexDirection:"column",gap:10}},
-        filtered.map(r=>u.default.createElement("div",{key:r.id,style:{background:s.card,border:`1px solid ${s.line}`,borderRadius:10,padding:"12px 14px",display:"flex",justifyContent:"space-between",alignItems:"center",gap:10}},
+        filtered.map(r=>u.default.createElement("div",{key:r.id,style:{background:"rgba(255,255,255,.55)",border:"1px solid rgba(57,51,47,.12)",borderRadius:2,padding:"12px 14px",display:"flex",justifyContent:"space-between",alignItems:"center",gap:10}},
           u.default.createElement("div",null,
-            u.default.createElement("div",{style:{fontSize:14.5,fontWeight:400,color:s.oceanDark}},r.worker_name),
+            u.default.createElement("div",{style:{fontSize:14.5,fontWeight:400,color:"#39332F"}},r.worker_name),
             u.default.createElement("div",{style:{fontSize:12,color:s.inkSoft,marginTop:2}},r.work_date,r.site_location?"　·　"+r.site_location:"",r.period?"　·　"+r.period:"",r.hours?"　·　"+r.hours+"小時":"",r.note?"　·　"+r.note:"")
           ),
           u.default.createElement("div",{style:{display:"flex",alignItems:"center",gap:10}},
-            u.default.createElement("div",{className:"mono",style:{fontSize:16,color:s.ocean,fontWeight:400}},r.days,"天"),
+            u.default.createElement("div",{className:"mono",style:{fontSize:16,color:"#703B42",fontWeight:400}},r.days,"天"),
             u.default.createElement("button",{onClick:()=>deleteOne(r.id),style:{...at,color:s.danger}},u.default.createElement(E,{name:"trash",size:16}))
           )
         ))
@@ -7972,10 +7990,10 @@ function HbDrawingHub({onBack,notify}){
     ),
     u.default.createElement("div",{style:{maxWidth:1180,margin:"0 auto",padding:"6px 58px 112px"}},
       u.default.createElement("div",{style:{display:"flex",flexWrap:"wrap",alignItems:"center",gap:4,fontSize:12.5,color:s.inkSoft,marginBottom:14}},
-        u.default.createElement("span",{onClick:()=>setCurrentFolderId(null),style:{cursor:"pointer",color:currentFolderId?s.inkSoft:s.oceanDark}},"圖面總覽"),
+        u.default.createElement("span",{onClick:()=>setCurrentFolderId(null),style:{cursor:"pointer",color:currentFolderId?s.inkSoft:"#39332F"}},"圖面總覽"),
         breadcrumb.map(f=>u.default.createElement(u.default.Fragment,{key:f.id},
           u.default.createElement("span",null,"／"),
-          u.default.createElement("span",{onClick:()=>setCurrentFolderId(f.id),style:{cursor:"pointer",color:f.id===currentFolderId?s.oceanDark:s.inkSoft}},f.name)
+          u.default.createElement("span",{onClick:()=>setCurrentFolderId(f.id),style:{cursor:"pointer",color:f.id===currentFolderId?"#39332F":s.inkSoft}},f.name)
         ))
       ),
       u.default.createElement("div",{style:{display:"flex",gap:8,marginBottom:16}},
@@ -7984,23 +8002,23 @@ function HbDrawingHub({onBack,notify}){
       ),
       u.default.createElement("input",{ref:fileInputRef,type:"file",accept:"image/jpeg,image/jpg,application/pdf",multiple:true,style:{display:"none"},onChange:handleNewDrawingUpload}),
       u.default.createElement("input",{ref:newVersionInputRef,type:"file",accept:"image/jpeg,image/jpg,application/pdf",style:{display:"none"},onChange:handleNewVersionUpload}),
-      loading?u.default.createElement("div",{style:{textAlign:"center",padding:30}},u.default.createElement(E,{name:"loader",className:"animate-spin",size:22,color:s.ocean})):
+      loading?u.default.createElement("div",{style:{textAlign:"center",padding:30}},u.default.createElement(E,{name:"loader",className:"animate-spin",size:22,color:"#703B42"})):
       u.default.createElement(u.default.Fragment,null,
         childFolders.length===0&&folderDrawings.length===0?
           u.default.createElement(He,{icon:"folder",text:currentFolderId?"這個資料夾還沒有內容":"尚未建立任何圖面資料夾"}):
           u.default.createElement("div",{style:{display:"flex",flexDirection:"column",gap:10}},
-            childFolders.map(f=>u.default.createElement("div",{key:f.id,style:{display:"flex",alignItems:"center",justifyContent:"space-between",background:s.card,border:`1px solid ${s.line}`,borderRadius:10,padding:"12px 14px"}},
+            childFolders.map(f=>u.default.createElement("div",{key:f.id,style:{display:"flex",alignItems:"center",justifyContent:"space-between",background:"rgba(255,255,255,.55)",border:"1px solid rgba(57,51,47,.12)",borderRadius:2,padding:"12px 14px"}},
               u.default.createElement("div",{onClick:()=>setCurrentFolderId(f.id),style:{display:"flex",alignItems:"center",gap:10,cursor:"pointer",flex:1}},
-                u.default.createElement(E,{name:"folder",size:18,color:s.ocean}),
+                u.default.createElement(E,{name:"folder",size:18,color:"#703B42"}),
                 u.default.createElement("span",{style:{fontSize:14}},f.name)
               ),
               u.default.createElement("button",{onClick:()=>deleteFolder(f.id),style:at},u.default.createElement(E,{name:"trash",size:15}))
             )),
             folderDrawings.map(d=>{
               let cv=currentVersionOf(d);
-              return u.default.createElement("div",{key:d.id,style:{background:s.card,border:`1px solid ${s.line}`,borderRadius:10,padding:"12px 14px"}},
+              return u.default.createElement("div",{key:d.id,style:{background:"rgba(255,255,255,.55)",border:"1px solid rgba(57,51,47,.12)",borderRadius:2,padding:"12px 14px"}},
                 u.default.createElement("div",{style:{display:"flex",alignItems:"center",gap:10}},
-                  u.default.createElement(E,{name:cv&&cv.mime==="application/pdf"?"file-text":"image",size:18,color:s.ocean}),
+                  u.default.createElement(E,{name:cv&&cv.mime==="application/pdf"?"file-text":"image",size:18,color:"#703B42"}),
                   u.default.createElement("div",{style:{flex:1,minWidth:0}},
                     u.default.createElement("div",{style:{fontSize:14}},d.name),
                     u.default.createElement("div",{style:{fontSize:11,color:s.inkSoft,marginTop:2}},cv?`目前版本 v${cv.versionNo}`:"尚無版本")
@@ -8514,28 +8532,28 @@ function HbSurveyHub({onBack,notify,projects}){
       h("p",{className:"hb-dosLede"},
         "產生一個專屬連結傳給業主，他填完你這邊就看得到。初次接洽時先發一份，可以省掉很多來回。"),
 
-      h("div",{style:{background:s.card,border:`1px solid ${s.line}`,borderRadius:10,padding:"14px 15px",marginBottom:18}},
+      h("div",{style:{background:"rgba(255,255,255,.55)",border:"1px solid rgba(57,51,47,.12)",borderRadius:2,padding:"14px 15px",marginBottom:18}},
         h("label",{style:{fontSize:12,color:s.inkSoft}},"問卷標題"),
         h("input",{value:title,onChange:e=>setTitle(e.target.value),placeholder:"例：陳宅設計需求問卷",
-          style:{width:"100%",boxSizing:"border-box",border:`1px solid ${s.line}`,borderRadius:8,padding:"9px 11px",fontSize:14,marginTop:4,marginBottom:10,background:"#fff",color:s.ink,fontFamily:"inherit"}}),
+          style:{width:"100%",boxSizing:"border-box",border:`1px solid ${s.line}`,borderRadius:2,padding:"9px 11px",fontSize:14,marginTop:4,marginBottom:10,background:"#fff",color:s.ink,fontFamily:"inherit"}}),
         h("label",{style:{fontSize:12,color:s.inkSoft}},"歸屬案件（選填）"),
         h("select",{value:projectId,onChange:e=>setProjectId(e.target.value),
-          style:{width:"100%",boxSizing:"border-box",border:`1px solid ${s.line}`,borderRadius:8,padding:"9px 11px",fontSize:14,marginTop:4,marginBottom:12,background:"#fff",color:s.ink,fontFamily:"inherit"}},
+          style:{width:"100%",boxSizing:"border-box",border:`1px solid ${s.line}`,borderRadius:2,padding:"9px 11px",fontSize:14,marginTop:4,marginBottom:12,background:"#fff",color:s.ink,fontFamily:"inherit"}},
           h("option",{value:""},"還沒建立案件"),
           (projects||[]).map(p=>h("option",{key:p.id,value:p.id},p.name))),
         h("button",{onClick:create,disabled:creating,
           className:"hb-cta",style:{opacity:creating?.6:1}},
           creating?"建立中…":"建立問卷並複製連結")),
 
-      err?h("div",{style:{background:"#FDF3F3",border:`1px solid ${s.danger}`,borderRadius:8,padding:"10px 12px",fontSize:12,color:s.danger,marginBottom:14,lineHeight:1.7}},
+      err?h("div",{style:{background:"#FDF3F3",border:`1px solid ${s.danger}`,borderRadius:2,padding:"10px 12px",fontSize:12,color:s.danger,marginBottom:14,lineHeight:1.7}},
         "讀取失敗：",err,h("div",{style:{color:s.inkSoft,marginTop:5}},"第一次使用請先到 Supabase 執行 questionnaire_and_angle.sql")):null,
 
-      loading?h("div",{style:{textAlign:"center",padding:36}},h(E,{name:"loader",size:20,className:"animate-spin",color:s.ocean})):
+      loading?h("div",{style:{textAlign:"center",padding:36}},h(E,{name:"loader",size:20,className:"animate-spin",color:"#703B42"})):
       list.length===0?h(He,{icon:"clipboard-list",text:"還沒有任何問卷"}):
       h("div",{style:{display:"flex",flexDirection:"column",gap:9}},
         list.map(r=>{
           let done=r.status==="submitted",open=openId===r.id;
-          return h("div",{key:r.id,style:{background:s.card,border:`1px solid ${done?s.tree:s.line}`,borderRadius:10,overflow:"hidden"}},
+          return h("div",{key:r.id,style:{background:"rgba(255,255,255,.55)",border:`1px solid ${done?"#5E6B58":"rgba(57,51,47,.12)"}`,borderRadius:2,overflow:"hidden"}},
             h("div",{onClick:()=>setOpenId(open?null:r.id),style:{padding:"11px 13px",cursor:"pointer"}},
               h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"baseline",gap:8,flexWrap:"wrap"}},
                 h("span",{style:{fontSize:14}},r.title||"設計需求問卷",
@@ -8545,15 +8563,15 @@ function HbSurveyHub({onBack,notify,projects}){
               h("div",{style:{fontSize:11,color:s.inkSoft,marginTop:5,display:"flex",gap:10,flexWrap:"wrap"}},
                 r.projectId?h("span",null,projName(r.projectId)):null,
                 h("span",null,String(r.createdAt||"").slice(0,10)),
-                done&&r.answers?h("span",{style:{color:s.oceanDark}},HB_svSummary(r.answers)):null)),
+                done&&r.answers?h("span",{style:{color:"#39332F"}},HB_svSummary(r.answers)):null)),
             open&&h("div",{style:{borderTop:`1px solid ${s.line}`,background:"#FBFAF7",padding:"11px 13px"}},
               h("div",{style:{display:"flex",gap:8,flexWrap:"wrap",marginBottom:done?12:0}},
                 h("button",{onClick:()=>HB_vdCopy(HB_svUrl(r.token),notify,"問卷連結"),
-                  style:{flex:"1 1 110px",border:`1px solid ${s.line}`,background:"#fff",borderRadius:7,padding:"8px 0",fontSize:12.5,color:s.oceanDark,cursor:"pointer",fontFamily:"inherit"}},"複製連結"),
+                  style:{flex:"1 1 110px",border:`1px solid ${s.line}`,background:"#fff",borderRadius:2,padding:"8px 0",fontSize:12.5,color:"#39332F",cursor:"pointer",fontFamily:"inherit"}},"複製連結"),
                 h("button",{onClick:()=>shareLine(r),
-                  style:{flex:"1 1 110px",border:"none",background:"#06C755",color:"#fff",borderRadius:7,padding:"8px 0",fontSize:12.5,cursor:"pointer",fontFamily:"inherit"}},"分享到 LINE"),
+                  style:{flex:"1 1 110px",border:"none",background:"#06C755",color:"#fff",borderRadius:2,padding:"8px 0",fontSize:12.5,cursor:"pointer",fontFamily:"inherit"}},"分享到 LINE"),
                 h("button",{onClick:()=>window.open(HB_svUrl(r.token),"_blank"),
-                  style:{border:`1px solid ${s.line}`,background:"#fff",borderRadius:7,padding:"8px 12px",fontSize:12.5,color:s.oceanDark,cursor:"pointer",fontFamily:"inherit"}},"預覽"),
+                  style:{border:`1px solid ${s.line}`,background:"#fff",borderRadius:2,padding:"8px 12px",fontSize:12.5,color:"#39332F",cursor:"pointer",fontFamily:"inherit"}},"預覽"),
                 h("button",{onClick:()=>remove(r),
                   style:{border:"none",background:"none",color:s.danger,cursor:"pointer",padding:"8px 12px",fontSize:12.5,fontFamily:"inherit"}},"刪除")),
               done?h("div",null,
@@ -8568,7 +8586,7 @@ function HbSurveyHub({onBack,notify,projects}){
                   }).filter(Boolean);
                   if(!rows.length)return null;
                   return h("div",{key:sec.g,style:{marginBottom:10}},
-                    h("div",{style:{fontSize:11,color:s.ocean,letterSpacing:"0.08em",marginBottom:2}},sec.g),rows);
+                    h("div",{style:{fontSize:11,color:"#703B42",letterSpacing:"0.08em",marginBottom:2}},sec.g),rows);
                 })
               ):null)
           );
@@ -8957,6 +8975,7 @@ function HbChangeOrderForm({initial,projects,notify,onCancel,onSaved}){
 function HbChangeOrderHub({onBack,notify,projects}){
   let h=u.default.createElement;
   let[list,setList]=(0,u.useState)([]);
+  let[hbMenu,hbSetMenu]=(0,u.useState)(null);
   let[loading,setLoading]=(0,u.useState)(!0);
   let[err,setErr]=(0,u.useState)(null);
   let[editing,setEditing]=(0,u.useState)(null);
@@ -8991,54 +9010,59 @@ function HbChangeOrderHub({onBack,notify,projects}){
   if(editing)return h(HbChangeOrderForm,{initial:editing,projects,notify,
     onCancel:()=>setEditing(null),onSaved:onSaved});
 
-  return h("div",{className:"hb-archive hb-dossier",style:{minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},
+  return h("div",{className:"hb-archive hb-dossier",style:{minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:"#39332F"},
+    onClick:()=>hbSetMenu(null)},
     h("div",{style:{maxWidth:1180,margin:"0 auto",padding:"0 58px 112px"}},
       h("button",{onClick:onBack,className:"hb-arcBack"},h(E,{name:"arrow-left",size:15}),h("span",null,"返回公司資料庫")),
-      h("div",{className:"hb-dosLabel"},"Avenants au Contrat"),h("h1",{className:"hb-dosTitle"},"追加減帳單"),
-      h("p",{className:"hb-dosLede"},
-        "現場開單、業主當場簽名才生效。簽完會鎖定，金額不能再改，日後結算有憑有據。"),
+      h("div",{className:"hb-dosLabel"},"Avenants au Contrat"),
+      h("h1",{className:"hb-dosTitle"},"追加減帳單"),
+      h("p",{className:"hb-dosLede"},"現場開單、業主當場簽名才生效。簽完會鎖定，金額不能再改，日後結算有憑有據。"),
 
-      h("button",{onClick:()=>setEditing({no:HB_coNextNo(list),projectId:proj||"",items:[HB_coNewItem()],status:"draft"}),
-        className:"hb-cta",style:{marginBottom:14}},"+ 新增追加減帳單"),
+      h("div",{className:"hb-dosSolo"},
+        h("div",{className:"hb-dosBar"},
+          h("div",{className:"hb-dosCount"}, filtered.length>0? filtered.length+" 張帳單":"尚無資料"),
+          h("button",{onClick:()=>setEditing({no:HB_coNextNo(list),projectId:proj||"",items:[HB_coNewItem()],status:"draft"}),
+            className:"hb-dosNew"},"新增追加減帳單")),
 
-      (projects||[]).length>0?h("select",{value:proj,onChange:e=>setProj(e.target.value),
-        style:{width:"100%",boxSizing:"border-box",border:`1px solid ${s.line}`,borderRadius:9,padding:"10px 12px",fontSize:13.5,background:"#fff",color:s.ink,marginBottom:12,fontFamily:"inherit"}},
-        h("option",{value:""},"全部案件"),
-        (projects||[]).map(p=>h("option",{key:p.id,value:p.id},p.name))):null,
+        (projects||[]).length>0?h("div",{className:"hb-dosFilter"},
+          h("select",{value:proj,onChange:e=>setProj(e.target.value),className:"hb-dosSelect",style:{maxWidth:320}},
+            h("option",{value:""},"全部案件"),
+            (projects||[]).map(p=>h("option",{key:p.id,value:p.id},p.name))),
+          signed.length>0?h("span",{className:"hb-dosSum"},
+            (proj?projName(proj):"全部案件")+"　已簽認 "+signed.length+" 張　·　累計 NT$ "+((sumSigned<0?"-":"")+HB_money(Math.abs(sumSigned)))):null):null,
 
-      signed.length>0?h("div",{style:{background:s.card,border:`1px solid ${s.line}`,borderRadius:10,padding:"11px 14px",marginBottom:14,display:"flex",justifyContent:"space-between",alignItems:"baseline",gap:8,flexWrap:"wrap"}},
-        h("span",{style:{fontSize:12,color:s.inkSoft}},proj?projName(proj):"全部案件","　已簽認 ",signed.length," 張"),
-        h("span",{style:{fontSize:15,color:sumSigned<0?s.danger:s.oceanDark,whiteSpace:"nowrap"}},
-          "累計 NT$ ",(sumSigned<0?"-":"")+HB_money(Math.abs(sumSigned)))):null,
+        err?h("p",{className:"hb-dosEmpty",style:{color:"#703B42"}},"讀取失敗："+err):null,
 
-      err?h("div",{style:{background:"#FDF3F3",border:`1px solid ${s.danger}`,borderRadius:8,padding:"10px 12px",fontSize:12,color:s.danger,marginBottom:14,lineHeight:1.7}},
-        "讀取失敗：",err,h("div",{style:{color:s.inkSoft,marginTop:5}},"第一次使用請先到 Supabase 執行 change_orders.sql")):null,
-
-      loading?h("div",{style:{textAlign:"center",padding:36}},h(E,{name:"loader",size:20,className:"animate-spin",color:s.ocean})):
-      filtered.length===0?h(He,{icon:"file-text",text:"還沒有任何追加減帳單"}):
-      h("div",{style:{display:"flex",flexDirection:"column",gap:9}},
-        filtered.map(r=>{
-          let done=r.status==="signed",neg=HB_num(r.total)<0;
-          return h("div",{key:r.id,style:{background:s.card,border:`1px solid ${done?s.tree:s.line}`,borderRadius:10,padding:"11px 13px"}},
-            h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"baseline",gap:8,flexWrap:"wrap"}},
-              h("span",{style:{fontSize:14}},
-                r.no?h("span",{className:"mono",style:{fontSize:11.5,color:s.inkSoft,marginRight:7}},r.no):null,
-                r.title||"（未命名）"),
-              h("span",{style:{fontSize:14.5,color:neg?s.danger:s.oceanDark,whiteSpace:"nowrap"}},
-                (neg?"-":"+")+HB_money(Math.abs(HB_num(r.total))))),
-            h("div",{style:{fontSize:11,color:s.inkSoft,marginTop:5,display:"flex",gap:10,flexWrap:"wrap",alignItems:"center"}},
-              h("span",null,projName(r.projectId)),
-              h("span",null,String(r.createdAt||"").slice(0,10)),
-              h("span",{style:{fontSize:10,color:done?"#fff":s.inkSoft,background:done?s.tree:"transparent",
-                border:done?"none":`1px solid ${s.line}`,borderRadius:999,padding:"2px 9px"}},done?"已簽認":"草稿")),
-            h("div",{style:{display:"flex",gap:8,marginTop:10}},
-              h("button",{onClick:()=>setEditing(r),style:{flex:1,border:`1px solid ${s.line}`,background:"none",borderRadius:7,padding:"8px 0",fontSize:12.5,color:s.oceanDark,cursor:"pointer",fontFamily:"inherit"}},done?"檢視":"編輯"),
-              h("button",{onClick:()=>{if(!HB_openChangeOrderPrint(r,projName(r.projectId)))notify("請允許彈出視窗")},
-                style:{border:`1px solid ${s.line}`,background:"none",borderRadius:7,padding:"8px 13px",fontSize:12.5,color:s.oceanDark,cursor:"pointer",fontFamily:"inherit"}},"PDF"),
-              h("button",{onClick:()=>remove(r),style:{border:"none",background:"none",color:s.danger,cursor:"pointer",padding:"8px 12px",fontSize:12.5,fontFamily:"inherit"}},"刪除"))
-          );
-        }))
-    )
+        loading?h("div",{style:{textAlign:"center",padding:40}},h(E,{name:"loader",size:22,className:"animate-spin",color:"#703B42"})):
+        filtered.length===0?h(He,{icon:"file-text",text:"還沒有任何追加減帳單"}):
+        h("ul",{className:"hb-dosList"},
+          filtered.map((r,ri)=>{
+            let done=r.status==="signed",neg=HB_num(r.total)<0;
+            return h("li",{key:r.id,className:"hb-dosItem"},
+              h("span",{className:"hb-dosNo"}, r.no||String(ri+1).padStart(2,"0")),
+              h("div",{className:"hb-dosBody"},
+                h("div",{className:"hb-dosName"}, r.title||"（未命名）"),
+                h("div",{className:"hb-dosMeta"},
+                  projName(r.projectId)+"　·　"+String(r.createdAt||"").slice(0,10),
+                  h("span",{className:"hb-dosChip"+(done?" on":"")}, done?"已簽認":"草稿"))),
+              h("span",{className:"hb-dosAmt",style:neg?{color:"#703B42"}:null},
+                (neg?"-":"+")+HB_money(Math.abs(HB_num(r.total)))),
+              h("div",{className:"hb-dosActs"},
+                h("button",{onClick:()=>setEditing(r),className:"hb-dosAct"},
+                  h(E,{name:done?"eye":"pencil",size:13}),h("span",null,done?"檢視":"編輯")),
+                h("button",{onClick:()=>{if(!HB_openChangeOrderPrint(r,projName(r.projectId)))notify("請允許彈出視窗")},className:"hb-dosAct"},
+                  h(E,{name:"printer",size:13}),h("span",null,"PDF")),
+                h("div",{className:"hb-dosMore"},
+                  h("button",{className:"hb-dosAct ico",title:"更多",
+                    onClick:ev=>{ev.stopPropagation();hbSetMenu(hbMenu===r.id?null:r.id)}},
+                    h(E,{name:"more-vertical",size:15})),
+                  hbMenu===r.id?h("div",{className:"hb-dosMenu",onClick:ev=>ev.stopPropagation()},
+                    h("button",{className:"del",onClick:()=>{
+                      hbSetMenu(null);
+                      if(window.confirm("確定要刪除「"+(r.title||"這張帳單")+"」？此動作無法復原。")) remove(r)
+                    }},"刪除")):null)))
+          }))
+      ))
   );
 }
 
