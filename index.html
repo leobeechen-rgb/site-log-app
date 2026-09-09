@@ -279,46 +279,59 @@
   /* ===== 資料庫入口卡（首頁／公司資料庫共用） ===== */
 .hb-landcard{
     position: relative;
-    display:flex; align-items:center; gap:18px; cursor:pointer;
-    background: rgba(250,247,241,.80);
-    -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
-    border: 1px solid rgba(152,138,118,.34);
-    border-radius: 2px;
-    padding: 21px 24px;
-    transition: background .25s ease, border-color .25s ease;
+    display:flex; align-items:flex-start; gap:18px; cursor:pointer;
+    background: linear-gradient(180deg, rgba(253,251,247,.86) 0%, rgba(248,244,236,.78) 100%);
+    -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+    border: 1px solid rgba(160,146,124,.22);
+    border-radius: 6px;
+    padding: 24px 26px 26px;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.75),
+      0 20px 44px -34px rgba(122,102,74,.55);
+    transition: background .3s ease, border-color .3s ease, box-shadow .3s ease;
   }
-  .hb-landcard:hover{ background: rgba(255,253,249,.94); border-color: rgba(94,26,38,.38); }
+  .hb-landcard:hover{
+    background: linear-gradient(180deg, rgba(255,254,251,.95) 0%, rgba(252,249,243,.90) 100%);
+    border-color: rgba(94,26,38,.26);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.85),
+      0 26px 52px -34px rgba(122,102,74,.62);
+  }
 
   .hb-landcard-ic{
-    width:38px; height:38px; border-radius:50%; flex-shrink:0;
-    background: transparent;
-    border: 1px solid rgba(152,138,118,.45);
+    width:38px; height:38px; border-radius:50%; flex-shrink:0; margin-top:1px;
+    background: rgba(255,255,255,.55);
+    border: 1px solid rgba(160,146,124,.32);
     display:flex; align-items:center; justify-content:center;
-    transition: border-color .25s ease, background .25s ease;
+    transition: border-color .3s ease, background .3s ease;
   }
-  .hb-landcard:hover .hb-landcard-ic{ border-color: rgba(94,26,38,.45); background: rgba(94,26,38,.045); }
+  .hb-landcard:hover .hb-landcard-ic{ border-color: rgba(94,26,38,.32); background: rgba(255,255,255,.85); }
+
+  .hb-landcard-body{ flex:1 1 auto; min-width:0; }
+  .hb-landcard-top{ display:flex; align-items:baseline; gap:14px; }
 
   .hb-landcard-t{
+    flex:1 1 auto; min-width:0;
     font-family:"Cormorant Garamond","Noto Serif TC",serif;
-    font-size:17.5px; letter-spacing:.16em; color:#1C1B18; line-height:1.5;
+    font-size:17.5px; letter-spacing:.16em; color:#2A2622; line-height:1.5;
   }
   .hb-landcard-d{
-    position: relative; font-size:11.5px; color:#7E786C;
-    margin-top:11px; padding-top:10px; line-height:1.75; letter-spacing:.03em;
+    position: relative; font-size:11.5px; color:#8A8377;
+    margin-top:13px; padding-top:12px; line-height:1.85; letter-spacing:.04em;
   }
   .hb-landcard-d::before{
     content:""; position:absolute; top:0; left:0;
-    width:26px; height:1px; background: rgba(152,138,118,.6);
-    transition: width .3s ease, background .25s ease;
+    width:28px; height:1px; background: rgba(160,146,124,.45);
+    transition: width .35s ease, background .3s ease;
   }
-  .hb-landcard:hover .hb-landcard-d::before{ width:46px; background: rgba(94,26,38,.5); }
+  .hb-landcard:hover .hb-landcard-d::before{ width:52px; background: rgba(94,26,38,.4); }
 
   .hb-landcard-go{
-    flex-shrink:0; color:#A79E8D; font-size:17px; line-height:1;
+    flex-shrink:0; color:#B5AB98; font-size:16px; line-height:1;
     font-family:"Cormorant Garamond",serif;
-    transition: transform .25s ease, color .25s ease;
+    transition: transform .3s ease, color .3s ease;
   }
-  .hb-landcard:hover .hb-landcard-go{ color:#5E1A26; transform: translateX(5px); }
+  .hb-landcard:hover .hb-landcard-go{ color:#5E1A26; transform: translateX(6px); }
 
   /* ===== 總覽入口磚：點一格進一個模組 ===== */
   .hb-hub{ display:grid; grid-template-columns:repeat(auto-fill,minmax(172px,1fr)); gap:12px; margin-top:16px }
@@ -4496,7 +4509,7 @@ function HbLanding({onCase:l,onCompany:t,onManageStaff:e,onLogout:n,onQuickQuote
       @keyframes hbLogoIn { from { opacity: 0; transform: scale(0.85); } to { opacity: 1; transform: scale(1); } }
       .hb-logo-mark { animation: hbLogoIn .8s ease-out, hbLogoSpin 60s linear infinite; animation-delay: 0s, .8s; transform-origin: center; }
       /* 下方三個入口：桌機一排三欄，手機自動改成一欄，避免文字擠成一團 */
-      .hb-landing-tri { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+      .hb-landing-tri { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px; }
       .hb-landgrid { grid-template-columns: 1fr 1fr; }
       @media (max-width: 760px){ .hb-landgrid { grid-template-columns: 1fr; } }
       @media (max-width: 620px) { .hb-landing-tri { grid-template-columns: 1fr; } }
@@ -4512,7 +4525,7 @@ function HbLanding({onCase:l,onCompany:t,onManageStaff:e,onLogout:n,onQuickQuote
         )
       ),
 
-      u.default.createElement("div",{className:"hb-landgrid",style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:22}},
+      u.default.createElement("div",{className:"hb-landgrid",style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:18,marginBottom:26}},
         u.default.createElement(HbCompanyGridCard,{icon:"clipboard-list",title:"\u6848\u4ef6\u8cc7\u6599\u5eab",desc:"\u7ba1\u7406\u9032\u884c\u4e2d\u7684\u7a7a\u9593\u8a2d\u8a08\u8207\u5de5\u7a0b\u5c08\u6848\uff1a\u65bd\u5de5\u7167\u7247\u3001\u6750\u6599\u9001\u9054\u3001\u5c08\u6848\u6a94\u6848\u3001\u8a2d\u5099\u8cc7\u6599",onClick:l}),
         u.default.createElement(HbCompanyGridCard,{icon:"folder",title:"\u516c\u53f8\u8cc7\u6599\u5eab",desc:"\u516c\u53f8\u71df\u904b\u3001\u884c\u653f\u8207\u5236\u5f0f\u5408\u7d04\uff1a\u8a2d\u8a08\u5408\u7d04\u3001\u5de5\u7a0b\u5831\u50f9\u55ae",onClick:t}),
         u.default.createElement(HbCompanyGridCard,{icon:"image",title:"\u8d6b\u67cf\u7a7a\u9593\u4f5c\u54c1\u6848\u4f8b",desc:"\u8de8\u6848\u4ef6\u7684\u884c\u92b7\uff0f\u63d0\u6848\u7528\u7167\u7247\u5eab",onClick:mp}),
@@ -6747,7 +6760,7 @@ function HbCompanyHub({onBack:l,onContracts:t,onQuotes:e,onReceipts:rc,onVendorR
     hbGoHome&&u.default.createElement("span",null)
   ),
   u.default.createElement("div",{style:{maxWidth:720,margin:"0 auto",padding:"12px 16px 112px",position:"relative",zIndex:1}},
-    u.default.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}},
+    u.default.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:18}},
       u.default.createElement(HbCompanyGridCard,{icon:"clipboard-list",title:"工程報價單",desc:"選擇案件，管理該案件的報價單附件",onClick:e}),
       u.default.createElement(HbCompanyGridCard,{icon:"folder",title:"廠商報價單",desc:"依廠商分類管理報價檔案（Excel／圖片），可打包下載或匯出 PDF 清單",onClick:vq})
     ),
@@ -6776,11 +6789,12 @@ try{document.documentElement.style.setProperty("--hb-landbg",'url("'+HB_LANDING_
 function HbCompanyGridCard({icon:l,title:t,desc:e,onClick:n}){
   let C=u.default.createElement;
   return C("div",{onClick:n,className:"hb-landcard"},
-    C("div",{className:"hb-landcard-ic"},C(E,{name:l,size:19,color:"#3B5540"})),
-    C("div",{style:{flex:"1 1 auto",minWidth:0}},
-      C("div",{className:"hb-landcard-t"},t),
-      C("div",{className:"hb-landcard-d"},e)),
-    C("span",{className:"hb-landcard-go"},"\u27F6")
+    C("div",{className:"hb-landcard-ic"},C(E,{name:l,size:18,color:"#5E6B58"})),
+    C("div",{className:"hb-landcard-body"},
+      C("div",{className:"hb-landcard-top"},
+        C("div",{className:"hb-landcard-t"},t),
+        C("span",{className:"hb-landcard-go"},"\u27F6")),
+      C("div",{className:"hb-landcard-d"},e))
   )
 }
 
