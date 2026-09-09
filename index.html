@@ -424,14 +424,15 @@
     display: grid;
     grid-template-columns: 365px minmax(0, 1fr);
     gap: 49px; align-items: start;
-    padding: 21px 58px 15px; margin: 0;
+    padding: 21px 58px 20px; margin: 0;
+    min-height: auto; height: auto;
   }
   .hb-hero{ padding: 0; }
   .hb-hero-mark{
-    width: 54px; height: 54px; border: 1px solid rgba(90,80,64,.55);
+    width: 48px; height: 48px; border: 1px solid rgba(90,80,64,.55);
     display: flex; align-items: center; justify-content: center;
-    font-family: "Cormorant Garamond", serif; font-size: 26px; color: #2A2622;
-    margin-bottom: 16px;
+    font-family: "Cormorant Garamond", serif; font-size: 23px; color: #2A2622;
+    margin-bottom: 12px;
   }
   .hb-hero-caps{
     font-family: "Cormorant Garamond", serif;
@@ -440,30 +441,30 @@
   }
   .hb-hero-caps-cn{
     font-family: "Noto Sans TC", sans-serif;
-    font-size: 9.5px; letter-spacing: .24em; color: #A79E8D; margin-top: 7px;
+    font-size: 9.5px; letter-spacing: .24em; color: #A79E8D; margin-top: 5px;
   }
-  .hb-hero-dash{ width: 24px; height: 1px; background: rgba(120,110,92,.55); margin: 13px 0 18px; }
+  .hb-hero-dash{ width: 24px; height: 1px; background: rgba(120,110,92,.55); margin: 11px 0 15px; }
   .hb-hero-h1{
     font-family: "Noto Serif TC", serif; font-weight: 400;
-    font-size: clamp(26px, 2.3vw, 38px); line-height: 1.3; letter-spacing: .01em;
+    font-size: clamp(24px, 2.05vw, 33px); line-height: 1.28; letter-spacing: .01em;
     color: #1F1C18; margin: 0;
     font-family: "Cormorant Garamond", serif;
   }
   .hb-hero-h1cn{
     font-family: "Noto Serif TC", serif;
-    font-size: 13px; letter-spacing: .1em; line-height: 1.85;
-    color: #55504A; margin-top: 12px;
+    font-size: 12.5px; letter-spacing: .1em; line-height: 1.8;
+    color: #55504A; margin-top: 9px;
   }
   .hb-hero-p{
     font-family: "Cormorant Garamond", serif;
-    font-size: 13.5px; line-height: 1.8; letter-spacing: .04em;
-    color: #6E6A62; margin: 20px 0 0;
+    font-size: 13px; line-height: 1.75; letter-spacing: .04em;
+    color: #6E6A62; margin: 16px 0 0;
   }
   .hb-hero-pcn{
-    font-size: 11px; line-height: 1.9; letter-spacing: .05em;
-    color: #948C7E; margin: 7px 0 0;
+    font-size: 10.5px; line-height: 1.85; letter-spacing: .05em;
+    color: #948C7E; margin: 5px 0 0;
   }
-  .hb-hero-rule{ width: 44px; height: 2px; background: #6E1C24; margin: 20px 0 16px; }
+  .hb-hero-rule{ width: 44px; height: 2px; background: #6E1C24; margin: 16px 0 12px; }
   .hb-hero-cities{
     font-family: "Cormorant Garamond", serif;
     font-size: 11px; letter-spacing: .26em; color: #8C8371;
@@ -496,7 +497,7 @@
     position: relative; cursor: pointer; overflow: hidden;
     background: #F0EBE1;
     border: none; border-radius: 0;
-    padding: 16px 30px 16px 92px;
+    padding: 24px 30px 22px 92px;
     height: 100%; min-height: 0;
     display: flex; flex-direction: column; justify-content: center;
     transition: background .4s ease;
@@ -505,14 +506,14 @@
   /* 巨大編號 */
   .hb-entry::before{
     content: counter(hbEntry, decimal-leading-zero);
-    position: absolute; left: 24px; top: 20px;
+    position: absolute; left: 24px; top: 26px;
     font-family: "Cormorant Garamond", serif;
-    font-size: 30px; line-height: 1; letter-spacing: .04em;
+    font-size: 33px; line-height: 1; letter-spacing: .04em;
     color: #B8AE9C;
   }
   /* 編號與內容之間的直線 */
   .hb-entry::after{
-    content: ""; position: absolute; left: 72px; top: 18px; bottom: 18px;
+    content: ""; position: absolute; left: 72px; top: 24px; bottom: 24px;
     width: 1px; background: rgba(160,146,124,.42);
   }
   .hb-entry-cat{ display: flex; align-items: baseline; gap: 9px; margin-bottom: 8px; line-height: 1.2; }
@@ -527,7 +528,7 @@
   }
   .hb-entry-t{
     font-family: "Cormorant Garamond", serif;
-    font-size: clamp(18px, 1.5vw, 23px); font-weight: 400;
+    font-size: clamp(19px, 1.6vw, 25px); font-weight: 400;
     letter-spacing: .02em; color: #2A2622; line-height: 1.26;
   }
   .hb-entry-tcn{
@@ -536,7 +537,7 @@
     margin-top: 5px; line-height: 1.55;
   }
   .hb-entry-d{
-    font-size: 10.5px; color: #7E786C; line-height: 1.7; letter-spacing: .03em;
+    font-size: 11px; color: #7E786C; line-height: 1.8; letter-spacing: .03em;
     margin-top: 8px; max-width: 32ch;
     display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
   }
@@ -4791,7 +4792,7 @@ function HbLanding({onCase:l,onCompany:t,onManageStaff:e,onLogout:n,onQuickQuote
 
       
 
-      u.default.createElement("div",{className:"hb-heroRow"},u.default.createElement("div",{className:"hb-hero"},u.default.createElement("div",{className:"hb-hero-mark"},"H"),u.default.createElement("div",{className:"hb-hero-caps"},"INT\u00C9RIEURS",u.default.createElement("br",null),"POUR UNE VIE",u.default.createElement("br",null),"PLUS BELLE"),u.default.createElement("div",{className:"hb-hero-caps-cn"},"為了更好的日常空間"),u.default.createElement("div",{className:"hb-hero-dash"}),u.default.createElement("h1",{className:"hb-hero-h1"},"La douceur",u.default.createElement("br",null),"que la vie d\u00E9pose."),u.default.createElement("div",{className:"hb-hero-h1cn"},"\u597D\u7684\u7A7A\u9593\uFF0C\u662F\u751F\u6D3B\u6C89\u6FB1\u5F8C\u7684\u6EAB\u67D4\u3002"),u.default.createElement("p",{className:"hb-hero-p"},"Projets, mati\u00E8res, plans et contrats,",u.default.createElement("br",null),"consign\u00E9s en un seul lieu."),u.default.createElement("p",{className:"hb-hero-pcn"},"\u6848\u4EF6\u3001\u6750\u6599\u3001\u5716\u9762\u8207\u5408\u7D04\uFF0C\u5728\u540C\u4E00\u8655\u88AB\u5B8C\u6574\u5730\u8A18\u4E0B\u4F86\u3002"),u.default.createElement("div",{className:"hb-hero-rule"}),u.default.createElement("div",{className:"hb-hero-cities"},"CHIAYI",u.default.createElement("i",null),"YUNLIN",u.default.createElement("i",null),"TAINAN"),u.default.createElement("div",{className:"hb-hero-cities-cn"},"\u5609\u7FA9\u3000\u96F2\u6797\u3000\u53F0\u5357")),u.default.createElement("div",{className:"hb-landgrid",style:{display:"grid",gridTemplateColumns:"repeat(2,minmax(0,1fr))",gap:20,gridAutoRows:"176px"}},
+      u.default.createElement("div",{className:"hb-heroRow"},u.default.createElement("div",{className:"hb-hero"},u.default.createElement("div",{className:"hb-hero-mark"},"H"),u.default.createElement("div",{className:"hb-hero-caps"},"INT\u00C9RIEURS",u.default.createElement("br",null),"POUR UNE VIE",u.default.createElement("br",null),"PLUS BELLE"),u.default.createElement("div",{className:"hb-hero-caps-cn"},"為了更好的日常空間"),u.default.createElement("div",{className:"hb-hero-dash"}),u.default.createElement("h1",{className:"hb-hero-h1"},"La douceur",u.default.createElement("br",null),"que la vie d\u00E9pose."),u.default.createElement("div",{className:"hb-hero-h1cn"},"\u597D\u7684\u7A7A\u9593\uFF0C\u662F\u751F\u6D3B\u6C89\u6FB1\u5F8C\u7684\u6EAB\u67D4\u3002"),u.default.createElement("p",{className:"hb-hero-p"},"Projets, mati\u00E8res, plans et contrats,",u.default.createElement("br",null),"consign\u00E9s en un seul lieu."),u.default.createElement("p",{className:"hb-hero-pcn"},"\u6848\u4EF6\u3001\u6750\u6599\u3001\u5716\u9762\u8207\u5408\u7D04\uFF0C\u5728\u540C\u4E00\u8655\u88AB\u5B8C\u6574\u5730\u8A18\u4E0B\u4F86\u3002"),u.default.createElement("div",{className:"hb-hero-rule"}),u.default.createElement("div",{className:"hb-hero-cities"},"CHIAYI",u.default.createElement("i",null),"YUNLIN",u.default.createElement("i",null),"TAINAN"),u.default.createElement("div",{className:"hb-hero-cities-cn"},"\u5609\u7FA9\u3000\u96F2\u6797\u3000\u53F0\u5357")),u.default.createElement("div",{className:"hb-landgrid",style:{display:"grid",gridTemplateColumns:"repeat(2,minmax(0,1fr))",gap:20,gridTemplateRows:"repeat(2,210px)",alignContent:"start"}},
         u.default.createElement(HbCompanyGridCard,{icon:"clipboard-list",title:"\u6848\u4ef6\u8cc7\u6599\u5eab",desc:"\u7ba1\u7406\u9032\u884c\u4e2d\u7684\u7a7a\u9593\u8a2d\u8a08\u8207\u5de5\u7a0b\u5c08\u6848\uff1a\u65bd\u5de5\u7167\u7247\u3001\u6750\u6599\u9001\u9054\u3001\u5c08\u6848\u6a94\u6848\u3001\u8a2d\u5099\u8cc7\u6599",onClick:l}),
         u.default.createElement(HbCompanyGridCard,{icon:"folder",title:"\u516c\u53f8\u8cc7\u6599\u5eab",desc:"\u516c\u53f8\u71df\u904b\u3001\u884c\u653f\u8207\u5236\u5f0f\u5408\u7d04\uff1a\u8a2d\u8a08\u5408\u7d04\u3001\u5de5\u7a0b\u5831\u50f9\u55ae",onClick:t}),
         u.default.createElement(HbCompanyGridCard,{icon:"image",title:"\u8d6b\u67cf\u7a7a\u9593\u4f5c\u54c1\u6848\u4f8b",desc:"\u8de8\u6848\u4ef6\u7684\u884c\u92b7\uff0f\u63d0\u6848\u7528\u7167\u7247\u5eab",onClick:mp}),
