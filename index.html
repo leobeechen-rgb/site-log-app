@@ -279,6 +279,28 @@
     .hb-landing-bg::after{ background-image: none; }
   }
 
+  /* ===== 首頁滿版：解除外層容器的寬度限制 ===== */
+  #root.hb-full-root,
+  .hb-shell.hb-full-root,
+  #root.hb-full-root .hb-shell{
+    max-width: none !important;
+    width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    box-shadow: none !important;
+  }
+  body.hb-full-body{ background: #E9E2D6 !important; }
+
+  /* 導覽列與橫幅必須貫穿視窗，不受任何容器內距限制 */
+  .hb-topnav,
+  .hb-banner{
+    width: 100vw;
+    max-width: none;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+  }
+  .hb-banner{ margin-top: 0; margin-bottom: 0; }
+
   /* ===== 法式型錄色票 ===== */
   :root{
     --fm-cream:#F5F1E9; --fm-paper:#F0EBE1; --fm-charcoal:#26241F;
@@ -4707,6 +4729,17 @@ function HbArchCard({icon:l,title:t,tint:e,onClick:n}){return u.default.createEl
 )}
 function HbLandingCard({icon:l,title:t,desc:e,onClick:n}){return u.default.createElement("div",{onClick:n,style:{background:"rgba(255,255,255,0.34)",backdropFilter:"blur(18px)",WebkitBackdropFilter:"blur(18px)",borderRadius:22,padding:"20px 20px",display:"flex",gap:16,alignItems:"flex-start",cursor:"pointer",border:"1px solid rgba(255,255,255,0.55)",boxShadow:"0 8px 24px -8px rgba(140,111,82,0.18)"}},u.default.createElement("div",{style:{width:46,height:46,borderRadius:"50% 50% 12px 12px",background:"rgba(255,255,255,0.5)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},u.default.createElement(E,{name:l,size:21,color:s.ocean})),u.default.createElement("div",{style:{flex:1}},u.default.createElement("div",{style:{fontSize:16,fontWeight:300,color:s.oceanDark}},t),u.default.createElement("div",{style:{fontSize:12.5,color:s.inkSoft,marginTop:4,lineHeight:1.5}},e)),u.default.createElement(E,{name:"arrow-left",size:16,color:s.inkSoft,style:{transform:"scaleX(-1)",marginTop:4}}))}
 function HbLanding({onCase:l,onCompany:t,onManageStaff:e,onLogout:n,onQuickQuote:qq,onProposal:pg,onMarketingPhotos:mp,onBookings:bk,onOpenBooking:ob,onDrawings:dw}){
+  /* 首頁要滿版：暫時解除外層容器的寬度限制，離開時還原 */
+  (0,u.useEffect)(()=>{
+    let els=[document.getElementById("root")].concat(Array.prototype.slice.call(document.querySelectorAll(".hb-shell")));
+    els=els.filter(Boolean);
+    els.forEach(function(el){ el.classList.add("hb-full-root") });
+    document.body.classList.add("hb-full-body");
+    return function(){
+      els.forEach(function(el){ el.classList.remove("hb-full-root") });
+      document.body.classList.remove("hb-full-body");
+    };
+  },[]);
   return u.default.createElement("div",{className:"hb-landing-bg",style:{height:"100vh",overflow:"hidden",display:"flex",flexDirection:"column",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},
     u.default.createElement("style",null,`
       @keyframes hbLogoSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
