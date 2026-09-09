@@ -279,6 +279,68 @@
     .hb-landing-bg::after{ background-image: none; }
   }
 
+  /* ===== 法式型錄色票 ===== */
+  :root{
+    --fm-cream:#F5F1E9; --fm-paper:#F0EBE1; --fm-charcoal:#26241F;
+    --fm-burgundy:#6E1C24; --fm-olive:#5E6B58; --fm-brass:#8A6E32;
+    --fm-ink:#2A2622; --fm-soft:#7E786C; --fm-line:rgba(160,146,124,.38);
+  }
+
+  /* ===== 首頁頂部深炭黑導覽列 ===== */
+  .hb-topnav{
+    flex: 0 0 auto; position: relative; z-index: 2;
+    background: var(--fm-charcoal);
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 20px; padding: 0 30px; min-height: 66px;
+  }
+  .hb-topnav-brand{ display: flex; align-items: center; gap: 14px; min-width: 0; }
+  .hb-topnav .hb-logo-mark{
+    width: 34px; height: 34px; object-fit: contain; flex-shrink: 0;
+    filter: brightness(0) invert(1); opacity: .9;
+    animation: hbLogoIn .8s ease-out, hbLogoSpin 220s linear infinite !important;
+    animation-delay: 0s, .8s !important;
+  }
+  .hb-topnav-word{
+    font-family:"Cormorant Garamond",serif; font-size: 20px;
+    letter-spacing: .3em; color: #F1ECE2; line-height: 1.1;
+  }
+  .hb-topnav-sub{
+    font-family:"Cormorant Garamond",serif; font-size: 8.5px;
+    letter-spacing: .34em; color: rgba(241,236,226,.55); margin-top: 4px;
+  }
+  .hb-topnav-right{ display: flex; align-items: center; gap: 16px; flex-shrink: 0; }
+  .hb-topnav-hi{ font-size: 11px; letter-spacing: .04em; color: rgba(241,236,226,.62); }
+  .hb-topnav-div{ width: 1px; height: 20px; background: rgba(241,236,226,.22); }
+  .hb-topnav-btn{
+    background: none; border: none; cursor: pointer; padding: 10px;
+    color: rgba(241,236,226,.78); display: flex; align-items: center;
+    min-width: 44px; min-height: 44px; justify-content: center;
+    transition: color .25s ease;
+  }
+  .hb-topnav-btn:hover{ color: #F1ECE2; }
+  @media (max-width: 760px){
+    .hb-topnav{ padding: 0 16px; min-height: 58px; }
+    .hb-topnav-hi, .hb-topnav-div{ display: none; }
+    .hb-topnav-word{ font-size: 16px; letter-spacing: .22em; }
+  }
+
+  /* ===== 手機：單欄、最小 48px 可點高度 ===== */
+  @media (max-width: 760px){
+    .hb-heroRow{ grid-template-columns: 1fr !important; gap: 22px; }
+    .hb-landgrid{ grid-template-columns: 1fr !important; gap: 12px !important; }
+    .hb-landing-tri{ grid-template-columns: 1fr !important; gap: 12px !important; }
+    .hb-entry{ min-height: 48px; padding: 20px 20px 20px 66px; }
+    .hb-entry.has-img{ padding-right: 34%; }
+    .hb-entry::before{ font-size: 24px; left: 16px; top: 20px; }
+    .hb-entry::after{ left: 52px; top: 20px; bottom: 20px; }
+    .hb-entry-d{ -webkit-line-clamp: 3; }
+    .hb-landing-tri .hb-entry{ min-height: 48px; padding: 14px 16px 14px 62px; }
+    .hb-landing-tri .hb-entry::before{ top: 12px; left: 14px; }
+    .hb-landing-tri .hb-entry::after{ left: 50px; top: 14px; bottom: 14px; }
+    .hb-hero-mark{ width: 52px; height: 52px; font-size: 25px; }
+    .hb-hero-h1{ font-size: 26px; }
+  }
+
   /* ===== 中央宣言橫幅：使用法式橫幅素材 ===== */
   .hb-banner{
     position: relative;
@@ -295,16 +357,22 @@
     padding-right: 34px; border-right: 1px solid rgba(140,120,80,.4);
   }
   .hb-banner-side.right{ border-right: none; border-left: 1px solid rgba(140,120,80,.4); padding: 0 0 0 34px; margin-left: auto; }
-  .hb-banner-main{ flex: 1 1 auto; min-width: 0; display: flex; align-items: baseline; gap: 44px; flex-wrap: wrap; }
-  .hb-banner-h{
-    font-family: "Noto Serif TC", serif; font-weight: 400;
-    font-size: clamp(15px, 1.55vw, 24px); letter-spacing: .2em; line-height: 1.85;
-    color: #33302B; flex: 1 1 auto;
+  .hb-banner-main{ flex: 1 1 auto; min-width: 0; text-align: center; }
+  .hb-banner-eyebrow{
+    font-family:"Cormorant Garamond",serif; font-size: 9.5px;
+    letter-spacing: .34em; text-transform: uppercase; color: var(--fm-brass);
+    margin-bottom: 12px;
   }
+  .hb-banner-title{
+    display: flex; align-items: center; justify-content: center; gap: 20px;
+    font-family:"Noto Serif TC",serif; font-weight: 400;
+    font-size: clamp(20px, 2.1vw, 30px); letter-spacing: .24em; text-indent: .24em;
+    color: var(--fm-burgundy); line-height: 1.4;
+  }
+  .hb-banner-dash{ display: block; width: 46px; height: 1px; background: rgba(110,28,36,.45); flex-shrink: 0; }
   .hb-banner-note{
-    font-family: "Cormorant Garamond","Noto Serif TC", serif; font-style: italic;
-    font-size: clamp(10.5px, .95vw, 13px); line-height: 1.9; letter-spacing: .05em;
-    color: #7C7466; flex: 0 1 auto;
+    font-size: clamp(11px, 1vw, 13px); line-height: 1.9; letter-spacing: .1em;
+    color: var(--fm-soft); margin-top: 13px;
   }
   @media (max-width: 900px){
     .hb-banner{ aspect-ratio: auto; padding: 30px 14% 30px 8%; background-size: cover;
@@ -4604,28 +4672,21 @@ function HbArchCard({icon:l,title:t,tint:e,onClick:n}){return u.default.createEl
 )}
 function HbLandingCard({icon:l,title:t,desc:e,onClick:n}){return u.default.createElement("div",{onClick:n,style:{background:"rgba(255,255,255,0.34)",backdropFilter:"blur(18px)",WebkitBackdropFilter:"blur(18px)",borderRadius:22,padding:"20px 20px",display:"flex",gap:16,alignItems:"flex-start",cursor:"pointer",border:"1px solid rgba(255,255,255,0.55)",boxShadow:"0 8px 24px -8px rgba(140,111,82,0.18)"}},u.default.createElement("div",{style:{width:46,height:46,borderRadius:"50% 50% 12px 12px",background:"rgba(255,255,255,0.5)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},u.default.createElement(E,{name:l,size:21,color:s.ocean})),u.default.createElement("div",{style:{flex:1}},u.default.createElement("div",{style:{fontSize:16,fontWeight:300,color:s.oceanDark}},t),u.default.createElement("div",{style:{fontSize:12.5,color:s.inkSoft,marginTop:4,lineHeight:1.5}},e)),u.default.createElement(E,{name:"arrow-left",size:16,color:s.inkSoft,style:{transform:"scaleX(-1)",marginTop:4}}))}
 function HbLanding({onCase:l,onCompany:t,onManageStaff:e,onLogout:n,onQuickQuote:qq,onProposal:pg,onMarketingPhotos:mp,onBookings:bk,onOpenBooking:ob,onDrawings:dw}){
-  return u.default.createElement("div",{className:"hb-landing-bg",style:{height:"100vh",overflow:"hidden",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},
+  return u.default.createElement("div",{className:"hb-landing-bg",style:{height:"100vh",overflow:"hidden",display:"flex",flexDirection:"column",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},
     u.default.createElement("style",null,`
       @keyframes hbLogoSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
       @keyframes hbLogoIn { from { opacity: 0; transform: scale(0.85); } to { opacity: 1; transform: scale(1); } }
       .hb-logo-mark { animation: hbLogoIn .8s ease-out, hbLogoSpin 60s linear infinite; animation-delay: 0s, .8s; transform-origin: center; }
       /* 下方三個入口：桌機一排三欄，手機自動改成一欄，避免文字擠成一團 */
       .hb-landing-tri { display: grid; grid-template-columns: repeat(auto-fit,minmax(340px,1fr)); gap: 20px; }
-      .hb-landgrid { grid-template-columns: repeat(auto-fit,minmax(340px,1fr)); }
-      @media (max-width: 760px){ .hb-landgrid { grid-template-columns: 1fr; } }
       @media (max-width: 620px) { .hb-landing-tri { grid-template-columns: 1fr; } }
     `),
 
 
-    u.default.createElement("div",{className:"hb-scroll",style:{maxWidth:1400,margin:"0 auto",height:"100%",overflowY:"auto",padding:"26px 28px 70px"}},
+    u.default.createElement("div",{className:"hb-topnav"},u.default.createElement("div",{className:"hb-topnav-brand"},u.default.createElement("img",{className:"hb-logo-mark",src:HB_LOGO_MARK,alt:"赫柏空間設計"}),u.default.createElement("div",null,u.default.createElement("div",{className:"hb-topnav-word"},"HERFULSINS"),u.default.createElement("div",{className:"hb-topnav-sub"},"MAISON DE DESIGN"))),u.default.createElement("div",{className:"hb-topnav-right"},u.default.createElement("span",{className:"hb-topnav-hi"},"歡迎回來，今天也要好好照顧每個工地"),u.default.createElement("span",{className:"hb-topnav-div"}),u.default.createElement("button",{onClick:e,title:"帳號管理",className:"hb-topnav-btn"},u.default.createElement(E,{name:"user",size:16})),u.default.createElement("button",{onClick:n,title:"登出",className:"hb-topnav-btn"},u.default.createElement(E,{name:"log-out",size:16})))),
+    u.default.createElement("div",{className:"hb-scroll",style:{width:"100%",maxWidth:1400,margin:"0 auto",flex:"1 1 auto",minHeight:0,overflowY:"auto",padding:"30px 28px 70px"}},
 
-      u.default.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:22}},
-        u.default.createElement("span",{style:{fontSize:11.5,color:s.inkSoft,fontWeight:300,letterSpacing:"0.02em"}},"\u6b61\u8fce\u56de\u4f86\uff0c\u4eca\u5929\u4e5f\u8981\u597d\u597d\u7167\u9867\u6bcf\u500b\u5de5\u5730"),
-        u.default.createElement("div",{style:{display:"flex",alignItems:"center",gap:18}},
-          u.default.createElement("button",{onClick:e,title:"\u5e33\u865f\u7ba1\u7406",style:{background:"none",border:"none",color:s.inkSoft,cursor:"pointer",display:"flex",padding:0}},u.default.createElement(E,{name:"user",size:16})),
-          u.default.createElement("button",{onClick:n,title:"\u767b\u51fa",style:{background:"none",border:"none",color:s.inkSoft,cursor:"pointer",display:"flex",padding:0}},u.default.createElement(E,{name:"log-out",size:16}))
-        )
-      ),
+      
 
       u.default.createElement("div",{className:"hb-heroRow"},u.default.createElement("div",{className:"hb-hero"},u.default.createElement("div",{className:"hb-hero-mark"},"H"),u.default.createElement("div",{className:"hb-hero-caps"},"INT\u00C9RIEURS",u.default.createElement("br",null),"POUR UNE VIE",u.default.createElement("br",null),"PLUS BELLE"),u.default.createElement("div",{className:"hb-hero-dash"}),u.default.createElement("h1",{className:"hb-hero-h1"},"\u597d\u7684\u7a7a\u9593\uff0c",u.default.createElement("br",null),"\u662f\u751f\u6d3b\u6c89\u6fb1\u5f8c\u7684\u6eab\u67d4\u3002"),u.default.createElement("p",{className:"hb-hero-p"},"\u6848\u4ef6\u3001\u6750\u6599\u3001\u5716\u9762\u8207\u5408\u7d04\uff0c",u.default.createElement("br",null),"\u5728\u540c\u4e00\u8655\u88ab\u5b8c\u6574\u5730\u8a18\u4e0b\u4f86\u3002"),u.default.createElement("div",{className:"hb-hero-rule"}),u.default.createElement("div",{className:"hb-hero-cities"},"\u5609\u7fa9",u.default.createElement("i",null),"\u96f2\u6797",u.default.createElement("i",null),"\u53f0\u5357")),u.default.createElement("div",{className:"hb-landgrid",style:{display:"grid",gridTemplateColumns:"repeat(2,minmax(0,1fr))",gap:18}},
         u.default.createElement(HbCompanyGridCard,{icon:"clipboard-list",title:"\u6848\u4ef6\u8cc7\u6599\u5eab",desc:"\u7ba1\u7406\u9032\u884c\u4e2d\u7684\u7a7a\u9593\u8a2d\u8a08\u8207\u5de5\u7a0b\u5c08\u6848\uff1a\u65bd\u5de5\u7167\u7247\u3001\u6750\u6599\u9001\u9054\u3001\u5c08\u6848\u6a94\u6848\u3001\u8a2d\u5099\u8cc7\u6599",onClick:l}),
@@ -4634,7 +4695,7 @@ function HbLanding({onCase:l,onCompany:t,onManageStaff:e,onLogout:n,onQuickQuote
         u.default.createElement(HbCompanyGridCard,{icon:"presentation",title:"\u5716\u9762\u7ba1\u7406",desc:"\u4f9d\u8cc7\u6599\u593e\u7ba1\u7406\u65bd\u5de5\u5716\u9762\uff0c\u652f\u63f4\u5b50\u8cc7\u6599\u593e\u8207\u7248\u672c\u7d00\u9304\u56de\u6eaf",onClick:dw})
       )),
 
-      u.default.createElement("div",{className:"hb-banner",style:{marginBottom:30}},u.default.createElement("div",{className:"hb-banner-side"},"MATI\u00C8RE",u.default.createElement("br",null),"HUMAIN",u.default.createElement("br",null),"HARMONIE"),u.default.createElement("div",{className:"hb-banner-main"},u.default.createElement("div",{className:"hb-banner-h"},"\u4EE5\u5DE5\u5730\u7D00\u9304\u672C\uFF0C\u7BA1\u7406\u6BCF\u4E00\u500B",u.default.createElement("br",null),"\u6B63\u5728\u6210\u5F62\u7684\u7A7A\u9593\u3002"),u.default.createElement("div",{className:"hb-banner-note"},"\u4E00\u9593\u4EE5\u7A7A\u9593\u70BA\u696D\u7684\u8A2D\u8A08\u5BA4\uFF0C",u.default.createElement("br",null),"\u76F8\u4FE1\u7D30\u7BC0\u8207\u6642\u9593\u90FD\u503C\u5F97\u88AB\u8A18\u4E0B\u3002")),u.default.createElement("div",{className:"hb-banner-side right"},"\u7A7A\u9593",u.default.createElement("br",null),"\u6750\u8CEA",u.default.createElement("br",null),"\u751F\u6D3B")),
+      u.default.createElement("div",{className:"hb-banner",style:{marginBottom:30}},u.default.createElement("div",{className:"hb-banner-side"},"MATI\u00C8RE",u.default.createElement("br",null),"HUMAIN",u.default.createElement("br",null),"HARMONIE"),u.default.createElement("div",{className:"hb-banner-main"},u.default.createElement("div",{className:"hb-banner-eyebrow"},"HERFULSINS INTERIOR DESIGN"),u.default.createElement("div",{className:"hb-banner-title"},u.default.createElement("span",{className:"hb-banner-dash"}),"赫柏空間設計",u.default.createElement("span",{className:"hb-banner-dash"})),u.default.createElement("div",{className:"hb-banner-note"},"以工地紀錄本，管理每一個正在成形的空間。")),u.default.createElement("div",{className:"hb-banner-side right"},"空間",u.default.createElement("br",null),"材質",u.default.createElement("br",null),"生活")),
 
       u.default.createElement("div",{className:"hb-landing-tri"},
         u.default.createElement(HbCompanyGridCard,{icon:"users",title:"\u5ba2\u6236\u9810\u7d04\u9801\u9762",desc:"\u958b\u555f\u5ba2\u6236\u7dda\u4e0a\u9810\u7d04\u8af8\u8a62\u9801\u9762",onClick:ob}),
