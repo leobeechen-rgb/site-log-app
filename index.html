@@ -415,6 +415,31 @@
     .hb-pagein::after{ display:none }
   }
 
+  /* ===== 資料庫頁最後一張：橫跨兩欄的收尾卡 ===== */
+  .hb-dbRow .hb-landgrid > .hb-entry:last-child{
+    grid-column: 1 / -1; min-height: 210px;
+  }
+  .hb-dbRow .hb-landgrid > .hb-entry:last-child .hb-entry-body{ max-width: 46%; }
+  .hb-dbRow .hb-landgrid > .hb-entry:last-child .hb-entry-photo{
+    right: 34px; width: 200px; max-width: 200px; opacity: .42;
+  }
+  .hb-entry-tail{
+    position: absolute; top: 50%; right: 258px; transform: translateY(-50%);
+    max-width: 300px; text-align: right; pointer-events: none;
+    font-family:"Cormorant Garamond",serif; font-size: 10px;
+    letter-spacing: .26em; text-transform: uppercase;
+    color: rgba(126,120,108,.7); line-height: 2.1;
+  }
+  @media (max-width: 1180px){
+    .hb-dbRow .hb-landgrid > .hb-entry:last-child .hb-entry-body{ max-width: 52%; }
+    .hb-entry-tail{ right: 210px; max-width: 240px; font-size: 9px; }
+    .hb-dbRow .hb-landgrid > .hb-entry:last-child .hb-entry-photo{ width: 160px; max-width: 160px; }
+  }
+  @media (max-width: 900px){
+    .hb-dbRow .hb-landgrid > .hb-entry:last-child .hb-entry-body{ max-width: none; }
+    .hb-entry-tail{ display: none; }
+  }
+
   /* ===== 資料庫頁：頁首 ＋ 敘事欄 ＋ 頁尾分隔帶 ===== */
   .hb-pagehead{
     position: relative; z-index: 1;
@@ -470,8 +495,11 @@
   .hb-dbfoot{
     position: relative; z-index: 1;
     display: flex; align-items: center; gap: 26px;
-    height: 80px; padding: 0 58px;
-    border-top: 1px solid var(--fm-line);
+    height: 90px; padding: 0 58px;
+    width: 100vw; max-width: none;
+    margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw);
+    background: #EBE4D7;
+    border-top: 1px solid rgba(160,146,124,.5);
   }
   .hb-dbfoot-a, .hb-dbfoot-b{
     font-family:"Cormorant Garamond",serif; font-size: 10px;
@@ -7228,7 +7256,7 @@ var HB_ENTRY_META={
   "設計需求問卷":{cat:"QUESTIONNAIRE",catCn:"問卷",fr:"Questionnaire Client",go:"ENVOYER",goCn:"發送"},
   "工程報價單":{cat:"DEVIS",catCn:"報價",fr:"Devis de Chantier",go:"OUVRIR",goCn:"開啟"},
   "廠商報價單":{cat:"FOURNISSEURS",catCn:"廠商",fr:"Devis Fournisseurs",go:"OUVRIR",goCn:"開啟"},
-  "IG 貼文工作室":{cat:"ÉDITION",catCn:"社群",fr:"Atelier de Publication",go:"OUVRIR",goCn:"開啟"}
+  "IG 貼文工作室":{cat:"ÉDITION",catCn:"社群",fr:"Atelier de Publication",go:"OUVRIR",goCn:"開啟",img:HB_MAT_STACK,tail:"FAIRE VIVRE LES ESPACES,|MÊME APRÈS LEUR LIVRAISON."}
 };
 function HbCompanyGridCard({icon:l,title:t,desc:e,onClick:n}){
   let C=u.default.createElement;
@@ -7240,7 +7268,9 @@ function HbCompanyGridCard({icon:l,title:t,desc:e,onClick:n}){
     C("div",{className:"hb-entry-tcn"},t),
     C("div",{className:"hb-entry-d"},e),
     C("div",{className:"hb-entry-go"},C("span",{className:"fr"},meta.go),C("span",{className:"cn"},meta.goCn||""),C("i",null)),
-    meta.img?C("div",{className:"hb-entry-photo",style:{backgroundImage:'url("'+meta.img+'")'}}):null
+    meta.img?C("div",{className:"hb-entry-photo",style:{backgroundImage:'url("'+meta.img+'")'}}):null,
+    meta.tail?C("div",{className:"hb-entry-tail"},meta.tail.split("|").map(function(ln,li){
+      return C("span",{key:li,style:{display:"block"}},ln)})):null
   )
 }
 
