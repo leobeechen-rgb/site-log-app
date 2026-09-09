@@ -552,19 +552,12 @@
     position: relative; width: 100vw; height: 130px;
     margin-top: 0; margin-bottom: 0;
     overflow: hidden;
-    background: #EEE5D5 var(--hb-bn-paper) center / cover no-repeat;
+    background: #EEEADF var(--hb-bn-paper) center / cover no-repeat;
     display: grid;
     grid-template-columns: 140px minmax(500px, 1fr) 300px 250px;
     align-items: center;
     padding: 0 58px; overflow: hidden;
     text-align: left;
-  }
-  /* 讓 B、C 欄的文字不被右側植物吃掉 */
-  .hb-banner::before{
-    content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none;
-    background: linear-gradient(90deg,
-      rgba(247,246,242,.60) 0%, rgba(247,246,242,.52) 52%,
-      rgba(247,246,242,.16) 74%, rgba(247,246,242,0) 90%);
   }
   .hb-banner > *{ position: relative; z-index: 2; }
   /* 金線、左側飾條：在紙材之上、文字之下 */
@@ -631,7 +624,6 @@
     .hb-bn-b{ padding-left: 0; }
     .hb-bn-h{ font-size: 19px; letter-spacing: .08em; }
     .hb-bn-sub{ font-size: 11px; margin-top: 9px; }
-    .hb-banner::before{ background: rgba(245,241,233,.6); }
   }
 
   /* ===== 首頁上段：左大標題 ＋ 右 2×2 入口 ===== */
