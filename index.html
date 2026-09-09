@@ -316,12 +316,7 @@
     gap: 20px; padding: 0 58px; height: 78px; min-height: 78px;
   }
   .hb-topnav-brand{ display: flex; align-items: center; gap: 14px; min-width: 0; }
-  .hb-topnav .hb-logo-mark{
-    width: 34px; height: 34px; object-fit: contain; flex-shrink: 0;
-    filter: brightness(0) invert(1); opacity: .9;
-    animation: hbLogoIn .8s ease-out, hbLogoSpin 220s linear infinite !important;
-    animation-delay: 0s, .8s !important;
-  }
+
   .hb-topnav-word{
     font-family:"Cormorant Garamond",serif; font-size: 20px;
     letter-spacing: .3em; color: #F1ECE2; line-height: 1.1;
@@ -429,10 +424,18 @@
   }
   .hb-hero{ padding: 0; }
   .hb-hero-mark{
-    width: 48px; height: 48px; border: 1px solid rgba(90,80,64,.55);
+    width: 54px; height: 54px; border: 1px solid rgba(90,80,64,.55);
     display: flex; align-items: center; justify-content: center;
-    font-family: "Cormorant Garamond", serif; font-size: 23px; color: #2A2622;
     margin-bottom: 12px;
+  }
+  .hb-hero-mark .hb-logo-mark{
+    width: 62%; height: 62%; object-fit: contain; display: block;
+    animation: hbLogoIn .9s ease-out, hbLogoSpin 150s linear infinite !important;
+    animation-delay: 0s, .9s !important;
+    transform-origin: center;
+  }
+  @media (prefers-reduced-motion: reduce){
+    .hb-hero-mark .hb-logo-mark{ animation: none !important; }
   }
   .hb-hero-caps{
     font-family: "Cormorant Garamond", serif;
@@ -4787,12 +4790,12 @@ function HbLanding({onCase:l,onCompany:t,onManageStaff:e,onLogout:n,onQuickQuote
     `),
 
 
-    u.default.createElement("div",{className:"hb-topnav"},u.default.createElement("div",{className:"hb-topnav-brand"},u.default.createElement("img",{className:"hb-logo-mark",src:HB_LOGO_MARK,alt:"赫柏空間設計"}),u.default.createElement("div",null,u.default.createElement("div",{className:"hb-topnav-word"},"HERFULSINS"),u.default.createElement("div",{className:"hb-topnav-sub"},"MAISON DE DESIGN"))),u.default.createElement("div",{className:"hb-topnav-right"},u.default.createElement("span",{className:"hb-topnav-hi"},"歡迎回來，今天也要好好照顧每個工地"),u.default.createElement("span",{className:"hb-topnav-div"}),u.default.createElement("button",{onClick:e,title:"帳號管理",className:"hb-topnav-btn"},u.default.createElement(E,{name:"user",size:16})),u.default.createElement("button",{onClick:n,title:"登出",className:"hb-topnav-btn"},u.default.createElement(E,{name:"log-out",size:16})))),
+    u.default.createElement("div",{className:"hb-topnav"},u.default.createElement("div",{className:"hb-topnav-brand"},u.default.createElement("div",null,u.default.createElement("div",{className:"hb-topnav-word"},"HERFULSINS"),u.default.createElement("div",{className:"hb-topnav-sub"},"MAISON DE DESIGN"))),u.default.createElement("div",{className:"hb-topnav-right"},u.default.createElement("span",{className:"hb-topnav-hi"},"歡迎回來，今天也要好好照顧每個工地"),u.default.createElement("span",{className:"hb-topnav-div"}),u.default.createElement("button",{onClick:e,title:"帳號管理",className:"hb-topnav-btn"},u.default.createElement(E,{name:"user",size:16})),u.default.createElement("button",{onClick:n,title:"登出",className:"hb-topnav-btn"},u.default.createElement(E,{name:"log-out",size:16})))),
     u.default.createElement("div",{className:"hb-scroll",style:{width:"100%",flex:"1 1 auto",minHeight:0,overflowY:"auto",padding:0}},
 
       
 
-      u.default.createElement("div",{className:"hb-heroRow"},u.default.createElement("div",{className:"hb-hero"},u.default.createElement("div",{className:"hb-hero-mark"},"H"),u.default.createElement("div",{className:"hb-hero-caps"},"INT\u00C9RIEURS",u.default.createElement("br",null),"POUR UNE VIE",u.default.createElement("br",null),"PLUS BELLE"),u.default.createElement("div",{className:"hb-hero-caps-cn"},"為了更好的日常空間"),u.default.createElement("div",{className:"hb-hero-dash"}),u.default.createElement("h1",{className:"hb-hero-h1"},"La douceur",u.default.createElement("br",null),"que la vie d\u00E9pose."),u.default.createElement("div",{className:"hb-hero-h1cn"},"\u597D\u7684\u7A7A\u9593\uFF0C\u662F\u751F\u6D3B\u6C89\u6FB1\u5F8C\u7684\u6EAB\u67D4\u3002"),u.default.createElement("p",{className:"hb-hero-p"},"Projets, mati\u00E8res, plans et contrats,",u.default.createElement("br",null),"consign\u00E9s en un seul lieu."),u.default.createElement("p",{className:"hb-hero-pcn"},"\u6848\u4EF6\u3001\u6750\u6599\u3001\u5716\u9762\u8207\u5408\u7D04\uFF0C\u5728\u540C\u4E00\u8655\u88AB\u5B8C\u6574\u5730\u8A18\u4E0B\u4F86\u3002"),u.default.createElement("div",{className:"hb-hero-rule"}),u.default.createElement("div",{className:"hb-hero-cities"},"CHIAYI",u.default.createElement("i",null),"YUNLIN",u.default.createElement("i",null),"TAINAN"),u.default.createElement("div",{className:"hb-hero-cities-cn"},"\u5609\u7FA9\u3000\u96F2\u6797\u3000\u53F0\u5357")),u.default.createElement("div",{className:"hb-landgrid",style:{display:"grid",gridTemplateColumns:"repeat(2,minmax(0,1fr))",gap:20,gridTemplateRows:"repeat(2,210px)",alignContent:"start"}},
+      u.default.createElement("div",{className:"hb-heroRow"},u.default.createElement("div",{className:"hb-hero"},u.default.createElement("div",{className:"hb-hero-mark"},u.default.createElement("img",{className:"hb-logo-mark",src:HB_LOGO_MARK,alt:"赫柏空間設計"})),u.default.createElement("div",{className:"hb-hero-caps"},"INT\u00C9RIEURS",u.default.createElement("br",null),"POUR UNE VIE",u.default.createElement("br",null),"PLUS BELLE"),u.default.createElement("div",{className:"hb-hero-caps-cn"},"為了更好的日常空間"),u.default.createElement("div",{className:"hb-hero-dash"}),u.default.createElement("h1",{className:"hb-hero-h1"},"La douceur",u.default.createElement("br",null),"que la vie d\u00E9pose."),u.default.createElement("div",{className:"hb-hero-h1cn"},"\u597D\u7684\u7A7A\u9593\uFF0C\u662F\u751F\u6D3B\u6C89\u6FB1\u5F8C\u7684\u6EAB\u67D4\u3002"),u.default.createElement("p",{className:"hb-hero-p"},"Projets, mati\u00E8res, plans et contrats,",u.default.createElement("br",null),"consign\u00E9s en un seul lieu."),u.default.createElement("p",{className:"hb-hero-pcn"},"\u6848\u4EF6\u3001\u6750\u6599\u3001\u5716\u9762\u8207\u5408\u7D04\uFF0C\u5728\u540C\u4E00\u8655\u88AB\u5B8C\u6574\u5730\u8A18\u4E0B\u4F86\u3002"),u.default.createElement("div",{className:"hb-hero-rule"}),u.default.createElement("div",{className:"hb-hero-cities"},"CHIAYI",u.default.createElement("i",null),"YUNLIN",u.default.createElement("i",null),"TAINAN"),u.default.createElement("div",{className:"hb-hero-cities-cn"},"\u5609\u7FA9\u3000\u96F2\u6797\u3000\u53F0\u5357")),u.default.createElement("div",{className:"hb-landgrid",style:{display:"grid",gridTemplateColumns:"repeat(2,minmax(0,1fr))",gap:20,gridTemplateRows:"repeat(2,210px)",alignContent:"start"}},
         u.default.createElement(HbCompanyGridCard,{icon:"clipboard-list",title:"\u6848\u4ef6\u8cc7\u6599\u5eab",desc:"\u7ba1\u7406\u9032\u884c\u4e2d\u7684\u7a7a\u9593\u8a2d\u8a08\u8207\u5de5\u7a0b\u5c08\u6848\uff1a\u65bd\u5de5\u7167\u7247\u3001\u6750\u6599\u9001\u9054\u3001\u5c08\u6848\u6a94\u6848\u3001\u8a2d\u5099\u8cc7\u6599",onClick:l}),
         u.default.createElement(HbCompanyGridCard,{icon:"folder",title:"\u516c\u53f8\u8cc7\u6599\u5eab",desc:"\u516c\u53f8\u71df\u904b\u3001\u884c\u653f\u8207\u5236\u5f0f\u5408\u7d04\uff1a\u8a2d\u8a08\u5408\u7d04\u3001\u5de5\u7a0b\u5831\u50f9\u55ae",onClick:t}),
         u.default.createElement(HbCompanyGridCard,{icon:"image",title:"\u8d6b\u67cf\u7a7a\u9593\u4f5c\u54c1\u6848\u4f8b",desc:"\u8de8\u6848\u4ef6\u7684\u884c\u92b7\uff0f\u63d0\u6848\u7528\u7167\u7247\u5eab",onClick:mp}),
