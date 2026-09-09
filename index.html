@@ -488,6 +488,136 @@
     .hb-entry-tail{ display: none; }
   }
 
+  /* ===== 合約檔案頁：巴黎事務所風格 ===== */
+  .hb-dossier{
+    background-color: #F5F1E9 !important;
+    background-image: none !important;
+    color: #39332F;
+  }
+  .hb-dosWrap{ position: relative; z-index: 1; max-width: 1180px; margin: 0 auto; padding: 0 58px; }
+
+  .hb-dosHead{ padding: 26px 0 30px; }
+  .hb-dosLabel{
+    font-family:"Cormorant Garamond",serif; font-size: 11px;
+    letter-spacing: .3em; text-transform: uppercase; color: #A58B62; margin-top: 22px;
+  }
+  .hb-dosTitle{
+    margin: 12px 0 0; font-family:"Noto Serif TC",serif; font-weight: 400;
+    font-size: clamp(28px, 3vw, 42px); letter-spacing: .14em; color: #39332F; line-height: 1.3;
+  }
+  .hb-dosLede{
+    margin: 16px 0 0; max-width: 62ch;
+    font-size: 13.5px; line-height: 2; letter-spacing: .03em; color: #6B625B;
+  }
+
+  .hb-dosRow{
+    display: grid; grid-template-columns: 250px minmax(0,1fr);
+    gap: 56px; align-items: start;
+    border-top: 1px solid rgba(57,51,47,.14); padding: 26px 0 60px;
+  }
+  .hb-dosSideT{
+    font-size: 11.5px; letter-spacing: .22em; color: #8C8279; margin-bottom: 10px; display: block;
+  }
+  .hb-dosNav{ display: flex; flex-direction: column; }
+  .hb-dosNavItem{
+    position: relative; text-align: left; background: none; border: none; cursor: pointer;
+    font-family: inherit; font-size: 14px; letter-spacing: .1em; color: #6B625B;
+    padding: 11px 0; transition: color .2s ease;
+  }
+  .hb-dosNavItem::after{
+    content: ""; position: absolute; left: 0; bottom: 6px; width: 0; height: 1px;
+    background: #703B42; transition: width .3s cubic-bezier(.22,.61,.36,1);
+  }
+  .hb-dosNavItem:hover{ color: #39332F; }
+  .hb-dosNavItem.on{ color: #703B42; }
+  .hb-dosNavItem.on::after{ width: 26px; }
+  .hb-dosNavItem:focus-visible{ outline: 1px solid #703B42; outline-offset: 3px; }
+
+  .hb-dosField{ margin-top: 26px; }
+  .hb-dosSelect{
+    width: 100%; padding: 9px 10px; border: 1px solid rgba(57,51,47,.2);
+    border-radius: 2px; font-size: 13.5px; background: #FCFAF6; color: #39332F; font-family: inherit;
+  }
+  .hb-dosSideFoot{ margin-top: 28px; border-top: 1px solid rgba(57,51,47,.12); padding-top: 16px; }
+  .hb-dosLink{
+    display: flex; align-items: center; gap: 8px; width: 100%;
+    background: none; border: none; cursor: pointer; padding: 8px 0;
+    font-family: inherit; font-size: 13px; letter-spacing: .04em; color: #6B625B;
+    transition: color .2s ease;
+  }
+  .hb-dosLink:hover{ color: #703B42; }
+  .hb-dosLink:focus-visible{ outline: 1px solid #703B42; outline-offset: 2px; }
+
+  .hb-dosBar{
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    padding-bottom: 14px; border-bottom: 1px solid rgba(57,51,47,.14);
+  }
+  .hb-dosCount{ font-size: 12.5px; letter-spacing: .1em; color: #8C8279; }
+  .hb-dosNew{
+    background: #703B42; color: #F7F3EC; border: 1px solid #703B42; border-radius: 2px;
+    padding: 10px 22px; cursor: pointer; font-family: inherit;
+    font-size: 13.5px; letter-spacing: .12em; transition: background .22s ease;
+  }
+  .hb-dosNew:hover{ background: #5E3037; }
+  .hb-dosNew:focus-visible{ outline: 2px solid #A58B62; outline-offset: 2px; }
+
+  .hb-dosList{ list-style: none; margin: 0; padding: 0; }
+  .hb-dosItem{
+    display: flex; align-items: center; gap: 20px;
+    padding: 17px 0; border-bottom: 1px solid rgba(57,51,47,.1);
+    transition: background .2s ease;
+  }
+  .hb-dosItem:hover{ background: rgba(255,255,255,.5); }
+  .hb-dosNo{
+    flex: 0 0 34px; font-family:"Cormorant Garamond",serif; font-size: 16px;
+    color: #A58B62; letter-spacing: .04em;
+  }
+  .hb-dosBody{ flex: 1 1 auto; min-width: 0; }
+  .hb-dosName{
+    font-family:"Noto Serif TC",serif; font-size: 17px; letter-spacing: .08em;
+    color: #39332F; line-height: 1.5;
+  }
+  .hb-dosMeta{ font-size: 13px; color: #7A716A; margin-top: 5px; letter-spacing: .03em; }
+  .hb-dosDate{
+    flex: 0 0 auto; font-family:"JetBrains Mono",monospace; font-size: 12px;
+    color: #8C8279; letter-spacing: .04em;
+  }
+  .hb-dosActs{ flex: 0 0 auto; display: flex; align-items: center; gap: 4px; }
+  .hb-dosAct{
+    display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+    background: none; border: none; padding: 8px 10px; font-family: inherit;
+    font-size: 12.5px; letter-spacing: .04em; color: #6B625B; border-radius: 2px;
+    transition: color .2s ease, background .2s ease;
+  }
+  .hb-dosAct:hover{ color: #39332F; background: rgba(57,51,47,.05); }
+  .hb-dosAct:focus-visible{ outline: 1px solid #703B42; outline-offset: 1px; }
+  .hb-dosAct.ico{ padding: 8px; color: #8C8279; }
+
+  .hb-dosMore{ position: relative; }
+  .hb-dosMenu{
+    position: absolute; right: 0; top: calc(100% + 6px); z-index: 30;
+    min-width: 128px; background: #FFFDF9; border: 1px solid rgba(57,51,47,.16);
+    border-radius: 2px; box-shadow: 0 12px 26px -20px rgba(57,51,47,.5);
+    display: flex; flex-direction: column; padding: 4px 0;
+  }
+  .hb-dosMenu button{
+    background: none; border: none; text-align: left; cursor: pointer;
+    padding: 10px 16px; font-family: inherit; font-size: 13px; letter-spacing: .06em; color: #39332F;
+  }
+  .hb-dosMenu button:hover{ background: rgba(57,51,47,.05); }
+  .hb-dosMenu button.del{ color: #703B42; }
+  .hb-dosMenu button.del:hover{ background: rgba(112,59,66,.08); }
+
+  @media (max-width: 1080px){ .hb-dosWrap{ padding: 0 30px; } .hb-dosRow{ gap: 34px; grid-template-columns: 210px minmax(0,1fr); } }
+  @media (max-width: 860px){
+    .hb-dosWrap{ padding: 0 22px; }
+    .hb-dosRow{ grid-template-columns: 1fr; gap: 24px; }
+    .hb-dosNav{ flex-direction: row; gap: 22px; border-bottom: 1px solid rgba(57,51,47,.12); }
+    .hb-dosItem{ flex-wrap: wrap; gap: 10px 16px; }
+    .hb-dosBody{ flex: 1 1 60%; }
+    .hb-dosActs{ flex: 1 1 100%; justify-content: flex-start; margin-left: -10px; }
+  }
+
   /* ===== 檔案冊子頁：頁首／索引欄／檔案卡 ===== */
   .hb-arcHead{
     position: relative; z-index: 1;
@@ -2983,6 +3113,7 @@ function HerfulsinsContractForm({category:l,projects:t,accounts:e,defaultProject
 function HerfulsinsContractsHub({onBack:l,notify:t}){
   let[e,n]=(0,u.useState)("company"),[a,i]=(0,u.useState)([]),[o,f]=(0,u.useState)([]),[c,r]=(0,u.useState)([]),[d,h]=(0,u.useState)(!0),[m,p]=(0,u.useState)(null),[z,C]=(0,u.useState)(!1),[D,y]=(0,u.useState)(!1);
   let[editingRow,setEditingRow]=(0,u.useState)(null);
+  let[hbMenu,hbSetMenu]=(0,u.useState)(null);
   let load=async()=>{
     h(!0);
     let[g,b,S]=await Promise.all([
@@ -3046,66 +3177,76 @@ function HerfulsinsContractsHub({onBack:l,notify:t}){
   let[selectedProject,setSelectedProject]=(0,u.useState)(null);
   let caseProjects=c;
   let filtered=e==="company"?a.filter(v=>v.category==="company"):a.filter(v=>v.category==="case"&&(!selectedProject||v.project_id===selectedProject));
-  return u.default.createElement("div",{className:"hb-archive",style:{minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},
-    u.default.createElement("div",{className:"hb-arcHead"},
-      u.default.createElement("div",{className:"hb-arcHead-l"},
+  return u.default.createElement("div",{className:"hb-archive hb-dossier",style:{minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:"#39332F"},
+      onClick:()=>hbSetMenu(null)},
+    u.default.createElement("div",{className:"hb-dosWrap"},
+
+      u.default.createElement("header",{className:"hb-dosHead"},
         u.default.createElement("button",{onClick:l,className:"hb-arcBack"},
           u.default.createElement(E,{name:"arrow-left",size:15}),
           u.default.createElement("span",null,"返回公司資料庫")),
-        u.default.createElement("div",{className:"hb-arcCat"},
-          u.default.createElement("span",{className:"fr"},"CONTRATS"),
-          u.default.createElement("span",{className:"cn"},"合約")),
-        u.default.createElement("h1",{className:"hb-arcTitle"},"Contrats de Conception"),
-        u.default.createElement("div",{className:"hb-arcCn"},"設計合約")),
-      u.default.createElement("div",{className:"hb-arcHead-r"},
-        u.default.createElement("p",{className:"hb-arcNote"},"Les engagements qui ouvrent",u.default.createElement("br",null),"chaque projet."),
-        u.default.createElement("div",{className:"hb-arcNo"},"DOSSIER 03"))),
+        u.default.createElement("div",{className:"hb-dosLabel"},"Contrats de Conception"),
+        u.default.createElement("h1",{className:"hb-dosTitle"},"設計合約"),
+        u.default.createElement("p",{className:"hb-dosLede"},"僅公司內部可見，獨立於案件資料之外。前期設計合約用於簽約前的設計委任；工程合約綁定指定案件。")),
 
-    u.default.createElement("div",{className:"hb-arcRow"},
-      u.default.createElement("aside",{className:"hb-arcSide"},
-        u.default.createElement("div",{className:"hb-arcSide-t"},"CATÉGORIES"),
-        [{k:"company",label:"前期設計合約",fr:"Conception"},{k:"case",label:"指定案件工程合約",fr:"Chantier"}].map(v=>
-          u.default.createElement("button",{key:v.k,onClick:()=>{n(v.k),setSelectedProject(null)},
-            className:"hb-arcIdx"+(e===v.k?" on":"")},
-            u.default.createElement("span",{className:"fr"},v.fr),
-            u.default.createElement("span",{className:"cn"},v.label))),
-        u.default.createElement("p",{className:"hb-arcSide-p"},"僅公司內部可見，獨立於案件資料之外。前期設計合約用於簽約前的設計委任，工程合約則綁定指定案件。"),
-        e==="case"&&u.default.createElement("div",{style:{marginTop:18}},
-          u.default.createElement("label",{className:"hb-arcSide-t",style:{display:"block",marginBottom:7}},"選擇案件"),
-          u.default.createElement("select",{value:selectedProject||"",onChange:v=>setSelectedProject(v.target.value||null),
-            style:{width:"100%",padding:"9px 10px",borderRadius:4,border:`1px solid ${s.line}`,fontSize:13,background:"#fff",fontFamily:"inherit"}},
-            u.default.createElement("option",{value:""},"全部案件"),
-            caseProjects.map(v=>u.default.createElement("option",{key:v.id,value:v.id},v.name)))),
-        u.default.createElement("button",{onClick:e==="case"?HB_downloadBlankEngContract:HB_downloadBlankContract,className:"hb-arcGhost"},
-          u.default.createElement(E,{name:"download",size:14}),
-          u.default.createElement("span",null,e==="case"?"下載空白工程合約範本":"下載空白合約範本"))),
+      u.default.createElement("div",{className:"hb-dosRow"},
 
-      u.default.createElement("div",{className:"hb-arcMain"},
-        u.default.createElement("div",{className:"hb-arcBar"},
-          u.default.createElement("button",{onClick:()=>C(!0),className:"hb-arcNew"},
-            u.default.createElement("span",{className:"fr"},e==="case"?"+ CRÉER UN NOUVEAU CONTRAT DE CHANTIER":"+ CRÉER UN NOUVEAU CONTRAT"),
-            u.default.createElement("span",{className:"cn"},e==="case"?"新增工程合約":"新增設計合約")),
-          u.default.createElement("button",{onClick:()=>y(!0),className:"hb-arcGhost sm"},
-            u.default.createElement(E,{name:"folder",size:14}),
-            u.default.createElement("span",null,"帳戶管理"))),
+        u.default.createElement("aside",{className:"hb-dosSide"},
+          u.default.createElement("div",{className:"hb-dosSideT"},"分類"),
+          u.default.createElement("nav",{className:"hb-dosNav"},
+            [{k:"company",label:"前期設計合約"},{k:"case",label:"指定案件工程合約"}].map(v=>
+              u.default.createElement("button",{key:v.k,onClick:()=>{n(v.k),setSelectedProject(null)},
+                className:"hb-dosNavItem"+(e===v.k?" on":"")},v.label))),
+          e==="case"&&u.default.createElement("div",{className:"hb-dosField"},
+            u.default.createElement("label",{className:"hb-dosSideT",htmlFor:"hbCaseSel"},"選擇案件"),
+            u.default.createElement("select",{id:"hbCaseSel",value:selectedProject||"",
+              onChange:v=>setSelectedProject(v.target.value||null),className:"hb-dosSelect"},
+              u.default.createElement("option",{value:""},"全部案件"),
+              caseProjects.map(v=>u.default.createElement("option",{key:v.id,value:v.id},v.name)))),
+          u.default.createElement("div",{className:"hb-dosSideFoot"},
+            u.default.createElement("button",{onClick:e==="case"?HB_downloadBlankEngContract:HB_downloadBlankContract,className:"hb-dosLink"},
+              u.default.createElement(E,{name:"download",size:13}),
+              u.default.createElement("span",null,e==="case"?"下載空白工程合約範本":"下載空白合約範本")),
+            u.default.createElement("button",{onClick:()=>y(!0),className:"hb-dosLink"},
+              u.default.createElement(E,{name:"folder",size:13}),
+              u.default.createElement("span",null,"帳戶管理")))),
 
-        d?u.default.createElement("div",{style:{textAlign:"center",padding:40}},u.default.createElement(E,{name:"loader",className:"animate-spin",size:22,color:s.ocean})):
-        filtered.length===0?u.default.createElement(He,{icon:"clipboard-list",text:"尚未建立任何設計合約"}):
-        u.default.createElement("div",{className:"hb-arcList"},
-          filtered.map((v,vi)=>u.default.createElement("div",{key:v.id,className:"hb-arcCard"},
-            u.default.createElement("div",{className:"hb-arcCard-no"},
-              u.default.createElement("span",{className:"n"},String(vi+1).padStart(2,"0")),
-              u.default.createElement("span",{className:"d"},String(v.created_at||"").slice(0,10).replace(/-/g,"."))),
-            u.default.createElement("div",{className:"hb-arcCard-body"},
-              u.default.createElement("div",{className:"hb-arcCard-t"},v.design_name||"空白合約（現場填寫）"),
-              u.default.createElement("div",{className:"hb-arcCard-m"},"甲方 ",v.party_a_name||"—",
-                e==="case"?"　·　"+((caseProjects.find(p=>p.id===v.project_id)||{}).name||""):"")),
-            u.default.createElement("div",{className:"hb-arcCard-act"},
-              u.default.createElement("button",{onClick:()=>genWord(v),className:"hb-arcAct"},u.default.createElement(E,{name:"file-output",size:14}),u.default.createElement("span",null,"Word")),
-              u.default.createElement("button",{onClick:()=>genPdf(v),className:"hb-arcAct"},u.default.createElement(E,{name:"printer",size:14}),u.default.createElement("span",null,"PDF")),
-              u.default.createElement("button",{onClick:()=>{setEditingRow(v);C(!0)},className:"hb-arcAct ico",title:"編輯"},u.default.createElement(E,{name:"pencil",size:14})),
-              u.default.createElement("button",{onClick:()=>deleteContract(v.id),className:"hb-arcAct ico del",title:"刪除"},u.default.createElement(E,{name:"trash",size:14}))))))
-      )),
+        u.default.createElement("section",{className:"hb-dosMain"},
+          u.default.createElement("div",{className:"hb-dosBar"},
+            u.default.createElement("div",{className:"hb-dosCount"},
+              filtered.length>0?filtered.length+" 份合約":"尚無資料"),
+            u.default.createElement("button",{onClick:()=>{setEditingRow(null);C(!0)},className:"hb-dosNew"},
+              e==="case"?"新增工程合約":"新增設計合約")),
+
+          d?u.default.createElement("div",{style:{textAlign:"center",padding:40}},
+              u.default.createElement(E,{name:"loader",className:"animate-spin",size:22,color:"#703B42"})):
+          filtered.length===0?u.default.createElement(He,{icon:"clipboard-list",text:"尚未建立任何設計合約"}):
+          u.default.createElement("ul",{className:"hb-dosList"},
+            filtered.map((v,vi)=>u.default.createElement("li",{key:v.id,className:"hb-dosItem"},
+              u.default.createElement("span",{className:"hb-dosNo"},String(vi+1).padStart(2,"0")),
+              u.default.createElement("div",{className:"hb-dosBody"},
+                u.default.createElement("div",{className:"hb-dosName"},v.design_name||"空白合約（現場填寫）"),
+                u.default.createElement("div",{className:"hb-dosMeta"},
+                  "甲方 "+(v.party_a_name||"—"),
+                  e==="case"&&(caseProjects.find(p=>p.id===v.project_id)||{}).name?"　·　"+(caseProjects.find(p=>p.id===v.project_id)||{}).name:"")),
+              u.default.createElement("time",{className:"hb-dosDate"},String(v.created_at||"").slice(0,10).replace(/-/g,".")),
+              u.default.createElement("div",{className:"hb-dosActs"},
+                u.default.createElement("button",{onClick:()=>genWord(v),className:"hb-dosAct"},
+                  u.default.createElement(E,{name:"file-output",size:13}),u.default.createElement("span",null,"Word")),
+                u.default.createElement("button",{onClick:()=>genPdf(v),className:"hb-dosAct"},
+                  u.default.createElement(E,{name:"printer",size:13}),u.default.createElement("span",null,"PDF")),
+                u.default.createElement("div",{className:"hb-dosMore"},
+                  u.default.createElement("button",{className:"hb-dosAct ico","aria-haspopup":"true",
+                    "aria-expanded":hbMenu===v.id?"true":"false",title:"更多",
+                    onClick:ev=>{ev.stopPropagation();hbSetMenu(hbMenu===v.id?null:v.id)}},
+                    u.default.createElement(E,{name:"more-vertical",size:15})),
+                  hbMenu===v.id&&u.default.createElement("div",{className:"hb-dosMenu",onClick:ev=>ev.stopPropagation()},
+                    u.default.createElement("button",{onClick:()=>{hbSetMenu(null);setEditingRow(v);C(!0)}},"編輯"),
+                    u.default.createElement("button",{className:"del",onClick:()=>{
+                      hbSetMenu(null);
+                      if(window.confirm("確定要刪除「"+(v.design_name||"空白合約")+"」？此動作無法復原。")) deleteContract(v.id)
+                    }},"刪除")))))))
+        ))),
 
     z&&u.default.createElement(HerfulsinsContractForm,{category:editingRow?editingRow.category:e,projects:caseProjects,accounts:o,defaultProjectId:selectedProject,initialValues:editingRow?toFormValues(editingRow):null,editing:!!editingRow,onCancel:()=>{C(!1);setEditingRow(null)},onCreate:editingRow?(v=>updateContract(editingRow.id,v)):createContract}),
     D&&u.default.createElement(HerfulsinsAccountManager,{accounts:o,onClose:()=>y(!1),onAdd:addAccount,onDelete:deleteAccount})
