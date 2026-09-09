@@ -8821,7 +8821,7 @@ function HbOverviewHub({project:pj,stage:st,photos:ph,materials:mt,appliances:ap
   let openDf=(df||[]).filter(function(v){return!v.completed});
   let hero=(ph||[])[0]||null;
 
-  let card={background:s.card,border:"1px solid "+s.line,borderRadius:3,padding:"22px 24px"};
+  let card={backgroundColor:"#F7F4EC",backgroundImage:"var(--hb-paper-card)",backgroundSize:"420px auto",backgroundRepeat:"repeat",backgroundPosition:"center",border:"1px solid rgba(160,146,124,.28)",borderRadius:5,boxShadow:"none",padding:"22px 24px"};
   let head={display:"flex",alignItems:"flex-end",justifyContent:"space-between",gap:12};
   let ttl={fontFamily:"'Noto Serif TC',serif",fontSize:19,fontWeight:400,color:s.ink,letterSpacing:"0.06em"};
   let sect=function(cn,en,right){
@@ -8958,7 +8958,7 @@ function HbOverviewHub({project:pj,stage:st,photos:ph,materials:mt,appliances:ap
           (ap||[]).slice(0,4).map(function(v){
             return C("div",{key:v.id,onClick:function(){go("appliances")},style:{cursor:"pointer",minWidth:0}},
               v.photoUrl?C("div",{style:{width:"100%",aspectRatio:"1",borderRadius:2,background:'center/cover no-repeat url("'+v.photoUrl+'")',border:"1px solid "+s.line}})
-                :C("div",{style:{width:"100%",aspectRatio:"1",borderRadius:2,background:s.cardAlt,border:"1px solid "+s.line}}),
+                :C("div",{style:{width:"100%",aspectRatio:"1",borderRadius:2,background:"rgba(160,146,124,.13)",border:"1px solid rgba(160,146,124,.24)"}}),
               C("div",{style:{fontSize:12.5,color:s.ink,marginTop:7,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},v.name))}))
       ))
     ),
