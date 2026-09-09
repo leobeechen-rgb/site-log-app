@@ -4430,18 +4430,20 @@ function HbLanding({onCase:l,onCompany:t,onManageStaff:e,onLogout:n,onQuickQuote
       .hb-landing-bg{
         --hb-landbg: url("${HB_LANDING_BG}");
         position: relative;
-        background-color:#E6DDCD;
+        background-color:#EFEAE0;
       }
       /* 底層：同一張圖放大並模糊，用來填滿完整圖片以外的區域，不會出現接縫 */
       .hb-landing-bg::before{
         content:""; position:fixed; inset:-6%; z-index:0; pointer-events:none;
         background: var(--hb-landbg) center/cover no-repeat;
-        filter: blur(34px) saturate(.88) brightness(1.02);
+        filter: blur(34px) saturate(.85) brightness(1.05);
+        opacity: .45;
       }
       /* 上層：完整圖片，不裁切不變形 */
       .hb-landing-bg::after{
         content:""; position:fixed; inset:0; z-index:0; pointer-events:none;
         background: var(--hb-landbg) center/contain no-repeat;
+        opacity: .55;
       }
       .hb-landing-bg > .hb-scroll{ position: relative; z-index: 1; }
       .hb-landing-tri { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
