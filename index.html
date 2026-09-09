@@ -294,124 +294,45 @@
   /* 導覽列與橫幅必須貫穿視窗，不受任何容器內距限制 */
   .hb-topnav,
   .hb-banner{
-    width: 100vw;
-    max-width: none;
-    margin-left: calc(50% - 50vw);
-    margin-right: calc(50% - 50vw);
-  }
-  .hb-banner{ margin-top: 0; margin-bottom: 0; }
-
-  /* ===== 法式型錄色票 ===== */
-  :root{
-    --fm-cream:#F5F1E9; --fm-paper:#F0EBE1; --fm-charcoal:#26241F;
-    --fm-burgundy:#6E1C24; --fm-olive:#5E6B58; --fm-brass:#8A6E32;
-    --fm-ink:#2A2622; --fm-soft:#7E786C; --fm-line:rgba(160,146,124,.38);
-  }
-
-  /* ===== 首頁頂部深炭黑導覽列 ===== */
-  .hb-topnav{
-    flex: 0 0 auto; position: relative; z-index: 2;
-    background: var(--fm-charcoal);
-    display: flex; align-items: center; justify-content: space-between;
-    gap: 20px; padding: 0 58px; height: 78px; min-height: 78px;
-  }
-  .hb-topnav-brand{ display: flex; align-items: center; gap: 14px; min-width: 0; }
-
-  .hb-topnav-word{
-    font-family:"Cormorant Garamond",serif; font-size: 20px;
-    letter-spacing: .3em; color: #F1ECE2; line-height: 1.1;
-  }
-  .hb-topnav-sub{
-    font-family:"Cormorant Garamond",serif; font-size: 8.5px;
-    letter-spacing: .34em; color: rgba(241,236,226,.55); margin-top: 4px;
-  }
-  .hb-topnav-right{ display: flex; align-items: center; gap: 16px; flex-shrink: 0; }
-  .hb-topnav-hi{ font-size: 11px; letter-spacing: .04em; color: rgba(241,236,226,.62); }
-  .hb-topnav-div{ width: 1px; height: 20px; background: rgba(241,236,226,.22); }
-  .hb-topnav-btn{
-    background: none; border: none; cursor: pointer; padding: 10px;
-    color: rgba(241,236,226,.78); display: flex; align-items: center;
-    min-width: 44px; min-height: 44px; justify-content: center;
-    transition: color .25s ease;
-  }
-  .hb-topnav-btn:hover{ color: #F1ECE2; }
-  @media (max-width: 760px){
-    .hb-topnav{ padding: 0 16px; min-height: 58px; }
-    .hb-topnav-hi, .hb-topnav-div{ display: none; }
-    .hb-topnav-word{ font-size: 16px; letter-spacing: .22em; }
-  }
-
-  /* ===== 型錄式頁尾 ===== */
-  .hb-footline{
-    display: flex; align-items: center; gap: 22px;
-    padding: 0 58px 30px; margin: 0;
-  }
-  .hb-footline-b{
-    font-family:"Cormorant Garamond",serif; font-size: 11px;
-    letter-spacing: .3em; text-transform: uppercase; color: var(--fm-soft); flex-shrink: 0;
-  }
-  .hb-footline-r{ flex: 1 1 auto; height: 1px; background: var(--fm-line); }
-  .hb-footline-c{
-    font-family:"Cormorant Garamond","Noto Serif TC",serif; font-size: 11px;
-    letter-spacing: .24em; color: var(--fm-soft); flex-shrink: 0;
-  }
-  @media (max-width: 900px){ .hb-footline{ padding: 0 22px 26px; } }
-
-  /* ===== 手機：單欄、最小 48px 可點高度 ===== */
-  @media (max-width: 760px){
-    .hb-heroRow{ grid-template-columns: 1fr !important; gap: 22px; }
-    .hb-landgrid{ grid-template-columns: 1fr !important; gap: 12px !important; }
-    .hb-landing-tri{ grid-template-columns: 1fr !important; gap: 12px !important; }
-    .hb-entry{ min-height: 48px; padding: 20px 20px 20px 66px; }
-    .hb-entry.has-img{ padding-right: 34%; }
-    .hb-entry::before{ font-size: 24px; left: 16px; top: 20px; }
-    .hb-entry::after{ left: 52px; top: 20px; bottom: 20px; }
-    .hb-entry-d{ -webkit-line-clamp: 3; }
-    .hb-landing-tri .hb-entry{ min-height: 48px; padding: 14px 16px 14px 62px; }
-    .hb-landing-tri .hb-entry::before{ top: 12px; left: 14px; }
-    .hb-landing-tri .hb-entry::after{ left: 50px; top: 14px; bottom: 14px; }
-    .hb-hero-mark{ width: 52px; height: 52px; font-size: 25px; }
-    .hb-hero-h1{ font-size: 26px; }
-  }
-
-  /* ===== 中央宣言橫幅：使用法式橫幅素材 ===== */
-  .hb-banner{
     position: relative; width: 100%; height: 130px; margin: 0;
-    background: var(--hb-banner-bg) center center / cover no-repeat;
-    display: flex; align-items: center; gap: 40px;
-    padding: 0 58px;
+    background: var(--hb-banner-bg) center 72% / cover no-repeat;
+    display: flex; align-items: center; justify-content: center;
+    padding: 0 58px; overflow: hidden;
   }
-  .hb-banner-side{
-    flex: 0 0 auto;
-    font-family: "Cormorant Garamond", serif;
-    font-size: 9.5px; letter-spacing: .3em; text-transform: uppercase;
-    color: #8C8371; line-height: 2.2;
-    padding-right: 34px; border-right: 1px solid rgba(140,120,80,.4);
+  /* 中央柔光：確保文字在任何裁切位置都讀得清楚，右側植物自然退後 */
+  .hb-banner::before{
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(58% 130% at 50% 50%,
+      rgba(245,241,233,.86) 0%, rgba(245,241,233,.55) 46%, rgba(245,241,233,0) 78%);
   }
-  .hb-banner-side.right{ border-right: none; border-left: 1px solid rgba(140,120,80,.4); padding: 0 0 0 34px; margin-left: auto; }
-  .hb-banner-main{ flex: 1 1 auto; min-width: 0; text-align: center; }
+  .hb-banner-main{ position: relative; text-align: center; max-width: 760px; }
   .hb-banner-eyebrow{
-    font-family:"Cormorant Garamond",serif; font-size: 9.5px;
-    letter-spacing: .34em; text-transform: uppercase; color: var(--fm-brass);
-    margin-bottom: 12px;
+    font-family:"Cormorant Garamond",serif; font-size: 12px;
+    letter-spacing: .3em; text-transform: uppercase; color: var(--fm-brass);
+    line-height: 1.2;
   }
   .hb-banner-title{
-    display: flex; align-items: center; justify-content: center; gap: 20px;
+    display: flex; align-items: center; justify-content: center; gap: 18px;
     font-family:"Noto Serif TC",serif; font-weight: 400;
-    font-size: clamp(20px, 2.1vw, 30px); letter-spacing: .24em; text-indent: .24em;
-    color: var(--fm-burgundy); line-height: 1.4;
+    font-size: clamp(26px, 2.1vw, 33px); letter-spacing: .2em; text-indent: .2em;
+    color: var(--fm-burgundy); line-height: 1.28; margin-top: 7px;
   }
-  .hb-banner-dash{ display: block; width: 46px; height: 1px; background: rgba(110,28,36,.45); flex-shrink: 0; }
+  .hb-banner-dash{ display: block; width: 42px; height: 1px; background: rgba(110,28,36,.5); flex-shrink: 0; }
+  .hb-banner-fr{
+    font-family:"Cormorant Garamond",serif; font-weight: 400;
+    font-size: 15px; letter-spacing: .16em; text-transform: uppercase;
+    color: #3A352E; line-height: 1.3; margin-top: 7px;
+  }
   .hb-banner-note{
-    font-size: clamp(11px, 1vw, 13px); line-height: 1.9; letter-spacing: .1em;
-    color: var(--fm-soft); margin-top: 13px;
+    font-size: 12.5px; letter-spacing: .1em; color: #5A544A;
+    line-height: 1.3; margin-top: 11px;
   }
   @media (max-width: 900px){
-    .hb-banner{ aspect-ratio: auto; padding: 30px 14% 30px 8%; background-size: cover;
-      flex-direction: column; align-items: flex-start; gap: 18px; }
-    .hb-banner-side{ border: none; padding: 0; }
-    .hb-banner-side.right{ display: none; }
-    .hb-banner-main{ flex-direction: column; gap: 14px; }
+    .hb-banner{ height: auto; padding: 26px 22px; }
+    .hb-banner-title{ font-size: 24px; gap: 12px; }
+    .hb-banner-dash{ width: 26px; }
+    .hb-banner-fr{ font-size: 12.5px; letter-spacing: .12em; }
+    .hb-banner-note{ font-size: 11.5px; }
   }
 
   /* ===== 首頁上段：左大標題 ＋ 右 2×2 入口 ===== */
@@ -4802,7 +4723,7 @@ function HbLanding({onCase:l,onCompany:t,onManageStaff:e,onLogout:n,onQuickQuote
         u.default.createElement(HbCompanyGridCard,{icon:"presentation",title:"\u5716\u9762\u7ba1\u7406",desc:"\u4f9d\u8cc7\u6599\u593e\u7ba1\u7406\u65bd\u5de5\u5716\u9762\uff0c\u652f\u63f4\u5b50\u8cc7\u6599\u593e\u8207\u7248\u672c\u7d00\u9304\u56de\u6eaf",onClick:dw})
       )),
 
-      u.default.createElement("div",{className:"hb-banner"},u.default.createElement("div",{className:"hb-banner-side"},"MATI\u00C8RE",u.default.createElement("br",null),"HUMAIN",u.default.createElement("br",null),"HARMONIE"),u.default.createElement("div",{className:"hb-banner-main"},u.default.createElement("div",{className:"hb-banner-eyebrow"},"HERFULSINS INTERIOR DESIGN"),u.default.createElement("div",{className:"hb-banner-title"},u.default.createElement("span",{className:"hb-banner-dash"}),"赫柏空間設計",u.default.createElement("span",{className:"hb-banner-dash"})),u.default.createElement("div",{className:"hb-banner-note"},"以工地紀錄本，管理每一個正在成形的空間。")),u.default.createElement("div",{className:"hb-banner-side right"},"空間",u.default.createElement("br",null),"材質",u.default.createElement("br",null),"生活")),
+      u.default.createElement("div",{className:"hb-banner"},u.default.createElement("div",{className:"hb-banner-main"},u.default.createElement("div",{className:"hb-banner-eyebrow"},"HERFULSINS \u00B7 MAISON D\u2019INT\u00C9RIEUR"),u.default.createElement("div",{className:"hb-banner-title"},u.default.createElement("span",{className:"hb-banner-dash"}),"赫柏空間設計",u.default.createElement("span",{className:"hb-banner-dash"})),u.default.createElement("div",{className:"hb-banner-fr"},"DES INT\u00C9RIEURS PENS\u00C9S POUR DURER."),u.default.createElement("div",{className:"hb-banner-note"},"工地紀錄本・管理每一個正在成形的空間"))),
 
       u.default.createElement("div",{className:"hb-landing-tri"},
         u.default.createElement(HbCompanyGridCard,{icon:"users",title:"\u5ba2\u6236\u9810\u7d04\u9801\u9762",desc:"\u958b\u555f\u5ba2\u6236\u7dda\u4e0a\u9810\u7d04\u8af8\u8a62\u9801\u9762",onClick:ob}),
