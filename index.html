@@ -291,7 +291,7 @@
     flex: 0 0 auto; position: relative; z-index: 2;
     background: var(--fm-charcoal);
     display: flex; align-items: center; justify-content: space-between;
-    gap: 20px; padding: 0 30px; min-height: 66px;
+    gap: 20px; padding: 0 58px; height: 78px; min-height: 78px;
   }
   .hb-topnav-brand{ display: flex; align-items: center; gap: 14px; min-width: 0; }
   .hb-topnav .hb-logo-mark{
@@ -324,6 +324,22 @@
     .hb-topnav-word{ font-size: 16px; letter-spacing: .22em; }
   }
 
+  /* ===== 型錄式頁尾 ===== */
+  .hb-footline{
+    display: flex; align-items: center; gap: 22px;
+    padding: 0 58px 30px; margin: 0;
+  }
+  .hb-footline-b{
+    font-family:"Cormorant Garamond",serif; font-size: 11px;
+    letter-spacing: .3em; text-transform: uppercase; color: var(--fm-soft); flex-shrink: 0;
+  }
+  .hb-footline-r{ flex: 1 1 auto; height: 1px; background: var(--fm-line); }
+  .hb-footline-c{
+    font-family:"Cormorant Garamond","Noto Serif TC",serif; font-size: 11px;
+    letter-spacing: .24em; color: var(--fm-soft); flex-shrink: 0;
+  }
+  @media (max-width: 900px){ .hb-footline{ padding: 0 22px 26px; } }
+
   /* ===== 手機：單欄、最小 48px 可點高度 ===== */
   @media (max-width: 760px){
     .hb-heroRow{ grid-template-columns: 1fr !important; gap: 22px; }
@@ -343,11 +359,10 @@
 
   /* ===== 中央宣言橫幅：使用法式橫幅素材 ===== */
   .hb-banner{
-    position: relative;
-    aspect-ratio: 2172 / 724;
-    background: var(--hb-banner-bg) center/100% 100% no-repeat;
+    position: relative; width: 100%; height: 130px; margin: 0;
+    background: var(--hb-banner-bg) center center / cover no-repeat;
     display: flex; align-items: center; gap: 40px;
-    padding: 0 16% 0 7%;
+    padding: 0 58px;
   }
   .hb-banner-side{
     flex: 0 0 auto;
@@ -385,41 +400,51 @@
   /* ===== 首頁上段：左大標題 ＋ 右 2×2 入口 ===== */
   .hb-heroRow{
     display: grid;
-    grid-template-columns: minmax(0, 0.88fr) minmax(0, 2.05fr);
-    gap: 34px; align-items: start; margin-bottom: 26px;
+    grid-template-columns: 365px minmax(0, 1fr);
+    gap: 49px; align-items: start;
+    padding: 21px 58px 31px; margin: 0;
   }
-  .hb-hero{ padding: 8px 0 0 4px; }
+  .hb-hero{ padding: 0; }
   .hb-hero-mark{
-    width: 62px; height: 62px; border: 1px solid rgba(90,80,64,.55);
+    width: 54px; height: 54px; border: 1px solid rgba(90,80,64,.55);
     display: flex; align-items: center; justify-content: center;
-    font-family: "Cormorant Garamond", serif; font-size: 30px; color: #2A2622;
-    margin-bottom: 20px;
+    font-family: "Cormorant Garamond", serif; font-size: 26px; color: #2A2622;
+    margin-bottom: 16px;
   }
   .hb-hero-caps{
     font-family: "Cormorant Garamond", serif;
     font-size: 10px; letter-spacing: .3em; text-transform: uppercase;
     color: #8C8371; line-height: 2.1;
   }
-  .hb-hero-dash{ width: 24px; height: 1px; background: rgba(120,110,92,.55); margin: 16px 0 26px; }
+  .hb-hero-dash{ width: 24px; height: 1px; background: rgba(120,110,92,.55); margin: 13px 0 20px; }
   .hb-hero-h1{
     font-family: "Noto Serif TC", serif; font-weight: 400;
-    font-size: clamp(27px, 2.9vw, 44px); line-height: 1.42; letter-spacing: .06em;
+    font-size: clamp(24px, 2.05vw, 34px); line-height: 1.55; letter-spacing: .05em;
     color: #1F1C18; margin: 0;
   }
   .hb-hero-p{
-    font-size: 13px; line-height: 2.05; letter-spacing: .04em;
-    color: #6E6A62; margin: 22px 0 0;
+    font-size: 12.5px; line-height: 1.95; letter-spacing: .04em;
+    color: #6E6A62; margin: 18px 0 0;
   }
-  .hb-hero-rule{ width: 44px; height: 2px; background: #6E1C24; margin: 26px 0 20px; }
+  .hb-hero-rule{ width: 44px; height: 2px; background: #6E1C24; margin: 20px 0 16px; }
   .hb-hero-cities{
     font-family: "Cormorant Garamond", serif;
     font-size: 11px; letter-spacing: .26em; color: #8C8371;
     display: flex; align-items: center;
   }
   .hb-hero-cities i{ display: block; width: 22px; height: 1px; background: rgba(140,131,113,.6); margin: 0 12px; }
-  @media (max-width: 1080px){
-    .hb-heroRow{ grid-template-columns: 1fr; gap: 26px; }
-    .hb-landgrid{ grid-template-columns: repeat(auto-fit,minmax(300px,1fr)) !important; }
+  @media (max-width: 1180px){
+    .hb-heroRow{ grid-template-columns: 300px minmax(0,1fr); gap: 32px; padding: 20px 30px 26px; }
+    .hb-banner, .hb-landing-tri{ padding-left: 30px; padding-right: 30px; }
+    .hb-landing-tri .hb-entry + .hb-entry{ padding-left: 92px; }
+  }
+  @media (max-width: 900px){
+    .hb-heroRow{ grid-template-columns: 1fr !important; gap: 24px; }
+    .hb-landgrid{ grid-template-columns: 1fr !important; grid-auto-rows: auto !important; }
+    .hb-landing-tri{ grid-template-columns: 1fr !important; padding: 26px 22px 34px; }
+    .hb-landing-tri .hb-entry + .hb-entry{ border-left: none; padding-left: 76px; border-top: 1px solid var(--fm-line); padding-top: 22px; margin-top: 4px; }
+    .hb-landing-tri .hb-entry + .hb-entry::before{ left: 8px; top: 22px; }
+    .hb-landing-tri .hb-entry + .hb-entry::after{ left: 58px; top: 24px; }
   }
 
   /* ===== 資料庫入口卡：編號 ＋ 直線 ＋ 類別／主標／說明／行動 ＋ 材質照 ===== */
@@ -430,8 +455,9 @@
     position: relative; cursor: pointer; overflow: hidden;
     background: #F0EBE1;
     border: none; border-radius: 0;
-    padding: 30px 34px 28px 96px;
-    min-height: 186px;
+    padding: 26px 32px 24px 96px;
+    height: 100%; min-height: 0;
+    display: flex; flex-direction: column; justify-content: center;
     transition: background .4s ease;
   }
   .hb-entry:hover{ background: #F4F0E7; }
@@ -455,7 +481,7 @@
   }
   .hb-entry-t{
     font-family: "Noto Serif TC", serif;
-    font-size: clamp(17px, 1.6vw, 22px); font-weight: 400;
+    font-size: clamp(17px, 1.35vw, 21px); font-weight: 400;
     letter-spacing: .16em; color: #2A2622; line-height: 1.5;
   }
   .hb-entry-d{
@@ -485,12 +511,21 @@
   .hb-entry.has-img{ padding-right: 34%; }
   .hb-entry:hover .hb-entry-photo{ transform: translateY(calc(-50% - 4px)); }
 
-  /* 下方 05–07：拿掉底色，層級比上排輕 */
-  .hb-landing-tri .hb-entry{ background: transparent; min-height: 150px; padding: 6px 20px 6px 84px; }
+  /* 下方 05–07：印在紙面上的三個編輯區塊，欄間以細直線分隔 */
+  .hb-landing-tri{
+    display: grid; grid-template-columns: repeat(3, minmax(0,1fr));
+    gap: 0; padding: 36px 58px 40px; min-height: 242px; align-items: start;
+  }
+  .hb-landing-tri .hb-entry{
+    background: transparent; min-height: 0; padding: 2px 40px 2px 76px; overflow: visible;
+  }
+  .hb-landing-tri .hb-entry + .hb-entry{ border-left: 1px solid var(--fm-line); padding-left: 116px; }
   .hb-landing-tri .hb-entry:hover{ background: transparent; }
-  .hb-landing-tri .hb-entry::before{ top: 4px; left: 16px; }
-  .hb-landing-tri .hb-entry::after{ left: 66px; top: 6px; bottom: 6px; }
-  .hb-landing-tri .hb-entry-t{ font-size: clamp(16px, 1.4vw, 19px); }
+  .hb-landing-tri .hb-entry::before{ top: 0; left: 8px; font-size: 30px; }
+  .hb-landing-tri .hb-entry + .hb-entry::before{ left: 48px; }
+  .hb-landing-tri .hb-entry::after{ left: 58px; top: 2px; bottom: 2px; }
+  .hb-landing-tri .hb-entry + .hb-entry::after{ left: 98px; }
+  .hb-landing-tri .hb-entry-t{ font-size: clamp(16px, 1.3vw, 20px); }
 
   @media (max-width: 820px){
     .hb-entry{ padding: 24px 22px 22px 74px; min-height: 0; }
@@ -4684,25 +4719,25 @@ function HbLanding({onCase:l,onCompany:t,onManageStaff:e,onLogout:n,onQuickQuote
 
 
     u.default.createElement("div",{className:"hb-topnav"},u.default.createElement("div",{className:"hb-topnav-brand"},u.default.createElement("img",{className:"hb-logo-mark",src:HB_LOGO_MARK,alt:"赫柏空間設計"}),u.default.createElement("div",null,u.default.createElement("div",{className:"hb-topnav-word"},"HERFULSINS"),u.default.createElement("div",{className:"hb-topnav-sub"},"MAISON DE DESIGN"))),u.default.createElement("div",{className:"hb-topnav-right"},u.default.createElement("span",{className:"hb-topnav-hi"},"歡迎回來，今天也要好好照顧每個工地"),u.default.createElement("span",{className:"hb-topnav-div"}),u.default.createElement("button",{onClick:e,title:"帳號管理",className:"hb-topnav-btn"},u.default.createElement(E,{name:"user",size:16})),u.default.createElement("button",{onClick:n,title:"登出",className:"hb-topnav-btn"},u.default.createElement(E,{name:"log-out",size:16})))),
-    u.default.createElement("div",{className:"hb-scroll",style:{width:"100%",maxWidth:1400,margin:"0 auto",flex:"1 1 auto",minHeight:0,overflowY:"auto",padding:"30px 28px 70px"}},
+    u.default.createElement("div",{className:"hb-scroll",style:{width:"100%",flex:"1 1 auto",minHeight:0,overflowY:"auto",padding:0}},
 
       
 
-      u.default.createElement("div",{className:"hb-heroRow"},u.default.createElement("div",{className:"hb-hero"},u.default.createElement("div",{className:"hb-hero-mark"},"H"),u.default.createElement("div",{className:"hb-hero-caps"},"INT\u00C9RIEURS",u.default.createElement("br",null),"POUR UNE VIE",u.default.createElement("br",null),"PLUS BELLE"),u.default.createElement("div",{className:"hb-hero-dash"}),u.default.createElement("h1",{className:"hb-hero-h1"},"\u597d\u7684\u7a7a\u9593\uff0c",u.default.createElement("br",null),"\u662f\u751f\u6d3b\u6c89\u6fb1\u5f8c\u7684\u6eab\u67d4\u3002"),u.default.createElement("p",{className:"hb-hero-p"},"\u6848\u4ef6\u3001\u6750\u6599\u3001\u5716\u9762\u8207\u5408\u7d04\uff0c",u.default.createElement("br",null),"\u5728\u540c\u4e00\u8655\u88ab\u5b8c\u6574\u5730\u8a18\u4e0b\u4f86\u3002"),u.default.createElement("div",{className:"hb-hero-rule"}),u.default.createElement("div",{className:"hb-hero-cities"},"\u5609\u7fa9",u.default.createElement("i",null),"\u96f2\u6797",u.default.createElement("i",null),"\u53f0\u5357")),u.default.createElement("div",{className:"hb-landgrid",style:{display:"grid",gridTemplateColumns:"repeat(2,minmax(0,1fr))",gap:18}},
+      u.default.createElement("div",{className:"hb-heroRow"},u.default.createElement("div",{className:"hb-hero"},u.default.createElement("div",{className:"hb-hero-mark"},"H"),u.default.createElement("div",{className:"hb-hero-caps"},"INT\u00C9RIEURS",u.default.createElement("br",null),"POUR UNE VIE",u.default.createElement("br",null),"PLUS BELLE"),u.default.createElement("div",{className:"hb-hero-dash"}),u.default.createElement("h1",{className:"hb-hero-h1"},"\u597d\u7684\u7a7a\u9593\uff0c",u.default.createElement("br",null),"\u662f\u751f\u6d3b\u6c89\u6fb1\u5f8c\u7684\u6eab\u67d4\u3002"),u.default.createElement("p",{className:"hb-hero-p"},"\u6848\u4ef6\u3001\u6750\u6599\u3001\u5716\u9762\u8207\u5408\u7d04\uff0c",u.default.createElement("br",null),"\u5728\u540c\u4e00\u8655\u88ab\u5b8c\u6574\u5730\u8a18\u4e0b\u4f86\u3002"),u.default.createElement("div",{className:"hb-hero-rule"}),u.default.createElement("div",{className:"hb-hero-cities"},"\u5609\u7fa9",u.default.createElement("i",null),"\u96f2\u6797",u.default.createElement("i",null),"\u53f0\u5357")),u.default.createElement("div",{className:"hb-landgrid",style:{display:"grid",gridTemplateColumns:"repeat(2,minmax(0,1fr))",gap:20,gridAutoRows:"210px"}},
         u.default.createElement(HbCompanyGridCard,{icon:"clipboard-list",title:"\u6848\u4ef6\u8cc7\u6599\u5eab",desc:"\u7ba1\u7406\u9032\u884c\u4e2d\u7684\u7a7a\u9593\u8a2d\u8a08\u8207\u5de5\u7a0b\u5c08\u6848\uff1a\u65bd\u5de5\u7167\u7247\u3001\u6750\u6599\u9001\u9054\u3001\u5c08\u6848\u6a94\u6848\u3001\u8a2d\u5099\u8cc7\u6599",onClick:l}),
         u.default.createElement(HbCompanyGridCard,{icon:"folder",title:"\u516c\u53f8\u8cc7\u6599\u5eab",desc:"\u516c\u53f8\u71df\u904b\u3001\u884c\u653f\u8207\u5236\u5f0f\u5408\u7d04\uff1a\u8a2d\u8a08\u5408\u7d04\u3001\u5de5\u7a0b\u5831\u50f9\u55ae",onClick:t}),
         u.default.createElement(HbCompanyGridCard,{icon:"image",title:"\u8d6b\u67cf\u7a7a\u9593\u4f5c\u54c1\u6848\u4f8b",desc:"\u8de8\u6848\u4ef6\u7684\u884c\u92b7\uff0f\u63d0\u6848\u7528\u7167\u7247\u5eab",onClick:mp}),
         u.default.createElement(HbCompanyGridCard,{icon:"presentation",title:"\u5716\u9762\u7ba1\u7406",desc:"\u4f9d\u8cc7\u6599\u593e\u7ba1\u7406\u65bd\u5de5\u5716\u9762\uff0c\u652f\u63f4\u5b50\u8cc7\u6599\u593e\u8207\u7248\u672c\u7d00\u9304\u56de\u6eaf",onClick:dw})
       )),
 
-      u.default.createElement("div",{className:"hb-banner",style:{marginBottom:30}},u.default.createElement("div",{className:"hb-banner-side"},"MATI\u00C8RE",u.default.createElement("br",null),"HUMAIN",u.default.createElement("br",null),"HARMONIE"),u.default.createElement("div",{className:"hb-banner-main"},u.default.createElement("div",{className:"hb-banner-eyebrow"},"HERFULSINS INTERIOR DESIGN"),u.default.createElement("div",{className:"hb-banner-title"},u.default.createElement("span",{className:"hb-banner-dash"}),"赫柏空間設計",u.default.createElement("span",{className:"hb-banner-dash"})),u.default.createElement("div",{className:"hb-banner-note"},"以工地紀錄本，管理每一個正在成形的空間。")),u.default.createElement("div",{className:"hb-banner-side right"},"空間",u.default.createElement("br",null),"材質",u.default.createElement("br",null),"生活")),
+      u.default.createElement("div",{className:"hb-banner"},u.default.createElement("div",{className:"hb-banner-side"},"MATI\u00C8RE",u.default.createElement("br",null),"HUMAIN",u.default.createElement("br",null),"HARMONIE"),u.default.createElement("div",{className:"hb-banner-main"},u.default.createElement("div",{className:"hb-banner-eyebrow"},"HERFULSINS INTERIOR DESIGN"),u.default.createElement("div",{className:"hb-banner-title"},u.default.createElement("span",{className:"hb-banner-dash"}),"赫柏空間設計",u.default.createElement("span",{className:"hb-banner-dash"})),u.default.createElement("div",{className:"hb-banner-note"},"以工地紀錄本，管理每一個正在成形的空間。")),u.default.createElement("div",{className:"hb-banner-side right"},"空間",u.default.createElement("br",null),"材質",u.default.createElement("br",null),"生活")),
 
       u.default.createElement("div",{className:"hb-landing-tri"},
         u.default.createElement(HbCompanyGridCard,{icon:"users",title:"\u5ba2\u6236\u9810\u7d04\u9801\u9762",desc:"\u958b\u555f\u5ba2\u6236\u7dda\u4e0a\u9810\u7d04\u8af8\u8a62\u9801\u9762",onClick:ob}),
         u.default.createElement(HbCompanyGridCard,{icon:"calendar",title:"\u9810\u7d04\u7ba1\u7406",desc:"\u67e5\u770b\u5ba2\u6236\u9810\u7d04\u3001\u4fee\u6539\u6642\u6bb5\u3001\u8a2d\u5b9a\u516c\u4f11\u65e5",onClick:bk}),
         u.default.createElement(HbCompanyGridCard,{icon:"presentation",title:"\u63d0\u6848\u7c21\u5831",desc:"\u63d0\u6848\u7c21\u5831\u7528PPT\u7522\u751f\u5668\uff0c\u65bc\u65b0\u8996\u7a97\u958b\u555f",onClick:pg})
       ),
-      u.default.createElement("div",{className:"hb-latin",style:{textAlign:"center",fontSize:10,color:s.inkSoft,marginTop:26,opacity:.85}},"People  \u00B7  Space  \u00B7  Possibility")
+      u.default.createElement("div",{className:"hb-footline"},u.default.createElement("span",{className:"hb-footline-b"},"HERFULSINS"),u.default.createElement("span",{className:"hb-footline-r"}),u.default.createElement("span",{className:"hb-footline-c"},"嘉義　雲林　台南"))
     )
   );
 }
