@@ -488,6 +488,21 @@
     .hb-entry-tail{ display: none; }
   }
 
+  /* 所有子頁共用的暖白紙面與文字色 */
+  .hb-dossier{ background-color:#F5F1E9 !important; background-image:none !important; color:#39332F; }
+  .hb-dossier .hb-dosHead{ max-width:1180px; margin:0 auto; padding:24px 58px 26px; }
+  .hb-dossier .hb-dosHead + *{ position:relative; z-index:1; }
+  @media (max-width:1080px){ .hb-dossier .hb-dosHead{ padding:20px 30px 22px; } }
+  @media (max-width:860px){ .hb-dossier .hb-dosHead{ padding:18px 22px 20px; } }
+
+  /* 單欄版（沒有分類索引的子頁） */
+  .hb-dosSolo{ border-top: 1px solid rgba(57,51,47,.14); padding: 22px 0 60px; }
+  .hb-dosAmt{
+    flex: 0 0 auto; font-family:"JetBrains Mono",monospace; font-size: 12.5px;
+    color: #39332F; letter-spacing: .03em; white-space: nowrap;
+  }
+  @media (max-width: 860px){ .hb-dosAmt{ flex: 0 0 auto; } }
+
   /* ===== 合約檔案頁：巴黎事務所風格 ===== */
   .hb-dossier{
     background-color: #F5F1E9 !important;
@@ -4302,6 +4317,7 @@ async function HB_generateEstimateExcel(v){
 
 function HerfulsinsEstimateHub({project:l,notify:t,onClose:e}){HB_ctaCss();
   let[n,a]=(0,u.useState)("list"),[i,o]=(0,u.useState)([]),[f,c]=(0,u.useState)(!0),[r,d]=(0,u.useState)(null);
+  let[hbMenu,hbSetMenu]=(0,u.useState)(null);
   let load=async()=>{
     c(!0);
     let query=q.from("sitelog_estimates").select("*").order("created_at",{ascending:!1});
@@ -4317,39 +4333,50 @@ function HerfulsinsEstimateHub({project:l,notify:t,onClose:e}){HB_ctaCss();
   };
   let toV=h=>({clientName:h.client_name,contactName:h.contact_name,engName:h.eng_name,siteAddress:h.site_address,quoteDate:h.quote_date,validDays:h.valid_days,depositNote:h.deposit_note,categories:h.categories||[],discount:h.discount??"",taxRate:h.tax_rate??""});
   if(n==="edit")return u.default.createElement(HB_EstimateEditor,{project:l,estimate:r,notify:t,onBack:()=>{a("list"),load()}});
-  return u.default.createElement("div",{style:{position:"fixed",inset:0,background:s.paper,zIndex:70,overflowY:"auto"}},
-    u.default.createElement("style",null,`
-      @keyframes iyBreatheA { 0%,100%{transform:scale(1);opacity:.7} 50%{transform:scale(1.3);opacity:1} }
-      @keyframes iyBreatheB { 0%,100%{transform:scale(1);opacity:.7} 50%{transform:scale(1.3);opacity:1} }
-      .iy-breathe-a { animation: iyBreatheA 3.8s ease-in-out infinite; transform-origin:center; }
-      .iy-breathe-b { animation: iyBreatheB 4.6s ease-in-out infinite; animation-delay:1s; transform-origin:center; }
-    `),
-    u.default.createElement("div",{style:{maxWidth:720,margin:"0 auto",padding:"18px 20px 4px",position:"relative"}},
-      u.default.createElement("button",{onClick:e,style:{background:"none",border:"none",color:s.inkSoft,cursor:"pointer",fontSize:11.5,display:"flex",alignItems:"center",gap:4,padding:0,marginBottom:8}},u.default.createElement(E,{name:"arrow-left",size:14})),
-      u.default.createElement("div",{style:{textAlign:"center",padding:"8px 0 18px"}},
-        u.default.createElement("img",{className:"hb-logo-mark",src:HB_LOGO_MARK,alt:"赫柏空間設計",style:{width:40,height:40,display:"block",margin:"0 auto 8px",objectFit:"contain"}}),
-        u.default.createElement("div",{className:"mono",style:{color:s.ocean,fontSize:10.5,letterSpacing:3,marginBottom:10,fontWeight:400}},"HERFULSINS INTERIOR DESIGN"),
-        u.default.createElement("h1",{style:{color:s.ink,fontSize:20,fontWeight:300,margin:0,letterSpacing:"0.08em",fontFamily:"'IansuiTitle',serif"}},"工程估價單"),
-        u.default.createElement("p",{style:{color:s.inkSoft,fontSize:12.5,marginTop:8,fontWeight:300,letterSpacing:"0.02em"}},"選擇案件，管理估價單附件")
-      )
-    ),
-    u.default.createElement("div",{style:{padding:14,maxWidth:720,margin:"0 auto"}},
-      u.default.createElement("button",{onClick:()=>{d(null),a("edit")},className:"hb-cta",style:{marginBottom:14}},"+ 新增估價單"),
-      f?u.default.createElement("div",{style:{textAlign:"center",padding:40}},u.default.createElement(E,{name:"loader",className:"animate-spin",size:22,color:s.ocean})):
-      i.length===0?u.default.createElement(He,{icon:"calculator",text:"尚未建立任何估價單"}):
-      u.default.createElement("div",{style:{display:"flex",flexDirection:"column",gap:8}},
-        i.map(h=>u.default.createElement("div",{key:h.id,style:{background:s.card,border:`1px solid ${s.line}`,borderRadius:8,padding:"11px 13px"}},
-          u.default.createElement("div",{style:{fontSize:14,fontWeight:400}},h.eng_name||"（未命名工程）"),
-          u.default.createElement("div",{style:{fontSize:12.5,color:s.inkSoft,marginTop:2}},"客戶：",h.client_name||"—","｜總價 NT$ ",HB_money(HB_estGrandTotal(h.categories||[]))),
-          u.default.createElement("div",{className:"hb-tbrow",style:{flexWrap:"wrap"}},
-            u.default.createElement("button",{onClick:()=>{d(h),a("edit")},className:"hb-tb hb-tb-sec"},"編輯"),
-            u.default.createElement("button",{onClick:()=>HB_openEstimatePrint(toV(h)),className:"hb-tb hb-tb-gho"},u.default.createElement(E,{name:"printer",size:14}),"PDF"),
-            u.default.createElement("button",{onClick:()=>HB_generateEstimateExcel(toV(h)),className:"hb-tb hb-tb-gho"},u.default.createElement(E,{name:"file-output",size:14}),"Excel"),
-            u.default.createElement("button",{onClick:()=>deleteEst(h.id),className:"hb-tb hb-tb-dgr hb-tb-ico hb-sp","aria-label":"刪除"},u.default.createElement(E,{name:"trash",size:15}))
-          )
-        ))
-      )
-    )
+  return u.default.createElement("div",{className:"hb-dossier",style:{position:"fixed",inset:0,zIndex:70,overflowY:"auto"},
+    onClick:()=>hbSetMenu(null)},
+    u.default.createElement("div",{className:"hb-dosWrap"},
+
+      u.default.createElement("header",{className:"hb-dosHead"},
+        u.default.createElement("button",{onClick:e,className:"hb-arcBack"},
+          u.default.createElement(E,{name:"arrow-left",size:15}),
+          u.default.createElement("span",null,"返回公司資料庫")),
+        u.default.createElement("div",{className:"hb-dosLabel"},"Devis de Chantier"),
+        u.default.createElement("h1",{className:"hb-dosTitle"},"工程報價單"),
+        u.default.createElement("p",{className:"hb-dosLede"},"選擇案件，管理該案件的估價單與附件。報價可直接輸出 PDF 或 Excel，並帶入廠商成本比對。")),
+
+      u.default.createElement("div",{className:"hb-dosSolo"},
+        u.default.createElement("div",{className:"hb-dosBar"},
+          u.default.createElement("div",{className:"hb-dosCount"}, i.length>0? i.length+" 份估價單":"尚無資料"),
+          u.default.createElement("button",{onClick:()=>{d(null),a("edit")},className:"hb-dosNew"},"新增估價單")),
+
+        f?u.default.createElement("div",{style:{textAlign:"center",padding:40}},
+            u.default.createElement(E,{name:"loader",className:"animate-spin",size:22,color:"#703B42"})):
+        i.length===0?u.default.createElement(He,{icon:"calculator",text:"尚未建立任何估價單"}):
+        u.default.createElement("ul",{className:"hb-dosList"},
+          i.map((h,hi)=>u.default.createElement("li",{key:h.id,className:"hb-dosItem"},
+            u.default.createElement("span",{className:"hb-dosNo"},String(hi+1).padStart(2,"0")),
+            u.default.createElement("div",{className:"hb-dosBody"},
+              u.default.createElement("div",{className:"hb-dosName"},h.eng_name||"（未命名工程）"),
+              u.default.createElement("div",{className:"hb-dosMeta"},"客戶 "+(h.client_name||"—"))),
+            u.default.createElement("span",{className:"hb-dosAmt"},"NT$ "+HB_money(HB_estGrandTotal(h.categories||[]))),
+            u.default.createElement("div",{className:"hb-dosActs"},
+              u.default.createElement("button",{onClick:()=>HB_openEstimatePrint(toV(h)),className:"hb-dosAct"},
+                u.default.createElement(E,{name:"printer",size:13}),u.default.createElement("span",null,"PDF")),
+              u.default.createElement("button",{onClick:()=>HB_generateEstimateExcel(toV(h)),className:"hb-dosAct"},
+                u.default.createElement(E,{name:"file-output",size:13}),u.default.createElement("span",null,"Excel")),
+              u.default.createElement("div",{className:"hb-dosMore"},
+                u.default.createElement("button",{className:"hb-dosAct ico","aria-haspopup":"true",
+                  "aria-expanded":hbMenu===h.id?"true":"false",title:"更多",
+                  onClick:ev=>{ev.stopPropagation();hbSetMenu(hbMenu===h.id?null:h.id)}},
+                  u.default.createElement(E,{name:"more-vertical",size:15})),
+                hbMenu===h.id&&u.default.createElement("div",{className:"hb-dosMenu",onClick:ev=>ev.stopPropagation()},
+                  u.default.createElement("button",{onClick:()=>{hbSetMenu(null);d(h);a("edit")}},"編輯"),
+                  u.default.createElement("button",{className:"del",onClick:()=>{
+                    hbSetMenu(null);
+                    if(window.confirm("確定要刪除「"+(h.eng_name||"未命名工程")+"」？此動作無法復原。")) deleteEst(h.id)
+                  }},"刪除")))))))
+      ))
   )
 }
 
@@ -5603,7 +5630,7 @@ function HbReceiptsHub({onBack,notify,projects}){
   let toVals=row=>({clientName:row.client_name,siteAddress:row.site_address,paymentMethod:row.payment_method,dateStr:row.receipt_date,periods:row.periods||[],showStamp:!noStamp.has(row.id)});
   let genWord=row=>HB_generateReceiptDocx(toVals(row)).catch(err=>notify("產生失敗："+(err?.message||err)));
   let genPdf=row=>{let ok=HB_openReceiptPrint(toVals(row));if(!ok)notify("請允許瀏覽器彈出視窗以產生 PDF")};
-  return u.default.createElement("div",{className:"hb-archive",style:{minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},
+  return u.default.createElement("div",{className:"hb-archive hb-dossier",style:{minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},
     u.default.createElement("style",null,`
       @keyframes iyBreatheA { 0%,100%{transform:scale(1);opacity:.7} 50%{transform:scale(1.3);opacity:1} }
       @keyframes iyBreatheB { 0%,100%{transform:scale(1);opacity:.7} 50%{transform:scale(1.3);opacity:1} }
@@ -5612,12 +5639,7 @@ function HbReceiptsHub({onBack,notify,projects}){
     `),
     u.default.createElement("div",{style:{maxWidth:1180,margin:"0 auto",padding:"18px 20px 4px",position:"relative"}},
       u.default.createElement("button",{onClick:onBack,style:{background:"none",border:"none",color:s.inkSoft,cursor:"pointer",fontSize:11.5,display:"flex",alignItems:"center",gap:4,padding:0,marginBottom:8}},u.default.createElement(E,{name:"arrow-left",size:14})),
-      u.default.createElement("div",{style:{textAlign:"center",padding:"8px 0 18px"}},
-        u.default.createElement("img",{className:"hb-logo-mark",src:HB_LOGO_MARK,alt:"赫柏空間設計",style:{width:40,height:40,display:"block",margin:"0 auto 8px",objectFit:"contain"}}),
-        u.default.createElement("div",{className:"mono",style:{color:s.ocean,fontSize:10.5,letterSpacing:3,marginBottom:10,fontWeight:400}},"HERFULSINS INTERIOR DESIGN"),
-        u.default.createElement("h1",{style:{color:s.ink,fontSize:20,fontWeight:300,margin:0,letterSpacing:"0.08em",fontFamily:"'IansuiTitle',serif"}},"工程收據"),
-        u.default.createElement("p",{style:{color:s.inkSoft,fontSize:12.5,marginTop:8,fontWeight:300,letterSpacing:"0.02em"}},"依期別產生工程收據，A4 直向每頁列印 3 筆款項")
-      )
+      u.default.createElement("header",{className:"hb-dosHead"},u.default.createElement("div",{className:"hb-dosLabel"},"Reçus de Chantier"),u.default.createElement("h1",{className:"hb-dosTitle"},"工程收據"),u.default.createElement("p",{className:"hb-dosLede"},"依期別產生工程收據，A4 直向每頁列印 3 筆款項"))
     ),
     u.default.createElement("div",{style:{maxWidth:1180,margin:"0 auto",padding:"16px 16px 112px"}},
       u.default.createElement("button",{onClick:()=>setCreating(!0),style:{...Dl,width:"100%",marginBottom:16}},"＋ 新增工程收據"),
@@ -5730,7 +5752,7 @@ function HbVendorReceiptsHub({onBack,notify,projects}){
   let toVals=row=>({vendorName:row.vendor_name,siteLocation:row.site_location,amount:row.amount,idNumber:row.id_number,address:row.address,phone:row.phone,dateStr:row.receipt_date,receiptNo:row.receipt_no,showStamp:!noStamp.has(row.id)});
   let genWord=row=>HB_generateVendorDocx(toVals(row)).catch(err=>notify("產生失敗："+(err?.message||err)));
   let genPdf=row=>{let ok=HB_openVendorPrint(toVals(row));if(!ok)notify("請允許瀏覽器彈出視窗以產生 PDF")};
-  return u.default.createElement("div",{className:"hb-archive",style:{minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},
+  return u.default.createElement("div",{className:"hb-archive hb-dossier",style:{minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},
     u.default.createElement("style",null,`
       @keyframes iyBreatheA { 0%,100%{transform:scale(1);opacity:.7} 50%{transform:scale(1.3);opacity:1} }
       @keyframes iyBreatheB { 0%,100%{transform:scale(1);opacity:.7} 50%{transform:scale(1.3);opacity:1} }
@@ -5739,12 +5761,7 @@ function HbVendorReceiptsHub({onBack,notify,projects}){
     `),
     u.default.createElement("div",{style:{maxWidth:1180,margin:"0 auto",padding:"18px 20px 4px",position:"relative"}},
       u.default.createElement("button",{onClick:onBack,style:{background:"none",border:"none",color:s.inkSoft,cursor:"pointer",fontSize:11.5,display:"flex",alignItems:"center",gap:4,padding:0,marginBottom:8}},u.default.createElement(E,{name:"arrow-left",size:14})),
-      u.default.createElement("div",{style:{textAlign:"center",padding:"8px 0 18px"}},
-        u.default.createElement("img",{className:"hb-logo-mark",src:HB_LOGO_MARK,alt:"赫柏空間設計",style:{width:40,height:40,display:"block",margin:"0 auto 8px",objectFit:"contain"}}),
-        u.default.createElement("div",{className:"mono",style:{color:s.ocean,fontSize:10.5,letterSpacing:3,marginBottom:10,fontWeight:400}},"HERFULSINS INTERIOR DESIGN"),
-        u.default.createElement("h1",{style:{color:s.ink,fontSize:20,fontWeight:300,margin:0,letterSpacing:"0.08em",fontFamily:"'IansuiTitle',serif"}},"廠商領據"),
-        u.default.createElement("p",{style:{color:s.inkSoft,fontSize:12.5,marginTop:8,fontWeight:300,letterSpacing:"0.02em"}},"廠商工程款領據產生，A5 橫向格式一張一筆")
-      )
+      u.default.createElement("header",{className:"hb-dosHead"},u.default.createElement("div",{className:"hb-dosLabel"},"Reçus Fournisseurs"),u.default.createElement("h1",{className:"hb-dosTitle"},"廠商領據"),u.default.createElement("p",{className:"hb-dosLede"},"廠商工程款領據產生，A5 橫向格式一張一筆"))
     ),
     u.default.createElement("div",{style:{maxWidth:1180,margin:"0 auto",padding:"16px 16px 112px"}},
       u.default.createElement("button",{onClick:()=>setCreating(!0),style:{...Dl,width:"100%",marginBottom:16}},"＋ 新增廠商領據"),
@@ -6399,7 +6416,7 @@ function HbVendorQuoteHub({onBack,notify}){
     return entries;
   })();
 
-  return u.default.createElement("div",{className:"hb-archive",style:{minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},
+  return u.default.createElement("div",{className:"hb-archive hb-dossier",style:{minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},
     u.default.createElement("style",null,`
       @keyframes iyBreatheA { 0%,100%{transform:scale(1);opacity:.7} 50%{transform:scale(1.3);opacity:1} }
       @keyframes iyBreatheB { 0%,100%{transform:scale(1);opacity:.7} 50%{transform:scale(1.3);opacity:1} }
@@ -6410,12 +6427,7 @@ function HbVendorQuoteHub({onBack,notify}){
       u.default.createElement("button",{onClick:openFolder?()=>setOpenFolder(null):onBack,style:{background:"none",border:"none",color:s.inkSoft,cursor:"pointer",fontSize:11.5,display:"flex",alignItems:"center",gap:4,padding:0,marginBottom:8}},
         u.default.createElement(E,{name:"arrow-left",size:14})
       ),
-      u.default.createElement("div",{style:{textAlign:"center",padding:"8px 0 18px"}},
-        u.default.createElement("img",{className:"hb-logo-mark",src:HB_LOGO_MARK,alt:"赫柏空間設計",style:{width:40,height:40,display:"block",margin:"0 auto 8px",objectFit:"contain"}}),
-        u.default.createElement("div",{className:"mono",style:{color:s.ocean,fontSize:10.5,letterSpacing:3,marginBottom:10,fontWeight:400}},"HERFULSINS INTERIOR DESIGN"),
-        u.default.createElement("h1",{style:{color:s.ink,fontSize:20,fontWeight:300,margin:0,letterSpacing:"0.08em",fontFamily:"'IansuiTitle',serif"}}, openFolder ? (currentFolder?currentFolder.name:"") : "廠商報價單"),
-        u.default.createElement("p",{style:{color:s.inkSoft,fontSize:12.5,marginTop:8,fontWeight:300,letterSpacing:"0.02em"}},"依廠商分類管理報價檔案（Excel／圖片）")
-      )
+      u.default.createElement("header",{className:"hb-dosHead"},u.default.createElement("div",{className:"hb-dosLabel"},"Devis Fournisseurs"),u.default.createElement("h1",{className:"hb-dosTitle"},"廠商報價單"),u.default.createElement("p",{className:"hb-dosLede"},"依廠商分類管理報價檔案（Excel／圖片）"))
     ),
     u.default.createElement("div",{style:{maxWidth:1180,margin:"0 auto",padding:16}},
       loading
@@ -7388,7 +7400,7 @@ function HbAttendanceHub({onBack,notify}){
     byWorker[k].pay+=HB_num(r.days)*HB_num(r.daily_rate);
   });
   let workerEntries=Object.entries(byWorker).sort((a,b)=>b[1].days-a[1].days);
-  return u.default.createElement("div",{className:"hb-archive",style:{minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},
+  return u.default.createElement("div",{className:"hb-archive hb-dossier",style:{minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},
     u.default.createElement("style",null,`
       @keyframes iyBreatheA { 0%,100%{transform:scale(1);opacity:.7} 50%{transform:scale(1.3);opacity:1} }
       @keyframes iyBreatheB { 0%,100%{transform:scale(1);opacity:.7} 50%{transform:scale(1.3);opacity:1} }
@@ -7397,12 +7409,7 @@ function HbAttendanceHub({onBack,notify}){
     `),
     u.default.createElement("div",{style:{maxWidth:1180,margin:"0 auto",padding:"18px 20px 4px",position:"relative"}},
       u.default.createElement("button",{onClick:onBack,style:{background:"none",border:"none",color:s.inkSoft,cursor:"pointer",fontSize:11.5,display:"flex",alignItems:"center",gap:4,padding:0,marginBottom:8}},u.default.createElement(E,{name:"arrow-left",size:14})),
-      u.default.createElement("div",{style:{textAlign:"center",padding:"8px 0 18px"}},
-        u.default.createElement("img",{className:"hb-logo-mark",src:HB_LOGO_MARK,alt:"赫柏空間設計",style:{width:40,height:40,display:"block",margin:"0 auto 8px",objectFit:"contain"}}),
-        u.default.createElement("div",{className:"mono",style:{color:s.ocean,fontSize:10.5,letterSpacing:3,marginBottom:10,fontWeight:400}},"HERFULSINS INTERIOR DESIGN"),
-        u.default.createElement("h1",{style:{color:s.ink,fontSize:20,fontWeight:300,margin:0,letterSpacing:"0.08em",fontFamily:"'IansuiTitle',serif"}},"師傅出勤紀錄"),
-        u.default.createElement("p",{style:{color:s.inkSoft,fontSize:12.5,marginTop:8,fontWeight:300,letterSpacing:"0.02em"}},"記錄工班師傅每日出工天數，依師傅統計工資")
-      )
+      u.default.createElement("header",{className:"hb-dosHead"},u.default.createElement("div",{className:"hb-dosLabel"},"Présences d’Atelier"),u.default.createElement("h1",{className:"hb-dosTitle"},"師傅出勤紀錄"),u.default.createElement("p",{className:"hb-dosLede"},"記錄工班師傅每日出工天數，依師傅統計工資"))
     ),
     u.default.createElement("div",{style:{maxWidth:1180,margin:"0 auto",padding:"16px 16px 112px"}},
       u.default.createElement("div",{style:{marginBottom:14}},
@@ -7827,7 +7834,7 @@ function HbDrawingHub({onBack,notify}){
 
   let viewingDrawing=drawings.find(d=>d.id===versionModalId);
 
-  return u.default.createElement("div",{className:"hb-archive",style:{minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},
+  return u.default.createElement("div",{className:"hb-archive hb-dossier",style:{minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},
     u.default.createElement("div",{style:{maxWidth:1180,margin:"0 auto",padding:"18px 20px 4px"}},
       u.default.createElement("button",{onClick:onBack,style:{background:"none",border:"none",color:s.inkSoft,cursor:"pointer",fontSize:11.5,display:"flex",alignItems:"center",gap:4,padding:0,marginBottom:8}},u.default.createElement(E,{name:"arrow-left",size:14})),
       u.default.createElement("h1",{style:{color:s.ink,fontSize:20,fontWeight:300,margin:0}},"圖面管理"),
@@ -8371,7 +8378,7 @@ function HbSurveyHub({onBack,notify,projects}){
   let projName=id=>{let p=(projects||[]).find(x=>x.id===id);return p?p.name:""};
 
   return h("div",{style:{background:s.paper,minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},
-    h("div",{style:{maxWidth:760,margin:"0 auto",padding:"18px 16px 112px"}},
+    h("div",{style:{maxWidth:1180,margin:"0 auto",padding:"18px 16px 112px"}},
       h("button",{onClick:onBack,style:{background:"none",border:"none",color:s.inkSoft,cursor:"pointer",fontSize:11.5,display:"flex",alignItems:"center",gap:4,padding:0,marginBottom:14}},h(E,{name:"arrow-left",size:14}),"返回"),
       h("h1",{style:{fontSize:20,fontWeight:300,margin:"0 0 4px",letterSpacing:"0.06em"}},"設計需求問卷"),
       h("p",{style:{fontSize:12,color:s.inkSoft,margin:"0 0 18px",lineHeight:1.7}},
@@ -8855,7 +8862,7 @@ function HbChangeOrderHub({onBack,notify,projects}){
     onCancel:()=>setEditing(null),onSaved:onSaved});
 
   return h("div",{style:{background:s.paper,minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},
-    h("div",{style:{maxWidth:760,margin:"0 auto",padding:"18px 16px 112px"}},
+    h("div",{style:{maxWidth:1180,margin:"0 auto",padding:"18px 16px 112px"}},
       h("button",{onClick:onBack,style:{background:"none",border:"none",color:s.inkSoft,cursor:"pointer",fontSize:11.5,display:"flex",alignItems:"center",gap:4,padding:0,marginBottom:14,fontFamily:"inherit"}},h(E,{name:"arrow-left",size:14}),"返回"),
       h("h1",{style:{fontSize:20,fontWeight:300,margin:"0 0 4px",letterSpacing:"0.06em"}},"追加減帳單"),
       h("p",{style:{fontSize:12,color:s.inkSoft,margin:"0 0 16px",lineHeight:1.7}},
@@ -9740,7 +9747,7 @@ function HbPdfRotate({onBack:back,notify:nf}){
   let files=box.current;
   let pageCount=files.reduce((a,f)=>a+f.pages.length,0);
 
-  return u.default.createElement("div",{className:"hb-archive",style:{minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},
+  return u.default.createElement("div",{className:"hb-archive hb-dossier",style:{minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},
     u.default.createElement("div",{style:{background:s.paper,padding:"20px 16px 14px",borderBottom:`1px solid ${s.line}`}},
       u.default.createElement("button",{onClick:back,style:{background:"none",border:"none",color:s.inkSoft,cursor:"pointer",padding:0,marginBottom:10,display:"flex",alignItems:"center",gap:5,fontFamily:"inherit",fontSize:13}},
         u.default.createElement(E,{name:"arrow-left",size:16}),"返回"),
