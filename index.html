@@ -242,8 +242,21 @@
     text-align:right; padding-left:26px; border-left:1px solid rgba(28,27,24,.14) }
   @media (max-width:900px){ .hb-hdrquote{ display:none } }
 
+  /* ===== 專案頁內容區：同一張紙材，從版頭一路鋪到底 ===== */
+  .hb-body{
+    background-color: #F4F1EA;
+    background-image: var(--hb-paper-page);
+    background-size: 900px auto;
+    background-repeat: repeat;
+    background-position: center top;
+    min-height: 100%;
+  }
+
   /* ===== 淺色分頁列 ===== */
-  .hb-lightnav{ display:flex; gap:0px; background:#F2EFE7; border-bottom:1px solid #E0DBCF;
+  .hb-lightnav{ display:flex; gap:0px; border-bottom:1px solid #E0DBCF;
+    background-color:#F4F1EA;
+    background-image: var(--hb-paper-page);
+    background-size: 900px auto; background-repeat: repeat; background-position: center top;
     padding:0 26px; overflow-x:auto; scrollbar-width:none }
   .hb-lightnav::-webkit-scrollbar{ display:none }
   .hb-lt{ flex:0 0 auto; background:none; border:none; border-bottom:2px solid transparent;
