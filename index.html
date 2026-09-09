@@ -502,6 +502,53 @@
   }
   .hb-dosCheck input{ accent-color:#703B42; }
 
+  /* ===== 子頁共用元件：按鈕、欄位、小標統一成檔案頁語彙 ===== */
+  .hb-dossier .hb-cta{
+    background: #703B42 !important; color: #F7F3EC !important;
+    border: 1px solid #703B42 !important; border-radius: 2px !important;
+    padding: 10px 22px !important; font-family: inherit !important;
+    font-size: 13.5px !important; letter-spacing: .12em !important;
+    box-shadow: none !important; width: auto !important; margin-left: 0 !important;
+  }
+  .hb-dossier .hb-cta:hover{ background: #5E3037 !important; }
+  .hb-dossier .hb-cta:focus-visible{ outline: 2px solid #A58B62; outline-offset: 2px; }
+
+  /* 次要按鈕（工具列上的小鈕） */
+  .hb-dossier .hb-tb,
+  .hb-dossier .hb-tb-sec,
+  .hb-dossier .hb-tb-gho{
+    border-radius: 2px !important; font-family: inherit !important;
+    letter-spacing: .05em !important; box-shadow: none !important;
+    border-color: rgba(57,51,47,.2) !important; color: #5A544A !important;
+  }
+  .hb-dossier .hb-tb-dgr{ color: #703B42 !important; border-color: rgba(112,59,66,.35) !important; }
+
+  /* 輸入欄位 */
+  .hb-dossier input[type="text"],
+  .hb-dossier input[type="search"],
+  .hb-dossier input[type="number"],
+  .hb-dossier input[type="date"],
+  .hb-dossier select,
+  .hb-dossier textarea{
+    border-radius: 2px !important;
+    border: 1px solid rgba(57,51,47,.2) !important;
+    background: #FCFAF6 !important;
+    color: #39332F !important;
+    font-family: inherit !important;
+  }
+  .hb-dossier input:focus-visible,
+  .hb-dossier select:focus-visible,
+  .hb-dossier textarea:focus-visible{
+    outline: 1px solid #703B42; outline-offset: 1px; border-color: rgba(112,59,66,.5) !important;
+  }
+  .hb-dossier input[type="checkbox"], .hb-dossier input[type="radio"]{ accent-color: #703B42; }
+
+  /* 區段小標 */
+  .hb-dossier h2, .hb-dossier h3{
+    font-family: "Noto Serif TC", serif !important;
+    color: #39332F !important; letter-spacing: .1em;
+  }
+
   /* 單欄版（沒有分類索引的子頁） */
   .hb-dosSolo{ border-top: 1px solid rgba(57,51,47,.14); padding: 22px 0 60px; }
   .hb-dosAmt{
