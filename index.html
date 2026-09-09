@@ -9276,7 +9276,7 @@ function HbOverviewHub({project:pj,stage:st,photos:ph,materials:mt,appliances:ap
   let openDf=(df||[]).filter(function(v){return!v.completed});
   let hero=(ph||[])[0]||null;
 
-  let card={backgroundColor:"#FAF8F3",backgroundImage:"var(--hb-paper-card)",backgroundSize:"800px auto",backgroundRepeat:"repeat",border:"1px solid rgba(57,51,47,.14)",borderRadius:3,boxShadow:"none",padding:"22px 24px"};
+  let card={background:"#FAF8F3",border:"1px solid rgba(57,51,47,.14)",borderRadius:3,boxShadow:"none",padding:"22px 24px"};
   let head={display:"flex",alignItems:"flex-end",justifyContent:"space-between",gap:12};
   let ttl={fontFamily:"'Noto Serif TC',serif",fontSize:19,fontWeight:400,color:s.ink,letterSpacing:"0.06em"};
   let sect=function(cn,en,right){
