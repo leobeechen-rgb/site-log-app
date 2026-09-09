@@ -279,12 +279,12 @@
   /* ===== 資料庫入口卡（首頁／公司資料庫共用） ===== */
 .hb-landcard{
     position: relative;
-    display:flex; align-items:flex-start; gap:18px; cursor:pointer;
+    display:flex; align-items:flex-start; gap:16px; cursor:pointer;
     background: linear-gradient(180deg, rgba(253,251,247,.86) 0%, rgba(248,244,236,.78) 100%);
     -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
     border: 1px solid rgba(160,146,124,.22);
     border-radius: 6px;
-    padding: 24px 26px 26px;
+    padding: 21px 24px 23px;
     box-shadow:
       inset 0 1px 0 rgba(255,255,255,.75),
       0 20px 44px -34px rgba(122,102,74,.55);
@@ -299,7 +299,7 @@
   }
 
   .hb-landcard-ic{
-    width:38px; height:38px; border-radius:50%; flex-shrink:0; margin-top:1px;
+    width:32px; height:32px; border-radius:50%; flex-shrink:0; margin-top:2px;
     background: rgba(255,255,255,.55);
     border: 1px solid rgba(160,146,124,.32);
     display:flex; align-items:center; justify-content:center;
@@ -308,26 +308,26 @@
   .hb-landcard:hover .hb-landcard-ic{ border-color: rgba(94,26,38,.32); background: rgba(255,255,255,.85); }
 
   .hb-landcard-body{ flex:1 1 auto; min-width:0; }
-  .hb-landcard-top{ display:flex; align-items:baseline; gap:14px; }
+  .hb-landcard-top{ display:flex; align-items:baseline; gap:16px; }
 
   .hb-landcard-t{
     flex:1 1 auto; min-width:0;
     font-family:"Cormorant Garamond","Noto Serif TC",serif;
-    font-size:17.5px; letter-spacing:.16em; color:#2A2622; line-height:1.5;
+    font-size:14.5px; font-weight:400; letter-spacing:.22em; color:#3A352E; line-height:1.6;
   }
   .hb-landcard-d{
-    position: relative; font-size:11.5px; color:#8A8377;
-    margin-top:13px; padding-top:12px; line-height:1.85; letter-spacing:.04em;
+    position: relative; font-size:10.5px; color:#948C7E;
+    margin-top:11px; padding-top:11px; line-height:1.95; letter-spacing:.06em;
   }
   .hb-landcard-d::before{
     content:""; position:absolute; top:0; left:0;
-    width:28px; height:1px; background: rgba(160,146,124,.45);
+    width:22px; height:1px; background: rgba(160,146,124,.4);
     transition: width .35s ease, background .3s ease;
   }
-  .hb-landcard:hover .hb-landcard-d::before{ width:52px; background: rgba(94,26,38,.4); }
+  .hb-landcard:hover .hb-landcard-d::before{ width:42px; background: rgba(94,26,38,.4); }
 
   .hb-landcard-go{
-    flex-shrink:0; color:#B5AB98; font-size:16px; line-height:1;
+    flex-shrink:0; color:#BFB6A4; font-size:13px; line-height:1;
     font-family:"Cormorant Garamond",serif;
     transition: transform .3s ease, color .3s ease;
   }
@@ -6789,7 +6789,7 @@ try{document.documentElement.style.setProperty("--hb-landbg",'url("'+HB_LANDING_
 function HbCompanyGridCard({icon:l,title:t,desc:e,onClick:n}){
   let C=u.default.createElement;
   return C("div",{onClick:n,className:"hb-landcard"},
-    C("div",{className:"hb-landcard-ic"},C(E,{name:l,size:18,color:"#5E6B58"})),
+    C("div",{className:"hb-landcard-ic"},C(E,{name:l,size:15,color:"#6B7565"})),
     C("div",{className:"hb-landcard-body"},
       C("div",{className:"hb-landcard-top"},
         C("div",{className:"hb-landcard-t"},t),
