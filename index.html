@@ -590,133 +590,172 @@
   @media (max-width: 860px){ .hb-dosAmt{ flex: 0 0 auto; } }
 
   /* ===== 合約檔案頁：巴黎事務所風格 ===== */
+  /* ===== 赫柏檔案頁共用版面（設計合約／報價單／收據／領據／單價庫…全部共用） ===== */
   .hb-dossier{
-    background-color: #F5F1E9 !important;
+    --hbP:#F2EFE8; --hbSheet:#FBFAF6; --hbInk:#17150F; --hbInk2:#6F675B; --hbInk3:#9A9083;
+    --hbRule:#CFC7B8; --hbRule2:#E4DED2; --hbAcc:#B4573A; --hbWash:rgba(180,87,58,.07);
+    --hbSerif:"Noto Serif TC","Songti TC","PingFang TC","Microsoft JhengHei",serif;
+    --hbLatin:"Cormorant Garamond","Times New Roman",serif;
+    background-color: var(--hbP) !important;
     background-image: none !important;
-    color: #39332F;
+    color: var(--hbInk);
+    font-family: var(--hbSerif) !important;
   }
-  .hb-dosWrap{ position: relative; z-index: 1; max-width: 1180px; margin: 0 auto; padding: 0 58px; }
+  .hb-dosWrap{ position: relative; z-index: 1; max-width: 1320px; margin: 0 auto; padding: 0 clamp(20px,4vw,58px); }
 
-  .hb-dosHead{ padding: 26px 0 30px; }
+  /* 頁首字標列 */
+  .hb-dosHead{ position: relative; padding: 0 0 clamp(20px,3vw,34px); border-bottom: 2px solid var(--hbInk); }
+  .hb-dosHead::before{
+    content: "HERFULSINS"; display: block;
+    font-size: clamp(14px,1.5vw,19px); letter-spacing: .34em; font-weight: 500; color: var(--hbInk);
+    padding: 22px 0 18px; border-bottom: 2px solid var(--hbInk); margin-bottom: clamp(22px,3.4vw,44px);
+  }
+  .hb-dosHead::after{
+    content: "L'ESPACE\A FAIT MIEUX VIVRE."; white-space: pre-line; text-align: right;
+    position: absolute; right: 0; bottom: clamp(26px,3.4vw,44px);
+    font-family: var(--hbLatin); font-size: 11px; letter-spacing: .24em; line-height: 1.9; color: var(--hbInk2);
+  }
   .hb-dosLabel{
-    font-family:"Cormorant Garamond",serif; font-size: 11px;
-    letter-spacing: .3em; text-transform: uppercase; color: #A58B62; margin-top: 22px;
+    font-family: var(--hbLatin); font-size: clamp(12px,1.2vw,17px); font-weight: 500;
+    letter-spacing: .42em; text-transform: uppercase; color: var(--hbInk); margin: 0 0 6px;
   }
   .hb-dosTitle{
-    margin: 12px 0 0; font-family:"Noto Serif TC",serif; font-weight: 400;
-    font-size: clamp(28px, 3vw, 42px); letter-spacing: .14em; color: #39332F; line-height: 1.3;
+    margin: 0; font-family: var(--hbSerif); font-weight: 900;
+    font-size: clamp(40px,7.6vw,104px); letter-spacing: .02em; line-height: .94; color: var(--hbInk);
   }
   .hb-dosLede{
-    margin: 16px 0 0; max-width: 62ch;
-    font-size: 13.5px; line-height: 2; letter-spacing: .03em; color: #6B625B;
+    margin: 18px 0 0; max-width: 52ch;
+    font-size: 14px; line-height: 2; letter-spacing: .03em; color: var(--hbInk2);
   }
 
+  /* 兩欄 */
   .hb-dosRow{
     display: grid; grid-template-columns: 250px minmax(0,1fr);
-    gap: 56px; align-items: start;
-    border-top: 1px solid rgba(57,51,47,.14); padding: 26px 0 60px;
+    gap: clamp(26px,4vw,58px); align-items: start;
+    border-top: 0; padding: clamp(24px,3.4vw,42px) 0 clamp(30px,5vw,60px);
   }
+  .hb-dosSide{ border-right: 1px solid var(--hbRule); padding-right: clamp(16px,2vw,34px); }
   .hb-dosSideT{
-    font-size: 11.5px; letter-spacing: .22em; color: #8C8279; margin-bottom: 10px; display: block;
+    font-family: var(--hbLatin); font-size: 14px; letter-spacing: .3em;
+    color: var(--hbInk2); margin-bottom: 16px; display: block; text-transform: uppercase;
   }
   .hb-dosNav{ display: flex; flex-direction: column; }
   .hb-dosNavItem{
     position: relative; text-align: left; background: none; border: none; cursor: pointer;
-    font-family: inherit; font-size: 14px; letter-spacing: .1em; color: #6B625B;
-    padding: 11px 0; transition: color .2s ease;
+    font-family: inherit; font-size: 17px; letter-spacing: .05em; color: var(--hbInk);
+    padding: 6px 0 8px; transition: color .2s ease;
   }
   .hb-dosNavItem::after{
-    content: ""; position: absolute; left: 0; bottom: 6px; width: 0; height: 1px;
-    background: #703B42; transition: width .3s cubic-bezier(.22,.61,.36,1);
+    content: ""; position: absolute; left: 0; bottom: 0; width: 0; height: 2px;
+    background: var(--hbAcc); transition: width .3s cubic-bezier(.22,.61,.36,1);
   }
-  .hb-dosNavItem:hover{ color: #39332F; }
-  .hb-dosNavItem.on{ color: #703B42; }
-  .hb-dosNavItem.on::after{ width: 26px; }
-  .hb-dosNavItem:focus-visible{ outline: 1px solid #703B42; outline-offset: 3px; }
+  .hb-dosNavItem:hover{ color: var(--hbAcc); }
+  .hb-dosNavItem.on{ color: var(--hbAcc); }
+  .hb-dosNavItem.on::after{ width: 100%; max-width: 190px; }
+  .hb-dosNavItem:focus-visible{ outline: 1px solid var(--hbAcc); outline-offset: 3px; }
 
   .hb-dosField{ margin-top: 26px; }
   .hb-dosSelect{
-    width: 100%; padding: 9px 10px; border: 1px solid rgba(57,51,47,.2);
-    border-radius: 2px; font-size: 13.5px; background: #FCFAF6; color: #39332F; font-family: inherit;
+    width: 100%; padding: 10px 11px; border: 1px solid var(--hbRule);
+    border-radius: 2px; font-size: 15px; background: var(--hbSheet); color: var(--hbInk); font-family: inherit;
   }
-  .hb-dosSideFoot{ margin-top: 28px; border-top: 1px solid rgba(57,51,47,.12); padding-top: 16px; }
+  .hb-dosSideFoot{ margin-top: 40px; border-top: 1px solid var(--hbRule); padding-top: 22px; }
   .hb-dosLink{
-    display: flex; align-items: center; gap: 8px; width: 100%;
-    background: none; border: none; cursor: pointer; padding: 8px 0;
-    font-family: inherit; font-size: 13px; letter-spacing: .04em; color: #6B625B;
-    transition: color .2s ease;
+    display: flex; align-items: center; gap: 10px; width: auto;
+    background: none; border: none; cursor: pointer; padding: 6px 0 4px;
+    font-family: inherit; font-size: 15px; letter-spacing: .04em; color: var(--hbAcc);
+    border-bottom: 1px solid transparent; transition: border-color .2s ease;
   }
-  .hb-dosLink:hover{ color: #703B42; }
-  .hb-dosLink:focus-visible{ outline: 1px solid #703B42; outline-offset: 2px; }
+  .hb-dosLink:hover{ border-bottom-color: var(--hbAcc); }
+  .hb-dosLink:focus-visible{ outline: 1px solid var(--hbAcc); outline-offset: 2px; }
 
+  /* 主欄標題列 */
   .hb-dosBar{
     display: flex; align-items: center; justify-content: space-between; gap: 16px;
-    padding-bottom: 14px; border-bottom: 1px solid rgba(57,51,47,.14);
+    padding-bottom: clamp(14px,2vw,22px); border-bottom: 0;
   }
-  .hb-dosCount{ font-size: 12.5px; letter-spacing: .1em; color: #8C8279; }
+  .hb-dosCount{
+    font-family: var(--hbSerif); font-weight: 700;
+    font-size: clamp(20px,2.6vw,32px); letter-spacing: .05em; color: var(--hbInk);
+  }
   .hb-dosNew{
-    background: #703B42; color: #F7F3EC; border: 1px solid #703B42; border-radius: 2px;
-    padding: 10px 22px; cursor: pointer; font-family: inherit;
-    font-size: 13.5px; letter-spacing: .12em; transition: background .22s ease;
+    background: var(--hbAcc); color: #FBF7F1; border: 0; border-radius: 2px;
+    padding: 15px 30px; cursor: pointer; font-family: inherit;
+    font-size: clamp(15px,1.5vw,18px); letter-spacing: .08em; transition: filter .22s ease;
   }
-  .hb-dosNew:hover{ background: #5E3037; }
-  .hb-dosNew:focus-visible{ outline: 2px solid #A58B62; outline-offset: 2px; }
+  .hb-dosNew:hover{ background: var(--hbAcc); filter: brightness(1.07); }
+  .hb-dosNew:focus-visible{ outline: 2px solid var(--hbInk); outline-offset: 2px; }
 
-  .hb-dosList{ list-style: none; margin: 0; padding: 0; }
+  /* 清單 */
+  .hb-dosList{ list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--hbRule); }
   .hb-dosItem{
-    display: flex; align-items: center; gap: 20px;
-    padding: 17px 0; border-bottom: 1px solid rgba(57,51,47,.1);
+    display: flex; align-items: center; gap: clamp(14px,3vw,36px);
+    padding: clamp(18px,2.4vw,30px) 0; border-bottom: 1px solid var(--hbRule);
     transition: background .2s ease;
   }
-  .hb-dosItem:hover{ background: rgba(255,255,255,.5); }
+  .hb-dosItem:hover{ background: rgba(255,255,255,.45); }
   .hb-dosNo{
-    flex: 0 0 34px; font-family:"Cormorant Garamond",serif; font-size: 16px;
-    color: #A58B62; letter-spacing: .04em;
+    flex: 0 0 auto; min-width: 1.7em; align-self: center;
+    font-family: var(--hbLatin); font-style: italic; font-weight: 500;
+    font-size: clamp(38px,5vw,70px); line-height: .88; color: var(--hbAcc); letter-spacing: 0;
   }
   .hb-dosBody{ flex: 1 1 auto; min-width: 0; }
   .hb-dosName{
-    font-family:"Noto Serif TC",serif; font-size: 17px; letter-spacing: .08em;
-    color: #39332F; line-height: 1.5;
+    font-family: var(--hbSerif); font-weight: 700;
+    font-size: clamp(18px,2vw,25px); letter-spacing: .03em; color: var(--hbInk); line-height: 1.45;
   }
-  .hb-dosMeta{ font-size: 13px; color: #7A716A; margin-top: 5px; letter-spacing: .03em; }
+  .hb-dosMeta{ font-size: 15px; color: var(--hbInk2); margin-top: 7px; letter-spacing: .04em; }
   .hb-dosDate{
-    flex: 0 0 auto; font-family:"JetBrains Mono",monospace; font-size: 12px;
-    color: #8C8279; letter-spacing: .04em;
+    flex: 0 0 auto; font-family: var(--hbLatin); font-size: 17px;
+    color: var(--hbInk2); letter-spacing: .06em;
   }
-  .hb-dosActs{ flex: 0 0 auto; display: flex; align-items: center; gap: 4px; }
+  .hb-dosActs{ flex: 0 0 auto; display: flex; align-items: center; gap: 10px; }
   .hb-dosAct{
-    display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
-    background: none; border: none; padding: 8px 10px; font-family: inherit;
-    font-size: 12.5px; letter-spacing: .04em; color: #6B625B; border-radius: 2px;
-    transition: color .2s ease, background .2s ease;
+    display: inline-flex; align-items: center; gap: 7px; cursor: pointer;
+    background: none; border: 1px solid var(--hbRule); padding: 11px 19px; font-family: inherit;
+    font-size: 15px; letter-spacing: .04em; color: var(--hbInk); border-radius: 2px;
+    transition: color .2s ease, border-color .2s ease;
   }
-  .hb-dosAct:hover{ color: #39332F; background: rgba(57,51,47,.05); }
-  .hb-dosAct:focus-visible{ outline: 1px solid #703B42; outline-offset: 1px; }
-  .hb-dosAct.ico{ padding: 8px; color: #8C8279; }
+  .hb-dosAct:hover{ color: var(--hbAcc); border-color: var(--hbInk); background: none; }
+  .hb-dosAct:focus-visible{ outline: 1px solid var(--hbAcc); outline-offset: 1px; }
+  .hb-dosAct.ico{ padding: 11px 15px; color: var(--hbInk2); }
 
   .hb-dosMore{ position: relative; }
   .hb-dosMenu{
     position: absolute; right: 0; top: calc(100% + 6px); z-index: 30;
-    min-width: 128px; background: #FFFDF9; border: 1px solid rgba(57,51,47,.16);
-    border-radius: 2px; box-shadow: 0 12px 26px -20px rgba(57,51,47,.5);
+    min-width: 132px; background: var(--hbSheet); border: 1px solid var(--hbRule);
+    border-radius: 2px; box-shadow: 0 14px 28px -20px rgba(23,21,15,.55);
     display: flex; flex-direction: column; padding: 4px 0;
   }
   .hb-dosMenu button{
     background: none; border: none; text-align: left; cursor: pointer;
-    padding: 10px 16px; font-family: inherit; font-size: 13px; letter-spacing: .06em; color: #39332F;
+    padding: 11px 17px; font-family: inherit; font-size: 15px; letter-spacing: .05em; color: var(--hbInk);
   }
-  .hb-dosMenu button:hover{ background: rgba(57,51,47,.05); }
-  .hb-dosMenu button.del{ color: #703B42; }
-  .hb-dosMenu button.del:hover{ background: rgba(112,59,66,.08); }
+  .hb-dosMenu button:hover{ background: var(--hbWash); }
+  .hb-dosMenu button.del{ color: var(--hbAcc); }
+  .hb-dosMenu button.del:hover{ background: var(--hbWash); }
 
-  @media (max-width: 1080px){ .hb-dosWrap{ padding: 0 30px; } .hb-dosRow{ gap: 34px; grid-template-columns: 210px minmax(0,1fr); } }
+  /* 頁尾 */
+  .hb-dosWrap::after{
+    content: "HERFULSINS · MAISON D'INTÉRIEUR";
+    display: block; border-top: 2px solid var(--hbInk);
+    padding: 20px 0 34px; font-size: 12px; letter-spacing: .28em; color: var(--hbInk2);
+  }
+
+  @media (max-width: 1080px){
+    .hb-dosWrap{ padding: 0 30px; }
+    .hb-dosRow{ gap: 34px; grid-template-columns: 210px minmax(0,1fr); }
+  }
   @media (max-width: 860px){
-    .hb-dosWrap{ padding: 0 22px; }
-    .hb-dosRow{ grid-template-columns: 1fr; gap: 24px; }
-    .hb-dosNav{ flex-direction: row; gap: 22px; border-bottom: 1px solid rgba(57,51,47,.12); }
+    .hb-dosWrap{ padding: 0 20px; }
+    .hb-dosHead::after{ display: none; }
+    .hb-dosRow{ grid-template-columns: 1fr; gap: 24px; padding-top: 24px; }
+    .hb-dosSide{ border-right: 0; border-bottom: 1px solid var(--hbRule); padding: 0 0 20px; }
+    .hb-dosNav{ flex-direction: row; gap: 22px; border-bottom: 0; flex-wrap: wrap; }
     .hb-dosItem{ flex-wrap: wrap; gap: 10px 16px; }
+    .hb-dosNo{ font-size: 34px; }
     .hb-dosBody{ flex: 1 1 60%; }
-    .hb-dosActs{ flex: 1 1 100%; justify-content: flex-start; margin-left: -10px; }
+    .hb-dosActs{ flex: 1 1 100%; justify-content: flex-start; }
   }
 
   /* ===== 檔案冊子頁：頁首／索引欄／檔案卡 ===== */
