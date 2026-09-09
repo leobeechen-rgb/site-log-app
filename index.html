@@ -375,8 +375,8 @@
 
   /* ===== 換頁進場：整頁淡入上浮 ＋ 卡片依序展開 ===== */
   @keyframes hbPageIn{
-    from{ opacity:0; transform:translateY(14px) }
-    to{ opacity:1; transform:none }
+    from{ opacity:0 }
+    to{ opacity:1 }
   }
   @keyframes hbPageVeil{
     from{ transform:scaleY(1) }
@@ -417,6 +417,30 @@
     .hb-pagein, .hb-pagein::after,
     .hb-pagein .hb-entry, .hb-pagein .hb-entry-go i{ animation: none !important; }
     .hb-pagein::after{ display:none }
+  }
+
+  /* ===== 資料庫頁：固定不間斷的背景直線 ===== */
+  .hb-backdrop{
+    position: fixed; inset: 0; z-index: 0;
+    pointer-events: none; overflow: hidden;
+  }
+  .hb-bline{
+    position: absolute; top: 0; bottom: 0; width: 1px;
+    background: rgba(123, 99, 73, .22);
+  }
+  .hb-bline.l{ left: calc(58px + 340px); }
+  .hb-bline.r{ right: calc(58px + 340px); }
+  /* 內容一律在直線之上；直線因此不會被切斷，只有卡片會蓋住經過的那一段 */
+  .hb-company > *:not(.hb-backdrop){ position: relative; z-index: 1; }
+  /* 卡片是不透明紙材，但不參與背景線的繪製 */
+  .hb-company .hb-entry{ background: rgba(247, 243, 234, .96); }
+  .hb-company .hb-entry:hover{ background: rgba(250, 247, 240, 1); }
+  @media (max-width: 1180px){
+    .hb-bline.l{ left: calc(30px + 280px); }
+    .hb-bline.r{ right: calc(30px + 280px); }
+  }
+  @media (max-width: 900px){
+    .hb-backdrop{ display: none; }
   }
 
   /* ===== 資料庫頁最後一張：橫跨兩欄的收尾卡 ===== */
@@ -7212,7 +7236,10 @@ function HbCompanyHub({onBack:l,onContracts:t,onQuotes:e,onReceipts:rc,onVendorR
       document.body.classList.remove("hb-full-body");
     };
   },[]);
-  return u.default.createElement("div",{className:"hb-landing-bg",style:{minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink,position:"relative"}},
+  return u.default.createElement("div",{className:"hb-landing-bg hb-company",style:{minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink,position:"relative"}},
+  u.default.createElement("div",{className:"hb-backdrop","aria-hidden":"true"},
+    u.default.createElement("span",{className:"hb-bline l"}),
+    u.default.createElement("span",{className:"hb-bline r"})),
   u.default.createElement("div",{style:{padding:"20px 58px 0",position:"relative",zIndex:1}},
     u.default.createElement("button",{onClick:l,style:{background:"none",border:"none",color:s.inkSoft,cursor:"pointer",fontSize:12.5,letterSpacing:"0.08em",fontFamily:"inherit",display:"flex",alignItems:"center",gap:8,padding:0}},
       u.default.createElement(E,{name:"arrow-left",size:16}),u.default.createElement("span",null,"返回首頁"))),
