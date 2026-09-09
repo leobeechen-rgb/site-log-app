@@ -490,10 +490,10 @@
 
   /* 所有子頁共用的暖白紙面與文字色 */
   .hb-dossier{ background-color:#F5F1E9 !important; background-image:none !important; color:#39332F; }
-  .hb-dossier .hb-dosHead{ max-width:1180px; margin:0 auto; padding:24px 58px 26px; }
+  .hb-dossier .hb-dosHead{ max-width:none; margin:0; padding:0 0 26px; }
   .hb-dossier .hb-dosHead + *{ position:relative; z-index:1; }
-  @media (max-width:1080px){ .hb-dossier .hb-dosHead{ padding:20px 30px 22px; } }
-  @media (max-width:860px){ .hb-dossier .hb-dosHead{ padding:18px 22px 20px; } }
+  @media (max-width:1080px){ .hb-dossier .hb-dosHead{ padding:0 0 22px; } }
+  @media (max-width:860px){ .hb-dossier .hb-dosHead{ padding:0 0 20px; } }
 
   .hb-dosEmpty{ text-align:center; color:#8C8279; margin-top:44px; font-size:13.5px; letter-spacing:.06em; }
   .hb-dosCheck{
@@ -6559,7 +6559,7 @@ function HbVendorQuoteHub({onBack,notify}){
       u.default.createElement("button",{onClick:openFolder?()=>setOpenFolder(null):onBack,className:"hb-arcBack"},u.default.createElement(E,{name:"arrow-left",size:15}),u.default.createElement("span",null,openFolder?"返回資料夾列表":"返回公司資料庫")),
       u.default.createElement("header",{className:"hb-dosHead"},u.default.createElement("div",{className:"hb-dosLabel"},"Devis Fournisseurs"),u.default.createElement("h1",{className:"hb-dosTitle"},"廠商報價單"),u.default.createElement("p",{className:"hb-dosLede"},"依廠商分類管理報價檔案（Excel／圖片）"))
     ),
-    u.default.createElement("div",{style:{maxWidth:1180,margin:"0 auto",padding:16}},
+    u.default.createElement("div",{style:{maxWidth:1180,margin:"0 auto",padding:"0 58px 112px"}},
       loading
         ? u.default.createElement("div",{style:{textAlign:"center",padding:40}},u.default.createElement(E,{name:"loader",className:"animate-spin",size:22,color:s.ocean}))
         : openFolder
