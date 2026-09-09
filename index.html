@@ -255,7 +255,9 @@
   .hb-landing-bg{
     position: relative;
     isolation: isolate;
-    background-color: #F5F1E9;
+    min-height: 100%;
+    min-height: 100dvh;
+    background-color: #F4F0E7;
   }
   /* 底層：石灰漆質感（純 CSS，中央偏亮、四角微暖灰 ＋ 極淡光影） */
   .hb-landing-bg::before{
@@ -264,7 +266,7 @@
       linear-gradient(114deg, rgba(255,255,255,.55) 0%, rgba(255,255,255,.14) 27%, rgba(255,255,255,0) 46%),
       radial-gradient(32% 28% at 11% 20%, rgba(92,80,60,.06) 0%, rgba(92,80,60,0) 74%),
       radial-gradient(28% 25% at 86% 80%, rgba(92,80,60,.05) 0%, rgba(92,80,60,0) 74%),
-      radial-gradient(128% 96% at 50% 30%, #FCFAF5 0%, #F7F3EB 42%, #F0EADE 74%, #E8E1D3 100%);
+      radial-gradient(128% 96% at 50% 30%, #FBF8F2 0%, #F6F2E9 44%, #F0EBDF 76%, #EAE4D6 100%);
   }
   /* 上層：左右酒紅雙細線 ＋ 底部深胡桃底帶 */
   .hb-landing-bg::after{
@@ -280,6 +282,8 @@
   }
 
   /* ===== 首頁滿版：解除外層容器的寬度限制 ===== */
+  /* 頁面底色一路到底，捲動時不會露出白或灰 */
+  html, body, #root{ min-height: 100%; background: #F4F0E7; }
   #root.hb-full-root,
   .hb-shell.hb-full-root,
   #root.hb-full-root .hb-shell{
@@ -289,7 +293,7 @@
     margin-right: 0 !important;
     box-shadow: none !important;
   }
-  body.hb-full-body{ background: #E9E2D6 !important; }
+  body.hb-full-body{ background: #F4F0E7 !important; }
 
   /* 導覽列與橫幅必須貫穿視窗，不受任何容器內距限制 */
   .hb-topnav,
@@ -7197,7 +7201,18 @@ function HbAttendanceForm({onCancel,onCreate,projects,workerOptions,lastRateFor}
   )
 }
 
-function HbCompanyHub({onBack:l,onContracts:t,onQuotes:e,onReceipts:rc,onVendorReceipts:vr,onQuickQuote:qq,onGoHome:hbGoHome,onVendorQuotes:vq,onProposal:pg,onMarketingPhotos:mp,onBookings:bk,onOpenBooking:ob,onDrawings:dw,onAttendance:atd,onPriceBook:pb,onSurvey:sv,onChangeOrders:co,onPdfRotate:pr}){return u.default.createElement("div",{className:"hb-landing-bg",style:{minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink,position:"relative"}},
+function HbCompanyHub({onBack:l,onContracts:t,onQuotes:e,onReceipts:rc,onVendorReceipts:vr,onQuickQuote:qq,onGoHome:hbGoHome,onVendorQuotes:vq,onProposal:pg,onMarketingPhotos:mp,onBookings:bk,onOpenBooking:ob,onDrawings:dw,onAttendance:atd,onPriceBook:pb,onSurvey:sv,onChangeOrders:co,onPdfRotate:pr}){
+  /* 這一頁也要滿版：暫時解除外層容器的寬度限制與底色 */
+  (0,u.useEffect)(()=>{
+    let els=[document.getElementById("root")].concat(Array.prototype.slice.call(document.querySelectorAll(".hb-shell"))).filter(Boolean);
+    els.forEach(function(el){ el.classList.add("hb-full-root") });
+    document.body.classList.add("hb-full-body");
+    return function(){
+      els.forEach(function(el){ el.classList.remove("hb-full-root") });
+      document.body.classList.remove("hb-full-body");
+    };
+  },[]);
+  return u.default.createElement("div",{className:"hb-landing-bg",style:{minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink,position:"relative"}},
   u.default.createElement("div",{style:{padding:"20px 58px 0",position:"relative",zIndex:1}},
     u.default.createElement("button",{onClick:l,style:{background:"none",border:"none",color:s.inkSoft,cursor:"pointer",fontSize:12.5,letterSpacing:"0.08em",fontFamily:"inherit",display:"flex",alignItems:"center",gap:8,padding:0}},
       u.default.createElement(E,{name:"arrow-left",size:16}),u.default.createElement("span",null,"返回首頁"))),
