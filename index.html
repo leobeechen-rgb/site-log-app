@@ -261,7 +261,7 @@
   .hb-landing-bg::before{
     content:""; position:fixed; inset:0; z-index:-2; pointer-events:none;
     background: var(--hb-landbg) center/cover no-repeat;
-    opacity: .55;
+    opacity: .30;
   }
   /* 上層：左右酒紅雙細線 ＋ 底部深胡桃底帶 */
   .hb-landing-bg::after{
@@ -274,6 +274,52 @@
   }
   @media (max-width: 1200px){
     .hb-landing-bg::after{ background-image: none; }
+  }
+
+  /* ===== 首頁線條插圖牆：載入時逐筆描出來 ===== */
+  .hb-artwall{
+    position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden;
+  }
+  .hb-artwall-i{ position: absolute; display: block; }
+  .hb-artwall .hb-art{ max-width: none; width: 100%; height: auto; margin: 0; }
+  .hb-artwall .hb-art path, .hb-artwall .hb-art circle{
+    stroke: #8C8171; stroke-width: .85; opacity: .30;
+    animation-duration: 2.4s; animation-timing-function: cubic-bezier(.22,.61,.36,1);
+  }
+  .hb-artwall .hb-art .d5{ stroke: #7C8A76; }
+  .hb-artwall .hb-art .wash{ display: none; }
+
+  .hb-artwall .i0{ left: 2.5%;  top: 7%;   width: 190px; animation: hbArtFloat 17s ease-in-out infinite; }
+  .hb-artwall .i1{ right: 3%;   top: 5%;   width: 215px; animation: hbArtFloat 21s ease-in-out infinite reverse; }
+  .hb-artwall .i2{ left: 6%;    top: 41%;  width: 150px; animation: hbArtFloat 19s ease-in-out infinite reverse; }
+  .hb-artwall .i3{ right: 5.5%; top: 44%;  width: 195px; animation: hbArtFloat 23s ease-in-out infinite; }
+  .hb-artwall .i4{ left: 3%;    top: 73%;  width: 175px; animation: hbArtFloat 20s ease-in-out infinite; }
+  .hb-artwall .i5{ right: 2.5%; top: 71%;  width: 220px; animation: hbArtFloat 18s ease-in-out infinite reverse; }
+  .hb-artwall .i6{ left: 14%;   top: 24%;  width: 120px; animation: hbArtFloat 25s ease-in-out infinite; }
+  .hb-artwall .i7{ right: 13%;  top: 26%;  width: 130px; animation: hbArtFloat 22s ease-in-out infinite reverse; }
+  .hb-artwall .i8{ left: 15%;   top: 86%;  width: 115px; animation: hbArtFloat 24s ease-in-out infinite reverse; }
+  .hb-artwall .i9{ right: 15%;  top: 88%;  width: 125px; animation: hbArtFloat 26s ease-in-out infinite; }
+
+  /* 描線的起始延遲：由外往內、一件一件出現 */
+  .hb-artwall .i0 path{ animation-delay:.10s } .hb-artwall .i1 path{ animation-delay:.30s }
+  .hb-artwall .i2 path{ animation-delay:.50s } .hb-artwall .i3 path{ animation-delay:.70s }
+  .hb-artwall .i4 path{ animation-delay:.90s } .hb-artwall .i5 path{ animation-delay:1.10s }
+  .hb-artwall .i6 path{ animation-delay:1.30s } .hb-artwall .i7 path{ animation-delay:1.45s }
+  .hb-artwall .i8 path{ animation-delay:1.60s } .hb-artwall .i9 path{ animation-delay:1.75s }
+
+  @keyframes hbArtFloat{
+    0%,100%{ transform: translate3d(0,0,0) }
+    50%    { transform: translate3d(0,-12px,0) }
+  }
+  @media (max-width: 1100px){
+    .hb-artwall .i2, .hb-artwall .i3, .hb-artwall .i6,
+    .hb-artwall .i7, .hb-artwall .i8, .hb-artwall .i9{ display: none; }
+    .hb-artwall .i0, .hb-artwall .i4{ width: 130px; }
+    .hb-artwall .i1, .hb-artwall .i5{ width: 145px; }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .hb-artwall .hb-artwall-i{ animation: none !important; }
+    .hb-artwall .hb-art path, .hb-artwall .hb-art circle{ animation: none !important; stroke-dashoffset: 0 !important; }
   }
 
   /* ===== 資料庫入口卡（首頁／公司資料庫共用） ===== */
@@ -4514,6 +4560,7 @@ function HbLanding({onCase:l,onCompany:t,onManageStaff:e,onLogout:n,onQuickQuote
       @media (max-width: 760px){ .hb-landgrid { grid-template-columns: 1fr; } }
       @media (max-width: 620px) { .hb-landing-tri { grid-template-columns: 1fr; } }
     `),
+    u.default.createElement("div",{className:"hb-artwall","aria-hidden":"true",dangerouslySetInnerHTML:{__html:(function(){var ks=["window","pendant","sofa","plant","stairs","table","chair","tub","mirror","tile"];try{return ks.map(function(k,ix){return '<span class="hb-artwall-i i'+ix+'">'+window.HB_ART(k)+'</span>'}).join("")}catch(_e){return ""}})()}}),
 
     u.default.createElement("div",{className:"hb-scroll",style:{maxWidth:1080,margin:"0 auto",height:"100%",overflowY:"auto",padding:"30px 24px 80px"}},
 
