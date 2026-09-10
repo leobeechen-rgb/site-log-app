@@ -627,7 +627,9 @@
     font-size:11px; letter-spacing:.24em; line-height:1.9; color:#6F675B; padding-bottom:6px;
   }
 
-  .hb-docsTabs{ position:sticky; top:0; z-index:80; background:#F2EFE8; border-bottom:1px solid #CFC7B8; }
+  .hb-docsTabs{ position:sticky; top:0; z-index:60; background:#F2EFE8; border-bottom:1px solid #CFC7B8; }
+  /* 子頁的滿版彈窗沒設層級，靠 DOM 順序疊；這裡補上，避免被分頁列壓住 */
+  .hb-docsBody [style*="position: fixed"][style*="inset"]:not(.hb-dossier){ z-index:200 !important; }
   .hb-docsTabsIn{
     display:flex; gap:clamp(14px,2.2vw,32px);
     overflow-x:auto; scrollbar-width:none; -webkit-overflow-scrolling:touch;
