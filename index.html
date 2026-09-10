@@ -9104,9 +9104,104 @@ function HbAttendanceForm({onCancel,onCreate,projects,workerOptions,lastRateFor}
 /* ===================================================================
    材質報告書
    =================================================================== */
+
+/* ===== 材質照自動修圖 =====
+   目的：把手機隨手拍的材料照，整理成一組看起來一致的方形色票。
+   做的事：正中央方形裁切 → 自動色階 → 白平衡 → 輕微對比與飽和。
+   做不到的事：去背、透視校正、把斜拍的板材拉正。這些需要真正的影像辨識，
+   純瀏覽器端做不到，硬做只會把材料紋理弄壞。 */
+async function HB_decodeImageFile(file){
+  if(typeof createImageBitmap==="function"){
+    try{ return await createImageBitmap(file,{imageOrientation:"from-image"}); }
+    catch(e1){ try{ return await createImageBitmap(file); }catch(e2){} }
+  }
+  return await new Promise(function(res,rej){
+    var fr=new FileReader();
+    fr.onerror=function(){ rej(new Error("\u8b80\u53d6\u6a94\u6848\u5931\u6557")) };
+    fr.onload=function(){
+      var im=new window.Image();
+      im.onerror=function(){ rej(new Error("\u5716\u7247\u89e3\u6790\u5931\u6557")) };
+      im.onload=function(){ res(im) };
+      im.src=fr.result;
+    };
+    fr.readAsDataURL(file);
+  });
+}
+
+function HB_tidySwatchPixels(cx,w,h){
+  var d=cx.getImageData(0,0,w,h), p=d.data, n=w*h, i,k,c;
+
+  /* 自動色階：取每個通道 0.5% / 99.5% 分位往外拉，強度打七折避免過曝 */
+  var hist=[new Uint32Array(256),new Uint32Array(256),new Uint32Array(256)];
+  for(i=0;i<p.length;i+=4){ hist[0][p[i]]++; hist[1][p[i+1]]++; hist[2][p[i+2]]++; }
+  var lo=[0,0,0], hi=[255,255,255], cut=Math.max(1,Math.round(n*0.005));
+  for(c=0;c<3;c++){
+    var acc=0;
+    for(k=0;k<256;k++){ acc+=hist[c][k]; if(acc>cut){ lo[c]=k; break } }
+    acc=0;
+    for(k=255;k>=0;k--){ acc+=hist[c][k]; if(acc>cut){ hi[c]=k; break } }
+    if(hi[c]-lo[c]<24){ lo[c]=0; hi[c]=255 }   /* 本來就很平的材質不硬拉 */
+  }
+  var mix=0.7, lut=[new Uint8ClampedArray(256),new Uint8ClampedArray(256),new Uint8ClampedArray(256)];
+  for(c=0;c<3;c++){
+    var a=lo[c], b=hi[c], span=Math.max(1,b-a);
+    for(k=0;k<256;k++){
+      var v=(k-a)*255/span;
+      lut[c][k]=k+(v-k)*mix;
+    }
+  }
+  for(i=0;i<p.length;i+=4){ p[i]=lut[0][p[i]]; p[i+1]=lut[1][p[i+1]]; p[i+2]=lut[2][p[i+2]]; }
+
+  /* 白平衡：用最亮的 12% 當中性參考，係數限制在 0.75～1.35，避免整張變色 */
+  var lum=new Uint8Array(n), idx=0;
+  for(i=0;i<p.length;i+=4){ lum[idx++]=(p[i]*0.299+p[i+1]*0.587+p[i+2]*0.114)|0; }
+  var lh=new Uint32Array(256);
+  for(i=0;i<n;i++) lh[lum[i]]++;
+  var want=Math.max(1,Math.round(n*0.12)), acc2=0, thr=255;
+  for(k=255;k>=0;k--){ acc2+=lh[k]; if(acc2>=want){ thr=k; break } }
+  var sr=0,sg=0,sb=0,cnt=0; idx=0;
+  for(i=0;i<p.length;i+=4){ if(lum[idx++]>=thr){ sr+=p[i]; sg+=p[i+1]; sb+=p[i+2]; cnt++ } }
+  if(cnt>50){
+    var mr=sr/cnt, mg=sg/cnt, mb=sb/cnt, avg=(mr+mg+mb)/3, wb=0.6;
+    var gr=1+(avg/Math.max(1,mr)-1)*wb, gg=1+(avg/Math.max(1,mg)-1)*wb, gb=1+(avg/Math.max(1,mb)-1)*wb;
+    gr=Math.min(1.35,Math.max(0.75,gr)); gg=Math.min(1.35,Math.max(0.75,gg)); gb=Math.min(1.35,Math.max(0.75,gb));
+    for(i=0;i<p.length;i+=4){ p[i]=p[i]*gr; p[i+1]=p[i+1]*gg; p[i+2]=p[i+2]*gb; }
+  }
+
+  /* 很輕的 S 曲線與飽和，讓不同光線下拍的照片看起來像同一組 */
+  for(i=0;i<p.length;i+=4){
+    for(c=0;c<3;c++){
+      var x=p[i+c]/255;
+      p[i+c]=(x+0.12*x*(1-x)*(2*x-1))*255;
+    }
+    var L=p[i]*0.299+p[i+1]*0.587+p[i+2]*0.114;
+    p[i]=L+(p[i]-L)*1.06; p[i+1]=L+(p[i+1]-L)*1.06; p[i+2]=L+(p[i+2]-L)*1.06;
+  }
+  cx.putImageData(d,0,0);
+}
+
+async function HB_makeSwatch(file,opts){
+  opts=opts||{};
+  var out=opts.size||900;
+  var img=await HB_decodeImageFile(file);
+  var w=img.width||img.naturalWidth, h=img.height||img.naturalHeight;
+  if(!w||!h) throw new Error("\u8b80\u4e0d\u5230\u5716\u7247\u5c3a\u5bf8");
+  var side=Math.min(w,h), sx=Math.round((w-side)/2), sy=Math.round((h-side)/2);
+  var cv=document.createElement("canvas"); cv.width=out; cv.height=out;
+  var cx=cv.getContext("2d",{willReadFrequently:true});
+  cx.imageSmoothingEnabled=true; cx.imageSmoothingQuality="high";
+  cx.drawImage(img,sx,sy,side,side,0,0,out,out);
+  if(img.close)img.close();
+  if(opts.enhance!==false){ try{ HB_tidySwatchPixels(cx,out,out) }catch(e){} }
+  return await new Promise(function(res,rej){
+    cv.toBlob(function(b){ b?res(b):rej(new Error("\u8f38\u51fa\u5931\u6557")) },"image/jpeg",opts.quality||0.9);
+  });
+}
+
 function HB_buildMaterialHTML(v){
   let e=HB_esc;
-  let items=(v.items||[]).filter(it=>(it.space||it.item||it.brand||it.spec));
+  let items=(v.items||[]).filter(it=>(it.space||it.item||it.brand||it.spec||it.photoUrl));
+  let hasPhoto=items.some(it=>it.photoUrl);
   let groups=[];
   items.forEach(function(it){
     let key=(it.space||"未指定空間").trim()||"未指定空間";
@@ -9115,10 +9210,11 @@ function HB_buildMaterialHTML(v){
     g.rows.push(it);
   });
   let body=groups.length?groups.map(function(g){
-    return `<tr class="cat"><td colspan="3">${e(g.name)}</td></tr>`+g.rows.map(function(it){
-      return `<tr><td>${e(it.item||"—")}</td><td>${e(it.brand||"—")}</td><td>${e(it.spec||"—")}</td></tr>`;
+    return `<tr class="cat"><td colspan="${hasPhoto?4:3}">${e(g.name)}</td></tr>`+g.rows.map(function(it){
+      let pc=hasPhoto?`<td style="text-align:center">${it.photoUrl?`<img src="${e(it.photoUrl)}" alt="" style="width:54px;height:54px;object-fit:cover;border:1px solid #DDD6C8;border-radius:3px;display:block;margin:0 auto" />`:"—"}</td>`:"";
+      return `<tr>${pc}<td>${e(it.item||"—")}</td><td>${e(it.brand||"—")}</td><td>${e(it.spec||"—")}</td></tr>`;
     }).join("");
-  }).join(""):`<tr><td colspan="3" style="text-align:center;color:#9A9083;padding:26px">尚未登錄材料</td></tr>`;
+  }).join(""):`<tr><td colspan="${hasPhoto?4:3}" style="text-align:center;color:#9A9083;padding:26px">尚未登錄材料</td></tr>`;
   return `<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>${e(v.title||"材質報告書")} · 赫柏空間設計材質報告書</title><style>
@@ -9135,7 +9231,7 @@ ${HB_DOC_CSS}
 <div class="meta">報告名稱：${e(v.title||"—")}　·　提出日期：${e(v.reportDate||"—")}　·　材料共 ${items.length} 筆</div>
 
 <table>
-<thead><tr><th style="width:26%">品項</th><th style="width:37%">品牌／型號</th><th style="width:37%">規格／顏色</th></tr></thead>
+<thead><tr>${hasPhoto?'<th style="width:74px">材質照</th>':""}<th style="width:${hasPhoto?22:26}%">品項</th><th style="width:${hasPhoto?32:37}%">品牌／型號</th><th style="width:${hasPhoto?32:37}%">規格／顏色</th></tr></thead>
 <tbody>${body}</tbody>
 </table>
 
@@ -9169,10 +9265,35 @@ function HbMaterialForm({onCancel,onSave,projects,initial}){
   let[title,setTitle]=(0,u.useState)(ini?(ini.title||""):"");
   let[reportDate,setReportDate]=(0,u.useState)(()=>ini&&ini.report_date?String(ini.report_date).slice(0,10):new Date().toISOString().slice(0,10));
   let[note,setNote]=(0,u.useState)(ini?(ini.note||""):"");
-  let[items,setItems]=(0,u.useState)(ini&&ini.items&&ini.items.length?ini.items.map(x=>({space:x.space||"",item:x.item||"",brand:x.brand||"",spec:x.spec||""})):[{space:"",item:"",brand:"",spec:""}]);
+  let[items,setItems]=(0,u.useState)(ini&&ini.items&&ini.items.length?ini.items.map(x=>({space:x.space||"",item:x.item||"",brand:x.brand||"",spec:x.spec||"",photoUrl:x.photoUrl||"",photoPath:x.photoPath||""})):[{space:"",item:"",brand:"",spec:"",photoUrl:"",photoPath:""}]);
+  let[photoBusy,setPhotoBusy]=(0,u.useState)({});
+  let[autoFix,setAutoFix]=(0,u.useState)(!0);
+  let[photoErr,setPhotoErr]=(0,u.useState)("");
   let upd=(i,k,val)=>setItems(xs=>xs.map((x,idx)=>idx===i?{...x,[k]:val}:x));
-  let add=()=>setItems(xs=>[...xs,{space:xs.length?xs[xs.length-1].space:"",item:"",brand:"",spec:""}]);
+  let add=()=>setItems(xs=>[...xs,{space:xs.length?xs[xs.length-1].space:"",item:"",brand:"",spec:"",photoUrl:"",photoPath:""}]);
   let del=i=>setItems(xs=>xs.length<=1?[{space:"",item:"",brand:"",spec:""}]:xs.filter((_,idx)=>idx!==i));
+  let pickPhoto=async(i,ev)=>{
+    let f=ev.target.files&&ev.target.files[0];
+    ev.target.value="";
+    if(!f)return;
+    setPhotoErr("");
+    setPhotoBusy(b=>({...b,[i]:!0}));
+    try{
+      let blob=autoFix?await HB_makeSwatch(f,{size:900,quality:.9}):await Ru(f,1400,.9);
+      let path="material/"+Be()+".jpg";
+      let url=await r2UploadSitelogFile("sitelog-photos",path,blob,"image/jpeg");
+      setItems(xs=>xs.map((x,idx)=>idx===i?{...x,photoUrl:url,photoPath:path}:x));
+    }catch(err){
+      setPhotoErr("\u6750\u8cea\u7167\u4e0a\u50b3\u5931\u6557\uff1a"+((err&&err.message)||err));
+    }finally{
+      setPhotoBusy(b=>{let n={...b};delete n[i];return n});
+    }
+  };
+  let rmPhoto=i=>{
+    let p=items[i]&&items[i].photoPath;
+    setItems(xs=>xs.map((x,idx)=>idx===i?{...x,photoUrl:"",photoPath:""}:x));
+    if(p){try{r2DeleteSitelogFile("sitelog-photos",p)}catch(e){}}
+  };
   let valid=title.trim()&&items.some(x=>x.item.trim());
   let lb={fontSize:12.5,color:s.inkSoft,display:"block",marginBottom:4,marginTop:10};
   return u.default.createElement("div",{style:{position:"fixed",inset:0,background:"rgba(43,38,32,0.45)",display:"flex",alignItems:"center",justifyContent:"center",padding:20,zIndex:55}},
@@ -9186,7 +9307,12 @@ function HbMaterialForm({onCancel,onSave,projects,initial}){
         projList.map(p=>u.default.createElement("option",{key:p.id,value:p.id},p.name))),
       u.default.createElement("label",{style:lb},"提出日期"),
       u.default.createElement("input",{type:"date",value:reportDate,onChange:e=>setReportDate(e.target.value),style:el}),
-      u.default.createElement("label",{style:lb},"材料明細"),
+      u.default.createElement("div",{style:{display:"flex",alignItems:"baseline",justifyContent:"space-between",gap:10,flexWrap:"wrap"}},
+        u.default.createElement("label",{style:lb},"材料明細"),
+        u.default.createElement("label",{style:{fontSize:12.5,color:s.inkSoft,display:"flex",alignItems:"center",gap:6,cursor:"pointer",marginTop:10}},
+          u.default.createElement("input",{type:"checkbox",checked:autoFix,onChange:e=>setAutoFix(e.target.checked)}),
+          "自動修圖（方形裁切・自動色階・白平衡）")),
+      photoErr?u.default.createElement("div",{style:{fontSize:12,color:s.danger,margin:"2px 0 6px"}},photoErr):null,
       items.map(function(x,i){
         return u.default.createElement("div",{key:i,style:{border:"1px solid "+s.line,borderRadius:6,padding:10,marginBottom:8,background:s.paper}},
           u.default.createElement("div",{style:{display:"flex",gap:8,marginBottom:6,alignItems:"center"}},
@@ -9195,7 +9321,16 @@ function HbMaterialForm({onCancel,onSave,projects,initial}){
             u.default.createElement("button",{onClick:()=>del(i),title:"刪除這一列",style:{background:"none",border:"none",cursor:"pointer",color:s.inkSoft,fontSize:18,lineHeight:1,padding:"0 4px"}},"×")),
           u.default.createElement("div",{style:{display:"flex",gap:8}},
             u.default.createElement("input",{value:x.brand,onChange:e=>upd(i,"brand",e.target.value),placeholder:"品牌／型號",style:{...el,margin:0,flex:1}}),
-            u.default.createElement("input",{value:x.spec,onChange:e=>upd(i,"spec",e.target.value),placeholder:"規格／顏色",style:{...el,margin:0,flex:1}})));
+            u.default.createElement("input",{value:x.spec,onChange:e=>upd(i,"spec",e.target.value),placeholder:"規格／顏色",style:{...el,margin:0,flex:1}})),
+          u.default.createElement("div",{style:{display:"flex",gap:10,alignItems:"center",marginTop:8,flexWrap:"wrap"}},
+            x.photoUrl
+              ? u.default.createElement("img",{src:x.photoUrl,alt:"",style:{width:72,height:72,objectFit:"cover",borderRadius:4,border:"1px solid "+s.line,background:"#fff",display:"block"}})
+              : u.default.createElement("div",{style:{width:72,height:72,borderRadius:4,border:"1px dashed "+s.line,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,color:s.inkSoft,textAlign:"center",lineHeight:1.4,padding:4,boxSizing:"border-box"}},photoBusy[i]?"處理中…":"尚無材質照"),
+            u.default.createElement("div",{style:{display:"flex",gap:8,flexWrap:"wrap"}},
+              u.default.createElement("label",{style:{display:"inline-flex",alignItems:"center",justifyContent:"center",minHeight:44,padding:"0 14px",border:"1px solid "+s.line,borderRadius:6,background:"#fff",fontSize:13,color:s.ink,cursor:photoBusy[i]?"default":"pointer",opacity:photoBusy[i]?.5:1}},
+                photoBusy[i]?"處理中…":(x.photoUrl?"更換照片":"上傳材質照"),
+                u.default.createElement("input",{type:"file",accept:"image/*",disabled:!!photoBusy[i],onChange:e=>pickPhoto(i,e),style:{display:"none"}})),
+              x.photoUrl?u.default.createElement("button",{type:"button",onClick:()=>rmPhoto(i),style:{minHeight:44,padding:"0 12px",border:"1px solid "+s.line,borderRadius:6,background:"none",fontSize:13,color:s.danger,cursor:"pointer"}},"移除照片"):null)));
       }),
       u.default.createElement("button",{onClick:add,style:{background:"none",border:"1px dashed "+s.line,borderRadius:6,padding:"9px 14px",width:"100%",cursor:"pointer",color:s.ocean,fontSize:13.5}},"＋ 新增一列材料"),
       u.default.createElement("label",{style:lb},"備註（選填）"),
