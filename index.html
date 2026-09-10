@@ -593,11 +593,13 @@
 
   /* ===== 合約檔案頁：巴黎事務所風格 ===== */
   /* ===== 文件系統：六種單據共用的上方分頁 ===== */
-  .hb-docsHub{ background:#F2EFE8; min-height:100vh; }
+  .hb-docsHub{ background:#F2EFE8; min-height:100vh; --hbTabH:53px; }
   .hb-docsTabs{
-    position: sticky; top: 0; z-index: 40;
+    position: sticky; top: 0; z-index: 80;
     background: #F2EFE8; border-bottom: 1px solid #CFC7B8;
   }
+  /* 工程報價單是 position:fixed 的滿版浮層，讓它從分頁列下方開始、並壓在分頁列之下 */
+  .hb-docsBody > .hb-dossier{ top: var(--hbTabH) !important; z-index: 60 !important; }
   .hb-docsTabsIn{
     max-width: 1320px; margin: 0 auto; padding: 0 clamp(20px,4vw,58px);
     display: flex; gap: clamp(14px,2.2vw,32px);
@@ -617,6 +619,7 @@
   /* 工作區內的子頁不用再自己留頂部空間 */
   .hb-docsBody .hb-arcBack{ margin-top: 18px !important; }
   @media (max-width: 860px){
+    .hb-docsHub{ --hbTabH:47px; }
     .hb-docsTabsIn{ gap: 18px; }
     .hb-docsTab{ padding: 13px 2px 11px; }
   }
