@@ -13428,6 +13428,54 @@ react-dom/cjs/react-dom-client.production.js:
 
     '.hb-rail__top{display:none;}',
     '.hb-rail[data-scrolled="1"] .hb-rail__top{display:flex;}',
+
+    /* ===== 手機：側標整條收起，只留一顆選單鍵，點開走底部面板 ===== */
+    '.hb-rail[data-mode="mobile"]{display:none!important;}',
+    '.hb-railBtn{position:fixed;right:14px;z-index:19;width:40px;height:40px;padding:0;',
+    '  display:none;align-items:center;justify-content:center;',
+    '  background:#F4F0E7;border:1px solid rgba(160,146,124,.6);border-radius:3px;',
+    '  color:#26241F;cursor:pointer;-webkit-tap-highlight-color:transparent;',
+    '  touch-action:manipulation;box-shadow:0 8px 18px -16px rgba(38,36,31,.6);}',
+    '.hb-railBtn[data-on="1"]{display:flex;}',
+    '.hb-railBtn svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.5;',
+    '  stroke-linecap:round;}',
+    '.hb-railBtn:active{background:#EDE7DA;}',
+
+    '.hb-railSheet{position:fixed;inset:0;z-index:400;background:rgba(23,21,15,.42);',
+    '  display:flex;align-items:flex-end;justify-content:center;}',
+    '.hb-railSheet[hidden]{display:none!important;}',
+    '.hb-railSheet__panel{width:100%;max-width:560px;background:#FBFAF6;color:#17150F;',
+    '  border-radius:16px 16px 0 0;padding:8px 16px calc(14px + env(safe-area-inset-bottom));',
+    '  box-shadow:0 -14px 34px -18px rgba(23,21,15,.6);max-height:82vh;overflow-y:auto;}',
+    '.hb-railSheet__grab{display:block;width:44px;height:4px;border-radius:2px;',
+    '  background:#D6CFC2;margin:2px auto 10px;}',
+    '.hb-railSheet__head{display:flex;align-items:center;justify-content:space-between;',
+    '  gap:12px;padding:2px 0 10px;}',
+    '.hb-railSheet__title{font-family:"Cormorant Garamond","Noto Serif TC",serif;',
+    '  font-size:17px;letter-spacing:.06em;color:#26241F;}',
+    '.hb-railSheet__x{background:none;border:0;padding:8px;margin:-8px;cursor:pointer;',
+    '  color:#6E695E;line-height:0;-webkit-tap-highlight-color:transparent;}',
+    '.hb-railSheet__x svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.6;',
+    '  stroke-linecap:round;}',
+    '.hb-railOpt{display:flex;align-items:center;gap:11px;width:100%;min-height:56px;',
+    '  padding:13px 10px;background:none;border:0;border-bottom:1px solid #E4DED2;',
+    '  border-radius:6px;font-family:inherit;text-align:left;cursor:pointer;color:#17150F;',
+    '  -webkit-tap-highlight-color:transparent;touch-action:manipulation;}',
+    '.hb-railOpt:last-of-type{border-bottom:0;}',
+    '.hb-railOpt__no{font-family:"Cormorant Garamond",serif;font-size:11px;letter-spacing:.18em;',
+    '  color:#A79E8D;width:20px;flex:0 0 20px;}',
+    '.hb-railOpt__cn{font-size:15px;letter-spacing:.05em;}',
+    '.hb-railOpt__fr{font-family:"Cormorant Garamond",serif;font-size:11px;letter-spacing:.22em;',
+    '  color:#A79E8D;margin-left:8px;text-transform:uppercase;}',
+    '.hb-railOpt[aria-current="page"]{background:#F6EDE9;}',
+    '.hb-railOpt[aria-current="page"] .hb-railOpt__no,',
+    '.hb-railOpt[aria-current="page"] .hb-railOpt__cn{color:#B4573A;}',
+    '.hb-railOpt__tick{margin-left:auto;color:#B4573A;line-height:0;}',
+    '.hb-railOpt__tick svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;',
+    '  stroke-linecap:round;stroke-linejoin:round;}',
+    '.hb-railSheet__cancel{width:100%;min-height:50px;margin-top:10px;background:none;',
+    '  border:1px solid #B4573A;border-radius:6px;color:#B4573A;font-family:inherit;',
+    '  font-size:15px;letter-spacing:.08em;cursor:pointer;touch-action:manipulation;}',
     '@media (prefers-reduced-motion:reduce){.hb-rail,.hb-rail *{transition:none!important;}}'
   ].join('');
   (document.head || document.documentElement).appendChild(css);
@@ -13502,6 +13550,123 @@ react-dom/cjs/react-dom-client.production.js:
   rail.appendChild(handle);
 
   document.body.appendChild(rail);
+
+  /* ===== 手機：選單鍵 ＋ 底部面板 ===== */
+  var mq = window.matchMedia('(max-width: 859px)');
+  function isMobile() { return mq.matches; }
+
+  var menuBtn = document.createElement('button');
+  menuBtn.type = 'button';
+  menuBtn.className = 'hb-railBtn';
+  menuBtn.setAttribute('aria-label', '\u958b\u555f\u5c0e\u89bd');
+  menuBtn.setAttribute('aria-haspopup', 'dialog');
+  menuBtn.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>';
+  document.body.appendChild(menuBtn);
+
+  var sheet = document.createElement('div');
+  sheet.className = 'hb-railSheet';
+  sheet.hidden = true;
+  sheet.innerHTML =
+    '<div class="hb-railSheet__panel" role="dialog" aria-modal="true" aria-label="\u5c0e\u89bd">' +
+      '<span class="hb-railSheet__grab"></span>' +
+      '<div class="hb-railSheet__head">' +
+        '<span class="hb-railSheet__title">\u5c0e\u89bd</span>' +
+        '<button type="button" class="hb-railSheet__x" aria-label="\u95dc\u9589">' +
+          '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>' +
+        '</button>' +
+      '</div>' +
+      '<div class="hb-railSheet__body"></div>' +
+      '<button type="button" class="hb-railSheet__cancel">\u53d6\u6d88</button>' +
+    '</div>';
+  document.body.appendChild(sheet);
+
+  var sheetBody = sheet.querySelector('.hb-railSheet__body');
+  var sheetOpts = [];
+
+  function makeOpt(label, fr, no, onClick) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'hb-railOpt';
+    b.innerHTML =
+      '<span class="hb-railOpt__no" aria-hidden="true">' + (no || '') + '</span>' +
+      '<span class="hb-railOpt__cn">' + label + '</span>' +
+      (fr ? '<span class="hb-railOpt__fr" aria-hidden="true">' + fr + '</span>' : '') +
+      '<span class="hb-railOpt__tick" aria-hidden="true"></span>';
+    b.addEventListener('click', function () { closeSheet(); onClick(); });
+    sheetBody.appendChild(b);
+    return b;
+  }
+
+  HB_RAIL_ITEMS.forEach(function (it, idx) {
+    sheetOpts.push({
+      label: it.label,
+      el: makeOpt(it.label, it.fr, ('0' + (idx + 1)).slice(-2), function () {
+        var btn = dockButton(it.label);
+        if (btn) btn.click();
+      })
+    });
+  });
+
+  var sheetTop = makeOpt('\u56de\u5230\u9802\u7aef', 'HAUT', '', function () {
+    var sc = scroller();
+    if (!sc) return;
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (sc.scrollTo) sc.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' });
+    else sc.scrollTop = 0;
+  });
+  sheetTop.style.display = 'none';
+
+  var prevOverflow = '';
+  function openSheet() {
+    sheetOpts.forEach(function (o) {
+      var btn = dockButton(o.label);
+      var circle = btn && btn.querySelector('div');
+      var bg = circle && circle.style ? circle.style.background : '';
+      var on = !!bg && bg !== 'transparent';
+      if (on) {
+        o.el.setAttribute('aria-current', 'page');
+        o.el.querySelector('.hb-railOpt__tick').innerHTML =
+          '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7"/></svg>';
+      } else {
+        o.el.removeAttribute('aria-current');
+        o.el.querySelector('.hb-railOpt__tick').innerHTML = '';
+      }
+    });
+    var sc = scroller();
+    sheetTop.style.display = (sc && sc.scrollTop > 200) ? 'flex' : 'none';
+    sheet.hidden = false;
+    menuBtn.setAttribute('aria-expanded', 'true');
+    prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+  }
+  function closeSheet() {
+    if (sheet.hidden) return;
+    sheet.hidden = true;
+    menuBtn.setAttribute('aria-expanded', 'false');
+    document.body.style.overflow = prevOverflow;
+  }
+  menuBtn.addEventListener('click', function (e) { e.stopPropagation(); openSheet(); });
+  sheet.addEventListener('click', function (e) { if (e.target === sheet) closeSheet(); });
+  sheet.querySelector('.hb-railSheet__x').addEventListener('click', closeSheet);
+  sheet.querySelector('.hb-railSheet__cancel').addEventListener('click', closeSheet);
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeSheet(); });
+
+  /* 選單鍵擺在頂端；若頁面有深色品牌列就往下讓開它 */
+  function placeMenuBtn(show) {
+    if (!show || !isMobile()) {
+      menuBtn.removeAttribute('data-on');
+      closeSheet();
+      return;
+    }
+    menuBtn.setAttribute('data-on', '1');
+    var top = 10;
+    var nav = document.querySelector('.hb-topnav');
+    if (nav) {
+      var r = nav.getBoundingClientRect();
+      if (r.height > 0 && r.bottom > 0) top = Math.round(r.bottom) + 8;
+    }
+    menuBtn.style.top = top + 'px';
+  }
 
   /* ---- 收合邏輯：畫面內模式預設收成把手，點一下才展開 ---- */
   var collapseTimer = null;
@@ -13590,7 +13755,11 @@ react-dom/cjs/react-dom-client.production.js:
   function update() {
     var show = appReady() && !onLoginScreen();
     rail.hidden = !show;
+    if (isMobile()) rail.setAttribute('data-mode', 'mobile');
+    else rail.removeAttribute('data-mode');
+    placeMenuBtn(show);
     if (!show) return;
+    if (isMobile()) { adjustHost(); return; }
     alignToShell();
     if (canCollapse()) {
       if (!rail.hasAttribute('data-collapsed')) rail.setAttribute('data-collapsed', '1');
