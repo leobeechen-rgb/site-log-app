@@ -9280,14 +9280,22 @@ function HB_suggestSwatches(imgEl,maxN){
     var rep=mem[0];
     var okSet={};
     for(i=0;i<mem.length;i++) okSet[mem[i].j*bx+mem[i].i]=1;
-    var rad=1, cap=Math.max(1,Math.floor(Math.min(bx,by)*0.22));
+    /* 往外長，但兩個條件都要成立才准長大：
+       (a) 這一圈幾乎都還屬於同一群（0.92）
+       (b) 整塊的平均顏色沒有飄離代表點太多（<16）
+       上限收到短邊的 10%，寧可框小一點也不要框到兩種材料 */
+    var rad=1, cap=Math.max(1,Math.floor(Math.min(bx,by)*0.10));
     while(rad<cap){
-      var need=(2*rad+3)*(2*rad+3), got=0;
+      var need=(2*rad+3)*(2*rad+3), got=0, ar=0, ag=0, ab=0, an=0;
       for(y=rep.j-rad-1;y<=rep.j+rad+1;y++)for(x=rep.i-rad-1;x<=rep.i+rad+1;x++){
         if(x<0||y<0||x>=bx||y>=by)continue;
         if(okSet[y*bx+x])got++;
+        var bb=blocks[y*bx+x];
+        ar+=bb.r; ag+=bb.g; ab+=bb.b; an++;
       }
-      if(got/need<0.8)break;
+      if(!an||got/need<0.92)break;
+      var dr2=ar/an-rep.r, dg2=ag/an-rep.g, db2=ab/an-rep.b;
+      if(Math.sqrt(dr2*dr2+dg2*dg2+db2*db2)>16)break;
       rad++;
     }
     /* 色票顏色用代表點的實際顏色，不是色度中心 */
@@ -9353,6 +9361,7 @@ function HbSwatchPicker({onCancel,onPick,autoFix}){
   let[added,setAdded]=(0,u.useState)(0);
   let[err,setErr]=(0,u.useState)("");
   let[sugg,setSugg]=(0,u.useState)([]);
+  let[done,setDone]=(0,u.useState)({});
   let[scanning,setScanning]=(0,u.useState)(!1);
   let imgRef=(0,u.useRef)(null);
   let wrapRef=(0,u.useRef)(null);
@@ -9383,7 +9392,7 @@ function HbSwatchPicker({onCancel,onPick,autoFix}){
     let f=ev.target.files&&ev.target.files[0];
     ev.target.value="";
     if(!f)return;
-    setErr(""); setNat(null); setAdded(0); setSugg([]);
+    setErr(""); setNat(null); setAdded(0); setSugg([]); setDone({});
     if(url)try{URL.revokeObjectURL(url)}catch(e){}
     setUrl(URL.createObjectURL(f));
     setCen({x:.5,y:.5});
@@ -9398,17 +9407,41 @@ function HbSwatchPicker({onCancel,onPick,autoFix}){
     setCen({x:Math.min(1,Math.max(0,x)),y:Math.min(1,Math.max(0,y))});
   };
 
-  let take=async function(){
+  let takeRegion=async function(gx,gy,gpct){
     let im=imgRef.current;
     if(!im||!nat)return;
+    let sN=Math.max(24,Math.round(Math.min(nat.w,nat.h)*gpct));
+    let sX=Math.round(Math.min(Math.max(gx*nat.w-sN/2,0),nat.w-sN));
+    let sY=Math.round(Math.min(Math.max(gy*nat.h-sN/2,0),nat.h-sN));
+    let blob=await HB_swatchFromRegion(im,sX,sY,sN,{size:900,quality:.9,mode:autoFix});
+    await onPick(blob);
+  };
+  let take=async function(){
+    setBusy(!0); setErr("");
+    try{ await takeRegion(cen.x,cen.y,pct); setAdded(function(n){return n+1}) }
+    catch(e){ setErr("\u53d6\u6750\u8cea\u5931\u6557\uff1a"+((e&&e.message)||e)) }
+    finally{ setBusy(!1) }
+  };
+  let takeOne=async function(g,gi){
     setBusy(!0); setErr("");
     try{
-      let blob=await HB_swatchFromRegion(im,sxNat,syNat,sideNat,{size:900,quality:.9,mode:autoFix});
-      await onPick(blob);
+      await takeRegion(g.x,g.y,g.pct);
+      setDone(function(m){ var n2={...m}; n2[gi]=1; return n2 });
       setAdded(function(n){return n+1});
-    }catch(e){
-      setErr("\u53d6\u6750\u8cea\u5931\u6557\uff1a"+((e&&e.message)||e));
-    }finally{ setBusy(!1) }
+    }catch(e){ setErr("\u53d6\u6750\u8cea\u5931\u6557\uff1a"+((e&&e.message)||e)) }
+    finally{ setBusy(!1) }
+  };
+  let takeAll=async function(){
+    setBusy(!0); setErr("");
+    try{
+      for(var gi=0;gi<sugg.length;gi++){
+        if(done[gi])continue;
+        await takeRegion(sugg[gi].x,sugg[gi].y,sugg[gi].pct);
+        setDone(function(m){ var n2={...m}; n2[gi]=1; return n2 });
+        setAdded(function(n){return n+1});
+      }
+    }catch(e){ setErr("\u53d6\u6750\u8cea\u5931\u6557\uff1a"+((e&&e.message)||e)) }
+    finally{ setBusy(!1) }
   };
 
   let small=nat&&sideNat<220;
@@ -9434,7 +9467,7 @@ function HbSwatchPicker({onCancel,onPick,autoFix}){
               C("img",{ref:imgRef,src:url,alt:"",draggable:!1,
                 onLoad:function(ev){ let t=ev.target; setNat({w:t.naturalWidth,h:t.naturalHeight});
                   setScanning(!0);
-                  setTimeout(function(){ try{ setSugg(HB_suggestSwatches(t,6)) }catch(e){ setSugg([]) } finally{ setScanning(!1) } },30) },
+                  setTimeout(function(){ try{ setSugg(HB_suggestSwatches(t,8)); setDone({}) }catch(e){ setSugg([]) } finally{ setScanning(!1) } },30) },
                 style:{width:"100%",height:"auto",display:"block",pointerEvents:"none"}}),
               nat?C("div",{style:{position:"absolute",
                 left:(sxNat/nat.w*100)+"%", top:(syNat/nat.h*100)+"%",
@@ -9445,15 +9478,30 @@ function HbSwatchPicker({onCancel,onPick,autoFix}){
             C("div",{style:{marginTop:12}},
               C("div",{style:{fontSize:12.5,color:s.inkSoft,marginBottom:6}},
                 scanning?"\u5206\u6790\u4e2d\u2026":(sugg.length?"\u81ea\u52d5\u627e\u5230\u7684\u8272\u584a\uff08\u9ede\u4e00\u4e0b\u8df3\u5230\u90a3\u4e00\u584a\uff09":"\u9019\u5f35\u5716\u6c92\u627e\u5230\u660e\u986f\u7684\u5e73\u9762\u8272\u584a\uff0c\u8acb\u81ea\u5df1\u6846")),
-              sugg.length?C("div",{style:{display:"flex",gap:8,flexWrap:"wrap"}},
+              sugg.length?C("div",{style:{display:"flex",gap:10,flexWrap:"wrap",alignItems:"flex-start"}},
                 sugg.map(function(g,gi){
                   var on=Math.abs(cen.x-g.x)<.004&&Math.abs(cen.y-g.y)<.004;
-                  return C("button",{key:gi,type:"button",title:g.hex,
-                    onClick:function(){ setCen({x:g.x,y:g.y}); setPct(g.pct) },
-                    style:{width:46,height:46,borderRadius:6,padding:0,cursor:"pointer",
-                      background:g.hex,border:on?"2px solid "+s.oceanDark:"1px solid rgba(0,0,0,.25)",
-                      boxShadow:on?"0 0 0 2px rgba(46,74,60,.25)":"none"}});
-                })):null),
+                  return C("div",{key:gi,style:{display:"flex",flexDirection:"column",gap:4,alignItems:"center"}},
+                    C("button",{type:"button",title:g.hex+"\uff08\u9ede\u4e00\u4e0b\u5148\u770b\u9019\u4e00\u584a\uff09",
+                      onClick:function(){ setCen({x:g.x,y:g.y}); setPct(g.pct) },
+                      style:{width:52,height:52,borderRadius:6,padding:0,cursor:"pointer",
+                        background:g.hex,border:on?"2px solid "+s.oceanDark:"1px solid rgba(0,0,0,.25)",
+                        boxShadow:on?"0 0 0 2px rgba(46,74,60,.25)":"none"}}),
+                    C("button",{type:"button",disabled:busy||!!done[gi],
+                      onClick:function(){ takeOne(g,gi) },
+                      style:{minHeight:32,padding:"0 8px",borderRadius:5,cursor:done[gi]?"default":"pointer",
+                        border:"1px solid "+(done[gi]?s.line:s.oceanDark),
+                        background:done[gi]?"#F1EFE9":"#fff",
+                        color:done[gi]?s.inkSoft:s.oceanDark,
+                        fontFamily:"inherit",fontSize:12,whiteSpace:"nowrap",opacity:busy&&!done[gi]?.5:1}},
+                      done[gi]?"\u5df2\u52a0\u5165":"\uff0b \u52a0\u5165")); 
+                }).concat([
+                  C("button",{key:"all",type:"button",disabled:busy,onClick:takeAll,
+                    style:{minHeight:52,padding:"0 14px",borderRadius:6,alignSelf:"flex-start",
+                      border:"1px solid "+s.oceanDark,background:"#fff",color:s.oceanDark,
+                      fontFamily:"inherit",fontSize:13,cursor:"pointer",opacity:busy?.5:1,whiteSpace:"nowrap"}},
+                    "\u5168\u90e8\u52a0\u5165")
+                ])):null),
             C("div",{style:{display:"flex",alignItems:"center",gap:12,marginTop:12,flexWrap:"wrap"}},
               C("span",{style:{fontSize:12.5,color:s.inkSoft,whiteSpace:"nowrap"}},"\u9078\u53d6\u6846\u5927\u5c0f"),
               C("input",{type:"range",min:8,max:60,step:1,value:Math.round(pct*100),
