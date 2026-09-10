@@ -7822,7 +7822,7 @@ function HbCompanyHub({onBack:l,onContracts:t,onQuotes:e,onReceipts:rc,onVendorR
       u.default.createElement("p",{className:"hb-narr-p"},"整理報價、廠商、設計合約與追加減帳，讓每個專案流程清楚可追溯。"),
       u.default.createElement("div",{className:"hb-narr-tags"},"DEVIS",u.default.createElement("i",null),"CONTRATS",u.default.createElement("i",null),"SUIVI")),
     u.default.createElement("div",{className:"hb-landgrid",style:{display:"grid",gridTemplateColumns:"repeat(2,minmax(0,1fr))",gap:20,gridAutoRows:"210px",alignContent:"start"}},
-      u.default.createElement(HbCompanyGridCard,{icon:"file-text",title:"文件系統",desc:"設計合約、工程報價、工程收據、廠商領據、追加減帳、廠商報價，六種單據集中在同一個工作區，上方分頁直接互跳",onClick:docs}),
+      u.default.createElement(HbCompanyGridCard,{icon:"file-text",title:"文件系統",desc:"合約、報價、收據、領據、追加減帳，六種單據集中開立，上方分頁直接互跳",onClick:docs}),
       u.default.createElement(HbCompanyGridCard,{icon:"users",title:"師傅出勤紀錄",desc:"記錄工班師傅每日出工天數，依師傅／月份統計應付工資",onClick:atd}),
       u.default.createElement(HbCompanyGridCard,{icon:"bookmark",title:"常用工項單價庫",desc:"常用工項的售價與廠商成本，報價時打字即時建議、一鍵帶入，並記錄價格歷史與漲價提醒",onClick:pb}),
       u.default.createElement(HbCompanyGridCard,{icon:"refresh",title:"圖面轉正",desc:"CAD 匯出的 PDF 方向不對時丟進來，自動判斷角度轉回正的，可多檔批次。只改旋轉屬性，線條尺寸不動",onClick:pr}),
@@ -7864,6 +7864,7 @@ var HB_ENTRY_META={
   "設計需求問卷":{cat:"QUESTIONNAIRE",catCn:"問卷",fr:"Questionnaire Client",go:"ENVOYER",goCn:"發送"},
   "工程報價單":{cat:"DEVIS",catCn:"報價",fr:"Devis de Chantier",go:"OUVRIR",goCn:"開啟"},
   "廠商報價單":{cat:"FOURNISSEURS",catCn:"廠商",fr:"Devis Fournisseurs",go:"OUVRIR",goCn:"開啟"},
+  "文件系統":{cat:"PIÈCES",catCn:"單據",fr:"Pièces Administratives",go:"OUVRIR",goCn:"開啟"},
   "IG 貼文工作室":{cat:"ÉDITION",catCn:"社群",fr:"Atelier de Publication",go:"OUVRIR",goCn:"開啟",img:HB_MAT_STACK,tail:"FAIRE VIVRE LES ESPACES,|MÊME APRÈS LEUR LIVRAISON."}
 };
 function HbCompanyGridCard({icon:l,title:t,desc:e,onClick:n}){
