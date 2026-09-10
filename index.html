@@ -7925,6 +7925,189 @@ function HbAttendanceForm({onCancel,onCreate,projects,workerOptions,lastRateFor}
 /* ===================================================================
    文件系統：六種單據共用一個工作區，上方分頁直接互跳
    =================================================================== */
+/* ===================================================================
+   材質報告書
+   =================================================================== */
+function HB_buildMaterialHTML(v){
+  let e=HB_esc;
+  let items=(v.items||[]).filter(it=>(it.space||it.item||it.brand||it.spec));
+  let groups=[];
+  items.forEach(function(it){
+    let key=(it.space||"未指定空間").trim()||"未指定空間";
+    let g=groups.find(x=>x.name===key);
+    if(!g){g={name:key,rows:[]};groups.push(g)}
+    g.rows.push(it);
+  });
+  let body=groups.length?groups.map(function(g){
+    return `<tr class="cat"><td colspan="3">${e(g.name)}</td></tr>`+g.rows.map(function(it){
+      return `<tr><td>${e(it.item||"—")}</td><td>${e(it.brand||"—")}</td><td>${e(it.spec||"—")}</td></tr>`;
+    }).join("");
+  }).join(""):`<tr><td colspan="3" style="text-align:center;color:#9A9083;padding:26px">尚未登錄材料</td></tr>`;
+  return `<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>${e(v.title||"材質報告書")} · 赫柏空間設計材質報告書</title><style>
+${HB_DOC_CSS}
+</style></head>
+<body>
+<div class="toolbar"><button class="back" onclick="window.close()" title="返回">\u2190</button><div class="btns"><button class="print" onclick="window.print()">列印 / 存成 PDF</button></div></div>
+<div class="brand">HERFULSINS INTERIOR DESIGN｜赫柏空間設計</div>
+<h1>材質報告書</h1>
+<table class="partyline">
+<tr><td><strong>案件名稱</strong></td><td class="pv"><span class="blank">${e(v.projectName||v.title||"　")}</span></td><td>　</td></tr>
+<tr><td>提出單位</td><td class="pv"><span class="blank us">赫柏空間設計</span></td><td>　</td></tr>
+</table>
+<div class="meta">報告名稱：${e(v.title||"—")}　·　提出日期：${e(v.reportDate||"—")}　·　材料共 ${items.length} 筆</div>
+
+<table>
+<thead><tr><th style="width:26%">品項</th><th style="width:37%">品牌／型號</th><th style="width:37%">規格／顏色</th></tr></thead>
+<tbody>${body}</tbody>
+</table>
+
+${v.note?`<div class="notes"><p>${e(v.note).replace(/\n/g,"</p><p>")}</p></div>`:""}
+
+<div class="notes">
+<p>1. 本報告書所載材料為本案實際採用之品項，如遇原廠停產、缺料或色號調整，乙方將另行通知並提供同等級替代品。</p>
+<p>2. 天然材料（石材、實木、皮革等）之紋理與色差屬材料特性，不視為瑕疵。</p>
+<p>3. 各項材料之保養方式與保固條件，依原廠說明為準。</p>
+</div>
+
+<div class="signbox">
+<div><span class="lbl">甲方確認簽章</span></div>
+<div><span class="lbl">乙方（赫柏空間設計）</span></div>
+<div><span class="lbl">確認日期</span></div>
+</div>
+<p class="footer">本文件由赫柏空間設計工地紀錄本產生</p>
+</body></html>`;
+}
+function HB_openMaterialPrint(v){
+  let html=HB_buildMaterialHTML(v);
+  let p=window.open("","_blank");
+  if(!p)return!1;
+  return p.document.open(),p.document.write(html),p.document.close(),!0
+}
+
+function HbMaterialForm({onCancel,onSave,projects,initial}){
+  let ini=initial||null;
+  let projList=projects||[];
+  let[projectId,setProjectId]=(0,u.useState)(ini?(ini.project_id||""):"");
+  let[title,setTitle]=(0,u.useState)(ini?(ini.title||""):"");
+  let[reportDate,setReportDate]=(0,u.useState)(()=>ini&&ini.report_date?String(ini.report_date).slice(0,10):new Date().toISOString().slice(0,10));
+  let[note,setNote]=(0,u.useState)(ini?(ini.note||""):"");
+  let[items,setItems]=(0,u.useState)(ini&&ini.items&&ini.items.length?ini.items.map(x=>({space:x.space||"",item:x.item||"",brand:x.brand||"",spec:x.spec||""})):[{space:"",item:"",brand:"",spec:""}]);
+  let upd=(i,k,val)=>setItems(xs=>xs.map((x,idx)=>idx===i?{...x,[k]:val}:x));
+  let add=()=>setItems(xs=>[...xs,{space:xs.length?xs[xs.length-1].space:"",item:"",brand:"",spec:""}]);
+  let del=i=>setItems(xs=>xs.length<=1?[{space:"",item:"",brand:"",spec:""}]:xs.filter((_,idx)=>idx!==i));
+  let valid=title.trim()&&items.some(x=>x.item.trim());
+  let lb={fontSize:12.5,color:s.inkSoft,display:"block",marginBottom:4,marginTop:10};
+  return u.default.createElement("div",{style:{position:"fixed",inset:0,background:"rgba(43,38,32,0.45)",display:"flex",alignItems:"center",justifyContent:"center",padding:20,zIndex:55}},
+    u.default.createElement("div",{className:"fade-in",style:{background:s.card,borderRadius:10,padding:22,width:"100%",maxWidth:620,maxHeight:"88vh",overflowY:"auto"}},
+      u.default.createElement("h3",{style:{margin:"0 0 6px",fontSize:17,fontWeight:400,color:s.oceanDark}},ini?"編輯材質報告書":"新增材質報告書"),
+      u.default.createElement("label",{style:lb},"報告名稱"),
+      u.default.createElement("input",{value:title,onChange:e=>setTitle(e.target.value),placeholder:"例：義教街蔡宅 · 全室材質表",style:el}),
+      u.default.createElement("label",{style:lb},"對應案件（選填）"),
+      u.default.createElement("select",{value:projectId,onChange:e=>setProjectId(e.target.value),style:el},
+        u.default.createElement("option",{value:""},"— 未指定案件 —"),
+        projList.map(p=>u.default.createElement("option",{key:p.id,value:p.id},p.name))),
+      u.default.createElement("label",{style:lb},"提出日期"),
+      u.default.createElement("input",{type:"date",value:reportDate,onChange:e=>setReportDate(e.target.value),style:el}),
+      u.default.createElement("label",{style:lb},"材料明細"),
+      items.map(function(x,i){
+        return u.default.createElement("div",{key:i,style:{border:"1px solid "+s.line,borderRadius:6,padding:10,marginBottom:8,background:s.paper}},
+          u.default.createElement("div",{style:{display:"flex",gap:8,marginBottom:6,alignItems:"center"}},
+            u.default.createElement("input",{value:x.space,onChange:e=>upd(i,"space",e.target.value),placeholder:"空間（例：主臥）",style:{...el,margin:0,flex:1}}),
+            u.default.createElement("input",{value:x.item,onChange:e=>upd(i,"item",e.target.value),placeholder:"品項（例：木地板）",style:{...el,margin:0,flex:1}}),
+            u.default.createElement("button",{onClick:()=>del(i),title:"刪除這一列",style:{background:"none",border:"none",cursor:"pointer",color:s.inkSoft,fontSize:18,lineHeight:1,padding:"0 4px"}},"×")),
+          u.default.createElement("div",{style:{display:"flex",gap:8}},
+            u.default.createElement("input",{value:x.brand,onChange:e=>upd(i,"brand",e.target.value),placeholder:"品牌／型號",style:{...el,margin:0,flex:1}}),
+            u.default.createElement("input",{value:x.spec,onChange:e=>upd(i,"spec",e.target.value),placeholder:"規格／顏色",style:{...el,margin:0,flex:1}})));
+      }),
+      u.default.createElement("button",{onClick:add,style:{background:"none",border:"1px dashed "+s.line,borderRadius:6,padding:"9px 14px",width:"100%",cursor:"pointer",color:s.ocean,fontSize:13.5}},"＋ 新增一列材料"),
+      u.default.createElement("label",{style:lb},"備註（選填）"),
+      u.default.createElement("textarea",{value:note,onChange:e=>setNote(e.target.value),rows:3,placeholder:"會印在材料表下方",style:{...el,resize:"vertical"}}),
+      u.default.createElement("div",{style:{display:"flex",gap:8,marginTop:16}},
+        u.default.createElement("button",{onClick:onCancel,style:{...Dl,flex:1,background:"none",border:"1px solid "+s.line,color:s.ink}},"取消"),
+        u.default.createElement("button",{disabled:!valid,onClick:()=>onSave({projectId:projectId||null,title:title.trim(),reportDate,note:note.trim(),items:items.filter(x=>x.item.trim()||x.brand.trim()||x.spec.trim())}),style:{...Dl,flex:1,opacity:valid?1:.5}},ini?"儲存變更":"建立"))));
+}
+
+function HbMaterialReportHub({onBack:onBack,notify:notify,projects:projects}){
+  let projList=projects||[];
+  let[rows,setRows]=(0,u.useState)([]);
+  let[loading,setLoading]=(0,u.useState)(!0);
+  let[creating,setCreating]=(0,u.useState)(!1);
+  let[editing,setEditing]=(0,u.useState)(null);
+  let[cat,setCat]=(0,u.useState)("all");
+  let[menu,setMenu]=(0,u.useState)(null);
+  let load=async()=>{
+    setLoading(!0);
+    let{data,error}=await q.from("sitelog_material_reports").select("*").order("created_at",{ascending:!1});
+    if(error){notify("讀取失敗："+error.message);setLoading(!1);return}
+    setRows(data||[]);setLoading(!1)
+  };
+  (0,u.useEffect)(()=>{load()},[]);
+  (0,u.useEffect)(()=>{let h=()=>setMenu(null);document.addEventListener("click",h);return()=>document.removeEventListener("click",h)},[]);
+  let projName=id=>{let p=projList.find(x=>x.id===id);return p?p.name:""};
+  let create=async v=>{
+    let{error}=await q.from("sitelog_material_reports").insert({
+      project_id:v.projectId,title:v.title,report_date:v.reportDate||null,note:v.note,items:v.items});
+    if(error){notify("新增失敗："+error.message);return}
+    setCreating(!1);notify("已新增材質報告書");load()
+  };
+  let update=async v=>{
+    if(!editing)return;
+    let{error}=await q.from("sitelog_material_reports").update({
+      project_id:v.projectId,title:v.title,report_date:v.reportDate||null,note:v.note,items:v.items}).eq("id",editing.id);
+    if(error){notify("儲存失敗："+error.message);return}
+    setEditing(null);notify("已更新材質報告書");load()
+  };
+  let remove=async id=>{
+    let{error}=await q.from("sitelog_material_reports").delete().eq("id",id);
+    if(error){notify("刪除失敗："+error.message);return}
+    setRows(xs=>xs.filter(x=>x.id!==id))
+  };
+  let toVals=r=>({title:r.title,projectName:projName(r.project_id),reportDate:r.report_date?String(r.report_date).slice(0,10):"",note:r.note,items:r.items||[]});
+  let genPdf=r=>{if(!HB_openMaterialPrint(toVals(r)))notify("請允許瀏覽器彈出視窗以產生 PDF")};
+  let filtered=cat==="all"?rows:cat==="none"?rows.filter(r=>!r.project_id):rows.filter(r=>r.project_id===cat);
+  let cats=[{k:"all",label:"全部"}].concat(projList.map(p=>({k:p.id,label:p.name}))).concat([{k:"none",label:"未指定案件"}]);
+  return u.default.createElement("div",{className:"hb-dossier",style:{minHeight:"100vh"}},
+    u.default.createElement("div",{className:"hb-dosWrap"},
+      u.default.createElement("button",{className:"hb-arcBack",onClick:onBack},"← 返回公司資料庫"),
+      u.default.createElement("header",{className:"hb-dosHead"},
+        u.default.createElement("p",{className:"hb-dosLabel"},"Rapports de Matériaux"),
+        u.default.createElement("h1",{className:"hb-dosTitle"},"材質報告書"),
+        u.default.createElement("p",{className:"hb-dosLede"},"逐一登錄各空間實際採用的材料品項、品牌型號與規格顏色，交屋時附給業主。")),
+      u.default.createElement("div",{className:"hb-dosRow"},
+        u.default.createElement("aside",{className:"hb-dosSide"},
+          u.default.createElement("span",{className:"hb-dosSideT"},"案件"),
+          u.default.createElement("div",{className:"hb-dosNav"},
+            cats.map(c=>u.default.createElement("button",{key:c.k,className:"hb-dosNavItem"+(cat===c.k?" on":""),onClick:()=>setCat(c.k)},c.label)))),
+        u.default.createElement("main",null,
+          u.default.createElement("div",{className:"hb-dosBar"},
+            u.default.createElement("span",{className:"hb-dosCount"},loading?"載入中…":filtered.length>0?filtered.length+" 份報告書":"尚無資料"),
+            u.default.createElement("button",{className:"hb-dosNew",onClick:()=>setCreating(!0)},"＋ 新增材質報告書")),
+          !loading&&filtered.length===0&&u.default.createElement("p",{className:"hb-dosEmpty"},"尚未建立任何材質報告書"),
+          filtered.length>0&&u.default.createElement("ul",{className:"hb-dosList"},
+            filtered.map(function(r,i){
+              let n=(r.items||[]).length;
+              return u.default.createElement("li",{key:r.id,className:"hb-dosItem"},
+                u.default.createElement("span",{className:"hb-dosNo"},String(i+1).padStart(2,"0")),
+                u.default.createElement("div",{className:"hb-dosBody"},
+                  u.default.createElement("div",{className:"hb-dosName"},r.title||"未命名報告書"),
+                  u.default.createElement("div",{className:"hb-dosMeta"},(projName(r.project_id)||"未指定案件")+"　·　材料 "+n+" 筆")),
+                u.default.createElement("span",{className:"hb-dosDate"},r.report_date?String(r.report_date).slice(0,10).replace(/-/g,"."):""),
+                u.default.createElement("div",{className:"hb-dosActs"},
+                  u.default.createElement("button",{onClick:()=>genPdf(r),className:"hb-dosAct"},
+                    u.default.createElement(E,{name:"printer",size:13}),u.default.createElement("span",null,"PDF")),
+                  u.default.createElement("button",{onClick:()=>setEditing(r),className:"hb-dosAct"},
+                    u.default.createElement(E,{name:"pencil",size:13}),u.default.createElement("span",null,"編輯")),
+                  u.default.createElement("div",{className:"hb-dosMore"},
+                    u.default.createElement("button",{className:"hb-dosAct ico",onClick:ev=>{ev.stopPropagation();setMenu(menu===r.id?null:r.id)}},"⋯"),
+                    menu===r.id&&u.default.createElement("div",{className:"hb-dosMenu",onClick:ev=>ev.stopPropagation()},
+                      u.default.createElement("button",{className:"del",onClick:()=>{setMenu(null);if(window.confirm("確定要刪除「"+(r.title||"這份報告書")+"」？此動作無法復原。"))remove(r.id)}},"刪除")))));
+            }))))),
+    creating&&u.default.createElement(HbMaterialForm,{onCancel:()=>setCreating(!1),onSave:create,projects:projList}),
+    editing&&u.default.createElement(HbMaterialForm,{key:editing.id,initial:editing,onCancel:()=>setEditing(null),onSave:update,projects:projList}));
+}
+
 function HbDocsHub({onBack:onBack,notify:notify,projects:projects}){
   let C=u.default.createElement;
   let DOCTABS=[
@@ -7933,7 +8116,8 @@ function HbDocsHub({onBack:onBack,notify:notify,projects:projects}){
     ["receipts","工程收據","Reçus de Chantier","工程收據"],
     ["vendorReceipts","廠商領據","Reçus Fournisseurs","廠商領據"],
     ["changeOrders","追加減帳","Avenants au Contrat","追加減帳"],
-    ["vendorQuotes","廠商報價","Devis Fournisseurs","廠商報價"]];
+    ["vendorQuotes","廠商報價","Devis Fournisseurs","廠商報價"],
+    ["materials","材質報告","Rapports de Matériaux","材質報告書"]];
   let [tab,setTab]=(0,u.useState)(function(){
     try{ let v=sessionStorage.getItem("hb_docs_tab"); return v&&DOCTABS.some(x=>x[0]===v)?v:"contracts"; }catch(e){ return "contracts"; }
   });
@@ -7945,6 +8129,7 @@ function HbDocsHub({onBack:onBack,notify:notify,projects:projects}){
     : tab==="receipts"       ? C(HbReceiptsHub,{onBack:onBack,notify:notify,projects:projects})
     : tab==="vendorReceipts" ? C(HbVendorReceiptsHub,{onBack:onBack,notify:notify,projects:projects})
     : tab==="changeOrders"   ? C(HbChangeOrderHub,{onBack:onBack,notify:notify,projects:projects})
+    : tab==="materials"      ? C(HbMaterialReportHub,{onBack:onBack,notify:notify,projects:projects})
     :                          C(HbVendorQuoteHub,{onBack:onBack,notify:notify});
   return C("div",{className:"hb-docsHub"},
     C("header",{className:"hb-docsHead"},
