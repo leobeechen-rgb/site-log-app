@@ -3423,7 +3423,7 @@ function HerfulsinsContractForm({category:l,projects:t,accounts:e,defaultProject
   let addStage=()=>r(p=>p.paymentStages.length>=4?p:{...p,paymentStages:[...p.paymentStages,{name:"",amount:"",condition:""}]});
   let removeStage=idx=>r(p=>({...p,paymentStages:p.paymentStages.filter((_,i)=>i!==idx)}));
   let field=(label,key,opts={})=>u.default.createElement("div",{style:{marginBottom:12}},
-    u.default.createElement("label",{style:{fontSize:12.5,color:s.inkSoft,display:"block",marginBottom:4}},label),
+    u.default.createElement("label",{style:{fontSize:12.5,lineHeight:1.5,color:s.inkSoft,display:"block",marginBottom:4,minHeight:19}},label),
     u.default.createElement("input",{type:opts.type||"text",value:c[key],onChange:v=>set(key,v.target.value),placeholder:opts.placeholder||"",style:{width:"100%",padding:"9px 10px",borderRadius:7,border:`1px solid ${s.line}`,fontSize:14,boxSizing:"border-box"}})
   );
   let submit=()=>{
@@ -3458,13 +3458,13 @@ function HerfulsinsContractForm({category:l,projects:t,accounts:e,defaultProject
       field(isEng?"甲方地址":"甲方地址（選填）","partyAAddress"),
       field(isEng?"甲方電話":"甲方電話（選填）","partyAPhone"),
       field("甲方身分證字號（選填）","partyAId"),
-      !isEng&&u.default.createElement("div",{style:{display:"flex",gap:10}},
-        u.default.createElement("div",{style:{flex:1}},field("設計面積（坪．選填）","areaPing")),
-        u.default.createElement("div",{style:{flex:1}},field(isBudget?"每坪前置作業費（元．選填）":"每坪設計費（元．選填）","pricePerPing"))
+      !isEng&&u.default.createElement("div",{style:{display:"flex",gap:10,alignItems:"flex-end"}},
+        u.default.createElement("div",{style:{flex:1,minWidth:0}},field("設計面積（坪．選填）","areaPing")),
+        u.default.createElement("div",{style:{flex:1,minWidth:0}},field(isBudget?"每坪前置作業費（元）":"每坪設計費（元．選填）","pricePerPing"))
       ),
-      !isEng&&u.default.createElement("div",{style:{display:"flex",gap:10}},
-        u.default.createElement("div",{style:{flex:1}},field("優惠坪數（實際計費坪數．選填）","discountPing",{placeholder:"留白則以設計面積計"})),
-        u.default.createElement("div",{style:{flex:1}},field("優惠折扣（幾折．選填）","discountRate",{placeholder:"例：9 為九折、8.5 為八五折"}))
+      !isEng&&u.default.createElement("div",{style:{display:"flex",gap:10,alignItems:"flex-end"}},
+        u.default.createElement("div",{style:{flex:1,minWidth:0}},field("優惠坪數（選填）","discountPing",{placeholder:"留白則以設計面積計"})),
+        u.default.createElement("div",{style:{flex:1,minWidth:0}},field("優惠折扣（選填）","discountRate",{placeholder:"例：9 為九折、8.5 為八五折"}))
       ),
       !isEng&&(HB_num(c.discountPing)>0||HB_num(c.discountRate)>0)&&HB_num(c.pricePerPing)>0&&
         u.default.createElement("p",{style:{fontSize:11.5,lineHeight:1.7,color:s.inkSoft,marginTop:-6,marginBottom:12}},
