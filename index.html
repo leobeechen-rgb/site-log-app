@@ -5816,6 +5816,7 @@ function HbReceiptsHub({onBack,notify,projects}){
   let[hbMenu,hbSetMenu]=(0,u.useState)(null);
   let[loading,setLoading]=(0,u.useState)(true);
   let[creating,setCreating]=(0,u.useState)(false);
+  let[editing,setEditing]=(0,u.useState)(null);
   let[noStamp,setNoStamp]=(0,u.useState)(()=>new Set());
   let toggleStamp=id=>setNoStamp(ns=>{let n=new Set(ns);n.has(id)?n.delete(id):n.add(id);return n});
   let load=async()=>{
@@ -5837,6 +5838,15 @@ function HbReceiptsHub({onBack,notify,projects}){
     let{error}=await q.from("sitelog_receipts").delete().eq("id",id);
     if(error){notify("刪除失敗："+error.message);return}
     setBatches(bs=>bs.filter(b=>b.id!==id))
+  };
+  let updateBatch=async v=>{
+    if(!editing)return;
+    let{error}=await q.from("sitelog_receipts").update({
+      client_name:v.clientName,site_address:v.siteAddress,payment_method:v.paymentMethod,
+      receipt_date:v.dateStr||null,periods:v.periods
+    }).eq("id",editing.id);
+    if(error){notify("儲存失敗："+error.message);return}
+    setEditing(null);notify("已更新工程收據");load()
   };
   let toVals=row=>({clientName:row.client_name,siteAddress:row.site_address,paymentMethod:row.payment_method,dateStr:row.receipt_date,periods:row.periods||[],showStamp:!noStamp.has(row.id)});
   let genWord=row=>HB_generateReceiptDocx(toVals(row)).catch(err=>notify("產生失敗："+(err?.message||err)));
@@ -5880,12 +5890,15 @@ function HbReceiptsHub({onBack,notify,projects}){
                   u.default.createElement(E,{name:"file-output",size:13}),u.default.createElement("span",null,"Word")),
                 u.default.createElement("button",{onClick:()=>genPdf(b),className:"hb-dosAct"},
                   u.default.createElement(E,{name:"printer",size:13}),u.default.createElement("span",null,"PDF")),
+                u.default.createElement("button",{onClick:()=>setEditing(b),className:"hb-dosAct"},
+                  u.default.createElement(E,{name:"pencil",size:13}),u.default.createElement("span",null,"編輯")),
                 u.default.createElement("div",{className:"hb-dosMore"},
                   u.default.createElement("button",{className:"hb-dosAct ico","aria-haspopup":"true",
                     "aria-expanded":hbMenu===b.id?"true":"false",title:"更多",
                     onClick:ev=>{ev.stopPropagation();hbSetMenu(hbMenu===b.id?null:b.id)}},
                     u.default.createElement(E,{name:"more-vertical",size:15})),
                   hbMenu===b.id&&u.default.createElement("div",{className:"hb-dosMenu",onClick:ev=>ev.stopPropagation()},
+                    u.default.createElement("button",{onClick:()=>{hbSetMenu(null);setEditing(b)}},"編輯"),
                     u.default.createElement("button",{className:"del",onClick:()=>{
                       hbSetMenu(null);
                       if(window.confirm("確定要刪除「"+(b.client_name||"這筆收據")+"」？此動作無法復原。")) deleteBatch(b.id)
@@ -5893,19 +5906,21 @@ function HbReceiptsHub({onBack,notify,projects}){
           }))
       )),
 
-    creating&&u.default.createElement(HbReceiptForm,{onCancel:()=>setCreating(!1),onCreate:createBatch,projects:projects||[]})
+    creating&&u.default.createElement(HbReceiptForm,{onCancel:()=>setCreating(!1),onCreate:createBatch,projects:projects||[]}),
+    editing&&u.default.createElement(HbReceiptForm,{key:editing.id,initial:toVals(editing),onCancel:()=>setEditing(null),onCreate:updateBatch,projects:projects||[]})
   )
 }
 
-function HbReceiptForm({onCancel,onCreate,projects}){
+function HbReceiptForm({onCancel,onCreate,projects,initial}){
   let projList=projects||[];
   let OTHER="__other__";
-  let[clientName,setClientName]=(0,u.useState)("");
+  let ini=initial||null;
+  let[clientName,setClientName]=(0,u.useState)(ini?(ini.clientName||""):"");
   let[addrPick,setAddrPick]=(0,u.useState)(OTHER);
-  let[siteAddress,setSiteAddress]=(0,u.useState)("");
-  let[paymentMethod,setPaymentMethod]=(0,u.useState)("cash");
-  let[dateStr,setDateStr]=(0,u.useState)(()=>new Date().toISOString().slice(0,10));
-  let[periods,setPeriods]=(0,u.useState)([{name:"壹期款",amount:""}]);
+  let[siteAddress,setSiteAddress]=(0,u.useState)(ini?(ini.siteAddress||""):"");
+  let[paymentMethod,setPaymentMethod]=(0,u.useState)(ini?(ini.paymentMethod||"cash"):"cash");
+  let[dateStr,setDateStr]=(0,u.useState)(()=>ini&&ini.dateStr?String(ini.dateStr).slice(0,10):new Date().toISOString().slice(0,10));
+  let[periods,setPeriods]=(0,u.useState)(ini&&ini.periods&&ini.periods.length?ini.periods.map(p=>({name:p.name||"",amount:p.amount==null?"":String(p.amount)})):[{name:"壹期款",amount:""}]);
   let updatePeriod=(i,key,val)=>setPeriods(ps=>ps.map((p,idx)=>idx===i?{...p,[key]:val}:p));
   let addPeriod=()=>{if(periods.length>=6)return;setPeriods(ps=>[...ps,{name:"",amount:""}])};
   let removePeriod=i=>setPeriods(ps=>ps.filter((_,idx)=>idx!==i));
@@ -5918,7 +5933,7 @@ function HbReceiptForm({onCancel,onCreate,projects}){
   let valid=clientName.trim()&&siteAddress.trim()&&periods.some(p=>p.name.trim()&&p.amount);
   return u.default.createElement("div",{style:{position:"fixed",inset:0,background:"rgba(43,38,32,0.45)",display:"flex",alignItems:"center",justifyContent:"center",padding:20,zIndex:55}},
     u.default.createElement("div",{className:"fade-in",style:{background:s.card,borderRadius:10,padding:22,width:"100%",maxWidth:400,maxHeight:"85vh",overflowY:"auto"}},
-      u.default.createElement("h3",{style:{margin:"0 0 14px",fontSize:17,fontWeight:400,color:s.oceanDark}},"新增工程收據"),
+      u.default.createElement("h3",{style:{margin:"0 0 14px",fontSize:17,fontWeight:400,color:s.oceanDark}},ini?"編輯工程收據":"新增工程收據"),
       u.default.createElement("label",{style:{fontSize:12.5,color:s.inkSoft}},"茲收到（客戶名稱）"),
       u.default.createElement("input",{value:clientName,onChange:e=>setClientName(e.target.value),placeholder:"例：陽光四季-陳怡君",style:el}),
       u.default.createElement("label",{style:{fontSize:12.5,color:s.inkSoft}},"工程地址"),
@@ -5944,7 +5959,7 @@ function HbReceiptForm({onCancel,onCreate,projects}){
       periods.length<6&&u.default.createElement("button",{type:"button",onClick:addPeriod,style:{...ll,width:"100%",fontSize:13,padding:"8px 0",marginBottom:14}},"＋ 新增期別"),
       u.default.createElement("div",{style:{display:"flex",gap:10,marginTop:6}},
         u.default.createElement("button",{onClick:onCancel,style:{...ll,flex:1}},"取消"),
-        u.default.createElement("button",{disabled:!valid,onClick:()=>onCreate({clientName:clientName.trim(),siteAddress:siteAddress.trim(),paymentMethod,dateStr,periods:periods.filter(p=>p.name.trim()&&p.amount)}),style:{...Dl,flex:1,opacity:valid?1:.5}},"建立")
+        u.default.createElement("button",{disabled:!valid,onClick:()=>onCreate({clientName:clientName.trim(),siteAddress:siteAddress.trim(),paymentMethod,dateStr,periods:periods.filter(p=>p.name.trim()&&p.amount)}),style:{...Dl,flex:1,opacity:valid?1:.5}},ini?"儲存變更":"建立")
       )
     )
   )
