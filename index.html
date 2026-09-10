@@ -711,6 +711,7 @@
     color: var(--hbInk2); margin-bottom: 16px; display: block; text-transform: uppercase;
   }
   .hb-dosNav{ display: flex; flex-direction: column; }
+  .hb-dosNavSel{ display: none; }
   .hb-dosNavItem{
     position: relative; text-align: left; background: none; border: none; cursor: pointer;
     font-family: inherit; font-size: 17px; letter-spacing: .05em; color: var(--hbInk);
@@ -823,8 +824,23 @@
   @media (max-width: 860px){
     .hb-dosWrap{ padding: 0 20px; }
     .hb-dosHead::after{ display: none; }
-    .hb-dosRow{ display: flex !important; flex-direction: column; gap: 24px; padding-top: 24px; }
-    .hb-dosSide{ order: -1; }
+    /* 手機：側欄拆開重排 —— 分類在最上、清單在中間、下載與帳戶在最下 */
+    .hb-dosRow{ display: flex !important; flex-direction: column; gap: 0; padding-top: 20px; }
+    .hb-dosSide{ display: contents; }
+    .hb-dosSideT{ order: -4; margin-bottom: 6px; }
+    .hb-dosNav{ display: none; }
+    .hb-dosNavSel{
+      order: -3; display: block; width: 100%; margin-bottom: 18px;
+      padding: 14px 15px; font-family: inherit; font-size: 17px; letter-spacing: .04em;
+      color: var(--hbInk); background: var(--hbSheet); border: 1px solid var(--hbRule); border-radius: 3px;
+      appearance: none; -webkit-appearance: none;
+      background-image: linear-gradient(45deg,transparent 50%,var(--hbInk2) 50%),linear-gradient(135deg,var(--hbInk2) 50%,transparent 50%);
+      background-position: calc(100% - 20px) calc(50% + 2px), calc(100% - 14px) calc(50% + 2px);
+      background-size: 6px 6px, 6px 6px; background-repeat: no-repeat;
+    }
+    .hb-dosField{ order: -2; margin: 0 0 18px; }
+    .hb-dosRow > main{ order: 0; }
+    .hb-dosSideFoot{ order: 1; margin-top: 26px; }
     .hb-dosSide{ border-right: 0; border-bottom: 1px solid var(--hbRule); padding: 0 0 20px; }
     .hb-dosNav{ flex-direction: row; gap: 22px; border-bottom: 0; flex-wrap: wrap; }
     .hb-dosItem{ flex-wrap: wrap; gap: 10px 16px; }
@@ -3608,6 +3624,10 @@ function HerfulsinsContractsHub({onBack:l,notify:t}){
             [{k:"company",label:"室內設計合約"},{k:"case",label:"專案工程合約"},{k:"budget",label:"初步預算書"}].map(v=>
               u.default.createElement("button",{key:v.k,onClick:()=>{n(v.k),setSelectedProject(null)},
                 className:"hb-dosNavItem"+(e===v.k?" on":"")},v.label))),
+          u.default.createElement("select",{className:"hb-dosNavSel","aria-label":"選擇合約分類",value:e,
+            onChange:v=>{n(v.target.value),setSelectedProject(null)}},
+            [{k:"company",label:"室內設計合約"},{k:"case",label:"專案工程合約"},{k:"budget",label:"初步預算書"}].map(v=>
+              u.default.createElement("option",{key:v.k,value:v.k},v.label))),
           e==="case"&&u.default.createElement("div",{className:"hb-dosField"},
             u.default.createElement("label",{className:"hb-dosSideT",htmlFor:"hbCaseSel"},"選擇案件"),
             u.default.createElement("select",{id:"hbCaseSel",value:selectedProject||"",
