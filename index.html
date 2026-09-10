@@ -2496,6 +2496,156 @@
   @media (prefers-reduced-motion: reduce){
     .hb-heroRow .hb-landgrid > .hb-entry{ transition: none !important; }
   }
+
+  /* =========================================================
+     手機表單體驗修正（統一處理，桌機不受影響）
+     根因 1：共用輸入樣式 fontSize 14/13 < 16px → iOS 聚焦自動放大
+     根因 2：彈窗 position:fixed + align-items:center + max-height:XXvh
+             → 鍵盤開啟時整個面板重新置中、底部按鈕被蓋住
+     根因 3：彈窗外層與內層各有一個捲動區（巢狀捲動）
+     根因 4：估價單明細表 min-width:952px → 手機必須左右拖動
+     ========================================================= */
+
+  @media (max-width: 768px){
+    /* 1 · 所有輸入元件至少 16px，iOS 不再自動放大（縮放功能保留） */
+    input:not([type="checkbox"]):not([type="radio"]),
+    select,
+    textarea{
+      font-size: 16px !important;
+      line-height: 1.45 !important;
+      min-height: 44px;
+      max-width: 100%;
+      min-width: 0;
+    }
+    textarea{ min-height: 92px; }
+    input[type="checkbox"],
+    input[type="radio"]{ width: 20px; height: 20px; }
+    /* 點擊範圍 44px */
+    button, [role="button"], summary{ min-height: 44px; }
+    button[style*="padding: 4px"], button[style*="padding: 2px"]{ min-width: 44px; }
+
+    /* 2 · 標籤在上、欄位單欄；只有空間夠才並排 */
+    label{ display: block; }
+    div[style*="display: flex"]:has(> input, > select, > textarea,
+                                    > div > input, > div > select, > div > textarea){
+      flex-wrap: wrap !important;
+      align-items: flex-start !important;
+    }
+    div[style*="display: flex"]:has(> input, > select, > textarea) > input,
+    div[style*="display: flex"]:has(> input, > select, > textarea) > select,
+    div[style*="display: flex"]:has(> input, > select, > textarea) > textarea{
+      flex: 1 1 13rem !important;
+      width: auto !important;
+    }
+    div[style*="display: flex"]:has(> div > input, > div > select) > div{
+      flex: 1 1 13rem !important;
+      min-width: 0 !important;
+    }
+  }
+
+  /* 3 · 彈窗改成接近全螢幕的編輯面板：單一垂直捲動區、跟著可視高度走
+        只針對「含有輸入欄位」的彈窗，圖片燈箱／確認框不受影響 */
+  @supports selector(:has(input)){
+    @media (max-width: 768px){
+      body [style*="position: fixed"][style*="inset"]:has(input, select, textarea){
+        top: var(--hb-vvtop, 0px) !important;
+        left: 0 !important; right: 0 !important; bottom: auto !important;
+        height: var(--hb-vvh, 100dvh) !important;
+        align-items: flex-start !important;
+        justify-content: center !important;
+        padding: 0 !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
+      }
+      body [style*="position: fixed"][style*="inset"]:has(input, select, textarea) > div{
+        width: 100% !important;
+        max-width: 100% !important;
+        max-height: none !important;
+        height: auto !important;
+        min-height: 100%;
+        border-radius: 0 !important;
+        overflow: visible !important;
+        box-shadow: none !important;
+        padding: calc(16px + env(safe-area-inset-top)) 16px calc(28px + env(safe-area-inset-bottom)) !important;
+      }
+      /* 面板內若還有自己的捲動區，一律解除，避免巢狀捲動 */
+      body [style*="position: fixed"][style*="inset"]:has(input, select, textarea) > div [style*="overflow-y: auto"],
+      body [style*="position: fixed"][style*="inset"]:has(input, select, textarea) > div [style*="max-height"]{
+        max-height: none !important;
+        overflow-y: visible !important;
+      }
+    }
+  }
+
+  /* 4 · 估價單明細表：手機改成「每筆一組」直向卡片，不再左右拖動 */
+  @media (max-width: 768px){
+    div[style*="overflow-x: auto"]:has(> table.hb-qt){
+      overflow-x: visible !important;
+      border: 0 !important;
+      border-radius: 0 !important;
+    }
+    table.hb-qt{
+      display: block; width: 100% !important;
+      min-width: 0 !important; font-size: 16px !important;
+      border-collapse: separate; border-spacing: 0;
+    }
+    table.hb-qt thead{ display: none; }
+    table.hb-qt tbody{ display: block; }
+    table.hb-qt tbody tr{
+      display: grid;
+      grid-template-columns: 5.5rem minmax(0,1fr);
+      align-items: center;
+      gap: 2px 10px;
+      margin: 0 0 12px;
+      padding: 10px 12px 12px;
+      border: 1px solid rgba(160,146,124,.34);
+      border-radius: 8px;
+      background: #fff;
+    }
+    table.hb-qt tbody td{
+      display: contents;
+      border: 0 !important;
+    }
+    table.hb-qt tbody td::before{
+      content: attr(data-l);
+      font-size: 13px; color: #7E786C; letter-spacing: .04em;
+      padding: 6px 0; align-self: center;
+    }
+    table.hb-qt tbody td > *{ min-width: 0; }
+    table.hb-qt tbody td input,
+    table.hb-qt tbody td textarea{
+      width: 100% !important; box-sizing: border-box;
+      text-align: left !important;
+    }
+    /* 欄位標題（沒有 data-l 時用欄位順序補） */
+    table.hb-qt tbody td:nth-child(1)::before{ content: "選取"; }
+    table.hb-qt tbody td:nth-child(2)::before{ content: "項次"; }
+    table.hb-qt tbody td:nth-child(3)::before{ content: "項目"; }
+    table.hb-qt tbody td:nth-child(4)::before{ content: "規格"; }
+    table.hb-qt tbody td:nth-child(5)::before{ content: "單位"; }
+    table.hb-qt tbody td:nth-child(6)::before{ content: "數量"; }
+    table.hb-qt tbody td:nth-child(7)::before{ content: "單價"; }
+    table.hb-qt tbody td:nth-child(8)::before{ content: "複價"; }
+    table.hb-qt tbody td:nth-child(9)::before{ content: "備註"; }
+    table.hb-qt tbody td:nth-child(10)::before{ content: "廠商成本"; }
+    table.hb-qt tbody td:nth-child(11)::before{ content: "淨利"; }
+    table.hb-qt tbody td:nth-child(12)::before{ content: "操作"; }
+  }
+
+  /* 5 · 其他含輸入欄位的寬表格，手機一律不左右捲 */
+  @supports selector(:has(input)){
+    @media (max-width: 768px){
+      div[style*="overflow-x: auto"]:has(input, select, textarea){ overflow-x: visible !important; }
+      table:has(input, select, textarea){ min-width: 0 !important; width: 100% !important; }
+    }
+  }
+
+  /* 6 · 固定在底部的操作列不要蓋住最後幾個欄位 */
+  @media (max-width: 768px){
+    [style*="position: fixed"][style*="bottom"]{ padding-bottom: env(safe-area-inset-bottom, 0px); }
+  }
 </style>
 <script>
 /* === 赫柏文件共用樣式（六份單據共用，改這裡就全部一起改） === */
@@ -15017,6 +15167,66 @@ react-dom/cjs/react-dom-client.production.js:
       new MutationObserver(queue).observe(root,{childList:true,subtree:true});
     }
     if(mq&&mq.addEventListener)mq.addEventListener("change",queue);
+  }catch(e){}
+})();
+</script>
+
+<script>
+/* 手機表單輔助：
+   1) 用 visualViewport 換算可視高度／位移，供彈窗 CSS 使用。
+      只寫 CSS 變數，不碰任何 scrollTop、不呼叫 scrollIntoView。
+   2) 補上缺少的 inputmode / enterkeyhint，不覆寫既有值。
+   任何一步失敗都直接放棄，不影響原本的表單行為。 */
+(function(){
+  try{
+    var d = document.documentElement;
+    var vv = window.visualViewport;
+    var raf = null;
+    function syncVV(){
+      if(raf) return;
+      raf = requestAnimationFrame(function(){
+        raf = null;
+        var h = vv ? vv.height : window.innerHeight;
+        var t = vv ? vv.offsetTop : 0;
+        d.style.setProperty("--hb-vvh", Math.round(h) + "px");
+        d.style.setProperty("--hb-vvtop", Math.round(t) + "px");
+      });
+    }
+    syncVV();
+    if(vv){
+      vv.addEventListener("resize", syncVV);
+      vv.addEventListener("scroll", syncVV);
+    }else{
+      window.addEventListener("resize", syncVV);
+      window.addEventListener("orientationchange", syncVV);
+    }
+
+    function enhance(){
+      var nodes = document.querySelectorAll("input:not([data-hbfx]),select:not([data-hbfx]),textarea:not([data-hbfx])");
+      Array.prototype.forEach.call(nodes, function(el){
+        el.setAttribute("data-hbfx","1");
+        var tag = el.tagName;
+        var t = (el.getAttribute("type") || "text").toLowerCase();
+        if(t === "checkbox" || t === "radio" || t === "file") return;
+        if(tag === "INPUT" && !el.hasAttribute("inputmode")){
+          if(t === "number"){ el.setAttribute("inputmode","decimal"); }
+          else if(t === "tel"){ el.setAttribute("inputmode","tel"); }
+          else if(t === "email"){ el.setAttribute("inputmode","email"); }
+          else if(t === "url"){ el.setAttribute("inputmode","url"); }
+        }
+        /* 數字欄位保留小數與負數 */
+        if(t === "number" && !el.hasAttribute("step")) el.setAttribute("step","any");
+        if(tag !== "TEXTAREA" && !el.hasAttribute("enterkeyhint")) el.setAttribute("enterkeyhint","next");
+      });
+    }
+    var timer = null;
+    function queue(){ if(timer) clearTimeout(timer); timer = setTimeout(enhance, 120); }
+    if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", queue);
+    else queue();
+    var root = document.getElementById("root") || document.body;
+    if(window.MutationObserver && root){
+      new MutationObserver(queue).observe(root, {childList:true, subtree:true});
+    }
   }catch(e){}
 })();
 </script>
