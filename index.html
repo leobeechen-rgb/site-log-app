@@ -2700,6 +2700,27 @@
   .hb-sheetBody > button:last-child{ border-bottom: 0; }
   .hb-sheetBody > button.del{ color: #B4573A; }
   .hb-sheetBody > button:focus-visible{ outline: 1px solid #B4573A; outline-offset: -2px; }
+
+  /* ===== 底部面板的層級與捲動 =====
+     文件系統的分頁列是 position:sticky + z-index:60，面板拉高時會被它壓在上面，
+     蓋掉面板的標題與關閉鍵。面板開啟時把所有黏頂的橫列降到最底層。 */
+  .hb-sheetWrap{ z-index: 400 !important; }
+  body.hb-sheet-open .hb-docsTabs,
+  body.hb-sheet-open .hb-navwrap,
+  body.hb-sheet-open .hb-company .hb-dbback,
+  body.hb-sheet-open .hb-mhead,
+  body.hb-sheet-open .hb-topnav{
+    z-index: 0 !important;
+  }
+  /* 選項很多時，標題與關閉鍵跟著捲動置頂，取消鍵永遠在最下面 */
+  .hb-sheetHead{
+    position: sticky; top: 0; z-index: 3;
+    background: #FBFAF6;
+    padding: 6px 0 10px !important;
+    margin-top: -2px;
+    box-shadow: 0 6px 10px -10px rgba(23,21,15,.35);
+  }
+  .hb-sheetCancel{ position: sticky; bottom: 0; background: #FBFAF6; z-index: 3; }
 </style>
 <script>
 /* === 赫柏文件共用樣式（六份單據共用，改這裡就全部一起改） === */
