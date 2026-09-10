@@ -3176,7 +3176,8 @@ function HB_buildBudgetHTML(v){
   let billPing=dPing>0?dPing:area;
   let rate=(dRate>0&&dRate<10)?dRate/10:1;
   let total=HB_num(v.totalPrice)||Math.round(billPing*price*rate);
-  let tax=Math.round(total*0.05);
+  let bRate=HB_num(v.budgetRate)||32;
+  let fee=Math.round(total*bRate/100);
   let row=(k,val)=>`<tr><td>${k}</td><td class="r amt">${val}</td></tr>`;
   return `<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -3206,23 +3207,22 @@ ${HB_DOC_CSS}
 <p>4. 本次服務<strong>不包含</strong>設計繪圖、平面配置圖、立面圖、施工圖、3D 渲染圖及任何圖說之交付。</p>
 </div>
 
-<h2>三、前置作業費用</h2>
+<h2>三、費用計算</h2>
 <table>
 <tr><th>項目</th><th class="r">金額 / 數值</th></tr>
 ${row("室內面積（坪）", area?HB_money(area):"—")}
 ${dPing>0?row("優惠計費坪數（坪）",HB_money(dPing)):""}
-${row("每坪前置作業費（元）", price?HB_money(price):"—")}
+${row("每坪概算單價（元）", price?HB_money(price):"—")}
 ${(dRate>0&&dRate<10)?row("優惠折扣", e(v.discountRate)+" 折"):""}
-<tr class="sub"><td>前置作業費小計（未稅）</td><td class="r amt">${total?HB_money(total):"—"}</td></tr>
-<tr><td>營業稅 5%</td><td class="r amt">${total?HB_money(tax):"—"}</td></tr>
-<tr class="grand"><td>前置作業費總計（含稅）</td><td class="r">${total?("NT$ "+HB_money(total+tax)):"—"}</td></tr>
+<tr class="sub"><td>工程概算總價</td><td class="r amt">${total?HB_money(total):"—"}</td></tr>
+<tr class="grand"><td>初步預算費用（營業稅另計）</td><td class="r">${total?("NT$ "+HB_money(fee)):"—"}</td></tr>
 </table>
-${total?`<p class="quote">前置作業費總計大寫：${e(HB_toChineseMoney(total+tax))} 元整</p>`:""}
+${total?`<p class="quote">本次應付金額大寫：${e(HB_toChineseMoney(fee))} 元整</p>`:""}
 ${(dPing>0||dRate>0)?`<p>優惠說明：${dPing>0?`本案以優惠坪數 ${HB_money(dPing)} 坪計算（實際面積 ${area?HB_money(area):"—"} 坪）`:""}${(dPing>0&&dRate>0)?"，並":""}${(dRate>0&&dRate<10)?`按 ${e(v.discountRate)} 折計價`:""}。</p>`:""}
 
 <h2>四、說明事項</h2>
 <div class="notes">
-<p>1. 上列費用為本次現場丈量與初步預算編製之前置作業費用，與後續工程費用無涉。</p>
+<p>1. 本次應付金額為現場丈量與初步預算編製之前置作業費用，營業稅另計，與後續工程費用無涉。</p>
 <p>2. 乙方依丈量結果所編製之工程初步預算，係供甲方評估工程規模之參考，不具報價效力；正式金額以後續之工程估價單為準。</p>
 <p>3. 本次服務不交付任何圖說。丈量所得之尺寸資料為乙方編製預算之工作底稿，未經乙方書面同意，甲方不得交付第三人使用或據以發包。</p>
 <p>4. 如甲方後續委由乙方承攬本案工程，工程範圍、金額、工期及付款方式另行議定並簽訂工程合約。</p>
@@ -3407,11 +3407,11 @@ function HerfulsinsContractForm({category:l,projects:t,accounts:e,defaultProject
   let[o,f]=(0,u.useState)((iv&&iv.projectId)||n||(t[0]&&t[0].id)||"");
   let[c,r]=(0,u.useState)(()=>iv?{
     designName:iv.designName||"",designLocation:iv.designLocation||"",partyAName:iv.partyAName||"",partyARep:iv.partyARep||"",partyAAddress:iv.partyAAddress||"",partyAPhone:iv.partyAPhone||"",partyAId:iv.partyAId||"",
-    areaPing:iv.areaPing??"",pricePerPing:iv.pricePerPing??"",discountPing:iv.discountPing??"",discountRate:iv.discountRate??"",totalPrice:iv.totalPrice??"",durationDays:iv.durationDays??"",contractDate:iv.contractDate||"",accountIds:iv.accountIds||[],
+    areaPing:iv.areaPing??"",pricePerPing:iv.pricePerPing??"",discountPing:iv.discountPing??"",discountRate:iv.discountRate??"",budgetRate:iv.budgetRate??"32",totalPrice:iv.totalPrice??"",durationDays:iv.durationDays??"",contractDate:iv.contractDate||"",accountIds:iv.accountIds||[],
     paymentStages:(iv.paymentStages&&iv.paymentStages.length>0)?iv.paymentStages.map(st=>({name:st.name||"",percent:st.percent??"",condition:st.condition||""})):[{name:"簽約款",percent:"30",condition:"本合約簽署之時付款"},{name:"二期款",percent:"60",condition:""},{name:"三期款",percent:"10",condition:""}]
   }:{
     designName:"",designLocation:"",partyAName:"",partyARep:"",partyAAddress:"",partyAPhone:"",partyAId:"",
-    areaPing:"",pricePerPing:"",discountPing:"",discountRate:"",totalPrice:"",durationDays:"",contractDate:"",accountIds:[],
+    areaPing:"",pricePerPing:"",discountPing:"",discountRate:"",budgetRate:"32",totalPrice:"",durationDays:"",contractDate:"",accountIds:[],
     paymentStages:[{name:"簽約款",percent:"30",condition:"本合約簽署之時付款"},{name:"二期款",percent:"60",condition:""},{name:"三期款",percent:"10",condition:""}]
   });
   let set=(k,val)=>r(p=>({...p,[k]:val}));
@@ -3435,6 +3435,7 @@ function HerfulsinsContractForm({category:l,projects:t,accounts:e,defaultProject
       pricePerPing:c.pricePerPing===""?null:HB_num(c.pricePerPing),
       discountPing:c.discountPing===""?null:HB_num(c.discountPing),
       discountRate:c.discountRate===""?null:HB_num(c.discountRate),
+      budgetRate:c.budgetRate===""?null:HB_num(c.budgetRate),
       totalPrice:c.totalPrice===""?null:HB_num(c.totalPrice),
       durationDays:isEng?(c.durationDays||null):null,
       paymentStages:isEng?cleanedStages:null,
@@ -3460,7 +3461,7 @@ function HerfulsinsContractForm({category:l,projects:t,accounts:e,defaultProject
       field("甲方身分證字號（選填）","partyAId"),
       !isEng&&u.default.createElement("div",{style:{display:"flex",gap:10,alignItems:"flex-end"}},
         u.default.createElement("div",{style:{flex:1,minWidth:0}},field("設計面積（坪．選填）","areaPing")),
-        u.default.createElement("div",{style:{flex:1,minWidth:0}},field(isBudget?"每坪前置作業費（元）":"每坪設計費（元．選填）","pricePerPing"))
+        u.default.createElement("div",{style:{flex:1,minWidth:0}},field(isBudget?"每坪概算單價（元）":"每坪設計費（元．選填）","pricePerPing"))
       ),
       !isEng&&u.default.createElement("div",{style:{display:"flex",gap:10,alignItems:"flex-end"}},
         u.default.createElement("div",{style:{flex:1,minWidth:0}},field("優惠坪數（選填）","discountPing",{placeholder:"留白則以設計面積計"})),
@@ -3473,10 +3474,16 @@ function HerfulsinsContractForm({category:l,projects:t,accounts:e,defaultProject
           " ＝ NT$ "+HB_money(Math.round(billPing()*HB_num(c.pricePerPing)*billRate()))+
           (HB_num(c.discountPing)>0&&HB_num(c.areaPing)>0?"（實際面積 "+c.areaPing+" 坪，優惠後以 "+c.discountPing+" 坪計）":"")),
       u.default.createElement("div",{style:{display:"flex",gap:8,alignItems:"flex-end"}},
-        u.default.createElement("div",{style:{flex:1}},field(isEng?"工程總價（元）":isBudget?"前置作業費總價（元．選填）":"合約總價（元．選填）","totalPrice")),
+        u.default.createElement("div",{style:{flex:1}},field(isEng?"工程總價（元）":isBudget?"工程概算總價（元）":"合約總價（元．選填）","totalPrice")),
         !isEng&&u.default.createElement("button",{onClick:calcTotal,style:{border:`1px solid ${s.line}`,background:"none",borderRadius:7,padding:"9px 12px",fontSize:12.5,color:s.oceanDark,cursor:"pointer",marginBottom:12,whiteSpace:"nowrap"}},"自動計算")
       ),
       isEng&&c.totalPrice&&u.default.createElement("p",{style:{fontSize:12,color:s.inkSoft,marginTop:-6,marginBottom:12}},"大寫：",HB_toChineseMoney(c.totalPrice)),
+      isBudget&&u.default.createElement("div",{style:{display:"flex",gap:10,alignItems:"flex-end"}},
+        u.default.createElement("div",{style:{flex:1,minWidth:0}},field("收取比例（%）","budgetRate",{placeholder:"預設 32"}))
+      ),
+      isBudget&&HB_num(c.totalPrice)>0&&u.default.createElement("p",{style:{fontSize:12,lineHeight:1.8,color:s.inkSoft,marginTop:-6,marginBottom:12}},
+        "本次向業主收取："+HB_money(HB_num(c.totalPrice))+" × "+(HB_num(c.budgetRate)||32)+"% ＝ NT$ "+
+        HB_money(Math.round(HB_num(c.totalPrice)*(HB_num(c.budgetRate)||32)/100))),
       isEng&&field("工程期限（工作天，選填，留白則簽約時填寫）","durationDays"),
       field(isEng?"簽約日期":"簽約日期（選填，留白則現場填寫）","contractDate",{type:"date"}),
       isEng&&u.default.createElement("div",{style:{marginBottom:14}},
@@ -3530,7 +3537,7 @@ function HerfulsinsContractsHub({onBack:l,notify:t}){
     let{error:g}=await q.from("sitelog_contracts").insert({
       category:e,project_id:v.projectId,design_name:v.designName,design_location:v.designLocation,
       party_a_name:v.partyAName,party_a_rep:v.partyARep,party_a_address:v.partyAAddress,party_a_phone:v.partyAPhone,party_a_id:v.partyAId,
-      area_ping:v.areaPing,price_per_ping:v.pricePerPing,discount_ping:v.discountPing??null,discount_rate:v.discountRate??null,total_price:v.totalPrice,contract_date:v.contractDate||null,account_ids:v.accountIds,
+      area_ping:v.areaPing,price_per_ping:v.pricePerPing,discount_ping:v.discountPing??null,discount_rate:v.discountRate??null,budget_rate:v.budgetRate??null,total_price:v.totalPrice,contract_date:v.contractDate||null,account_ids:v.accountIds,
       duration_days:v.durationDays||null,payment_stages:v.paymentStages||null
     });
     if(g){t("新增失敗："+g.message);return}
@@ -3540,7 +3547,7 @@ function HerfulsinsContractsHub({onBack:l,notify:t}){
     let{error:g}=await q.from("sitelog_contracts").update({
       project_id:v.projectId,design_name:v.designName,design_location:v.designLocation,
       party_a_name:v.partyAName,party_a_rep:v.partyARep,party_a_address:v.partyAAddress,party_a_phone:v.partyAPhone,party_a_id:v.partyAId,
-      area_ping:v.areaPing,price_per_ping:v.pricePerPing,discount_ping:v.discountPing??null,discount_rate:v.discountRate??null,total_price:v.totalPrice,contract_date:v.contractDate||null,account_ids:v.accountIds,
+      area_ping:v.areaPing,price_per_ping:v.pricePerPing,discount_ping:v.discountPing??null,discount_rate:v.discountRate??null,budget_rate:v.budgetRate??null,total_price:v.totalPrice,contract_date:v.contractDate||null,account_ids:v.accountIds,
       duration_days:v.durationDays||null,payment_stages:v.paymentStages||null
     }).eq("id",id);
     if(g){t("更新失敗："+g.message);return}
@@ -3548,7 +3555,7 @@ function HerfulsinsContractsHub({onBack:l,notify:t}){
   };
   let toFormValues=row=>({
     designName:row.design_name||"",designLocation:row.design_location||"",partyAName:row.party_a_name||"",partyARep:row.party_a_rep||"",partyAAddress:row.party_a_address||"",partyAPhone:row.party_a_phone||"",partyAId:row.party_a_id||"",
-    areaPing:row.area_ping??"",pricePerPing:row.price_per_ping??"",discountPing:row.discount_ping??"",discountRate:row.discount_rate??"",totalPrice:row.total_price??"",durationDays:row.duration_days??"",contractDate:row.contract_date||"",
+    areaPing:row.area_ping??"",pricePerPing:row.price_per_ping??"",discountPing:row.discount_ping??"",discountRate:row.discount_rate??"",budgetRate:row.budget_rate??"32",totalPrice:row.total_price??"",durationDays:row.duration_days??"",contractDate:row.contract_date||"",
     accountIds:row.account_ids||[],paymentStages:row.payment_stages||[],projectId:row.project_id||null
   });
   let deleteContract=async id=>{
@@ -3569,7 +3576,7 @@ function HerfulsinsContractsHub({onBack:l,notify:t}){
   let toRowValues=row=>({
     designName:row.design_name,designLocation:row.design_location,partyAName:row.party_a_name,partyARep:row.party_a_rep,
     partyAAddress:row.party_a_address,partyAPhone:row.party_a_phone,partyAId:row.party_a_id,areaPing:row.area_ping,
-    pricePerPing:row.price_per_ping,discountPing:row.discount_ping,discountRate:row.discount_rate,totalPrice:row.total_price,
+    pricePerPing:row.price_per_ping,discountPing:row.discount_ping,discountRate:row.discount_rate,budgetRate:row.budget_rate,totalPrice:row.total_price,
     engName:row.design_name,engLocation:row.design_location,durationDays:row.duration_days,paymentStages:row.payment_stages||[],
     accounts:(row.account_ids||[]).map(id=>o.find(acc=>acc.id===id)).filter(Boolean),
     ...HB_toROCFromParts(row.contract_date)
