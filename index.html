@@ -9128,56 +9128,196 @@ async function HB_decodeImageFile(file){
   });
 }
 
-function HB_tidySwatchPixels(cx,w,h){
-  var d=cx.getImageData(0,0,w,h), p=d.data, n=w*h, i,k,c;
+/* mode: "none" 不處理／"tidy" 只整理亮度（預設）／"cast" 再加色偏校正
+   關鍵：色階只在「亮度」上做，再把同一個增益套回 RGB，
+   這樣材料本身的顏色與飽和度不會被改掉。
+   之前的版本是每個色版各自拉色階，等於偷偷做了一次白平衡，
+   飽和的材料（酒紅絲絨、深色木皮）會被洗成灰灰的，那是錯的。 */
+function HB_tidySwatchPixels(cx,w,h,mode){
+  mode=mode||"tidy";
+  if(mode==="none")return;
+  var d=cx.getImageData(0,0,w,h), p=d.data, n=w*h, i,k;
 
-  /* 自動色階：取每個通道 0.5% / 99.5% 分位往外拉，強度打七折避免過曝 */
-  var hist=[new Uint32Array(256),new Uint32Array(256),new Uint32Array(256)];
-  for(i=0;i<p.length;i+=4){ hist[0][p[i]]++; hist[1][p[i+1]]++; hist[2][p[i+2]]++; }
-  var lo=[0,0,0], hi=[255,255,255], cut=Math.max(1,Math.round(n*0.005));
-  for(c=0;c<3;c++){
-    var acc=0;
-    for(k=0;k<256;k++){ acc+=hist[c][k]; if(acc>cut){ lo[c]=k; break } }
-    acc=0;
-    for(k=255;k>=0;k--){ acc+=hist[c][k]; if(acc>cut){ hi[c]=k; break } }
-    if(hi[c]-lo[c]<24){ lo[c]=0; hi[c]=255 }   /* 本來就很平的材質不硬拉 */
-  }
-  var mix=0.7, lut=[new Uint8ClampedArray(256),new Uint8ClampedArray(256),new Uint8ClampedArray(256)];
-  for(c=0;c<3;c++){
-    var a=lo[c], b=hi[c], span=Math.max(1,b-a);
-    for(k=0;k<256;k++){
-      var v=(k-a)*255/span;
-      lut[c][k]=k+(v-k)*mix;
-    }
-  }
-  for(i=0;i<p.length;i+=4){ p[i]=lut[0][p[i]]; p[i+1]=lut[1][p[i+1]]; p[i+2]=lut[2][p[i+2]]; }
-
-  /* 白平衡：用最亮的 12% 當中性參考，係數限制在 0.75～1.35，避免整張變色 */
-  var lum=new Uint8Array(n), idx=0;
-  for(i=0;i<p.length;i+=4){ lum[idx++]=(p[i]*0.299+p[i+1]*0.587+p[i+2]*0.114)|0; }
-  var lh=new Uint32Array(256);
-  for(i=0;i<n;i++) lh[lum[i]]++;
-  var want=Math.max(1,Math.round(n*0.12)), acc2=0, thr=255;
-  for(k=255;k>=0;k--){ acc2+=lh[k]; if(acc2>=want){ thr=k; break } }
-  var sr=0,sg=0,sb=0,cnt=0; idx=0;
-  for(i=0;i<p.length;i+=4){ if(lum[idx++]>=thr){ sr+=p[i]; sg+=p[i+1]; sb+=p[i+2]; cnt++ } }
-  if(cnt>50){
-    var mr=sr/cnt, mg=sg/cnt, mb=sb/cnt, avg=(mr+mg+mb)/3, wb=0.6;
-    var gr=1+(avg/Math.max(1,mr)-1)*wb, gg=1+(avg/Math.max(1,mg)-1)*wb, gb=1+(avg/Math.max(1,mb)-1)*wb;
-    gr=Math.min(1.35,Math.max(0.75,gr)); gg=Math.min(1.35,Math.max(0.75,gg)); gb=Math.min(1.35,Math.max(0.75,gb));
-    for(i=0;i<p.length;i+=4){ p[i]=p[i]*gr; p[i+1]=p[i+1]*gg; p[i+2]=p[i+2]*gb; }
-  }
-
-  /* 很輕的 S 曲線與飽和，讓不同光線下拍的照片看起來像同一組 */
+  /* 亮度直方圖 → 0.5% / 99.5% 分位 */
+  var lumA=new Float32Array(n), hist=new Uint32Array(256), idx=0;
   for(i=0;i<p.length;i+=4){
-    for(c=0;c<3;c++){
-      var x=p[i+c]/255;
-      p[i+c]=(x+0.12*x*(1-x)*(2*x-1))*255;
-    }
     var L=p[i]*0.299+p[i+1]*0.587+p[i+2]*0.114;
-    p[i]=L+(p[i]-L)*1.06; p[i+1]=L+(p[i+1]-L)*1.06; p[i+2]=L+(p[i+2]-L)*1.06;
+    lumA[idx++]=L;
+    hist[L|0]++;
+  }
+  var cut=Math.max(1,Math.round(n*0.005)), acc=0, lo=0, hi=255;
+  for(k=0;k<256;k++){ acc+=hist[k]; if(acc>cut){ lo=k; break } }
+  acc=0;
+  for(k=255;k>=0;k--){ acc+=hist[k]; if(acc>cut){ hi=k; break } }
+  if(hi-lo<30){ lo=0; hi=255 }
+  var span=Math.max(1,hi-lo);
+
+  /* 亮度查表：色階（強度 0.55）＋ 很輕的 S 曲線（0.06） */
+  var lut=new Float32Array(256);
+  for(k=0;k<256;k++){
+    var v=(k-lo)*255/span;
+    v=k+(v-k)*0.55;
+    if(v<0)v=0; else if(v>255)v=255;
+    var x=v/255;
+    lut[k]=(x+0.06*x*(1-x)*(2*x-1))*255;
+  }
+
+  /* 把亮度增益等比套回三個色版 → 色相與飽和度不變 */
+  idx=0;
+  for(i=0;i<p.length;i+=4){
+    var L0=lumA[idx++];
+    if(L0<=2){ idx=idx; continue }
+    var g=lut[L0|0]/L0;
+    if(g<0.35)g=0.35; else if(g>3)g=3;
+    p[i]=p[i]*g; p[i+1]=p[i+1]*g; p[i+2]=p[i+2]*g;
+  }
+
+  /* 色偏校正：只有選了「校正色偏」才做，而且偏色不明顯就不動 */
+  if(mode==="cast"){
+    var lum2=new Float32Array(n), h2=new Uint32Array(256);
+    idx=0;
+    for(i=0;i<p.length;i+=4){
+      var L2=p[i]*0.299+p[i+1]*0.587+p[i+2]*0.114;
+      lum2[idx++]=L2; h2[L2|0]++;
+    }
+    var want=Math.max(1,Math.round(n*0.15)), a2=0, thr=255;
+    for(k=255;k>=0;k--){ a2+=h2[k]; if(a2>=want){ thr=k; break } }
+    var sr=0,sg=0,sb=0,cnt=0; idx=0;
+    for(i=0;i<p.length;i+=4){ if(lum2[idx++]>=thr){ sr+=p[i]; sg+=p[i+1]; sb+=p[i+2]; cnt++ } }
+    if(cnt>50){
+      var mr=sr/cnt, mg=sg/cnt, mb=sb/cnt, avg=(mr+mg+mb)/3;
+      var dev=Math.max(Math.abs(mr-avg),Math.abs(mg-avg),Math.abs(mb-avg))/Math.max(1,avg);
+      if(dev>0.06){
+        var gr=Math.min(1.2,Math.max(0.85,1+(avg/Math.max(1,mr)-1)*0.5));
+        var gg=Math.min(1.2,Math.max(0.85,1+(avg/Math.max(1,mg)-1)*0.5));
+        var gb=Math.min(1.2,Math.max(0.85,1+(avg/Math.max(1,mb)-1)*0.5));
+        for(i=0;i<p.length;i+=4){ p[i]=p[i]*gr; p[i+1]=p[i+1]*gg; p[i+2]=p[i+2]*gb; }
+      }
+    }
   }
   cx.putImageData(d,0,0);
+}
+
+/* ===== 從 3D 圖自動找出材質色塊 =====
+   原理：把圖縮小 → 切成小方塊 → 算每塊的顏色平均與變異數 →
+   只留「平坦」的方塊（同一片材料表面）→ 用 k-means 依顏色分群 →
+   每群挑一個最平坦的代表點，再往外長到還算同色為止。
+   這是統計取樣，不是材質辨識：它找的是「大片同色的平面」，
+   所以窗簾、抱枕、天空、白牆也會被找出來，需要你自己挑掉。 */
+function HB_suggestSwatches(imgEl,maxN){
+  maxN=maxN||6;
+  var nw=imgEl.naturalWidth||imgEl.width, nh=imgEl.naturalHeight||imgEl.height;
+  if(!nw||!nh)return[];
+  var A=320, sc=Math.min(1,A/Math.max(nw,nh));
+  var aw=Math.max(40,Math.round(nw*sc)), ah=Math.max(40,Math.round(nh*sc));
+  var cv=document.createElement("canvas"); cv.width=aw; cv.height=ah;
+  var cx=cv.getContext("2d",{willReadFrequently:true});
+  cx.drawImage(imgEl,0,0,aw,ah);
+  var d;
+  try{ d=cx.getImageData(0,0,aw,ah).data }catch(e){ return[] }
+
+  var B=8, bx=Math.floor(aw/B), by=Math.floor(ah/B);
+  if(bx<3||by<3)return[];
+  var blocks=[], i,j,x,y,c;
+  for(j=0;j<by;j++)for(i=0;i<bx;i++){
+    var sr=0,sg=0,sb=0,q1=0,q2=0,q3=0,cnt=0;
+    for(y=0;y<B;y++)for(x=0;x<B;x++){
+      var o=(((j*B+y)*aw)+(i*B+x))*4;
+      var r=d[o],g=d[o+1],b=d[o+2];
+      sr+=r;sg+=g;sb+=b;q1+=r*r;q2+=g*g;q3+=b*b;cnt++;
+    }
+    var mr=sr/cnt,mg=sg/cnt,mb=sb/cnt,tot=Math.max(1,mr+mg+mb);
+    blocks.push({i:i,j:j,r:mr,g:mg,b:mb,
+      v:(q1/cnt-mr*mr)+(q2/cnt-mg*mg)+(q3/cnt-mb*mb),
+      /* 分群用「色度為主、亮度為輔」：同一片材料被光影照出深淺時
+         色度幾乎不變，這樣才不會把一面牆拆成三種材質 */
+      fr:mr/tot*255, fg:mg/tot*255, fl:(mr*0.299+mg*0.587+mb*0.114)*0.35});
+  }
+
+  /* 只留最平坦的 45%，過亮或過暗的（打光死白、全黑陰影）直接丟掉 */
+  var flat=blocks.filter(function(b){
+    var L=b.r*0.299+b.g*0.587+b.b*0.114;
+    return L>26&&L<244;
+  }).sort(function(a,b){return a.v-b.v});
+  flat=flat.slice(0,Math.max(8,Math.round(flat.length*0.45)));
+  if(flat.length<4)return[];
+
+  /* k-means */
+  var K=Math.min(10,Math.max(3,maxN+3));
+  var cen=[], step=Math.max(1,Math.floor(flat.length/K));
+  var byHue=flat.slice().sort(function(a,b){return (a.fr-a.fg)-(b.fr-b.fg)});
+  for(i=0;i<K;i++){ var m0=byHue[Math.min(byHue.length-1,i*step)]; cen.push({fr:m0.fr,fg:m0.fg,fl:m0.fl}) }
+  var lab=new Int32Array(flat.length);
+  for(var it=0;it<14;it++){
+    for(i=0;i<flat.length;i++){
+      var best=0,bd=1e12;
+      for(c=0;c<K;c++){
+        var d1=flat[i].fr-cen[c].fr, d2=flat[i].fg-cen[c].fg, d3=flat[i].fl-cen[c].fl;
+        var dd=d1*d1+d2*d2+d3*d3;
+        if(dd<bd){bd=dd;best=c}
+      }
+      lab[i]=best;
+    }
+    var sum=[];
+    for(c=0;c<K;c++)sum.push({fr:0,fg:0,fl:0,n:0});
+    for(i=0;i<flat.length;i++){ var t=sum[lab[i]]; t.fr+=flat[i].fr; t.fg+=flat[i].fg; t.fl+=flat[i].fl; t.n++ }
+    for(c=0;c<K;c++) if(sum[c].n){ cen[c]={fr:sum[c].fr/sum[c].n,fg:sum[c].fg/sum[c].n,fl:sum[c].fl/sum[c].n} }
+  }
+
+  /* 每群挑代表點：先挑最平坦的，再往外長到不同色為止 */
+  var groups=[];
+  for(c=0;c<K;c++){
+    var mem=[];
+    for(i=0;i<flat.length;i++) if(lab[i]===c) mem.push(flat[i]);
+    if(mem.length<3)continue;
+    mem.sort(function(a,b){return a.v-b.v});
+    var rep=mem[0];
+    var okSet={};
+    for(i=0;i<mem.length;i++) okSet[mem[i].j*bx+mem[i].i]=1;
+    var rad=1, cap=Math.max(1,Math.floor(Math.min(bx,by)*0.22));
+    while(rad<cap){
+      var need=(2*rad+3)*(2*rad+3), got=0;
+      for(y=rep.j-rad-1;y<=rep.j+rad+1;y++)for(x=rep.i-rad-1;x<=rep.i+rad+1;x++){
+        if(x<0||y<0||x>=bx||y>=by)continue;
+        if(okSet[y*bx+x])got++;
+      }
+      if(got/need<0.8)break;
+      rad++;
+    }
+    /* 色票顏色用代表點的實際顏色，不是色度中心 */
+    groups.push({
+      cx:(rep.i+0.5)*B/aw, cy:(rep.j+0.5)*B/ah,
+      sideNat:Math.round((2*rad+1)*B/sc),
+      n:mem.length,
+      hex:"#"+[rep.r,rep.g,rep.b].map(function(v){
+        var t=Math.round(Math.min(255,Math.max(0,v))).toString(16);
+        return t.length<2?"0"+t:t }).join("")
+    });
+  }
+
+  /* 顏色太接近的合併，再依面積取前幾名 */
+  groups.sort(function(a,b){return b.n-a.n});
+  var out=[];
+  function hex2rgb(h){ return [parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)] }
+  /* 合併重複：同一片材料被光影照出深淺時，色度幾乎一樣、只有亮度不同。
+     所以比色度而不是比 RGB；但亮度差太多（淺灰 vs 炭黑）就不算重複。 */
+  function chroma(a){ var t=Math.max(1,a[0]+a[1]+a[2]); return [a[0]/t*255,a[1]/t*255] }
+  function lumOf(a){ return a[0]*0.299+a[1]*0.587+a[2]*0.114 }
+  for(i=0;i<groups.length&&out.length<maxN;i++){
+    var a1=hex2rgb(groups[i].hex), c1=chroma(a1), L1=lumOf(a1), dup=!1;
+    for(j=0;j<out.length;j++){
+      var a2=hex2rgb(out[j].hex), c2=chroma(a2), L2=lumOf(a2);
+      var cd=(c1[0]-c2[0])*(c1[0]-c2[0])+(c1[1]-c2[1])*(c1[1]-c2[1]);
+      var ratio=Math.max(L1,L2)/Math.max(1,Math.min(L1,L2));
+      var rd=(a1[0]-a2[0])*(a1[0]-a2[0])+(a1[1]-a2[1])*(a1[1]-a2[1])+(a1[2]-a2[2])*(a1[2]-a2[2]);
+      if(rd<24*24||(cd<10*10&&ratio<1.7)){dup=!0;break}
+    }
+    if(!dup)out.push(groups[i]);
+  }
+  var minSide=Math.min(nw,nh);
+  return out.map(function(g){
+    return {x:g.cx,y:g.cy,pct:Math.min(.6,Math.max(.08,g.sideNat/minSide)),hex:g.hex};
+  });
 }
 
 /* 從已經載入的 <img> 上裁一塊方形出來，跑同一套修圖 */
@@ -9188,7 +9328,7 @@ async function HB_swatchFromRegion(imgEl,sx,sy,side,opts){
   var cx=cv.getContext("2d",{willReadFrequently:true});
   cx.imageSmoothingEnabled=true; cx.imageSmoothingQuality="high";
   cx.drawImage(imgEl,sx,sy,side,side,0,0,out,out);
-  if(opts.enhance!==false){ try{ HB_tidySwatchPixels(cx,out,out) }catch(e){} }
+  try{ HB_tidySwatchPixels(cx,out,out,opts.mode||"tidy") }catch(e){}
   return await new Promise(function(res,rej){
     cv.toBlob(function(b){ b?res(b):rej(new Error("\u8f38\u51fa\u5931\u6557")) },"image/jpeg",opts.quality||0.9);
   });
@@ -9206,6 +9346,8 @@ function HbSwatchPicker({onCancel,onPick,autoFix}){
   let[busy,setBusy]=(0,u.useState)(!1);
   let[added,setAdded]=(0,u.useState)(0);
   let[err,setErr]=(0,u.useState)("");
+  let[sugg,setSugg]=(0,u.useState)([]);
+  let[scanning,setScanning]=(0,u.useState)(!1);
   let imgRef=(0,u.useRef)(null);
   let wrapRef=(0,u.useRef)(null);
   let preRef=(0,u.useRef)(null);
@@ -9227,7 +9369,7 @@ function HbSwatchPicker({onCancel,onPick,autoFix}){
       cx.clearRect(0,0,P,P);
       cx.imageSmoothingEnabled=true; cx.imageSmoothingQuality="high";
       cx.drawImage(im,sxNat,syNat,sideNat,sideNat,0,0,P,P);
-      if(autoFix)HB_tidySwatchPixels(cx,P,P);
+      HB_tidySwatchPixels(cx,P,P,autoFix);
     }catch(e){}
   },[sxNat,syNat,sideNat,nat,autoFix,url]);
 
@@ -9235,7 +9377,7 @@ function HbSwatchPicker({onCancel,onPick,autoFix}){
     let f=ev.target.files&&ev.target.files[0];
     ev.target.value="";
     if(!f)return;
-    setErr(""); setNat(null); setAdded(0);
+    setErr(""); setNat(null); setAdded(0); setSugg([]);
     if(url)try{URL.revokeObjectURL(url)}catch(e){}
     setUrl(URL.createObjectURL(f));
     setCen({x:.5,y:.5});
@@ -9255,7 +9397,7 @@ function HbSwatchPicker({onCancel,onPick,autoFix}){
     if(!im||!nat)return;
     setBusy(!0); setErr("");
     try{
-      let blob=await HB_swatchFromRegion(im,sxNat,syNat,sideNat,{size:900,quality:.9,enhance:autoFix});
+      let blob=await HB_swatchFromRegion(im,sxNat,syNat,sideNat,{size:900,quality:.9,mode:autoFix});
       await onPick(blob);
       setAdded(function(n){return n+1});
     }catch(e){
@@ -9284,7 +9426,9 @@ function HbSwatchPicker({onCancel,onPick,autoFix}){
               onPointerCancel:function(){ dragRef.current=!1 },
               style:{position:"relative",width:"100%",lineHeight:0,borderRadius:6,overflow:"hidden",background:"#EDEAE3",touchAction:"none",cursor:"crosshair",userSelect:"none"}},
               C("img",{ref:imgRef,src:url,alt:"",draggable:!1,
-                onLoad:function(ev){ let t=ev.target; setNat({w:t.naturalWidth,h:t.naturalHeight}) },
+                onLoad:function(ev){ let t=ev.target; setNat({w:t.naturalWidth,h:t.naturalHeight});
+                  setScanning(!0);
+                  setTimeout(function(){ try{ setSugg(HB_suggestSwatches(t,6)) }catch(e){ setSugg([]) } finally{ setScanning(!1) } },30) },
                 style:{width:"100%",height:"auto",display:"block",pointerEvents:"none"}}),
               nat?C("div",{style:{position:"absolute",
                 left:(sxNat/nat.w*100)+"%", top:(syNat/nat.h*100)+"%",
@@ -9292,6 +9436,18 @@ function HbSwatchPicker({onCancel,onPick,autoFix}){
                 border:"2px solid #fff", boxShadow:"0 0 0 1px rgba(0,0,0,.55), 0 0 0 9999px rgba(20,18,14,.34)",
                 pointerEvents:"none"}}):null),
 
+            C("div",{style:{marginTop:12}},
+              C("div",{style:{fontSize:12.5,color:s.inkSoft,marginBottom:6}},
+                scanning?"\u5206\u6790\u4e2d\u2026":(sugg.length?"\u81ea\u52d5\u627e\u5230\u7684\u8272\u584a\uff08\u9ede\u4e00\u4e0b\u8df3\u5230\u90a3\u4e00\u584a\uff09":"\u9019\u5f35\u5716\u6c92\u627e\u5230\u660e\u986f\u7684\u5e73\u9762\u8272\u584a\uff0c\u8acb\u81ea\u5df1\u6846")),
+              sugg.length?C("div",{style:{display:"flex",gap:8,flexWrap:"wrap"}},
+                sugg.map(function(g,gi){
+                  var on=Math.abs(cen.x-g.x)<.004&&Math.abs(cen.y-g.y)<.004;
+                  return C("button",{key:gi,type:"button",title:g.hex,
+                    onClick:function(){ setCen({x:g.x,y:g.y}); setPct(g.pct) },
+                    style:{width:46,height:46,borderRadius:6,padding:0,cursor:"pointer",
+                      background:g.hex,border:on?"2px solid "+s.oceanDark:"1px solid rgba(0,0,0,.25)",
+                      boxShadow:on?"0 0 0 2px rgba(46,74,60,.25)":"none"}});
+                })):null),
             C("div",{style:{display:"flex",alignItems:"center",gap:12,marginTop:12,flexWrap:"wrap"}},
               C("span",{style:{fontSize:12.5,color:s.inkSoft,whiteSpace:"nowrap"}},"\u9078\u53d6\u6846\u5927\u5c0f"),
               C("input",{type:"range",min:8,max:60,step:1,value:Math.round(pct*100),
@@ -9327,7 +9483,7 @@ async function HB_makeSwatch(file,opts){
   cx.imageSmoothingEnabled=true; cx.imageSmoothingQuality="high";
   cx.drawImage(img,sx,sy,side,side,0,0,out,out);
   if(img.close)img.close();
-  if(opts.enhance!==false){ try{ HB_tidySwatchPixels(cx,out,out) }catch(e){} }
+  try{ HB_tidySwatchPixels(cx,out,out,opts.mode||"tidy") }catch(e){}
   return await new Promise(function(res,rej){
     cv.toBlob(function(b){ b?res(b):rej(new Error("\u8f38\u51fa\u5931\u6557")) },"image/jpeg",opts.quality||0.9);
   });
@@ -9402,7 +9558,7 @@ function HbMaterialForm({onCancel,onSave,projects,initial}){
   let[note,setNote]=(0,u.useState)(ini?(ini.note||""):"");
   let[items,setItems]=(0,u.useState)(ini&&ini.items&&ini.items.length?ini.items.map(x=>({space:x.space||"",item:x.item||"",brand:x.brand||"",spec:x.spec||"",photoUrl:x.photoUrl||"",photoPath:x.photoPath||""})):[{space:"",item:"",brand:"",spec:"",photoUrl:"",photoPath:""}]);
   let[photoBusy,setPhotoBusy]=(0,u.useState)({});
-  let[autoFix,setAutoFix]=(0,u.useState)(!0);
+  let[autoFix,setAutoFix]=(0,u.useState)("tidy");
   let[photoErr,setPhotoErr]=(0,u.useState)("");
   let upd=(i,k,val)=>setItems(xs=>xs.map((x,idx)=>idx===i?{...x,[k]:val}:x));
   let add=()=>setItems(xs=>[...xs,{space:xs.length?xs[xs.length-1].space:"",item:"",brand:"",spec:"",photoUrl:"",photoPath:""}]);
@@ -9414,7 +9570,7 @@ function HbMaterialForm({onCancel,onSave,projects,initial}){
     setPhotoErr("");
     setPhotoBusy(b=>({...b,[i]:!0}));
     try{
-      let blob=autoFix?await HB_makeSwatch(f,{size:900,quality:.9}):await Ru(f,1400,.9);
+      let blob=autoFix==="none"?await Ru(f,1400,.9):await HB_makeSwatch(f,{size:900,quality:.9,mode:autoFix});
       let path="material/"+Be()+".jpg";
       let url=await r2UploadSitelogFile("sitelog-photos",path,blob,"image/jpeg");
       setItems(xs=>xs.map((x,idx)=>idx===i?{...x,photoUrl:url,photoPath:path}:x));
@@ -9456,9 +9612,13 @@ function HbMaterialForm({onCancel,onSave,projects,initial}){
       u.default.createElement("input",{type:"date",value:reportDate,onChange:e=>setReportDate(e.target.value),style:el}),
       u.default.createElement("div",{style:{display:"flex",alignItems:"baseline",justifyContent:"space-between",gap:10,flexWrap:"wrap"}},
         u.default.createElement("label",{style:lb},"材料明細"),
-        u.default.createElement("label",{style:{fontSize:12.5,color:s.inkSoft,display:"flex",alignItems:"center",gap:6,cursor:"pointer",marginTop:10}},
-          u.default.createElement("input",{type:"checkbox",checked:autoFix,onChange:e=>setAutoFix(e.target.checked)}),
-          "自動修圖（方形裁切・自動色階・白平衡）")),
+        u.default.createElement("label",{style:{fontSize:12.5,color:s.inkSoft,display:"flex",alignItems:"center",gap:8,marginTop:10}},
+          "\u4fee\u5716",
+          u.default.createElement("select",{value:autoFix,onChange:e=>setAutoFix(e.target.value),
+            style:{...el,margin:0,width:"auto",padding:"6px 8px"}},
+            u.default.createElement("option",{value:"tidy"},"\u8f15\u5fae\u6574\u7406\uff08\u4fdd\u7559\u539f\u8272\uff09"),
+            u.default.createElement("option",{value:"cast"},"\u9023\u8272\u504f\u4e00\u8d77\u6821\u6b63"),
+            u.default.createElement("option",{value:"none"},"\u4e0d\u4fee\u5716")))),
       u.default.createElement("button",{type:"button",onClick:()=>setShowPicker(!0),
         style:{width:"100%",minHeight:46,marginBottom:10,border:"1px dashed "+s.line,borderRadius:6,background:"none",fontSize:13.5,color:s.oceanDark,cursor:"pointer"}},
         "\u5f9e 3D \u5716\u53d6\u6750\u8cea\uff08\u6846\u4e00\u584a\u5c31\u65b0\u589e\u4e00\u5217\uff09"),
