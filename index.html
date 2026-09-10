@@ -1775,7 +1775,6 @@
     }
     .hb-dosAct{ min-height: 44px; padding: 0 16px; font-size: 14px; }
     .hb-dosAct.ico{ min-width: 44px; padding: 0 12px; justify-content: center; }
-    .hb-contracts .hb-dosMenu{ display: none; }
 
     /* 6 · 次要功能：範本下載與帳戶管理放清單下方 */
     .hb-contracts .hb-dosSideFoot{ order: 5; margin: 22px 0 0; padding-top: 18px; }
@@ -2672,6 +2671,35 @@
     .hb-dosMenu button{ min-height: 46px; }
     .hb-dosItem, .hb-dosList, .hb-dosMain{ overflow: visible; }
   }
+
+  /* 共用篩選欄：手機的全寬選擇欄（HbPickField 專用，桌機不會出現） */
+  @media (max-width: 860px){
+    .hb-dosPick{
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      width: 100%; min-height: 52px; margin: 0 0 18px; padding: 13px 14px;
+      background: var(--hbSheet,#FBFAF6); border: 1px solid var(--hbRule,rgba(160,146,124,.5));
+      border-radius: 4px;
+      font-family: inherit; font-size: 16px; letter-spacing: .04em; color: var(--hbInk,#17150F);
+      text-align: left; cursor: pointer;
+    }
+    .hb-dosPick > span{ min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .hb-dosPick svg{ flex: 0 0 auto; color: var(--hbInk2,#6F675B); }
+    .hb-dosPick:focus-visible{ outline: 1px solid var(--hbAcc,#B4573A); outline-offset: 2px; }
+    /* 桌機版的原始控制項在手機不出現（由 HbPickField 自己決定不渲染，這裡是保險） */
+    .hb-dosFilter .hb-dosSelect{ width: 100%; max-width: none !important; }
+  }
+
+  /* 底部面板內的一般 <button>（各頁「更多操作」直接丟進來的按鈕）統一外觀 */
+  .hb-sheetBody > button{
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    width: 100%; min-height: 56px; padding: 14px 12px;
+    background: none; border: 0; border-bottom: 1px solid #E4DED2; border-radius: 6px;
+    font-family: inherit; font-size: 16px; letter-spacing: .05em; color: #17150F;
+    text-align: left; cursor: pointer;
+  }
+  .hb-sheetBody > button:last-child{ border-bottom: 0; }
+  .hb-sheetBody > button.del{ color: #B4573A; }
+  .hb-sheetBody > button:focus-visible{ outline: 1px solid #B4573A; outline-offset: -2px; }
 </style>
 <script>
 /* === 赫柏文件共用樣式（六份單據共用，改這裡就全部一起改） === */
@@ -4728,17 +4756,19 @@ function HerfulsinsContractsHub({onBack:l,notify:t}){
             HB_CONTRACT_CATS.map(v=>
               u.default.createElement("button",{key:v.k,onClick:()=>{n(v.k),setSelectedProject(null)},
                 className:"hb-dosNavItem"+(e===v.k?" on":"")},v.label))),
-          u.default.createElement("button",{type:"button",className:"hb-dosPick","aria-haspopup":"dialog",
-            "aria-expanded":hbCatSheet?"true":"false",
-            onClick:ev=>{ev.stopPropagation();hbSetCatSheet(!0)}},
-            u.default.createElement("span",null,(HB_CONTRACT_CATS.find(v=>v.k===e)||HB_CONTRACT_CATS[0]).label),
-            u.default.createElement(E,{name:"chevron-down",size:18})),
+          u.default.createElement(HbPickField,{value:e,
+            options:HB_CONTRACT_CATS.map(v=>({k:v.k,label:v.label})),
+            onChange:function(k){ n(k); setSelectedProject(null) },
+            title:"選擇合約分類",note:"切換分類後顯示對應文件"},null),
           e==="case"&&u.default.createElement("div",{className:"hb-dosField"},
             u.default.createElement("label",{className:"hb-dosSideT",htmlFor:"hbCaseSel"},"選擇案件"),
-            u.default.createElement("select",{id:"hbCaseSel",value:selectedProject||"",
-              onChange:v=>setSelectedProject(v.target.value||null),className:"hb-dosSelect"},
-              u.default.createElement("option",{value:""},"全部案件"),
-              caseProjects.map(v=>u.default.createElement("option",{key:v.id,value:v.id},v.name)))),
+            u.default.createElement(HbPickField,{value:selectedProject||"",
+              options:[{k:"",label:"全部案件"}].concat(caseProjects.map(v=>({k:v.id,label:v.name}))),
+              onChange:function(k){ setSelectedProject(k||null) },title:"選擇案件"},
+              u.default.createElement("select",{id:"hbCaseSel",value:selectedProject||"",
+                onChange:v=>setSelectedProject(v.target.value||null),className:"hb-dosSelect"},
+                u.default.createElement("option",{value:""},"全部案件"),
+                caseProjects.map(v=>u.default.createElement("option",{key:v.id,value:v.id},v.name))))),
           u.default.createElement("div",{className:"hb-dosSideFoot"},
             e!=="budget"&&u.default.createElement("button",{onClick:e==="case"?HB_downloadBlankEngContract:HB_downloadBlankContract,className:"hb-dosLink"},
               u.default.createElement(E,{name:"download",size:13}),
@@ -4777,7 +4807,7 @@ function HerfulsinsContractsHub({onBack:l,notify:t}){
                     "aria-expanded":hbMenu===v.id?"true":"false",title:"更多",
                     onClick:ev=>{ev.stopPropagation();hbSetMenu(hbMenu===v.id?null:v.id)}},
                     u.default.createElement(E,{name:"more-vertical",size:15})),
-                  !hbIsMobile&&hbMenu===v.id&&u.default.createElement("div",{className:"hb-dosMenu",onClick:ev=>ev.stopPropagation()},
+                  hbMenu===v.id&&u.default.createElement(HbMoreMenu,{title:HbMoreTitle(v),onClose:()=>hbSetMenu(null)},
                     u.default.createElement("button",{onClick:()=>{hbSetMenu(null);setEditingRow(v);C(!0)}},"編輯"),
                     u.default.createElement("button",{className:"del",onClick:()=>{
                       hbSetMenu(null);
@@ -4786,21 +4816,6 @@ function HerfulsinsContractsHub({onBack:l,notify:t}){
         ))),
 
     z&&u.default.createElement(HerfulsinsContractForm,{category:editingRow?editingRow.category:e,projects:caseProjects,accounts:o,defaultProjectId:selectedProject,initialValues:editingRow?toFormValues(editingRow):null,editing:!!editingRow,onCancel:()=>{C(!1);setEditingRow(null)},onCreate:editingRow?(v=>updateContract(editingRow.id,v)):createContract}),
-    hbIsMobile&&hbCatSheet&&u.default.createElement(HbSheet,{title:"選擇合約分類",onClose:()=>hbSetCatSheet(!1),footNote:"切換分類後顯示對應文件"},
-      HB_CONTRACT_CATS.map(v=>u.default.createElement("button",{key:v.k,type:"button",
-        className:"hb-sheetOpt"+(e===v.k?" on":""),"aria-current":e===v.k?"true":void 0,
-        onClick:()=>{n(v.k);setSelectedProject(null);hbSetCatSheet(!1)}},
-        u.default.createElement("span",null,v.label),
-        e===v.k?u.default.createElement(E,{name:"check",size:17}):null))),
-    hbIsMobile&&hbMenu&&(function(){
-      let row=a.find(v=>v.id===hbMenu);
-      if(!row)return null;
-      return u.default.createElement(HbSheet,{title:row.design_name||(row.category==="budget"?"未命名預算書":"空白合約"),onClose:()=>hbSetMenu(null)},
-        u.default.createElement("button",{type:"button",className:"hb-sheetOpt",
-          onClick:()=>{hbSetMenu(null);setEditingRow(row);C(!0)}},u.default.createElement("span",null,"編輯")),
-        u.default.createElement("button",{type:"button",className:"hb-sheetOpt del",
-          onClick:()=>{hbSetMenu(null);if(window.confirm("確定要刪除「"+(row.design_name||"空白合約")+"」？此動作無法復原。"))deleteContract(row.id)}},
-          u.default.createElement("span",null,"刪除")))})(),
     D&&u.default.createElement(HerfulsinsAccountManager,{accounts:o,onClose:()=>y(!1),onAdd:addAccount,onDelete:deleteAccount})
   )
 }
@@ -5882,7 +5897,7 @@ function HerfulsinsEstimateHub({project:l,notify:t,onClose:e}){HB_ctaCss();
                   "aria-expanded":hbMenu===h.id?"true":"false",title:"更多",
                   onClick:ev=>{ev.stopPropagation();hbSetMenu(hbMenu===h.id?null:h.id)}},
                   u.default.createElement(E,{name:"more-vertical",size:15})),
-                hbMenu===h.id&&u.default.createElement("div",{className:"hb-dosMenu",onClick:ev=>ev.stopPropagation()},
+                hbMenu===h.id&&u.default.createElement(HbMoreMenu,{title:HbMoreTitle(h),onClose:()=>hbSetMenu(null)},
                   u.default.createElement("button",{onClick:()=>{hbSetMenu(null);d(h);a("edit")}},"編輯"),
                   u.default.createElement("button",{className:"del",onClick:()=>{
                     hbSetMenu(null);
@@ -7146,7 +7161,7 @@ function HbReceiptsHub({onBack,notify,projects}){
                     "aria-expanded":hbMenu===b.id?"true":"false",title:"更多",
                     onClick:ev=>{ev.stopPropagation();hbSetMenu(hbMenu===b.id?null:b.id)}},
                     u.default.createElement(E,{name:"more-vertical",size:15})),
-                  hbMenu===b.id&&u.default.createElement("div",{className:"hb-dosMenu",onClick:ev=>ev.stopPropagation()},
+                  hbMenu===b.id&&u.default.createElement(HbMoreMenu,{title:HbMoreTitle(b),onClose:()=>hbSetMenu(null)},
                     u.default.createElement("button",{onClick:()=>{hbSetMenu(null);setEditing(b)}},"編輯"),
                     u.default.createElement("button",{className:"del",onClick:()=>{
                       hbSetMenu(null);
@@ -7285,7 +7300,7 @@ function HbVendorReceiptsHub({onBack,notify,projects}){
                   "aria-expanded":hbMenu===v.id?"true":"false",title:"更多",
                   onClick:ev=>{ev.stopPropagation();hbSetMenu(hbMenu===v.id?null:v.id)}},
                   u.default.createElement(E,{name:"more-vertical",size:15})),
-                hbMenu===v.id&&u.default.createElement("div",{className:"hb-dosMenu",onClick:ev=>ev.stopPropagation()},
+                hbMenu===v.id&&u.default.createElement(HbMoreMenu,{title:HbMoreTitle(v),onClose:()=>hbSetMenu(null)},
                   u.default.createElement("button",{className:"del",onClick:()=>{
                     hbSetMenu(null);
                     if(window.confirm("確定要刪除「"+(v.vendor_name||"這筆領據")+"」？此動作無法復原。")) deleteOne(v.id)
@@ -9772,9 +9787,13 @@ function HbMaterialReportHub({onBack:onBack,notify:notify,projects:projects}){
         u.default.createElement("p",{className:"hb-dosLede"},"逐一登錄各空間實際採用的材料品項、品牌型號與規格顏色，交屋時附給業主。")),
       u.default.createElement("div",{className:"hb-dosRow"},
         u.default.createElement("aside",{className:"hb-dosSide"},
-          u.default.createElement("span",{className:"hb-dosSideT"},"案件"),
-          u.default.createElement("div",{className:"hb-dosNav"},
-            cats.map(c=>u.default.createElement("button",{key:c.k,className:"hb-dosNavItem"+(cat===c.k?" on":""),onClick:()=>setCat(c.k)},c.label)))),
+          u.default.createElement(HbPickField,{label:"案件",value:cat,
+            options:cats.map(c=>({k:c.k,label:c.label})),
+            onChange:function(k){ setCat(k) },title:"選擇案件"},
+            u.default.createElement(u.default.Fragment,null,
+              u.default.createElement("span",{className:"hb-dosSideT"},"案件"),
+              u.default.createElement("div",{className:"hb-dosNav"},
+                cats.map(c=>u.default.createElement("button",{key:c.k,className:"hb-dosNavItem"+(cat===c.k?" on":""),onClick:()=>setCat(c.k)},c.label)))))),
         u.default.createElement("main",null,
           u.default.createElement("div",{className:"hb-dosBar"},
             u.default.createElement("span",{className:"hb-dosCount"},loading?"載入中…":filtered.length>0?filtered.length+" 份報告書":"尚無資料"),
@@ -9796,7 +9815,7 @@ function HbMaterialReportHub({onBack:onBack,notify:notify,projects:projects}){
                     u.default.createElement(E,{name:"pencil",size:13}),u.default.createElement("span",null,"編輯")),
                   u.default.createElement("div",{className:"hb-dosMore"},
                     u.default.createElement("button",{className:"hb-dosAct ico",onClick:ev=>{ev.stopPropagation();setMenu(menu===r.id?null:r.id)}},"⋯"),
-                    menu===r.id&&u.default.createElement("div",{className:"hb-dosMenu",onClick:ev=>ev.stopPropagation()},
+                    menu===r.id&&u.default.createElement(HbMoreMenu,{title:HbMoreTitle(r),onClose:()=>setMenu(null)},
                       u.default.createElement("button",{className:"del",onClick:()=>{setMenu(null);if(window.confirm("確定要刪除「"+(r.title||"這份報告書")+"」？此動作無法復原。"))remove(r.id)}},"刪除")))));
             }))))),
     creating&&u.default.createElement(HbMaterialForm,{onCancel:()=>setCreating(!1),onSave:create,projects:projList}),
@@ -9817,6 +9836,49 @@ function HbUseMobile(bp){
   },[q]);
   return m;
 }
+/* 共用篩選欄：手機一律「全寬選擇欄 → 底部面板」，桌機維持各頁原本的控制項。
+   所有 hb-dossier 系列頁面共用這一個，避免每頁長得不一樣。 */
+/* 共用「更多操作」：手機一律用公司合約那套底部面板（標題＋×＋選項＋取消），
+   桌機維持原本的小下拉。六個頁面共用同一個。 */
+function HbMoreTitle(r){
+  if(!r)return "\u64cd\u4f5c";
+  return r.design_name||r.eng_name||r.client_name||r.vendor_name||r.title||r.name||"\u64cd\u4f5c";
+}
+function HbMoreMenu({title:title,onClose:onClose,children:children}){
+  let C=u.default.createElement;
+  let isMobile=HbUseMobile(860);
+  if(isMobile)return C(HbSheet,{title:title||"\u64cd\u4f5c",onClose:onClose||function(){}},children);
+  return C("div",{className:"hb-dosMenu",onClick:function(ev){ ev.stopPropagation() }},children);
+}
+
+function HbPickField({label:label,value:value,options:options,onChange:onChange,title:title,note:note,children:children}){
+  let C=u.default.createElement;
+  let isMobile=HbUseMobile(860);
+  let[open,setOpen]=(0,u.useState)(!1);
+  if(!isMobile)return children||null;
+  let opts=options||[];
+  let cur=null;
+  for(let i=0;i<opts.length;i++){ if(String(opts[i].k)===String(value)){ cur=opts[i]; break } }
+  if(!cur)cur=opts[0]||{label:""};
+  return C(u.default.Fragment,null,
+    label?C("span",{className:"hb-dosSideT"},label):null,
+    C("button",{type:"button",className:"hb-dosPick","aria-haspopup":"dialog",
+      "aria-expanded":open?"true":"false",
+      onClick:function(ev){ ev.stopPropagation(); setOpen(!0) }},
+      C("span",null,cur.label),
+      C(E,{name:"chevron-down",size:18})),
+    open?C(HbSheet,{title:title||label||"\u9078\u64c7",footNote:note,onClose:function(){ setOpen(!1) }},
+      opts.map(function(o){
+        let on=String(o.k)===String(value);
+        return C("button",{key:String(o.k),type:"button",
+          className:"hb-sheetOpt"+(on?" on":""),
+          "aria-current":on?"true":void 0,
+          onClick:function(){ onChange(o.k); setOpen(!1) }},
+          C("span",null,o.label),
+          on?C(E,{name:"check",size:17}):null);
+      })):null);
+}
+
 function HbSheet({title:title,onClose:onClose,children:children,footNote:footNote}){
   let C=u.default.createElement;
   let panelRef=(0,u.useRef)(null);
@@ -11182,9 +11244,12 @@ function HbChangeOrderHub({onBack,notify,projects}){
             className:"hb-dosNew"},"新增追加減帳單")),
 
         (projects||[]).length>0?h("div",{className:"hb-dosFilter"},
-          h("select",{value:proj,onChange:e=>setProj(e.target.value),className:"hb-dosSelect",style:{maxWidth:320}},
-            h("option",{value:""},"全部案件"),
-            (projects||[]).map(p=>h("option",{key:p.id,value:p.id},p.name))),
+          h(HbPickField,{label:"案件",value:proj,
+            options:[{k:"",label:"全部案件"}].concat((projects||[]).map(p=>({k:p.id,label:p.name}))),
+            onChange:function(k){ setProj(k) },title:"選擇案件"},
+            h("select",{value:proj,onChange:e=>setProj(e.target.value),className:"hb-dosSelect",style:{maxWidth:320}},
+              h("option",{value:""},"全部案件"),
+              (projects||[]).map(p=>h("option",{key:p.id,value:p.id},p.name)))),
           signed.length>0?h("span",{className:"hb-dosSum"},
             (proj?projName(proj):"全部案件")+"　已簽認 "+signed.length+" 張　·　累計 NT$ "+((sumSigned<0?"-":"")+HB_money(Math.abs(sumSigned)))):null):null,
 
@@ -11213,7 +11278,7 @@ function HbChangeOrderHub({onBack,notify,projects}){
                   h("button",{className:"hb-dosAct ico",title:"更多",
                     onClick:ev=>{ev.stopPropagation();hbSetMenu(hbMenu===r.id?null:r.id)}},
                     h(E,{name:"more-vertical",size:15})),
-                  hbMenu===r.id?h("div",{className:"hb-dosMenu",onClick:ev=>ev.stopPropagation()},
+                  hbMenu===r.id?h(HbMoreMenu,{title:HbMoreTitle(r),onClose:()=>hbSetMenu(null)},
                     h("button",{className:"del",onClick:()=>{
                       hbSetMenu(null);
                       if(window.confirm("確定要刪除「"+(r.title||"這張帳單")+"」？此動作無法復原。")) remove(r)
