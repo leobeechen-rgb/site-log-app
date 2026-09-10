@@ -1599,6 +1599,36 @@
     backdrop-filter: blur(14px) saturate(160%);
     border: 1px solid rgba(255,255,255,0.65) !important;
   }
+
+  /* ===== 手機：整頁只允許上下捲動，鎖住左右位移與回彈 ===== */
+  @media (max-width: 760px){
+    html, body{
+      max-width: 100%;
+      overflow-x: hidden;
+      overscroll-behavior: none;
+    }
+    #root,
+    .hb-shell,
+    .hb-full-root,
+    .hb-pagein{
+      max-width: 100%;
+      overflow-x: hidden !important;
+      overscroll-behavior-x: none;
+      overscroll-behavior-y: contain;
+    }
+    /* 內容不得撐破視窗寬度 */
+    .hb-pagein img,
+    .hb-pagein svg,
+    .hb-pagein canvas,
+    .hb-pagein video,
+    .hb-pagein iframe{ max-width: 100%; }
+    .hb-pagein pre{ max-width: 100%; overflow-x: auto; }
+    /* 需要自己左右捲的區塊（寬表格、分頁列）維持可捲，但不把手勢傳給整頁 */
+    .hb-navrow,
+    .hb-dtblwrap,
+    .hb-tblwrap,
+    .hb-docsTabsIn{ overscroll-behavior-x: contain; }
+  }
 </style>
 <script>
 /* === 赫柏文件共用樣式（六份單據共用，改這裡就全部一起改） === */
