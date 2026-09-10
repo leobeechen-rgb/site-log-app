@@ -2456,10 +2456,10 @@
 
   /* ===== 首頁上段四張卡：暖米色纖維紙紋（只在 .hb-heroRow .hb-landgrid 內生效） ===== */
   .hb-heroRow .hb-landgrid > .hb-entry{
-    background-color: #EDE7DA;
-    /* 第一層是低透明度暖米色遮罩，用來壓紋理對比；第二層才是紙材本身 */
+    background-color: #F4F1EA;
+    /* 第一層是暖米色遮罩，用來壓紋理對比與黃調；第二層才是紙材本身 */
     background-image:
-      linear-gradient(180deg, rgba(243,238,227,.34) 0%, rgba(236,230,217,.40) 100%),
+      linear-gradient(180deg, rgba(249,247,242,.66) 0%, rgba(245,242,235,.70) 100%),
       var(--hb-paper-fiber);
     background-size: auto, cover;
     background-position: center, center;
@@ -2471,19 +2471,27 @@
   }
   .hb-heroRow .hb-landgrid > .hb-entry:hover{
     background-image:
-      linear-gradient(180deg, rgba(250,246,238,.22) 0%, rgba(244,239,229,.30) 100%),
+      linear-gradient(180deg, rgba(252,250,246,.56) 0%, rgba(248,245,239,.62) 100%),
       var(--hb-paper-fiber);
     border-color: rgba(160,146,124,.46);
   }
-  /* 紙紋是背景層，不會攔截點擊；內容照舊在上層 */
-  .hb-heroRow .hb-landgrid > .hb-entry > *{ position: relative; z-index: 1; }
+  /* 紙紋是背景層，本來就不會攔截點擊，不需要改子元素的 position；
+     裝飾圖必須維持 absolute 才會靠右置中 */
+  .hb-heroRow .hb-landgrid > .hb-entry > .hb-entry-photo{
+    position: absolute !important;
+    top: 50% !important;
+    right: 20px !important;
+    left: auto !important;
+    bottom: auto !important;
+    z-index: 1;
+  }
 
   @media (max-width: 760px){
     /* 手機同一套紙材（前面把首頁列改成透明，這裡針對這四張還原） */
     .hb-heroRow .hb-landgrid > .hb-entry{
-      background-color: #EDE7DA;
+      background-color: #F4F1EA;
       background-image:
-        linear-gradient(180deg, rgba(243,238,227,.34) 0%, rgba(236,230,217,.40) 100%),
+        linear-gradient(180deg, rgba(249,247,242,.66) 0%, rgba(245,242,235,.70) 100%),
         var(--hb-paper-fiber);
       background-size: auto, cover;
       background-position: center, center;
@@ -2491,7 +2499,7 @@
       border: 0;
       border-bottom: 1px solid rgba(160,146,124,.3);
     }
-    .hb-heroRow .hb-landgrid > .hb-entry:active{ background-color: #E8E1D2; }
+    .hb-heroRow .hb-landgrid > .hb-entry:active{ background-color: #EEEAE1; }
   }
   @media (prefers-reduced-motion: reduce){
     .hb-heroRow .hb-landgrid > .hb-entry{ transition: none !important; }
