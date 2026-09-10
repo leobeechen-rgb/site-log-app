@@ -1622,7 +1622,7 @@ tr.grand td{border-top:2px solid var(--ink);font-weight:700;font-size:17px;backg
 .add{color:var(--ink)}
 .ded{color:var(--accent)}
 table.partyline{border:0;margin:10px 0 18px}
-table.partyline td{border:0;padding:5px 0;vertical-align:bottom}
+table.partyline td{border:0;padding:9px 0;line-height:2;height:38px;vertical-align:bottom}
 table.partyline td:first-child{width:1%;white-space:nowrap;padding-right:14px;font-size:11px;letter-spacing:.16em;color:var(--ink-3)}
 table.partyline td:first-child strong{font-weight:500;letter-spacing:.16em}
 table.partyline td:last-child{white-space:nowrap;padding-left:14px}
@@ -3013,8 +3013,8 @@ ${HB_DOC_CSS}
 <div class="brand">HERFULSINS INTERIOR DESIGN｜赫柏空間設計</div>
 <h1>赫柏空間委任設計合約書</h1>
 <table class="partyline">
-<tr><td><strong>立合約書人：</strong>委託人：</td><td class="pv"><span class="blank">${e(v.partyAName)||"　"}</span></td><td>（以下簡稱甲方）</td></tr>
-<tr><td>受託人：</td><td class="pv"><span class="blank us">赫柏空間設計</span></td><td>（以下簡稱乙方）</td></tr>
+<tr><td><strong>立合約書人：</strong>委託人</td><td class="pv"><span class="blank">${e(v.partyAName)||"　"}</span></td><td>（以下簡稱甲方）</td></tr>
+<tr><td>受託人</td><td class="pv"><span class="blank us">赫柏空間設計</span></td><td>（以下簡稱乙方）</td></tr>
 </table>
 <p>茲因甲方委託乙方辦理室內設計事宜，經雙方本於誠實信用原則共同議定本合約條款如下，以資雙方共同遵守：</p>
 
@@ -3162,6 +3162,75 @@ async function shareToLine(){
 
 function HB_openContractPrint(v){
   let html=HB_buildContractHTML(v);
+  let p=window.open("","_blank");
+  if(!p)return!1;
+  return p.document.open(),p.document.write(html),p.document.close(),!0
+}
+
+/* ---------- PDF（可列印）初步預算書 ---------- */
+function HB_buildBudgetHTML(v){
+  let e=HB_esc;
+  let fb=(val,w)=>{let t2=(val===0||val)?String(val).trim():"";return t2?'<span class="blank">'+e(t2)+'</span>':'<span class="fillin" style="width:'+(w||110)+'px"></span>'};
+  let area=HB_num(v.areaPing), price=HB_num(v.pricePerPing);
+  let dPing=HB_num(v.discountPing), dRate=HB_num(v.discountRate);
+  let billPing=dPing>0?dPing:area;
+  let rate=(dRate>0&&dRate<10)?dRate/10:1;
+  let total=HB_num(v.totalPrice)||Math.round(billPing*price*rate);
+  let tax=Math.round(total*0.05);
+  let row=(k,val)=>`<tr><td>${k}</td><td class="r amt">${val}</td></tr>`;
+  return `<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>${e(v.designName||"初步預算書")} · 赫柏空間設計初步預算書</title><style>
+${HB_DOC_CSS}
+</style></head>
+<body>
+<div class="toolbar"><button class="back" onclick="window.close()" title="返回">\u2190</button><div class="btns"><button class="print" onclick="window.print()">列印 / 存成 PDF</button></div></div>
+<div class="brand">HERFULSINS INTERIOR DESIGN｜赫柏空間設計</div>
+<h1>室內設計初步預算書</h1>
+<table class="partyline">
+<tr><td><strong>提出對象：</strong>業主</td><td class="pv"><span class="blank">${e(v.partyAName)||"　"}</span></td><td>（以下簡稱甲方）</td></tr>
+<tr><td>提出單位</td><td class="pv"><span class="blank us">赫柏空間設計</span></td><td>（以下簡稱乙方）</td></tr>
+</table>
+<p>謹依甲方提供之現況資料，就本案室內設計費用提出初步概算如下，供甲方評估參考。</p>
+
+<h2>一、案件資料</h2>
+<p>\u2756 設計案名稱：${fb(v.designName,260)}</p>
+<p>\u2756 設計案地點：${fb(v.designLocation,300)}</p>
+<p>\u2756 提出日期：${fb((v.contractYear?("中華民國 "+v.contractYear+" 年 "+v.contractMonth+" 月 "+v.contractDay+" 日"):""),200)}</p>
+
+<h2>二、坪數概算</h2>
+<table>
+<tr><th>項目</th><th class="r">金額 / 數值</th></tr>
+${row("室內面積（坪）", area?HB_money(area):"—")}
+${dPing>0?row("優惠計費坪數（坪）",HB_money(dPing)):""}
+${row("每坪概算設計費（元）", price?HB_money(price):"—")}
+${(dRate>0&&dRate<10)?row("優惠折扣", e(v.discountRate)+" 折"):""}
+<tr class="sub"><td>概算小計（未稅）</td><td class="r amt">${total?HB_money(total):"—"}</td></tr>
+<tr><td>營業稅 5%</td><td class="r amt">${total?HB_money(tax):"—"}</td></tr>
+<tr class="grand"><td>概算總計（含稅）</td><td class="r">${total?("NT$ "+HB_money(total+tax)):"—"}</td></tr>
+</table>
+${total?`<p class="quote">概算總計金額大寫：${e(HB_toChineseMoney(total+tax))} 元整</p>`:""}
+${(dPing>0||dRate>0)?`<p>優惠說明：${dPing>0?`本案以優惠坪數 ${HB_money(dPing)} 坪計算（實際面積 ${area?HB_money(area):"—"} 坪）`:""}${(dPing>0&&dRate>0)?"，並":""}${(dRate>0&&dRate<10)?`按 ${e(v.discountRate)} 折計價`:""}。</p>`:""}
+
+<h2>三、說明事項</h2>
+<div class="notes">
+<p>1. 本預算書為初步概算，僅供甲方評估參考之用，不具報價效力，亦非正式合約。</p>
+<p>2. 本概算自提出日起 30 日內有效，逾期請重新洽詢。</p>
+<p>3. 本概算僅含室內設計服務費，不含工程施作費、家具家電、軟裝陳設、拆除清運及政府規費。</p>
+<p>4. 實際費用以雙方正式簽署之委任設計合約所載金額為準；工程費用另以工程估價單計算。</p>
+<p>5. 如室內面積、格局或服務範圍變更，本概算金額應重新核算。</p>
+</div>
+
+<div class="signbox">
+<div><span class="lbl">甲方確認簽章</span></div>
+<div><span class="lbl">乙方（赫柏空間設計）</span></div>
+<div><span class="lbl">確認日期</span></div>
+</div>
+<p class="footer">本文件由赫柏空間設計工地紀錄本產生，內容以雙方正式簽署之書面合約為準</p>
+</body></html>`;
+}
+function HB_openBudgetPrint(v){
+  let html=HB_buildBudgetHTML(v);
   let p=window.open("","_blank");
   if(!p)return!1;
   return p.document.open(),p.document.write(html),p.document.close(),!0
@@ -3325,6 +3394,7 @@ function HerfulsinsAccountManager({accounts:l,onClose:t,onAdd:e,onDelete:n}){
 /* ===== 新增／編輯合約表單 ===== */
 function HerfulsinsContractForm({category:l,projects:t,accounts:e,defaultProjectId:n,initialValues:iv,editing:isEditing,onCancel:a,onCreate:i}){
   let isEng=l==="case";
+  let isBudget=l==="budget";
   let[o,f]=(0,u.useState)((iv&&iv.projectId)||n||(t[0]&&t[0].id)||"");
   let[c,r]=(0,u.useState)(()=>iv?{
     designName:iv.designName||"",designLocation:iv.designLocation||"",partyAName:iv.partyAName||"",partyARep:iv.partyARep||"",partyAAddress:iv.partyAAddress||"",partyAPhone:iv.partyAPhone||"",partyAId:iv.partyAId||"",
@@ -3364,7 +3434,7 @@ function HerfulsinsContractForm({category:l,projects:t,accounts:e,defaultProject
   };
   return u.default.createElement("div",{style:{position:"fixed",inset:0,background:"rgba(43,38,32,0.55)",display:"flex",alignItems:"center",justifyContent:"center",padding:20,zIndex:65,overflowY:"auto"}},
     u.default.createElement("div",{className:"fade-in",style:{background:s.card,borderRadius:10,padding:20,width:"100%",maxWidth:420,maxHeight:"90vh",overflowY:"auto"}},
-      u.default.createElement("h3",{style:{margin:"0 0 14px",fontSize:16,color:s.oceanDark}},isEditing?(isEng?"編輯專案工程合約":"編輯室內設計合約"):(isEng?"新增專案工程合約":"新增室內設計合約")),
+      u.default.createElement("h3",{style:{margin:"0 0 14px",fontSize:16,color:s.oceanDark}},isEditing?(isBudget?"編輯初步預算書":isEng?"編輯專案工程合約":"編輯室內設計合約"):(isBudget?"新增初步預算書":isEng?"新增專案工程合約":"新增室內設計合約")),
       !isEng&&u.default.createElement("p",{style:{margin:"-6px 0 14px",fontSize:11.5,lineHeight:1.65,color:s.inkSoft,background:s.cardAlt,borderRadius:7,padding:"9px 11px"}},"所有欄位都可以留白。留白的欄位列印出來會是可手寫的底線，直接帶到現場簽約時填寫即可；只勾選收款帳戶就能存檔列印。"),
       isEng&&u.default.createElement("div",{style:{marginBottom:12}},
         u.default.createElement("label",{style:{fontSize:12.5,color:s.inkSoft,display:"block",marginBottom:4}},"所屬案件"),
@@ -3381,7 +3451,7 @@ function HerfulsinsContractForm({category:l,projects:t,accounts:e,defaultProject
       field("甲方身分證字號（選填）","partyAId"),
       !isEng&&u.default.createElement("div",{style:{display:"flex",gap:10}},
         u.default.createElement("div",{style:{flex:1}},field("設計面積（坪．選填）","areaPing")),
-        u.default.createElement("div",{style:{flex:1}},field("每坪設計費（元．選填）","pricePerPing"))
+        u.default.createElement("div",{style:{flex:1}},field(isBudget?"每坪概算設計費（元．選填）":"每坪設計費（元．選填）","pricePerPing"))
       ),
       !isEng&&u.default.createElement("div",{style:{display:"flex",gap:10}},
         u.default.createElement("div",{style:{flex:1}},field("優惠坪數（實際計費坪數．選填）","discountPing",{placeholder:"留白則以設計面積計"})),
@@ -3394,7 +3464,7 @@ function HerfulsinsContractForm({category:l,projects:t,accounts:e,defaultProject
           " ＝ NT$ "+HB_money(Math.round(billPing()*HB_num(c.pricePerPing)*billRate()))+
           (HB_num(c.discountPing)>0&&HB_num(c.areaPing)>0?"（實際面積 "+c.areaPing+" 坪，優惠後以 "+c.discountPing+" 坪計）":"")),
       u.default.createElement("div",{style:{display:"flex",gap:8,alignItems:"flex-end"}},
-        u.default.createElement("div",{style:{flex:1}},field(isEng?"工程總價（元）":"合約總價（元．選填）","totalPrice")),
+        u.default.createElement("div",{style:{flex:1}},field(isEng?"工程總價（元）":isBudget?"概算總價（元．選填）":"合約總價（元．選填）","totalPrice")),
         !isEng&&u.default.createElement("button",{onClick:calcTotal,style:{border:`1px solid ${s.line}`,background:"none",borderRadius:7,padding:"9px 12px",fontSize:12.5,color:s.oceanDark,cursor:"pointer",marginBottom:12,whiteSpace:"nowrap"}},"自動計算")
       ),
       isEng&&c.totalPrice&&u.default.createElement("p",{style:{fontSize:12,color:s.inkSoft,marginTop:-6,marginBottom:12}},"大寫：",HB_toChineseMoney(c.totalPrice)),
@@ -3496,10 +3566,10 @@ function HerfulsinsContractsHub({onBack:l,notify:t}){
     ...HB_toROCFromParts(row.contract_date)
   });
   let genWord=row=>(row.category==="case"?HB_generateEngContractDocx(toRowValues(row)):HB_generateContractDocx(toRowValues(row))).catch(g=>t("產生失敗："+(g?.message||g)));
-  let genPdf=row=>{let ok=row.category==="case"?HB_openEngContractPrint(toRowValues(row)):HB_openContractPrint(toRowValues(row));if(!ok)t("請允許瀏覽器彈出視窗以產生 PDF")};
+  let genPdf=row=>{let ok=row.category==="budget"?HB_openBudgetPrint(toRowValues(row)):row.category==="case"?HB_openEngContractPrint(toRowValues(row)):HB_openContractPrint(toRowValues(row));if(!ok)t("請允許瀏覽器彈出視窗以產生 PDF")};
   let[selectedProject,setSelectedProject]=(0,u.useState)(null);
   let caseProjects=c;
-  let filtered=e==="company"?a.filter(v=>v.category==="company"):a.filter(v=>v.category==="case"&&(!selectedProject||v.project_id===selectedProject));
+  let filtered=e==="case"?a.filter(v=>v.category==="case"&&(!selectedProject||v.project_id===selectedProject)):a.filter(v=>v.category===e);
   return u.default.createElement("div",{className:"hb-archive hb-dossier",style:{minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:"#17150F"},
       onClick:()=>hbSetMenu(null)},
     u.default.createElement("div",{className:"hb-dosWrap"},
@@ -3510,14 +3580,14 @@ function HerfulsinsContractsHub({onBack:l,notify:t}){
           u.default.createElement("span",null,"返回公司資料庫")),
         u.default.createElement("div",{className:"hb-dosLabel"},"Contrats de Conception"),
         u.default.createElement("h1",{className:"hb-dosTitle"},"公司合約"),
-        u.default.createElement("p",{className:"hb-dosLede"},"僅公司內部可見，獨立於案件資料之外。室內設計合約用於簽約前的設計委任；專案工程合約綁定指定案件。")),
+        u.default.createElement("p",{className:"hb-dosLede"},"僅公司內部可見，獨立於案件資料之外。室內設計合約用於簽約前的設計委任；專案工程合約綁定指定案件；初步預算書用於簽約前的費用評估。")),
 
       u.default.createElement("div",{className:"hb-dosRow"},
 
         u.default.createElement("aside",{className:"hb-dosSide"},
           u.default.createElement("div",{className:"hb-dosSideT"},"分類"),
           u.default.createElement("nav",{className:"hb-dosNav"},
-            [{k:"company",label:"室內設計合約"},{k:"case",label:"專案工程合約"}].map(v=>
+            [{k:"company",label:"室內設計合約"},{k:"case",label:"專案工程合約"},{k:"budget",label:"初步預算書"}].map(v=>
               u.default.createElement("button",{key:v.k,onClick:()=>{n(v.k),setSelectedProject(null)},
                 className:"hb-dosNavItem"+(e===v.k?" on":"")},v.label))),
           e==="case"&&u.default.createElement("div",{className:"hb-dosField"},
@@ -3527,7 +3597,7 @@ function HerfulsinsContractsHub({onBack:l,notify:t}){
               u.default.createElement("option",{value:""},"全部案件"),
               caseProjects.map(v=>u.default.createElement("option",{key:v.id,value:v.id},v.name)))),
           u.default.createElement("div",{className:"hb-dosSideFoot"},
-            u.default.createElement("button",{onClick:e==="case"?HB_downloadBlankEngContract:HB_downloadBlankContract,className:"hb-dosLink"},
+            e!=="budget"&&u.default.createElement("button",{onClick:e==="case"?HB_downloadBlankEngContract:HB_downloadBlankContract,className:"hb-dosLink"},
               u.default.createElement(E,{name:"download",size:13}),
               u.default.createElement("span",null,e==="case"?"下載空白專案工程合約範本":"下載空白室內設計合約範本")),
             u.default.createElement("button",{onClick:()=>y(!0),className:"hb-dosLink"},
@@ -3537,24 +3607,24 @@ function HerfulsinsContractsHub({onBack:l,notify:t}){
         u.default.createElement("section",{className:"hb-dosMain"},
           u.default.createElement("div",{className:"hb-dosBar"},
             u.default.createElement("div",{className:"hb-dosCount"},
-              filtered.length>0?filtered.length+" 份合約":"尚無資料"),
+              filtered.length>0?filtered.length+(e==="budget"?" 份預算書":" 份合約"):"尚無資料"),
             u.default.createElement("button",{onClick:()=>{setEditingRow(null);C(!0)},className:"hb-dosNew"},
-              e==="case"?"新增專案工程合約":"新增室內設計合約")),
+              e==="budget"?"新增初步預算書":e==="case"?"新增專案工程合約":"新增室內設計合約")),
 
           d?u.default.createElement("div",{style:{textAlign:"center",padding:40}},
               u.default.createElement(E,{name:"loader",className:"animate-spin",size:22,color:"#B4573A"})):
-          filtered.length===0?u.default.createElement(He,{icon:"clipboard-list",text:"尚未建立任何合約"}):
+          filtered.length===0?u.default.createElement(He,{icon:"clipboard-list",text:e==="budget"?"尚未建立任何預算書":"尚未建立任何合約"}):
           u.default.createElement("ul",{className:"hb-dosList"},
             filtered.map((v,vi)=>u.default.createElement("li",{key:v.id,className:"hb-dosItem"},
               u.default.createElement("span",{className:"hb-dosNo"},String(vi+1).padStart(2,"0")),
               u.default.createElement("div",{className:"hb-dosBody"},
-                u.default.createElement("div",{className:"hb-dosName"},v.design_name||"空白合約（現場填寫）"),
+                u.default.createElement("div",{className:"hb-dosName"},v.design_name||(v.category==="budget"?"未命名預算書":"空白合約（現場填寫）")),
                 u.default.createElement("div",{className:"hb-dosMeta"},
                   "甲方 "+(v.party_a_name||"—"),
                   e==="case"&&(caseProjects.find(p=>p.id===v.project_id)||{}).name?"　·　"+(caseProjects.find(p=>p.id===v.project_id)||{}).name:"")),
               u.default.createElement("time",{className:"hb-dosDate"},String(v.created_at||"").slice(0,10).replace(/-/g,".")),
               u.default.createElement("div",{className:"hb-dosActs"},
-                u.default.createElement("button",{onClick:()=>genWord(v),className:"hb-dosAct"},
+                v.category!=="budget"&&u.default.createElement("button",{onClick:()=>genWord(v),className:"hb-dosAct"},
                   u.default.createElement(E,{name:"file-output",size:13}),u.default.createElement("span",null,"Word")),
                 u.default.createElement("button",{onClick:()=>genPdf(v),className:"hb-dosAct"},
                   u.default.createElement(E,{name:"printer",size:13}),u.default.createElement("span",null,"PDF")),
