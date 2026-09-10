@@ -13333,10 +13333,10 @@ react-dom/cjs/react-dom-client.production.js:
 
   /* ---- 1. 導覽項目：label 必須與底部 dock 的文字一致，才對得上 ---- */
   var HB_RAIL_ITEMS = [
-    { label: '首頁',       svg: '<path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z"/>' },
-    { label: '公司資料庫', svg: '<path d="M3 7.5A1.5 1.5 0 0 1 4.5 6h4L10.5 8h9A1.5 1.5 0 0 1 21 9.5v8A1.5 1.5 0 0 1 19.5 19h-15A1.5 1.5 0 0 1 3 17.5z"/>' },
-    { label: '專案資料庫', svg: '<rect x="5" y="4" width="14" height="17" rx="1.5"/><path d="M9 3.5h6v2.5H9z"/><path d="M9 11h6M9 15h4"/>' },
-    { label: '分享到LINE', svg: '<circle cx="17.5" cy="6" r="2.5"/><circle cx="6.5" cy="12" r="2.5"/><circle cx="17.5" cy="18" r="2.5"/><path d="m8.8 10.7 6.4-3.4M8.8 13.3l6.4 3.4"/>' }
+    { label: '首頁',       fr: 'ACCUEIL',        svg: '<path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z"/>' },
+    { label: '公司資料庫', fr: 'ADMINISTRATION', svg: '<path d="M3 7.5A1.5 1.5 0 0 1 4.5 6h4L10.5 8h9A1.5 1.5 0 0 1 21 9.5v8A1.5 1.5 0 0 1 19.5 19h-15A1.5 1.5 0 0 1 3 17.5z"/>' },
+    { label: '專案資料庫', fr: 'PROJETS',        svg: '<rect x="5" y="4" width="14" height="17" rx="1.5"/><path d="M9 3.5h6v2.5H9z"/><path d="M9 11h6M9 15h4"/>' },
+    { label: '分享到LINE', fr: 'PARTAGER',       svg: '<circle cx="17.5" cy="6" r="2.5"/><circle cx="6.5" cy="12" r="2.5"/><circle cx="17.5" cy="18" r="2.5"/><path d="m8.8 10.7 6.4-3.4M8.8 13.3l6.4 3.4"/>' }
   ];
 
   /* ---- 2. 樣式 ---- */
@@ -13345,54 +13345,86 @@ react-dom/cjs/react-dom-client.production.js:
     /* 隱藏底部導覽列（保留在 DOM，側邊列靠它做導覽） */
     '.hb-dock{display:none!important;}',
 
+    /* ===== 側邊導覽：法式檔案側標 =====
+       米白紙面、細金線、Cormorant 編號，作用中用陶土色側標而不是實心圓 */
     '.hb-rail{position:fixed;right:0;top:50%;transform:translateY(-50%);z-index:18;',
-    '  display:flex;flex-direction:column;padding:3px 0;',
+    '  display:flex;flex-direction:column;padding:0;',
     '  transition:opacity .25s ease,right .2s ease;',
     '  font-family:"Noto Sans TC","PingFang TC",sans-serif;}',
     '.hb-rail[hidden]{display:none!important;}',
 
-    /* 桌機留白夠寬時：整條浮在畫面外的留白區，不加底不加框 */
+    /* 桌機留白夠寬：浮在外殼旁的留白區，不加底不加框 */
     '.hb-rail[data-place="outside"]{background:transparent;border:0;box-shadow:none;opacity:.9;}',
     '.hb-rail[data-place="outside"]:hover{opacity:1;}',
 
-    /* 留白不夠或手機：貼在畫面右緣，用最輕的一層底 */
-    '.hb-rail[data-place="inside"]{background:rgba(250,249,246,.94);',
-    '  -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);',
-    '  border-left:1px solid #E6E2D8;border-radius:3px 0 0 3px;opacity:.92;}',
+    /* 留白不夠或手機：貼右緣，米白紙面＋左側細線 */
+    '.hb-rail[data-place="inside"]{background:#F4F0E7;',
+    '  background-image:linear-gradient(180deg,rgba(255,255,255,.46) 0%,rgba(248,245,238,.5) 100%),var(--hb-paper-fiber);',
+    '  background-size:auto,cover;background-position:center,center;background-repeat:no-repeat,no-repeat;',
+    '  border-left:1px solid rgba(160,146,124,.55);border-radius:2px 0 0 2px;',
+    '  box-shadow:-10px 0 22px -20px rgba(38,36,31,.55);opacity:.97;}',
     '.hb-rail[data-place="inside"]:hover,.hb-rail[data-place="inside"]:focus-within{opacity:1;}',
 
-    '.hb-rail__item{display:flex;align-items:center;justify-content:center;width:38px;',
-    '  padding:4px 0;background:none;border:0;cursor:pointer;text-decoration:none;',
-    '  -webkit-tap-highlight-color:transparent;}',
-    '.hb-rail__ico{width:28px;height:28px;border-radius:50%;border:1px solid transparent;',
-    '  display:flex;align-items:center;justify-content:center;color:#A8A296;',
-    '  transition:all .18s ease;}',
-    '.hb-rail__ico svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.5;',
+    '.hb-rail__items{display:flex;flex-direction:column;position:relative;}',
+    /* 頭尾各一道金色短線 */
+    '.hb-rail__items::before,.hb-rail__items::after{content:"";display:block;',
+    '  width:14px;height:1px;background:rgba(138,110,50,.6);margin:9px auto;}',
+
+    '.hb-rail__item{position:relative;display:flex;flex-direction:column;align-items:center;',
+    '  justify-content:center;width:46px;min-height:46px;padding:7px 0 8px;',
+    '  background:none;border:0;cursor:pointer;text-decoration:none;',
+    '  -webkit-tap-highlight-color:transparent;touch-action:manipulation;}',
+    '.hb-rail__item + .hb-rail__item::before{content:"";position:absolute;top:0;left:11px;right:11px;',
+    '  height:1px;background:rgba(160,146,124,.34);}',
+
+    '.hb-rail__no{font-family:"Cormorant Garamond",serif;font-size:9.5px;letter-spacing:.18em;',
+    '  color:#A79E8D;line-height:1;margin-bottom:4px;transition:color .18s ease;}',
+    '.hb-rail__ico{width:22px;height:22px;display:flex;align-items:center;justify-content:center;',
+    '  color:#6E695E;transition:color .18s ease;}',
+    '.hb-rail__ico svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.4;',
     '  stroke-linecap:round;stroke-linejoin:round;}',
     '.hb-rail__txt{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);}',
-    '.hb-rail__item:hover .hb-rail__ico{color:#1C1B18;}',
-    '.hb-rail__item:focus-visible{outline:1px solid #2E4A3C;outline-offset:-3px;}',
 
-    /* 目前所在頁：跟原本 dock 一樣是實心圓 */
-    '.hb-rail__item[aria-current="page"] .hb-rail__ico{background:#1C1B18;',
-    '  border-color:#1C1B18;color:#FFFFFF;}',
+    '.hb-rail__item:hover .hb-rail__ico{color:#26241F;}',
+    '.hb-rail__item:hover .hb-rail__no{color:#8A6E32;}',
+    '.hb-rail__item:active .hb-rail__ico{color:#B4573A;}',
+    '.hb-rail__item:focus-visible{outline:1px solid #B4573A;outline-offset:-3px;}',
 
-    /* 手機：只留圖示，避免吃掉內容寬度 */
-    '@media (max-width:859px){.hb-rail__item{width:38px;padding:5px 0;}}',
+    /* 目前所在頁：右緣一道陶土色細標 */
+    '.hb-rail__item[aria-current="page"]::after{content:"";position:absolute;right:0;',
+    '  top:9px;bottom:9px;width:2px;background:#B4573A;border-radius:1px 0 0 1px;}',
+    '.hb-rail__item[aria-current="page"] .hb-rail__ico{color:#26241F;}',
+    '.hb-rail__item[aria-current="page"] .hb-rail__no{color:#B4573A;}',
 
-    /* 收合把手：只有畫面內模式（手機／窄視窗）才會用到 */
+    /* 滑鼠移上去才浮出法文標籤（觸控裝置不出現） */
+    '.hb-rail__tip{position:absolute;right:calc(100% + 9px);top:50%;',
+    '  transform:translateY(-50%) translateX(5px);white-space:nowrap;',
+    '  opacity:0;pointer-events:none;background:#26241F;color:#F4F0E7;',
+    '  border-radius:2px;padding:6px 11px 7px;',
+    '  box-shadow:0 10px 22px -16px rgba(23,21,15,.8);',
+    '  transition:opacity .18s ease,transform .18s ease;}',
+    '.hb-rail__tipFr{display:block;font-family:"Cormorant Garamond",serif;font-size:10px;',
+    '  letter-spacing:.3em;text-transform:uppercase;line-height:1.2;}',
+    '.hb-rail__tipCn{display:block;font-size:11px;letter-spacing:.1em;line-height:1.4;',
+    '  color:rgba(244,240,231,.7);margin-top:3px;}',
+    '@media (hover:hover) and (pointer:fine){',
+    '  .hb-rail__item:hover .hb-rail__tip,.hb-rail__item:focus-visible .hb-rail__tip{',
+    '    opacity:1;transform:translateY(-50%) translateX(0);}}',
+
+    /* 收合把手：紙面小標籤 */
     '.hb-rail__handle{display:none;position:absolute;right:0;top:50%;',
-    '  transform:translateY(-50%);width:16px;height:52px;padding:0;border:0;',
-    '  border-radius:3px 0 0 3px;background:rgba(28,27,24,.10);cursor:pointer;',
-    '  align-items:center;justify-content:center;color:#6E695E;',
-    '  -webkit-tap-highlight-color:transparent;}',
+    '  transform:translateY(-50%);width:18px;height:58px;padding:0;',
+    '  border:1px solid rgba(160,146,124,.55);border-right:0;',
+    '  border-radius:3px 0 0 3px;background:#F4F0E7;cursor:pointer;',
+    '  align-items:center;justify-content:center;color:#8A6E32;',
+    '  box-shadow:-8px 0 18px -18px rgba(38,36,31,.5);',
+    '  -webkit-tap-highlight-color:transparent;touch-action:manipulation;}',
     '.hb-rail__handle svg{width:11px;height:11px;fill:none;stroke:currentColor;',
-    '  stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}',
-    '.hb-rail[data-collapsed="1"]{background:transparent!important;border:0!important;',
-    '  -webkit-backdrop-filter:none!important;backdrop-filter:none!important;padding:0;}',
+    '  stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;}',
+    '.hb-rail[data-collapsed="1"]{background:transparent!important;background-image:none!important;',
+    '  border:0!important;box-shadow:none!important;padding:0;}',
     '.hb-rail[data-collapsed="1"] .hb-rail__items{display:none;}',
     '.hb-rail[data-collapsed="1"] .hb-rail__handle{display:flex;}',
-    '.hb-rail__items{display:flex;flex-direction:column;}',
 
     '.hb-rail__top{display:none;}',
     '.hb-rail[data-scrolled="1"] .hb-rail__top{display:flex;}',
@@ -13401,14 +13433,19 @@ react-dom/cjs/react-dom-client.production.js:
   (document.head || document.documentElement).appendChild(css);
 
   /* ---- 3. 建立 DOM（掛在 body，不進 React 樹） ---- */
-  function makeItem(label, svg, onClick) {
+  function makeItem(label, svg, onClick, fr, no) {
     var b = document.createElement('button');
     b.type = 'button';
     b.className = 'hb-rail__item';
     b.setAttribute('aria-label', label);
     b.innerHTML =
+      (no ? '<span class="hb-rail__no" aria-hidden="true">' + no + '</span>' : '') +
       '<span class="hb-rail__ico"><svg viewBox="0 0 24 24" aria-hidden="true">' + svg + '</svg></span>' +
-      '<span class="hb-rail__txt">' + label + '</span>';
+      '<span class="hb-rail__txt">' + label + '</span>' +
+      '<span class="hb-rail__tip" aria-hidden="true">' +
+        (fr ? '<span class="hb-rail__tipFr">' + fr + '</span>' : '') +
+        '<span class="hb-rail__tipCn">' + label + '</span>' +
+      '</span>';
     b.addEventListener('click', onClick);
     return b;
   }
@@ -13433,13 +13470,13 @@ react-dom/cjs/react-dom-client.production.js:
   itemsBox.className = 'hb-rail__items';
   rail.appendChild(itemsBox);
 
-  var railItems = HB_RAIL_ITEMS.map(function (it) {
+  var railItems = HB_RAIL_ITEMS.map(function (it, idx) {
     var el = makeItem(it.label, it.svg, function () {
       var btn = dockButton(it.label);
       if (btn) btn.click();               // 沿用 App 原本的導覽邏輯
       else if (window.HB_RAIL_DEBUG) console.warn('[hb-rail] 找不到 dock 按鈕：' + it.label);
       setCollapsed(true);                  // 導覽後自動收回
-    });
+    }, it.fr, ('0' + (idx + 1)).slice(-2));
     itemsBox.appendChild(el);
     return { label: it.label, el: el };
   });
@@ -13452,7 +13489,7 @@ react-dom/cjs/react-dom-client.production.js:
       var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       if (sc.scrollTo) sc.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' });
       else sc.scrollTop = 0;
-    });
+    }, 'HAUT', '');
   topBtn.classList.add('hb-rail__top');
   itemsBox.appendChild(topBtn);
 
