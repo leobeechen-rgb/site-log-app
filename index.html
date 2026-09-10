@@ -9180,6 +9180,141 @@ function HB_tidySwatchPixels(cx,w,h){
   cx.putImageData(d,0,0);
 }
 
+/* 從已經載入的 <img> 上裁一塊方形出來，跑同一套修圖 */
+async function HB_swatchFromRegion(imgEl,sx,sy,side,opts){
+  opts=opts||{};
+  var out=opts.size||900;
+  var cv=document.createElement("canvas"); cv.width=out; cv.height=out;
+  var cx=cv.getContext("2d",{willReadFrequently:true});
+  cx.imageSmoothingEnabled=true; cx.imageSmoothingQuality="high";
+  cx.drawImage(imgEl,sx,sy,side,side,0,0,out,out);
+  if(opts.enhance!==false){ try{ HB_tidySwatchPixels(cx,out,out) }catch(e){} }
+  return await new Promise(function(res,rej){
+    cv.toBlob(function(b){ b?res(b):rej(new Error("\u8f38\u51fa\u5931\u6557")) },"image/jpeg",opts.quality||0.9);
+  });
+}
+
+/* ===== 從 3D 渲染圖框選材質 =====
+   固定正方形選取框，拖曳移動、滑桿調大小；即時預覽修圖後的樣子。
+   同一張圖可以連續框好幾塊，每按一次就多一列材料明細。 */
+function HbSwatchPicker({onCancel,onPick,autoFix}){
+  let C=u.default.createElement;
+  let[url,setUrl]=(0,u.useState)("");
+  let[nat,setNat]=(0,u.useState)(null);          /* {w,h} 原圖尺寸 */
+  let[cen,setCen]=(0,u.useState)({x:.5,y:.5});   /* 選取框中心，0~1 */
+  let[pct,setPct]=(0,u.useState)(.22);           /* 邊長占短邊比例 */
+  let[busy,setBusy]=(0,u.useState)(!1);
+  let[added,setAdded]=(0,u.useState)(0);
+  let[err,setErr]=(0,u.useState)("");
+  let imgRef=(0,u.useRef)(null);
+  let wrapRef=(0,u.useRef)(null);
+  let preRef=(0,u.useRef)(null);
+  let dragRef=(0,u.useRef)(!1);
+
+  (0,u.useEffect)(function(){ return function(){ if(url)try{URL.revokeObjectURL(url)}catch(e){} } },[url]);
+
+  let sideNat=nat?Math.max(24,Math.round(Math.min(nat.w,nat.h)*pct)):0;
+  let sxNat=nat?Math.round(Math.min(Math.max(cen.x*nat.w-sideNat/2,0),nat.w-sideNat)):0;
+  let syNat=nat?Math.round(Math.min(Math.max(cen.y*nat.h-sideNat/2,0),nat.h-sideNat)):0;
+
+  /* 即時預覽（在小 canvas 上跑同一套修圖） */
+  (0,u.useEffect)(function(){
+    let cv=preRef.current, im=imgRef.current;
+    if(!cv||!im||!nat)return;
+    let P=180; cv.width=P; cv.height=P;
+    let cx=cv.getContext("2d",{willReadFrequently:true});
+    try{
+      cx.clearRect(0,0,P,P);
+      cx.imageSmoothingEnabled=true; cx.imageSmoothingQuality="high";
+      cx.drawImage(im,sxNat,syNat,sideNat,sideNat,0,0,P,P);
+      if(autoFix)HB_tidySwatchPixels(cx,P,P);
+    }catch(e){}
+  },[sxNat,syNat,sideNat,nat,autoFix,url]);
+
+  let openFile=function(ev){
+    let f=ev.target.files&&ev.target.files[0];
+    ev.target.value="";
+    if(!f)return;
+    setErr(""); setNat(null); setAdded(0);
+    if(url)try{URL.revokeObjectURL(url)}catch(e){}
+    setUrl(URL.createObjectURL(f));
+    setCen({x:.5,y:.5});
+  };
+
+  let moveTo=function(ev){
+    let wrap=wrapRef.current;
+    if(!wrap||!nat)return;
+    let r=wrap.getBoundingClientRect();
+    if(!r.width||!r.height)return;
+    let x=(ev.clientX-r.left)/r.width, y=(ev.clientY-r.top)/r.height;
+    setCen({x:Math.min(1,Math.max(0,x)),y:Math.min(1,Math.max(0,y))});
+  };
+
+  let take=async function(){
+    let im=imgRef.current;
+    if(!im||!nat)return;
+    setBusy(!0); setErr("");
+    try{
+      let blob=await HB_swatchFromRegion(im,sxNat,syNat,sideNat,{size:900,quality:.9,enhance:autoFix});
+      await onPick(blob);
+      setAdded(function(n){return n+1});
+    }catch(e){
+      setErr("\u53d6\u6750\u8cea\u5931\u6557\uff1a"+((e&&e.message)||e));
+    }finally{ setBusy(!1) }
+  };
+
+  let small=nat&&sideNat<220;
+  let btn={minHeight:44,padding:"0 16px",border:"1px solid "+s.line,borderRadius:6,background:"#fff",fontSize:14,color:s.ink,cursor:"pointer"};
+
+  return C("div",{style:{position:"fixed",inset:0,background:"rgba(43,38,32,0.55)",display:"flex",alignItems:"center",justifyContent:"center",padding:16,zIndex:65}},
+    C("div",{className:"fade-in",style:{background:s.card,borderRadius:10,padding:18,width:"100%",maxWidth:680,maxHeight:"90vh",overflowY:"auto"}},
+      C("h3",{style:{margin:"0 0 4px",fontSize:17,fontWeight:400,color:s.oceanDark}},"\u5f9e 3D \u5716\u53d6\u6750\u8cea"),
+      C("p",{style:{margin:"0 0 12px",fontSize:12.5,color:s.inkSoft,lineHeight:1.7}},
+        "\u5728\u5716\u4e0a\u62d6\u66f3\u79fb\u52d5\u9078\u53d6\u6846\uff0c\u4e0b\u65b9\u6ed1\u687f\u8abf\u5927\u5c0f\u3002\u9078\u53d7\u5149\u5e73\u5747\u3001\u6c92\u6709\u53cd\u5149\u8207\u9670\u5f71\u4ea4\u754c\u7684\u5340\u57df\uff0c\u53d6\u51fa\u4f86\u7684\u6750\u8cea\u7968\u6703\u6bd4\u8f03\u6e96\u3002"),
+
+      !url
+        ? C("label",{style:{...btn,display:"inline-flex",alignItems:"center",justifyContent:"center",width:"100%"}},
+            "\u9078\u64c7 3D \u6e32\u67d3\u5716",
+            C("input",{type:"file",accept:"image/*",onChange:openFile,style:{display:"none"}}))
+        : C(u.default.Fragment,null,
+            C("div",{ref:wrapRef,
+              onPointerDown:function(ev){ dragRef.current=!0; try{ev.currentTarget.setPointerCapture(ev.pointerId)}catch(e){} moveTo(ev) },
+              onPointerMove:function(ev){ if(dragRef.current)moveTo(ev) },
+              onPointerUp:function(){ dragRef.current=!1 },
+              onPointerCancel:function(){ dragRef.current=!1 },
+              style:{position:"relative",width:"100%",lineHeight:0,borderRadius:6,overflow:"hidden",background:"#EDEAE3",touchAction:"none",cursor:"crosshair",userSelect:"none"}},
+              C("img",{ref:imgRef,src:url,alt:"",draggable:!1,
+                onLoad:function(ev){ let t=ev.target; setNat({w:t.naturalWidth,h:t.naturalHeight}) },
+                style:{width:"100%",height:"auto",display:"block",pointerEvents:"none"}}),
+              nat?C("div",{style:{position:"absolute",
+                left:(sxNat/nat.w*100)+"%", top:(syNat/nat.h*100)+"%",
+                width:(sideNat/nat.w*100)+"%", height:(sideNat/nat.h*100)+"%",
+                border:"2px solid #fff", boxShadow:"0 0 0 1px rgba(0,0,0,.55), 0 0 0 9999px rgba(20,18,14,.34)",
+                pointerEvents:"none"}}):null),
+
+            C("div",{style:{display:"flex",alignItems:"center",gap:12,marginTop:12,flexWrap:"wrap"}},
+              C("span",{style:{fontSize:12.5,color:s.inkSoft,whiteSpace:"nowrap"}},"\u9078\u53d6\u6846\u5927\u5c0f"),
+              C("input",{type:"range",min:8,max:60,step:1,value:Math.round(pct*100),
+                onChange:function(e){ setPct(Number(e.target.value)/100) },
+                style:{flex:"1 1 180px",minWidth:0}}),
+              C("canvas",{ref:preRef,style:{width:90,height:90,borderRadius:4,border:"1px solid "+s.line,background:"#fff",flex:"0 0 auto"}})),
+
+            nat?C("div",{style:{fontSize:11.5,color:small?"#B4573A":s.inkSoft,marginTop:6,lineHeight:1.6}},
+              "\u53d6\u6a23\u5340\u57df "+sideNat+"\u00d7"+sideNat+" px"+(small?"\uff08\u592a\u5c0f\uff0c\u653e\u5927\u5f8c\u6703\u7cca\uff0c\u5efa\u8b70\u62c9\u5927\u6216\u63db\u4e00\u5f35\u89e3\u6790\u5ea6\u9ad8\u7684\u5716\uff09":"")):null,
+
+            added>0?C("div",{style:{fontSize:12.5,color:s.tree,marginTop:8}},"\u5df2\u52a0\u5165 "+added+" \u7b46\u6750\u6599\uff0c\u53ef\u4ee5\u7e7c\u7e8c\u6846\u4e0b\u4e00\u584a"):null,
+            err?C("div",{style:{fontSize:12.5,color:s.danger,marginTop:8}},err):null,
+
+            C("div",{style:{display:"flex",gap:8,marginTop:14,flexWrap:"wrap"}},
+              C("button",{type:"button",onClick:take,disabled:busy,
+                style:{...Dl,flex:"2 1 180px",minHeight:46,opacity:busy?.5:1}},busy?"\u8655\u7406\u4e2d\u2026":"\u52a0\u5165\u6750\u6599\u660e\u7d30"),
+              C("label",{style:{...btn,flex:"1 1 120px",display:"inline-flex",alignItems:"center",justifyContent:"center"}},
+                "\u63db\u4e00\u5f35\u5716",
+                C("input",{type:"file",accept:"image/*",onChange:openFile,style:{display:"none"}})))),
+
+      C("button",{type:"button",onClick:onCancel,style:{...btn,width:"100%",marginTop:10}},"\u95dc\u9589")));
+}
+
 async function HB_makeSwatch(file,opts){
   opts=opts||{};
   var out=opts.size||900;
@@ -9294,6 +9429,18 @@ function HbMaterialForm({onCancel,onSave,projects,initial}){
     setItems(xs=>xs.map((x,idx)=>idx===i?{...x,photoUrl:"",photoPath:""}:x));
     if(p){try{r2DeleteSitelogFile("sitelog-photos",p)}catch(e){}}
   };
+  let[showPicker,setShowPicker]=(0,u.useState)(!1);
+  let addFromRender=async blob=>{
+    setPhotoErr("");
+    let path="material/"+Be()+".jpg";
+    let url=await r2UploadSitelogFile("sitelog-photos",path,blob,"image/jpeg");
+    setItems(xs=>{
+      let last=xs[xs.length-1];
+      let lastEmpty=last&&!String(last.item||"").trim()&&!String(last.brand||"").trim()&&!String(last.spec||"").trim()&&!last.photoUrl;
+      if(lastEmpty)return xs.map((x,idx)=>idx===xs.length-1?{...x,photoUrl:url,photoPath:path}:x);
+      return [...xs,{space:last?last.space:"",item:"",brand:"",spec:"",photoUrl:url,photoPath:path}];
+    });
+  };
   let valid=title.trim()&&items.some(x=>x.item.trim());
   let lb={fontSize:12.5,color:s.inkSoft,display:"block",marginBottom:4,marginTop:10};
   return u.default.createElement("div",{style:{position:"fixed",inset:0,background:"rgba(43,38,32,0.45)",display:"flex",alignItems:"center",justifyContent:"center",padding:20,zIndex:55}},
@@ -9312,6 +9459,10 @@ function HbMaterialForm({onCancel,onSave,projects,initial}){
         u.default.createElement("label",{style:{fontSize:12.5,color:s.inkSoft,display:"flex",alignItems:"center",gap:6,cursor:"pointer",marginTop:10}},
           u.default.createElement("input",{type:"checkbox",checked:autoFix,onChange:e=>setAutoFix(e.target.checked)}),
           "自動修圖（方形裁切・自動色階・白平衡）")),
+      u.default.createElement("button",{type:"button",onClick:()=>setShowPicker(!0),
+        style:{width:"100%",minHeight:46,marginBottom:10,border:"1px dashed "+s.line,borderRadius:6,background:"none",fontSize:13.5,color:s.oceanDark,cursor:"pointer"}},
+        "\u5f9e 3D \u5716\u53d6\u6750\u8cea\uff08\u6846\u4e00\u584a\u5c31\u65b0\u589e\u4e00\u5217\uff09"),
+      showPicker?u.default.createElement(HbSwatchPicker,{autoFix:autoFix,onCancel:()=>setShowPicker(!1),onPick:addFromRender}):null,
       photoErr?u.default.createElement("div",{style:{fontSize:12,color:s.danger,margin:"2px 0 6px"}},photoErr):null,
       items.map(function(x,i){
         return u.default.createElement("div",{key:i,style:{border:"1px solid "+s.line,borderRadius:6,padding:10,marginBottom:8,background:s.paper}},
