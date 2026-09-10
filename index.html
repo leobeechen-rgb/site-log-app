@@ -2238,6 +2238,148 @@
     .hb-dayNum{ font-size:52px; }
     .hb-rdvCardFoot{ gap:6px; }
   }
+
+  /* ===== 首頁手機切版 ＋ 進場動畫 ===== */
+  .hb-lgLabel{ display: none; }
+
+  /* 捲入淡入：class 由 JS 加上，JS 失敗時內容照常顯示 */
+  .hb-rv{ opacity: 0; transform: translateY(8px); transition: opacity .45s ease, transform .45s ease; }
+  .hb-rv.hb-rv-in{ opacity: 1; transform: none; }
+
+  @media (max-width: 760px){
+    /* 首頁的入口不用原本掛載時的整批動畫，改成捲到才播 */
+    .hb-pagein .hb-heroRow .hb-entry,
+    .hb-pagein .hb-landing-tri .hb-entry{ animation: none !important; }
+
+    /* 品牌列：保留 HERFULSINS、帳戶、登出 */
+    .hb-topnav{ padding: 0 16px; height: 60px; min-height: 60px; }
+
+    /* 上段：LOGO 靠左，預留旋轉空間 */
+    .hb-heroRow{ padding: 22px 18px 8px !important; gap: 18px; }
+    .hb-hero-mark{
+      width: 64px; height: 64px; margin: 0 0 18px;
+      animation: hbHeroIn .45s ease-out both;
+    }
+    .hb-hero-mark .hb-logo-mark{ width: 68%; height: 68%; }
+    .hb-hero-caps,
+    .hb-hero-caps-cn,
+    .hb-hero-dash,
+    .hb-hero-p,
+    .hb-hero-pcn,
+    .hb-hero-cities,
+    .hb-hero-cities-cn{ display: none; }
+    .hb-hero-h1{
+      font-size: clamp(26px,7.6vw,34px); line-height: 1.24; overflow-wrap: anywhere;
+      animation: hbHeroIn .45s ease-out .06s both;
+    }
+    .hb-hero-h1cn{
+      font-size: 14px; letter-spacing: .06em; margin-top: 12px; color: #4A443B;
+      animation: hbHeroIn .45s ease-out .12s both;
+    }
+    .hb-hero-rule{ width: 100%; height: 1px; background: rgba(140,120,80,.42); margin: 20px 0 0; }
+
+    /* 功能入口小標 */
+    .hb-lgLabel{
+      display: block; padding: 18px 0 12px;
+      border-bottom: 1px solid rgba(160,146,124,.34);
+    }
+    .hb-lgLabelFr{
+      display: block; font-family:"Cormorant Garamond",serif;
+      font-size: 12px; letter-spacing: .34em; text-transform: uppercase; color: #6B6459;
+    }
+    .hb-lgLabelCn{
+      display: block; margin-top: 5px; font-size: 13px; letter-spacing: .1em; color: #8C8371;
+    }
+
+    /* 入口列：單欄、細分隔線 */
+    .hb-heroRow .hb-landgrid,
+    .hb-landing-tri{
+      display: block !important; padding: 0 !important; gap: 0 !important; margin: 0;
+    }
+    .hb-heroRow .hb-entry,
+    .hb-landing-tri .hb-entry{
+      display: block; position: relative; height: auto; min-height: 0; margin: 0;
+      padding: 18px 46px 18px 62px;
+      background-color: transparent; background-image: none;
+      border: 0; border-bottom: 1px solid rgba(160,146,124,.3);
+      border-radius: 0; box-shadow: none; overflow: visible;
+      border-left: 0 !important; border-top: 0 !important; padding-top: 18px !important;
+    }
+    .hb-heroRow .hb-entry:hover,
+    .hb-landing-tri .hb-entry:hover{ background: transparent; }
+    .hb-heroRow .hb-entry:active,
+    .hb-landing-tri .hb-entry:active{ background-color: rgba(110,28,36,.05); }
+    .hb-heroRow .hb-entry:focus-visible,
+    .hb-landing-tri .hb-entry:focus-visible{ outline: 2px solid #6E1C24; outline-offset: -3px; }
+    .hb-heroRow .hb-entry::before,
+    .hb-landing-tri .hb-entry::before{
+      left: 6px !important; top: 19px !important;
+      font-family:"Cormorant Garamond",serif; font-size: 22px; color: #8A6E32;
+    }
+    .hb-heroRow .hb-entry::after,
+    .hb-landing-tri .hb-entry::after{
+      left: 44px !important; top: 20px !important; bottom: 20px !important;
+      width: 1px; background: rgba(160,146,124,.42);
+    }
+    .hb-heroRow .hb-entry-cat,
+    .hb-landing-tri .hb-entry-cat,
+    .hb-heroRow .hb-entry-go,
+    .hb-landing-tri .hb-entry-go,
+    .hb-heroRow .hb-entry-tail,
+    .hb-landing-tri .hb-entry-tail{ display: none; }
+    .hb-heroRow .hb-entry-t,
+    .hb-landing-tri .hb-entry-t{
+      font-family:"Cormorant Garamond","Noto Serif TC",serif; font-weight: 500;
+      font-size: 20px; line-height: 1.25; color: #2A2622; overflow-wrap: anywhere;
+    }
+    .hb-heroRow .hb-entry-tcn,
+    .hb-landing-tri .hb-entry-tcn{
+      font-family:"Noto Sans TC",sans-serif; font-size: 15px; letter-spacing: .06em;
+      color: #3A352E; margin-top: 5px; line-height: 1.5;
+    }
+    .hb-heroRow .hb-entry-d,
+    .hb-landing-tri .hb-entry-d{
+      display: block; -webkit-line-clamp: none; overflow: visible; max-width: none;
+      margin-top: 7px; font-size: 12.5px; line-height: 1.7; color: #7E786C;
+    }
+    /* 裝飾照：沿用原素材，靠右不壓字 */
+    .hb-heroRow .hb-entry.has-img,
+    .hb-landing-tri .hb-entry.has-img{ padding-right: 122px; }
+    .hb-heroRow .hb-entry-photo,
+    .hb-landing-tri .hb-entry-photo{
+      right: 40px; width: 76px; max-width: 76px; aspect-ratio: 1;
+      background-position: center; background-size: contain;
+    }
+    .hb-heroRow .hb-entry-arrow,
+    .hb-landing-tri .hb-entry-arrow{
+      display: block; position: absolute; right: 8px; top: 50%;
+      transform: translateY(-50%); color: #8A6E32; line-height: 0;
+      transition: transform .2s ease;
+    }
+
+    /* 中段品牌橫幅：縮短高度，留在 04 與 05 之間 */
+    .hb-banner{ padding: 18px 18px !important; }
+    .hb-bn-h{ font-size: 16px !important; line-height: 1.35; }
+    .hb-bn-sub{ font-size: 10.5px !important; margin-top: 7px !important; }
+    .hb-bn-leaves{ width: 96px; opacity: .55; }
+
+    .hb-footline{ padding: 22px 18px 26px; flex-direction: column; gap: 8px; text-align: center; }
+    .hb-footline-r{ display: none; }
+  }
+
+  /* 桌機 hover 箭頭右移 */
+  @media (hover:hover) and (pointer:fine){
+    .hb-entry:hover .hb-entry-arrow{ transform: translateY(-50%) translateX(3px); }
+  }
+
+  @keyframes hbHeroIn{
+    from{ opacity:0; transform: translateY(8px) }
+    to{ opacity:1; transform: none }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .hb-hero-mark, .hb-hero-h1, .hb-hero-h1cn{ animation: none !important; opacity: 1 !important; transform: none !important; }
+    .hb-rv{ opacity: 1 !important; transform: none !important; transition: none !important; }
+  }
 </style>
 <script>
 /* === 赫柏文件共用樣式（六份單據共用，改這裡就全部一起改） === */
@@ -6455,7 +6597,7 @@ function HbLanding({onCase:l,onCompany:t,onManageStaff:e,onLogout:n,onQuickQuote
 
       
 
-      u.default.createElement("div",{className:"hb-heroRow"},u.default.createElement("div",{className:"hb-hero"},u.default.createElement("div",{className:"hb-hero-mark"},u.default.createElement("img",{className:"hb-logo-mark",src:HB_LOGO_MARK,alt:"赫柏空間設計"})),u.default.createElement("div",{className:"hb-hero-caps"},"INT\u00C9RIEURS",u.default.createElement("br",null),"POUR UNE VIE",u.default.createElement("br",null),"PLUS BELLE"),u.default.createElement("div",{className:"hb-hero-caps-cn"},"為了更好的日常空間"),u.default.createElement("div",{className:"hb-hero-dash"}),u.default.createElement("h1",{className:"hb-hero-h1"},"La douceur",u.default.createElement("br",null),"que la vie d\u00E9pose."),u.default.createElement("div",{className:"hb-hero-h1cn"},"\u597D\u7684\u7A7A\u9593\uFF0C\u662F\u751F\u6D3B\u6C89\u6FB1\u5F8C\u7684\u6EAB\u67D4\u3002"),u.default.createElement("p",{className:"hb-hero-p"},"Projets, mati\u00E8res, plans et contrats,",u.default.createElement("br",null),"consign\u00E9s en un seul lieu."),u.default.createElement("p",{className:"hb-hero-pcn"},"\u6848\u4EF6\u3001\u6750\u6599\u3001\u5716\u9762\u8207\u5408\u7D04\uFF0C\u5728\u540C\u4E00\u8655\u88AB\u5B8C\u6574\u5730\u8A18\u4E0B\u4F86\u3002"),u.default.createElement("div",{className:"hb-hero-rule"}),u.default.createElement("div",{className:"hb-hero-cities"},"CHIAYI",u.default.createElement("i",null),"YUNLIN",u.default.createElement("i",null),"TAINAN"),u.default.createElement("div",{className:"hb-hero-cities-cn"},"\u5609\u7FA9\u3000\u96F2\u6797\u3000\u53F0\u5357")),u.default.createElement("div",{className:"hb-landgrid",style:{display:"grid",gridTemplateColumns:"repeat(2,minmax(0,1fr))",gap:20,gridTemplateRows:"repeat(2,210px)",alignContent:"start"}},
+      u.default.createElement("div",{className:"hb-heroRow"},u.default.createElement("div",{className:"hb-hero"},u.default.createElement("div",{className:"hb-hero-mark"},u.default.createElement("img",{className:"hb-logo-mark",src:HB_LOGO_MARK,alt:"赫柏空間設計"})),u.default.createElement("div",{className:"hb-hero-caps"},"INT\u00C9RIEURS",u.default.createElement("br",null),"POUR UNE VIE",u.default.createElement("br",null),"PLUS BELLE"),u.default.createElement("div",{className:"hb-hero-caps-cn"},"為了更好的日常空間"),u.default.createElement("div",{className:"hb-hero-dash"}),u.default.createElement("h1",{className:"hb-hero-h1"},"La douceur",u.default.createElement("br",null),"que la vie d\u00E9pose."),u.default.createElement("div",{className:"hb-hero-h1cn"},"\u597D\u7684\u7A7A\u9593\uFF0C\u662F\u751F\u6D3B\u6C89\u6FB1\u5F8C\u7684\u6EAB\u67D4\u3002"),u.default.createElement("p",{className:"hb-hero-p"},"Projets, mati\u00E8res, plans et contrats,",u.default.createElement("br",null),"consign\u00E9s en un seul lieu."),u.default.createElement("p",{className:"hb-hero-pcn"},"\u6848\u4EF6\u3001\u6750\u6599\u3001\u5716\u9762\u8207\u5408\u7D04\uFF0C\u5728\u540C\u4E00\u8655\u88AB\u5B8C\u6574\u5730\u8A18\u4E0B\u4F86\u3002"),u.default.createElement("div",{className:"hb-hero-rule"}),u.default.createElement("div",{className:"hb-hero-cities"},"CHIAYI",u.default.createElement("i",null),"YUNLIN",u.default.createElement("i",null),"TAINAN"),u.default.createElement("div",{className:"hb-hero-cities-cn"},"\u5609\u7FA9\u3000\u96F2\u6797\u3000\u53F0\u5357")),u.default.createElement("div",{className:"hb-lgLabel"},u.default.createElement("span",{className:"hb-lgLabelFr"},"LES ESPACES"),u.default.createElement("span",{className:"hb-lgLabelCn"},"\u529F\u80FD\u5165\u53E3")),u.default.createElement("div",{className:"hb-landgrid",style:{display:"grid",gridTemplateColumns:"repeat(2,minmax(0,1fr))",gap:20,gridTemplateRows:"repeat(2,210px)",alignContent:"start"}},
         u.default.createElement(HbCompanyGridCard,{icon:"clipboard-list",title:"\u6848\u4ef6\u8cc7\u6599\u5eab",desc:"\u7ba1\u7406\u9032\u884c\u4e2d\u7684\u7a7a\u9593\u8a2d\u8a08\u8207\u5de5\u7a0b\u5c08\u6848\uff1a\u65bd\u5de5\u7167\u7247\u3001\u6750\u6599\u9001\u9054\u3001\u5c08\u6848\u6a94\u6848\u3001\u8a2d\u5099\u8cc7\u6599",onClick:l}),
         u.default.createElement(HbCompanyGridCard,{icon:"folder",title:"\u516c\u53f8\u8cc7\u6599\u5eab",desc:"\u516c\u53f8\u71df\u904b\u3001\u884c\u653f\u8207\u5236\u5f0f\u5408\u7d04\uff1a\u8a2d\u8a08\u5408\u7d04\u3001\u5de5\u7a0b\u5831\u50f9\u55ae",onClick:t}),
         u.default.createElement(HbCompanyGridCard,{icon:"image",title:"\u8d6b\u67cf\u7a7a\u9593\u4f5c\u54c1\u6848\u4f8b",desc:"\u8de8\u6848\u4ef6\u7684\u884c\u92b7\uff0f\u63d0\u6848\u7528\u7167\u7247\u5eab",onClick:mp}),
@@ -14704,5 +14846,51 @@ react-dom/cjs/react-dom-client.production.js:
 })();
 </script>
 
+
+<script>
+/* 首頁功能入口：捲進畫面才淡入，每列只播一次，同批錯開 60ms。
+   JS 或 IntersectionObserver 不可用時完全不套用，內容照常顯示可點。 */
+(function(){
+  try{
+    if(!("IntersectionObserver" in window))return;
+    var mq=window.matchMedia?window.matchMedia("(max-width: 760px)"):null;
+    var rm=window.matchMedia?window.matchMedia("(prefers-reduced-motion: reduce)"):null;
+    var io=new IntersectionObserver(function(entries){
+      entries.forEach(function(en){
+        if(!en.isIntersecting)return;
+        var el=en.target;
+        io.unobserve(el);
+        el.style.transitionDelay=(el.getAttribute("data-hbrv")||"0")+"ms";
+        el.classList.add("hb-rv-in");
+      });
+    },{rootMargin:"0px 0px -6% 0px",threshold:0.08});
+    function scan(){
+      if(rm&&rm.matches)return;
+      if(mq&&!mq.matches)return;
+      var groups=document.querySelectorAll(".hb-heroRow .hb-landgrid, .hb-landing-tri");
+      Array.prototype.forEach.call(groups,function(gp){
+        var n=0;
+        Array.prototype.forEach.call(gp.children,function(el){
+          if(!el.classList||!el.classList.contains("hb-entry"))return;
+          if(el.getAttribute("data-hbrv")!==null)return;
+          el.setAttribute("data-hbrv",String(n*60));
+          el.classList.add("hb-rv");
+          n++;
+          io.observe(el);
+        });
+      });
+    }
+    var t=null;
+    function queue(){ if(t)clearTimeout(t); t=setTimeout(scan,80) }
+    if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",queue);
+    else queue();
+    var root=document.getElementById("root")||document.body;
+    if(window.MutationObserver&&root){
+      new MutationObserver(queue).observe(root,{childList:true,subtree:true});
+    }
+    if(mq&&mq.addEventListener)mq.addEventListener("change",queue);
+  }catch(e){}
+})();
+</script>
 </body>
 </html>
