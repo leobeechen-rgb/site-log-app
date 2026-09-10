@@ -1790,6 +1790,47 @@
     .hb-dosLede{ font-size: 13.5px; line-height: 1.9; margin-top: 12px; }
     .hb-dosWrap::after{ padding: 16px 0 26px; font-size: 10.5px; letter-spacing: .22em; }
   }
+
+  /* ===== 手機：所有捲動容器一律鎖住左右（含首頁 .hb-scroll） ===== */
+  @media (max-width: 760px){
+    .hb-scroll,
+    .hb-landing-bg,
+    .hb-docsHub,
+    .hb-dossier,
+    .hb-archive{
+      max-width: 100%;
+      overflow-x: hidden !important;
+      overscroll-behavior-x: none;
+    }
+    .hb-scroll{ overscroll-behavior-y: contain; }
+
+    /* 100vw 出血在手機一律收回容器內，這是左右滑動的主要來源 */
+    .hb-topnav,
+    .hb-banner,
+    .hb-dbfoot{
+      width: 100% !important;
+      max-width: 100% !important;
+      margin-left: 0 !important;
+      margin-right: 0 !important;
+    }
+
+    /* 內容不得撐破視窗寬度 */
+    .hb-scroll img,
+    .hb-scroll svg,
+    .hb-scroll canvas,
+    .hb-scroll video,
+    .hb-scroll iframe{ max-width: 100%; }
+    .hb-scroll pre{ max-width: 100%; overflow-x: auto; }
+
+    /* 大字標題在窄螢幕允許斷行，避免單字撐寬 */
+    .hb-hero-h1,
+    .hb-hero-caps,
+    .hb-bn-h,
+    .hb-docsFr,
+    .hb-dosTitle,
+    .hb-pagehead-h,
+    .hb-arcTitle{ overflow-wrap: anywhere; }
+  }
 </style>
 <script>
 /* === 赫柏文件共用樣式（六份單據共用，改這裡就全部一起改） === */
