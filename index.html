@@ -2721,6 +2721,24 @@
     box-shadow: 0 6px 10px -10px rgba(23,21,15,.35);
   }
   .hb-sheetCancel{ position: sticky; bottom: 0; background: #FBFAF6; z-index: 3; }
+
+  /* ===== 手機選單鍵的讓位 =====
+     按鈕是固定在右上角的，凡是右側有內容的頂端列都要讓出空間，
+     否則會蓋住「返回」之類的字。逐頁列出，不用萬用選擇器。 */
+  @media (max-width: 859px){
+    /* 公司資料庫：HERFULSINS ｜ ← 返回首頁（右側有字） */
+    html[data-hbrail="1"] .hb-company .hb-dbback{ padding-right: 62px !important; }
+    /* 文件系統：HERFULSINS ← 返回公司資料庫 */
+    html[data-hbrail="1"] .hb-docsBrand{ padding-right: 58px; }
+    /* 預約管理：HERFULSINS · MAISON ｜ 返回首頁 */
+    html[data-hbrail="1"] .hb-rdvTop{ padding-right: 58px; }
+    /* 作品照片庫：返回 ＋ 品牌字 */
+    html[data-hbrail="1"] .hb-mktHead{ padding-right: 58px; }
+    /* 檔案類頁面：返回鍵靠左，只要讓標題不要頂到按鈕即可 */
+    html[data-hbrail="1"] .hb-dossier .hb-dosLabel,
+    html[data-hbrail="1"] .hb-dossier .hb-dosTitle{ padding-right: 54px; }
+    /* 首頁深色列：按鈕改放它下方，不需要讓位 */
+  }
 </style>
 <script>
 /* === 赫柏文件共用樣式（六份單據共用，改這裡就全部一起改） === */
@@ -13655,10 +13673,13 @@ react-dom/cjs/react-dom-client.production.js:
   function placeMenuBtn(show) {
     if (!show || !isMobile()) {
       menuBtn.removeAttribute('data-on');
+      document.documentElement.removeAttribute('data-hbrail');
       closeSheet();
       return;
     }
     menuBtn.setAttribute('data-on', '1');
+    document.documentElement.setAttribute('data-hbrail', '1');
+    /* 首頁那條深色品牌列自己有帳戶／登出圖示，按鈕改放它下面 */
     var top = 10;
     var nav = document.querySelector('.hb-topnav');
     if (nav) {
