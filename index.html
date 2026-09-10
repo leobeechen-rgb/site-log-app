@@ -3354,7 +3354,7 @@ function HerfulsinsContractForm({category:l,projects:t,accounts:e,defaultProject
   };
   return u.default.createElement("div",{style:{position:"fixed",inset:0,background:"rgba(43,38,32,0.55)",display:"flex",alignItems:"center",justifyContent:"center",padding:20,zIndex:65,overflowY:"auto"}},
     u.default.createElement("div",{className:"fade-in",style:{background:s.card,borderRadius:10,padding:20,width:"100%",maxWidth:420,maxHeight:"90vh",overflowY:"auto"}},
-      u.default.createElement("h3",{style:{margin:"0 0 14px",fontSize:16,color:s.oceanDark}},isEditing?(isEng?"編輯工程合約":"編輯設計合約"):(isEng?"新增工程合約":"新增設計合約")),
+      u.default.createElement("h3",{style:{margin:"0 0 14px",fontSize:16,color:s.oceanDark}},isEditing?(isEng?"編輯專案工程合約":"編輯室內設計合約"):(isEng?"新增專案工程合約":"新增室內設計合約")),
       !isEng&&u.default.createElement("p",{style:{margin:"-6px 0 14px",fontSize:11.5,lineHeight:1.65,color:s.inkSoft,background:s.cardAlt,borderRadius:7,padding:"9px 11px"}},"所有欄位都可以留白。留白的欄位列印出來會是可手寫的底線，直接帶到現場簽約時填寫即可；只勾選收款帳戶就能存檔列印。"),
       isEng&&u.default.createElement("div",{style:{marginBottom:12}},
         u.default.createElement("label",{style:{fontSize:12.5,color:s.inkSoft,display:"block",marginBottom:4}},"所屬案件"),
@@ -3435,7 +3435,7 @@ function HerfulsinsContractsHub({onBack:l,notify:t}){
       duration_days:v.durationDays||null,payment_stages:v.paymentStages||null
     });
     if(g){t("新增失敗："+g.message);return}
-    C(!1),t(e==="case"?"已新增工程合約":"已新增設計合約"),load()
+    C(!1),t(e==="case"?"已新增專案工程合約":"已新增室內設計合約"),load()
   };
   let updateContract=async(id,v)=>{
     let{error:g}=await q.from("sitelog_contracts").update({
@@ -3489,15 +3489,15 @@ function HerfulsinsContractsHub({onBack:l,notify:t}){
           u.default.createElement(E,{name:"arrow-left",size:15}),
           u.default.createElement("span",null,"返回公司資料庫")),
         u.default.createElement("div",{className:"hb-dosLabel"},"Contrats de Conception"),
-        u.default.createElement("h1",{className:"hb-dosTitle"},"設計合約"),
-        u.default.createElement("p",{className:"hb-dosLede"},"僅公司內部可見，獨立於案件資料之外。前期設計合約用於簽約前的設計委任；工程合約綁定指定案件。")),
+        u.default.createElement("h1",{className:"hb-dosTitle"},"公司合約"),
+        u.default.createElement("p",{className:"hb-dosLede"},"僅公司內部可見，獨立於案件資料之外。室內設計合約用於簽約前的設計委任；專案工程合約綁定指定案件。")),
 
       u.default.createElement("div",{className:"hb-dosRow"},
 
         u.default.createElement("aside",{className:"hb-dosSide"},
           u.default.createElement("div",{className:"hb-dosSideT"},"分類"),
           u.default.createElement("nav",{className:"hb-dosNav"},
-            [{k:"company",label:"前期設計合約"},{k:"case",label:"指定案件工程合約"}].map(v=>
+            [{k:"company",label:"室內設計合約"},{k:"case",label:"專案工程合約"}].map(v=>
               u.default.createElement("button",{key:v.k,onClick:()=>{n(v.k),setSelectedProject(null)},
                 className:"hb-dosNavItem"+(e===v.k?" on":"")},v.label))),
           e==="case"&&u.default.createElement("div",{className:"hb-dosField"},
@@ -3509,7 +3509,7 @@ function HerfulsinsContractsHub({onBack:l,notify:t}){
           u.default.createElement("div",{className:"hb-dosSideFoot"},
             u.default.createElement("button",{onClick:e==="case"?HB_downloadBlankEngContract:HB_downloadBlankContract,className:"hb-dosLink"},
               u.default.createElement(E,{name:"download",size:13}),
-              u.default.createElement("span",null,e==="case"?"下載空白工程合約範本":"下載空白合約範本")),
+              u.default.createElement("span",null,e==="case"?"下載空白專案工程合約範本":"下載空白室內設計合約範本")),
             u.default.createElement("button",{onClick:()=>y(!0),className:"hb-dosLink"},
               u.default.createElement(E,{name:"folder",size:13}),
               u.default.createElement("span",null,"帳戶管理")))),
@@ -3519,11 +3519,11 @@ function HerfulsinsContractsHub({onBack:l,notify:t}){
             u.default.createElement("div",{className:"hb-dosCount"},
               filtered.length>0?filtered.length+" 份合約":"尚無資料"),
             u.default.createElement("button",{onClick:()=>{setEditingRow(null);C(!0)},className:"hb-dosNew"},
-              e==="case"?"新增工程合約":"新增設計合約")),
+              e==="case"?"新增專案工程合約":"新增室內設計合約")),
 
           d?u.default.createElement("div",{style:{textAlign:"center",padding:40}},
               u.default.createElement(E,{name:"loader",className:"animate-spin",size:22,color:"#B4573A"})):
-          filtered.length===0?u.default.createElement(He,{icon:"clipboard-list",text:"尚未建立任何設計合約"}):
+          filtered.length===0?u.default.createElement(He,{icon:"clipboard-list",text:"尚未建立任何合約"}):
           u.default.createElement("ul",{className:"hb-dosList"},
             filtered.map((v,vi)=>u.default.createElement("li",{key:v.id,className:"hb-dosItem"},
               u.default.createElement("span",{className:"hb-dosNo"},String(vi+1).padStart(2,"0")),
@@ -7807,7 +7807,7 @@ function HbAttendanceForm({onCancel,onCreate,projects,workerOptions,lastRateFor}
 function HbDocsHub({onBack:onBack,notify:notify,projects:projects}){
   let C=u.default.createElement;
   let DOCTABS=[
-    ["contracts","設計合約","Contrats de Conception","設計合約"],
+    ["contracts","公司合約","Contrats de la Maison","公司合約"],
     ["estimate","工程報價","Devis de Chantier","工程報價"],
     ["receipts","工程收據","Reçus de Chantier","工程收據"],
     ["vendorReceipts","廠商領據","Reçus Fournisseurs","廠商領據"],
@@ -7908,7 +7908,7 @@ var HB_ENTRY_META={
   "客戶預約頁面":{cat:"RENDEZ-VOUS",catCn:"預約",fr:"Prise de Rendez-vous",go:"OUVRIR",goCn:"開啟"},
   "預約管理":{cat:"AGENDA",catCn:"行事曆",fr:"Gestion de l’Agenda",go:"GÉRER",goCn:"管理"},
   "提案簡報":{cat:"PRÉSENTATION",catCn:"簡報",fr:"Présentation de Projet",go:"CRÉER",goCn:"製作"},
-  "設計合約":{cat:"CONTRATS",catCn:"合約",fr:"Contrats de Conception",go:"RÉDIGER",goCn:"擬定"},
+  "公司合約":{cat:"CONTRATS",catCn:"合約",fr:"Contrats de la Maison",go:"RÉDIGER",goCn:"擬定"},
   "追加減帳單":{cat:"AVENANTS",catCn:"追加減",fr:"Avenants au Contrat",go:"OUVRIR",goCn:"開啟"},
   "工程收據":{cat:"REÇUS",catCn:"收據",fr:"Reçus de Chantier",go:"ÉMETTRE",goCn:"開立"},
   "廠商領據":{cat:"FOURNISSEURS",catCn:"廠商",fr:"Reçus Fournisseurs",go:"ÉMETTRE",goCn:"開立"},
