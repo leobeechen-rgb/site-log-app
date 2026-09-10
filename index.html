@@ -1990,6 +1990,254 @@
       display: block; flex: 0 0 auto; width: 40px; height: 2px; background: #B4573A;
     }
   }
+
+  /* ===== 預約管理 RENDEZ-VOUS（法式建築雜誌風） ===== */
+  .hb-rdv{
+    --rdvPaper:#F3EEE5; --rdvInk:#292824; --rdvInk2:#6B665D; --rdvInk3:#9A9488;
+    --rdvTerra:#A35D46; --rdvLine:rgba(41,40,36,.14); --rdvLine2:rgba(41,40,36,.30);
+    --rdvSerif:"Cormorant Garamond","Noto Serif TC","Songti TC",serif;
+    background: var(--rdvPaper); min-height: 100vh; color: var(--rdvInk);
+    font-family:"Noto Sans TC",sans-serif;
+    max-width: 1420px; margin: 0 auto; padding: 0 clamp(16px,3vw,40px);
+    overflow-x: hidden;
+  }
+  .hb-rdv *{ box-sizing: border-box; }
+
+  .hb-rdvTop, .hb-rdvFoot{ display:flex; align-items:center; gap:18px; padding: 20px 0 14px; }
+  .hb-rdvFoot{ padding: 20px 0 34px; border-top: 1px solid var(--rdvLine2); margin-top: 8px; }
+  .hb-rdvMark{
+    font-family: var(--rdvSerif); font-size: 13px; font-weight: 500;
+    letter-spacing: .26em; text-transform: uppercase; color: var(--rdvInk); white-space: nowrap;
+  }
+  .hb-rdvTopRule{ flex: 1 1 auto; height:1px; background: var(--rdvLine2); min-width: 12px; }
+  .hb-rdvFootQ{ font-size: 12.5px; letter-spacing: .1em; color: var(--rdvInk2); white-space: nowrap; }
+  .hb-rdvHome{
+    display:inline-flex; align-items:center; gap:8px; min-height:44px;
+    background:none; border:0; cursor:pointer; padding:0;
+    font-family:inherit; font-size:14px; letter-spacing:.08em; color: var(--rdvInk);
+  }
+  .hb-rdvHome:hover{ color: var(--rdvTerra); }
+
+  .hb-rdvHead{
+    display:flex; align-items:flex-end; justify-content:space-between; gap:24px;
+    padding: 4px 0 22px; border-bottom: 2px solid var(--rdvInk);
+  }
+  .hb-rdvH1{
+    margin:0; font-family: var(--rdvSerif); font-weight: 700;
+    font-size: clamp(38px,7vw,86px); line-height: .92; letter-spacing: -.01em; color: var(--rdvInk);
+  }
+  .hb-rdvCn{ margin-top: 8px; font-size: 17px; letter-spacing: .12em; color: var(--rdvInk); }
+  .hb-rdvActs{ display:flex; gap:14px; flex-wrap:wrap; }
+  .hb-rdvBtn{
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
+    min-height:64px; min-width:172px; padding: 10px 26px; cursor:pointer;
+    font-family:inherit; border-radius:3px;
+    border:1px solid var(--rdvTerra); background: transparent; color: var(--rdvTerra);
+    transition: background .18s ease, color .18s ease;
+  }
+  .hb-rdvBtn.is-solid{ background: var(--rdvTerra); color:#FBF7F1; border-color: var(--rdvTerra); }
+  .hb-rdvBtn.is-solid:hover{ filter: brightness(1.07); }
+  .hb-rdvBtn:not(.is-solid):hover{ background: rgba(163,93,70,.08); }
+  .hb-rdvBtn:focus-visible{ outline:2px solid var(--rdvInk); outline-offset:2px; }
+  .hb-rdvBtnT{ font-size:16px; letter-spacing:.1em; }
+  .hb-rdvBtnS{ font-size:11.5px; letter-spacing:.14em; opacity:.85; }
+
+  .hb-rdvLoading{ padding: 60px 0; text-align:center; }
+  .hb-rdvBody{
+    display:grid; grid-template-columns: minmax(0,65fr) minmax(0,35fr);
+    align-items:start; border-bottom: 2px solid var(--rdvInk);
+  }
+  .hb-rdvCal{ padding: 26px clamp(14px,2.4vw,34px) 26px 0; min-width:0; }
+  .hb-rdvDay{ padding: 26px 0 26px clamp(16px,2.4vw,34px); border-left: 1px solid var(--rdvLine2); min-width:0; }
+
+  .hb-calHead{ display:flex; align-items:flex-end; justify-content:space-between; gap:16px; margin-bottom:18px; flex-wrap:wrap; }
+  .hb-calFr{
+    margin:0; font-family: var(--rdvSerif); font-weight:600;
+    font-size: clamp(22px,2.6vw,32px); letter-spacing:.04em; text-transform:uppercase; color: var(--rdvInk);
+  }
+  .hb-calCn{ margin-top:5px; font-size:14px; letter-spacing:.1em; color: var(--rdvInk2); }
+  .hb-calNav{ display:flex; align-items:center; gap:10px; }
+  .hb-calNavBtn{
+    width:44px; height:44px; display:flex; align-items:center; justify-content:center;
+    background:none; border:0; cursor:pointer; color: var(--rdvInk2); border-radius:3px;
+  }
+  .hb-calNavBtn:hover{ color: var(--rdvTerra); }
+  .hb-calToday{
+    min-height:40px; padding:0 22px; cursor:pointer; font-family:inherit;
+    font-size:14px; letter-spacing:.1em; color: var(--rdvInk);
+    background:#FBF8F2; border:1px solid var(--rdvLine2); border-radius:3px;
+  }
+  .hb-calToday:hover{ border-color: var(--rdvTerra); color: var(--rdvTerra); }
+
+  .hb-calGrid{
+    display:grid; grid-template-columns: repeat(7,minmax(0,1fr));
+    border-top:1px solid var(--rdvLine); border-left:1px solid var(--rdvLine);
+  }
+  .hb-calDow{
+    border-right:1px solid var(--rdvLine); border-bottom:1px solid var(--rdvLine);
+    padding:10px 0; text-align:center; font-size:13px; letter-spacing:.1em; color: var(--rdvInk2);
+    background: rgba(255,255,255,.3);
+  }
+  .hb-calCell{
+    border-right:1px solid var(--rdvLine); border-bottom:1px solid var(--rdvLine);
+    min-height: 74px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;
+    background:none; font-family: var(--rdvSerif); cursor:pointer; padding:8px 2px;
+    color: var(--rdvInk); position:relative; transition: background .15s ease;
+  }
+  .hb-calCell.is-empty{ cursor:default; background: rgba(41,40,36,.02); }
+  .hb-calCell:not(.is-empty):hover{ background: rgba(163,93,70,.06); }
+  .hb-calCell.is-sel{ background: rgba(163,93,70,.13); }
+  .hb-calCell.is-sel .hb-calNum{ color: var(--rdvTerra); }
+  .hb-calCell.is-closed .hb-calNum{ color: var(--rdvInk3); }
+  .hb-calCell.is-today .hb-calNum::after{
+    content:""; display:block; width:18px; height:2px; background: var(--rdvTerra);
+    margin:3px auto 0; border-radius:1px;
+  }
+  .hb-calCell:focus-visible{ outline:2px solid var(--rdvInk); outline-offset:-2px; }
+  .hb-calNum{ font-size: clamp(17px,1.5vw,21px); line-height:1; }
+  .hb-calDots{ display:flex; gap:4px; min-height:6px; }
+  .hb-calDots i{ display:block; width:6px; height:6px; border-radius:50%; }
+
+  .hb-calLegend{
+    display:flex; flex-wrap:wrap; gap:8px 22px; margin-top:16px;
+    font-size:12.5px; color: var(--rdvInk2);
+  }
+  .hb-calLegend span{ display:inline-flex; align-items:center; gap:7px; }
+  .hb-calLegend i{ display:block; width:7px; height:7px; border-radius:50%; }
+
+  /* 折疊區塊 */
+  .hb-rdvDisc{ margin-top:14px; border:1px solid var(--rdvLine2); border-radius:3px; background: rgba(255,255,255,.4); }
+  .hb-rdvDisc > summary{
+    display:flex; align-items:center; gap:14px; padding:16px 18px; cursor:pointer;
+    list-style:none; min-height:56px; font-size:14.5px; letter-spacing:.06em; color: var(--rdvInk);
+  }
+  .hb-rdvDisc > summary::-webkit-details-marker{ display:none; }
+  .hb-rdvDisc > summary:focus-visible{ outline:2px solid var(--rdvTerra); outline-offset:-3px; }
+  .hb-discIco{ color: var(--rdvInk2); line-height:0; flex:0 0 auto; }
+  .hb-discT{ flex:0 0 auto; }
+  .hb-discBar{ width:1px; height:16px; background: var(--rdvLine2); flex:0 0 auto; }
+  .hb-discM{ flex:1 1 auto; min-width:0; font-size:13px; color: var(--rdvInk2); letter-spacing:.04em; }
+  .hb-discGo{ flex:0 0 auto; font-size:13.5px; color: var(--rdvTerra); letter-spacing:.06em; }
+  .hb-discBody{ padding: 2px 18px 18px; border-top:1px solid var(--rdvLine); }
+  .hb-discBody p{ margin: 14px 0 12px; font-size:12.5px; line-height:1.85; color: var(--rdvInk2); }
+  .hb-discRow{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:10px; }
+  .hb-rdvSubT{ margin:16px 0 10px; font-size:13px; letter-spacing:.14em; color: var(--rdvInk2); }
+  .hb-rdvNote{ font-size:12.5px; color: var(--rdvInk3); line-height:1.8; margin-top:10px; }
+
+  .hb-rdvInput{
+    min-height:44px; padding:0 12px; font-family:inherit; font-size:14px; color: var(--rdvInk);
+    background:#FCFAF6; border:1px solid var(--rdvLine2); border-radius:3px; max-width:100%;
+  }
+  .hb-rdvInput.is-wide{ flex:1 1 220px; min-width:0; }
+  .hb-rdvMini{
+    min-height:44px; padding:0 16px; cursor:pointer; font-family:inherit; font-size:13.5px;
+    letter-spacing:.06em; color: var(--rdvInk); background:none;
+    border:1px solid var(--rdvLine2); border-radius:3px; white-space:nowrap;
+  }
+  .hb-rdvMini:hover{ border-color: var(--rdvTerra); color: var(--rdvTerra); }
+  .hb-rdvMini.is-solid{ background: var(--rdvTerra); border-color: var(--rdvTerra); color:#FBF7F1; }
+  .hb-rdvMini:disabled{ opacity:.5; cursor:default; }
+
+  .hb-slotWrap{ display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+  .hb-slot{
+    display:inline-flex; align-items:center; gap:6px; min-height:40px; padding:0 14px;
+    font-family:inherit; font-size:13px; cursor:pointer; border-radius:22px;
+    border:1px solid rgba(90,99,85,.55); color:#4E5648; background: rgba(90,99,85,.06);
+  }
+  .hb-slot.is-taken{ border-color: rgba(139,18,32,.5); color:#8B1220; background: rgba(139,18,32,.06); }
+  .hb-slot.is-static{ cursor:default; padding-right:6px; }
+  .hb-slot:disabled{ cursor:default; opacity:.85; }
+
+  .hb-wdRow{ display:flex; flex-wrap:wrap; gap:8px; margin-top:6px; }
+  .hb-wdBtn{
+    min-width:46px; min-height:40px; cursor:pointer; font-family:inherit; font-size:13.5px;
+    background:#FCFAF6; border:1px solid var(--rdvLine2); border-radius:3px; color: var(--rdvInk);
+  }
+  .hb-wdBtn.is-on{ background: var(--rdvTerra); border-color: var(--rdvTerra); color:#FBF7F1; }
+
+  .hb-closedList{ list-style:none; margin:12px 0 0; padding:0; display:flex; flex-direction:column; gap:8px; }
+  .hb-closedList li{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:8px 12px; border:1px solid var(--rdvLine); border-radius:3px; background:#FCFAF6; font-size:13.5px;
+  }
+  .hb-closedList em{ font-style:normal; color: var(--rdvInk2); font-size:12.5px; margin-left:10px; }
+
+  /* 右欄：當日 */
+  .hb-dayHead{ padding-bottom:18px; border-bottom:1px solid var(--rdvLine2); }
+  .hb-dayFr{ font-family: var(--rdvSerif); font-size:19px; font-weight:500; letter-spacing:.2em; color: var(--rdvInk); }
+  .hb-dayNum{ font-family: var(--rdvSerif); font-size: clamp(48px,5vw,74px); line-height:.95; color: var(--rdvTerra); margin-top:2px; }
+  .hb-dayCn{ margin-top:8px; font-size:13.5px; letter-spacing:.08em; color: var(--rdvInk2); }
+  .hb-daySec{ padding: 18px 0; border-bottom:1px solid var(--rdvLine); }
+  .hb-daySecT{
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    padding-bottom:12px; border-bottom:1px solid var(--rdvLine); margin-bottom:14px;
+    font-size:15px; letter-spacing:.08em; color: var(--rdvInk);
+  }
+  .hb-dayAdd{
+    min-height:40px; padding:0 4px; background:none; border:0; cursor:pointer;
+    font-family:inherit; font-size:13.5px; letter-spacing:.06em; color: var(--rdvTerra); white-space:nowrap;
+  }
+  .hb-dayAdd:hover{ text-decoration: underline; }
+  .hb-rdvEmpty{
+    display:flex; flex-direction:column; align-items:center; gap:10px;
+    padding:26px 0; color: var(--rdvInk3); font-size:13px;
+  }
+  .hb-dayHint{ margin:16px 0 0; text-align:center; font-size:12.5px; color: var(--rdvInk3); }
+
+  .hb-rdvList{ display:flex; flex-direction:column; gap:10px; }
+  .hb-rdvCard{ border:1px solid var(--rdvLine); border-radius:3px; background:#FCFAF6; padding:13px 14px; }
+  .hb-rdvCardTop{ display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
+  .hb-rdvCardMain{ min-width:0; }
+  .hb-rdvCardT{ font-size:14.5px; line-height:1.5; color: var(--rdvInk); overflow-wrap:anywhere; }
+  .hb-rdvCardM{ font-size:12.5px; line-height:1.7; color: var(--rdvInk2); margin-top:3px; overflow-wrap:anywhere; }
+  .hb-rdvTag{
+    flex:0 0 auto; font-size:11px; letter-spacing:.12em; color: var(--rdvTerra);
+    border:1px solid rgba(163,93,70,.4); border-radius:2px; padding:2px 7px; white-space:nowrap;
+  }
+  .hb-rdvCardFoot{
+    display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;
+    margin-top:11px; padding-top:10px; border-top:1px solid var(--rdvLine);
+  }
+  .hb-rdvCardFoot.is-edit{ justify-content:flex-start; }
+  .hb-rdvWhen{ font-family: var(--rdvSerif); font-size:15.5px; letter-spacing:.04em; color: var(--rdvInk); }
+  .hb-rdvIcons{ display:flex; gap:2px; }
+  .hb-rdvIco{
+    width:40px; height:40px; display:inline-flex; align-items:center; justify-content:center;
+    background:none; border:0; cursor:pointer; color: var(--rdvInk2); border-radius:3px;
+  }
+  .hb-rdvIco:hover{ color: var(--rdvInk); background: rgba(41,40,36,.05); }
+  .hb-rdvIco.is-danger{ color:#8B1220; }
+
+  @media (max-width: 900px){
+    .hb-rdvBody{ display:block; }
+    .hb-rdvCal{ padding: 20px 0 6px; }
+    .hb-rdvDay{ padding: 6px 0 22px; border-left:0; border-top:1px solid var(--rdvLine2); }
+  }
+  @media (max-width: 760px){
+    .hb-rdv{ padding: 0 16px; }
+    .hb-rdvTop, .hb-rdvFoot{ gap:12px; }
+    .hb-rdvMark{ font-size:10.5px; letter-spacing:.18em; white-space:normal; }
+    .hb-rdvFootQ{ font-size:11.5px; white-space:normal; }
+    .hb-rdvHead{ display:block; padding-bottom:18px; }
+    .hb-rdvH1{ font-size: clamp(34px,11vw,52px); overflow-wrap:anywhere; }
+    .hb-rdvCn{ font-size:15px; }
+    .hb-rdvActs{ margin-top:18px; gap:10px; }
+    .hb-rdvBtn{ flex:1 1 46%; min-width:0; padding:10px 8px; }
+    .hb-rdvBtnT{ font-size:14.5px; letter-spacing:.06em; }
+    .hb-calHead{ margin-bottom:14px; }
+    .hb-calNav{ gap:6px; }
+    .hb-calToday{ padding:0 14px; font-size:13px; }
+    .hb-calCell{ min-height:56px; gap:4px; padding:6px 0; }
+    .hb-calNum{ font-size:16px; }
+    .hb-calDow{ padding:8px 0; font-size:11.5px; }
+    .hb-calDots i{ width:5px; height:5px; }
+    .hb-calLegend{ gap:6px 14px; font-size:11.5px; }
+    .hb-rdvDisc > summary{ flex-wrap:wrap; gap:8px 10px; padding:14px; }
+    .hb-discM{ flex:1 1 100%; }
+    .hb-discBody{ padding: 2px 14px 16px; }
+    .hb-dayNum{ font-size:52px; }
+    .hb-rdvCardFoot{ gap:6px; }
+  }
 </style>
 <script>
 /* === 赫柏文件共用樣式（六份單據共用，改這裡就全部一起改） === */
@@ -7631,7 +7879,7 @@ function HbBookingsHub({onBack:l,notify:g}){
       [weekSlots,setWeekSlots]=(0,u.useState)({0:[],1:[],2:[],3:[],4:[],5:[],6:[]}),
       [activeWeekday,setActiveWeekday]=(0,u.useState)(new Date().getDay()),
       [calMonth,setCalMonth]=(0,u.useState)(()=>{let d=new Date();d.setDate(1);return d}),
-      [selectedCalDate,setSelectedCalDate]=(0,u.useState)(null),
+      [selectedCalDate,setSelectedCalDate]=(0,u.useState)(()=>hbToday()),
       [overrides,setOverrides]=(0,u.useState)([]),
       [schedule,setSchedule]=(0,u.useState)([]),
       [scProjects,setScProjects]=(0,u.useState)([]),
@@ -7845,195 +8093,246 @@ function HbBookingsHub({onBack:l,notify:g}){
   let todayStr=new Date().toISOString().slice(0,10);
   let visibleSchedule=sc=>sc.status!=="cancelled"&&(selectedCalDate?(sc.start_date<=selectedCalDate&&sc.end_date>=selectedCalDate):sc.end_date>=todayStr);
 
-  return u.default.createElement("div",{style:{background:s.paper,minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},
-    u.default.createElement("div",{style:{background:"rgba(255,255,255,0.55)",backdropFilter:"blur(14px)",WebkitBackdropFilter:"blur(14px)",padding:"20px 16px",borderBottom:`1px solid ${s.line}`}},
-      u.default.createElement("button",{onClick:l,style:{background:"none",border:"none",color:s.oceanDark,display:"flex",alignItems:"center",gap:6,cursor:"pointer",padding:0,marginBottom:10}},u.default.createElement(E,{name:"arrow-left",size:18})),
-      u.default.createElement("h2",{style:{color:s.ink,fontSize:20,fontWeight:300,margin:0}},"預約管理")
+  let C=u.default.createElement;
+  let hbPad2=n=>String(n).padStart(2,"0");
+  let RDV_FR_MONTHS=["JANVIER","F\u00C9VRIER","MARS","AVRIL","MAI","JUIN","JUILLET","AO\u00DBT","SEPTEMBRE","OCTOBRE","NOVEMBRE","D\u00C9CEMBRE"];
+  let RDV_FR_DAYS=["DIMANCHE","LUNDI","MARDI","MERCREDI","JEUDI","VENDREDI","SAMEDI"];
+  let selDate=selectedCalDate;
+  let selParts=selDate?selDate.split("-").map(Number):null;
+  let selDow=selParts?new Date(selParts[0],selParts[1]-1,selParts[2]).getDay():null;
+  let dayBookings=selDate?list.filter(b=>b.date===selDate&&b.status!=="cancelled"):[];
+  let daySchedule=selDate?schedule.filter(sc=>sc.status!=="cancelled"&&sc.start_date<=selDate&&sc.end_date>=selDate):[];
+  let upcomingBookings=list.filter(b=>b.status!=="cancelled"&&b.date>=todayStr);
+  let upcomingSchedule=schedule.filter(sc=>sc.status!=="cancelled"&&sc.end_date>=todayStr);
+  let openNewBooking=d=>{setEditingId(null);setNbDate(d||selectedCalDate||hbToday());setShowAddBooking(true)};
+  let openNewSchedule=d=>{setScEditId(null);setScStartDate(d||selectedCalDate||hbToday());setShowAddSchedule(true)};
+
+  let rdvBookingCard=b=>C("article",{key:b.id,className:"hb-rdvCard"},
+    C("div",{className:"hb-rdvCardTop"},
+      C("div",{className:"hb-rdvCardMain"},
+        C("div",{className:"hb-rdvCardT"},b.name," \u00B7 ",b.phone),
+        C("div",{className:"hb-rdvCardM"},b.service_type,b.address?(" \u00B7 "+b.address):""),
+        b.note?C("div",{className:"hb-rdvCardM"},b.note):null),
+      C("span",{className:"hb-rdvTag"},statusLabel[b.status]||b.status)),
+    editingId===b.id?
+      C("div",{className:"hb-rdvCardFoot is-edit"},
+        C("input",{type:"date",value:editDate,onChange:x=>setEditDate(x.target.value),className:"hb-rdvInput"}),
+        C("select",{value:slotsForDate(editDate).includes(editTime)?editTime:"",onChange:x=>setEditTime(x.target.value),className:"hb-rdvInput"},
+          C("option",{value:""},"\u9078\u64C7\u56FA\u5B9A\u6642\u6BB5"),
+          slotsForDate(editDate).map(tt=>C("option",{key:tt,value:tt},tt))),
+        C("input",{type:"time",value:editTime,onChange:x=>setEditTime(x.target.value),className:"hb-rdvInput",title:"\u6216\u81EA\u884C\u8F38\u5165\u4EFB\u610F\u6642\u9593"}),
+        C("button",{type:"button",onClick:()=>saveEdit(b.id),disabled:savingEdit,className:"hb-rdvMini is-solid"},savingEdit?"\u5132\u5B58\u4E2D\u2026":"\u5132\u5B58"),
+        C("button",{type:"button",onClick:cancelEdit,className:"hb-rdvMini"},"\u53D6\u6D88")):
+      C("div",{className:"hb-rdvCardFoot"},
+        C("div",{className:"hb-rdvWhen"},Tl(b.date),"\u3000",b.time),
+        C("div",{className:"hb-rdvIcons"},
+          b.status==="pending"&&C("button",{type:"button",onClick:()=>confirmBooking(b.id),className:"hb-rdvIco",title:"\u78BA\u8A8D\u9810\u7D04","aria-label":"\u78BA\u8A8D\u9810\u7D04"},C(E,{name:"check",size:16})),
+          C("button",{type:"button",onClick:()=>{setMsgTxt(HB_buildBookingMsg(b));setMsgBk(b)},className:"hb-rdvIco",title:"\u9810\u7D04\u6210\u529F\u8A0A\u606F","aria-label":"\u9810\u7D04\u6210\u529F\u8A0A\u606F"},C(E,{name:"message-circle",size:16})),
+          C("button",{type:"button",onClick:()=>startEdit(b),className:"hb-rdvIco",title:"\u7DE8\u8F2F","aria-label":"\u7DE8\u8F2F"},C(E,{name:"pencil",size:16})),
+          C("button",{type:"button",onClick:()=>cancelBooking(b.id),className:"hb-rdvIco is-danger",title:"\u53D6\u6D88\u9810\u7D04","aria-label":"\u53D6\u6D88\u9810\u7D04"},C(E,{name:"x",size:16})))));
+
+  let rdvScheduleCard=sc=>C("article",{key:sc.id,className:"hb-rdvCard"},
+    C("div",{className:"hb-rdvCardTop"},
+      C("div",{className:"hb-rdvCardMain"},
+        C("div",{className:"hb-rdvCardT"},sc.title),
+        sc.location?C("div",{className:"hb-rdvCardM"},sc.location):null,
+        sc.note?C("div",{className:"hb-rdvCardM"},sc.note):null),
+      C("span",{className:"hb-rdvTag"},scheduleTypeLabel[sc.type]||"\u884C\u7A0B")),
+    C("div",{className:"hb-rdvCardFoot"},
+      C("div",{className:"hb-rdvWhen"},
+        sc.start_date===sc.end_date?Tl(sc.start_date):(Tl(sc.start_date)+" \uFF5E "+Tl(sc.end_date)),
+        sc.all_day?"\uFF08\u5168\u5929\uFF09":(sc.time?"\u3000"+sc.time:"")),
+      C("div",{className:"hb-rdvIcons"},
+        C("button",{type:"button",onClick:()=>{setMsgTxt(HB_buildScheduleMsg(sc));setMsgBk(sc)},className:"hb-rdvIco",title:"\u884C\u7A0B\u8A0A\u606F","aria-label":"\u884C\u7A0B\u8A0A\u606F"},C(E,{name:"message-circle",size:16})),
+        C("button",{type:"button",onClick:()=>startEditSchedule(sc),className:"hb-rdvIco",title:"\u7DE8\u8F2F","aria-label":"\u7DE8\u8F2F"},C(E,{name:"pencil",size:16})),
+        C("button",{type:"button",onClick:()=>cancelSchedule(sc.id),className:"hb-rdvIco is-danger",title:"\u522A\u9664\u884C\u7A0B","aria-label":"\u522A\u9664\u884C\u7A0B"},C(E,{name:"x",size:16})))));
+
+  let rdvEmpty=txt=>C("div",{className:"hb-rdvEmpty"},C(E,{name:"calendar",size:26}),C("span",null,txt));
+
+  let rdvCells=(()=>{
+    let y=calMonth.getFullYear(),mo=calMonth.getMonth();
+    let firstDow=new Date(y,mo,1).getDay();
+    let daysInMonth=new Date(y,mo+1,0).getDate();
+    let out=[];
+    for(let i2=0;i2<firstDow;i2++)out.push(C("div",{key:"e"+i2,className:"hb-calCell is-empty","aria-hidden":"true"}));
+    for(let day=1;day<=daysInMonth;day++){
+      let dkey=y+"-"+hbPad2(mo+1)+"-"+hbPad2(day);
+      let daySlotsArr=slotsForDate(dkey);
+      let taken=list.filter(b=>b.date===dkey&&(b.status==="pending"||b.status==="confirmed")).length+overrides.filter(o=>o.date===dkey).length;
+      let remain=daySlotsArr.length-taken;
+      let isClosedDay=daySlotsArr.length===0||closed.some(c=>c.date===dkey);
+      let dotColor=isClosedDay?null:remain<=0?s.danger:remain<=2?"#C98A2E":s.tree;
+      let hasSchedule=schedule.some(sc=>sc.status!=="cancelled"&&sc.start_date<=dkey&&sc.end_date>=dkey);
+      let isSel=selectedCalDate===dkey;
+      let isToday=dkey===todayStr;
+      out.push(C("button",{key:dkey,type:"button",onClick:()=>setSelectedCalDate(dkey),
+        "aria-pressed":isSel?"true":"false",
+        "aria-label":dkey+(isClosedDay?"\uFF08\u672A\u958B\u653E\u9810\u7D04\uFF09":""),
+        className:"hb-calCell"+(isSel?" is-sel":"")+(isToday?" is-today":"")+(isClosedDay?" is-closed":"")},
+        C("span",{className:"hb-calNum"},day),
+        C("span",{className:"hb-calDots"},
+          dotColor?C("i",{style:{background:dotColor}}):null,
+          hasSchedule?C("i",{style:{background:s.cane}}):null)));
+    }
+    return out;
+  })();
+
+  return C("div",{className:"hb-rdv"},
+    C("header",{className:"hb-rdvTop"},
+      C("span",{className:"hb-rdvMark"},"HERFULSINS \u00B7 MAISON D\u2019INT\u00C9RIEUR"),
+      C("span",{className:"hb-rdvTopRule","aria-hidden":"true"}),
+      C("button",{type:"button",onClick:l,className:"hb-rdvHome"},C(E,{name:"home",size:17}),C("span",null,"\u8FD4\u56DE\u9996\u9801"))),
+
+    C("div",{className:"hb-rdvHead"},
+      C("div",{className:"hb-rdvHeadL"},
+        C("h1",{className:"hb-rdvH1"},"RENDEZ-VOUS"),
+        C("div",{className:"hb-rdvCn"},"\u9810\u7D04\u7BA1\u7406")),
+      C("div",{className:"hb-rdvActs"},
+        C("button",{type:"button",onClick:()=>openNewBooking(),className:"hb-rdvBtn is-solid"},
+          C("span",{className:"hb-rdvBtnT"},"\uFF0B\u3000\u65B0\u589E\u9810\u7D04"),
+          C("span",{className:"hb-rdvBtnS"},"\u8207\u5BA2\u6236\u898B\u9762")),
+        C("button",{type:"button",onClick:()=>openNewSchedule(),className:"hb-rdvBtn"},
+          C("span",{className:"hb-rdvBtnT"},"\uFF0B\u3000\u65B0\u589E\u884C\u7A0B")))),
+
+    loading?C("div",{className:"hb-rdvLoading"},C(E,{name:"loader",className:"animate-spin",size:24,color:"#A35D46"})):
+    C("div",{className:"hb-rdvBody"},
+
+      C("section",{className:"hb-rdvCal","aria-label":"\u6708\u66C6"},
+        C("div",{className:"hb-calHead"},
+          C("div",{className:"hb-calHeadL"},
+            C("h2",{className:"hb-calFr"},RDV_FR_MONTHS[calMonth.getMonth()]+" "+calMonth.getFullYear()),
+            C("div",{className:"hb-calCn"},calMonth.getFullYear()+" \u5E74 "+(calMonth.getMonth()+1)+" \u6708")),
+          C("div",{className:"hb-calNav"},
+            C("button",{type:"button","aria-label":"\u4E0A\u500B\u6708",className:"hb-calNavBtn",onClick:()=>setCalMonth(m=>{let d=new Date(m);d.setMonth(d.getMonth()-1);return d})},C(E,{name:"chevron-down",size:16,style:{transform:"rotate(90deg)"}})),
+            C("button",{type:"button",className:"hb-calToday",onClick:()=>{let d=new Date();let f=new Date(d);f.setDate(1);setCalMonth(f);setSelectedCalDate(hbToday())}},"\u4ECA\u5929"),
+            C("button",{type:"button","aria-label":"\u4E0B\u500B\u6708",className:"hb-calNavBtn",onClick:()=>setCalMonth(m=>{let d=new Date(m);d.setMonth(d.getMonth()+1);return d})},C(E,{name:"chevron-down",size:16,style:{transform:"rotate(-90deg)"}})))),
+
+        C("div",{className:"hb-calGrid"},
+          WEEKDAY_NAMES.map(dn=>C("div",{key:"dow"+dn,className:"hb-calDow"},dn)),
+          rdvCells),
+
+        C("div",{className:"hb-calLegend"},
+          C("span",null,C("i",{style:{background:s.tree}}),"\u6642\u6BB5\u5145\u88D5"),
+          C("span",null,C("i",{style:{background:"#C98A2E"}}),"\u5269\u5C11\u6578\u6642\u6BB5"),
+          C("span",null,C("i",{style:{background:s.danger}}),"\u5DF2\u984D\u6EFF"),
+          C("span",null,C("i",{style:{background:s.cane}}),"\u7576\u5929\u6709\u884C\u7A0B")),
+
+        C("details",{className:"hb-rdvDisc hb-icsBox"},
+          C("summary",null,
+            C("span",{className:"hb-discIco"},C(E,{name:"calendar",size:18})),
+            C("span",{className:"hb-discT"},"\u8A02\u95B1\u884C\u4E8B\u66C6"),
+            C("span",{className:"hb-discBar","aria-hidden":"true"}),
+            C("span",{className:"hb-discM"},"\u540C\u6B65\u81F3 iPhone \u884C\u4E8B\u66C6"),
+            C("span",{className:"hb-discGo"},"\u8A2D\u5B9A\u8A02\u95B1 \u2197")),
+          C("div",{className:"hb-discBody"},
+            C("p",null,"\u5728 iPhone\u300C\u8A2D\u5B9A\u300DApp \u2192\u300C\u884C\u4E8B\u66C6\u300D\u2192\u300C\u5E33\u865F\u300D\u2192\u300C\u65B0\u589E\u5E33\u865F\u300D\u2192\u300C\u5176\u4ED6\u300D\u2192\u300C\u65B0\u589E\u8A02\u95B1\u7684\u884C\u4E8B\u66C6\u300D\uFF0C\u8CBC\u4E0A\u4E0B\u65B9\u9023\u7D50\u5373\u53EF\u3002\u4E4B\u5F8C\u65B0\u589E/\u4FEE\u6539\u7684\u884C\u7A0B\u8207\u5BA2\u6236\u9810\u7D04\u6703\u81EA\u52D5\u540C\u6B65\uFF0C\u4F46\u6709\u5E7E\u5C0F\u6642\u5EF6\u9072\uFF0C\u4E0D\u662F\u5373\u6642\u3002"),
+            C("div",{className:"hb-discRow"},
+              C("input",{readOnly:true,value:HB_SCHEDULE_ICS_URL,onClick:x=>x.target.select(),className:"hb-rdvInput is-wide"}),
+              C("button",{type:"button",className:"hb-rdvMini",onClick:()=>{navigator.clipboard?.writeText(HB_SCHEDULE_ICS_URL).then(()=>g("\u5DF2\u8907\u88FD\u8A02\u95B1\u9023\u7D50")).catch(()=>g(HB_SCHEDULE_ICS_URL))}},"\u8907\u88FD\u9023\u7D50")))),
+
+        selDate?C("details",{className:"hb-rdvDisc"},
+          C("summary",null,
+            C("span",{className:"hb-discT"},"\u7576\u65E5\u6642\u6BB5\u72C0\u614B"),
+            C("span",{className:"hb-discBar","aria-hidden":"true"}),
+            C("span",{className:"hb-discM"},Tl(selDate))),
+          C("div",{className:"hb-discBody"},
+            C("p",null,"\u9EDE\u300C\u53EF\u9810\u7D04\u300D\u53EF\u4EE5\u624B\u52D5\u8A2D\u70BA\u5DF2\u6EFF\u984D\uFF08\u4E0D\u63A5\u53D7\u9019\u500B\u6642\u6BB5\uFF09\uFF1B\u9EDE\u300C\u5DF2\u6EFF\u984D\uFF08\u624B\u52D5\uFF09\u300D\u53EF\u4EE5\u91CD\u65B0\u958B\u653E\u3002\u5DF2\u7D93\u6709\u5BA2\u6236\u9810\u7D04\u7684\u6642\u6BB5\u7121\u6CD5\u5728\u9019\u88E1\u53D6\u6D88\u3002"),
+            slotsForDate(selDate).length===0?C("div",{className:"hb-rdvNote"},"\u9019\u5929\u6C92\u6709\u958B\u653E\u4EFB\u4F55\u6642\u6BB5"):
+            C("div",{className:"hb-slotWrap"},
+              slotsForDate(selDate).map(tt=>{
+                let bookedByClient=list.some(b=>b.date===selDate&&b.time===tt&&(b.status==="pending"||b.status==="confirmed"));
+                let blockedManually=overrides.some(o=>o.date===selDate&&o.time===tt);
+                let taken=bookedByClient||blockedManually;
+                let label=bookedByClient?"\uFF08\u5DF2\u9810\u7D04\uFF09":blockedManually?"\uFF08\u5DF2\u6EFF\u984D\u30FB\u624B\u52D5\uFF09":"\uFF08\u53EF\u9810\u7D04\uFF09";
+                return C("button",{key:tt,type:"button",disabled:bookedByClient,onClick:()=>toggleSlotBlock(selDate,tt),
+                  className:"hb-slot"+(taken?" is-taken":"")},tt,label);
+              })))):null,
+
+        C("details",{className:"hb-rdvDisc"},
+          C("summary",null,
+            C("span",{className:"hb-discT"},"\u516C\u4F11\u65E5\u7BA1\u7406"),
+            C("span",{className:"hb-discBar","aria-hidden":"true"}),
+            C("span",{className:"hb-discM"},closed.length?(closed.length+" \u5929"):"\u5C1A\u672A\u8A2D\u5B9A")),
+          C("div",{className:"hb-discBody"},
+            C("button",{type:"button",className:"hb-rdvMini",onClick:()=>setShowAddClosed(true)},"\uFF0B \u65B0\u589E\u81E8\u6642\u516C\u4F11\u65E5"),
+            closed.length===0?C("div",{className:"hb-rdvNote"},"\u76EE\u524D\u6C92\u6709\u8A2D\u5B9A\u81E8\u6642\u516C\u4F11\u65E5\uFF08\u56FA\u5B9A\u9031\u65E5\u516C\u4F11\u4E0D\u7528\u53E6\u5916\u8A2D\u5B9A\uFF09"):
+            C("ul",{className:"hb-closedList"},
+              closed.map(c=>C("li",{key:c.date},
+                C("span",null,Tl(c.date),c.reason?C("em",null,c.reason):null),
+                C("button",{type:"button",className:"hb-rdvIco is-danger","aria-label":"\u79FB\u9664\u516C\u4F11\u65E5",onClick:()=>deleteClosedDate(c.date)},C(E,{name:"trash",size:15}))))))),
+
+        C("details",{className:"hb-rdvDisc"},
+          C("summary",null,
+            C("span",{className:"hb-discT"},"\u53EF\u9810\u7D04\u6642\u6BB5\u8A2D\u5B9A"),
+            C("span",{className:"hb-discBar","aria-hidden":"true"}),
+            C("span",{className:"hb-discM"},"\u4F9D\u661F\u671F\u5E7E\u8A2D\u5B9A")),
+          C("div",{className:"hb-discBody"},
+            C("p",null,"\u6BCF\u5929\u53EF\u4EE5\u5206\u5225\u8A2D\u5B9A\u4E0D\u540C\u7684\u958B\u653E\u6642\u9593\uFF0C\u5BA2\u6236\u9810\u7D04\u9801\u9762\u6703\u4F9D\u65E5\u671F\u81EA\u52D5\u5957\u7528\u5C0D\u61C9\u661F\u671F\u5E7E\u7684\u6642\u6BB5\uFF1B\u82E5\u67D0\u5929\u5B8C\u5168\u6C92\u6709\u8A2D\u5B9A\u6642\u6BB5\uFF0C\u5BA2\u6236\u5C31\u7121\u6CD5\u9078\u90A3\u5929\u3002"),
+            C("div",{className:"hb-wdRow"},
+              WEEKDAY_NAMES.map((wn,wi)=>C("button",{key:wi,type:"button",onClick:()=>setActiveWeekday(wi),
+                className:"hb-wdBtn"+(activeWeekday===wi?" is-on":"")},"\u9031"+wn))),
+            C("div",{className:"hb-slotWrap"},
+              (weekSlots[activeWeekday]||[]).length===0?C("div",{className:"hb-rdvNote"},"\u9031"+WEEKDAY_NAMES[activeWeekday]+"\u76EE\u524D\u6C92\u6709\u958B\u653E\u4EFB\u4F55\u6642\u6BB5"):
+              (weekSlots[activeWeekday]||[]).map(sl=>C("span",{key:sl.id,className:"hb-slot is-static"},sl.time,
+                C("button",{type:"button",className:"hb-rdvIco is-danger","aria-label":"\u79FB\u9664\u6642\u6BB5",onClick:()=>deleteSlot(sl.id)},C(E,{name:"x",size:14}))))),
+            C("div",{className:"hb-discRow"},
+              C("input",{type:"time",value:newSlotTime,onChange:x=>setNewSlotTime(x.target.value),className:"hb-rdvInput is-wide"}),
+              C("button",{type:"button",className:"hb-rdvMini is-solid",onClick:addSlot},"\u65B0\u589E\u5230\u9031"+WEEKDAY_NAMES[activeWeekday])))),
+
+        C("details",{className:"hb-rdvDisc"},
+          C("summary",null,
+            C("span",{className:"hb-discT"},"\u8FD1\u671F\u5168\u90E8\u9810\u7D04\u8207\u884C\u7A0B"),
+            C("span",{className:"hb-discBar","aria-hidden":"true"}),
+            C("span",{className:"hb-discM"},"\u9810\u7D04 "+upcomingBookings.length+" \u30FB\u884C\u7A0B "+upcomingSchedule.length)),
+          C("div",{className:"hb-discBody"},
+            C("div",{className:"hb-rdvSubT"},"\u9810\u7D04"),
+            upcomingBookings.length===0?C("div",{className:"hb-rdvNote"},"\u76EE\u524D\u9084\u6C92\u6709\u5373\u5C07\u5230\u4F86\u7684\u9810\u7D04"):C("div",{className:"hb-rdvList"},upcomingBookings.map(rdvBookingCard)),
+            C("div",{className:"hb-rdvSubT"},"\u884C\u7A0B"),
+            upcomingSchedule.length===0?C("div",{className:"hb-rdvNote"},"\u76EE\u524D\u9084\u6C92\u6709\u5373\u5C07\u5230\u4F86\u7684\u884C\u7A0B"):C("div",{className:"hb-rdvList"},upcomingSchedule.map(rdvScheduleCard))))
+      ),
+
+      C("aside",{className:"hb-rdvDay","aria-label":"\u7576\u65E5\u5B89\u6392"},
+        selDate?C("div",{className:"hb-dayHead"},
+          C("div",{className:"hb-dayFr"},RDV_FR_DAYS[selDow]),
+          C("div",{className:"hb-dayNum"},selParts[2]),
+          C("div",{className:"hb-dayCn"},selParts[0]+" \u5E74 "+selParts[1]+" \u6708 \u00B7 \u661F\u671F"+WEEKDAY_NAMES[selDow])):
+        C("div",{className:"hb-dayHead"},
+          C("div",{className:"hb-dayFr"},"AGENDA"),
+          C("div",{className:"hb-dayCn"},"\u5C1A\u672A\u9078\u64C7\u65E5\u671F")),
+
+        C("div",{className:"hb-daySec"},
+          C("div",{className:"hb-daySecT"},
+            C("span",null,"\u7576\u65E5\u9810\u7D04"),
+            C("button",{type:"button",className:"hb-dayAdd",onClick:()=>openNewBooking(selDate)},"\uFF0B \u5EFA\u7ACB\u9810\u7D04")),
+          !selDate?rdvEmpty("\u9078\u64C7\u5DE6\u5074\u65E5\u671F\u5F8C\u986F\u793A"):
+          dayBookings.length===0?rdvEmpty("\u7576\u65E5\u5C1A\u7121\u9810\u7D04"):
+          C("div",{className:"hb-rdvList"},dayBookings.map(rdvBookingCard))),
+
+        C("div",{className:"hb-daySec"},
+          C("div",{className:"hb-daySecT"},
+            C("span",null,"\u7576\u65E5\u884C\u7A0B"),
+            C("button",{type:"button",className:"hb-dayAdd",onClick:()=>openNewSchedule(selDate)},"\uFF0B \u65B0\u589E\u884C\u7A0B")),
+          !selDate?rdvEmpty("\u9078\u64C7\u5DE6\u5074\u65E5\u671F\u5F8C\u986F\u793A"):
+          daySchedule.length===0?rdvEmpty("\u7576\u65E5\u5C1A\u7121\u884C\u7A0B"):
+          C("div",{className:"hb-rdvList"},daySchedule.map(rdvScheduleCard))),
+
+        C("p",{className:"hb-dayHint"},"\u9078\u64C7\u5DE6\u5074\u65E5\u671F\uFF0C\u67E5\u770B\u7576\u65E5\u5B89\u6392\u3002"))
     ),
-    u.default.createElement("div",{style:{padding:16}},
-      u.default.createElement("button",{onClick:()=>setShowAddBooking(true),style:{...Dl,width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:8,marginBottom:10}},u.default.createElement(E,{name:"users",size:16})," 新增預約（與客戶見面）"),
-      u.default.createElement("button",{onClick:()=>{setScStartDate(selectedCalDate||hbToday());setShowAddSchedule(true)},style:{...ll,width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:8,marginBottom:16}},u.default.createElement(E,{name:"calendar",size:16})," 新增行程"),
-      u.default.createElement("div",{style:{background:s.card,border:`1px solid ${s.line}`,borderRadius:8,padding:"12px 14px",marginBottom:16}},
-        u.default.createElement("div",{style:{fontSize:13,fontWeight:400,color:s.oceanDark,marginBottom:4}},"訂閱行事曆（iPhone 自動同步）"),
-        u.default.createElement("p",{style:{fontSize:11.5,color:s.inkSoft,margin:"0 0 8px",lineHeight:1.6}},"在 iPhone「設定」App →「行事曆」→「帳號」→「新增帳號」→「其他」→「新增訂閱的行事曆」，貼上下方連結即可。之後新增/修改的行程與客戶預約會自動同步，但有幾小時延遲，不是即時。"),
-        u.default.createElement("div",{style:{display:"flex",gap:8}},
-          u.default.createElement("input",{readOnly:true,value:HB_SCHEDULE_ICS_URL,onClick:x=>x.target.select(),style:{...el,marginBottom:0,fontSize:11.5,flex:1}}),
-          u.default.createElement("button",{onClick:()=>{navigator.clipboard?.writeText(HB_SCHEDULE_ICS_URL).then(()=>g("已複製訂閱連結")).catch(()=>g(HB_SCHEDULE_ICS_URL))},style:{...ll,padding:"0 14px",fontSize:12.5,whiteSpace:"nowrap"}},"複製連結")
-        )
-      ),
-      !loading&&u.default.createElement("div",{style:{background:s.card,border:`1px solid ${s.line}`,borderRadius:8,padding:"12px 14px",marginBottom:16}},
-        u.default.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}},
-          u.default.createElement("button",{onClick:()=>setCalMonth(m=>{let d=new Date(m);d.setMonth(d.getMonth()-1);return d}),style:{...at}},u.default.createElement(E,{name:"chevron-up",size:16,style:{transform:"rotate(-90deg)"}})),
-          u.default.createElement("div",{style:{fontSize:14,fontWeight:400,color:s.oceanDark}},calMonth.getFullYear()+"年 "+(calMonth.getMonth()+1)+"月"),
-          u.default.createElement("button",{onClick:()=>setCalMonth(m=>{let d=new Date(m);d.setMonth(d.getMonth()+1);return d}),style:{...at}},u.default.createElement(E,{name:"chevron-down",size:16,style:{transform:"rotate(-90deg)"}}))
-        ),
-        u.default.createElement("div",{style:{maxWidth:380,margin:"0 auto"}},
-        u.default.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:3,marginBottom:6}},
-          ["日","一","二","三","四","五","六"].map(dn=>u.default.createElement("div",{key:dn,style:{textAlign:"center",fontSize:10.5,color:s.inkSoft,fontWeight:400}},dn))
-        ),
-        u.default.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:3,marginBottom:10}},
-          (()=>{
-            let y=calMonth.getFullYear(),mo=calMonth.getMonth();
-            let firstDow=new Date(y,mo,1).getDay();
-            let daysInMonth=new Date(y,mo+1,0).getDate();
-            let cells=[];
-            for(let i=0;i<firstDow;i++)cells.push(u.default.createElement("div",{key:"e"+i}));
-            for(let day=1;day<=daysInMonth;day++){
-              let dkey=y+"-"+String(mo+1).padStart(2,"0")+"-"+String(day).padStart(2,"0");
-              let daySlotsArr=slotsForDate(dkey);
-              let taken=list.filter(b=>b.date===dkey&&(b.status==="pending"||b.status==="confirmed")).length+overrides.filter(o=>o.date===dkey).length;
-              let remain=daySlotsArr.length-taken;
-              let isClosedDay=daySlotsArr.length===0||closed.some(c=>c.date===dkey);
-              let dotColor=isClosedDay?null:remain<=0?s.danger:remain<=2?"#C98A2E":s.tree;
-              let hasSchedule=schedule.some(sc=>sc.status!=="cancelled"&&sc.start_date<=dkey&&sc.end_date>=dkey);
-              let isSel=selectedCalDate===dkey;
-              let clickable=!isClosedDay||hasSchedule;
-              cells.push(u.default.createElement("div",{key:dkey,onClick:()=>clickable&&setSelectedCalDate(p=>p===dkey?null:dkey),style:{aspectRatio:"1",borderRadius:6,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:2,fontSize:11,cursor:clickable?"pointer":"default",background:isSel?s.ocean:"#fff",color:isSel?"#fff":isClosedDay?s.line:s.ink,border:`1px solid ${isSel?s.ocean:s.line}`}},
-                day,
-                (dotColor||hasSchedule)&&u.default.createElement("div",{style:{display:"flex",gap:3}},
-                  dotColor&&u.default.createElement("span",{style:{width:5,height:5,borderRadius:"50%",background:isSel?"#fff":dotColor}}),
-                  hasSchedule&&u.default.createElement("span",{style:{width:5,height:5,borderRadius:"50%",background:isSel?"#fff":s.cane}})
-                )
-              ));
-            }
-            return cells;
-          })()
-        )
-        ),
-        u.default.createElement("div",{style:{display:"flex",gap:12,fontSize:11,color:s.inkSoft,flexWrap:"wrap"}},
-          u.default.createElement("span",{style:{display:"flex",alignItems:"center",gap:4}},u.default.createElement("span",{style:{width:6,height:6,borderRadius:"50%",background:s.tree}}),"時段充裕"),
-          u.default.createElement("span",{style:{display:"flex",alignItems:"center",gap:4}},u.default.createElement("span",{style:{width:6,height:6,borderRadius:"50%",background:"#C98A2E"}}),"剩少數時段"),
-          u.default.createElement("span",{style:{display:"flex",alignItems:"center",gap:4}},u.default.createElement("span",{style:{width:6,height:6,borderRadius:"50%",background:s.danger}}),"已額滿"),
-          u.default.createElement("span",{style:{display:"flex",alignItems:"center",gap:4}},u.default.createElement("span",{style:{width:6,height:6,borderRadius:"50%",background:s.cane}}),"當天有行程")
-        ),
-        selectedCalDate&&u.default.createElement("button",{onClick:()=>setSelectedCalDate(null),style:{marginTop:8,fontSize:12,color:s.ocean,background:"none",border:"none",cursor:"pointer",padding:0}},"清除「"+selectedCalDate+"」篩選，顯示全部預約")
-      ),
-      selectedCalDate&&u.default.createElement("div",{style:{background:s.card,border:`1px solid ${s.line}`,borderRadius:8,padding:"12px 14px",marginBottom:16}},
-        u.default.createElement("div",{style:{fontSize:12.5,fontWeight:700,color:s.oceanDark,marginBottom:2}},selectedCalDate+" 各時段狀態"),
-        u.default.createElement("p",{style:{fontSize:11.5,color:s.inkSoft,margin:"0 0 8px"}},"點「可預約」可以手動設為已滿額（不接受這個時段）；點「已滿額（手動）」可以重新開放。已經有客戶預約的時段無法在這裡取消，請至下方列表操作"),
-        slotsForDate(selectedCalDate).length===0?u.default.createElement("div",{style:{fontSize:12.5,color:s.inkSoft}},"這天沒有開放任何時段"):
-        u.default.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:8}},
-          slotsForDate(selectedCalDate).map(tt=>{
-            let bookedByClient=list.some(b=>b.date===selectedCalDate&&b.time===tt&&(b.status==="pending"||b.status==="confirmed"));
-            let blockedManually=overrides.some(o=>o.date===selectedCalDate&&o.time===tt);
-            let taken=bookedByClient||blockedManually;
-            let label=bookedByClient?"（已預約）":blockedManually?"（已滿額・手動）":"（可預約）";
-            let clickable=!bookedByClient;
-            return u.default.createElement("div",{key:tt,onClick:()=>clickable&&toggleSlotBlock(selectedCalDate,tt),style:{display:"flex",alignItems:"center",gap:6,border:`1px solid ${taken?s.danger:s.tree}`,borderRadius:20,padding:"6px 12px",fontSize:12.5,fontWeight:700,color:taken?s.danger:s.tree,background:taken?"rgba(139,18,32,0.06)":"rgba(90,99,85,0.06)",cursor:clickable?"pointer":"default",opacity:clickable?1:.85}},
-              u.default.createElement("span",{style:{width:6,height:6,borderRadius:"50%",background:taken?s.danger:s.tree}}),
-              tt,label
-            );
-          })
-        )
-      ),
-      loading?u.default.createElement("div",{style:{textAlign:"center",padding:30}},u.default.createElement(E,{name:"loader",className:"animate-spin",size:22,color:s.ocean})):
-      u.default.createElement(u.default.Fragment,null,
-        list.filter(b=>b.status!=="cancelled"&&(selectedCalDate?b.date===selectedCalDate:b.date>=todayStr)).length===0?u.default.createElement("div",{style:{textAlign:"center",padding:30,color:s.inkSoft,fontSize:13}},"目前還沒有任何預約"):
-        u.default.createElement("div",{style:{display:"flex",flexDirection:"column",gap:10,marginBottom:28}},
-          list.filter(b=>b.status!=="cancelled"&&(selectedCalDate?b.date===selectedCalDate:b.date>=todayStr)).map(b=>u.default.createElement("div",{key:b.id,style:{background:s.card,border:`1px solid ${s.line}`,borderRadius:8,padding:"12px 14px"}},
-            u.default.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:10}},
-              u.default.createElement("div",null,
-                u.default.createElement("div",{style:{fontSize:14,fontWeight:400}},b.name," · ",b.phone),
-                u.default.createElement("div",{style:{fontSize:12.5,color:s.inkSoft,marginTop:2}},b.service_type,b.address?(" · "+b.address):""),
-                b.note?u.default.createElement("div",{style:{fontSize:12,color:s.inkSoft,marginTop:4}},b.note):null
-              ),
-              u.default.createElement("div",{style:{textAlign:"right",whiteSpace:"nowrap",flexShrink:0,marginLeft:8}},
-                u.default.createElement("div",{style:{fontSize:11,fontWeight:400,color:s.ocean,textTransform:"uppercase",whiteSpace:"nowrap"}},statusLabel[b.status]||b.status)
-              )
-            ),
-            editingId===b.id?
-              u.default.createElement("div",{style:{marginTop:10,paddingTop:10,borderTop:`1px solid ${s.line}`,display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}},
-                u.default.createElement("input",{type:"date",value:editDate,onChange:x=>setEditDate(x.target.value),style:{...el,width:"auto",marginBottom:0}}),
-                u.default.createElement("select",{value:slotsForDate(editDate).includes(editTime)?editTime:"",onChange:x=>setEditTime(x.target.value),style:{...el,width:"auto",marginBottom:0}},
-                  u.default.createElement("option",{value:""},"選擇固定時段"),
-                  slotsForDate(editDate).map(tt=>u.default.createElement("option",{key:tt,value:tt},tt))
-                ),
-                u.default.createElement("input",{type:"time",value:editTime,onChange:x=>setEditTime(x.target.value),style:{...el,width:"auto",marginBottom:0},title:"或自行輸入任意時間"}),
-                u.default.createElement("button",{onClick:()=>saveEdit(b.id),disabled:savingEdit,style:{...Dl,padding:"9px 14px"}},"儲存"),
-                u.default.createElement("button",{onClick:cancelEdit,style:{...ll,padding:"9px 14px"}},"取消")
-              ):
-              u.default.createElement("div",{style:{marginTop:10,paddingTop:10,borderTop:`1px solid ${s.line}`,display:"flex",justifyContent:"space-between",alignItems:"center"}},
-                u.default.createElement("div",{style:{fontSize:14,fontWeight:400,color:s.oceanDark}},Tl(b.date)," ",b.time),
-                u.default.createElement("div",{style:{display:"flex",gap:6}},
-                  b.status==="pending"&&u.default.createElement("button",{onClick:()=>confirmBooking(b.id),style:{...at,color:s.tree}},u.default.createElement(E,{name:"check",size:16})),
-                  b.status!=="cancelled"&&u.default.createElement("button",{onClick:()=>{setMsgTxt(HB_buildBookingMsg(b));setMsgBk(b)},title:"預約成功訊息",style:{...at,color:s.ocean}},u.default.createElement(E,{name:"message-circle",size:16})),
-                  b.status!=="cancelled"&&u.default.createElement("button",{onClick:()=>startEdit(b),style:{...at}},u.default.createElement(E,{name:"pencil",size:16})),
-                  b.status!=="cancelled"&&u.default.createElement("button",{onClick:()=>cancelBooking(b.id),style:{...at,color:s.danger}},u.default.createElement(E,{name:"x",size:16}))
-                )
-              )
-          ))
-        ),
-        msgBk&&u.default.createElement("div",{onClick:()=>setMsgBk(null),style:{position:"fixed",inset:0,background:"rgba(43,38,32,0.5)",display:"flex",alignItems:"center",justifyContent:"center",padding:16,zIndex:70}},
-          u.default.createElement("div",{className:"fade-in",onClick:ev=>ev.stopPropagation(),style:{background:s.card,borderRadius:10,padding:18,width:"100%",maxWidth:430,maxHeight:"88vh",display:"flex",flexDirection:"column"}},
-            u.default.createElement("h3",{style:{margin:"0 0 2px",fontSize:16,fontWeight:400,color:s.oceanDark}},"預約成功訊息"),
-            u.default.createElement("div",{style:{fontSize:12,color:s.inkSoft,marginBottom:10}},[msgBk.name||msgBk.title||"",msgBk.service_type||"",Tl(msgBk.date||msgBk.start_date)+" "+(msgBk.time||"")].filter(Boolean).join(" · ")),
-            u.default.createElement("textarea",{value:msgTxt,onChange:ev=>setMsgTxt(ev.target.value),style:{width:"100%",flex:1,minHeight:250,border:`1px solid ${s.line}`,borderRadius:8,padding:10,fontSize:13,lineHeight:1.65,color:s.ink,background:s.paper,resize:"vertical",fontFamily:"inherit",boxSizing:"border-box"}}),
-            u.default.createElement("div",{style:{display:"flex",gap:8,marginTop:12}},
-              u.default.createElement("button",{onClick:()=>setMsgBk(null),style:{...ll,flex:1,padding:"10px 0"}},"關閉"),
-              u.default.createElement("button",{onClick:()=>{window.open("https://line.me/R/share?text="+encodeURIComponent(msgTxt),"_blank")},style:{...ll,flex:1,padding:"10px 0"}},"LINE 傳送"),
-              u.default.createElement("button",{onClick:()=>{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(msgTxt).then(()=>g("訊息已複製")).catch(()=>window.prompt("請手動複製：",msgTxt))}else{window.prompt("請手動複製：",msgTxt)}},style:{...Dl,flex:1.3,padding:"10px 0"}},"複製訊息")
-            )
-          )
-        ),
-        schedule.filter(visibleSchedule).length>0&&u.default.createElement("div",{style:{borderTop:`1px solid ${s.line}`,paddingTop:20,marginBottom:8}},
-          u.default.createElement("h3",{style:{fontSize:15,fontWeight:300,margin:"0 0 12px",color:s.oceanDark}},"行程"),
-          u.default.createElement("div",{style:{display:"flex",flexDirection:"column",gap:10}},
-            schedule.filter(visibleSchedule).map(sc=>u.default.createElement("div",{key:sc.id,style:{background:s.card,border:`1px solid ${s.line}`,borderRadius:8,padding:"12px 14px"}},
-              u.default.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:10}},
-                u.default.createElement("div",null,
-                  u.default.createElement("div",{style:{fontSize:14,fontWeight:400}},sc.title),
-                  sc.location?u.default.createElement("div",{style:{fontSize:12.5,color:s.inkSoft,marginTop:2}},sc.location):null,
-                  sc.note?u.default.createElement("div",{style:{fontSize:12,color:s.inkSoft,marginTop:4}},sc.note):null
-                ),
-                u.default.createElement("div",{style:{display:"flex",gap:6}},
-                  u.default.createElement("button",{onClick:()=>{setMsgTxt(HB_buildScheduleMsg(sc));setMsgBk(sc)},title:"預約成功訊息",style:{...at,color:s.ocean}},u.default.createElement(E,{name:"message-circle",size:16})),
-                  u.default.createElement("button",{onClick:()=>startEditSchedule(sc),style:{...at}},u.default.createElement(E,{name:"pencil",size:16})),
-                  u.default.createElement("button",{onClick:()=>cancelSchedule(sc.id),style:{...at,color:s.danger}},u.default.createElement(E,{name:"x",size:16}))
-                )
-              ),
-              u.default.createElement("div",{style:{marginTop:10,paddingTop:10,borderTop:`1px solid ${s.line}`,fontSize:14,fontWeight:400,color:s.oceanDark}},
-                sc.start_date===sc.end_date?Tl(sc.start_date):(Tl(sc.start_date)+" ～ "+Tl(sc.end_date)),
-                sc.all_day?"（全天）":(sc.time?"　"+sc.time:"")
-              )
-            ))
-          )
-        ),
-        u.default.createElement("div",{style:{borderTop:`1px solid ${s.line}`,paddingTop:20}},
-          u.default.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}},
-            u.default.createElement("h3",{style:{fontSize:15,fontWeight:300,margin:0,color:s.oceanDark}},"公休日管理"),
-            u.default.createElement("button",{onClick:()=>setShowAddClosed(true),style:{...at,color:s.ocean}},u.default.createElement(E,{name:"plus",size:18}))
-          ),
-          closed.length===0?u.default.createElement("div",{style:{fontSize:12.5,color:s.inkSoft}},"目前沒有設定臨時公休日（固定週日公休不用另外設定）"):
-          u.default.createElement("div",{style:{display:"flex",flexDirection:"column",gap:8}},
-            closed.map(c=>u.default.createElement("div",{key:c.date,style:{display:"flex",justifyContent:"space-between",alignItems:"center",background:s.card,border:`1px solid ${s.line}`,borderRadius:8,padding:"9px 12px"}},
-              u.default.createElement("div",null,
-                u.default.createElement("span",{style:{fontSize:13.5,fontWeight:400}},Tl(c.date)),
-                c.reason?u.default.createElement("span",{style:{fontSize:12,color:s.inkSoft,marginLeft:8}},c.reason):null
-              ),
-              u.default.createElement("button",{onClick:()=>deleteClosedDate(c.date),style:{...at,color:s.danger}},u.default.createElement(E,{name:"trash",size:15}))
-            ))
-          )
-        ),
-        u.default.createElement("div",{style:{borderTop:`1px solid ${s.line}`,paddingTop:20,marginTop:20}},
-          u.default.createElement("h3",{style:{fontSize:15,fontWeight:300,margin:"0 0 4px",color:s.oceanDark}},"可預約時段設定"),
-          u.default.createElement("p",{style:{fontSize:12,color:s.inkSoft,margin:"0 0 12px"}},"每天可以分別設定不同的開放時間，客戶預約頁面會依日期自動套用對應星期幾的時段；若某天完全沒有設定時段，客戶就無法選那天"),
-          u.default.createElement("div",{style:{display:"flex",gap:6,marginBottom:12,flexWrap:"wrap"}},
-            WEEKDAY_NAMES.map((wn,wi)=>u.default.createElement("button",{key:wi,onClick:()=>setActiveWeekday(wi),style:{border:`1px solid ${activeWeekday===wi?s.ocean:s.line}`,background:activeWeekday===wi?s.ocean:"#fff",color:activeWeekday===wi?"#fff":s.oceanDark,borderRadius:8,padding:"7px 0",width:36,fontSize:13,fontWeight:400,cursor:"pointer"}},"週"+wn))
-          ),
-          u.default.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:8,marginBottom:12}},
-            (weekSlots[activeWeekday]||[]).length===0?u.default.createElement("div",{style:{fontSize:12.5,color:s.inkSoft}},"週"+WEEKDAY_NAMES[activeWeekday]+"目前沒有開放任何時段"):
-            (weekSlots[activeWeekday]||[]).map(sl=>u.default.createElement("div",{key:sl.id,style:{display:"flex",alignItems:"center",gap:6,background:s.card,border:`1px solid ${s.line}`,borderRadius:20,padding:"6px 6px 6px 12px",fontSize:13,fontWeight:400}},
-              sl.time,
-              u.default.createElement("button",{onClick:()=>deleteSlot(sl.id),style:{...at,padding:2,color:s.danger}},u.default.createElement(E,{name:"x",size:14}))
-            ))
-          ),
-          u.default.createElement("div",{style:{display:"flex",gap:8}},
-            u.default.createElement("input",{type:"time",value:newSlotTime,onChange:x=>setNewSlotTime(x.target.value),style:{...el,width:"auto",marginBottom:0,flex:1}}),
-            u.default.createElement("button",{onClick:addSlot,style:{...Dl,padding:"9px 16px"}},"新增到週"+WEEKDAY_NAMES[activeWeekday])
-          )
-        )
-      )
-    ),
+
+    C("footer",{className:"hb-rdvFoot"},
+      C("span",{className:"hb-rdvMark"},"HERFULSINS \u00B7 MAISON D\u2019INT\u00C9RIEUR"),
+      C("span",{className:"hb-rdvTopRule","aria-hidden":"true"}),
+      C("span",{className:"hb-rdvFootQ"},"\u8B93\u6BCF\u6B21\u76F8\u9047\uFF0C\u90FD\u6709\u5F9E\u5BB9\u7684\u5B89\u6392\u3002")),
+
+    msgBk&&C("div",{onClick:()=>setMsgBk(null),style:{position:"fixed",inset:0,background:"rgba(41,40,36,0.5)",display:"flex",alignItems:"center",justifyContent:"center",padding:16,zIndex:70}},
+      C("div",{className:"fade-in",onClick:ev=>ev.stopPropagation(),style:{background:"#FCFAF6",borderRadius:4,padding:18,width:"100%",maxWidth:430,maxHeight:"88vh",display:"flex",flexDirection:"column"}},
+        C("h3",{style:{margin:"0 0 2px",fontSize:16,fontWeight:400,color:"#292824"}},"\u9810\u7D04\u6210\u529F\u8A0A\u606F"),
+        C("div",{style:{fontSize:12,color:"#6B665D",marginBottom:10}},[msgBk.name||msgBk.title||"",msgBk.service_type||"",Tl(msgBk.date||msgBk.start_date)+" "+(msgBk.time||"")].filter(Boolean).join(" \u00B7 ")),
+        C("textarea",{value:msgTxt,onChange:ev=>setMsgTxt(ev.target.value),style:{width:"100%",flex:1,minHeight:250,border:"1px solid rgba(41,40,36,.30)",borderRadius:4,padding:10,fontSize:13,lineHeight:1.65,color:"#292824",background:"#F3EEE5",resize:"vertical",fontFamily:"inherit",boxSizing:"border-box"}}),
+        C("div",{style:{display:"flex",gap:8,marginTop:12}},
+          C("button",{type:"button",onClick:()=>setMsgBk(null),className:"hb-rdvMini",style:{flex:1}},"\u95DC\u9589"),
+          C("button",{type:"button",onClick:()=>{window.open("https://line.me/R/share?text="+encodeURIComponent(msgTxt),"_blank")},className:"hb-rdvMini",style:{flex:1}},"LINE \u50B3\u9001"),
+          C("button",{type:"button",onClick:()=>{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(msgTxt).then(()=>g("\u8A0A\u606F\u5DF2\u8907\u88FD")).catch(()=>window.prompt("\u8ACB\u624B\u52D5\u8907\u88FD\uFF1A",msgTxt))}else{window.prompt("\u8ACB\u624B\u52D5\u8907\u88FD\uFF1A",msgTxt)}},className:"hb-rdvMini is-solid",style:{flex:1.3}},"\u8907\u88FD\u8A0A\u606F")))),
     showAddClosed&&u.default.createElement("div",{style:{position:"fixed",inset:0,background:"rgba(43,38,32,0.45)",display:"flex",alignItems:"center",justifyContent:"center",padding:20,zIndex:55}},
       u.default.createElement("div",{className:"fade-in",style:{background:s.card,borderRadius:10,padding:22,width:"100%",maxWidth:340}},
         u.default.createElement("h3",{style:{margin:"0 0 14px",fontSize:17,fontWeight:400,color:s.oceanDark}},"新增臨時公休日"),
