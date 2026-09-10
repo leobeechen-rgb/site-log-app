@@ -1629,6 +1629,167 @@
     .hb-tblwrap,
     .hb-docsTabsIn{ overscroll-behavior-x: contain; }
   }
+
+  /* ===== 底部面板（手機用） ===== */
+  .hb-sheetWrap{
+    position: fixed; inset: 0; z-index: 300;
+    background: rgba(23,21,15,.42);
+    display: flex; align-items: flex-end; justify-content: center;
+    animation: hbSheetFade .18s ease both;
+  }
+  @keyframes hbSheetFade{ from{ opacity:0 } to{ opacity:1 } }
+  @keyframes hbSheetUp{ from{ transform:translateY(16%) } to{ transform:translateY(0) } }
+  .hb-sheet{
+    width: 100%; max-width: 560px; background: #FBFAF6; color: #17150F;
+    font-family: "Noto Serif TC","Songti TC","PingFang TC",serif;
+    border-radius: 16px 16px 0 0;
+    padding: 8px 16px calc(14px + env(safe-area-inset-bottom));
+    box-shadow: 0 -14px 34px -18px rgba(23,21,15,.6);
+    max-height: 82vh; overflow-y: auto; overscroll-behavior: contain;
+    animation: hbSheetUp .22s cubic-bezier(.22,.61,.36,1) both;
+  }
+  .hb-sheet:focus{ outline: none; }
+  .hb-sheetGrab{ display:block; width:44px; height:4px; border-radius:2px; background:#D6CFC2; margin:4px auto 10px; }
+  .hb-sheetHead{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:2px 0 8px; }
+  .hb-sheetTitle{
+    min-width:0; font-size:17px; font-weight:700; letter-spacing:.05em;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .hb-sheetX{
+    flex:0 0 auto; width:44px; height:44px; margin-right:-10px;
+    display:flex; align-items:center; justify-content:center;
+    background:none; border:0; padding:0; cursor:pointer; color:#6F675B;
+  }
+  .hb-sheetBody{ display:flex; flex-direction:column; }
+  .hb-sheetOpt{
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    width:100%; min-height:54px; padding:14px 12px;
+    background:none; border:0; border-bottom:1px solid #E4DED2; border-radius:6px;
+    font-family:inherit; font-size:16px; letter-spacing:.05em; color:#17150F;
+    text-align:left; cursor:pointer;
+  }
+  .hb-sheetOpt:last-child{ border-bottom:0; }
+  .hb-sheetOpt.on{ background:rgba(180,87,58,.09); color:#B4573A; }
+  .hb-sheetOpt.del{ color:#B4573A; }
+  .hb-sheetOpt:focus-visible{ outline:1px solid #B4573A; outline-offset:-2px; }
+  .hb-sheetNote{ padding:12px 12px 2px; border-top:1px solid #E4DED2; font-size:12.5px; letter-spacing:.06em; color:#9A9083; }
+  .hb-sheetCancel{
+    width:100%; min-height:52px; margin-top:12px;
+    background:none; border:1px solid #B4573A; border-radius:6px;
+    font-family:inherit; font-size:16px; letter-spacing:.1em; color:#B4573A; cursor:pointer;
+  }
+  body.hb-sheet-open{ overflow:hidden; }
+  body.hb-sheet-open .hb-pagein{ overflow:hidden !important; }
+  @media (prefers-reduced-motion: reduce){
+    .hb-sheetWrap, .hb-sheet{ animation:none !important; }
+  }
+
+  /* 桌機不顯示的手機專用元件 */
+  .hb-dosPick{ display:none; }
+  .hb-dosNewShort{ display:none; }
+
+  /* ===== 手機切版：文件系統／公司合約 ===== */
+  @media (max-width: 860px){
+    /* 1 · 頁首：法文主標兩行、中文小標、去掉右側裝飾文案 */
+    .hb-docsHeadIn, .hb-docsTabsIn{ padding: 0 18px; }
+    .hb-docsBrand{ padding: 13px 0 11px; gap: 12px; border-bottom-width: 1px; }
+    .hb-docsMark{ font-size: 12.5px; letter-spacing: .3em; }
+    .hb-docsBack{ display:inline-flex; align-items:center; min-height:44px; font-size:14px; }
+    .hb-docsHero{ display:block; padding: 14px 0 13px; border-bottom: 1px solid #CFC7B8; }
+    .hb-docsFr{
+      font-family: "Cormorant Garamond","Times New Roman",serif; font-weight: 600;
+      font-size: clamp(31px,9vw,42px); line-height: 1.06; letter-spacing: .012em;
+      text-transform: uppercase; color: #17150F; margin-bottom: 0;
+    }
+    .hb-docsFrA, .hb-docsFrB{ display: block; }
+    .hb-docsH1{
+      font-family: "Noto Sans TC",sans-serif; font-weight: 400;
+      font-size: 15.5px; line-height: 1.5; letter-spacing: .12em; color: #6F675B; margin-top: 5px;
+    }
+    .hb-docsMotto{ display: none; }
+
+    /* 2 · 功能導覽：單行橫向滑動 */
+    .hb-docsTabsIn{
+      flex-wrap: nowrap; gap: 0 22px;
+      overflow-x: auto; overflow-y: hidden;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none; -ms-overflow-style: none;
+      scroll-snap-type: x proximity;
+    }
+    .hb-docsTabsIn::-webkit-scrollbar{ display: none; }
+    .hb-docsTab{
+      font-size: 15px; padding: 13px 2px 11px; min-height: 44px;
+      scroll-snap-align: center;
+    }
+
+    /* 3 · 分類：全寬選擇欄，內容依序重排 */
+    .hb-docsBody .hb-dosRow, .hb-dossier .hb-dosRow{
+      display: flex; flex-direction: column; gap: 0;
+      padding: 16px 0 26px;
+    }
+    .hb-dosSide{ display: contents; }
+    .hb-dosNav{ display: none; }
+    .hb-dosSideT{ order: 1; margin: 0 0 8px; font-size: 12px; letter-spacing: .2em; }
+    .hb-dosPick{
+      order: 2; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      width: 100%; min-height: 52px; margin: 0 0 18px; padding: 13px 14px;
+      background: var(--hbSheet); border: 1px solid var(--hbRule); border-radius: 4px;
+      font-family: inherit; font-size: 16px; letter-spacing: .04em; color: var(--hbInk);
+      text-align: left; cursor: pointer;
+    }
+    .hb-dosPick svg{ color: var(--hbInk2); }
+    .hb-dosPick:focus-visible{ outline: 1px solid var(--hbAcc); outline-offset: 2px; }
+    .hb-dosField{ order: 3; margin: 0 0 18px; }
+    .hb-dosSelect{ min-height: 52px; }
+    .hb-dosMain{ order: 4; }
+
+    /* 4 · 清單表頭 */
+    .hb-dosBar{ gap: 12px; padding-bottom: 14px; }
+    .hb-dosCount{ font-size: 21px; letter-spacing: .04em; }
+    .hb-dosNewFull{ display: none; }
+    .hb-dosNewShort{ display: inline; }
+    .hb-dosNew{
+      flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center;
+      min-height: 46px; padding: 0 18px; font-size: 15px; letter-spacing: .04em;
+    }
+
+    /* 5 · 合約項目：單欄、編號縮小置左、操作另起一列 */
+    .hb-dosList{ border-top: 1px solid var(--hbRule2); }
+    .hb-dosItem{
+      display: grid; grid-template-columns: auto minmax(0,1fr);
+      grid-template-areas: "no body" "no date" "no acts";
+      column-gap: 14px; row-gap: 3px; align-items: start; flex-wrap: nowrap;
+      padding: 16px 0 14px; border-bottom: 1px solid var(--hbRule2);
+    }
+    .hb-dosNo{
+      grid-area: no; align-self: start; min-width: 1.5em;
+      font-size: 30px; line-height: 1.15;
+    }
+    .hb-dosBody{ grid-area: body; flex: none; }
+    .hb-dosName{ font-size: 18px; line-height: 1.5; overflow-wrap: anywhere; }
+    .hb-dosMeta{ font-size: 14px; margin-top: 5px; }
+    .hb-dosDate{ grid-area: date; font-size: 14px; }
+    .hb-dosActs{
+      grid-area: acts; flex: none; display: flex; flex-wrap: wrap;
+      gap: 8px; margin-top: 10px; justify-content: flex-start;
+    }
+    .hb-dosAct{ min-height: 44px; padding: 0 16px; font-size: 14px; }
+    .hb-dosAct.ico{ min-width: 44px; padding: 0 12px; justify-content: center; }
+    .hb-dosMenu{ display: none; }
+
+    /* 6 · 次要功能：範本下載與帳戶管理放清單下方 */
+    .hb-dosSideFoot{ order: 5; margin: 22px 0 0; padding-top: 18px; }
+    .hb-dosLink{ min-height: 44px; font-size: 15px; }
+
+    /* 7 · 獨立進入（非文件系統）時的頁首收斂 */
+    .hb-dosWrap{ padding: 0 18px; }
+    .hb-dosHead{ padding-bottom: 18px; }
+    .hb-dosHead::before{ padding: 14px 0 12px; margin-bottom: 16px; font-size: 12.5px; letter-spacing: .3em; }
+    .hb-dosLabel{ font-size: 12px; letter-spacing: .28em; }
+    .hb-dosTitle{ font-size: 32px; }
+    .hb-dosLede{ font-size: 13.5px; line-height: 1.9; margin-top: 12px; }
+    .hb-dosWrap::after{ padding: 16px 0 26px; font-size: 10.5px; letter-spacing: .22em; }
+  }
 </style>
 <script>
 /* === 赫柏文件共用樣式（六份單據共用，改這裡就全部一起改） === */
@@ -3600,6 +3761,8 @@ function HerfulsinsContractsHub({onBack:l,notify:t}){
   let[e,n]=(0,u.useState)("company"),[a,i]=(0,u.useState)([]),[o,f]=(0,u.useState)([]),[c,r]=(0,u.useState)([]),[d,h]=(0,u.useState)(!0),[m,p]=(0,u.useState)(null),[z,C]=(0,u.useState)(!1),[D,y]=(0,u.useState)(!1);
   let[editingRow,setEditingRow]=(0,u.useState)(null);
   let[hbMenu,hbSetMenu]=(0,u.useState)(null);
+  let[hbCatSheet,hbSetCatSheet]=(0,u.useState)(!1);
+  let hbIsMobile=HbUseMobile(860);
   let load=async()=>{
     h(!0);
     let[g,b,S]=await Promise.all([
@@ -3680,9 +3843,14 @@ function HerfulsinsContractsHub({onBack:l,notify:t}){
         u.default.createElement("aside",{className:"hb-dosSide"},
           u.default.createElement("div",{className:"hb-dosSideT"},"分類"),
           u.default.createElement("nav",{className:"hb-dosNav"},
-            [{k:"company",label:"室內設計合約"},{k:"case",label:"專案工程合約"},{k:"budget",label:"初步預算書"}].map(v=>
+            HB_CONTRACT_CATS.map(v=>
               u.default.createElement("button",{key:v.k,onClick:()=>{n(v.k),setSelectedProject(null)},
                 className:"hb-dosNavItem"+(e===v.k?" on":"")},v.label))),
+          u.default.createElement("button",{type:"button",className:"hb-dosPick","aria-haspopup":"dialog",
+            "aria-expanded":hbCatSheet?"true":"false",
+            onClick:ev=>{ev.stopPropagation();hbSetCatSheet(!0)}},
+            u.default.createElement("span",null,(HB_CONTRACT_CATS.find(v=>v.k===e)||HB_CONTRACT_CATS[0]).label),
+            u.default.createElement(E,{name:"chevron-down",size:18})),
           e==="case"&&u.default.createElement("div",{className:"hb-dosField"},
             u.default.createElement("label",{className:"hb-dosSideT",htmlFor:"hbCaseSel"},"選擇案件"),
             u.default.createElement("select",{id:"hbCaseSel",value:selectedProject||"",
@@ -3702,7 +3870,8 @@ function HerfulsinsContractsHub({onBack:l,notify:t}){
             u.default.createElement("div",{className:"hb-dosCount"},
               filtered.length>0?filtered.length+(e==="budget"?" 份預算書":" 份合約"):"尚無資料"),
             u.default.createElement("button",{onClick:()=>{setEditingRow(null);C(!0)},className:"hb-dosNew"},
-              e==="budget"?"新增初步預算書":e==="case"?"新增專案工程合約":"新增室內設計合約")),
+              u.default.createElement("span",{className:"hb-dosNewFull"},e==="budget"?"新增初步預算書":e==="case"?"新增專案工程合約":"新增室內設計合約"),
+              u.default.createElement("span",{className:"hb-dosNewShort"},e==="budget"?"＋ 新增預算書":"＋ 新增合約"))),
 
           d?u.default.createElement("div",{style:{textAlign:"center",padding:40}},
               u.default.createElement(E,{name:"loader",className:"animate-spin",size:22,color:"#B4573A"})):
@@ -3726,7 +3895,7 @@ function HerfulsinsContractsHub({onBack:l,notify:t}){
                     "aria-expanded":hbMenu===v.id?"true":"false",title:"更多",
                     onClick:ev=>{ev.stopPropagation();hbSetMenu(hbMenu===v.id?null:v.id)}},
                     u.default.createElement(E,{name:"more-vertical",size:15})),
-                  hbMenu===v.id&&u.default.createElement("div",{className:"hb-dosMenu",onClick:ev=>ev.stopPropagation()},
+                  !hbIsMobile&&hbMenu===v.id&&u.default.createElement("div",{className:"hb-dosMenu",onClick:ev=>ev.stopPropagation()},
                     u.default.createElement("button",{onClick:()=>{hbSetMenu(null);setEditingRow(v);C(!0)}},"編輯"),
                     u.default.createElement("button",{className:"del",onClick:()=>{
                       hbSetMenu(null);
@@ -3735,6 +3904,21 @@ function HerfulsinsContractsHub({onBack:l,notify:t}){
         ))),
 
     z&&u.default.createElement(HerfulsinsContractForm,{category:editingRow?editingRow.category:e,projects:caseProjects,accounts:o,defaultProjectId:selectedProject,initialValues:editingRow?toFormValues(editingRow):null,editing:!!editingRow,onCancel:()=>{C(!1);setEditingRow(null)},onCreate:editingRow?(v=>updateContract(editingRow.id,v)):createContract}),
+    hbIsMobile&&hbCatSheet&&u.default.createElement(HbSheet,{title:"選擇合約分類",onClose:()=>hbSetCatSheet(!1),footNote:"切換分類後顯示對應文件"},
+      HB_CONTRACT_CATS.map(v=>u.default.createElement("button",{key:v.k,type:"button",
+        className:"hb-sheetOpt"+(e===v.k?" on":""),"aria-current":e===v.k?"true":void 0,
+        onClick:()=>{n(v.k);setSelectedProject(null);hbSetCatSheet(!1)}},
+        u.default.createElement("span",null,v.label),
+        e===v.k?u.default.createElement(E,{name:"check",size:17}):null))),
+    hbIsMobile&&hbMenu&&(function(){
+      let row=a.find(v=>v.id===hbMenu);
+      if(!row)return null;
+      return u.default.createElement(HbSheet,{title:row.design_name||(row.category==="budget"?"未命名預算書":"空白合約"),onClose:()=>hbSetMenu(null)},
+        u.default.createElement("button",{type:"button",className:"hb-sheetOpt",
+          onClick:()=>{hbSetMenu(null);setEditingRow(row);C(!0)}},u.default.createElement("span",null,"編輯")),
+        u.default.createElement("button",{type:"button",className:"hb-sheetOpt del",
+          onClick:()=>{hbSetMenu(null);if(window.confirm("確定要刪除「"+(row.design_name||"空白合約")+"」？此動作無法復原。"))deleteContract(row.id)}},
+          u.default.createElement("span",null,"刪除")))})(),
     D&&u.default.createElement(HerfulsinsAccountManager,{accounts:o,onClose:()=>y(!1),onAdd:addAccount,onDelete:deleteAccount})
   )
 }
@@ -8185,6 +8369,44 @@ function HbMaterialReportHub({onBack:onBack,notify:notify,projects:projects}){
     editing&&u.default.createElement(HbMaterialForm,{key:editing.id,initial:editing,onCancel:()=>setEditing(null),onSave:update,projects:projList}));
 }
 
+var HB_CONTRACT_CATS=[{k:"company",label:"\u5BA4\u5167\u8A2D\u8A08\u5408\u7D04"},{k:"case",label:"\u5C08\u6848\u5DE5\u7A0B\u5408\u7D04"},{k:"budget",label:"\u521D\u6B65\u9810\u7B97\u66F8"}];
+function HbUseMobile(bp){
+  var q="(max-width:"+(bp||860)+"px)";
+  let[m,setM]=(0,u.useState)(function(){try{return window.matchMedia(q).matches}catch(e){return false}});
+  (0,u.useEffect)(function(){
+    var mq;
+    try{ mq=window.matchMedia(q) }catch(e){ return }
+    var on=function(ev){ setM(!!ev.matches) };
+    setM(mq.matches);
+    if(mq.addEventListener) mq.addEventListener("change",on); else if(mq.addListener) mq.addListener(on);
+    return function(){ if(mq.removeEventListener) mq.removeEventListener("change",on); else if(mq.removeListener) mq.removeListener(on) };
+  },[q]);
+  return m;
+}
+function HbSheet({title:title,onClose:onClose,children:children,footNote:footNote}){
+  let C=u.default.createElement;
+  let panelRef=(0,u.useRef)(null);
+  (0,u.useEffect)(function(){
+    var onKey=function(ev){ if(ev.key==="Escape"){ ev.stopPropagation(); onClose&&onClose() } };
+    document.addEventListener("keydown",onKey,true);
+    try{ document.body.classList.add("hb-sheet-open") }catch(e){}
+    try{ panelRef.current&&panelRef.current.focus({preventScroll:true}) }catch(e){}
+    return function(){
+      document.removeEventListener("keydown",onKey,true);
+      try{ document.body.classList.remove("hb-sheet-open") }catch(e){}
+    };
+  },[onClose]);
+  return C("div",{className:"hb-sheetWrap",role:"dialog","aria-modal":"true","aria-label":title||"\u9078\u9805",
+      onClick:function(ev){ ev.stopPropagation(); onClose&&onClose() }},
+    C("div",{className:"hb-sheet",ref:panelRef,tabIndex:-1,onClick:function(ev){ ev.stopPropagation() }},
+      C("span",{className:"hb-sheetGrab","aria-hidden":"true"}),
+      C("div",{className:"hb-sheetHead"},
+        C("div",{className:"hb-sheetTitle"},title||""),
+        C("button",{type:"button",className:"hb-sheetX","aria-label":"\u95DC\u9589",onClick:onClose},C(E,{name:"x",size:18}))),
+      C("div",{className:"hb-sheetBody"},children),
+      footNote?C("div",{className:"hb-sheetNote"},footNote):null,
+      C("button",{type:"button",className:"hb-sheetCancel",onClick:onClose},"\u53D6\u6D88")));
+}
 function HbDocsHub({onBack:onBack,notify:notify,projects:projects}){
   let C=u.default.createElement;
   let DOCTABS=[
@@ -8199,6 +8421,16 @@ function HbDocsHub({onBack:onBack,notify:notify,projects:projects}){
     try{ let v=sessionStorage.getItem("hb_docs_tab"); return v&&DOCTABS.some(x=>x[0]===v)?v:"contracts"; }catch(e){ return "contracts"; }
   });
   (0,u.useEffect)(function(){ try{ sessionStorage.setItem("hb_docs_tab",tab); }catch(e){} },[tab]);
+  (0,u.useEffect)(function(){
+    try{
+      var wrap=document.querySelector(".hb-docsTabsIn");
+      var el=wrap&&wrap.querySelector(".hb-docsTab.on");
+      if(!wrap||!el||wrap.scrollWidth<=wrap.clientWidth+1)return;
+      var left=el.offsetLeft-(wrap.clientWidth-el.offsetWidth)/2;
+      left=Math.max(0,Math.min(left,wrap.scrollWidth-wrap.clientWidth));
+      if(wrap.scrollTo) wrap.scrollTo({left:left,behavior:"smooth"}); else wrap.scrollLeft=left;
+    }catch(e){}
+  },[tab]);
   let cur=DOCTABS.find(x=>x[0]===tab)||DOCTABS[0];
   let body =
       tab==="contracts"      ? C(HerfulsinsContractsHub,{onBack:onBack,notify:notify})
@@ -8216,7 +8448,7 @@ function HbDocsHub({onBack:onBack,notify:notify,projects:projects}){
           C("button",{type:"button",className:"hb-docsBack",onClick:onBack},"← 返回公司資料庫")),
         C("div",{className:"hb-docsHero"},
           C("div",{className:"hb-docsHeroL"},
-            C("div",{className:"hb-docsFr"},cur[2]),
+            C("div",{className:"hb-docsFr"},C("span",{className:"hb-docsFrA"},String(cur[2]).split(" ")[0])," ",C("span",{className:"hb-docsFrB"},String(cur[2]).split(" ").slice(1).join(" "))),
             C("h1",{className:"hb-docsH1"},cur[3])),
           C("div",{className:"hb-docsMotto"},"L'ESPACE",C("br",null),"FAIT MIEUX VIVRE.")))),
     C("nav",{className:"hb-docsTabs","aria-label":"文件類型"},
