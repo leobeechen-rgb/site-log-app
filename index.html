@@ -592,6 +592,35 @@
   @media (max-width: 860px){ .hb-dosAmt{ flex: 0 0 auto; } }
 
   /* ===== 合約檔案頁：巴黎事務所風格 ===== */
+  /* ===== 文件系統：六種單據共用的上方分頁 ===== */
+  .hb-docsHub{ background:#F2EFE8; min-height:100vh; }
+  .hb-docsTabs{
+    position: sticky; top: 0; z-index: 40;
+    background: #F2EFE8; border-bottom: 1px solid #CFC7B8;
+  }
+  .hb-docsTabsIn{
+    max-width: 1320px; margin: 0 auto; padding: 0 clamp(20px,4vw,58px);
+    display: flex; gap: clamp(14px,2.2vw,32px);
+    overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch;
+  }
+  .hb-docsTabsIn::-webkit-scrollbar{ display: none; }
+  .hb-docsTab{
+    flex: 0 0 auto; background: none; border: 0; cursor: pointer;
+    font-family: "Noto Serif TC","Songti TC","PingFang TC",serif;
+    font-size: clamp(15px,1.6vw,17px); letter-spacing: .06em; color: #6F675B;
+    padding: 15px 2px 13px; border-bottom: 2px solid transparent;
+    transition: color .2s ease, border-color .2s ease; white-space: nowrap;
+  }
+  .hb-docsTab:hover{ color: #17150F; }
+  .hb-docsTab.on{ color: #B4573A; border-bottom-color: #B4573A; }
+  .hb-docsTab:focus-visible{ outline: 1px solid #B4573A; outline-offset: 2px; }
+  /* 工作區內的子頁不用再自己留頂部空間 */
+  .hb-docsBody .hb-arcBack{ margin-top: 18px !important; }
+  @media (max-width: 860px){
+    .hb-docsTabsIn{ gap: 18px; }
+    .hb-docsTab{ padding: 13px 2px 11px; }
+  }
+
   /* ===== 赫柏檔案頁共用版面（設計合約／報價單／收據／領據／單價庫…全部共用） ===== */
   .hb-dossier{
     --hbP:#F2EFE8; --hbSheet:#FBFAF6; --hbInk:#17150F; --hbInk2:#6F675B; --hbInk3:#9A9083;
@@ -7732,7 +7761,34 @@ function HbAttendanceForm({onCancel,onCreate,projects,workerOptions,lastRateFor}
   )
 }
 
-function HbCompanyHub({onBack:l,onContracts:t,onQuotes:e,onReceipts:rc,onVendorReceipts:vr,onQuickQuote:qq,onGoHome:hbGoHome,onVendorQuotes:vq,onProposal:pg,onMarketingPhotos:mp,onBookings:bk,onOpenBooking:ob,onDrawings:dw,onAttendance:atd,onPriceBook:pb,onSurvey:sv,onChangeOrders:co,onPdfRotate:pr}){
+/* ===================================================================
+   文件系統：六種單據共用一個工作區，上方分頁直接互跳
+   =================================================================== */
+function HbDocsHub({onBack:onBack,notify:notify,projects:projects}){
+  let DOCTABS=[["contracts","設計合約"],["estimate","工程報價"],["receipts","工程收據"],
+               ["vendorReceipts","廠商領據"],["changeOrders","追加減帳"],["vendorQuotes","廠商報價"]];
+  let [tab,setTab]=(0,u.useState)(function(){
+    try{ let v=sessionStorage.getItem("hb_docs_tab"); return v&&DOCTABS.some(x=>x[0]===v)?v:"contracts"; }catch(e){ return "contracts"; }
+  });
+  (0,u.useEffect)(function(){ try{ sessionStorage.setItem("hb_docs_tab",tab); }catch(e){} },[tab]);
+  let body =
+      tab==="contracts"      ? u.default.createElement(HerfulsinsContractsHub,{onBack:onBack,notify:notify})
+    : tab==="estimate"       ? u.default.createElement(HerfulsinsEstimateHub,{project:null,notify:notify,onClose:onBack})
+    : tab==="receipts"       ? u.default.createElement(HbReceiptsHub,{onBack:onBack,notify:notify,projects:projects})
+    : tab==="vendorReceipts" ? u.default.createElement(HbVendorReceiptsHub,{onBack:onBack,notify:notify,projects:projects})
+    : tab==="changeOrders"   ? u.default.createElement(HbChangeOrderHub,{onBack:onBack,notify:notify,projects:projects})
+    :                          u.default.createElement(HbVendorQuoteHub,{onBack:onBack,notify:notify});
+  return u.default.createElement("div",{className:"hb-docsHub"},
+    u.default.createElement("nav",{className:"hb-docsTabs","aria-label":"文件類型"},
+      u.default.createElement("div",{className:"hb-docsTabsIn"},
+        DOCTABS.map(function(x){
+          return u.default.createElement("button",{key:x[0],type:"button",onClick:function(){setTab(x[0])},
+            className:"hb-docsTab"+(tab===x[0]?" on":""),"aria-current":tab===x[0]?"page":void 0},x[1]);
+        }))),
+    u.default.createElement("div",{key:tab,className:"hb-docsBody"},body));
+}
+
+function HbCompanyHub({onBack:l,onContracts:t,onQuotes:e,onReceipts:rc,onVendorReceipts:vr,onQuickQuote:qq,onGoHome:hbGoHome,onVendorQuotes:vq,onProposal:pg,onMarketingPhotos:mp,onBookings:bk,onOpenBooking:ob,onDrawings:dw,onAttendance:atd,onPriceBook:pb,onSurvey:sv,onChangeOrders:co,onPdfRotate:pr,onDocs:docs}){
   /* 這一頁也要滿版：暫時解除外層容器的寬度限制與底色 */
   (0,u.useEffect)(()=>{
     let els=[document.getElementById("root")].concat(Array.prototype.slice.call(document.querySelectorAll(".hb-shell"))).filter(Boolean);
@@ -7763,12 +7819,7 @@ function HbCompanyHub({onBack:l,onContracts:t,onQuotes:e,onReceipts:rc,onVendorR
       u.default.createElement("p",{className:"hb-narr-p"},"整理報價、廠商、設計合約與追加減帳，讓每個專案流程清楚可追溯。"),
       u.default.createElement("div",{className:"hb-narr-tags"},"DEVIS",u.default.createElement("i",null),"CONTRATS",u.default.createElement("i",null),"SUIVI")),
     u.default.createElement("div",{className:"hb-landgrid",style:{display:"grid",gridTemplateColumns:"repeat(2,minmax(0,1fr))",gap:20,gridAutoRows:"210px",alignContent:"start"}},
-      u.default.createElement(HbCompanyGridCard,{icon:"clipboard-list",title:"工程報價單",desc:"選擇案件，管理該案件的報價單附件",onClick:e}),
-      u.default.createElement(HbCompanyGridCard,{icon:"folder",title:"廠商報價單",desc:"依廠商分類管理報價檔案（Excel／圖片），可打包下載或匯出 PDF 清單",onClick:vq}),
-      u.default.createElement(HbCompanyGridCard,{icon:"file-text",title:"設計合約",desc:"前期設計合約／指定案件工程合約的設計委任合約產生與紀錄",onClick:t}),
-      u.default.createElement(HbCompanyGridCard,{icon:"pencil",title:"追加減帳單",desc:"工程變更現場開單，業主當場簽名才生效，簽完鎖定，結算時有憑有據",onClick:co}),
-      u.default.createElement(HbCompanyGridCard,{icon:"file-output",title:"工程收據",desc:"依期別產生工程收據，A4直向每頁3筆款項",onClick:rc}),
-      u.default.createElement(HbCompanyGridCard,{icon:"pencil",title:"廠商領據",desc:"廠商工程款領據產生，A5橫向格式一張一筆",onClick:vr}),
+      u.default.createElement(HbCompanyGridCard,{icon:"file-text",title:"文件系統",desc:"設計合約、工程報價、工程收據、廠商領據、追加減帳、廠商報價，六種單據集中在同一個工作區，上方分頁直接互跳",onClick:docs}),
       u.default.createElement(HbCompanyGridCard,{icon:"users",title:"師傅出勤紀錄",desc:"記錄工班師傅每日出工天數，依師傅／月份統計應付工資",onClick:atd}),
       u.default.createElement(HbCompanyGridCard,{icon:"bookmark",title:"常用工項單價庫",desc:"常用工項的售價與廠商成本，報價時打字即時建議、一鍵帶入，並記錄價格歷史與漲價提醒",onClick:pb}),
       u.default.createElement(HbCompanyGridCard,{icon:"refresh",title:"圖面轉正",desc:"CAD 匯出的 PDF 方向不對時丟進來，自動判斷角度轉回正的，可多檔批次。只改旋轉屬性，線條尺寸不動",onClick:pr}),
@@ -8347,7 +8398,7 @@ function Gy(){let[l,t]=(0,u.useState)(!0),[e,n]=(0,u.useState)(!1),[a,i]=(0,u.us
         }
         .fade-in { animation: hbFadeIn .2s var(--hb-ease-out) both; }
         @media (prefers-reduced-motion: reduce){ .fade-in { animation-name: hbFadeInSoft; } }
-      `),u.default.createElement("div",{key:o,className:"hb-pagein",style:{height:"100%",overflowY:o==="landing"?"hidden":"auto",WebkitOverflowScrolling:"touch",paddingBottom:o==="landing"?0:92}},l?u.default.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh"}},u.default.createElement(E,{name:"loader",className:"animate-spin",size:28,color:s.ocean})):o==="landing"?u.default.createElement(HbLanding,{onCase:()=>f("home"),onCompany:()=>f("companyHub"),onManageStaff:()=>f("staff"),onQuickQuote:()=>f("estimateHub"),onProposal:()=>HB_openProposalSystem(),onMarketingPhotos:()=>f("marketingPhotos"),onBookings:()=>f("bookings"),onOpenBooking:()=>HB_openBookingSystem(),onDrawings:()=>f("drawings"),onLogout:()=>{try{localStorage.removeItem("sitelog_admin_unlocked"),localStorage.removeItem("sitelog_admin_username")}catch{}window.location.reload()}}):o==="companyHub"?u.default.createElement(HbCompanyHub,{onBack:()=>f("landing"),onContracts:()=>f("contracts"),onQuotes:()=>f("estimateHub"),onReceipts:()=>f("receipts"),onVendorReceipts:()=>f("vendorReceipts"),onQuickQuote:()=>f("estimateHub"),onGoHome:()=>f("home"),onVendorQuotes:()=>f("vendorQuotes"),onProposal:()=>HB_openProposalSystem(),onMarketingPhotos:()=>f("marketingPhotos"),onBookings:()=>f("bookings"),onOpenBooking:()=>HB_openBookingSystem(),onDrawings:()=>f("drawings"),onAttendance:()=>f("attendance"),onPriceBook:()=>f("priceBook"),onSurvey:()=>f("survey"),onChangeOrders:()=>f("changeOrders"),onPdfRotate:()=>f("pdfRotate")}):o==="changeOrders"?u.default.createElement(HbChangeOrderHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="survey"?u.default.createElement(HbSurveyHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="priceBook"?u.default.createElement(HbPriceBookHub,{onBack:()=>f("companyHub"),notify:g}):o==="attendance"?u.default.createElement(HbAttendanceHub,{onBack:()=>f("companyHub"),notify:g}):o==="marketingPhotos"?u.default.createElement(HbMarketingPhotoHub,{onBack:()=>f("landing"),notify:g}):o==="bookings"?u.default.createElement(HbBookingsHub,{onBack:()=>f("landing"),notify:g}):o==="vendorQuotes"?u.default.createElement(HbVendorQuoteHub,{onBack:()=>f("companyHub"),notify:g}):o==="drawings"?u.default.createElement(HbDrawingHub,{onBack:()=>f("companyHub"),notify:g}):o==="receipts"?u.default.createElement(HbReceiptsHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="vendorReceipts"?u.default.createElement(HbVendorReceiptsHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="quoteImportPick"?u.default.createElement(Iy,{projects:a,onOpen:hbImportQuote,onNew:()=>h(!0),onRefresh:()=>{D(!0),y()},refreshing:e,storageUsedBytes:z,onManageStaff:()=>f("staff"),pickerMode:!0,progressRanges:hbProg,onBack:()=>f("companyHub")}):o==="estimateHub"?u.default.createElement(HerfulsinsEstimateHub,{project:null,notify:g,onClose:()=>f("companyHub")}):o==="home"?u.default.createElement(Iy,{projects:a,onOpen:T=>{r(T),hbSetOpenTab("photos"),f("detail")},onNew:()=>h(!0),onRefresh:()=>{D(!0),y()},refreshing:e,storageUsedBytes:z,onManageStaff:()=>f("staff"),progressRanges:hbProg,onBack:()=>f("landing"),onGoCompany:()=>f("companyHub")}):o==="staff"?u.default.createElement(Ky,{onBack:()=>f("landing")}):o==="pdfRotate"?u.default.createElement(HbPdfRotate,{onBack:()=>f("companyHub"),notify:g}):o==="contracts"?u.default.createElement(HerfulsinsContractsHub,{onBack:()=>f("landing"),notify:g}):o==="digitalCard"?u.default.createElement(HbDigitalCard,{onBack:()=>f("landing"),notify:g}):u.default.createElement(lh,{project:j,onBack:()=>f("home"),onUpdateMeta:S,onDelete:M,notify:g,initialTab:"overview"})),d&&u.default.createElement(Py,{onCancel:()=>h(!1),onCreate:b}),m&&u.default.createElement("div",{className:"hb-toast",style:{position:"fixed",bottom:20,left:"50%",background:s.ink,color:s.card,padding:"10px 18px",borderRadius:8,fontSize:13,boxShadow:"0 4px 14px rgba(0,0,0,0.25)",zIndex:60}},m),u.default.createElement(HbBottomNav,{active:o,onNavigate:T=>f(T)}))}
+      `),u.default.createElement("div",{key:o,className:"hb-pagein",style:{height:"100%",overflowY:o==="landing"?"hidden":"auto",WebkitOverflowScrolling:"touch",paddingBottom:o==="landing"?0:92}},l?u.default.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh"}},u.default.createElement(E,{name:"loader",className:"animate-spin",size:28,color:s.ocean})):o==="landing"?u.default.createElement(HbLanding,{onCase:()=>f("home"),onCompany:()=>f("companyHub"),onManageStaff:()=>f("staff"),onQuickQuote:()=>f("estimateHub"),onProposal:()=>HB_openProposalSystem(),onMarketingPhotos:()=>f("marketingPhotos"),onBookings:()=>f("bookings"),onOpenBooking:()=>HB_openBookingSystem(),onDrawings:()=>f("drawings"),onLogout:()=>{try{localStorage.removeItem("sitelog_admin_unlocked"),localStorage.removeItem("sitelog_admin_username")}catch{}window.location.reload()}}):o==="companyHub"?u.default.createElement(HbCompanyHub,{onBack:()=>f("landing"),onContracts:()=>f("contracts"),onQuotes:()=>f("estimateHub"),onReceipts:()=>f("receipts"),onVendorReceipts:()=>f("vendorReceipts"),onQuickQuote:()=>f("estimateHub"),onGoHome:()=>f("home"),onVendorQuotes:()=>f("vendorQuotes"),onProposal:()=>HB_openProposalSystem(),onMarketingPhotos:()=>f("marketingPhotos"),onBookings:()=>f("bookings"),onOpenBooking:()=>HB_openBookingSystem(),onDrawings:()=>f("drawings"),onAttendance:()=>f("attendance"),onPriceBook:()=>f("priceBook"),onSurvey:()=>f("survey"),onChangeOrders:()=>f("changeOrders"),onPdfRotate:()=>f("pdfRotate"),onDocs:()=>f("docsHub")}):o==="docsHub"?u.default.createElement(HbDocsHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="changeOrders"?u.default.createElement(HbChangeOrderHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="survey"?u.default.createElement(HbSurveyHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="priceBook"?u.default.createElement(HbPriceBookHub,{onBack:()=>f("companyHub"),notify:g}):o==="attendance"?u.default.createElement(HbAttendanceHub,{onBack:()=>f("companyHub"),notify:g}):o==="marketingPhotos"?u.default.createElement(HbMarketingPhotoHub,{onBack:()=>f("landing"),notify:g}):o==="bookings"?u.default.createElement(HbBookingsHub,{onBack:()=>f("landing"),notify:g}):o==="vendorQuotes"?u.default.createElement(HbVendorQuoteHub,{onBack:()=>f("companyHub"),notify:g}):o==="drawings"?u.default.createElement(HbDrawingHub,{onBack:()=>f("companyHub"),notify:g}):o==="receipts"?u.default.createElement(HbReceiptsHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="vendorReceipts"?u.default.createElement(HbVendorReceiptsHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="quoteImportPick"?u.default.createElement(Iy,{projects:a,onOpen:hbImportQuote,onNew:()=>h(!0),onRefresh:()=>{D(!0),y()},refreshing:e,storageUsedBytes:z,onManageStaff:()=>f("staff"),pickerMode:!0,progressRanges:hbProg,onBack:()=>f("companyHub")}):o==="estimateHub"?u.default.createElement(HerfulsinsEstimateHub,{project:null,notify:g,onClose:()=>f("companyHub")}):o==="home"?u.default.createElement(Iy,{projects:a,onOpen:T=>{r(T),hbSetOpenTab("photos"),f("detail")},onNew:()=>h(!0),onRefresh:()=>{D(!0),y()},refreshing:e,storageUsedBytes:z,onManageStaff:()=>f("staff"),progressRanges:hbProg,onBack:()=>f("landing"),onGoCompany:()=>f("companyHub")}):o==="staff"?u.default.createElement(Ky,{onBack:()=>f("landing")}):o==="pdfRotate"?u.default.createElement(HbPdfRotate,{onBack:()=>f("companyHub"),notify:g}):o==="contracts"?u.default.createElement(HerfulsinsContractsHub,{onBack:()=>f("landing"),notify:g}):o==="digitalCard"?u.default.createElement(HbDigitalCard,{onBack:()=>f("landing"),notify:g}):u.default.createElement(lh,{project:j,onBack:()=>f("home"),onUpdateMeta:S,onDelete:M,notify:g,initialTab:"overview"})),d&&u.default.createElement(Py,{onCancel:()=>h(!1),onCreate:b}),m&&u.default.createElement("div",{className:"hb-toast",style:{position:"fixed",bottom:20,left:"50%",background:s.ink,color:s.card,padding:"10px 18px",borderRadius:8,fontSize:13,boxShadow:"0 4px 14px rgba(0,0,0,0.25)",zIndex:60}},m),u.default.createElement(HbBottomNav,{active:o,onNavigate:T=>f(T)}))}
 
 /* ===================================================================
    設計需求問卷：公司端建立連結 → 業主線上填 → 答案回到案件
