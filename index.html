@@ -2514,6 +2514,12 @@
      根因 4：估價單明細表 min-width:952px → 手機必須左右拖動
      ========================================================= */
 
+  /* 表單裡的按鈕與可點標籤，確保觸控事件不被攔截 */
+  @media (max-width: 768px){
+    button, [role="button"], label{ touch-action: manipulation; }
+    label > select, label > input:not([type="checkbox"]):not([type="radio"]){ pointer-events: auto; }
+  }
+
   @media (max-width: 768px){
     /* 1 · 所有輸入元件至少 16px，iOS 不再自動放大（縮放功能保留） */
     input:not([type="checkbox"]):not([type="radio"]),
@@ -9612,13 +9618,20 @@ function HbMaterialForm({onCancel,onSave,projects,initial}){
       u.default.createElement("input",{type:"date",value:reportDate,onChange:e=>setReportDate(e.target.value),style:el}),
       u.default.createElement("div",{style:{display:"flex",alignItems:"baseline",justifyContent:"space-between",gap:10,flexWrap:"wrap"}},
         u.default.createElement("label",{style:lb},"材料明細"),
-        u.default.createElement("label",{style:{fontSize:12.5,color:s.inkSoft,display:"flex",alignItems:"center",gap:8,marginTop:10}},
-          "\u4fee\u5716",
-          u.default.createElement("select",{value:autoFix,onChange:e=>setAutoFix(e.target.value),
-            style:{...el,margin:0,width:"auto",padding:"6px 8px"}},
-            u.default.createElement("option",{value:"tidy"},"\u8f15\u5fae\u6574\u7406\uff08\u4fdd\u7559\u539f\u8272\uff09"),
-            u.default.createElement("option",{value:"cast"},"\u9023\u8272\u504f\u4e00\u8d77\u6821\u6b63"),
-            u.default.createElement("option",{value:"none"},"\u4e0d\u4fee\u5716")))),
+        u.default.createElement("div",{style:{display:"flex",alignItems:"center",gap:8,marginTop:10,flexWrap:"wrap"}},
+          u.default.createElement("span",{style:{fontSize:12.5,color:s.inkSoft}},"\u4fee\u5716"),
+          u.default.createElement("div",{style:{display:"flex",border:"1px solid "+s.line,borderRadius:6,overflow:"hidden"}},
+            [["tidy","\u8f15\u5fae\u6574\u7406"],["cast","\u9023\u8272\u504f\u6821\u6b63"],["none","\u4e0d\u4fee\u5716"]].map(function(o,oi){
+              var on=autoFix===o[0];
+              return u.default.createElement("button",{key:o[0],type:"button",
+                "aria-pressed":on?"true":"false",
+                onClick:function(){ setAutoFix(o[0]) },
+                style:{minHeight:44,padding:"0 12px",border:"none",
+                  borderLeft:oi?"1px solid "+s.line:"none",
+                  background:on?s.oceanDark:"#fff",
+                  color:on?"#fff":s.ink,
+                  fontFamily:"inherit",fontSize:13.5,cursor:"pointer",whiteSpace:"nowrap"}},o[1]);
+            })))),
       u.default.createElement("button",{type:"button",onClick:()=>setShowPicker(!0),
         style:{width:"100%",minHeight:46,marginBottom:10,border:"1px dashed "+s.line,borderRadius:6,background:"none",fontSize:13.5,color:s.oceanDark,cursor:"pointer"}},
         "\u5f9e 3D \u5716\u53d6\u6750\u8cea\uff08\u6846\u4e00\u584a\u5c31\u65b0\u589e\u4e00\u5217\uff09"),
