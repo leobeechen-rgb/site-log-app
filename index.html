@@ -631,10 +631,8 @@
   /* 子頁的滿版彈窗沒設層級，靠 DOM 順序疊；這裡補上，避免被分頁列壓住 */
   .hb-docsBody [style*="position: fixed"][style*="inset"]:not(.hb-dossier){ z-index:200 !important; }
   .hb-docsTabsIn{
-    display:flex; gap:clamp(14px,2.2vw,32px);
-    overflow-x:auto; scrollbar-width:none; -webkit-overflow-scrolling:touch;
+    display:flex; flex-wrap:wrap; gap:0 clamp(14px,2.2vw,32px);
   }
-  .hb-docsTabsIn::-webkit-scrollbar{ display:none; }
   .hb-docsTab{
     flex:0 0 auto; background:none; border:0; cursor:pointer;
     font-family:"Noto Serif TC","Songti TC","PingFang TC",serif;
@@ -659,8 +657,8 @@
 
   @media (max-width: 860px){
     .hb-docsMotto{ display:none; }
-    .hb-docsTabsIn{ gap:18px; }
-    .hb-docsTab{ padding:13px 2px 11px; }
+    .hb-docsTabsIn{ gap:0 18px; }
+    .hb-docsTab{ padding:11px 2px 9px; font-size:15px; }
   }
 
   /* ===== 赫柏檔案頁共用版面（設計合約／報價單／收據／領據／單價庫…全部共用） ===== */
