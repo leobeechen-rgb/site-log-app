@@ -1623,9 +1623,12 @@ tr.grand td{border-top:2px solid var(--ink);font-weight:700;font-size:17px;backg
 .ded{color:var(--accent)}
 table.partyline{border:0;margin:10px 0 18px}
 table.partyline td{border:0;padding:5px 0;vertical-align:bottom}
-table.partyline td:first-child{width:92px;font-size:11px;letter-spacing:.16em;color:var(--ink-3)}
+table.partyline td:first-child{width:1%;white-space:nowrap;padding-right:14px;font-size:11px;letter-spacing:.16em;color:var(--ink-3)}
+table.partyline td:first-child strong{font-weight:500;letter-spacing:.16em}
+table.partyline td:last-child{white-space:nowrap;padding-left:14px}
 table.partyline td.pv{border-bottom:1px solid var(--rule)}
 table.partyline td.pv .blank{border:0;min-width:0}
+table.partyline .blank.us{letter-spacing:.26em;color:var(--ink)}
 table.partyline td:last-child{width:auto}
 table.v th,table.v td{padding:8px 11px}
 table.rc-table th,table.rc-table td{padding:6px 9px;font-size:12.5px}
@@ -3011,7 +3014,7 @@ ${HB_DOC_CSS}
 <h1>赫柏空間委任設計合約書</h1>
 <table class="partyline">
 <tr><td><strong>立合約書人：</strong>委託人：</td><td class="pv"><span class="blank">${e(v.partyAName)||"　"}</span></td><td>（以下簡稱甲方）</td></tr>
-<tr><td>受託人：</td><td class="pv"><span class="blank">赫柏空間設計</span></td><td>（以下簡稱乙方）</td></tr>
+<tr><td>受託人：</td><td class="pv"><span class="blank us">赫柏空間設計</span></td><td>（以下簡稱乙方）</td></tr>
 </table>
 <p>茲因甲方委託乙方辦理室內設計事宜，經雙方本於誠實信用原則共同議定本合約條款如下，以資雙方共同遵守：</p>
 
