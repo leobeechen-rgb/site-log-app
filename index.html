@@ -1075,6 +1075,54 @@
     .hb-dbfoot-r{ display: none; }
   }
 
+  /* ===== 手機：公司資料庫頁（只縮排版，維持桌機模板樣式） ===== */
+  @media (max-width: 760px){
+    .hb-company{
+      overflow-x: hidden;
+      padding-bottom: calc(104px + env(safe-area-inset-bottom));
+    }
+
+    /* 頁首：維持桌機的麵包屑＋大標＋中文副標＋斜體註記，只是改成直排 */
+    .hb-company .hb-pagehead{ padding: 18px 20px 22px; gap: 14px; }
+    .hb-company .hb-pagehead-h{ font-size: 26px; }
+    .hb-company .hb-pagehead-note{ font-size: 12.5px; }
+
+    /* 敘事欄：保留 DOSSIER 02 小標與標籤列 */
+    .hb-company .hb-dbRow{ padding: 0 20px 28px; gap: 24px; }
+    .hb-company .hb-narr{
+      padding-bottom: 22px;
+      border-bottom: 1px solid rgba(160,146,124,.34);
+    }
+    .hb-company .hb-narr-h{ font-size: 21px; }
+    .hb-company .hb-narr-p{ margin-top: 16px; }
+    .hb-company .hb-narr-tags{ margin-top: 20px; }
+
+    /* 卡片：沿用桌機的紙面、編號、直線、OUVRIR 一行，只改成單欄 */
+    .hb-company .hb-landgrid{ gap: 14px !important; }
+    .hb-company .hb-entry{
+      min-height: 152px;
+      padding: 22px 20px 22px 84px;
+      justify-content: center;
+    }
+    .hb-company .hb-entry::before{ font-size: 30px; left: 20px; top: 24px; }
+    .hb-company .hb-entry::after{ left: 66px; top: 22px; bottom: 22px; }
+    .hb-company .hb-entry-d{ max-width: none; -webkit-line-clamp: 3; }
+    .hb-company .hb-entry-go{ margin-top: 14px; }
+    .hb-company .hb-entry-go i{ width: 32px; }
+
+    /* 有材質照的卡：照片縮小，文字不要被擠成一行兩字 */
+    .hb-company .hb-entry.has-img{ padding-right: 30%; }
+    .hb-company .hb-entry-photo{ right: 14px; width: 26%; max-width: 104px; }
+
+    /* 頁尾：拿掉 100vw 出血，避免左右滑動 */
+    .hb-company .hb-dbfoot{
+      width: auto; max-width: none; margin-left: 0; margin-right: 0;
+      padding: 20px 20px calc(20px + env(safe-area-inset-bottom));
+      gap: 7px;
+    }
+    .hb-company .hb-dbfoot-a, .hb-company .hb-dbfoot-b{ font-size: 9px; letter-spacing: .24em; line-height: 1.7; }
+  }
+
   /* ===== 中央橫幅：四欄橫向編輯排版（非置中 Banner） ===== */
   .hb-banner{
     position: relative; width: 100vw; height: 130px;
