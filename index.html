@@ -1723,14 +1723,14 @@
     }
 
     /* 3 · 分類：全寬選擇欄，內容依序重排 */
-    .hb-docsBody .hb-dosRow, .hb-dossier .hb-dosRow{
+    .hb-docsBody .hb-contracts .hb-dosRow, .hb-contracts .hb-dosRow{
       display: flex; flex-direction: column; gap: 0;
       padding: 16px 0 26px;
     }
-    .hb-dosSide{ display: contents; }
-    .hb-dosNav{ display: none; }
-    .hb-dosSideT{ order: 1; margin: 0 0 8px; font-size: 12px; letter-spacing: .2em; }
-    .hb-dosPick{
+    .hb-contracts .hb-dosSide{ display: contents; }
+    .hb-contracts .hb-dosNav{ display: none; }
+    .hb-contracts .hb-dosSideT{ order: 1; margin: 0 0 8px; font-size: 12px; letter-spacing: .2em; }
+    .hb-contracts .hb-dosPick{
       order: 2; display: flex; align-items: center; justify-content: space-between; gap: 12px;
       width: 100%; min-height: 52px; margin: 0 0 18px; padding: 13px 14px;
       background: var(--hbSheet); border: 1px solid var(--hbRule); border-radius: 4px;
@@ -1739,9 +1739,9 @@
     }
     .hb-dosPick svg{ color: var(--hbInk2); }
     .hb-dosPick:focus-visible{ outline: 1px solid var(--hbAcc); outline-offset: 2px; }
-    .hb-dosField{ order: 3; margin: 0 0 18px; }
+    .hb-contracts .hb-dosField{ order: 3; margin: 0 0 18px; }
     .hb-dosSelect{ min-height: 52px; }
-    .hb-dosMain{ order: 4; }
+    .hb-contracts .hb-dosMain{ order: 4; }
 
     /* 4 · 清單表頭 */
     .hb-dosBar{ gap: 12px; padding-bottom: 14px; }
@@ -1775,10 +1775,10 @@
     }
     .hb-dosAct{ min-height: 44px; padding: 0 16px; font-size: 14px; }
     .hb-dosAct.ico{ min-width: 44px; padding: 0 12px; justify-content: center; }
-    .hb-dosMenu{ display: none; }
+    .hb-contracts .hb-dosMenu{ display: none; }
 
     /* 6 · 次要功能：範本下載與帳戶管理放清單下方 */
-    .hb-dosSideFoot{ order: 5; margin: 22px 0 0; padding-top: 18px; }
+    .hb-contracts .hb-dosSideFoot{ order: 5; margin: 22px 0 0; padding-top: 18px; }
     .hb-dosLink{ min-height: 44px; font-size: 15px; }
 
     /* 7 · 獨立進入（非文件系統）時的頁首收斂 */
@@ -2659,6 +2659,18 @@
   /* 6 · 固定在底部的操作列不要蓋住最後幾個欄位 */
   @media (max-width: 768px){
     [style*="position: fixed"][style*="bottom"]{ padding-bottom: env(safe-area-inset-bottom, 0px); }
+  }
+
+  /* 共用的「⋯」下拉選單：手機上確保不被祖先裁切、層級夠高 */
+  @media (max-width: 900px){
+    .hb-dosMore{ position: relative; }
+    .hb-dosMenu{
+      z-index: 90;
+      min-width: 148px;
+      max-width: calc(100vw - 32px);
+    }
+    .hb-dosMenu button{ min-height: 46px; }
+    .hb-dosItem, .hb-dosList, .hb-dosMain{ overflow: visible; }
   }
 </style>
 <script>
@@ -4696,7 +4708,7 @@ function HerfulsinsContractsHub({onBack:l,notify:t}){
   let[selectedProject,setSelectedProject]=(0,u.useState)(null);
   let caseProjects=c;
   let filtered=e==="case"?a.filter(v=>v.category==="case"&&(!selectedProject||v.project_id===selectedProject)):a.filter(v=>v.category===e);
-  return u.default.createElement("div",{className:"hb-archive hb-dossier",style:{minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:"#17150F"},
+  return u.default.createElement("div",{className:"hb-archive hb-dossier hb-contracts",style:{minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:"#17150F"},
       onClick:()=>hbSetMenu(null)},
     u.default.createElement("div",{className:"hb-dosWrap"},
 
