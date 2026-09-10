@@ -3180,45 +3180,54 @@ function HB_buildBudgetHTML(v){
   let row=(k,val)=>`<tr><td>${k}</td><td class="r amt">${val}</td></tr>`;
   return `<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>${e(v.designName||"初步預算書")} · 赫柏空間設計初步預算書</title><style>
+<title>${e(v.designName||"初步預算書")} · 赫柏空間設計工程初步預算書</title><style>
 ${HB_DOC_CSS}
 </style></head>
 <body>
 <div class="toolbar"><button class="back" onclick="window.close()" title="返回">\u2190</button><div class="btns"><button class="print" onclick="window.print()">列印 / 存成 PDF</button></div></div>
 <div class="brand">HERFULSINS INTERIOR DESIGN｜赫柏空間設計</div>
-<h1>室內設計初步預算書</h1>
+<h1>工程初步預算書</h1>
 <table class="partyline">
 <tr><td><strong>提出對象：</strong>業主</td><td class="pv"><span class="blank">${e(v.partyAName)||"　"}</span></td><td>（以下簡稱甲方）</td></tr>
 <tr><td>提出單位</td><td class="pv"><span class="blank us">赫柏空間設計</span></td><td>（以下簡稱乙方）</td></tr>
 </table>
-<p>謹依甲方提供之現況資料，就本案室內設計費用提出初步概算如下，供甲方評估參考。</p>
+<p>甲方委託乙方就本案現場進行丈量與尺寸記錄，並據以編製工程初步預算。茲就本次前置作業費用議定如下。</p>
 
 <h2>一、案件資料</h2>
 <p>\u2756 設計案名稱：${fb(v.designName,260)}</p>
 <p>\u2756 設計案地點：${fb(v.designLocation,300)}</p>
 <p>\u2756 提出日期：${fb((v.contractYear?("中華民國 "+v.contractYear+" 年 "+v.contractMonth+" 月 "+v.contractDay+" 日"):""),200)}</p>
 
-<h2>二、坪數概算</h2>
+<h2>二、本次服務內容</h2>
+<div class="notes">
+<p>1. 現場丈量：實地量測室內各空間尺寸、樑柱位置、窗戶與門洞開口、天花高度並記錄。</p>
+<p>2. 現況記錄：現場拍照存檔，記錄既有管線、設備與結構現況。</p>
+<p>3. 初步預算編製：依丈量結果估算工程項目與概略金額，供甲方評估工程規模。</p>
+<p>4. 本次服務<strong>不包含</strong>設計繪圖、平面配置圖、立面圖、施工圖、3D 渲染圖及任何圖說之交付。</p>
+</div>
+
+<h2>三、前置作業費用</h2>
 <table>
 <tr><th>項目</th><th class="r">金額 / 數值</th></tr>
 ${row("室內面積（坪）", area?HB_money(area):"—")}
 ${dPing>0?row("優惠計費坪數（坪）",HB_money(dPing)):""}
-${row("每坪概算設計費（元）", price?HB_money(price):"—")}
+${row("每坪前置作業費（元）", price?HB_money(price):"—")}
 ${(dRate>0&&dRate<10)?row("優惠折扣", e(v.discountRate)+" 折"):""}
-<tr class="sub"><td>概算小計（未稅）</td><td class="r amt">${total?HB_money(total):"—"}</td></tr>
+<tr class="sub"><td>前置作業費小計（未稅）</td><td class="r amt">${total?HB_money(total):"—"}</td></tr>
 <tr><td>營業稅 5%</td><td class="r amt">${total?HB_money(tax):"—"}</td></tr>
-<tr class="grand"><td>概算總計（含稅）</td><td class="r">${total?("NT$ "+HB_money(total+tax)):"—"}</td></tr>
+<tr class="grand"><td>前置作業費總計（含稅）</td><td class="r">${total?("NT$ "+HB_money(total+tax)):"—"}</td></tr>
 </table>
-${total?`<p class="quote">概算總計金額大寫：${e(HB_toChineseMoney(total+tax))} 元整</p>`:""}
+${total?`<p class="quote">前置作業費總計大寫：${e(HB_toChineseMoney(total+tax))} 元整</p>`:""}
 ${(dPing>0||dRate>0)?`<p>優惠說明：${dPing>0?`本案以優惠坪數 ${HB_money(dPing)} 坪計算（實際面積 ${area?HB_money(area):"—"} 坪）`:""}${(dPing>0&&dRate>0)?"，並":""}${(dRate>0&&dRate<10)?`按 ${e(v.discountRate)} 折計價`:""}。</p>`:""}
 
-<h2>三、說明事項</h2>
+<h2>四、說明事項</h2>
 <div class="notes">
-<p>1. 本預算書為初步概算，僅供甲方評估參考之用，不具報價效力，亦非正式合約。</p>
-<p>2. 本概算自提出日起 30 日內有效，逾期請重新洽詢。</p>
-<p>3. 本概算僅含室內設計服務費，不含工程施作費、家具家電、軟裝陳設、拆除清運及政府規費。</p>
-<p>4. 實際費用以雙方正式簽署之委任設計合約所載金額為準；工程費用另以工程估價單計算。</p>
-<p>5. 如室內面積、格局或服務範圍變更，本概算金額應重新核算。</p>
+<p>1. 上列費用為本次現場丈量與初步預算編製之前置作業費用，與後續工程費用無涉。</p>
+<p>2. 乙方依丈量結果所編製之工程初步預算，係供甲方評估工程規模之參考，不具報價效力；正式金額以後續之工程估價單為準。</p>
+<p>3. 本次服務不交付任何圖說。丈量所得之尺寸資料為乙方編製預算之工作底稿，未經乙方書面同意，甲方不得交付第三人使用或據以發包。</p>
+<p>4. 如甲方後續委由乙方承攬本案工程，工程範圍、金額、工期及付款方式另行議定並簽訂工程合約。</p>
+<p>5. 前置作業費用於本合約簽署時支付，丈量作業完成後不予退還。</p>
+<p>6. 如現場面積、樓層或丈量範圍與委託時所述不符，本費用應重新核算。</p>
 </div>
 
 <div class="signbox">
@@ -3451,7 +3460,7 @@ function HerfulsinsContractForm({category:l,projects:t,accounts:e,defaultProject
       field("甲方身分證字號（選填）","partyAId"),
       !isEng&&u.default.createElement("div",{style:{display:"flex",gap:10}},
         u.default.createElement("div",{style:{flex:1}},field("設計面積（坪．選填）","areaPing")),
-        u.default.createElement("div",{style:{flex:1}},field(isBudget?"每坪概算設計費（元．選填）":"每坪設計費（元．選填）","pricePerPing"))
+        u.default.createElement("div",{style:{flex:1}},field(isBudget?"每坪前置作業費（元．選填）":"每坪設計費（元．選填）","pricePerPing"))
       ),
       !isEng&&u.default.createElement("div",{style:{display:"flex",gap:10}},
         u.default.createElement("div",{style:{flex:1}},field("優惠坪數（實際計費坪數．選填）","discountPing",{placeholder:"留白則以設計面積計"})),
@@ -3464,7 +3473,7 @@ function HerfulsinsContractForm({category:l,projects:t,accounts:e,defaultProject
           " ＝ NT$ "+HB_money(Math.round(billPing()*HB_num(c.pricePerPing)*billRate()))+
           (HB_num(c.discountPing)>0&&HB_num(c.areaPing)>0?"（實際面積 "+c.areaPing+" 坪，優惠後以 "+c.discountPing+" 坪計）":"")),
       u.default.createElement("div",{style:{display:"flex",gap:8,alignItems:"flex-end"}},
-        u.default.createElement("div",{style:{flex:1}},field(isEng?"工程總價（元）":isBudget?"概算總價（元．選填）":"合約總價（元．選填）","totalPrice")),
+        u.default.createElement("div",{style:{flex:1}},field(isEng?"工程總價（元）":isBudget?"前置作業費總價（元．選填）":"合約總價（元．選填）","totalPrice")),
         !isEng&&u.default.createElement("button",{onClick:calcTotal,style:{border:`1px solid ${s.line}`,background:"none",borderRadius:7,padding:"9px 12px",fontSize:12.5,color:s.oceanDark,cursor:"pointer",marginBottom:12,whiteSpace:"nowrap"}},"自動計算")
       ),
       isEng&&c.totalPrice&&u.default.createElement("p",{style:{fontSize:12,color:s.inkSoft,marginTop:-6,marginBottom:12}},"大寫：",HB_toChineseMoney(c.totalPrice)),
@@ -3580,7 +3589,7 @@ function HerfulsinsContractsHub({onBack:l,notify:t}){
           u.default.createElement("span",null,"返回公司資料庫")),
         u.default.createElement("div",{className:"hb-dosLabel"},"Contrats de Conception"),
         u.default.createElement("h1",{className:"hb-dosTitle"},"公司合約"),
-        u.default.createElement("p",{className:"hb-dosLede"},"僅公司內部可見，獨立於案件資料之外。室內設計合約用於簽約前的設計委任；專案工程合約綁定指定案件；初步預算書用於簽約前的費用評估。")),
+        u.default.createElement("p",{className:"hb-dosLede"},"僅公司內部可見，獨立於案件資料之外。室內設計合約用於簽約前的設計委任；專案工程合約綁定指定案件；初步預算書用於報價前的丈量前置作業。")),
 
       u.default.createElement("div",{className:"hb-dosRow"},
 
