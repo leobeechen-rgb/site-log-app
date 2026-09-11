@@ -9417,6 +9417,117 @@ async function HB_swatchFromRegion(imgEl,sx,sy,side,opts){
 /* ===== 從 3D 渲染圖框選材質 =====
    固定正方形選取框，拖曳移動、滑桿調大小；即時預覽修圖後的樣子。
    同一張圖可以連續框好幾塊，每按一次就多一列材料明細。 */
+/* 索引圖引線位置：有手動設定就用手動的，沒有就自動往最近的邊推。
+   編輯器與列印共用這一份，兩邊不會算出不一樣的結果。 */
+function HB_keyClamp(n,lo,hi){ n=Number(n); if(!isFinite(n))n=.5; return n<lo?lo:(n>hi?hi:n) }
+function HB_keyLabelPos(it){
+  var x=HB_keyClamp(it.srcX,.03,.97), y=HB_keyClamp(it.srcY,.03,.97);
+  if(it.lblX!=null&&it.lblY!=null)
+    return {x:x,y:y,lx:HB_keyClamp(it.lblX,.03,.97),ly:HB_keyClamp(it.lblY,.03,.97),manual:!0};
+  return {x:x,y:y,
+    lx:HB_keyClamp(x+(x<.5?-.10:.10),.05,.95),
+    ly:HB_keyClamp(y+(y<.5?-.10:.10),.06,.94),manual:!1};
+}
+
+/* 索引圖引線編輯器：拖曳編號就能決定引線要拉到哪裡 */
+function HbKeyplanEditor({items:items,setItems:setItems,onClose:onClose}){
+  let C=u.default.createElement;
+  let dragRef=(0,u.useRef)(null);
+  let wrapRefs=(0,u.useRef)({});
+
+  let flat=[];
+  items.forEach(function(it,idx){
+    if(it.space||it.item||it.brand||it.spec||it.photoUrl)
+      flat.push({it:it,idx:idx,no:("0"+(flat.length+1)).slice(-2)});
+  });
+  let pts=flat.filter(function(f){ return f.it.srcUrl&&f.it.srcX!=null&&f.it.srcY!=null });
+
+  let groups=[];
+  pts.forEach(function(f){
+    let g=null;
+    for(let k=0;k<groups.length;k++){ if(groups[k].url===f.it.srcUrl){ g=groups[k]; break } }
+    if(!g){ g={url:f.it.srcUrl,rows:[]}; groups.push(g) }
+    g.rows.push(f);
+  });
+
+  let setLbl=function(idx,x,y){
+    setItems(function(xs){ return xs.map(function(x2,i){ return i===idx?{...x2,lblX:x,lblY:y}:x2 }) });
+  };
+  let resetGroup=function(g){
+    setItems(function(xs){ return xs.map(function(x2,i){
+      let hit=g.rows.some(function(r){ return r.idx===i });
+      if(!hit)return x2;
+      let n2={...x2}; delete n2.lblX; delete n2.lblY; return n2;
+    }) });
+  };
+  let moveTo=function(gi,ev){
+    let d=dragRef.current;
+    if(!d)return;
+    let w=wrapRefs.current[gi];
+    if(!w)return;
+    let r=w.getBoundingClientRect();
+    if(!r.width||!r.height)return;
+    setLbl(d.idx,
+      Math.min(.97,Math.max(.03,(ev.clientX-r.left)/r.width)),
+      Math.min(.97,Math.max(.03,(ev.clientY-r.top)/r.height)));
+  };
+
+  let btn={minHeight:44,padding:"0 14px",border:"1px solid "+s.line,borderRadius:6,
+    background:"#fff",fontFamily:"inherit",fontSize:13.5,color:s.ink,cursor:"pointer"};
+
+  return C("div",{style:{position:"fixed",inset:0,background:"rgba(43,38,32,.55)",display:"flex",
+      alignItems:"center",justifyContent:"center",padding:16,zIndex:70}},
+    C("div",{className:"fade-in",style:{background:s.card,borderRadius:10,padding:18,width:"100%",
+      maxWidth:680,maxHeight:"90vh",overflowY:"auto"}},
+      C("h3",{style:{margin:"0 0 4px",fontSize:17,fontWeight:400,color:s.oceanDark}},"\u8abf\u6574\u7d22\u5f15\u5716\u5f15\u7dda"),
+      C("p",{style:{margin:"0 0 14px",fontSize:12.5,color:s.inkSoft,lineHeight:1.7}},
+        "\u62d6\u66f3\u5716\u4e0a\u7684\u7de8\u865f\uff0c\u5c31\u80fd\u6c7a\u5b9a\u5f15\u7dda\u8981\u62c9\u5230\u54ea\u88e1\u3002\u5713\u9ede\u662f\u53d6\u6a23\u4f4d\u7f6e\uff0c\u4e0d\u6703\u8ddf\u8457\u79fb\u52d5\u3002"),
+
+      groups.length?groups.map(function(g,gi){
+        return C("div",{key:gi,style:{marginBottom:18}},
+          C("div",{ref:function(el){ wrapRefs.current[gi]=el },
+            onPointerMove:function(ev){ if(dragRef.current)moveTo(gi,ev) },
+            onPointerUp:function(){ dragRef.current=null },
+            onPointerCancel:function(){ dragRef.current=null },
+            style:{position:"relative",width:"100%",lineHeight:0,border:"1px solid "+s.line,
+              borderRadius:4,overflow:"hidden",touchAction:"none",userSelect:"none"}},
+            C("img",{src:g.url,alt:"",draggable:!1,style:{width:"100%",height:"auto",display:"block",pointerEvents:"none"}}),
+            C("svg",{viewBox:"0 0 100 100",preserveAspectRatio:"none","aria-hidden":"true",
+              style:{position:"absolute",inset:0,width:"100%",height:"100%",overflow:"visible",pointerEvents:"none"}},
+              g.rows.map(function(f,ri){
+                let p=HB_keyLabelPos(f.it);
+                return C("line",{key:ri,x1:p.x*100,y1:p.y*100,x2:p.lx*100,y2:p.ly*100,
+                  stroke:"#B4573A",strokeWidth:1,vectorEffect:"non-scaling-stroke"});
+              })),
+            g.rows.map(function(f,ri){
+              let p=HB_keyLabelPos(f.it);
+              return C(u.default.Fragment,{key:ri},
+                C("span",{style:{position:"absolute",left:(p.x*100)+"%",top:(p.y*100)+"%",
+                  width:9,height:9,margin:"-4.5px 0 0 -4.5px",borderRadius:"50%",
+                  background:"#B4573A",boxShadow:"0 0 0 2px #fff",pointerEvents:"none"}}),
+                C("button",{type:"button",
+                  onPointerDown:function(ev){ ev.preventDefault(); dragRef.current={idx:f.idx};
+                    try{ wrapRefs.current[gi].setPointerCapture(ev.pointerId) }catch(e){} },
+                  style:{position:"absolute",left:(p.lx*100)+"%",top:(p.ly*100)+"%",
+                    transform:"translate(-50%,-50%)",minWidth:30,height:30,padding:"0 7px",
+                    display:"inline-flex",alignItems:"center",justifyContent:"center",
+                    background:"#fff",border:"1.5px solid #B4573A",borderRadius:15,
+                    fontFamily:"inherit",fontSize:12.5,lineHeight:1,color:"#B4573A",
+                    cursor:"grab",touchAction:"none",boxShadow:"0 4px 10px -6px rgba(23,21,15,.6)"}},
+                  f.no));
+            })),
+          C("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",
+            gap:10,marginTop:8,flexWrap:"wrap"}},
+            C("span",{style:{fontSize:11.5,color:s.inkSoft}},
+              "\u6750\u6599\u7d22\u5f15\u5716"+(groups.length>1?(" "+(gi+1)):"")+" \u00b7 "+g.rows.length+" \u500b\u7de8\u865f"),
+            C("button",{type:"button",onClick:function(){ resetGroup(g) },
+              style:{...btn,minHeight:38,fontSize:12.5}},"\u9084\u539f\u81ea\u52d5\u4f4d\u7f6e")));
+      }):C("p",{style:{fontSize:13,color:s.inkSoft,lineHeight:1.8,margin:"0 0 14px"}},
+        "\u9019\u4efd\u5831\u544a\u66f8\u9084\u6c92\u6709\u5f9e 3D \u5716\u53d6\u7684\u6750\u8cea\uff0c\u6240\u4ee5\u6c92\u6709\u7d22\u5f15\u5716\u53ef\u4ee5\u8abf\u3002"),
+
+      C("button",{type:"button",onClick:onClose,style:{...Dl,width:"100%",minHeight:46}},"\u5b8c\u6210")));
+}
+
 function HbSwatchPicker({onCancel,onPick,autoFix}){
   let C=u.default.createElement;
   let[url,setUrl]=(0,u.useState)("");
@@ -9639,14 +9750,10 @@ function HB_buildMaterialHTML(v){
     if(!g){ g={url:it.srcUrl,pts:[]}; plans.push(g) }
     g.pts.push(it);
   });
-  let clamp=function(n,lo,hi){ return n<lo?lo:(n>hi?hi:n) };
   let planHtml=plans.map(function(p,pi){
     let ms=p.pts.map(function(it){
-      let x=clamp(Number(it.srcX),.03,.97), y=clamp(Number(it.srcY),.03,.97);
-      return {x:x,y:y,
-        lx:clamp(x+(x<.5?-.10:.10),.05,.95),
-        ly:clamp(y+(y<.5?-.10:.10),.06,.94),
-        no:it.no};
+      let p=HB_keyLabelPos(it);
+      return {x:p.x,y:p.y,lx:p.lx,ly:p.ly,no:it.no};
     });
     return '<figure class="mrplan">'
       + '<div class="mrplanWrap">'
@@ -9738,7 +9845,7 @@ function HbMaterialForm({onCancel,onSave,projects,initial}){
   let[title,setTitle]=(0,u.useState)(ini?(ini.title||""):"");
   let[reportDate,setReportDate]=(0,u.useState)(()=>ini&&ini.report_date?String(ini.report_date).slice(0,10):new Date().toISOString().slice(0,10));
   let[note,setNote]=(0,u.useState)(ini?(ini.note||""):"");
-  let[items,setItems]=(0,u.useState)(ini&&ini.items&&ini.items.length?ini.items.map(x=>({space:x.space||"",item:x.item||"",brand:x.brand||"",spec:x.spec||"",photoUrl:x.photoUrl||"",photoPath:x.photoPath||"",srcUrl:x.srcUrl||"",srcPath:x.srcPath||"",srcX:x.srcX,srcY:x.srcY})):[{space:"",item:"",brand:"",spec:"",photoUrl:"",photoPath:""}]);
+  let[items,setItems]=(0,u.useState)(ini&&ini.items&&ini.items.length?ini.items.map(x=>({space:x.space||"",item:x.item||"",brand:x.brand||"",spec:x.spec||"",photoUrl:x.photoUrl||"",photoPath:x.photoPath||"",srcUrl:x.srcUrl||"",srcPath:x.srcPath||"",srcX:x.srcX,srcY:x.srcY,lblX:x.lblX,lblY:x.lblY})):[{space:"",item:"",brand:"",spec:"",photoUrl:"",photoPath:""}]);
   let[photoBusy,setPhotoBusy]=(0,u.useState)({});
   let[autoFix,setAutoFix]=(0,u.useState)("tidy");
   let[photoErr,setPhotoErr]=(0,u.useState)("");
@@ -9768,6 +9875,7 @@ function HbMaterialForm({onCancel,onSave,projects,initial}){
     if(p){try{r2DeleteSitelogFile("sitelog-photos",p)}catch(e){}}
   };
   let[showPicker,setShowPicker]=(0,u.useState)(!1);
+  let[showKeyplan,setShowKeyplan]=(0,u.useState)(!1);
   let addFromRender=async (blob,meta)=>{
     setPhotoErr("");
     let path="material/"+Be()+".jpg";
@@ -9813,6 +9921,10 @@ function HbMaterialForm({onCancel,onSave,projects,initial}){
       u.default.createElement("button",{type:"button",onClick:()=>setShowPicker(!0),
         style:{width:"100%",minHeight:46,marginBottom:10,border:"1px dashed "+s.line,borderRadius:6,background:"none",fontSize:13.5,color:s.oceanDark,cursor:"pointer"}},
         "\u5f9e 3D \u5716\u53d6\u6750\u8cea\uff08\u6846\u4e00\u584a\u5c31\u65b0\u589e\u4e00\u5217\uff09"),
+      items.some(x=>x.srcUrl&&x.srcX!=null)?u.default.createElement("button",{type:"button",onClick:()=>setShowKeyplan(!0),
+        style:{width:"100%",minHeight:46,marginBottom:10,border:"1px solid "+s.line,borderRadius:6,background:"none",fontSize:13.5,color:s.ink,cursor:"pointer"}},
+        "\u8abf\u6574\u7d22\u5f15\u5716\u5f15\u7dda\uff08\u62d6\u66f3\u7de8\u865f\u6539\u4f4d\u7f6e\uff09"):null,
+      showKeyplan?u.default.createElement(HbKeyplanEditor,{items:items,setItems:setItems,onClose:()=>setShowKeyplan(!1)}):null,
       showPicker?u.default.createElement(HbSwatchPicker,{autoFix:autoFix,onCancel:()=>setShowPicker(!1),onPick:addFromRender}):null,
       photoErr?u.default.createElement("div",{style:{fontSize:12,color:s.danger,margin:"2px 0 6px"}},photoErr):null,
       items.map(function(x,i){
