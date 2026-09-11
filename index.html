@@ -9433,6 +9433,7 @@ function HbSwatchPicker({onCancel,onPick,autoFix}){
   let wrapRef=(0,u.useRef)(null);
   let preRef=(0,u.useRef)(null);
   let dragRef=(0,u.useRef)(!1);
+  let srcRef=(0,u.useRef)({file:null,url:"",path:""});
 
   (0,u.useEffect)(function(){ return function(){ if(url)try{URL.revokeObjectURL(url)}catch(e){} } },[url]);
 
@@ -9460,6 +9461,7 @@ function HbSwatchPicker({onCancel,onPick,autoFix}){
     if(!f)return;
     setErr(""); setNat(null); setAdded(0); setSugg([]); setDone({});
     if(url)try{URL.revokeObjectURL(url)}catch(e){}
+    srcRef.current={file:f,url:"",path:""};
     setUrl(URL.createObjectURL(f));
     setCen({x:.5,y:.5});
   };
@@ -9473,6 +9475,17 @@ function HbSwatchPicker({onCancel,onPick,autoFix}){
     setCen({x:Math.min(1,Math.max(0,x)),y:Math.min(1,Math.max(0,y))});
   };
 
+  /* 整張渲染圖只上傳一次，之後同一張圖取的每一塊都共用同一個網址 */
+  let ensureRender=async function(){
+    let r=srcRef.current;
+    if(r.url)return r.url;
+    if(!r.file)return "";
+    let blob=await Ru(r.file,1600,.85);
+    let path="material/render-"+Be()+".jpg";
+    let u2=await r2UploadSitelogFile("sitelog-photos",path,blob,"image/jpeg");
+    srcRef.current.url=u2; srcRef.current.path=path;
+    return u2;
+  };
   let takeRegion=async function(gx,gy,gpct){
     let im=imgRef.current;
     if(!im||!nat)return;
@@ -9480,7 +9493,9 @@ function HbSwatchPicker({onCancel,onPick,autoFix}){
     let sX=Math.round(Math.min(Math.max(gx*nat.w-sN/2,0),nat.w-sN));
     let sY=Math.round(Math.min(Math.max(gy*nat.h-sN/2,0),nat.h-sN));
     let blob=await HB_swatchFromRegion(im,sX,sY,sN,{size:900,quality:.9,mode:autoFix});
-    await onPick(blob);
+    let srcUrl="";
+    try{ srcUrl=await ensureRender() }catch(e){ srcUrl="" }
+    await onPick(blob,{srcUrl:srcUrl,srcPath:srcRef.current.path,srcX:gx,srcY:gy});
   };
   let take=async function(){
     setBusy(!0); setErr("");
@@ -9611,8 +9626,41 @@ async function HB_makeSwatch(file,opts){
 
 function HB_buildMaterialHTML(v){
   let e=HB_esc;
-  let items=(v.items||[]).filter(it=>(it.space||it.item||it.brand||it.spec||it.photoUrl));
+  let items=(v.items||[]).filter(it=>(it.space||it.item||it.brand||it.spec||it.photoUrl))
+    .map(function(it,i){ return Object.assign({},it,{no:String(i+1).padStart(2,"0")}) });
   let hasPhoto=items.some(it=>it.photoUrl);
+
+  /* 材料索引圖：同一張渲染圖上的取樣點，用引線標出對應編號 */
+  let plans=[];
+  items.forEach(function(it){
+    if(!it.srcUrl||it.srcX==null||it.srcY==null)return;
+    let g=null;
+    for(let k=0;k<plans.length;k++){ if(plans[k].url===it.srcUrl){ g=plans[k]; break } }
+    if(!g){ g={url:it.srcUrl,pts:[]}; plans.push(g) }
+    g.pts.push(it);
+  });
+  let clamp=function(n,lo,hi){ return n<lo?lo:(n>hi?hi:n) };
+  let planHtml=plans.map(function(p,pi){
+    let ms=p.pts.map(function(it){
+      let x=clamp(Number(it.srcX),.03,.97), y=clamp(Number(it.srcY),.03,.97);
+      return {x:x,y:y,
+        lx:clamp(x+(x<.5?-.10:.10),.05,.95),
+        ly:clamp(y+(y<.5?-.10:.10),.06,.94),
+        no:it.no};
+    });
+    return '<figure class="mrplan">'
+      + '<div class="mrplanWrap">'
+      +   '<img src="'+e(p.url)+'" alt="" />'
+      +   '<svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">'
+      +     ms.map(function(m){ return '<line x1="'+(m.x*100).toFixed(2)+'" y1="'+(m.y*100).toFixed(2)
+              +'" x2="'+(m.lx*100).toFixed(2)+'" y2="'+(m.ly*100).toFixed(2)+'" />' }).join('')
+      +   '</svg>'
+      +   ms.map(function(m){ return '<span class="mrdot" style="left:'+(m.x*100).toFixed(2)+'%;top:'+(m.y*100).toFixed(2)+'%"></span>'
+              +'<span class="mrno" style="left:'+(m.lx*100).toFixed(2)+'%;top:'+(m.ly*100).toFixed(2)+'%">'+m.no+'</span>' }).join('')
+      + '</div>'
+      + '<figcaption>材料索引圖'+(plans.length>1?(' '+(pi+1)):'')+'　·　圖上編號對應下方材料表</figcaption>'
+      + '</figure>';
+  }).join('');
   let groups=[];
   items.forEach(function(it){
     let key=(it.space||"未指定空間").trim()||"未指定空間";
@@ -9621,15 +9669,27 @@ function HB_buildMaterialHTML(v){
     g.rows.push(it);
   });
   let body=groups.length?groups.map(function(g){
-    return `<tr class="cat"><td colspan="${hasPhoto?4:3}">${e(g.name)}</td></tr>`+g.rows.map(function(it){
+    return `<tr class="cat"><td colspan="${hasPhoto?5:4}">${e(g.name)}</td></tr>`+g.rows.map(function(it){
       let pc=hasPhoto?`<td style="text-align:center">${it.photoUrl?`<img src="${e(it.photoUrl)}" alt="" style="width:54px;height:54px;object-fit:cover;border:1px solid #DDD6C8;border-radius:3px;display:block;margin:0 auto" />`:"—"}</td>`:"";
-      return `<tr>${pc}<td>${e(it.item||"—")}</td><td>${e(it.brand||"—")}</td><td>${e(it.spec||"—")}</td></tr>`;
+      return `<tr><td style="text-align:center;color:#8A6E32">${it.no}</td>${pc}<td>${e(it.item||"—")}</td><td>${e(it.brand||"—")}</td><td>${e(it.spec||"—")}</td></tr>`;
     }).join("");
-  }).join(""):`<tr><td colspan="${hasPhoto?4:3}" style="text-align:center;color:#9A9083;padding:26px">尚未登錄材料</td></tr>`;
+  }).join(""):`<tr><td colspan="${hasPhoto?5:4}" style="text-align:center;color:#9A9083;padding:26px">尚未登錄材料</td></tr>`;
   return `<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>${e(v.title||"材質報告書")} · 赫柏空間設計材質報告書</title><style>
 ${HB_DOC_CSS}
+.mrplan{margin:18px 0 22px;padding:0;page-break-inside:avoid;break-inside:avoid;}
+.mrplanWrap{position:relative;line-height:0;border:1px solid #DDD6C8;border-radius:3px;overflow:hidden;}
+.mrplanWrap img{width:100%;height:auto;display:block;}
+.mrplanWrap svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;}
+.mrplanWrap svg line{stroke:#B4573A;stroke-width:.35;vector-effect:non-scaling-stroke;}
+.mrdot{position:absolute;width:7px;height:7px;margin:-3.5px 0 0 -3.5px;border-radius:50%;
+  background:#B4573A;box-shadow:0 0 0 1.5px #FFFFFF;}
+.mrno{position:absolute;transform:translate(-50%,-50%);min-width:21px;height:21px;
+  display:inline-flex;align-items:center;justify-content:center;padding:0 5px;
+  background:#FFFFFF;border:1px solid #B4573A;border-radius:11px;
+  font-size:11px;line-height:1;color:#B4573A;letter-spacing:.04em;}
+.mrplan figcaption{margin-top:7px;font-size:11.5px;color:#8A8172;letter-spacing:.05em;line-height:1.7;}
 </style></head>
 <body>
 <div class="toolbar"><button class="back" onclick="window.close()" title="返回">\u2190</button><div class="btns"><button class="print" onclick="window.print()">列印 / 存成 PDF</button></div></div>
@@ -9641,8 +9701,10 @@ ${HB_DOC_CSS}
 </table>
 <div class="meta">報告名稱：${e(v.title||"—")}　·　提出日期：${e(v.reportDate||"—")}　·　材料共 ${items.length} 筆</div>
 
+${planHtml}
+
 <table>
-<thead><tr>${hasPhoto?'<th style="width:74px">材質照</th>':""}<th style="width:${hasPhoto?22:26}%">品項</th><th style="width:${hasPhoto?32:37}%">品牌／型號</th><th style="width:${hasPhoto?32:37}%">規格／顏色</th></tr></thead>
+<thead><tr><th style="width:44px">編號</th>${hasPhoto?'<th style="width:74px">材質照</th>':""}<th style="width:${hasPhoto?20:24}%">品項</th><th style="width:${hasPhoto?30:35}%">品牌／型號</th><th style="width:${hasPhoto?30:35}%">規格／顏色</th></tr></thead>
 <tbody>${body}</tbody>
 </table>
 
@@ -9676,7 +9738,7 @@ function HbMaterialForm({onCancel,onSave,projects,initial}){
   let[title,setTitle]=(0,u.useState)(ini?(ini.title||""):"");
   let[reportDate,setReportDate]=(0,u.useState)(()=>ini&&ini.report_date?String(ini.report_date).slice(0,10):new Date().toISOString().slice(0,10));
   let[note,setNote]=(0,u.useState)(ini?(ini.note||""):"");
-  let[items,setItems]=(0,u.useState)(ini&&ini.items&&ini.items.length?ini.items.map(x=>({space:x.space||"",item:x.item||"",brand:x.brand||"",spec:x.spec||"",photoUrl:x.photoUrl||"",photoPath:x.photoPath||""})):[{space:"",item:"",brand:"",spec:"",photoUrl:"",photoPath:""}]);
+  let[items,setItems]=(0,u.useState)(ini&&ini.items&&ini.items.length?ini.items.map(x=>({space:x.space||"",item:x.item||"",brand:x.brand||"",spec:x.spec||"",photoUrl:x.photoUrl||"",photoPath:x.photoPath||"",srcUrl:x.srcUrl||"",srcPath:x.srcPath||"",srcX:x.srcX,srcY:x.srcY})):[{space:"",item:"",brand:"",spec:"",photoUrl:"",photoPath:""}]);
   let[photoBusy,setPhotoBusy]=(0,u.useState)({});
   let[autoFix,setAutoFix]=(0,u.useState)("tidy");
   let[photoErr,setPhotoErr]=(0,u.useState)("");
@@ -9706,15 +9768,17 @@ function HbMaterialForm({onCancel,onSave,projects,initial}){
     if(p){try{r2DeleteSitelogFile("sitelog-photos",p)}catch(e){}}
   };
   let[showPicker,setShowPicker]=(0,u.useState)(!1);
-  let addFromRender=async blob=>{
+  let addFromRender=async (blob,meta)=>{
     setPhotoErr("");
     let path="material/"+Be()+".jpg";
     let url=await r2UploadSitelogFile("sitelog-photos",path,blob,"image/jpeg");
+    let src=meta||{};
     setItems(xs=>{
       let last=xs[xs.length-1];
       let lastEmpty=last&&!String(last.item||"").trim()&&!String(last.brand||"").trim()&&!String(last.spec||"").trim()&&!last.photoUrl;
-      if(lastEmpty)return xs.map((x,idx)=>idx===xs.length-1?{...x,photoUrl:url,photoPath:path}:x);
-      return [...xs,{space:last?last.space:"",item:"",brand:"",spec:"",photoUrl:url,photoPath:path}];
+      let add={photoUrl:url,photoPath:path,srcUrl:src.srcUrl||"",srcPath:src.srcPath||"",srcX:src.srcX,srcY:src.srcY};
+      if(lastEmpty)return xs.map((x,idx)=>idx===xs.length-1?{...x,...add}:x);
+      return [...xs,{space:last?last.space:"",item:"",brand:"",spec:"",...add}];
     });
   };
   let valid=title.trim()&&items.some(x=>x.item.trim());
@@ -13455,6 +13519,9 @@ react-dom/cjs/react-dom-client.production.js:
     '  color:#26241F;cursor:pointer;-webkit-tap-highlight-color:transparent;',
     '  touch-action:manipulation;box-shadow:0 8px 18px -16px rgba(38,36,31,.6);}',
     '.hb-railBtn[data-on="1"]{display:flex;}',
+    '.hb-railBtn{transition:opacity .2s ease,transform .2s ease,top .2s ease;}',
+    '.hb-railBtn[data-away="1"]{opacity:0;pointer-events:none;transform:translateY(-8px);}',
+    '@media (prefers-reduced-motion:reduce){.hb-railBtn{transition:none;}}',
     '.hb-railBtn svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.5;',
     '  stroke-linecap:round;}',
     '.hb-railBtn:active{background:#EDE7DA;}',
@@ -13669,7 +13736,27 @@ react-dom/cjs/react-dom-client.production.js:
   sheet.querySelector('.hb-railSheet__cancel').addEventListener('click', closeSheet);
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeSheet(); });
 
-  /* 選單鍵擺在頂端；若頁面有深色品牌列就往下讓開它 */
+  /* 選單鍵定位：
+     不再靠「認得每一頁的表頭」來閃避——那種做法只要有沒列到的頁面就會出包。
+     改成每次都實際量：把按鈕暫時藏起來，用 elementFromPoint 檢查它要站的位置
+     底下有沒有按鈕、連結、圖片或文字，有就往下挪，挪到空的為止。
+     這樣沒見過的頁面（案件資料庫、專案詳情、業主頁…）也一樣有效。 */
+  function pointBusy(x, y) {
+    var el = document.elementFromPoint(x, y);
+    if (!el) return false;
+    if (el === document.documentElement || el === document.body) return false;
+    if (el.closest && el.closest('button, a, [role="button"], input, select, textarea, img, svg, canvas')) return true;
+    var r = null;
+    try {
+      if (document.caretRangeFromPoint) r = document.caretRangeFromPoint(x, y);
+      else if (document.caretPositionFromPoint) r = document.caretPositionFromPoint(x, y);
+    } catch (e) { r = null; }
+    var node = r ? (r.startContainer || r.offsetNode) : null;
+    if (node && node.nodeType === 3 && /\S/.test(node.textContent || '')) return true;
+    return false;
+  }
+
+  var lastPlaceAt = 0;
   function placeMenuBtn(show) {
     if (!show || !isMobile()) {
       menuBtn.removeAttribute('data-on');
@@ -13679,14 +13766,47 @@ react-dom/cjs/react-dom-client.production.js:
     }
     menuBtn.setAttribute('data-on', '1');
     document.documentElement.setAttribute('data-hbrail', '1');
-    /* 首頁那條深色品牌列自己有帳戶／登出圖示，按鈕改放它下面 */
+    if (!sheet.hidden) return;                       /* 面板開著時不重新定位 */
+    var now = Date.now();
+    if (now - lastPlaceAt < 250) return;             /* 節流，別每個捲動影格都量 */
+    lastPlaceAt = now;
+
+    /* 起點：首頁那條深色品牌列自己有帳戶／登出圖示，按鈕放它下面 */
     var top = 10;
     var nav = document.querySelector('.hb-topnav');
     if (nav) {
       var r = nav.getBoundingClientRect();
       if (r.height > 0 && r.bottom > 0) top = Math.round(r.bottom) + 8;
     }
+
+    var prevVis = menuBtn.style.visibility;
+    menuBtn.style.visibility = 'hidden';
+    try {
+      var cx = window.innerWidth - 14 - 20;          /* 按鈕水平中心 */
+      var limit = 200;
+      for (var i = 0; i < 16 && top < limit; i++) {
+        var cy = top + 20;
+        if (!pointBusy(cx, cy) && !pointBusy(cx - 15, cy) && !pointBusy(cx + 15, cy)
+            && !pointBusy(cx, cy - 15) && !pointBusy(cx, cy + 15)) break;
+        top += 14;
+      }
+    } catch (e) { /* 量不到就用起點 */ }
+    menuBtn.style.visibility = prevVis;
     menuBtn.style.top = top + 'px';
+  }
+
+  /* 往下捲時淡出，停住或往上捲才出現——避免它一路擋在內容上 */
+  var lastTop = 0;
+  function syncBtnVisibility() {
+    if (!isMobile()) { menuBtn.removeAttribute('data-away'); return; }
+    if (!sheet.hidden) { menuBtn.removeAttribute('data-away'); return; }
+    var sc = scroller();
+    var t = sc ? sc.scrollTop : 0;
+    var d = t - lastTop;
+    lastTop = t;
+    if (t < 60) { menuBtn.removeAttribute('data-away'); return; }
+    if (d > 6) menuBtn.setAttribute('data-away', '1');
+    else if (d < -6) menuBtn.removeAttribute('data-away');
   }
 
   /* ---- 收合邏輯：畫面內模式預設收成把手，點一下才展開 ---- */
@@ -13779,6 +13899,7 @@ react-dom/cjs/react-dom-client.production.js:
     if (isMobile()) rail.setAttribute('data-mode', 'mobile');
     else rail.removeAttribute('data-mode');
     placeMenuBtn(show);
+    syncBtnVisibility();
     if (!show) return;
     if (isMobile()) { adjustHost(); return; }
     alignToShell();
