@@ -9429,11 +9429,14 @@ function HB_keyLabelPos(it){
     ly:HB_keyClamp(y+(y<.5?-.10:.10),.06,.94),manual:!1};
 }
 
-/* 索引圖引線編輯器：拖曳編號就能決定引線要拉到哪裡 */
+/* 索引圖編輯器：圓點與編號都能拖。
+   拖曳時只改 DOM，不動 React state —— 每次 pointermove 就 setState 會讓整張表單重繪，
+   在手機上就是卡。放開手指才寫回一次。 */
 function HbKeyplanEditor({items:items,setItems:setItems,onClose:onClose}){
   let C=u.default.createElement;
   let dragRef=(0,u.useRef)(null);
   let wrapRefs=(0,u.useRef)({});
+  let nodeRefs=(0,u.useRef)({});
 
   let flat=[];
   items.forEach(function(it,idx){
@@ -9450,9 +9453,50 @@ function HbKeyplanEditor({items:items,setItems:setItems,onClose:onClose}){
     g.rows.push(f);
   });
 
-  let setLbl=function(idx,x,y){
-    setItems(function(xs){ return xs.map(function(x2,i){ return i===idx?{...x2,lblX:x,lblY:y}:x2 }) });
+  let paint=function(key,p){
+    let n=nodeRefs.current[key];
+    if(!n)return;
+    if(n.dot){ n.dot.style.left=(p.x*100)+"%"; n.dot.style.top=(p.y*100)+"%" }
+    if(n.lbl){ n.lbl.style.left=(p.lx*100)+"%"; n.lbl.style.top=(p.ly*100)+"%" }
+    if(n.line){
+      n.line.setAttribute("x1",(p.x*100).toFixed(2));
+      n.line.setAttribute("y1",(p.y*100).toFixed(2));
+      n.line.setAttribute("x2",(p.lx*100).toFixed(2));
+      n.line.setAttribute("y2",(p.ly*100).toFixed(2));
+    }
   };
+
+  let onMove=function(gi,ev){
+    let d=dragRef.current;
+    if(!d||d.gi!==gi)return;
+    let w=wrapRefs.current[gi];
+    if(!w)return;
+    let r=w.getBoundingClientRect();
+    if(!r.width||!r.height)return;
+    let nx=Math.min(.97,Math.max(.03,(ev.clientX-r.left)/r.width));
+    let ny=Math.min(.97,Math.max(.03,(ev.clientY-r.top)/r.height));
+    let p={x:d.base.x,y:d.base.y,lx:d.base.lx,ly:d.base.ly};
+    if(d.kind==="dot"){ p.x=nx; p.y=ny } else { p.lx=nx; p.ly=ny }
+    d.next=p;
+    paint(d.key,p);
+  };
+  let onUp=function(){
+    let d=dragRef.current;
+    dragRef.current=null;
+    if(!d||!d.next)return;
+    let p=d.next, idx=d.idx, kind=d.kind;
+    setItems(function(xs){ return xs.map(function(x2,i){
+      if(i!==idx)return x2;
+      return kind==="dot"?{...x2,srcX:p.x,srcY:p.y,lblX:p.lx,lblY:p.ly}
+                         :{...x2,lblX:p.lx,lblY:p.ly};
+    }) });
+  };
+  let start=function(gi,key,f,p,kind,ev){
+    ev.preventDefault(); ev.stopPropagation();
+    dragRef.current={gi:gi,key:key,idx:f.idx,kind:kind,base:p,next:null};
+    try{ wrapRefs.current[gi].setPointerCapture(ev.pointerId) }catch(e){}
+  };
+
   let resetGroup=function(g){
     setItems(function(xs){ return xs.map(function(x2,i){
       let hit=g.rows.some(function(r){ return r.idx===i });
@@ -9460,59 +9504,60 @@ function HbKeyplanEditor({items:items,setItems:setItems,onClose:onClose}){
       let n2={...x2}; delete n2.lblX; delete n2.lblY; return n2;
     }) });
   };
-  let moveTo=function(gi,ev){
-    let d=dragRef.current;
-    if(!d)return;
-    let w=wrapRefs.current[gi];
-    if(!w)return;
-    let r=w.getBoundingClientRect();
-    if(!r.width||!r.height)return;
-    setLbl(d.idx,
-      Math.min(.97,Math.max(.03,(ev.clientX-r.left)/r.width)),
-      Math.min(.97,Math.max(.03,(ev.clientY-r.top)/r.height)));
-  };
 
   let btn={minHeight:44,padding:"0 14px",border:"1px solid "+s.line,borderRadius:6,
     background:"#fff",fontFamily:"inherit",fontSize:13.5,color:s.ink,cursor:"pointer"};
 
   return C("div",{style:{position:"fixed",inset:0,background:"rgba(43,38,32,.55)",display:"flex",
-      alignItems:"center",justifyContent:"center",padding:16,zIndex:70}},
-    C("div",{className:"fade-in",style:{background:s.card,borderRadius:10,padding:18,width:"100%",
-      maxWidth:680,maxHeight:"90vh",overflowY:"auto"}},
-      C("h3",{style:{margin:"0 0 4px",fontSize:17,fontWeight:400,color:s.oceanDark}},"\u8abf\u6574\u7d22\u5f15\u5716\u5f15\u7dda"),
-      C("p",{style:{margin:"0 0 14px",fontSize:12.5,color:s.inkSoft,lineHeight:1.7}},
-        "\u62d6\u66f3\u5716\u4e0a\u7684\u7de8\u865f\uff0c\u5c31\u80fd\u6c7a\u5b9a\u5f15\u7dda\u8981\u62c9\u5230\u54ea\u88e1\u3002\u5713\u9ede\u662f\u53d6\u6a23\u4f4d\u7f6e\uff0c\u4e0d\u6703\u8ddf\u8457\u79fb\u52d5\u3002"),
+      alignItems:"center",justifyContent:"center",padding:12,zIndex:500}},
+    C("div",{className:"fade-in",style:{background:s.card,borderRadius:10,padding:16,width:"100%",
+      maxWidth:680,maxHeight:"92vh",overflowY:"auto",overscrollBehavior:"contain"}},
+
+      C("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}},
+        C("h3",{style:{margin:0,fontSize:17,fontWeight:400,color:s.oceanDark}},"\u8abf\u6574\u7d22\u5f15\u5716"),
+        C("button",{type:"button",onClick:onClose,
+          style:{...btn,minHeight:40,borderColor:s.oceanDark,color:s.oceanDark}},"\u5b8c\u6210")),
+      C("p",{style:{margin:"6px 0 14px",fontSize:12.5,color:s.inkSoft,lineHeight:1.7}},
+        "\u5713\u9ede\u662f\u6a19\u793a\u4f4d\u7f6e\uff0c\u7de8\u865f\u662f\u5f15\u7dda\u7d42\u9ede\uff0c\u5169\u500b\u90fd\u53ef\u4ee5\u62d6\u3002\u79fb\u52d5\u5713\u9ede\u4e0d\u6703\u91cd\u65b0\u88c1\u5207\u6750\u8cea\u7968\u3002"),
 
       groups.length?groups.map(function(g,gi){
         return C("div",{key:gi,style:{marginBottom:18}},
           C("div",{ref:function(el){ wrapRefs.current[gi]=el },
-            onPointerMove:function(ev){ if(dragRef.current)moveTo(gi,ev) },
-            onPointerUp:function(){ dragRef.current=null },
-            onPointerCancel:function(){ dragRef.current=null },
+            onPointerMove:function(ev){ onMove(gi,ev) },
+            onPointerUp:onUp, onPointerCancel:onUp, onLostPointerCapture:onUp,
             style:{position:"relative",width:"100%",lineHeight:0,border:"1px solid "+s.line,
-              borderRadius:4,overflow:"hidden",touchAction:"none",userSelect:"none"}},
+              borderRadius:4,overflow:"hidden",touchAction:"none",userSelect:"none",
+              WebkitUserSelect:"none",overscrollBehavior:"contain"}},
             C("img",{src:g.url,alt:"",draggable:!1,style:{width:"100%",height:"auto",display:"block",pointerEvents:"none"}}),
             C("svg",{viewBox:"0 0 100 100",preserveAspectRatio:"none","aria-hidden":"true",
               style:{position:"absolute",inset:0,width:"100%",height:"100%",overflow:"visible",pointerEvents:"none"}},
               g.rows.map(function(f,ri){
-                let p=HB_keyLabelPos(f.it);
-                return C("line",{key:ri,x1:p.x*100,y1:p.y*100,x2:p.lx*100,y2:p.ly*100,
+                let p=HB_keyLabelPos(f.it), key=gi+"-"+ri;
+                return C("line",{key:ri,ref:function(el){
+                    nodeRefs.current[key]=nodeRefs.current[key]||{}; nodeRefs.current[key].line=el },
+                  x1:p.x*100,y1:p.y*100,x2:p.lx*100,y2:p.ly*100,
                   stroke:"#B4573A",strokeWidth:1,vectorEffect:"non-scaling-stroke"});
               })),
             g.rows.map(function(f,ri){
-              let p=HB_keyLabelPos(f.it);
+              let p=HB_keyLabelPos(f.it), key=gi+"-"+ri;
               return C(u.default.Fragment,{key:ri},
-                C("span",{style:{position:"absolute",left:(p.x*100)+"%",top:(p.y*100)+"%",
-                  width:9,height:9,margin:"-4.5px 0 0 -4.5px",borderRadius:"50%",
-                  background:"#B4573A",boxShadow:"0 0 0 2px #fff",pointerEvents:"none"}}),
-                C("button",{type:"button",
-                  onPointerDown:function(ev){ ev.preventDefault(); dragRef.current={idx:f.idx};
-                    try{ wrapRefs.current[gi].setPointerCapture(ev.pointerId) }catch(e){} },
+                C("button",{type:"button","aria-label":"\u79fb\u52d5\u6a19\u793a\u9ede "+f.no,
+                  ref:function(el){ nodeRefs.current[key]=nodeRefs.current[key]||{}; nodeRefs.current[key].dot=el },
+                  onPointerDown:function(ev){ start(gi,key,f,p,"dot",ev) },
+                  style:{position:"absolute",left:(p.x*100)+"%",top:(p.y*100)+"%",
+                    width:30,height:30,margin:"-15px 0 0 -15px",padding:0,borderRadius:"50%",
+                    border:"0",background:"transparent",cursor:"grab",touchAction:"none",
+                    display:"flex",alignItems:"center",justifyContent:"center"}},
+                  C("span",{style:{width:11,height:11,borderRadius:"50%",background:"#B4573A",
+                    boxShadow:"0 0 0 2.5px #fff, 0 2px 6px -3px rgba(23,21,15,.7)",pointerEvents:"none"}})),
+                C("button",{type:"button","aria-label":"\u79fb\u52d5\u7de8\u865f "+f.no,
+                  ref:function(el){ nodeRefs.current[key]=nodeRefs.current[key]||{}; nodeRefs.current[key].lbl=el },
+                  onPointerDown:function(ev){ start(gi,key,f,p,"lbl",ev) },
                   style:{position:"absolute",left:(p.lx*100)+"%",top:(p.ly*100)+"%",
-                    transform:"translate(-50%,-50%)",minWidth:30,height:30,padding:"0 7px",
+                    transform:"translate(-50%,-50%)",minWidth:32,height:32,padding:"0 8px",
                     display:"inline-flex",alignItems:"center",justifyContent:"center",
-                    background:"#fff",border:"1.5px solid #B4573A",borderRadius:15,
-                    fontFamily:"inherit",fontSize:12.5,lineHeight:1,color:"#B4573A",
+                    background:"#fff",border:"1.5px solid #B4573A",borderRadius:16,
+                    fontFamily:"inherit",fontSize:13,lineHeight:1,color:"#B4573A",
                     cursor:"grab",touchAction:"none",boxShadow:"0 4px 10px -6px rgba(23,21,15,.6)"}},
                   f.no));
             })),
@@ -9525,7 +9570,8 @@ function HbKeyplanEditor({items:items,setItems:setItems,onClose:onClose}){
       }):C("p",{style:{fontSize:13,color:s.inkSoft,lineHeight:1.8,margin:"0 0 14px"}},
         "\u9019\u4efd\u5831\u544a\u66f8\u9084\u6c92\u6709\u5f9e 3D \u5716\u53d6\u7684\u6750\u8cea\uff0c\u6240\u4ee5\u6c92\u6709\u7d22\u5f15\u5716\u53ef\u4ee5\u8abf\u3002"),
 
-      C("button",{type:"button",onClick:onClose,style:{...Dl,width:"100%",minHeight:46}},"\u5b8c\u6210")));
+      C("button",{type:"button",onClick:onClose,
+        style:{...Dl,width:"100%",minHeight:46,marginBottom:4}},"\u5b8c\u6210")));
 }
 
 function HbSwatchPicker({onCancel,onPick,autoFix}){
@@ -9639,7 +9685,7 @@ function HbSwatchPicker({onCancel,onPick,autoFix}){
   let small=nat&&sideNat<220;
   let btn={minHeight:44,padding:"0 16px",border:"1px solid "+s.line,borderRadius:6,background:"#fff",fontSize:14,color:s.ink,cursor:"pointer"};
 
-  return C("div",{style:{position:"fixed",inset:0,background:"rgba(43,38,32,0.55)",display:"flex",alignItems:"center",justifyContent:"center",padding:16,zIndex:65}},
+  return C("div",{style:{position:"fixed",inset:0,background:"rgba(43,38,32,0.55)",display:"flex",alignItems:"center",justifyContent:"center",padding:16,zIndex:500}},
     C("div",{className:"fade-in",style:{background:s.card,borderRadius:10,padding:18,width:"100%",maxWidth:680,maxHeight:"90vh",overflowY:"auto"}},
       C("h3",{style:{margin:"0 0 4px",fontSize:17,fontWeight:400,color:s.oceanDark}},"\u5f9e 3D \u5716\u53d6\u6750\u8cea"),
       C("p",{style:{margin:"0 0 12px",fontSize:12.5,color:s.inkSoft,lineHeight:1.7}},
