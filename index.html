@@ -7113,10 +7113,48 @@ function HB_buildReceiptHTML(v){
 <html lang="zh-Hant"><head><meta charset="UTF-8" /><title>${e(v.clientName||"工程收據")} · 赫柏空間工程收據</title>
 <style>
 ${HB_DOC_CSS}
+/* ===== 工程收據：整份收在一張 A4 =====
+   共用樣式原本每三張就強制分頁（.rc:nth-of-type(3n)），
+   而且每張的內距與字級是照單張排的，四張以上一定溢出到第二頁。
+   這裡改成不強制分頁，並依張數自動縮排版。 */
+.rc:nth-of-type(3n){ page-break-after:auto !important; break-after:auto !important; }
+.stack{ gap:14px; }
+.rc{ page-break-inside:avoid; break-inside:avoid; position:relative; }
+
+.stack.rcn4 .rc,
+.stack.rcn5 .rc,
+.stack.rcn6 .rc{ padding:13px 16px; }
+.stack.rcn4{ gap:10px } .stack.rcn5{ gap:8px } .stack.rcn6{ gap:6px }
+
+.stack.rcn5 .rc-head,
+.stack.rcn6 .rc-head{ padding-bottom:6px; margin-bottom:8px; }
+.stack.rcn5 .rc-info,
+.stack.rcn6 .rc-info{ font-size:9.5px; line-height:1.6; }
+.stack.rcn5 .rc-title,
+.stack.rcn6 .rc-title{ margin:2px 0 6px; }
+
+.stack.rcn4 table.rc-table th,.stack.rcn4 table.rc-table td{ padding:4px 8px; font-size:11.5px; }
+.stack.rcn5 table.rc-table th,.stack.rcn5 table.rc-table td{ padding:3px 8px; font-size:11px; }
+.stack.rcn6 table.rc-table th,.stack.rcn6 table.rc-table td{ padding:2px 7px; font-size:10.5px; }
+.stack.rcn4 table.rc-table td.amt{ font-size:13.5px }
+.stack.rcn5 table.rc-table td.amt{ font-size:13px }
+.stack.rcn6 table.rc-table td.amt{ font-size:12.5px }
+
+.stack.rcn5 .stamp,.stack.rcn6 .stamp{ width:88px }
+
+@media print{
+  @page{ size:A4 portrait; margin:10mm 11mm; }
+  .toolbar{ display:none !important; }
+  body{ padding:0 !important; }
+  .stack{ gap:10px; }
+  .stack.rcn4{ gap:8px } .stack.rcn5{ gap:6px } .stack.rcn6{ gap:5px }
+  /* 整疊視為一個不可分割的區塊，印表機不會從中間切開 */
+  .stack{ page-break-inside:avoid; break-inside:avoid; }
+}
 </style></head>
 <body>
 <div class="toolbar"><button class="back" onclick="window.close()" title="返回">←</button><button class="print" onclick="window.print()">列印 / 存 PDF</button></div>
-<div class="stack">${blocks}</div>
+<div class="stack rcn${periods.length}">${blocks}</div>
 </body></html>`;
 }
 
