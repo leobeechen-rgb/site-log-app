@@ -6247,6 +6247,55 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
     if(focusAfter)setTimeout(()=>{let el=refs["name_"+ni.id];el&&el.focus()},30);
   };
   let removeItem=(cid,iid)=>i(p=>({...p,categories:p.categories.map(c=>c.id!==cid?c:{...c,items:c.items.filter(it=>it.id!==iid)})}));
+  /* 在指定位置插入一列（offset 0=上方、1=下方） */
+  let insertItemAt=(cid,idx,offset,seed)=>{
+    let ni=HB_newEstItem();
+    if(seed)ni={...ni,...seed,id:ni.id};
+    i(p=>({...p,categories:p.categories.map(c=>{
+      if(c.id!==cid)return c;
+      let arr=c.items.slice();
+      arr.splice(Math.max(0,Math.min(arr.length,idx+offset)),0,ni);
+      return {...c,items:arr};
+    })}));
+    setTimeout(()=>{let el=refs["name_"+ni.id];el&&el.focus()},30);
+    return ni;
+  };
+  let duplicateItemAt=(cid,idx,it)=>insertItemAt(cid,idx,1,{
+    name:it.name,spec:it.spec,unit:it.unit,qty:it.qty,price:it.price,
+    vendorPrice:it.vendorPrice,note:it.note});
+  let[hbRowMenu,hbSetRowMenu]=(0,u.useState)(null);
+  (0,u.useEffect)(()=>{
+    if(!hbRowMenu)return;
+    let close=()=>hbSetRowMenu(null);
+    document.addEventListener("click",close);
+    document.addEventListener("scroll",close,!0);
+    window.addEventListener("resize",close);
+    return()=>{document.removeEventListener("click",close);
+      document.removeEventListener("scroll",close,!0);
+      window.removeEventListener("resize",close)};
+  },[hbRowMenu]);
+  let hbRowMenuNode=()=>{
+    if(!hbRowMenu)return null;
+    let m=hbRowMenu;
+    let row=(label,fn,danger)=>u.default.createElement("button",{type:"button",
+      onClick:ev=>{ev.stopPropagation();hbSetRowMenu(null);fn()},
+      style:{display:"block",width:"100%",textAlign:"left",minHeight:44,padding:"0 14px",
+        border:"none",borderBottom:`1px solid ${sc.line}`,background:"none",
+        fontFamily:"inherit",fontSize:13.5,color:danger?sc.danger:sc.ink,cursor:"pointer"}},label);
+    return u.default.createElement("div",{
+      onClick:ev=>ev.stopPropagation(),
+      onContextMenu:ev=>ev.preventDefault(),
+      style:{position:"fixed",left:m.x,top:m.y,zIndex:600,width:184,
+        background:"#fff",border:`1px solid ${sc.line}`,borderRadius:8,overflow:"hidden",
+        boxShadow:"0 18px 40px -22px rgba(23,21,15,.7)"}},
+      u.default.createElement("div",{style:{padding:"9px 14px",fontSize:11.5,color:sc.inkSoft,
+        borderBottom:`1px solid ${sc.line}`,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},
+        "\u7b2c "+(m.idx+1)+" \u5217"+(m.it.name?("\uff1a"+String(m.it.name).split("\n")[0]):"")),
+      row("\u5728\u4e0a\u65b9\u63d2\u5165\u4e00\u5217",()=>insertItemAt(m.cid,m.idx,0)),
+      row("\u5728\u4e0b\u65b9\u63d2\u5165\u4e00\u5217",()=>insertItemAt(m.cid,m.idx,1)),
+      row("\u8907\u88fd\u9019\u4e00\u5217",()=>duplicateItemAt(m.cid,m.idx,m.it)),
+      row("\u522a\u9664\u9019\u4e00\u5217",()=>removeItem(m.cid,m.it.id),!0));
+  };
   let toggleSelectItem=(cid,iid)=>setSelectedItems(p=>{let s=new Set(p[cid]||[]);s.has(iid)?s.delete(iid):s.add(iid);return{...p,[cid]:s}});
   let toggleSelectAllItems=(cid,ids)=>setSelectedItems(p=>{let cur=p[cid]||new Set();let all=ids.length>0&&ids.every(id=>cur.has(id));return{...p,[cid]:all?new Set():new Set(ids)}});
   let copySelectedItems=cid=>{
@@ -6774,7 +6823,22 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
             u.default.createElement("tbody",null,
               cat.items.map((it,idx)=>{
                 let rowProfit=HB_num(it.qty)*HB_num(it.price)-HB_num(it.vendorPrice);
-                return u.default.createElement("tr",{key:it.id,"data-hbcat":cat.id,"data-hbid":it.id,style:it.highlighted?{background:"#FFF3B0"}:null},
+                let hbOpenRowMenu=(cx,cy)=>{
+                  let vw=window.innerWidth,vh=window.innerHeight;
+                  hbSetRowMenu({cid:cat.id,idx:idx,it:it,
+                    x:Math.min(Math.max(8,cx),vw-192),
+                    y:Math.min(Math.max(8,cy),vh-214)});
+                };
+                let hbPress=null;
+                return u.default.createElement("tr",{key:it.id,"data-hbcat":cat.id,"data-hbid":it.id,
+                  onContextMenu:ev=>{ev.preventDefault();ev.stopPropagation();hbOpenRowMenu(ev.clientX,ev.clientY)},
+                  onTouchStart:ev=>{let t=ev.touches&&ev.touches[0];if(!t)return;
+                    let cx=t.clientX,cy=t.clientY;
+                    hbPress=setTimeout(()=>{hbPress=null;hbOpenRowMenu(cx,cy)},520)},
+                  onTouchMove:()=>{if(hbPress){clearTimeout(hbPress);hbPress=null}},
+                  onTouchEnd:()=>{if(hbPress){clearTimeout(hbPress);hbPress=null}},
+                  onTouchCancel:()=>{if(hbPress){clearTimeout(hbPress);hbPress=null}},
+                  style:it.highlighted?{background:"#FFF3B0"}:null},
                   u.default.createElement("td",{style:{...tdStyle,textAlign:"center"}},u.default.createElement("input",{type:"checkbox",checked:(selectedItems[cat.id]||new Set()).has(it.id),onChange:()=>toggleSelectItem(cat.id,it.id),style:{width:14,height:14,verticalAlign:"middle"}})),
                   u.default.createElement("td",{className:"hb-draghandle",title:"按住序號可拖曳調整順序",style:{...tdStyle,textAlign:"center",color:sc.inkSoft,fontSize:11.5}},idx+1),
                   u.default.createElement("td",{style:tdStyle},
@@ -6807,6 +6871,7 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
         u.default.createElement("p",{style:{textAlign:"right",fontSize:12.5,fontWeight:400,color:sc.oceanDark,margin:0}},(cat.name||"本項")+" 小計：NT$ ",HB_money(HB_estCatSubtotal(cat))),
         HB_estCatCost(cat)>0&&u.default.createElement("p",{style:{textAlign:"right",fontSize:11,fontWeight:400,color:sc.tree,margin:"3px 0 0"}},(cat.name||"本項")+" 淨利：NT$ ",HB_money(HB_estCatSubtotal(cat)-HB_estCatCost(cat)))
       )),
+      hbRowMenuNode(),
       u.default.createElement("button",{onClick:()=>addCat(""),style:{border:`1px solid ${sc.line}`,background:"none",borderRadius:99,padding:"10px 0",width:"100%",fontSize:13,fontWeight:400,color:sc.oceanDark,cursor:"pointer",marginBottom:10}},"+ 新增大項分類"),
       u.default.createElement("button",{onClick:pbStoreAll,disabled:pbBusy,style:{border:`1px dashed ${sc.ocean}`,background:"none",borderRadius:99,padding:"10px 0",width:"100%",fontSize:12.5,fontWeight:400,color:sc.oceanDark,cursor:pbBusy?"default":"pointer",marginBottom:8,display:"flex",alignItems:"center",justifyContent:"center",gap:7,opacity:pbBusy?.6:1}},
         pbBusy?u.default.createElement(E,{name:"loader",size:14,className:"animate-spin"}):u.default.createElement(E,{name:"bookmark",size:14}),
