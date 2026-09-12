@@ -6265,6 +6265,7 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
     name:it.name,spec:it.spec,unit:it.unit,qty:it.qty,price:it.price,
     vendorPrice:it.vendorPrice,note:it.note});
   let[hbRowMenu,hbSetRowMenu]=(0,u.useState)(null);
+  let hbSelectionAnchor=(0,u.useRef)(null);
   (0,u.useEffect)(()=>{
     if(!hbRowMenu)return;
     let close=()=>hbSetRowMenu(null);
@@ -6287,17 +6288,31 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
       onClick:ev=>ev.stopPropagation(),
       onContextMenu:ev=>ev.preventDefault(),
       style:{position:"fixed",left:m.x,top:m.y,zIndex:600,width:184,
-        background:"#fff",border:`1px solid ${sc.line}`,borderRadius:8,overflow:"hidden",
+        background:"#fff",border:`1px solid ${sc.line}`,borderRadius:8,overflowY:"auto",maxHeight:"calc(100vh - 16px)",
         boxShadow:"0 18px 40px -22px rgba(23,21,15,.7)"}},
       u.default.createElement("div",{style:{padding:"9px 14px",fontSize:11.5,color:sc.inkSoft,
         borderBottom:`1px solid ${sc.line}`,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},
         "\u7b2c "+(m.idx+1)+" \u5217"+(m.it.name?("\uff1a"+String(m.it.name).split("\n")[0]):"")),
+      row("剪下（已選 "+(selectedItems[m.cid]?.size||1)+" 項）",()=>cutSelectedItems(m.cid)),
+      row("複製（已選 "+(selectedItems[m.cid]?.size||1)+" 項）",()=>copySelectedItems(m.cid)),
+      row("貼上到此列下方",()=>pasteClipboardItems(m.cid,m.it.id)),
       row("\u5728\u4e0a\u65b9\u63d2\u5165\u4e00\u5217",()=>insertItemAt(m.cid,m.idx,0)),
       row("\u5728\u4e0b\u65b9\u63d2\u5165\u4e00\u5217",()=>insertItemAt(m.cid,m.idx,1)),
       row("\u8907\u88fd\u9019\u4e00\u5217",()=>duplicateItemAt(m.cid,m.idx,m.it)),
       row("\u522a\u9664\u9019\u4e00\u5217",()=>removeItem(m.cid,m.it.id),!0));
   };
-  let toggleSelectItem=(cid,iid)=>setSelectedItems(p=>{let s=new Set(p[cid]||[]);s.has(iid)?s.delete(iid):s.add(iid);return{...p,[cid]:s}});
+  let toggleSelectItem=(cid,iid,ev)=>{
+    let anchor=hbSelectionAnchor.current;
+    let ids=(a.categories.find(c=>c.id===cid)?.items||[]).map(it=>it.id);
+    let from=anchor&&anchor.cid===cid?ids.indexOf(anchor.iid):-1,to=ids.indexOf(iid);
+    let range=!!(ev&&ev.shiftKey&&from>=0&&to>=0);
+    setSelectedItems(p=>{let selected=new Set(p[cid]||[]);
+      if(range){let checked=!selected.has(iid);for(let n=Math.min(from,to);n<=Math.max(from,to);n++)checked?selected.add(ids[n]):selected.delete(ids[n]);}
+      else selected.has(iid)?selected.delete(iid):selected.add(iid);
+      return {...p,[cid]:selected};
+    });
+    if(!range)hbSelectionAnchor.current={cid,iid};
+  };
   let toggleSelectAllItems=(cid,ids)=>setSelectedItems(p=>{let cur=p[cid]||new Set();let all=ids.length>0&&ids.every(id=>cur.has(id));return{...p,[cid]:all?new Set():new Set(ids)}});
   let copySelectedItems=cid=>{
     let cat=a.categories.find(c=>c.id===cid);
@@ -6308,8 +6323,8 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
     setItemClipboard(rows.map(it=>({...it})));
     let text=rows.map(it=>[it.name,it.spec,it.unit,it.qty,it.price,it.vendorPrice,it.note].map(x=>(x??"").toString().replace(/\t/g," ")).join("\t")).join("\n");
     let done=()=>{notify("已複製 "+rows.length+" 項，可切到其他大項按「貼上」，或貼到 Excel");setSelectedItems(p=>({...p,[cid]:new Set()}))};
-    if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(text).then(done).catch(done);
-    else done()
+    if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(text).then(done).catch(()=>notify("已複製 "+rows.length+" 項，可在本估價單右鍵貼上；瀏覽器未允許複製到系統剪貼簿"));
+    else notify("已複製 "+rows.length+" 項，可在本估價單右鍵貼上")
   };
   let cutSelectedItems=cid=>{
     let cat=a.categories.find(c=>c.id===cid);
@@ -6322,10 +6337,15 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
     setSelectedItems(p=>({...p,[cid]:new Set()}));
     notify("已剪下 "+rows.length+" 項，切到其他大項按「貼上」即可移過去")
   };
-  let pasteClipboardItems=cid=>{
+  let pasteClipboardItems=(cid,afterId)=>{
     if(!itemClipboard||!itemClipboard.length){notify("剪貼簿是空的，請先在其他大項勾選項目並按「剪下」或「複製」");return}
     let copies=itemClipboard.map(it=>({...it,id:HB_estUid()}));
-    i(p=>({...p,categories:p.categories.map(c=>c.id!==cid?c:{...c,items:[...c.items,...copies]})}));
+    i(p=>({...p,categories:p.categories.map(c=>{
+      if(c.id!==cid)return c;
+      let items=[...c.items],idx=afterId?items.findIndex(it=>it.id===afterId):-1;
+      items.splice(idx<0?items.length:idx+1,0,...copies);
+      return {...c,items};
+    })}));
     notify("已貼上 "+copies.length+" 項")
   };
   let dupItem=(cid,iid)=>i(p=>({...p,categories:p.categories.map(c=>{
@@ -6846,21 +6866,26 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
                 let rowProfit=HB_num(it.qty)*HB_num(it.price)-HB_num(it.vendorPrice);
                 let hbOpenRowMenu=(cx,cy)=>{
                   let vw=window.innerWidth,vh=window.innerHeight;
+                  if(!(selectedItems[cat.id]||new Set()).has(it.id)){
+                    setSelectedItems(p=>({...p,[cat.id]:new Set([it.id])}));
+                    hbSelectionAnchor.current={cid:cat.id,iid:it.id};
+                  }
                   hbSetRowMenu({cid:cat.id,idx:idx,it:it,
                     x:Math.min(Math.max(8,cx),vw-192),
-                    y:Math.min(Math.max(8,cy),vh-214)});
+                    y:Math.max(8,Math.min(cy,vh-360))});
                 };
                 let hbPress=null;
                 return u.default.createElement("tr",{key:it.id,"data-hbcat":cat.id,"data-hbid":it.id,
-                  onContextMenu:ev=>{ev.preventDefault();ev.stopPropagation();hbOpenRowMenu(ev.clientX,ev.clientY)},
+                  onContextMenu:ev=>{if(ev.target.closest("input:not([type=checkbox]),textarea,[contenteditable=true]"))return;ev.preventDefault();ev.stopPropagation();hbOpenRowMenu(ev.clientX,ev.clientY)},
                   onTouchStart:ev=>{let t=ev.touches&&ev.touches[0];if(!t)return;
                     let cx=t.clientX,cy=t.clientY;
                     hbPress=setTimeout(()=>{hbPress=null;hbOpenRowMenu(cx,cy)},520)},
                   onTouchMove:()=>{if(hbPress){clearTimeout(hbPress);hbPress=null}},
                   onTouchEnd:()=>{if(hbPress){clearTimeout(hbPress);hbPress=null}},
                   onTouchCancel:()=>{if(hbPress){clearTimeout(hbPress);hbPress=null}},
-                  style:it.highlighted?{background:"#FFF3B0"}:null},
-                  u.default.createElement("td",{style:{...tdStyle,textAlign:"center"}},u.default.createElement("input",{type:"checkbox",checked:(selectedItems[cat.id]||new Set()).has(it.id),onChange:()=>toggleSelectItem(cat.id,it.id),style:{width:14,height:14,verticalAlign:"middle"}})),
+                  style:(selectedItems[cat.id]||new Set()).has(it.id)?{background:"#E3EDE7"}:it.highlighted?{background:"#FFF3B0"}:null},
+                  u.default.createElement("td",{style:{...tdStyle,textAlign:"center"}},u.default.createElement("input",{type:"checkbox",checked:(selectedItems[cat.id]||new Set()).has(it.id),onClick:ev=>toggleSelectItem(cat.id,it.id,ev),onChange:()=>{},title:"勾選項目；按住 Shift 點選可連續選取",
+                    "aria-label":"選取第 "+(idx+1)+" 項",style:{width:14,height:14,verticalAlign:"middle"}})),
                   u.default.createElement("td",{className:"hb-draghandle",title:"按住序號可拖曳調整順序",style:{...tdStyle,textAlign:"center",color:sc.inkSoft,fontSize:11.5}},idx+1),
                   u.default.createElement("td",{style:tdStyle},
                     u.default.createElement("textarea",{ref:el=>{if(el){refs["name_"+it.id]=el;autoGrow(el)}},placeholder:"項目（可換行輸入多行）",value:it.name,onChange:v=>{setItem(cat.id,it.id,"name",v.target.value);pbOnType(cat.id,it.id,v.target.value,v.target)},onInput:v=>autoGrow(v.target),onMouseDown:()=>cellDown(cat.id,idx,0),onMouseEnter:()=>cellEnter(cat.id,idx,0),onBlur:()=>{setTimeout(()=>setPbSug(p=>(p&&p.itemId===it.id)?null:p),160)},onKeyDown:v=>{if(v.key==="Escape"){setPbSug(null);return}cellNav(v,cat.id,idx,0)},"data-hbcell":"1",rows:1,style:{...cellInputStyle,resize:"none",overflow:"hidden",lineHeight:1.45,display:"block",background:cellInSel(cat.id,idx,0)?selBg:"transparent"}}),
