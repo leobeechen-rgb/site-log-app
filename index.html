@@ -6876,7 +6876,7 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
                 };
                 let hbPress=null;
                 return u.default.createElement("tr",{key:it.id,"data-hbcat":cat.id,"data-hbid":it.id,
-                  onContextMenu:ev=>{if(ev.target.closest("input:not([type=checkbox]),textarea,[contenteditable=true]"))return;ev.preventDefault();ev.stopPropagation();hbOpenRowMenu(ev.clientX,ev.clientY)},
+                  onContextMenu:ev=>{ev.preventDefault();ev.stopPropagation();hbOpenRowMenu(ev.clientX,ev.clientY)},
                   onTouchStart:ev=>{let t=ev.touches&&ev.touches[0];if(!t)return;
                     let cx=t.clientX,cy=t.clientY;
                     hbPress=setTimeout(()=>{hbPress=null;hbOpenRowMenu(cx,cy)},520)},
