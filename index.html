@@ -5712,7 +5712,7 @@ function HB_buildEstimateHTML(v){
   let no=0;
   (v.categories||[]).forEach(cat=>{
     if(!cat.items||cat.items.length===0)return;
-    rows+=`<tr class="cat"><td colspan="8">${e(cat.name||"（未命名分類）")}</td></tr>`;
+    rows+=`<tbody class="estimate-category"><tr class="cat"><td colspan="8">${e(cat.name||"（未命名分類）")}</td></tr>`;
     cat.items.forEach(it=>{
       if(!it.name&&!it.spec&&!HB_num(it.price))return;
       no++;
@@ -5723,7 +5723,7 @@ function HB_buildEstimateHTML(v){
       rows+=`<tr><td class="c">${no}</td><td>${HB_escMultiline(it.name)}</td><td>${e(it.spec)}</td><td class="c">${e(it.unit)}</td><td class="c">${qtyCell}</td><td class="r">${priceCell}</td><td class="r">${amt?HB_money(amt):""}</td><td>${e(it.note)}</td></tr>`;
     });
     let sub=HB_estCatSubtotal(cat);
-    rows+=`<tr class="sub"><td colspan="6" class="r">${e(cat.name)} 小計</td><td class="r">${HB_money(sub)}</td><td></td></tr>`;
+    rows+=`<tr class="sub"><td colspan="6" class="r">${e(cat.name)} 小計</td><td class="r">${HB_money(sub)}</td><td></td></tr></tbody>`;
   });
   return `<!DOCTYPE html>
 <html lang="zh-Hant">
@@ -5732,31 +5732,68 @@ function HB_buildEstimateHTML(v){
 <title>${e(v.engName||"工程估價單")} · 赫柏空間估價單</title>
 <style>
 ${HB_DOC_CSS}
+/* Estimate-only print layout; other document templates keep their own styles. */
+@page{size:A4 portrait;margin:14mm 12mm}
+body.hb-estimate{width:210mm;max-width:100%;padding:12mm;margin:0 auto;background:#fffdf9;font-size:12px;line-height:1.6}
+.hb-estimate .brand{font-size:11px;letter-spacing:.17em}
+.hb-estimate h1{font-size:26px;margin:10px 0 14px;padding-bottom:10px}
+ .hb-estimate .estimate-meta{table-layout:fixed;width:100%;margin:0 0 14px;font-size:11.5px;color:#514a40}
+.hb-estimate .estimate-meta td{border:0;padding:3px 0;line-height:1.7;vertical-align:top;overflow-wrap:anywhere}
+.hb-estimate .estimate-meta th{border:0;padding:3px 6px 3px 0;font-size:11px;font-weight:500;background:none;letter-spacing:0;color:#756b5e;vertical-align:top}
+.hb-estimate .estimate-table{table-layout:fixed;width:100%;margin:0 0 12px;font-size:12px;border:1px solid #bdb3a3}
+.hb-estimate .estimate-table th,.hb-estimate .estimate-table td{padding:7px 6px;line-height:1.6;vertical-align:middle;border:1px solid #cfc7b8;letter-spacing:0;overflow-wrap:anywhere}
+.hb-estimate .estimate-table th{font-size:11px;font-weight:700;color:#514a40;background:#f0ece5;white-space:nowrap}
+.hb-estimate .estimate-table td.r{font-family:Arial,"Noto Serif TC",sans-serif;font-variant-numeric:tabular-nums;white-space:nowrap;overflow-wrap:normal;font-size:12px}
+.hb-estimate .estimate-table td.c{font-variant-numeric:tabular-nums}
+.hb-estimate .estimate-table .cat td{font-size:12px;font-weight:700;letter-spacing:.06em;text-align:left;color:#763c3b;background:#f3eae7;padding:6px 8px}
+.hb-estimate .estimate-table .sub td{font-size:11.5px;background:#f7f4ee}
+.hb-estimate .estimate-table .grand td{font-size:13px;font-weight:700;background:#eee8df;border-top:1.5px solid #8d7b62}
+.hb-estimate .estimate-table .grand .total-value{font-size:16px}
+.hb-estimate .amount-words{text-align:right;font-size:12px;font-weight:700;margin:9px 0 14px;break-before:avoid}
+.hb-estimate .notes{padding:9px 12px;margin-top:10px;break-inside:avoid}
+.hb-estimate .notes p{font-size:11px;line-height:1.8}
+.hb-estimate .signbox{grid-template-columns:1fr 1fr;gap:20px;padding-top:12px;font-size:11px;line-height:1.8}
+.hb-estimate .signbox div{min-height:72px}
+.hb-estimate .footer{margin-top:16px;padding-top:8px;font-size:9px;letter-spacing:.08em}
+.hb-estimate thead{display:table-header-group}
+.hb-estimate tbody{break-inside:auto}
+.hb-estimate tr{break-inside:avoid;page-break-inside:avoid}
+.hb-estimate .cat{break-after:avoid;page-break-after:avoid}
+.hb-estimate .sub{break-before:avoid;page-break-before:avoid}
+.hb-estimate .estimate-totals{break-inside:avoid;page-break-inside:avoid}
+@media print{
+ body.hb-estimate{width:auto;max-width:none;padding:0;margin:0;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+ .hb-estimate h1,.hb-estimate .estimate-meta{break-after:avoid;page-break-after:avoid}
+}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"><\/script>
 </head>
-<body>
+<body class="hb-estimate">
 <div class="toolbar"><button class="back" onclick="window.close()" title="返回">\u2190</button><div class="btns"><button class="lineshare" onclick="shareToLine()">分享PDF到LINE</button><button class="print" onclick="window.print()">列印 / 存 PDF</button></div></div>
 <div class="brand">HERFULSINS INTERIOR DESIGN｜赫柏空間設計</div>
 <h1>工程估價單</h1>
-<div class="meta">
-  <span>客戶名稱：${e(v.clientName)}</span>
-  <span>工程名稱：${e(v.engName)}</span>
-  <span>施工地點：${e(v.siteAddress)}</span>
-  <span>日期：${e(v.quoteDate)}</span>
-</div>
-<table>
-<tr><th class="c">項次</th><th>項目</th><th>規格</th><th class="c">單位</th><th class="c">數量</th><th class="r">單價</th><th class="r">複價</th><th>備註</th></tr>
+<table class="estimate-meta" aria-label="估價單基本資料">
+<colgroup><col style="width:13%"><col style="width:53%"><col style="width:13%"><col style="width:21%"></colgroup>
+<tbody>
+<tr><th scope="row">客戶名稱</th><td>${e(v.clientName)||"—"}</td><th scope="row">估價日期</th><td>${e(v.quoteDate)||"—"}</td></tr>
+<tr><th scope="row">工程名稱</th><td colspan="3">${e(v.engName)||"—"}</td></tr>
+<tr><th scope="row">施工地點</th><td colspan="3">${e(v.siteAddress)||"—"}</td></tr>
+</tbody></table>
+<table class="estimate-table">
+<colgroup><col style="width:5%"><col style="width:25%"><col style="width:14%"><col style="width:9%"><col style="width:6%"><col style="width:12%"><col style="width:14%"><col style="width:15%"></colgroup>
+<thead><tr><th class="c" scope="col">項次</th><th scope="col">項目</th><th scope="col">規格</th><th class="c" scope="col">單位</th><th class="c" scope="col">數量</th><th class="r" scope="col">單價</th><th class="r" scope="col">複價</th><th scope="col">備註</th></tr></thead>
 ${rows}
+<tbody class="estimate-totals">
 ${T.plain
-  ? `<tr class="grand"><td colspan="6" class="r">總價（未含營業稅 5%）</td><td class="r">NT$ ${HB_money(total)}</td><td></td></tr>`
+  ? `<tr class="grand"><td colspan="6" class="r">總價（未含營業稅 5%）</td><td colspan="2" class="r total-value">NT$ ${HB_money(total)}</td></tr>`
   : `<tr class="sub"><td colspan="6" class="r">合計</td><td class="r">${HB_money(T.sub)}</td><td></td></tr>`
     +(T.discount>0?`<tr class="sub"><td colspan="6" class="r">折讓</td><td class="r">-${HB_money(T.discount)}</td><td></td></tr>`:``)
     +(T.rate>0?`<tr class="sub"><td colspan="6" class="r">未稅金額</td><td class="r">${HB_money(T.net)}</td><td></td></tr>`
       +`<tr class="sub"><td colspan="6" class="r">營業稅 ${e(T.rate)}%</td><td class="r">${HB_money(T.tax)}</td><td></td></tr>`:``)
-    +`<tr class="grand"><td colspan="6" class="r">總計${T.rate>0?"（含稅）":"（未含營業稅）"}</td><td class="r">NT$ ${HB_money(total)}</td><td></td></tr>`}
+    +`<tr class="grand"><td colspan="6" class="r">總計${T.rate>0?"（含稅）":"（未含營業稅）"}</td><td colspan="2" class="r total-value">NT$ ${HB_money(total)}</td></tr>`}
+</tbody>
 </table>
-<p style="text-align:right;font-weight:700;">大寫：${e(HB_toChineseMoney(total))}</p>
+<p class="amount-words">大寫：${e(HB_toChineseMoney(total))}</p>
 <div class="notes">
 <p>1. 本估價單有效期限 ${e(v.validDays||"5")} 天。</p>
 <p>2. ${e(v.depositNote||"如蒙惠顧請先付訂金3成，或雙方議定金額。")}</p>
