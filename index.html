@@ -5720,7 +5720,7 @@ function HB_buildEstimateHTML(v){
       let hid=HB_estHidden(it);
       let qtyCell=hid?"—":e(it.qty);
       let priceCell=hid?"—":(it.price!==""?HB_money(HB_num(it.price)):"");
-      rows+=`<tr><td class="c">${no}</td><td>${HB_escMultiline(it.name)}</td><td>${e(it.spec)}</td><td class="c">${e(it.unit)}</td><td class="c">${qtyCell}</td><td class="r">${priceCell}</td><td class="r">${amt?HB_money(amt):""}</td><td>${e(it.note)}</td></tr>`;
+      rows+=`<tr${it.highlighted?' class="estimate-highlight"':''}><td class="c">${no}</td><td>${HB_escMultiline(it.name)}</td><td>${e(it.spec)}</td><td class="c">${e(it.unit)}</td><td class="c">${qtyCell}</td><td class="r">${priceCell}</td><td class="r">${amt?HB_money(amt):""}</td><td>${e(it.note)}</td></tr>`;
     });
     let sub=HB_estCatSubtotal(cat);
     rows+=`<tr class="sub"><td colspan="6" class="r">${e(cat.name)} 小計</td><td class="r">${HB_money(sub)}</td><td></td></tr></tbody>`;
@@ -5744,6 +5744,7 @@ body.hb-estimate{width:210mm;max-width:100%;padding:12mm;margin:0 auto;backgroun
 .hb-estimate .estimate-table th,.hb-estimate .estimate-table td{padding:7px 6px;line-height:1.6;vertical-align:middle;border:0;border-right:.75pt solid #bdb3a3;border-bottom:.75pt solid #bdb3a3;letter-spacing:0;overflow-wrap:anywhere}
 .hb-estimate .estimate-table tr>:first-child{border-left:.75pt solid #bdb3a3}
 .hb-estimate .estimate-table thead tr:first-child>th{border-top:.75pt solid #bdb3a3}
+.hb-estimate .estimate-table .estimate-highlight>td{background-color:#FFF3B0!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .hb-estimate .estimate-table th{font-size:11px;font-weight:700;color:#514a40;background:#f0ece5;white-space:nowrap}
 .hb-estimate .estimate-table td.r{font-family:Arial,"Noto Serif TC",sans-serif;font-variant-numeric:tabular-nums;white-space:nowrap;overflow-wrap:normal;font-size:12px}
 .hb-estimate .estimate-table td.c{font-variant-numeric:tabular-nums}
