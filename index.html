@@ -3219,10 +3219,12 @@ table.sign tr:first-child td{height:auto;background:var(--wash)}
 .hb-motion-login button,.hb-motion-login input{font:inherit;}
 .hb-motion-login button{touch-action:manipulation;}
 .hb-skip-intro{border:0;padding:10px 8px;background:transparent;color:#686960;font-size:11px!important;min-height:44px;animation:hb-skip-away .2s 3s forwards;}
-.hb-motion-brand{min-height:620px;position:relative;display:grid;place-items:center;}
-.hb-logo-parallax{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;transform:translate(var(--hb-px,0px),var(--hb-py,0px));transition:transform .7s ease-out;}
-.hb-logo-arrival{width:clamp(640px,70vw,1280px);aspect-ratio:1;flex:none;animation:hb-logo-arrive 1.55s cubic-bezier(.16,1,.3,1) both,hb-logo-soften 1.3s 1.55s ease-in-out forwards;}
-.hb-motion-login .hb-motion-mark{position:static;width:100%;height:100%;margin:0;object-fit:contain;opacity:1;animation:hb-mark-spin 120s 1.55s linear infinite;transform-origin:center;max-width:none;}
+.hb-motion-brand{min-height:620px;min-width:0;position:relative;display:grid;place-items:center;overflow:hidden;isolation:isolate;}
+.hb-logo-parallax{position:absolute;inset:0;pointer-events:none;}
+/* Centering and animated transforms live on separate elements. Oversized art cannot enlarge a grid track. */
+.hb-logo-center{position:absolute;left:50%;top:50%;width:112%;max-width:980px;aspect-ratio:1;transform:translate(-50%,-50%);transform-origin:50% 50%;}
+.hb-logo-arrival{width:100%;height:100%;aspect-ratio:1;transform-origin:50% 50%;animation:hb-logo-arrive 1.55s cubic-bezier(.16,1,.3,1) both,hb-logo-soften 1.3s 1.55s ease-in-out forwards;}
+.hb-motion-login .hb-motion-mark{position:static;display:block;width:100%;height:100%;margin:0;object-fit:contain;opacity:1;animation:hb-mark-spin 120s 1.55s linear infinite;transform-origin:center;max-width:none;}
 .hb-motion-login .hb-motion-title{position:relative;z-index:1;margin:0;font-family:'YaqianTTF','IansuiTitle',serif!important;font-weight:400;font-size:58px;line-height:1.18;letter-spacing:0;writing-mode:horizontal-tb;text-orientation:mixed;display:flex;flex-direction:column;align-items:center;gap:5px;color:var(--hb-ink);}
 .hb-motion-title>span{display:block;animation:hb-char-in .8s var(--hb-char-delay) cubic-bezier(.16,1,.3,1) both;}
 .hb-motion-login .hb-motion-form{position:relative;z-index:2;width:100%;max-width:390px;align-self:center;justify-self:center;margin:44px 0;padding:0;background:transparent;border:0;box-shadow:none;animation:hb-form-in .8s 1.1s ease-out both;}
@@ -3266,7 +3268,8 @@ table.sign tr:first-child td{height:auto;background:var(--wash)}
  .hb-motion-login{grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto auto auto;padding:12px 24px 24px;gap:0;overflow:hidden;}
  .hb-motion-top{min-height:40px;}.hb-motion-top>span{font-size:10px;letter-spacing:.22em;}
  .hb-motion-brand{min-height:0;height:clamp(285px,43svh,405px);margin:0 -24px;overflow:hidden;}
- .hb-logo-arrival{width:clamp(430px,116vw,850px);animation-name:hb-logo-arrive-mobile,hb-logo-soften;}
+ .hb-logo-center{width:112%;max-width:760px;}
+ .hb-logo-arrival{animation-name:hb-logo-arrive-mobile,hb-logo-soften;}
  .hb-motion-login .hb-motion-title{font-size:clamp(34px,5.2svh,44px);line-height:1.08;gap:1px;}
  .hb-motion-login .hb-motion-form{max-width:440px;margin:16px auto 30px;}
  .hb-motion-heading{font-size:23px;margin-bottom:22px;}
@@ -11947,7 +11950,7 @@ function SSOForm({onStaff:l,onOwner:t}){
   return h('main',{ref:root,className:'hb-motion-login'+(skip?' hb-intro-skip':''),'aria-busy':busy,onPointerMove:move,onPointerLeave:reset},
     h('header',{className:'hb-motion-top'},h('span',null,'HERFULSINS'),h('button',{type:'button',className:'hb-skip-intro',onClick:()=>setSkip(true)},'略過開場')),
     h('section',{className:'hb-motion-brand','aria-label':'赫柏空間設計'},
-      h('div',{className:'hb-logo-parallax','aria-hidden':true},h('div',{className:'hb-logo-arrival'},h('img',{className:'hb-sso-logo-bg hb-motion-mark',src:HB_LOGO_MARK,alt:'',draggable:false}))),
+      h('div',{className:'hb-logo-parallax','aria-hidden':true},h('div',{className:'hb-logo-center'},h('div',{className:'hb-logo-arrival'},h('img',{className:'hb-sso-logo-bg hb-motion-mark',src:HB_LOGO_MARK,alt:'',draggable:false})))),
       h('h1',{className:'hb-sso-title hb-motion-title','aria-label':'赫柏空間設計'},Array.from('赫柏空間設計').map((ch,idx)=>h('span',{key:idx,'aria-hidden':true,style:{'--hb-char-delay':(.45+idx*.11)+'s'}},ch)))
     ),
     h('section',{className:'hb-sso-form hb-motion-form'},
