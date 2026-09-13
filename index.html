@@ -5740,8 +5740,10 @@ body.hb-estimate{width:210mm;max-width:100%;padding:12mm;margin:0 auto;backgroun
  .hb-estimate .estimate-meta{table-layout:fixed;width:100%;margin:0 0 14px;font-size:11.5px;color:#514a40}
 .hb-estimate .estimate-meta td{border:0;padding:3px 0;line-height:1.7;vertical-align:top;overflow-wrap:anywhere}
 .hb-estimate .estimate-meta th{border:0;padding:3px 6px 3px 0;font-size:11px;font-weight:500;background:none;letter-spacing:0;color:#756b5e;vertical-align:top}
-.hb-estimate .estimate-table{table-layout:fixed;width:100%;margin:0 0 12px;font-size:12px;border:1px solid #bdb3a3}
-.hb-estimate .estimate-table th,.hb-estimate .estimate-table td{padding:7px 6px;line-height:1.6;vertical-align:middle;border:1px solid #cfc7b8;letter-spacing:0;overflow-wrap:anywhere}
+.hb-estimate .estimate-table{table-layout:fixed;width:100%;margin:0 0 12px;font-size:12px;border:0;border-collapse:separate;border-spacing:0;empty-cells:show}
+.hb-estimate .estimate-table th,.hb-estimate .estimate-table td{padding:7px 6px;line-height:1.6;vertical-align:middle;border:0;border-right:.75pt solid #bdb3a3;border-bottom:.75pt solid #bdb3a3;letter-spacing:0;overflow-wrap:anywhere}
+.hb-estimate .estimate-table tr>:first-child{border-left:.75pt solid #bdb3a3}
+.hb-estimate .estimate-table thead tr:first-child>th{border-top:.75pt solid #bdb3a3}
 .hb-estimate .estimate-table th{font-size:11px;font-weight:700;color:#514a40;background:#f0ece5;white-space:nowrap}
 .hb-estimate .estimate-table td.r{font-family:Arial,"Noto Serif TC",sans-serif;font-variant-numeric:tabular-nums;white-space:nowrap;overflow-wrap:normal;font-size:12px}
 .hb-estimate .estimate-table td.c{font-variant-numeric:tabular-nums}
@@ -5762,7 +5764,7 @@ body.hb-estimate{width:210mm;max-width:100%;padding:12mm;margin:0 auto;backgroun
 .hb-estimate .sub{break-before:avoid;page-break-before:avoid}
 .hb-estimate .estimate-totals{break-inside:avoid;page-break-inside:avoid}
 @media print{
- body.hb-estimate{width:auto;max-width:none;padding:0;margin:0;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+ body.hb-estimate{width:auto;max-width:none;padding:0 .5mm 0 0;margin:0;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
  .hb-estimate h1,.hb-estimate .estimate-meta{break-after:avoid;page-break-after:avoid}
 }
 </style>
@@ -12201,13 +12203,14 @@ function HbOverviewHub({project:pj,stage:st,photos:ph,materials:mt,appliances:ap
     let co=kind==="ok"?s.tree:kind==="warn"?s.cane:kind==="hot"?s.danger:s.inkSoft;
     return C("span",{style:{display:"inline-block",fontSize:11,padding:"3px 11px",borderRadius:2,background:bg,color:co,whiteSpace:"nowrap"}},txt)};
 
-  return C(u.default.Fragment,null,
+  return C(u.default.Fragment,{key:pj&&pj.id||"project-overview"},
     /* ── 第一列：形象卡 ／ 專案時程 ── */
     C("div",{className:"hb-ovw"},
       C("div",null,
-        C("div",{onClick:function(){go("photos")},
+        C("div",{className:"hb-project-stage",onClick:function(){go("photos")},
           style:{position:"relative",borderRadius:3,overflow:"hidden",minHeight:390,cursor:"pointer",
             background:'center/cover no-repeat url("'+HB_DEFAULT_COVER+'")',border:"1px solid "+s.line}},
+          C("div",{className:"hb-project-cover","aria-hidden":true,style:{position:"absolute",inset:0,background:"inherit",pointerEvents:"none"}}),
           C("div",{style:{position:"absolute",inset:0,background:"linear-gradient(105deg,rgba(28,27,24,.86) 0%,rgba(28,27,24,.45) 52%,rgba(28,27,24,.20) 100%)"}}),
           C("div",{style:{position:"relative",minHeight:390,padding:"30px 32px",display:"flex",flexDirection:"column",justifyContent:"space-between"}},
             C("div",{className:"hb-latin",style:{fontSize:10,lineHeight:2,color:"#EDEAE0",opacity:.62}},
@@ -12222,7 +12225,7 @@ function HbOverviewHub({project:pj,stage:st,photos:ph,materials:mt,appliances:ap
               "LIVE A MORE",C("br",null),"BEAUTIFUL EVERYDAY")))
       ),
       C("div",null,
-        C("div",{style:card},
+        C("div",{className:"hb-project-calendar",style:card},
           sect("\u5C08\u6848\u6642\u7A0B","Calendrier du Projet",more("progress","\u67E5\u770B\u5B8C\u6574\u6642\u7A0B")),
           tl.length===0?C("div",{style:{fontSize:12.5,color:s.inkSoft}},"\u5C1A\u672A\u8B80\u5230\u5DE5\u7A0B\u968E\u6BB5")
           :C("div",{style:{position:"relative",display:"grid",gridTemplateColumns:"repeat("+tl.length+",1fr)",gap:0,marginBottom:22}},
@@ -12253,7 +12256,7 @@ function HbOverviewHub({project:pj,stage:st,photos:ph,materials:mt,appliances:ap
 
     /* ── 第二列：主要材料 ／ 現場待處理事項 ── */
     C("div",{className:"hb-ovw",style:{marginTop:18}},
-      C("div",null,C("div",{style:Object.assign({},card,{padding:"20px 22px 8px"})},
+      C("div",null,C("div",{className:"hb-project-secondary",style:Object.assign({},card,{padding:"20px 22px 8px"})},
         sect("\u4E3B\u8981\u6750\u6599","Mat\u00E9riaux Principaux",more("materials")),
         matList.length===0?C("div",{style:{fontSize:12.5,color:s.inkSoft,paddingBottom:14}},"\u5C1A\u672A\u767B\u9304\u6750\u6599")
         :C("table",{className:"hb-ovwtbl",style:{width:"100%",borderCollapse:"collapse"}},
@@ -12277,7 +12280,7 @@ function HbOverviewHub({project:pj,stage:st,photos:ph,materials:mt,appliances:ap
               C("td",{className:"mono",style:Object.assign({},td,{color:s.inkSoft})},Tl(v.deliveredAt)||"\u2014"))}))
         )
       )),
-      C("div",null,C("div",{style:Object.assign({},card,{padding:"20px 22px 8px"})},
+      C("div",null,C("div",{className:"hb-project-secondary hb-project-secondary-later",style:Object.assign({},card,{padding:"20px 22px 8px"})},
         sect("\u73FE\u5834\u5F85\u8655\u7406\u4E8B\u9805","Points \u00E0 Traiter",more("defects")),
         openDf.length===0?C("div",{style:{fontSize:12.5,color:s.inkSoft,paddingBottom:14}},"\u76EE\u524D\u6C92\u6709\u672A\u8655\u7406\u7684\u4E8B\u9805")
         :C("table",{className:"hb-ovwtbl",style:{width:"100%",borderCollapse:"collapse"}},
@@ -16809,11 +16812,11 @@ react-dom/cjs/react-dom-client.production.js:
 .hb-project-stage::before,.hb-project-stage::after{content:"";position:absolute;z-index:8;top:-1px;bottom:-1px;width:51%;pointer-events:none;background:#f1ede3;box-shadow:0 0 24px rgba(48,39,27,.07);animation:hbDoorOpen 1.18s cubic-bezier(.72,0,.18,1) .08s both}
 .hb-project-stage::before{left:-1px;transform-origin:left center}
 .hb-project-stage::after{right:-1px;transform-origin:right center}
-.hb-project-stage img{animation:hbImageBreathe 7s cubic-bezier(.2,.75,.3,1) .55s both}
-.hb-project-calendar{animation:hbPaperSet .84s cubic-bezier(.18,.82,.25,1) .58s both}
+.hb-project-stage img,.hb-project-stage>.hb-project-cover{animation:hbImageBreathe 7s cubic-bezier(.2,.75,.3,1) .55s both}
+.hb-project-calendar{position:relative;overflow:hidden;isolation:isolate;animation:hbPaperSet .84s cubic-bezier(.18,.82,.25,1) .58s both}
 .hb-project-calendar::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.38) 50%,transparent 65%);transform:translateX(-115%);animation:hbLightSweep 1.1s ease-out 1.45s both}
 .hb-project-secondary{animation:hbPaperSet .82s cubic-bezier(.18,.82,.25,1) both}
-.hb-project-secondary:nth-of-type(odd){animation-delay:.82s}.hb-project-secondary:nth-of-type(even){animation-delay:.96s}
+.hb-project-secondary{animation-delay:.82s;animation-fill-mode:backwards}.hb-project-secondary-later{animation-delay:.96s}
 @keyframes hbDoorOpen{0%{transform:scaleX(1)}100%{transform:scaleX(0)}}
 @keyframes hbStageWake{0%{opacity:0;filter:blur(7px);transform:translateY(12px)}100%{opacity:1;filter:blur(0);transform:none}}
 @keyframes hbContentRise{0%{transform:scale(1.018)}100%{transform:scale(1)}}
@@ -16821,31 +16824,18 @@ react-dom/cjs/react-dom-client.production.js:
 @keyframes hbPaperSet{0%{opacity:0;transform:translateY(22px) rotateX(-4deg);box-shadow:0 24px 48px rgba(37,31,24,.13)}100%{opacity:1;transform:none;box-shadow:none}}
 @keyframes hbLightSweep{to{transform:translateX(115%)}}
 @media (hover:hover){.hb-project-secondary{transition:transform .45s cubic-bezier(.2,.8,.2,1),box-shadow .45s ease}.hb-project-secondary:hover{transform:translateY(-3px);box-shadow:0 16px 34px rgba(45,38,28,.08)!important}}
-@media (max-width:700px){.hb-project-stage::before,.hb-project-stage::after{width:100%;height:51%;left:0;right:0;bottom:auto;animation-name:hbDoorOpenMobile}.hb-project-stage::after{top:auto;bottom:0}.hb-project-stage img{animation-duration:5.5s}@keyframes hbDoorOpenMobile{0%{transform:scaleY(1)}100%{transform:scaleY(0)}}}
-@media (prefers-reduced-motion:reduce){.hb-project-stage,.hb-project-stage>*,.hb-project-stage::before,.hb-project-stage::after,.hb-project-stage img,.hb-project-calendar,.hb-project-calendar::after,.hb-project-secondary{animation:none!important}}
+@media (max-width:700px){.hb-project-stage::before,.hb-project-stage::after{width:100%;height:51%;left:0;right:0;bottom:auto;animation-name:hbDoorOpenMobile}.hb-project-stage::before{transform-origin:center top}.hb-project-stage::after{top:auto;bottom:0;transform-origin:center bottom}.hb-project-stage img,.hb-project-stage>.hb-project-cover{animation-duration:5.5s}@keyframes hbDoorOpenMobile{0%{transform:scaleY(1)}100%{transform:scaleY(0)}}}
+@media (prefers-reduced-motion:reduce){
+ .hb-project-stage,.hb-project-stage>*,.hb-project-calendar,.hb-project-secondary{animation:none!important;transition:none!important}
+ .hb-project-stage::before,.hb-project-stage::after,.hb-project-calendar::after{display:none!important;animation:none!important}
+ .hb-project-stage img{animation:none!important}
+ .hb-project-secondary:hover{transform:none;box-shadow:none!important}
+}
+@media print{
+ .hb-project-stage,.hb-project-stage>*,.hb-project-calendar,.hb-project-secondary{animation:none!important}
+ .hb-project-stage::before,.hb-project-stage::after,.hb-project-calendar::after{display:none!important}
+}
 </style>
-<script id="hb-project-cinematic-js">
-(()=>{
- let playedKey='';
- const textOf=e=>(e?.innerText||'').replace(/\s+/g,' ').trim();
- const cardFor=(needle,minW=280)=>{
-  const leaf=[...document.querySelectorAll('h1,h2,h3,h4,p,span,div')].find(e=>e.children.length<5&&textOf(e).includes(needle));
-  if(!leaf)return null;
-  let n=leaf;
-  while(n&&n!==document.body){const r=n.getBoundingClientRect(),cs=getComputedStyle(n);if(r.width>=minW&&r.height>=145&&(cs.borderStyle!=='none'||cs.backgroundColor!=='rgba(0, 0, 0, 0)'))return n;n=n.parentElement}
-  return leaf.parentElement;
- };
- const run=()=>{
-  const calendar=cardFor('CALENDRIER DU PROJET',360),hero=cardFor('施工進度',420);
-  if(!calendar||!hero)return;
-  const key=textOf(document.querySelector('h1,h2')||document.body).slice(0,80);
-  if(playedKey===key&&hero.classList.contains('hb-project-stage'))return;
-  playedKey=key;hero.classList.add('hb-project-stage');calendar.classList.add('hb-project-calendar');
-  ['MATÉRIAUX PRINCIPAUX','POINTS À TRAITER'].forEach(t=>{const c=cardFor(t,280);if(c)c.classList.add('hb-project-secondary')});
- };
- let timer;new MutationObserver(()=>{clearTimeout(timer);timer=setTimeout(run,90)}).observe(document.documentElement,{subtree:true,childList:true});
- addEventListener('load',()=>setTimeout(run,180));
-})();
-</script>
+<!-- Project animation classes are attached directly by HbOverviewHub. -->
 </body>
 </html>
