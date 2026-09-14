@@ -3330,6 +3330,66 @@ table.sign tr:first-child td{height:auto;background:var(--wash)}
 }
 
 </style>
+<style id="hb-est-unit-editor-css">
+/* Scoped to the quotation detail editor; the rest of the site is unchanged. */
+.hb-unit-editor .hb-est-toolbar{display:flex;gap:12px;justify-content:space-between;align-items:center;flex-wrap:wrap;margin-bottom:12px;font-size:12px;color:#65746c}
+.hb-unit-editor .hb-est-toolbar button{border:1px solid #cdd5cf;background:transparent;border-radius:6px;padding:8px 12px;color:inherit;cursor:pointer}
+.hb-unit-editor .hb-est-toolbar label{display:flex;gap:7px;align-items:center;cursor:pointer}
+.hb-unit-editor .hb-est-category{border:1px solid #d7ded8!important;border-radius:8px!important;padding:12px!important}
+.hb-unit-editor .hb-est-category.is-collapsed>:not(:first-child){display:none!important}
+.hb-unit-editor .hb-est-category-heading{flex-wrap:wrap}
+.hb-unit-editor .hb-est-category-heading>input{min-width:150px;background:transparent;border:0;font-weight:500!important;font-size:15px!important}
+.hb-unit-editor .hb-est-cat-subtotal{font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:600;font-size:14px;color:#294637;margin:0 8px}
+.hb-unit-editor .hb-est-collapse{border:0;background:transparent;min-width:36px;min-height:36px;cursor:pointer;color:#294637}
+.hb-unit-editor .hb-est-details{table-layout:fixed}
+.hb-unit-editor .hb-est-details th{background:#f6f7f4!important;border-left:0!important;border-right:0!important;font-size:11px!important;color:#6b746b!important;letter-spacing:.06em;padding:10px 7px!important}
+.hb-unit-editor .hb-est-details td{border-left:0!important;border-right:0!important;padding:9px 6px!important;vertical-align:top}
+.hb-unit-editor .hb-est-details tr:nth-child(even):not([style]){background:#f8f9f6}
+.hb-unit-editor .hb-est-details input:focus,.hb-unit-editor .hb-est-details textarea:focus,.hb-unit-editor .hb-est-details select:focus{outline:1px solid #829986;outline-offset:1px;background:#fff!important;border-radius:4px}
+.hb-unit-editor .hb-est-unit-control select{width:100%;min-height:32px;cursor:pointer;padding:5px 2px!important;border:1px solid #d4dcd4!important;border-radius:5px;background:#fff!important}
+.hb-unit-editor .hb-est-unit-control input{margin-top:5px;border-bottom:1px solid #abbcac!important}
+.hb-unit-editor .hb-est-dimensions{margin-top:5px}
+.hb-unit-editor .hb-est-dimension-inputs{display:flex;align-items:center;gap:3px;color:#8a948b;font-size:10px}
+.hb-unit-editor .hb-est-dimension-inputs input{width:0;flex:1;min-width:0;border:1px dashed #bfcbbf;border-radius:20px;background:#fafbf8;text-align:center;padding:5px 2px;font-size:11px;min-height:30px;color:#324c3c}
+.hb-unit-editor .hb-est-measure-result{display:flex;gap:5px;align-items:center;justify-content:space-between;font-size:10px;color:#7b857a;margin-top:5px;line-height:1.5}
+.hb-unit-editor .hb-est-measure-result button{border:1px solid #bccabb;background:#fff;border-radius:4px;cursor:pointer;color:#355641;white-space:nowrap;padding:3px 6px}
+.hb-unit-editor .hb-est-measure-result button:disabled{opacity:.4;cursor:default}
+.hb-unit-editor.hb-hide-est-costs .hb-est-details th:nth-child(10),.hb-unit-editor.hb-hide-est-costs .hb-est-details th:nth-child(11),.hb-unit-editor.hb-hide-est-costs .hb-est-details td:nth-child(10),.hb-unit-editor.hb-hide-est-costs .hb-est-details td:nth-child(11){display:none!important}
+@media(max-width:768px){
+ #hb-est-editor>div[style*="pointer-events: none"]{display:none!important}
+ #hb-est-editor{overflow-x:hidden!important;display:flex!important;flex-direction:column!important;flex-wrap:nowrap!important;align-items:stretch!important;justify-content:flex-start!important;overflow-y:hidden!important}
+ #hb-est-editor>.hb-est-header{flex:0 0 auto!important;min-height:0!important;height:auto!important;padding:10px 14px!important;overflow:hidden!important}
+ #hb-est-editor>.hb-est-arc{flex:0 0 18px!important;min-height:0!important;height:18px!important;padding:0!important;overflow:hidden!important}
+ #hb-est-editor>.hb-est-content{flex:1 1 0!important;min-height:0!important;height:auto!important;padding:10px 12px!important;overflow-y:auto!important;width:100%;box-sizing:border-box}
+ #hb-est-editor>.hb-est-footer{flex:0 0 auto!important;min-height:0!important;height:auto!important;padding:8px 12px!important;position:relative!important;bottom:auto!important;width:100%;box-sizing:border-box}
+ .hb-unit-editor .hb-est-details{min-width:0!important;table-layout:auto;display:block;width:100%!important}
+ .hb-unit-editor .hb-est-details thead{display:none}
+ .hb-unit-editor .hb-est-details tbody{display:block}
+ .hb-unit-editor .hb-est-details tbody tr{display:block!important;padding:10px!important;margin:0 0 12px!important;width:auto!important}
+ .hb-unit-editor .hb-est-details tbody td{display:flex!important;align-items:center;gap:8px;width:auto!important;min-width:0!important;max-width:none!important;padding:7px 0!important;box-sizing:border-box;white-space:normal!important}
+ .hb-unit-editor .hb-est-details tbody td::before{flex:0 0 70px;min-width:70px;display:block;font-size:12px;color:#7b857a;padding:0}
+ .hb-unit-editor .hb-est-details tbody td>input:not([type=checkbox]),.hb-unit-editor .hb-est-details tbody td>textarea{flex:1;width:0!important;min-width:0;text-align:left!important}
+ .hb-unit-editor .hb-est-details tbody td>input[type=checkbox]{width:18px!important}
+ .hb-unit-editor .hb-est-details tbody td:nth-child(4)::before{content:'數量'}
+ .hb-unit-editor .hb-est-details tbody td:nth-child(5)::before{content:'尺寸／規格';flex-basis:100%;margin-bottom:2px}
+ .hb-unit-editor .hb-est-details tbody td:nth-child(6)::before{content:'單位'}
+ .hb-unit-editor .hb-est-details tbody td:nth-child(8)::before{content:'總價'}
+ .hb-unit-editor .hb-est-details tbody td:nth-child(10)::before{content:'廠商成本'}
+ .hb-unit-editor .hb-est-details tbody td:nth-child(5){flex-wrap:wrap!important}
+ .hb-unit-editor .hb-est-details tbody td:nth-child(5)>input{width:100%!important;flex-basis:100%!important}
+ .hb-unit-editor .hb-est-dimensions{width:100%;padding-bottom:5px}
+ .hb-unit-editor .hb-est-dimension-inputs input{width:0!important;min-height:40px;font-size:14px}
+ .hb-unit-editor .hb-est-measure-result button{min-height:36px;padding:4px 14px}
+ .hb-unit-editor .hb-est-unit-control{flex:1;min-width:0}
+ .hb-unit-editor .hb-est-unit-control select{min-height:40px;font-size:14px!important}
+ .hb-unit-editor .hb-est-category-heading>input{flex-basis:100%!important}
+ .hb-unit-editor .hb-est-details tbody td:last-child{flex-wrap:wrap;justify-content:flex-start}
+ .hb-unit-editor .hb-est-details tbody td:last-child::before{flex-basis:100%}
+ .hb-unit-editor .hb-est-details tbody td:last-child button{min-width:36px;min-height:36px}
+ .hb-unit-editor.hb-hide-est-costs .hb-est-details td:nth-child(10),.hb-unit-editor.hb-hide-est-costs .hb-est-details td:nth-child(11){display:none!important}
+}
+
+</style>
 </head>
 <body>
 <div id="root"></div>
@@ -4986,6 +5046,57 @@ function HB_toROCFromParts(dateStr){let r=HB_toROC(dateStr);return{contractYear:
 /* ===== 估價單功能 ===== */
 var HB_EST_CATEGORY_PRESETS=["裝修工程","拆除工程","泥作工程","水電工程","油漆工程","空調工程","衛浴設備","鋁窗工程","系統櫃工程","燈具工程","窗簾工程","玻璃工程","清潔工程","其他"];
 var HB_estUid=()=>Math.random().toString(36).slice(2,10);
+/* Engineering detail units. Existing quantities only change on explicit Apply. */
+var HB_EST_UNIT_GROUPS=[
+ ['面積與長度',['坪','m²','㎡','平方公尺','才','m','公尺','米','尺','台尺','m³','立方公尺']],
+ ['設備與材料',['式','組','套','台','個','座','樘','扇','片','支','盞','只','面','口','點','迴','路']],
+ ['人工與運輸',['工','人日','天','小時','車','趟','間','處','層']],
+ ['包裝與重量',['包','袋','桶','箱','捲','件','kg','公斤','噸','L','公升']]
+];
+var HB_EST_UNITS=HB_EST_UNIT_GROUPS.flatMap(g=>g[1]);
+window.HB_EST_UNITS=HB_EST_UNITS;
+function HB_estMeasureQuantity(item){
+ const m=item.measurement||{},unit=String(item.unit||'').trim();
+ const value=x=>{const s=String(x??'').trim();return /^(?:\d+(?:\.\d*)?|\.\d+)$/.test(s)?Number(s):NaN};
+ const l=value(m.length),w=value(m.width),d=value(m.depth);
+ if(!(l>0))return null;
+ let result;
+ if(['m','公尺','米'].includes(unit))result=l/100;
+ else if(['尺','台尺'].includes(unit))result=l*33/1000;
+ else if(unit==='坪'&&w>0)result=l*w*121/4000000;
+ else if(['m²','㎡','平方公尺'].includes(unit)&&w>0)result=l*w/10000;
+ else if(['m³','立方公尺'].includes(unit)&&w>0&&d>0)result=l*w*d/1000000;
+ else return null;
+ if(!Number.isFinite(result))return null;
+ return Math.round(result*10000)/10000;
+}
+function HB_estItemSpec(item){
+ const spec=String(item.spec||'');
+ if(HB_estHidden(item))return spec;
+ const m=item.measurement||{};
+ const dimensions=[['長',m.length],['寬',m.width],['高／深',m.depth]].filter(x=>String(x[1]??'').trim()!=='').map(x=>x[0]+' '+x[1]).join(' × ');
+ return [spec,dimensions?dimensions+' cm':''].filter(Boolean).join('；');
+}
+function HB_EstUnitControl({value,onChange,inputProps={}}){
+ const C=u.default.createElement,[custom,setCustom]=u.useState(false),isKnown=HB_EST_UNITS.includes(value);
+ return C('div',{className:'hb-est-unit-control'},
+  C('select',{...inputProps,'aria-label':'計價單位',value:custom||!isKnown?'__custom__':value,onChange:e=>{if(e.target.value==='__custom__')setCustom(true);else{setCustom(false);onChange(e.target.value)}},onKeyDown:e=>{if(e.key==='Tab')inputProps.onKeyDown?.(e)}},
+   HB_EST_UNIT_GROUPS.map(([label,units])=>C('optgroup',{key:label,label},units.map(unit=>C('option',{key:unit,value:unit},unit)))),C('option',{value:'__custom__'},'自訂…')),
+  (custom||!isKnown)&&C('input',{'aria-label':'自訂單位',placeholder:'輸入單位',value:value||'',onChange:e=>onChange(e.target.value),style:inputProps.style,onKeyDown:inputProps.onKeyDown})
+ );
+}
+function HB_EstDimensions({item,onChange,onApply}){
+ const C=u.default.createElement,m=item.measurement||{},unit=item.unit||'',area=['坪','m²','㎡','平方公尺'].includes(unit),volume=['m³','立方公尺'].includes(unit),linear=['m','公尺','米','尺','台尺'].includes(unit),q=HB_estMeasureQuantity(item);
+ const field=(key,label)=>C('input',{key,type:'text',inputMode:'decimal','aria-label':label+'（公分）',placeholder:label,value:m[key]||'',onChange:e=>onChange({...m,[key]:e.target.value}),onTouchStart:e=>e.stopPropagation()});
+ return C('div',{className:'hb-est-dimensions'},
+  C('div',{className:'hb-est-dimension-inputs'},field('length','長'),C('span',null,'×'),field('width','寬'),volume?C(u.default.Fragment,null,C('span',null,'×'),field('depth','高／深')):null,C('span',null,'cm')),
+  C('div',{className:'hb-est-measure-result'},
+   C('span',null,q!=null?q+' '+unit:(area?'長 × 寬換算面積':volume?'長 × 寬 × 高／深換算體積':linear?'依長度換算':'尺寸記錄 · 數量手動填寫')),
+   (area||volume||linear)&&C('button',{type:'button',disabled:q==null||q<=0,title:'以尺寸換算結果更新本列數量','aria-label':'套用尺寸換算數量',onClick:()=>{if(q!=null&&q>0)onApply(String(q))}},'套用')
+  )
+ );
+}
+
 function HB_newEstItem(){return{id:HB_estUid(),name:"",spec:"",unit:"式",qty:"1",price:"",vendorPrice:"",note:""}}
 function HB_newEstCategory(name){return{id:HB_estUid(),name:name||"",items:[HB_newEstItem()]}}
 function HB_estCatSubtotal(cat){return(cat.items||[]).reduce((sum,it)=>sum+HB_num(it.qty)*HB_num(it.price),0)}
@@ -5764,7 +5875,7 @@ function HB_buildEstimateHTML(v){
       let hid=HB_estHidden(it);
       let qtyCell=hid?"—":e(it.qty);
       let priceCell=hid?"—":(it.price!==""?HB_money(HB_num(it.price)):"");
-      rows+=`<tr${it.highlighted?' class="estimate-highlight"':''}><td class="c">${no}</td><td>${HB_escMultiline(it.name)}</td><td>${e(it.spec)}</td><td class="c">${e(it.unit)}</td><td class="c">${qtyCell}</td><td class="r">${priceCell}</td><td class="r">${amt?HB_money(amt):""}</td><td>${e(it.note)}</td></tr>`;
+      rows+=`<tr${it.highlighted?' class="estimate-highlight"':''}><td class="c">${no}</td><td>${HB_escMultiline(it.name)}</td><td>${e(HB_estItemSpec(it))}</td><td class="c">${e(it.unit)}</td><td class="c">${qtyCell}</td><td class="r">${priceCell}</td><td class="r">${amt?HB_money(amt):""}</td><td>${e(it.note)}</td></tr>`;
     });
     let sub=HB_estCatSubtotal(cat);
     rows+=`<tr class="sub"><td colspan="6" class="r">${e(cat.name)} 小計</td><td class="r">${HB_money(sub)}</td><td></td></tr></tbody>`;
@@ -5946,7 +6057,7 @@ async function HB_generateEstimateExcel(v){
         let costVal=it.vendorPrice!==""?HB_num(it.vendorPrice):0;
         let hid=HB_estHidden(it);
         /* 隱藏單價的列：數量與單價寫「—」，複價改寫成數值（公式會因為沒有數字而失效） */
-        let r=ws.addRow([no,it.name||"",it.spec||"",it.unit||"",
+        let r=ws.addRow([no,it.name||"",HB_estItemSpec(it),it.unit||"",
           hid?"—":(qtyVal||""),
           hid?"—":(priceVal||""),
           hid?qtyVal*priceVal:{formula:`E${rowNum}*F${rowNum}`,result:qtyVal*priceVal},
@@ -6275,6 +6386,7 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
   let[selectedItems,setSelectedItems]=(0,u.useState)({});
   let[itemClipboard,setItemClipboard]=(0,u.useState)(null);
   let[sheetMode,setSheetMode]=(0,u.useState)(!1);
+  let[showCosts,setShowCosts]=u.useState(false),[collapsed,setCollapsed]=u.useState({});
 
   /* ===== 常用工項單價庫：打字即時建議 / 一鍵帶入 / 存回單價庫 ===== */
   let[pbSug,setPbSug]=(0,u.useState)(null);
@@ -6424,9 +6536,7 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
     setTimeout(()=>{let el=refs["name_"+ni.id];el&&el.focus()},30);
     return ni;
   };
-  let duplicateItemAt=(cid,idx,it)=>insertItemAt(cid,idx,1,{
-    name:it.name,spec:it.spec,unit:it.unit,qty:it.qty,price:it.price,
-    vendorPrice:it.vendorPrice,note:it.note});
+  let duplicateItemAt=(cid,idx,it)=>insertItemAt(cid,idx,1,{...it});
   let[hbRowMenu,hbSetRowMenu]=(0,u.useState)(null);
   let hbSelectionAnchor=(0,u.useRef)(null);
   (0,u.useEffect)(()=>{
@@ -6735,7 +6845,7 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
   let tdStyle={border:`1px solid ${sc.line}`,padding:"4px 5px",verticalAlign:"top"};
   let cellInputStyle={width:"100%",border:"none",background:"transparent",fontSize:13,padding:"5px 4px",fontFamily:"inherit",boxSizing:"border-box",color:sc.ink,fontVariantNumeric:"tabular-nums"};
   let autoGrow=el=>{if(el){el.style.height="auto";el.style.height=el.scrollHeight+"px"}};
-  let HB_CELL_COLS=["name","spec","unit","qty","price","note","vendorPrice"];
+  let HB_CELL_COLS=["name","qty","spec","unit","price","note",...(showCosts?["vendorPrice"]:[])];
   let[cellSel,setCellSel]=(0,u.useState)(null);
   let[cellDragging,setCellDragging]=(0,u.useState)(!1);
   let aRef=(0,u.useRef)(a);aRef.current=a;
@@ -6839,9 +6949,9 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
     }
   };
   let selBg="rgba(65,16,27,0.12)";
-  let[calcOpen,setCalcOpen]=(0,u.useState)(()=>{try{return window.matchMedia("(min-width:1280px)").matches}catch(e){return!1}});
+  let[calcOpen,setCalcOpen]=(0,u.useState)(!1);
   let[calcDock,setCalcDock]=(0,u.useState)(()=>{try{return window.matchMedia("(min-width:1280px)").matches}catch(e){return!1}});
-  (0,u.useEffect)(()=>{try{var mq=window.matchMedia("(min-width:1280px)");var fn=function(ev){setCalcDock(ev.matches);setCalcOpen(ev.matches)};mq.addEventListener?mq.addEventListener("change",fn):mq.addListener(fn);return function(){mq.removeEventListener?mq.removeEventListener("change",fn):mq.removeListener(fn)}}catch(e){}},[]);
+  (0,u.useEffect)(()=>{try{var mq=window.matchMedia("(min-width:1280px)");var fn=function(ev){setCalcDock(ev.matches)};mq.addEventListener?mq.addEventListener("change",fn):mq.addListener(fn);return function(){mq.removeEventListener?mq.removeEventListener("change",fn):mq.removeListener(fn)}}catch(e){}},[]);
   let[calcDisplay,setCalcDisplay]=(0,u.useState)("0");
   let[calcAcc,setCalcAcc]=(0,u.useState)(null);
   let[calcOp,setCalcOp]=(0,u.useState)(null);
@@ -6905,7 +7015,7 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
     window.addEventListener("keydown",onKey);
     return()=>window.removeEventListener("keydown",onKey)
   },[calcOpen,calcDisplay,calcAcc,calcOp,calcWaiting]);
-  return u.default.createElement("div",{style:{position:"fixed",inset:0,background:sc.paper,zIndex:71,overflowY:"auto",display:"flex",flexDirection:"column"}},
+  return u.default.createElement("div",{id:"hb-est-editor",className:"hb-unit-editor"+(showCosts?"":" hb-hide-est-costs"),style:{position:"fixed",inset:0,background:sc.paper,zIndex:71,overflowY:"auto",display:"flex",flexDirection:"column"}},
     u.default.createElement("div",{"aria-hidden":"true",style:{position:"absolute",pointerEvents:"none",width:340,height:340,right:-110,top:-150,borderRadius:"50%",zIndex:0,background:"radial-gradient(circle at 30% 30%, rgba(255,255,255,.95), rgba(255,255,255,0) 70%)"}}),
     u.default.createElement("div",{"aria-hidden":"true",style:{position:"absolute",pointerEvents:"none",width:230,height:230,left:-85,top:60,borderRadius:"50%",zIndex:0,opacity:.7,background:"radial-gradient(circle at 50% 50%, #DCE9F1, rgba(255,255,255,0) 72%)"}}),
     vqPick&&u.default.createElement(HB_VendorCostPicker,{rows:vqPick.rows,quotes:vqPick.quotes,onCancel:()=>setVqPick(null),onApply:applyVendorCosts}),
@@ -6933,7 +7043,7 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
       })
     ),
     localToast&&u.default.createElement("div",{className:"hb-toast",style:{position:"fixed",bottom:20,left:"50%",background:sc.ink,color:sc.card,padding:"10px 18px",borderRadius:99,fontSize:13,boxShadow:"0 4px 14px rgba(0,0,0,0.35)",zIndex:99,maxWidth:"90vw",textAlign:"center"}},localToast),
-    u.default.createElement("div",{style:{background:"rgba(247,250,252,0.94)",position:"relative",zIndex:2,backdropFilter:"blur(14px)",WebkitBackdropFilter:"blur(14px)",padding:"13px 20px",display:"flex",alignItems:"center",gap:6,flexShrink:0,borderBottom:"none"}},
+    u.default.createElement("div",{className:"hb-est-header",style:{background:"rgba(247,250,252,0.94)",position:"relative",zIndex:2,backdropFilter:"blur(14px)",WebkitBackdropFilter:"blur(14px)",padding:"13px 20px",display:"flex",alignItems:"center",gap:6,flexShrink:0,borderBottom:"none"}},
       u.default.createElement("button",{onClick:n,style:{background:"none",border:"none",color:sc.inkSoft,cursor:"pointer",display:"flex",alignItems:"center",gap:4,fontSize:12.5}},u.default.createElement(E,{name:"arrow-left",size:15})),
       u.default.createElement("div",{style:{flex:1,display:"flex",alignItems:"center",gap:13,minWidth:0,marginLeft:4}},
         u.default.createElement("div",{"aria-hidden":"true",style:{width:44,height:44,borderRadius:"50%",flex:"none",position:"relative",overflow:"hidden",background:sc.card,boxShadow:"0 2px 10px rgba(30,60,80,.10)"}},
@@ -6946,7 +7056,7 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
       ),
       u.default.createElement("button",{onClick:()=>setCalcOpen(!0),title:"計算機",style:{background:"none",border:"none",color:sc.inkSoft,cursor:"pointer",display:"flex",alignItems:"center",padding:0}},u.default.createElement(E,{name:"calculator",size:17}))
     ),
-    u.default.createElement("div",{"aria-hidden":"true",style:{flexShrink:0,height:24,marginTop:-1,position:"relative",zIndex:1,lineHeight:0}},
+    u.default.createElement("div",{className:"hb-est-arc","aria-hidden":"true",style:{flexShrink:0,height:24,marginTop:-1,position:"relative",zIndex:1,lineHeight:0}},
       u.default.createElement("svg",{viewBox:"0 0 1000 24",preserveAspectRatio:"none",style:{display:"block",width:"100%",height:"100%"}},
         u.default.createElement("path",{d:"M0,24 L0,17 Q500,-13 1000,17 L1000,24 Z",fill:sc.paper}),
         u.default.createElement("path",{d:"M0,17 Q500,-13 1000,17",fill:"none",stroke:sc.line,strokeWidth:1}))
@@ -6954,7 +7064,7 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
     u.default.createElement("input",{ref:importFileRef,type:"file",accept:".xlsx,.xls,.csv",hidden:!0,onChange:handleFileImport}),
     u.default.createElement("input",{ref:wholeFileRef,type:"file",accept:".xlsx,.xls,.csv",hidden:!0,onChange:handleWholeFileImport}),
     u.default.createElement("input",{ref:vendorFileRef,type:"file",accept:"image/*,.pdf,.doc,.docx,.xls,.xlsx",hidden:!0,onChange:handleVendorFile}),
-    u.default.createElement("div",{style:{flex:1,overflowY:"auto",padding:"14px 20px 20px"}},
+    u.default.createElement("div",{className:"hb-est-content",style:{flex:1,overflowY:"auto",padding:"14px 20px 20px"}},
     u.default.createElement("div",{style:{maxWidth:1560,margin:"0 auto",paddingRight:calcDock&&calcOpen?322:0,transition:"padding-right .2s ease"}},
       u.default.createElement("div",{style:{background:sc.card,borderRadius:16,marginBottom:12,overflow:"hidden"}},
         u.default.createElement("button",{onClick:()=>setShowBasic(x=>!x),style:{width:"100%",background:"none",border:"none",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 13px",cursor:"pointer",fontSize:13,fontWeight:400,color:sc.oceanDark}},
@@ -6977,9 +7087,17 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
         style:{width:"100%",border:`1px dashed ${sc.ocean}`,background:"none",color:sc.oceanDark,
         borderRadius:99,padding:"10px 0",fontSize:13,cursor:"pointer",fontFamily:"inherit",
         marginBottom:10}},"⊞ 試算表模式（整片編輯、公式、分類小計）"),
-      a.categories.map(cat=>u.default.createElement("div",{key:cat.id,style:{background:sc.card,borderRadius:16,padding:12,marginBottom:10}},
-        u.default.createElement("div",{style:{display:"flex",gap:6,marginBottom:7,alignItems:"center"}},
+      u.default.createElement("div",{className:"hb-est-toolbar"},
+        u.default.createElement("span",null,"工程明細 · 尺寸以 cm 記錄，按「套用」才更新數量"),
+        u.default.createElement("div",{style:{display:"flex",alignItems:"center",gap:12,flexWrap:"wrap"}},
+          u.default.createElement("label",null,u.default.createElement("input",{type:"checkbox",checked:showCosts,onChange:e=>setShowCosts(e.target.checked)}),"顯示成本與淨利"),
+          u.default.createElement("button",{type:"button",onClick:()=>setCollapsed({})},"展開全部"),
+          u.default.createElement("button",{type:"button",onClick:()=>setCollapsed(Object.fromEntries(a.categories.map(c=>[c.id,true])))},"收合全部"))),
+      a.categories.map(cat=>u.default.createElement("div",{key:cat.id,className:"hb-est-category"+(collapsed[cat.id]?" is-collapsed":""),style:{background:sc.card,borderRadius:16,padding:12,marginBottom:10}},
+        u.default.createElement("div",{className:"hb-est-category-heading",style:{display:"flex",gap:6,marginBottom:7,alignItems:"center"}},
           u.default.createElement("input",{placeholder:"大項名稱（如：裝修工程）",value:cat.name,onChange:v=>setCat(cat.id,"name",v.target.value),style:{...inputStyle,flex:1,fontWeight:400}}),
+          u.default.createElement("span",{className:"hb-est-cat-subtotal"},"NT$ "+HB_money(HB_estCatSubtotal(cat))),
+          u.default.createElement("button",{type:"button",className:"hb-est-collapse","aria-label":(collapsed[cat.id]?"展開":"收合")+cat.name,"aria-expanded":!collapsed[cat.id],onClick:()=>setCollapsed(p=>({...p,[cat.id]:!p[cat.id]}))},collapsed[cat.id]?"▸":"▾"),
           u.default.createElement("button",{onClick:()=>setPasteOpen(p=>({...p,[cat.id]:!p[cat.id]})),title:"從 Excel 貼上匯入多列",style:{border:"none",background:"none",color:sc.oceanDark,cursor:"pointer",padding:"0 4px"}},u.default.createElement(E,{name:"clipboard-paste",size:16})),
           u.default.createElement("button",{onClick:()=>openFileImport(cat.id),title:"上傳 Excel 檔案匯入",style:{border:"none",background:"none",color:sc.oceanDark,cursor:"pointer",padding:"0 4px"}},u.default.createElement(E,{name:"upload",size:16})),
           u.default.createElement("button",{onClick:()=>cutSelectedItems(cat.id),disabled:!(selectedItems[cat.id]&&selectedItems[cat.id].size),title:"剪下已勾選的項目（從本大項移除，切到其他大項按「貼上」）",style:{border:"none",background:"none",color:selectedItems[cat.id]&&selectedItems[cat.id].size?sc.oceanDark:sc.inkSoft,cursor:selectedItems[cat.id]&&selectedItems[cat.id].size?"pointer":"default",padding:"0 4px",opacity:selectedItems[cat.id]&&selectedItems[cat.id].size?1:.45}},u.default.createElement(E,{name:"scissors",size:16})),
@@ -7007,19 +7125,19 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
           )
         ),
         u.default.createElement("div",{style:{overflowX:"auto",marginBottom:8,border:`1px solid ${sc.line}`,borderRadius:14}},
-          u.default.createElement("table",{className:"hb-qt",style:{width:"100%",borderCollapse:"collapse",fontSize:13,minWidth:952}},
+          u.default.createElement("table",{className:"hb-qt hb-est-details",style:{width:"100%",borderCollapse:"collapse",fontSize:13,minWidth:showCosts?1320:1080}},
             u.default.createElement("thead",null,
               u.default.createElement("tr",null,
                 u.default.createElement("th",{style:{...thStyle,width:22}},u.default.createElement("input",{type:"checkbox",checked:cat.items.length>0&&cat.items.every(it=>(selectedItems[cat.id]||new Set()).has(it.id)),onChange:()=>toggleSelectAllItems(cat.id,cat.items.map(it=>it.id)),style:{width:14,height:14,verticalAlign:"middle"}})),
                 u.default.createElement("th",{style:{...thStyle,width:26}},"項次"),
-                u.default.createElement("th",{style:{...thStyle,textAlign:"left",minWidth:180}},"項目"),
-                u.default.createElement("th",{style:{...thStyle,minWidth:90}},"規格"),
-                u.default.createElement("th",{style:{...thStyle,width:44}},"單位"),
-                u.default.createElement("th",{style:{...thStyle,width:56}},"數量"),
+                u.default.createElement("th",{style:{...thStyle,textAlign:"left",width:220}},"項目"),
+                u.default.createElement("th",{style:{...thStyle,width:64}},"數量"),
+                u.default.createElement("th",{style:{...thStyle,width:210}},"尺寸／規格"),
+                u.default.createElement("th",{style:{...thStyle,width:88}},"單位"),
                 u.default.createElement("th",{style:{...thStyle,width:108}},"單價"),
-                u.default.createElement("th",{style:{...thStyle,width:112}},"複價"),
-                u.default.createElement("th",{style:{...thStyle,minWidth:90}},"備註"),
-                u.default.createElement("th",{style:{...thStyle,width:104,borderLeft:`2px solid ${sc.lemon}`}},"廠商單價"),
+                u.default.createElement("th",{style:{...thStyle,width:110}},"總價"),
+                u.default.createElement("th",{style:{...thStyle,width:150}},"備註"),
+                u.default.createElement("th",{style:{...thStyle,width:104,borderLeft:`2px solid ${sc.lemon}`}},"廠商成本"),
                 u.default.createElement("th",{style:{...thStyle,width:100}},"淨利"),
                 u.default.createElement("th",{style:{...thStyle,width:88}},"")
               )
@@ -7054,9 +7172,9 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
                     u.default.createElement("textarea",{ref:el=>{if(el){refs["name_"+it.id]=el;autoGrow(el)}},placeholder:"項目（可換行輸入多行）",value:it.name,onChange:v=>{setItem(cat.id,it.id,"name",v.target.value);pbOnType(cat.id,it.id,v.target.value,v.target)},onInput:v=>autoGrow(v.target),onMouseDown:()=>cellDown(cat.id,idx,0),onMouseEnter:()=>cellEnter(cat.id,idx,0),onBlur:()=>{setTimeout(()=>setPbSug(p=>(p&&p.itemId===it.id)?null:p),160)},onKeyDown:v=>{if(v.key==="Escape"){setPbSug(null);return}cellNav(v,cat.id,idx,0)},"data-hbcell":"1",rows:1,style:{...cellInputStyle,resize:"none",overflow:"hidden",lineHeight:1.45,display:"block",background:cellInSel(cat.id,idx,0)?selBg:"transparent"}}),
                     pbHint[it.id]?u.default.createElement("div",{style:{fontSize:10.5,color:sc.danger,lineHeight:1.45,marginTop:2,display:"flex",gap:4,alignItems:"flex-start"}},u.default.createElement(E,{name:"alert-triangle",size:11}),u.default.createElement("span",{style:{flex:1}},pbHint[it.id]),u.default.createElement("span",{onClick:()=>setPbHint(p=>{let n={...p};delete n[it.id];return n}),style:{cursor:"pointer",color:sc.inkSoft}},"✕")):null
                   ),
-                  u.default.createElement("td",{style:tdStyle},u.default.createElement("input",{ref:el=>{if(el)refs["spec_"+it.id]=el},placeholder:"規格",value:it.spec,onChange:v=>setItem(cat.id,it.id,"spec",v.target.value),onMouseDown:()=>cellDown(cat.id,idx,1),onMouseEnter:()=>cellEnter(cat.id,idx,1),onKeyDown:v=>cellNav(v,cat.id,idx,1),"data-hbcell":"1",style:{...cellInputStyle,background:cellInSel(cat.id,idx,1)?selBg:"transparent"}})),
-                  u.default.createElement("td",{style:tdStyle},u.default.createElement("input",{ref:el=>{if(el)refs["unit_"+it.id]=el},placeholder:"式",value:it.unit,onChange:v=>setItem(cat.id,it.id,"unit",v.target.value),onMouseDown:()=>cellDown(cat.id,idx,2),onMouseEnter:()=>cellEnter(cat.id,idx,2),onKeyDown:v=>cellNav(v,cat.id,idx,2),"data-hbcell":"1",style:{...cellInputStyle,textAlign:"center",background:cellInSel(cat.id,idx,2)?selBg:"transparent"}})),
-                  u.default.createElement("td",{style:tdStyle},u.default.createElement("input",{ref:el=>{if(el)refs["qty_"+it.id]=el},type:"text",inputMode:window.HB_COARSE?"decimal":void 0,autoCapitalize:"off",autoCorrect:"off",spellCheck:!1,value:it.qty,onChange:v=>setItem(cat.id,it.id,"qty",v.target.value),onMouseDown:()=>cellDown(cat.id,idx,3),onMouseEnter:()=>cellEnter(cat.id,idx,3),onKeyDown:v=>cellNav(v,cat.id,idx,3),"data-hbcell":"1",style:{...cellInputStyle,textAlign:"right",background:cellInSel(cat.id,idx,3)?selBg:"transparent",opacity:it.hidePrice?.4:1,textDecoration:it.hidePrice?"line-through":"none"}})),
+                  u.default.createElement("td",{style:tdStyle},u.default.createElement("input",{ref:el=>{if(el)refs["qty_"+it.id]=el},type:"text",inputMode:window.HB_COARSE?"decimal":void 0,autoCapitalize:"off",autoCorrect:"off",spellCheck:!1,value:it.qty,onChange:v=>setItem(cat.id,it.id,"qty",v.target.value),onMouseDown:()=>cellDown(cat.id,idx,1),onMouseEnter:()=>cellEnter(cat.id,idx,1),onKeyDown:v=>cellNav(v,cat.id,idx,1),"data-hbcell":"1",style:{...cellInputStyle,textAlign:"right",background:cellInSel(cat.id,idx,1)?selBg:"transparent",opacity:it.hidePrice?.4:1,textDecoration:it.hidePrice?"line-through":"none"}})),
+                  u.default.createElement("td",{style:tdStyle},u.default.createElement("input",{ref:el=>{if(el)refs["spec_"+it.id]=el},placeholder:"規格",value:it.spec,onChange:v=>setItem(cat.id,it.id,"spec",v.target.value),onMouseDown:()=>cellDown(cat.id,idx,2),onMouseEnter:()=>cellEnter(cat.id,idx,2),onKeyDown:v=>cellNav(v,cat.id,idx,2),"data-hbcell":"1",style:{...cellInputStyle,background:cellInSel(cat.id,idx,2)?selBg:"transparent"}}),u.default.createElement(HB_EstDimensions,{item:it,onChange:measurement=>setItem(cat.id,it.id,"measurement",measurement),onApply:qty=>setItem(cat.id,it.id,"qty",qty)})),
+                  u.default.createElement("td",{style:tdStyle},u.default.createElement(HB_EstUnitControl,{value:it.unit,onChange:unit=>setItem(cat.id,it.id,"unit",unit),inputProps:{ref:el=>{if(el)refs["unit_"+it.id]=el},placeholder:"式",onMouseDown:()=>cellDown(cat.id,idx,3),onMouseEnter:()=>cellEnter(cat.id,idx,3),onKeyDown:v=>cellNav(v,cat.id,idx,3),"data-hbcell":"1",style:{...cellInputStyle,textAlign:"center",background:cellInSel(cat.id,idx,3)?selBg:"transparent"}}})), 
                   u.default.createElement("td",{style:tdStyle},u.default.createElement("input",{ref:el=>{if(el)refs["price_"+it.id]=el},type:"text",inputMode:window.HB_COARSE?"decimal":void 0,autoCapitalize:"off",autoCorrect:"off",spellCheck:!1,placeholder:"單價",value:it.price,onChange:v=>setItem(cat.id,it.id,"price",v.target.value),onMouseDown:()=>cellDown(cat.id,idx,4),onMouseEnter:()=>cellEnter(cat.id,idx,4),onKeyDown:v=>cellNav(v,cat.id,idx,4),"data-hbcell":"1",style:{...cellInputStyle,textAlign:"right",background:cellInSel(cat.id,idx,4)?selBg:"transparent",opacity:it.hidePrice?.4:1,textDecoration:it.hidePrice?"line-through":"none"}})),
                   u.default.createElement("td",{style:{...tdStyle,textAlign:"right",whiteSpace:"nowrap",paddingRight:6,color:sc.oceanDark,fontWeight:400}},HB_money(HB_num(it.qty)*HB_num(it.price))),
                   u.default.createElement("td",{style:tdStyle},u.default.createElement("input",{ref:el=>{if(el)refs["note_"+it.id]=el},placeholder:"備註",value:it.note,onChange:v=>setItem(cat.id,it.id,"note",v.target.value),onMouseDown:()=>cellDown(cat.id,idx,5),onMouseEnter:()=>cellEnter(cat.id,idx,5),onKeyDown:v=>cellNav(v,cat.id,idx,5),"data-hbcell":"1",style:{...cellInputStyle,background:cellInSel(cat.id,idx,5)?selBg:"transparent"}})),
@@ -7090,7 +7208,7 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
         vqLoading?"讀取中…":"從廠商報價帶入成本"),
       u.default.createElement("textarea",{placeholder:"付款/訂金條件備註",value:a.depositNote,onChange:v=>set("depositNote",v.target.value),rows:2,style:{...inputStyle,resize:"vertical"}})
     )),
-    u.default.createElement("div",{style:{position:"sticky",bottom:"var(--hb-overlay-gap, 0px)",flexShrink:0,zIndex:50,background:"rgba(247,250,252,0.96)",backdropFilter:"blur(14px)",WebkitBackdropFilter:"blur(14px)",padding:"9px 16px 12px",borderTop:`1px solid ${sc.line}`,boxShadow:"0 -3px 12px rgba(22,35,43,0.05)"}},
+    u.default.createElement("div",{className:"hb-est-footer",style:{position:"sticky",bottom:"var(--hb-overlay-gap, 0px)",flexShrink:0,zIndex:50,background:"rgba(247,250,252,0.96)",backdropFilter:"blur(14px)",WebkitBackdropFilter:"blur(14px)",padding:"9px 16px 12px",borderTop:`1px solid ${sc.line}`,boxShadow:"0 -3px 12px rgba(22,35,43,0.05)"}},
       u.default.createElement("div",{style:{maxWidth:1560,margin:"0 auto",paddingRight:calcDock&&calcOpen?322:0,transition:"padding-right .2s ease"}},
       u.default.createElement("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:6,flexWrap:"wrap"}},
         u.default.createElement("span",{style:{color:sc.inkSoft,fontSize:10.5}},"折讓"),
@@ -15496,7 +15614,7 @@ react-dom/cjs/react-dom-client.production.js:
   var CATS = ["裝修工程","拆除工程","泥作工程","水電工程","油漆工程","空調工程",
               "衛浴設備","鋁窗工程","系統櫃工程","燈具工程","窗簾工程","玻璃工程",
               "清潔工程","其他"];
-  var UNITS = ["式","米","才","坪","樘","組","盞","支","個","只","台","處","批"];
+  var UNITS = global.HB_EST_UNITS || ["式","米","才","坪","樘","組","盞","支","個","只","台","處","批"];
 
   /* 欄位定義：edit=可編輯，calc=公式欄 */
   var COLS = [
@@ -15582,7 +15700,7 @@ react-dom/cjs/react-dom-client.production.js:
         rows.push({
           id: it.id || uid(),
           cat: c.name || "",
-          name: it.name || "", spec: it.spec || "", unit: it.unit || "",
+          measurement: it.measurement, name: it.name || "", spec: it.spec || "", unit: it.unit || "",
           qty: it.qty === 0 || it.qty ? String(it.qty) : "",
           price: it.price === 0 || it.price ? String(it.price) : "",
           note: it.note || "",
@@ -15598,7 +15716,7 @@ react-dom/cjs/react-dom-client.production.js:
       var key = r.cat || "未分類";
       if (!map[key]) { map[key] = { id: "c_" + key, name: key, items: [] }; order.push(key); }
       map[key].items.push({
-        id: r.id, name: r.name, spec: r.spec, unit: r.unit,
+        measurement: r.measurement, id: r.id, name: r.name, spec: r.spec, unit: r.unit,
         qty: r.qty, price: r.price, note: r.note, vendorPrice: r.vendorPrice
       });
     });
@@ -16927,7 +17045,7 @@ react-dom/cjs/react-dom-client.production.js:
   if (window.__HB_QTCOL__) return;
   window.__HB_QTCOL__ = true;
 
-  var KEY = "hb_qt_cols_v1";
+  var KEY = "hb_qt_cols_units_v2";
   var EDGE = 7, MINW = 46, MAXW = 520;
 
   var sheet = document.createElement("style");
