@@ -11013,6 +11013,26 @@ function HbCompanyGridCard({icon:l,title:t,desc:e,onClick:n}){
   )
 }
 
+function HB_drawingCadExt(value){
+  let match=String(value||"").split(/[?#]/)[0].match(/\.(dwg|dxf)$/i);
+  return match?match[1].toLowerCase():"";
+}
+function HB_drawingIsCad(v){return !!(v&&HB_drawingCadExt(v.path||v.url))}
+async function HB_downloadDrawingCad(ev,v,name){
+  ev.preventDefault();
+  let link=ev.currentTarget;
+  if(link.getAttribute("aria-busy")==="true")return;
+  link.setAttribute("aria-busy","true");
+  let label=link.textContent;link.textContent="下載中…";
+  try{
+    let blob=await HB_fetchAsset(v.url);
+    let ext=HB_drawingCadExt(v.path||v.url);
+    let filename=String(name||"圖面").replace(/\.(dwg|dxf)$/i,"").replace(/[\\/:*?"<>|]/g,"_")+"_v"+v.versionNo+"."+ext;
+    HB_downloadBlob(blob,filename);
+  }catch(err){alert("CAD 下載失敗："+(err.message||err))}
+  finally{link.textContent=label;link.removeAttribute("aria-busy")}
+}
+
 function HbDrawingHub({onBack,notify}){
   let[folders,setFolders]=(0,u.useState)([]);
   let[drawings,setDrawings]=(0,u.useState)([]);
@@ -11086,14 +11106,17 @@ function HbDrawingHub({onBack,notify}){
 
   let validPick=file=>{
     let t=(file.type||"").toLowerCase();
-    return t==="application/pdf"||t.startsWith("image/");
+    return !!HB_drawingCadExt(file.name)||/\.pdf$/i.test(file.name)||t==="application/pdf"||(t.startsWith("image/")&&!/dwg|dxf/i.test(t));
   };
 
   let uploadFileToDrawing=async(drawingId,file)=>{
-    let isImg=(file.type||"").startsWith("image/");
-    let upBlob=file,upType=file.type||"application/octet-stream";
-    if(isImg){try{upBlob=await Ru(file);upType="image/jpeg"}catch{}}
-    let ext=isImg?"jpg":"pdf";
+    let cadExt=HB_drawingCadExt(file.name);
+    let isPdf=/\.pdf$/i.test(file.name)||file.type==="application/pdf";
+    let isImg=!cadExt&&!isPdf&&(file.type||"").startsWith("image/");
+    let ext=cadExt||(isPdf?"pdf":(file.name.split(".").pop()||"jpg").toLowerCase());
+    let upBlob=cadExt?new Blob([file],{type:"application/octet-stream"}):file;
+    let upType=cadExt?"application/octet-stream":(isPdf?"application/pdf":file.type||"application/octet-stream");
+    if(isImg){try{upBlob=await Ru(file);upType="image/jpeg";ext="jpg"}catch{}}
     let existingVers=versions.filter(v=>v.drawingId===drawingId);
     let nextNo=(existingVers.reduce((m,v)=>Math.max(m,v.versionNo),0))+1;
     let path=`${currentFolderId}/${drawingId}/v${nextNo}_${Be()}.${ext}`;
@@ -11109,9 +11132,10 @@ function HbDrawingHub({onBack,notify}){
     ev.target.value="";
     if(!picked.length||!currentFolderId)return;
     setUploading(true);
+    let uploadedCount=0;
     try{
       for(let file of picked){
-        if(!validPick(file)){notify(`${file.name} 格式不支援（僅接受 JPG / PDF）`);continue}
+        if(!validPick(file)){notify(`${file.name} 格式不支援（支援圖片 / PDF / DWG / DXF）`);continue}
         if(file.size>30*1024*1024){notify(`${file.name} 檔案過大（上限 30MB），略過`);continue}
         let name=file.name.replace(/\.[^.]+$/,"");
         let{data,error}=await q.from("sitelog_drawings").insert({folder_id:currentFolderId,name}).select().single();
@@ -11121,8 +11145,9 @@ function HbDrawingHub({onBack,notify}){
         let ver=await uploadFileToDrawing(data.id,file);
         setVersions(vs=>[...vs,ver]);
         setDrawings(ds=>ds.map(d=>d.id===data.id?{...d,currentVersionId:ver.id}:d));
+        uploadedCount++;
       }
-      notify("圖面已上傳");
+      if(uploadedCount)notify(`已上傳 ${uploadedCount} 個圖面`);
     }catch(err){notify("上傳失敗："+(err.message||err))}
     setUploading(false);
   };
@@ -11132,7 +11157,7 @@ function HbDrawingHub({onBack,notify}){
     ev.target.value="";
     let drawingId=pendingNewVersionDrawing.current;
     if(!file||!drawingId)return;
-    if(!validPick(file)){notify("格式不支援（僅接受 JPG / PDF）");return}
+    if(!validPick(file)){notify("格式不支援（支援圖片 / PDF / DWG / DXF）");return}
     if(file.size>30*1024*1024){notify("檔案過大（上限 30MB）");return}
     setUploading(true);
     try{
@@ -11174,7 +11199,7 @@ function HbDrawingHub({onBack,notify}){
     u.default.createElement("div",{className:"hb-dosWrap"},
       u.default.createElement("button",{onClick:onBack,className:"hb-arcBack"},u.default.createElement(E,{name:"arrow-left",size:15}),u.default.createElement("span",null,"返回公司資料庫")),
       u.default.createElement("div",{className:"hb-dosLabel"},"Gestion des Plans"),u.default.createElement("h1",{className:"hb-dosTitle"},"圖面管理"),
-      u.default.createElement("p",{className:"hb-dosLede"},"依資料夾管理施工圖面，支援子資料夾與版本紀錄回溯。")
+      u.default.createElement("p",{className:"hb-dosLede"},"依資料夾管理施工圖面，支援圖片、PDF、DWG、DXF，每檔上限 30 MB。CAD 檔下載後以繪圖軟體開啟，並可保留版本紀錄。")
     ),
     u.default.createElement("div",{style:{maxWidth:1320,margin:"0 auto",padding:"6px clamp(20px,4vw,58px) 112px"}},
       u.default.createElement("div",{style:{display:"flex",flexWrap:"wrap",alignItems:"center",gap:4,fontSize:12.5,color:s.inkSoft,marginBottom:14}},
@@ -11188,8 +11213,8 @@ function HbDrawingHub({onBack,notify}){
         u.default.createElement(ke,{label:"新增資料夾",icon:"folder-plus",busy:false,onClick:()=>setShowNewFolder(true)}),
         currentFolderId&&u.default.createElement(ke,{label:uploading?"上傳中…":"上傳圖面",icon:"upload",busy:uploading,onClick:()=>fileInputRef.current&&fileInputRef.current.click()})
       ),
-      u.default.createElement("input",{ref:fileInputRef,type:"file",accept:"image/jpeg,image/jpg,application/pdf",multiple:true,style:{display:"none"},onChange:handleNewDrawingUpload}),
-      u.default.createElement("input",{ref:newVersionInputRef,type:"file",accept:"image/jpeg,image/jpg,application/pdf",style:{display:"none"},onChange:handleNewVersionUpload}),
+      u.default.createElement("input",{ref:fileInputRef,type:"file",accept:"image/*,.pdf,application/pdf,.dwg,.dxf",multiple:true,style:{display:"none"},onChange:handleNewDrawingUpload}),
+      u.default.createElement("input",{ref:newVersionInputRef,type:"file",accept:"image/*,.pdf,application/pdf,.dwg,.dxf",style:{display:"none"},onChange:handleNewVersionUpload}),
       loading?u.default.createElement("div",{style:{textAlign:"center",padding:30}},u.default.createElement(E,{name:"loader",className:"animate-spin",size:22,color:"#B4573A"})):
       u.default.createElement(u.default.Fragment,null,
         childFolders.length===0&&folderDrawings.length===0?
@@ -11206,14 +11231,14 @@ function HbDrawingHub({onBack,notify}){
               let cv=currentVersionOf(d);
               return u.default.createElement("div",{key:d.id,style:{background:"rgba(255,255,255,.55)",border:"1px solid rgba(57,51,47,.12)",borderRadius:2,padding:"12px 14px"}},
                 u.default.createElement("div",{style:{display:"flex",alignItems:"center",gap:10}},
-                  u.default.createElement(E,{name:cv&&cv.mime==="application/pdf"?"file-text":"image",size:18,color:"#B4573A"}),
+                  u.default.createElement(E,{name:cv&&(HB_drawingIsCad(cv)||cv.mime==="application/pdf")?"file-text":"image",size:18,color:"#B4573A"}),
                   u.default.createElement("div",{style:{flex:1,minWidth:0}},
                     u.default.createElement("div",{style:{fontSize:14}},d.name),
-                    u.default.createElement("div",{style:{fontSize:11,color:s.inkSoft,marginTop:2}},cv?`目前版本 v${cv.versionNo}`:"尚無版本")
+                    u.default.createElement("div",{style:{fontSize:11,color:s.inkSoft,marginTop:2}},cv?`目前版本 v${cv.versionNo}${HB_drawingIsCad(cv)?" · "+HB_drawingCadExt(cv.path||cv.url).toUpperCase():""}`:"尚無版本")
                   )
                 ),
                 u.default.createElement("div",{style:{display:"flex",gap:8,marginTop:10,flexWrap:"wrap"}},
-                  cv&&u.default.createElement("a",{href:cv.url,target:"_blank",rel:"noreferrer",style:{...ll,flex:1,fontSize:12.5,padding:"8px 0",textAlign:"center",textDecoration:"none",display:"block"}},"檢視 / 下載"),
+                  cv&&u.default.createElement("a",{href:cv.url,onClick:HB_drawingIsCad(cv)?ev=>HB_downloadDrawingCad(ev,cv,d.name):undefined,target:"_blank",rel:"noreferrer",style:{...ll,flex:1,fontSize:12.5,padding:"8px 0",textAlign:"center",textDecoration:"none",display:"block"}},HB_drawingIsCad(cv)?"下載 CAD 原檔":"檢視 / 下載"),
                   u.default.createElement("button",{onClick:()=>openNewVersionPicker(d.id),style:{...ll,flex:1,fontSize:12.5,padding:"8px 0"}},"上傳新版本"),
                   u.default.createElement("button",{onClick:()=>setVersionModalId(d.id),style:{...ll,flex:1,fontSize:12.5,padding:"8px 0"}},`版本紀錄 (${versionsFor(d.id).length})`),
                   u.default.createElement("button",{onClick:()=>deleteDrawing(d.id),style:at},u.default.createElement(E,{name:"trash",size:15}))
@@ -11254,11 +11279,11 @@ function HbDrawingVersionModal({drawing,versions,onClose,onRestore}){
       u.default.createElement("div",{style:{display:"flex",flexDirection:"column",gap:10}},
         versions.map(v=>u.default.createElement("div",{key:v.id,style:{border:`1px solid ${s.line}`,borderRadius:8,padding:"10px 12px"}},
           u.default.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center"}},
-            u.default.createElement("span",{style:{fontSize:13.5,fontWeight:400}},`v${v.versionNo}`+(v.id===drawing.currentVersionId?"　目前使用中":"")),
+            u.default.createElement("span",{style:{fontSize:13.5,fontWeight:400}},`v${v.versionNo}${HB_drawingIsCad(v)?" · "+HB_drawingCadExt(v.path||v.url).toUpperCase():""}`+(v.id===drawing.currentVersionId?"　目前使用中":"")),
             u.default.createElement("span",{style:{fontSize:11,color:s.inkSoft}},new Date(v.uploadedAt).toLocaleString("zh-TW"))
           ),
           u.default.createElement("div",{style:{display:"flex",gap:8,marginTop:8}},
-            u.default.createElement("a",{href:v.url,target:"_blank",rel:"noreferrer",style:{...ll,flex:1,fontSize:12,padding:"6px 0",textAlign:"center",textDecoration:"none",display:"block"}},"下載 / 檢視"),
+            u.default.createElement("a",{href:v.url,onClick:HB_drawingIsCad(v)?ev=>HB_downloadDrawingCad(ev,v,drawing.name):undefined,target:"_blank",rel:"noreferrer",style:{...ll,flex:1,fontSize:12,padding:"6px 0",textAlign:"center",textDecoration:"none",display:"block"}},HB_drawingIsCad(v)?"下載 CAD 原檔":"下載 / 檢視"),
             v.id!==drawing.currentVersionId&&u.default.createElement("button",{onClick:()=>onRestore(v.id),style:{...ll,flex:1,fontSize:12,padding:"6px 0"}},"設為目前版本")
           )
         ))
