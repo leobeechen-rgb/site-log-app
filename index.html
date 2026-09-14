@@ -3404,6 +3404,13 @@ table.sign tr:first-child td{height:auto;background:var(--wash)}
 #hb-est-editor .hb-est-client-title{line-height:1.5;overflow-wrap:anywhere}
 @media(max-width:859px){html[data-hbrail="1"] #hb-est-editor>.hb-est-header{padding-right:64px!important}}
 @media(max-width:768px){#hb-est-editor .hb-est-masthead{margin-bottom:16px;padding:10px 0 18px}#hb-est-editor .hb-est-page-label{font-size:12px;letter-spacing:.2em;margin-bottom:9px}#hb-est-editor .hb-est-page-title{font-size:clamp(32px,8.6vw,56px)}#hb-est-editor .hb-est-project-title{font-size:14px}}
+
+/* The side masthead is a body portal, clear of the editor's scroll and glass layers. */
+.hb-est-side-masthead{position:fixed;inset:0 auto 0 0;z-index:72;box-sizing:border-box;display:flex;align-items:center;justify-content:center;gap:18px;padding:24px 12px;margin:0;pointer-events:none;background:transparent;color:#17150f}
+.hb-est-side-title{writing-mode:vertical-rl;text-orientation:upright;white-space:nowrap;flex:none;margin:0;padding:0;font-family:"Noto Serif TC","Songti TC","PingFang TC","Microsoft JhengHei",serif;font-size:clamp(30px,min(3.55vw,8vh),68px);font-weight:500;line-height:1.2;letter-spacing:.14em;color:#292821}
+.hb-est-side-label{writing-mode:vertical-rl;text-orientation:mixed;white-space:nowrap;flex:none;margin:0;padding:0;font-family:"Cormorant Garamond","Times New Roman",serif;font-size:12px;font-weight:500;line-height:1.5;letter-spacing:.28em;text-transform:uppercase;color:#857b6c}
+@media(max-width:1099px){.hb-est-side-masthead{display:none}}
+@media(max-width:768px){#hb-est-editor .hb-est-masthead{padding:4px 0 12px;margin-bottom:14px}#hb-est-editor .hb-est-page-title{font-size:clamp(28px,7vw,40px)}#hb-est-editor .hb-est-page-label{font-size:10px;margin-bottom:6px}}
 </style>
 </head>
 <body>
@@ -6385,6 +6392,32 @@ var HB_COLD={
 };
 function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
   let sc=HB_COLD;
+  // Use the actual left gutter, so the title never takes width from the quotation.
+  let[titleGutter,setTitleGutter]=u.useState(0);
+  u.useEffect(()=>{
+    const editor=document.getElementById("hb-est-editor");
+    if(!editor)return;
+    let frame=0;
+    const measure=()=>{
+      frame=0;
+      const gap=Math.floor(editor.getBoundingClientRect().left);
+      const next=window.innerWidth>=1100&&gap>=144?gap:0;
+      setTitleGutter(previous=>previous===next?previous:next);
+    };
+    const schedule=()=>{if(!frame)frame=requestAnimationFrame(measure)};
+    const resize=typeof ResizeObserver!=="undefined"?new ResizeObserver(schedule):null;
+    resize&&resize.observe(editor);
+    const observer=new MutationObserver(schedule);
+    observer.observe(editor,{attributes:true,attributeFilter:["style","class"]});
+    window.addEventListener("resize",schedule);
+    schedule();
+    return()=>{
+      if(frame)cancelAnimationFrame(frame);
+      resize&&resize.disconnect();observer.disconnect();
+      window.removeEventListener("resize",schedule);
+    };
+  },[]);
+
   let[localToast,setLocalToast]=(0,u.useState)(null);
   let localToastTimerRef=(0,u.useRef)(null);
   let notify=msg=>{
@@ -7031,6 +7064,12 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
     return()=>window.removeEventListener("keydown",onKey)
   },[calcOpen,calcDisplay,calcAcc,calcOp,calcWaiting]);
   return u.default.createElement("div",{id:"hb-est-editor",className:"hb-unit-editor"+(showCosts?"":" hb-hide-est-costs"),style:{position:"fixed",inset:0,background:sc.paper,zIndex:71,overflowY:"auto",display:"flex",flexDirection:"column"}},
+    titleGutter>0&&Zs().createPortal(
+      u.default.createElement("header",{className:"hb-est-side-masthead",style:{width:titleGutter}},
+        u.default.createElement("div",{className:"hb-est-side-label",lang:"fr"},"Devis de Chantier"),
+        u.default.createElement("h1",{className:"hb-est-side-title"},"工程報價單")
+      ),document.body
+    ),
     u.default.createElement("div",{"aria-hidden":"true",style:{position:"absolute",pointerEvents:"none",width:340,height:340,right:-110,top:-150,borderRadius:"50%",zIndex:0,background:"radial-gradient(circle at 30% 30%, rgba(255,255,255,.95), rgba(255,255,255,0) 70%)"}}),
     u.default.createElement("div",{"aria-hidden":"true",style:{position:"absolute",pointerEvents:"none",width:230,height:230,left:-85,top:60,borderRadius:"50%",zIndex:0,opacity:.7,background:"radial-gradient(circle at 50% 50%, #DCE9F1, rgba(255,255,255,0) 72%)"}}),
     vqPick&&u.default.createElement(HB_VendorCostPicker,{rows:vqPick.rows,quotes:vqPick.quotes,onCancel:()=>setVqPick(null),onApply:applyVendorCosts}),
@@ -7081,7 +7120,7 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
     u.default.createElement("input",{ref:vendorFileRef,type:"file",accept:"image/*,.pdf,.doc,.docx,.xls,.xlsx",hidden:!0,onChange:handleVendorFile}),
     u.default.createElement("div",{className:"hb-est-content",style:{flex:1,overflowY:"auto",padding:"14px 20px 20px"}},
     u.default.createElement("div",{style:{maxWidth:1560,margin:"0 auto",paddingRight:calcDock&&calcOpen?322:0,transition:"padding-right .2s ease"}},
-      u.default.createElement("header",{className:"hb-est-masthead"},
+      titleGutter===0&&u.default.createElement("header",{className:"hb-est-masthead"},
         u.default.createElement("div",{className:"hb-est-page-label",lang:"fr"},"Devis de Chantier"),
         u.default.createElement("h1",{className:"hb-est-page-title"},"工程報價單")
       ),
