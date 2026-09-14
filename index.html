@@ -5962,9 +5962,9 @@ function HB_buildEstimateHTML(v){
 <style>
 ${HB_DOC_CSS}
 /* Estimate-only print layout; other document templates keep their own styles. */
-@page{size:A4 portrait;margin:14mm 7mm}
-body.hb-estimate{width:210mm;max-width:100%;padding:12mm 7mm;margin:0 auto;background:#fffdf9;font-size:12px;line-height:1.6}
-.hb-estimate .toolbar{margin-left:-7mm;margin-right:-7mm}
+@page{size:A4 portrait;margin:14mm 5mm}
+body.hb-estimate{width:1120px;max-width:100%;padding:12mm 5mm;margin:0 auto;background:#fffdf9;font-size:12px;line-height:1.6}
+.hb-estimate .toolbar{margin-left:-5mm;margin-right:-5mm}
 .hb-estimate .brand{font-size:11px;letter-spacing:.17em}
 .hb-estimate h1{font-size:26px;margin:10px 0 14px;padding-bottom:10px}
  .hb-estimate .estimate-meta{table-layout:fixed;width:100%;margin:0 0 14px;font-size:11.5px;color:#514a40}
@@ -6047,8 +6047,8 @@ async function shareToLine(){
     var content=document.body.cloneNode(true);
     var tb=content.querySelector('.toolbar');
     if(tb)tb.remove();
-    content.style.width='196mm';content.style.maxWidth='196mm';content.style.padding='0';content.style.margin='0';
-    var opt={margin:[14,7,14,7],filename:filename,image:{type:'jpeg',quality:0.98},html2canvas:{scale:2,useCORS:true},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}};
+    content.style.width='200mm';content.style.maxWidth='200mm';content.style.padding='0';content.style.margin='0';
+    var opt={margin:[14,5,14,5],filename:filename,image:{type:'jpeg',quality:0.98},html2canvas:{scale:2,useCORS:true},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}};
     var blob=await html2pdf().set(opt).from(content).outputPdf('blob');
     var file=new File([blob],filename,{type:'application/pdf'});
     if(navigator.canShare&&navigator.canShare({files:[file]})){
