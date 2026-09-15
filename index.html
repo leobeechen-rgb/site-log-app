@@ -4651,11 +4651,18 @@ async function shareToLine(){
 </html>`;
 }
 
+function HB_openPrintableHTML(html){
+  const bridge=window.webkit?.messageHandlers?.herfulsinsPrint;
+  if(window.HB_NATIVE_DOCUMENT_PREVIEW===true&&bridge){
+    try{bridge.postMessage({type:"previewHTML",html});return true}catch(err){console.error("Document preview failed",err)}
+  }
+  const preview=window.open("","_blank");
+  if(!preview)return false;
+  preview.document.open();preview.document.write(html);preview.document.close();return true;
+}
 function HB_openContractPrint(v){
   let html=HB_buildContractHTML(v);
-  let p=window.open("","_blank");
-  if(!p)return!1;
-  return p.document.open(),p.document.write(html),p.document.close(),!0
+  return HB_openPrintableHTML(html)
 }
 
 /* ---------- PDF（可列印）初步預算書 ---------- */
@@ -4731,9 +4738,7 @@ ${(dPing>0||dRate>0)?`<p>優惠說明：${dPing>0?`本案以優惠坪數 ${HB_mo
 }
 function HB_openBudgetPrint(v){
   let html=HB_buildBudgetHTML(v);
-  let p=window.open("","_blank");
-  if(!p)return!1;
-  return p.document.open(),p.document.write(html),p.document.close(),!0
+  return HB_openPrintableHTML(html)
 }
 
 
@@ -4854,9 +4859,7 @@ async function shareToLine(){
 
 function HB_openEngContractPrint(v){
   let html=HB_buildEngContractHTML(v);
-  let p=window.open("","_blank");
-  if(!p)return!1;
-  return p.document.open(),p.document.write(html),p.document.close(),!0
+  return HB_openPrintableHTML(html)
 }
 
 /* ===== 帳戶管理小視窗 ===== */
@@ -6119,9 +6122,7 @@ async function shareToLine(){
 }
 function HB_openEstimatePrint(v){
   let html=HB_buildEstimateHTML(v);
-  let p=window.open("","_blank");
-  if(!p)return!1;
-  return p.document.open(),p.document.write(html),p.document.close(),!0
+  return HB_openPrintableHTML(html)
 }
 
 async function HB_generateEstimateExcel(v){
@@ -7669,9 +7670,7 @@ ${HB_DOC_CSS}
 
 function HB_openReceiptPrint(v){
   let html=HB_buildReceiptHTML(v);
-  let p=window.open("","_blank");
-  if(!p)return!1;
-  return p.document.open(),p.document.write(html),p.document.close(),!0
+  return HB_openPrintableHTML(html)
 }
 
 function HB_buildVendorHTML(v){
@@ -7720,9 +7719,7 @@ ${HB_DOC_CSS}
 
 function HB_openVendorPrint(v){
   let html=HB_buildVendorHTML(v);
-  let p=window.open("","_blank");
-  if(!p)return!1;
-  return p.document.open(),p.document.write(html),p.document.close(),!0
+  return HB_openPrintableHTML(html)
 }
 
 /* ---------- 工程收據 UI ---------- */
@@ -10602,9 +10599,7 @@ ${v.note?`<div class="notes"><p>${e(v.note).replace(/\n/g,"</p><p>")}</p></div>`
 }
 function HB_openMaterialPrint(v){
   let html=HB_buildMaterialHTML(v);
-  let p=window.open("","_blank");
-  if(!p)return!1;
-  return p.document.open(),p.document.write(html),p.document.close(),!0
+  return HB_openPrintableHTML(html)
 }
 
 function HbMaterialForm({onCancel,onSave,projects,initial}){
@@ -12059,10 +12054,7 @@ function HB_buildChangeOrderHTML(v,projectName){
   +'</body></html>';
 }
 function HB_openChangeOrderPrint(v,projectName){
-  var w=window.open("","_blank");
-  if(!w)return!1;
-  w.document.open();w.document.write(HB_buildChangeOrderHTML(v,projectName));w.document.close();
-  return!0;
+  return HB_openPrintableHTML(HB_buildChangeOrderHTML(v,projectName));
 }
 
 /* ---------- 簽名板 ---------- */
