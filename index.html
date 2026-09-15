@@ -3522,6 +3522,17 @@ table.sign tr:first-child td{height:auto;background:var(--wash)}
  .hb-mkt-page .hb-mktBrand{flex-wrap:wrap;gap:4px 12px}
 }
 </style>
+<style id="hb-pricebook-mobile-layout">
+@media (max-width: 600px){
+  .hb-pricebook-card-row{display:grid!important;grid-template-columns:22px minmax(0,1fr)!important;gap:8px 10px!important;align-items:start!important;padding:13px 12px!important}
+  .hb-pricebook-card-row>input[type="checkbox"]{grid-column:1;grid-row:1;width:18px!important;height:18px!important;margin:2px 0 0!important}
+  .hb-pricebook-info{grid-column:2;grid-row:1;min-width:0!important}
+  .hb-pricebook-info>div:first-child{font-size:15px!important;line-height:1.55!important;overflow-wrap:anywhere}
+  .hb-pricebook-price{grid-column:2;grid-row:2;text-align:left!important;white-space:normal!important;display:flex!important;align-items:baseline!important;gap:8px 12px!important;flex-wrap:wrap!important;padding-top:8px!important;border-top:1px solid rgba(57,51,47,.10)}
+  .hb-pricebook-price>div:first-child{font-size:15px!important;font-weight:500}
+  .hb-pricebook-price>div:not(:first-child){margin-top:0!important}
+}
+</style>
 </head>
 <body>
 <div id="root"></div>
@@ -14744,17 +14755,7 @@ u.default.createElement("button",{disabled:!msg.trim()||busy,onClick:send,style:
   .toolbar button { background: #41101B; color: #EEE5DA; border: none; border-radius: 7px; padding: 8px 16px; font-weight: 700; font-size: 13px; cursor: pointer; }
 </style>
 
-<style id="hb-pricebook-mobile-layout">
-@media (max-width: 600px){
-  .hb-pricebook-card-row{display:grid!important;grid-template-columns:22px minmax(0,1fr)!important;gap:8px 10px!important;align-items:start!important;padding:13px 12px!important}
-  .hb-pricebook-card-row>input[type="checkbox"]{grid-column:1;grid-row:1;width:18px!important;height:18px!important;margin:2px 0 0!important}
-  .hb-pricebook-info{grid-column:2;grid-row:1;min-width:0!important}
-  .hb-pricebook-info>div:first-child{font-size:15px!important;line-height:1.55!important;overflow-wrap:anywhere}
-  .hb-pricebook-price{grid-column:2;grid-row:2;text-align:left!important;white-space:normal!important;display:flex!important;align-items:baseline!important;gap:8px 12px!important;flex-wrap:wrap!important;padding-top:8px!important;border-top:1px solid rgba(57,51,47,.10)}
-  .hb-pricebook-price>div:first-child{font-size:15px!important;font-weight:500}
-  .hb-pricebook-price>div:not(:first-child){margin-top:0!important}
-}
-</style>
+
 </head>
 <body>
   <div class="toolbar"><button onclick="window.print()">\u5217\u5370 / \u5B58 PDF</button></div>
