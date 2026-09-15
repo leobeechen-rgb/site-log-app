@@ -2057,6 +2057,7 @@
     display:inline-flex; align-items:center; gap:8px; min-height:44px;
     background:none; border:0; cursor:pointer; padding:0;
     font-family:inherit; font-size:14px; letter-spacing:.08em; color: var(--rdvInk);
+    white-space:nowrap; flex:0 0 auto; min-width:max-content;
   }
   .hb-rdvHome:hover{ color: var(--rdvTerra); }
 
@@ -2774,7 +2775,8 @@
     /* 文件系統：HERFULSINS ← 返回公司資料庫 */
     html[data-hbrail="1"] .hb-docsBrand{ padding-right: 58px; }
     /* 預約管理：HERFULSINS · MAISON ｜ 返回首頁 */
-    html[data-hbrail="1"] .hb-rdvTop{ padding-right: 58px; }
+    html[data-hbrail="1"] .hb-rdvTop{ padding-right: 58px; gap:10px; }
+    html[data-hbrail="1"] .hb-rdvHome{ gap:5px; font-size:13px; letter-spacing:.03em; }
     /* 作品照片庫：返回 ＋ 品牌字 */
     html[data-hbrail="1"] .hb-mktHead{ padding-right: 58px; }
     /* 檔案類頁面：返回鍵靠左，只要讓標題不要頂到按鈕即可 */
