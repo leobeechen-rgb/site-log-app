@@ -3497,6 +3497,20 @@ table.sign tr:first-child td{height:auto;background:var(--wash)}
 }
 
 </style>
+
+<style id="hb-menu-layout-only">
+.hb-library-menu-slot,.hb-global-menu-slot{display:none}
+@media(max-width:859px){
+ .hb-railBtn{position:static!important;inset:auto!important;transform:none!important;transition:none!important;float:none!important;box-sizing:border-box;width:44px!important;height:44px!important;min-width:44px!important;min-height:44px!important;flex:0 0 44px!important;margin:0!important}
+ .hb-railBtn:not([data-docked]){display:none!important}
+ html[data-hbrail="1"] .hb-library-menu-slot{display:flex;align-items:center;justify-content:center;order:3;flex:0 0 44px;width:44px;height:44px}
+ .hb-library-toolbar{gap:8px!important;flex:0 0 auto;align-items:center}
+ .hb-library-toolbar>button{width:44px;min-width:44px;height:44px;min-height:44px;align-items:center;justify-content:center}
+ .hb-shell:has(>.hb-global-menu-slot[data-active]){display:flex;flex-direction:column}
+ .hb-shell>.hb-global-menu-slot[data-active]{display:flex;align-items:center;justify-content:flex-end;box-sizing:border-box;flex:0 0 52px;height:52px;padding:4px 14px;border-bottom:1px solid #E0DBCF;background:#F4F0E7}
+ .hb-shell:has(>.hb-global-menu-slot[data-active])>.hb-pagein{flex:1 1 0%;height:auto!important;min-height:0;box-sizing:border-box}
+}
+</style>
 </head>
 <body>
 <div id="root"></div>
@@ -11666,7 +11680,7 @@ var HB_TODAY_CSS=`
 @media(max-width:560px){.hb-today{padding:0 10px 28px}.hb-today .td-top{padding:10px 5px;min-height:52px}.hb-today .td-brand{font-size:9px;letter-spacing:.11em}.hb-today .td-back{font-size:12px}.td-notebook{margin-top:2px;padding:32px 19px 22px}.td-eyebrow{font-size:13px;letter-spacing:.26em}.td-studio{font-size:10px;margin-bottom:18px}.td-date{font-size:11px;letter-spacing:.03em;margin-bottom:16px}.td-header h1{font-size:36px;max-width:300px;margin:0 auto 12px;line-height:1.1}.td-title-cn{font-size:17px}.td-header>.td-primary{font-size:12px;padding:10px 16px;min-height:42px}.td-header{padding-bottom:20px}.td-priorities{padding:20px 0}.td-sectionhead>span{font-size:9px;letter-spacing:.1em}.td-focusgrid{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:0;margin-top:15px;padding-bottom:7px;scrollbar-width:thin;scrollbar-color:#c4b18c transparent}.td-focuscard{flex:0 0 92%;scroll-snap-align:start;padding:6px 17px 5px 0;min-width:0;gap:14px}.td-focuscard:not(:first-child){padding-left:17px}.td-focuscard:last-child{border-right:0}.td-focusno{font-size:38px}.td-focusbody strong{font-size:15px}.td-focusbody>span{font-size:11px}.td-focusempty{flex-direction:column;gap:6px;padding-top:15px}.td-workspace{padding-top:22px;gap:18px}.td-toolbar{gap:8px;padding:15px 0}.td-tabs{gap:1px}.td-tabs button{padding:7px 11px;font-size:11px}.td-export{font-size:10px;padding:7px 8px}.td-filters{grid-template-columns:1fr 1fr;gap:9px}.td-searchlabel{grid-column:1/-1}.td-filters input,.td-filters select{font-size:12px;min-height:40px}.td-row{grid-template-columns:22px minmax(0,1fr) 25px;gap:10px;padding:17px 0}.td-check{width:21px;height:21px;align-self:start;margin-top:3px}.td-task h3{font-size:14px}.td-task p{font-size:11px}.td-deadline{grid-column:2;grid-row:2;flex-direction:row;justify-content:flex-start;gap:10px;align-items:center}.td-more{grid-column:3;grid-row:1;align-self:start}.td-task{grid-column:2;grid-row:1}.td-summarybody{display:block}.td-metrics{padding-bottom:15px;border-bottom:1px solid var(--td-line)}.td-summarynote{margin-top:20px}.td-storage{align-items:flex-start;gap:12px}.td-storage>span{max-width:75%}.td-storage button{padding-top:0}.td-help{font-size:10px}.td-modal{padding:22px}.td-formgrid{grid-template-columns:1fr}.td-empty{padding:30px 0}.td-empty h3{font-size:17px}}
 @media(prefers-reduced-motion:reduce){.hb-today *,.td-modal *{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 `;
-function Gy(){let[l,t]=(0,u.useState)(!0),[e,n]=(0,u.useState)(!1),[a,i]=(0,u.useState)([]),[o,f]=(0,u.useState)(()=>{try{let v=sessionStorage.getItem("hb_last_view");return v&&v!=="quoteImportPick"?v:"landing"}catch{return"landing"}}),[c,r]=(0,u.useState)(()=>{try{return sessionStorage.getItem("hb_last_project")||null}catch{return null}}),[d,h]=(0,u.useState)(!1),[m,p]=(0,u.useState)(null),[z,C]=(0,u.useState)(null),[hbOpenTab,hbSetOpenTab]=(0,u.useState)(()=>{try{return sessionStorage.getItem("hb_last_tab")||"overview"}catch{return"overview"}}),[hbQuoteImport,hbSetQuoteImport]=(0,u.useState)(null),[hbProg,hbSetProg]=(0,u.useState)({}),D=async T=>{T?n(!0):t(!0);try{let{data:k,error:H}=await q.from("sitelog_projects").select("*, sitelog_photos(count), sitelog_quotes(count)").order("created_at",{ascending:!1});if(H){g("讀取案件失敗："+H.message);T||i([])}else i((k||[]).map(cm))}catch(k){g("讀取案件失敗："+(k.message||k))}finally{T?n(!1):t(!1)}},hbLoadProg=async()=>{try{let{data:ev}=await q.from("sitelog_schedule_events").select("project_id,project_name,start_date,end_date").eq("type","site").neq("status","cancelled");if(!ev)return;let by={};for(let x of ev){let st=x.start_date;if(!st)continue;let en=x.end_date||st;for(let k2 of [x.project_id,x.project_name?"name:"+x.project_name:null]){if(!k2)continue;let cur=by[k2];if(!cur){by[k2]={s:st,e:en}}else{if(st<cur.s)cur.s=st;if(en>cur.e)cur.e=en}}}hbSetProg(by)}catch{}},y=async()=>{let[T,k,H,B]=await Promise.all([q.from("sitelog_photos").select("size"),q.from("sitelog_quotes").select("size"),q.from("sitelog_files").select("size"),q.from("sitelog_materials").select("photo_size")]);if(T.error||k.error||H.error||B.error)return;let nl=(ql,je)=>(ql||[]).reduce((Ml,te)=>Ml+(Number(te[je])||0),0),hl=nl(T.data,"size")+nl(k.data,"size")+nl(H.data,"size")+nl(B.data,"photo_size");C(hl)};(0,u.useEffect)(()=>{D(!1),y(),hbLoadProg()},[]);(0,u.useEffect)(()=>{try{o&&o!=="quoteImportPick"&&sessionStorage.setItem("hb_last_view",o);c?sessionStorage.setItem("hb_last_project",c):sessionStorage.removeItem("hb_last_project");sessionStorage.setItem("hb_last_tab",hbOpenTab)}catch{}},[o,c,hbOpenTab]);(0,u.useEffect)(()=>{let hbMsg=T=>{T?.data&&T.data.type==="hb-quote-import"&&(hbSetQuoteImport(T.data),f("quoteImportPick"))};return window.addEventListener("message",hbMsg),()=>window.removeEventListener("message",hbMsg)},[]);let g=(0,u.useCallback)(T=>{p(T),setTimeout(()=>p(null),2600)},[]),hbImportQuote=async T=>{if(!hbQuoteImport)return;try{let{blob:k,filename:H,meta:B}=hbQuoteImport,mt=k.type||"text/html",sl=`${T.id}/${Be()}.${mt==="application/json"?"json":"html"}`,X=await r2UploadSitelogFile("sitelog-quotes",sl,k,mt);let{error:dl}=await q.from("sitelog_quotes").insert({project_id:T.id,name:H,mime:mt,size:k.size,url:X,path:sl,folder_id:null});if(dl)throw dl;i(ql=>ql.map(je=>je.id===T.id?{...je,quoteCount:(je.quoteCount||0)+1}:je)),hbSetQuoteImport(null),r(T),hbSetOpenTab("quotes"),f("detail"),g(`\u5DF2\u5C07\u5831\u50F9\u55AE\u300C${B?.qClient||H}\u300D\u5B58\u5165\u6848\u4EF6`)}catch(k){g("\u5B58\u6A94\u5931\u6557\uFF1A"+(k.message||k))}},b=async(T,k,H,B)=>{let{data:nl,error:hl}=await q.from("sitelog_projects").insert({name:T,address:k,lat:H??null,lng:B??null,status:fn[0]}).select().single();if(hl){g("\u5EFA\u7ACB\u5931\u6557\uFF1A"+hl.message);return}i(ql=>[cm(nl),...ql]),h(!1),g("\u6848\u4EF6\u5DF2\u5EFA\u7ACB")},S=async(T,k)=>{i(hl=>hl.map(ql=>ql.id===T?{...ql,...k,updatedAt:new Date().toISOString()}:ql));let H={name:"name",address:"address",lat:"lat",lng:"lng",status:"status",ownerPassword:"owner_password",expectedEnd:"expected_end"},B={};for(let hl of Object.keys(H))hl in k&&(B[H[hl]]=k[hl]);if(Object.keys(B).length===0)return;B.updated_at=new Date().toISOString();let{error:nl}=await q.from("sitelog_projects").update(B).eq("id",T);nl&&g("\u66F4\u65B0\u5931\u6557\uFF1A"+nl.message)},M=async T=>{let{error:k}=await q.from("sitelog_projects").delete().eq("id",T);if(k){g("\u522A\u9664\u5931\u6557\uFF1A"+k.message);return!1}i(H=>H.filter(B=>B.id!==T)),f("home"),g("\u6848\u4EF6\u5DF2\u522A\u9664");return!0},j=a.find(T=>T.id===c);return u.default.createElement("div",{className:"hb-shell",style:{background:s.paper,height:"100vh",overflow:"hidden",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},u.default.createElement("style",null,`
+function Gy(){let[l,t]=(0,u.useState)(!0),[e,n]=(0,u.useState)(!1),[a,i]=(0,u.useState)([]),[o,f]=(0,u.useState)(()=>{try{let v=sessionStorage.getItem("hb_last_view");return v&&v!=="quoteImportPick"?v:"landing"}catch{return"landing"}}),[c,r]=(0,u.useState)(()=>{try{return sessionStorage.getItem("hb_last_project")||null}catch{return null}}),[d,h]=(0,u.useState)(!1),[m,p]=(0,u.useState)(null),[z,C]=(0,u.useState)(null),[hbOpenTab,hbSetOpenTab]=(0,u.useState)(()=>{try{return sessionStorage.getItem("hb_last_tab")||"overview"}catch{return"overview"}}),[hbQuoteImport,hbSetQuoteImport]=(0,u.useState)(null),[hbProg,hbSetProg]=(0,u.useState)({}),D=async T=>{T?n(!0):t(!0);try{let{data:k,error:H}=await q.from("sitelog_projects").select("*, sitelog_photos(count), sitelog_quotes(count)").order("created_at",{ascending:!1});if(H){g("讀取案件失敗："+H.message);T||i([])}else i((k||[]).map(cm))}catch(k){g("讀取案件失敗："+(k.message||k))}finally{T?n(!1):t(!1)}},hbLoadProg=async()=>{try{let{data:ev}=await q.from("sitelog_schedule_events").select("project_id,project_name,start_date,end_date").eq("type","site").neq("status","cancelled");if(!ev)return;let by={};for(let x of ev){let st=x.start_date;if(!st)continue;let en=x.end_date||st;for(let k2 of [x.project_id,x.project_name?"name:"+x.project_name:null]){if(!k2)continue;let cur=by[k2];if(!cur){by[k2]={s:st,e:en}}else{if(st<cur.s)cur.s=st;if(en>cur.e)cur.e=en}}}hbSetProg(by)}catch{}},y=async()=>{let[T,k,H,B]=await Promise.all([q.from("sitelog_photos").select("size"),q.from("sitelog_quotes").select("size"),q.from("sitelog_files").select("size"),q.from("sitelog_materials").select("photo_size")]);if(T.error||k.error||H.error||B.error)return;let nl=(ql,je)=>(ql||[]).reduce((Ml,te)=>Ml+(Number(te[je])||0),0),hl=nl(T.data,"size")+nl(k.data,"size")+nl(H.data,"size")+nl(B.data,"photo_size");C(hl)};(0,u.useEffect)(()=>{D(!1),y(),hbLoadProg()},[]);(0,u.useEffect)(()=>{try{o&&o!=="quoteImportPick"&&sessionStorage.setItem("hb_last_view",o);c?sessionStorage.setItem("hb_last_project",c):sessionStorage.removeItem("hb_last_project");sessionStorage.setItem("hb_last_tab",hbOpenTab)}catch{}},[o,c,hbOpenTab]);(0,u.useEffect)(()=>{let hbMsg=T=>{T?.data&&T.data.type==="hb-quote-import"&&(hbSetQuoteImport(T.data),f("quoteImportPick"))};return window.addEventListener("message",hbMsg),()=>window.removeEventListener("message",hbMsg)},[]);let g=(0,u.useCallback)(T=>{p(T),setTimeout(()=>p(null),2600)},[]),hbImportQuote=async T=>{if(!hbQuoteImport)return;try{let{blob:k,filename:H,meta:B}=hbQuoteImport,mt=k.type||"text/html",sl=`${T.id}/${Be()}.${mt==="application/json"?"json":"html"}`,X=await r2UploadSitelogFile("sitelog-quotes",sl,k,mt);let{error:dl}=await q.from("sitelog_quotes").insert({project_id:T.id,name:H,mime:mt,size:k.size,url:X,path:sl,folder_id:null});if(dl)throw dl;i(ql=>ql.map(je=>je.id===T.id?{...je,quoteCount:(je.quoteCount||0)+1}:je)),hbSetQuoteImport(null),r(T),hbSetOpenTab("quotes"),f("detail"),g(`\u5DF2\u5C07\u5831\u50F9\u55AE\u300C${B?.qClient||H}\u300D\u5B58\u5165\u6848\u4EF6`)}catch(k){g("\u5B58\u6A94\u5931\u6557\uFF1A"+(k.message||k))}},b=async(T,k,H,B)=>{let{data:nl,error:hl}=await q.from("sitelog_projects").insert({name:T,address:k,lat:H??null,lng:B??null,status:fn[0]}).select().single();if(hl){g("\u5EFA\u7ACB\u5931\u6557\uFF1A"+hl.message);return}i(ql=>[cm(nl),...ql]),h(!1),g("\u6848\u4EF6\u5DF2\u5EFA\u7ACB")},S=async(T,k)=>{i(hl=>hl.map(ql=>ql.id===T?{...ql,...k,updatedAt:new Date().toISOString()}:ql));let H={name:"name",address:"address",lat:"lat",lng:"lng",status:"status",ownerPassword:"owner_password",expectedEnd:"expected_end"},B={};for(let hl of Object.keys(H))hl in k&&(B[H[hl]]=k[hl]);if(Object.keys(B).length===0)return;B.updated_at=new Date().toISOString();let{error:nl}=await q.from("sitelog_projects").update(B).eq("id",T);nl&&g("\u66F4\u65B0\u5931\u6557\uFF1A"+nl.message)},M=async T=>{let{error:k}=await q.from("sitelog_projects").delete().eq("id",T);if(k){g("\u522A\u9664\u5931\u6557\uFF1A"+k.message);return!1}i(H=>H.filter(B=>B.id!==T)),f("home"),g("\u6848\u4EF6\u5DF2\u522A\u9664");return!0},j=a.find(T=>T.id===c);return u.default.createElement("div",{className:"hb-shell",style:{background:s.paper,height:"100vh",overflow:"hidden",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},u.default.createElement("div",{className:"hb-global-menu-slot"}),u.default.createElement("style",null,`
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap');
         @media (min-width: 860px) {
           html, body { background: #DCE4E1; }
@@ -13637,7 +13651,8 @@ function $y(l){return l==null?null:(l/(1024*1024)).toFixed(1)}function Iy({proje
     u.default.createElement("div",{style:{padding:"18px 20px 12px",position:"relative",overflow:"hidden",zIndex:1}},
       u.default.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10,minHeight:22}},
         hbBack?u.default.createElement("button",{onClick:hbBack,className:"hb-backLink",style:{background:"none",border:"none",color:s.inkSoft,cursor:"pointer",fontSize:11.5,display:"flex",alignItems:"center",gap:4,padding:0}},u.default.createElement(E,{name:"arrow-left",size:14})):u.default.createElement("span",null),
-        u.default.createElement("div",{style:{position:"relative",display:"flex",alignItems:"center",gap:14}},
+        u.default.createElement("div",{className:"hb-library-toolbar",style:{position:"relative",display:"flex",alignItems:"center",gap:14}},
+          !hbPM&&u.default.createElement("div",{className:"hb-library-menu-slot"}),
           u.default.createElement("button",{onClick:n,disabled:a,style:{background:"none",border:"none",color:s.inkSoft,cursor:"pointer",display:"flex",padding:0}},u.default.createElement(E,{name:"refresh",size:19,className:a?"animate-spin":""})),
           !hbPM&&u.default.createElement("button",{onClick:()=>hbSetMenuOpen(v=>!v),style:{background:"none",border:"none",color:s.inkSoft,cursor:"pointer",display:"flex",padding:0}},u.default.createElement(E,{name:"more-vertical",size:19})),
           !hbPM&&hbMenuOpen&&u.default.createElement(u.default.Fragment,null,
@@ -15220,49 +15235,34 @@ react-dom/cjs/react-dom-client.production.js:
 
   var lastActiveProjectTab = null;
   function placeMenuBtn(show) {
-    var slot = show && isMobile() && document.querySelector('.hb-project-actions-row > .hb-project-menu-slot');
+    var mobile = show && isMobile();
+    var globalSlot = document.querySelector('.hb-global-menu-slot');
+    var slot = mobile && (document.querySelector('.hb-project-actions-row > .hb-project-menu-slot') ||
+      document.querySelector('.hb-library-menu-slot') || globalSlot);
+    if (globalSlot) globalSlot.toggleAttribute('data-active', !!slot && slot === globalSlot);
     var host = slot || document.body;
     if (menuBtn.parentNode !== host) host.appendChild(menuBtn);
     menuBtn.toggleAttribute('data-docked', !!slot);
-    if (!show || !isMobile()) {
+    menuBtn.style.top = '';
+    menuBtn.removeAttribute('data-away');
+    if (!mobile || !slot) {
       menuBtn.removeAttribute('data-on');
       document.documentElement.removeAttribute('data-hbrail');
       closeSheet();
+      lastActiveProjectTab = null;
       return;
     }
     menuBtn.setAttribute('data-on', '1');
     document.documentElement.setAttribute('data-hbrail', '1');
-    if (slot) {
-      menuBtn.style.top = '';
-      menuBtn.removeAttribute('data-away');
-      var active = document.querySelector('.hb-project-nav-row .hb-lt.on');
-      if (active && active !== lastActiveProjectTab) {
-        var nav = active.parentElement, ar = active.getBoundingClientRect(), nr = nav.getBoundingClientRect();
-        if (ar.left < nr.left || ar.right > nr.right)
-          nav.scrollLeft += ar.left - nr.left - (nr.width - ar.width) / 2;
-        lastActiveProjectTab = active;
-      }
-      return;
+    var active = document.querySelector('.hb-project-nav-row .hb-lt.on');
+    if (active && active !== lastActiveProjectTab) {
+      var nav = active.parentElement, ar = active.getBoundingClientRect(), nr = nav.getBoundingClientRect();
+      if (ar.left < nr.left || ar.right > nr.right)
+        nav.scrollLeft += ar.left - nr.left - (nr.width - ar.width) / 2;
     }
-    lastActiveProjectTab = null;
-    var nav = document.querySelector('.hb-topnav');
-    var rect = nav && nav.getBoundingClientRect();
-    menuBtn.style.top = Math.max(10, rect && rect.bottom > 0 ? Math.round(rect.bottom) + 8 : 10) + 'px';
+    lastActiveProjectTab = active;
   }
-
-  /* 往下捲時淡出，停住或往上捲才出現——避免它一路擋在內容上 */
-  var lastTop = 0;
-  function syncBtnVisibility() {
-    if (!isMobile() || menuBtn.hasAttribute('data-docked')) { menuBtn.removeAttribute('data-away'); return; }
-    if (!sheet.hidden) { menuBtn.removeAttribute('data-away'); return; }
-    var sc = scroller();
-    var t = sc ? sc.scrollTop : 0;
-    var d = t - lastTop;
-    lastTop = t;
-    if (t < 60) { menuBtn.removeAttribute('data-away'); return; }
-    if (d > 6) menuBtn.setAttribute('data-away', '1');
-    else if (d < -6) menuBtn.removeAttribute('data-away');
-  }
+  function syncBtnVisibility() { menuBtn.removeAttribute('data-away'); }
 
   /* ---- 收合邏輯：畫面內模式預設收成把手，點一下才展開 ---- */
   var collapseTimer = null;
