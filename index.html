@@ -2603,7 +2603,7 @@
         只針對「含有輸入欄位」的彈窗，圖片燈箱／確認框不受影響 */
   @supports selector(:has(input)){
     @media (max-width: 768px){
-      body [style*="position: fixed"][style*="inset"]:has(input, select, textarea){
+      body [style*="position: fixed"][style*="inset"]:not(.hb-mkt-page):has(input, select, textarea){
         top: var(--hb-vvtop, 0px) !important;
         left: 0 !important; right: 0 !important; bottom: auto !important;
         height: var(--hb-vvh, 100dvh) !important;
@@ -2615,7 +2615,7 @@
         -webkit-overflow-scrolling: touch;
         overscroll-behavior: contain;
       }
-      body [style*="position: fixed"][style*="inset"]:has(input, select, textarea) > div{
+      body [style*="position: fixed"][style*="inset"]:not(.hb-mkt-page):has(input, select, textarea) > div{
         width: 100% !important;
         max-width: 100% !important;
         max-height: none !important;
@@ -2627,8 +2627,8 @@
         padding: calc(16px + env(safe-area-inset-top)) 16px calc(28px + env(safe-area-inset-bottom)) !important;
       }
       /* 面板內若還有自己的捲動區，一律解除，避免巢狀捲動 */
-      body [style*="position: fixed"][style*="inset"]:has(input, select, textarea) > div [style*="overflow-y: auto"],
-      body [style*="position: fixed"][style*="inset"]:has(input, select, textarea) > div [style*="max-height"]{
+      body [style*="position: fixed"][style*="inset"]:not(.hb-mkt-page):has(input, select, textarea) > div [style*="overflow-y: auto"],
+      body [style*="position: fixed"][style*="inset"]:not(.hb-mkt-page):has(input, select, textarea) > div [style*="max-height"]{
         max-height: none !important;
         overflow-y: visible !important;
       }
@@ -3511,6 +3511,17 @@ table.sign tr:first-child td{height:auto;background:var(--wash)}
  .hb-shell:has(>.hb-global-menu-slot[data-active])>.hb-pagein{flex:1 1 0%;height:auto!important;min-height:0;box-sizing:border-box}
 }
 </style>
+
+<style id="hb-portfolio-mobile-layout">
+/* The portfolio is a page, not a full-screen form dialog. */
+@media(max-width:859px){
+ .hb-mkt-page{position:relative!important;inset:auto!important;z-index:auto!important;display:block!important;width:100%!important;height:auto!important;min-height:0!important;overflow:visible!important;box-sizing:border-box}
+ .hb-mkt-page>.hb-mkt-body{display:block;flex:none;min-height:0;height:auto;overflow:visible}
+ .hb-mkt-page .hb-mkt-shell{height:auto;min-height:0;padding-top:12px!important}
+ .hb-mkt-page .hb-mkt-sidebar,.hb-mkt-page .hb-mkt-main,.hb-mkt-page .hb-mkt-grid-scroll{height:auto;min-height:0;overflow:visible}
+ .hb-mkt-page .hb-mktBrand{flex-wrap:wrap;gap:4px 12px}
+}
+</style>
 </head>
 <body>
 <div id="root"></div>
@@ -4087,7 +4098,7 @@ function HbMarketingPhotoHub({onBack,notify}){
     }catch(err){notify("複製失敗："+(err.message||err))}
   };
 
-  return u.default.createElement("div",{style:{background:MP.cream,fontFamily:"'Noto Sans TC', sans-serif",color:MP.ink,position:"fixed",inset:0,zIndex:9999,width:"100vw",height:"100vh",display:"flex",flexDirection:"column",overflow:"hidden"}},
+  return u.default.createElement("div",{className:"hb-mkt-page",style:{background:MP.cream,fontFamily:"'Noto Sans TC', sans-serif",color:MP.ink,position:"fixed",inset:0,zIndex:9999,width:"100vw",height:"100vh",display:"flex",flexDirection:"column",overflow:"hidden"}},
     u.default.createElement("style",null,`
       @keyframes iyBreatheA { 0%,100%{transform:scale(1);opacity:.7} 50%{transform:scale(1.3);opacity:1} }
       @keyframes iyBreatheB { 0%,100%{transform:scale(1);opacity:.7} 50%{transform:scale(1.3);opacity:1} }
