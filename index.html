@@ -7692,6 +7692,8 @@ function HB_buildVendorHTML(v){
 <html lang="zh-Hant"><head><meta charset="UTF-8" /><title>${e(v.vendorName||"廠商領據")} · 赫柏空間領據</title>
 <style>
 ${HB_DOC_CSS}
+/* 領據依列印視窗選擇紙張與方向，保留共用頁邊距。 */
+@page{size:auto}
 </style></head>
 <body>
 <div class="toolbar"><button class="back" onclick="window.close()" title="返回">←</button><button class="print" onclick="window.print()">列印 / 存 PDF</button></div>
