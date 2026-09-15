@@ -5763,16 +5763,16 @@ function HbPriceBookHub({onBack,notify}){
       loading&&list.length===0?h("div",{style:{textAlign:"center",padding:40}},h(E,{name:"loader",size:22,className:"animate-spin",color:"#B4573A"})):
       filtered.length===0?h("div",{style:{textAlign:"center",padding:"46px 20px",color:s.inkSoft,fontSize:13,lineHeight:1.8}},
         list.length===0?"單價庫還是空的。按上面的「從歷史估價單建庫」，可以把你過去報過的工項一次全部匯進來。":"沒有符合的工項"):
-      h("div",{style:{display:"flex",flexDirection:"column",gap:8}},
+      h("div",{className:"hb-pricebook-list",style:{display:"flex",flexDirection:"column",gap:8}},
         filtered.slice(0,400).map(row=>{
           let margin=HB_pbMargin(row);
           let trend=HB_pbTrend(row,"c");
           let open=openId===row.id;
           let hist=(Array.isArray(row.price_history)?row.price_history:[]).slice().reverse();
-          return h("div",{key:row.id,style:{background:"rgba(255,255,255,.55)",border:"1px solid rgba(57,51,47,.12)",borderRadius:2,overflow:"hidden"}},
-            h("div",{onClick:()=>setOpenId(open?null:row.id),style:{padding:"11px 13px",cursor:"pointer",display:"flex",gap:10,alignItems:"flex-start",background:sel.has(row.id)?"rgba(46,74,60,0.07)":"transparent"}},
+          return h("div",{key:row.id,className:"hb-pricebook-card",style:{background:"rgba(255,255,255,.55)",border:"1px solid rgba(57,51,47,.12)",borderRadius:2,overflow:"hidden"}},
+            h("div",{className:"hb-pricebook-card-row",onClick:()=>setOpenId(open?null:row.id),style:{padding:"11px 13px",cursor:"pointer",display:"flex",gap:10,alignItems:"flex-start",background:sel.has(row.id)?"rgba(46,74,60,0.07)":"transparent"}},
               h("input",{type:"checkbox",checked:sel.has(row.id),onChange:()=>toggleOne(row.id),onClick:ev=>ev.stopPropagation(),style:{width:15,height:15,marginTop:2,flexShrink:0,cursor:"pointer"}}),
-              h("div",{style:{flex:1,minWidth:0}},
+              h("div",{className:"hb-pricebook-info",style:{flex:1,minWidth:0}},
                 h("div",{style:{fontSize:14,fontWeight:400,color:s.ink,lineHeight:1.45}},row.name,
                   row.spec?h("span",{style:{color:s.inkSoft,fontSize:12}}," ／ ",row.spec):null),
                 h("div",{style:{fontSize:11,color:s.inkSoft,marginTop:3,display:"flex",gap:8,flexWrap:"wrap"}},
@@ -5782,7 +5782,7 @@ function HbPriceBookHub({onBack,notify}){
                   row.last_used_at?h("span",null,"最近 ",String(row.last_used_at).slice(0,10)):null
                 )
               ),
-              h("div",{style:{textAlign:"right",whiteSpace:"nowrap"}},
+              h("div",{className:"hb-pricebook-price",style:{textAlign:"right",whiteSpace:"nowrap"}},
                 h("div",{style:{fontSize:14,color:"#17150F"}},row.price?"NT$ "+HB_money(HB_num(row.price)):"—"),
                 h("div",{style:{fontSize:11,color:s.inkSoft,marginTop:2}},"單位成本 ",row.vendor_price?HB_money(HB_num(row.vendor_price)):"—",
                   margin!=null?h("span",{style:{color:margin>=0?s.tree:s.danger,marginLeft:6}},"毛利 ",margin,"%"):null),
@@ -14742,6 +14742,18 @@ u.default.createElement("button",{disabled:!msg.trim()||busy,onClick:send,style:
   }
   .toolbar { position: sticky; top: 0; background: #1C1B18; padding: 12px 16px; display: flex; justify-content: flex-end; margin: -24px -24px 24px; }
   .toolbar button { background: #41101B; color: #EEE5DA; border: none; border-radius: 7px; padding: 8px 16px; font-weight: 700; font-size: 13px; cursor: pointer; }
+</style>
+
+<style id="hb-pricebook-mobile-layout">
+@media (max-width: 600px){
+  .hb-pricebook-card-row{display:grid!important;grid-template-columns:22px minmax(0,1fr)!important;gap:8px 10px!important;align-items:start!important;padding:13px 12px!important}
+  .hb-pricebook-card-row>input[type="checkbox"]{grid-column:1;grid-row:1;width:18px!important;height:18px!important;margin:2px 0 0!important}
+  .hb-pricebook-info{grid-column:2;grid-row:1;min-width:0!important}
+  .hb-pricebook-info>div:first-child{font-size:15px!important;line-height:1.55!important;overflow-wrap:anywhere}
+  .hb-pricebook-price{grid-column:2;grid-row:2;text-align:left!important;white-space:normal!important;display:flex!important;align-items:baseline!important;gap:8px 12px!important;flex-wrap:wrap!important;padding-top:8px!important;border-top:1px solid rgba(57,51,47,.10)}
+  .hb-pricebook-price>div:first-child{font-size:15px!important;font-weight:500}
+  .hb-pricebook-price>div:not(:first-child){margin-top:0!important}
+}
 </style>
 </head>
 <body>
