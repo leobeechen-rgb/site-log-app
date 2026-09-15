@@ -3533,6 +3533,20 @@ table.sign tr:first-child td{height:auto;background:var(--wash)}
   .hb-pricebook-price>div:not(:first-child){margin-top:0!important}
 }
 </style>
+
+<style id="hb-todo-check-polish">
+/* 今日待辦：避免全站 44px 觸控高度把完成鈕拉成橢圓 */
+.hb-today .td-check{
+  box-sizing:border-box!important;width:24px!important;height:24px!important;
+  min-width:24px!important;min-height:24px!important;max-width:24px!important;max-height:24px!important;
+  padding:0!important;margin:0!important;border:1.5px solid #9B8461!important;border-radius:50%!important;
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  line-height:1!important;font-size:13px!important;font-weight:500!important;flex:0 0 24px!important;
+  background:rgba(255,253,248,.72)!important;color:#FFF9F1!important;box-shadow:none!important;
+}
+.hb-today .td-done .td-check{background:#762D35!important;border-color:#762D35!important;box-shadow:0 0 0 3px rgba(118,45,53,.08)!important}
+@media(max-width:560px){.hb-today .td-check{align-self:start!important;margin-top:1px!important}}
+</style>
 </head>
 <body>
 <div id="root"></div>
