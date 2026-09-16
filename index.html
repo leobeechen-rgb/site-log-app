@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head><style id="hb-owner-gallery-style">
-/* HERFULSINS v17 — from the floor plan into a finished home. */
+/* HERFULSINS v18 — drawing version control and owner publishing. */
 .hb-gallery-video{position:fixed;inset:0;z-index:10000;overflow:hidden;background:#f2efe7;color:#514b3f;font-family:'PingFang TC','Microsoft JhengHei',sans-serif;isolation:isolate;overscroll-behavior:contain;touch-action:none;opacity:1;transition:opacity .36s ease}
 .hb-gallery-video.is-leaving{opacity:0;pointer-events:none}
 .hb-gallery-video *{box-sizing:border-box}
@@ -11115,6 +11115,18 @@ async function HB_downloadDrawingCad(ev,v,name){
   finally{link.textContent=label;link.removeAttribute("aria-busy")}
 }
 
+const HB_DRAWING_SHARE_KEY="herfulsins_drawing_share_v1";
+const HB_DRAWING_SHARE_TAG="[[HB_OWNER_PUBLISHED]]";
+function HB_readDrawingShare(){
+  try{return JSON.parse(localStorage.getItem(HB_DRAWING_SHARE_KEY)||"{}")||{}}catch{return{}}
+}
+function HB_writeDrawingShare(value){
+  try{localStorage.setItem(HB_DRAWING_SHARE_KEY,JSON.stringify(value))}catch{}
+}
+function HB_hasDrawingShareTag(note){return String(note||"").includes(HB_DRAWING_SHARE_TAG)}
+function HB_addDrawingShareTag(note){let clean=String(note||"").replaceAll(HB_DRAWING_SHARE_TAG,"").trim();return(clean?clean+"\n":"")+HB_DRAWING_SHARE_TAG}
+function HB_removeDrawingShareTag(note){return String(note||"").replaceAll(HB_DRAWING_SHARE_TAG,"").trim()||null}
+
 function HbDrawingHub({onBack,notify}){
   let[folders,setFolders]=(0,u.useState)([]);
   let[drawings,setDrawings]=(0,u.useState)([]);
@@ -11124,6 +11136,10 @@ function HbDrawingHub({onBack,notify}){
   let[showNewFolder,setShowNewFolder]=(0,u.useState)(false);
   let[uploading,setUploading]=(0,u.useState)(false);
   let[versionModalId,setVersionModalId]=(0,u.useState)(null);
+  let[shareMeta,setShareMeta]=(0,u.useState)(()=>HB_readDrawingShare());
+  let[ownerPreview,setOwnerPreview]=(0,u.useState)(false);
+  let[statusFilter,setStatusFilter]=(0,u.useState)("all");
+  let[searchText,setSearchText]=(0,u.useState)("");
   let fileInputRef=(0,u.useRef)(null);
   let newVersionInputRef=(0,u.useRef)(null);
   let pendingNewVersionDrawing=(0,u.useRef)(null);
@@ -11135,9 +11151,18 @@ function HbDrawingHub({onBack,notify}){
       q.from("sitelog_drawings").select("*").order("created_at",{ascending:false}),
       q.from("sitelog_drawing_versions").select("*").order("version_no",{ascending:true})
     ]);
-    setFolders((foRes.data||[]).map(r=>({id:r.id,name:r.name,parentId:r.parent_id,createdAt:r.created_at})));
-    setDrawings((drRes.data||[]).map(r=>({id:r.id,folderId:r.folder_id,name:r.name,currentVersionId:r.current_version_id,createdAt:r.created_at})));
-    setVersions((vrRes.data||[]).map(r=>({id:r.id,drawingId:r.drawing_id,versionNo:r.version_no,mime:r.mime,size:r.size,url:r.url,path:r.path,note:r.note,uploadedAt:r.uploaded_at})));
+    let mappedFolders=(foRes.data||[]).map(r=>({id:r.id,name:r.name,parentId:r.parent_id,createdAt:r.created_at}));
+    let mappedDrawings=(drRes.data||[]).map(r=>({id:r.id,folderId:r.folder_id,name:r.name,currentVersionId:r.current_version_id,createdAt:r.created_at}));
+    let mappedVersions=(vrRes.data||[]).map(r=>({id:r.id,drawingId:r.drawing_id,versionNo:r.version_no,mime:r.mime,size:r.size,url:r.url,path:r.path,note:r.note,uploadedAt:r.uploaded_at}));
+    setFolders(mappedFolders);setDrawings(mappedDrawings);setVersions(mappedVersions);
+    if(!vrRes.error){
+      let next={};
+      mappedDrawings.forEach(d=>{
+        let published=mappedVersions.filter(v=>v.drawingId===d.id&&HB_hasDrawingShareTag(v.note)).sort((a,b)=>b.versionNo-a.versionNo)[0];
+        if(published)next[d.id]={shared:true,publishedVersionId:published.id,publishedAt:published.uploadedAt,viewedAt:null};
+      });
+      setShareMeta(next);HB_writeDrawingShare(next);
+    }
     setLoading(false);
   };
   (0,u.useEffect)(()=>{load()},[]);
@@ -11146,6 +11171,43 @@ function HbDrawingHub({onBack,notify}){
   let folderDrawings=drawings.filter(d=>d.folderId===currentFolderId);
   let versionsFor=id=>versions.filter(v=>v.drawingId===id).sort((a,b)=>b.versionNo-a.versionNo);
   let currentVersionOf=d=>versions.find(v=>v.id===d.currentVersionId)||versionsFor(d.id)[0];
+  let shareOf=d=>shareMeta[d.id]||{shared:false,publishedVersionId:null,publishedAt:null,viewedAt:null};
+  let publishedVersionOf=d=>{let m=shareOf(d);return versions.find(v=>v.id===m.publishedVersionId)||null};
+  let updateShare=(id,patch)=>{
+    setShareMeta(prev=>{let next={...prev,[id]:{...(prev[id]||{}),...patch}};HB_writeDrawingShare(next);return next});
+  };
+  let publishVersion=async(d,versionId)=>{
+    let target=versions.find(v=>v.id===versionId&&v.drawingId===d.id);if(!target){notify("找不到要發布的版本");return}
+    let marked=versions.filter(v=>v.drawingId===d.id&&HB_hasDrawingShareTag(v.note)&&v.id!==target.id);
+    for(let v of marked){let{error}=await q.from("sitelog_drawing_versions").update({note:HB_removeDrawingShareTag(v.note)}).eq("id",v.id);if(error){notify("發布失敗："+error.message);return}}
+    let newNote=HB_addDrawingShareTag(target.note),{error}=await q.from("sitelog_drawing_versions").update({note:newNote}).eq("id",target.id);
+    if(error){notify("發布失敗："+error.message);return}
+    setVersions(vs=>vs.map(v=>v.drawingId!==d.id?v:{...v,note:v.id===target.id?HB_addDrawingShareTag(v.note):HB_removeDrawingShareTag(v.note)}));
+    updateShare(d.id,{shared:true,publishedVersionId:target.id,publishedAt:new Date().toISOString(),viewedAt:null});
+    notify(`v${target.versionNo} 已發布給業主`);
+  };
+  let publishDrawing=d=>{
+    let cv=currentVersionOf(d);if(!cv){notify("請先上傳圖面版本");return}
+    publishVersion(d,cv.id);
+  };
+  let toggleDrawingShare=async d=>{
+    let m=shareOf(d),cv=currentVersionOf(d);
+    if(!m.shared&&!cv){notify("請先上傳圖面版本");return}
+    if(!m.shared){publishVersion(d,m.publishedVersionId||cv.id);return}
+    let published=publishedVersionOf(d);
+    if(published){let{error}=await q.from("sitelog_drawing_versions").update({note:HB_removeDrawingShareTag(published.note)}).eq("id",published.id);if(error){notify("停止共享失敗："+error.message);return}
+      setVersions(vs=>vs.map(v=>v.id===published.id?{...v,note:HB_removeDrawingShareTag(v.note)}:v));}
+    updateShare(d.id,{shared:false,publishedVersionId:null,publishedAt:null,viewedAt:null});
+    notify("已改為公司內部圖面");
+  };
+  let visibleDrawings=folderDrawings.filter(d=>{
+    let m=shareOf(d),cv=currentVersionOf(d),pv=publishedVersionOf(d),qv=searchText.trim().toLowerCase();
+    if(ownerPreview&&!m.shared)return false;
+    if(statusFilter==="shared"&&!m.shared)return false;
+    if(statusFilter==="internal"&&m.shared)return false;
+    if(statusFilter==="pending"&&(!m.shared||!cv||!pv||cv.id===pv.id))return false;
+    return !qv||String(d.name||"").toLowerCase().includes(qv);
+  });
 
   let breadcrumb=(()=>{
     let chain=[],cur=currentFolderId;
@@ -11266,6 +11328,7 @@ function HbDrawingHub({onBack,notify}){
     if(error){notify("刪除失敗："+error.message);return}
     setVersions(vs=>vs.filter(v=>v.drawingId!==id));
     setDrawings(ds=>ds.filter(d=>d.id!==id));
+    setShareMeta(prev=>{let next={...prev};delete next[id];HB_writeDrawingShare(next);return next});
     if(versionModalId===id)setVersionModalId(null);
     notify("圖面已刪除");
   };
@@ -11281,9 +11344,15 @@ function HbDrawingHub({onBack,notify}){
     u.default.createElement("div",{className:"hb-dosWrap"},
       u.default.createElement("button",{onClick:onBack,className:"hb-arcBack"},u.default.createElement(E,{name:"arrow-left",size:15}),u.default.createElement("span",null,"返回公司資料庫")),
       u.default.createElement("div",{className:"hb-dosLabel"},"Gestion des Plans"),u.default.createElement("h1",{className:"hb-dosTitle"},"圖面管理"),
-      u.default.createElement("p",{className:"hb-dosLede"},"依資料夾管理施工圖面，支援圖片、PDF、DWG、DXF，每檔上限 30 MB。CAD 檔下載後以繪圖軟體開啟，並可保留版本紀錄。")
+      u.default.createElement("p",{className:"hb-dosLede"},ownerPreview?"業主預覽模式僅顯示已正式發布的圖面，內部草稿與待發布版本不會出現。":"依資料夾管理施工圖面、保留版本紀錄，並決定哪些正式版本提供業主查看。")
     ),
     u.default.createElement("div",{style:{maxWidth:1320,margin:"0 auto",padding:"6px clamp(20px,4vw,58px) 112px"}},
+      u.default.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(118px,1fr))",gap:8,marginBottom:14}},
+        [[drawings.length,"全部圖面"],[drawings.filter(d=>shareOf(d).shared).length,"業主共享"],[drawings.filter(d=>{let cv=currentVersionOf(d),pv=publishedVersionOf(d);return shareOf(d).shared&&cv&&pv&&cv.id!==pv.id}).length,"新版待發布"],[drawings.filter(d=>shareOf(d).viewedAt).length,"業主已查看"]].map((it,i)=>u.default.createElement("div",{key:i,style:{background:"rgba(255,255,255,.55)",border:"1px solid rgba(57,51,47,.12)",padding:"12px 14px",minWidth:0}},
+          u.default.createElement("div",{style:{fontFamily:"Georgia,serif",fontSize:22,color:i===1?"#315C48":"#17150F"}},it[0]),
+          u.default.createElement("div",{style:{fontSize:11,color:s.inkSoft,marginTop:3}},it[1])
+        ))
+      ),
       u.default.createElement("div",{style:{display:"flex",flexWrap:"wrap",alignItems:"center",gap:4,fontSize:12.5,color:s.inkSoft,marginBottom:14}},
         u.default.createElement("span",{onClick:()=>setCurrentFolderId(null),style:{cursor:"pointer",color:currentFolderId?s.inkSoft:"#17150F"}},"圖面總覽"),
         breadcrumb.map(f=>u.default.createElement(u.default.Fragment,{key:f.id},
@@ -11291,9 +11360,14 @@ function HbDrawingHub({onBack,notify}){
           u.default.createElement("span",{onClick:()=>setCurrentFolderId(f.id),style:{cursor:"pointer",color:f.id===currentFolderId?"#17150F":s.inkSoft}},f.name)
         ))
       ),
-      u.default.createElement("div",{style:{display:"flex",gap:8,marginBottom:16}},
+      u.default.createElement("div",{style:{display:"flex",gap:8,marginBottom:10,flexWrap:"wrap"}},
         u.default.createElement(ke,{label:"新增資料夾",icon:"folder-plus",busy:false,onClick:()=>setShowNewFolder(true)}),
-        currentFolderId&&u.default.createElement(ke,{label:uploading?"上傳中…":"上傳圖面",icon:"upload",busy:uploading,onClick:()=>fileInputRef.current&&fileInputRef.current.click()})
+        currentFolderId&&u.default.createElement(ke,{label:uploading?"上傳中…":"上傳圖面",icon:"upload",busy:uploading,onClick:()=>fileInputRef.current&&fileInputRef.current.click()}),
+        u.default.createElement("button",{onClick:()=>{setOwnerPreview(v=>!v);setStatusFilter("all")},style:{...ll,padding:"9px 14px",background:ownerPreview?"#315C48":"rgba(255,255,255,.55)",color:ownerPreview?"#fff":s.ink}},ownerPreview?"返回公司管理":"預覽業主畫面")
+      ),
+      currentFolderId&&u.default.createElement("div",{style:{display:"flex",gap:7,marginBottom:16,overflowX:"auto",paddingBottom:2}},
+        u.default.createElement("input",{value:searchText,onChange:e=>setSearchText(e.target.value),placeholder:"搜尋圖面名稱",style:{...el,minWidth:150,flex:"1 1 180px",margin:0,padding:"9px 11px"}}),
+        [["all","全部"],["shared","業主共享"],["pending","待發布"],["internal","公司內部"]].map(it=>u.default.createElement("button",{key:it[0],onClick:()=>setStatusFilter(it[0]),style:{...ll,whiteSpace:"nowrap",padding:"8px 11px",background:statusFilter===it[0]?"#17150F":"rgba(255,255,255,.55)",color:statusFilter===it[0]?"#fff":s.ink}},it[1]))
       ),
       u.default.createElement("input",{ref:fileInputRef,type:"file",accept:"image/*,.pdf,application/pdf,.dwg,.dxf",multiple:true,style:{display:"none"},onChange:handleNewDrawingUpload}),
       u.default.createElement("input",{ref:newVersionInputRef,type:"file",accept:"image/*,.pdf,application/pdf,.dwg,.dxf",style:{display:"none"},onChange:handleNewVersionUpload}),
@@ -11309,21 +11383,24 @@ function HbDrawingHub({onBack,notify}){
               ),
               u.default.createElement("button",{onClick:()=>deleteFolder(f.id),style:at},u.default.createElement(E,{name:"trash",size:15}))
             )),
-            folderDrawings.map(d=>{
-              let cv=currentVersionOf(d);
+            visibleDrawings.map(d=>{
+              let meta=shareOf(d),actualCv=currentVersionOf(d),published=publishedVersionOf(d),cv=ownerPreview?(published||actualCv):actualCv,isPending=meta.shared&&actualCv&&published&&actualCv.id!==published.id;
               return u.default.createElement("div",{key:d.id,style:{background:"rgba(255,255,255,.55)",border:"1px solid rgba(57,51,47,.12)",borderRadius:2,padding:"12px 14px"}},
                 u.default.createElement("div",{style:{display:"flex",alignItems:"center",gap:10}},
                   u.default.createElement(E,{name:cv&&(HB_drawingIsCad(cv)||cv.mime==="application/pdf")?"file-text":"image",size:18,color:"#B4573A"}),
                   u.default.createElement("div",{style:{flex:1,minWidth:0}},
                     u.default.createElement("div",{style:{fontSize:14}},d.name),
-                    u.default.createElement("div",{style:{fontSize:11,color:s.inkSoft,marginTop:2}},cv?`目前版本 v${cv.versionNo}${HB_drawingIsCad(cv)?" · "+HB_drawingCadExt(cv.path||cv.url).toUpperCase():""}`:"尚無版本")
-                  )
+                    u.default.createElement("div",{style:{fontSize:11,color:s.inkSoft,marginTop:2}},cv?`${ownerPreview?"業主版本":"目前版本"} v${cv.versionNo}${HB_drawingIsCad(cv)?" · "+HB_drawingCadExt(cv.path||cv.url).toUpperCase():""}`:"尚無版本")
+                  ),
+                  u.default.createElement("span",{style:{fontSize:10,padding:"4px 8px",borderRadius:20,whiteSpace:"nowrap",background:isPending?"#EEE4D4":meta.shared?"#E3EEE7":"#EEEAE2",color:isPending?"#80633B":meta.shared?"#315C48":"#746E64"}},isPending?"新版待發布":meta.shared?"業主共享":"公司內部")
                 ),
                 u.default.createElement("div",{style:{display:"flex",gap:8,marginTop:10,flexWrap:"wrap"}},
                   cv&&u.default.createElement("a",{href:cv.url,onClick:HB_drawingIsCad(cv)?ev=>HB_downloadDrawingCad(ev,cv,d.name):undefined,target:"_blank",rel:"noreferrer",style:{...ll,flex:1,fontSize:12.5,padding:"8px 0",textAlign:"center",textDecoration:"none",display:"block"}},HB_drawingIsCad(cv)?"下載 CAD 原檔":"檢視 / 下載"),
-                  u.default.createElement("button",{onClick:()=>openNewVersionPicker(d.id),style:{...ll,flex:1,fontSize:12.5,padding:"8px 0"}},"上傳新版本"),
-                  u.default.createElement("button",{onClick:()=>setVersionModalId(d.id),style:{...ll,flex:1,fontSize:12.5,padding:"8px 0"}},`版本紀錄 (${versionsFor(d.id).length})`),
-                  u.default.createElement("button",{onClick:()=>deleteDrawing(d.id),style:at},u.default.createElement(E,{name:"trash",size:15}))
+                  !ownerPreview&&u.default.createElement("button",{onClick:()=>openNewVersionPicker(d.id),style:{...ll,flex:1,fontSize:12.5,padding:"8px 0"}},"上傳新版本"),
+                  !ownerPreview&&u.default.createElement("button",{onClick:()=>setVersionModalId(d.id),style:{...ll,flex:1,fontSize:12.5,padding:"8px 0"}},`版本紀錄 (${versionsFor(d.id).length})`),
+                  !ownerPreview&&u.default.createElement("button",{onClick:()=>toggleDrawingShare(d),style:{...ll,flex:1,fontSize:12.5,padding:"8px 0",color:meta.shared?"#8C493F":"#315C48"}},meta.shared?"停止共享":"開啟共享"),
+                  !ownerPreview&&(isPending||!meta.shared)&&u.default.createElement("button",{onClick:()=>publishDrawing(d),style:{...Dl,flex:1,fontSize:12.5,padding:"8px 0",background:"#315C48"}},meta.shared?"發布新版給業主":"發布給業主"),
+                  !ownerPreview&&u.default.createElement("button",{onClick:()=>deleteDrawing(d.id),style:at},u.default.createElement(E,{name:"trash",size:15}))
                 )
               );
             })
@@ -11331,7 +11408,7 @@ function HbDrawingHub({onBack,notify}){
       )
     ),
     showNewFolder&&u.default.createElement(HbNewDrawingFolderModal,{onCancel:()=>setShowNewFolder(false),onCreate:createFolder}),
-    viewingDrawing&&u.default.createElement(HbDrawingVersionModal,{drawing:viewingDrawing,versions:versionsFor(viewingDrawing.id),onClose:()=>setVersionModalId(null),onRestore:vid=>restoreVersion(viewingDrawing.id,vid)})
+    viewingDrawing&&u.default.createElement(HbDrawingVersionModal,{drawing:viewingDrawing,versions:versionsFor(viewingDrawing.id),publishedVersionId:shareOf(viewingDrawing).publishedVersionId,onClose:()=>setVersionModalId(null),onRestore:vid=>restoreVersion(viewingDrawing.id,vid),onPublish:vid=>publishVersion(viewingDrawing,vid)})
   );
 }
 
@@ -11350,7 +11427,7 @@ function HbNewDrawingFolderModal({onCancel,onCreate}){
   );
 }
 
-function HbDrawingVersionModal({drawing,versions,onClose,onRestore}){
+function HbDrawingVersionModal({drawing,versions,publishedVersionId,onClose,onRestore,onPublish}){
   return u.default.createElement("div",{style:{position:"fixed",inset:0,background:"rgba(43,38,32,0.45)",display:"flex",alignItems:"center",justifyContent:"center",padding:20,zIndex:55}},
     u.default.createElement("div",{className:"fade-in",style:{background:s.card,borderRadius:10,padding:22,width:"100%",maxWidth:420,maxHeight:"80vh",overflowY:"auto"}},
       u.default.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}},
@@ -11361,12 +11438,13 @@ function HbDrawingVersionModal({drawing,versions,onClose,onRestore}){
       u.default.createElement("div",{style:{display:"flex",flexDirection:"column",gap:10}},
         versions.map(v=>u.default.createElement("div",{key:v.id,style:{border:`1px solid ${s.line}`,borderRadius:8,padding:"10px 12px"}},
           u.default.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center"}},
-            u.default.createElement("span",{style:{fontSize:13.5,fontWeight:400}},`v${v.versionNo}${HB_drawingIsCad(v)?" · "+HB_drawingCadExt(v.path||v.url).toUpperCase():""}`+(v.id===drawing.currentVersionId?"　目前使用中":"")),
+            u.default.createElement("span",{style:{fontSize:13.5,fontWeight:400}},`v${v.versionNo}${HB_drawingIsCad(v)?" · "+HB_drawingCadExt(v.path||v.url).toUpperCase():""}`+(v.id===drawing.currentVersionId?"　目前使用中":"")+(v.id===publishedVersionId?"　業主發布版":"")),
             u.default.createElement("span",{style:{fontSize:11,color:s.inkSoft}},new Date(v.uploadedAt).toLocaleString("zh-TW"))
           ),
           u.default.createElement("div",{style:{display:"flex",gap:8,marginTop:8}},
             u.default.createElement("a",{href:v.url,onClick:HB_drawingIsCad(v)?ev=>HB_downloadDrawingCad(ev,v,drawing.name):undefined,target:"_blank",rel:"noreferrer",style:{...ll,flex:1,fontSize:12,padding:"6px 0",textAlign:"center",textDecoration:"none",display:"block"}},HB_drawingIsCad(v)?"下載 CAD 原檔":"下載 / 檢視"),
-            v.id!==drawing.currentVersionId&&u.default.createElement("button",{onClick:()=>onRestore(v.id),style:{...ll,flex:1,fontSize:12,padding:"6px 0"}},"設為目前版本")
+            v.id!==drawing.currentVersionId&&u.default.createElement("button",{onClick:()=>onRestore(v.id),style:{...ll,flex:1,fontSize:12,padding:"6px 0"}},"設為目前版本"),
+            v.id!==publishedVersionId&&u.default.createElement("button",{onClick:()=>onPublish(v.id),style:{...ll,flex:1,fontSize:12,padding:"6px 0",color:"#315C48"}},"發布給業主")
           )
         ))
       )
