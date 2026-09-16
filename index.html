@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head><style id="hb-owner-gallery-style">
-/* HERFULSINS v23 — rich responsive drawing control workspace. */
+/* HERFULSINS v24 — interactive drawing control shortcuts. */
 .hb-gallery-video{position:fixed;inset:0;z-index:10000;overflow:hidden;background:#f2efe7;color:#514b3f;font-family:'PingFang TC','Microsoft JhengHei',sans-serif;isolation:isolate;overscroll-behavior:contain;touch-action:none;opacity:1;transition:opacity .36s ease}
 .hb-gallery-video.is-leaving{opacity:0;pointer-events:none}
 .hb-gallery-video *{box-sizing:border-box}
@@ -11376,12 +11376,20 @@ function HbDrawingHub({onBack,notify}){
   let folderSharedCount=folderDrawings.filter(d=>shareOf(d).shared).length;
   let drawingDate=v=>v&&v.uploadedAt?new Date(v.uploadedAt).toLocaleDateString("zh-TW",{year:"numeric",month:"2-digit",day:"2-digit"}):"—";
   let drawingKind=v=>!v?"尚無檔案":HB_drawingIsCad(v)?HB_drawingCadExt(v.path||v.url).toUpperCase():v.mime==="application/pdf"?"PDF":"IMAGE";
+  let jumpPlan=mode=>{
+    if(!currentFolderId){notify("請先選擇一個圖面資料夾");return}
+    if(mode==="owner"){setOwnerPreview(true);setStatusFilter("all")}
+    else{setOwnerPreview(false);setStatusFilter(mode==="pending"?"pending":"all")}
+    setTimeout(()=>document.getElementById("hb-plan-register")?.scrollIntoView({behavior:"smooth",block:"start"}),60);
+  };
 
   return u.default.createElement("div",{className:"hb-archive hb-dossier hb-plan-system",style:{minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},
     u.default.createElement("style",null,`
       .hb-plan-system{--plan-green:#315c48;--plan-rust:#b4573a;--plan-ink:#211f1b;--plan-paper:rgba(255,255,255,.62)}
       .hb-plan-features{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:0 0 18px}
-      .hb-plan-feature{display:flex;gap:10px;align-items:center;padding:13px 14px;border:1px solid rgba(57,51,47,.12);background:rgba(255,255,255,.42)}
+      .hb-plan-feature{display:flex;width:100%;gap:10px;align-items:center;padding:13px 14px;border:1px solid rgba(57,51,47,.12);background:rgba(255,255,255,.42);font-family:inherit;color:inherit;text-align:left;cursor:pointer;appearance:none;transition:transform .18s ease,border-color .18s ease,background .18s ease,box-shadow .18s ease}
+      .hb-plan-feature:hover,.hb-plan-feature:focus-visible{transform:translateY(-2px);border-color:rgba(49,92,72,.42);background:rgba(255,255,255,.72);box-shadow:0 9px 24px rgba(56,45,36,.07);outline:none}
+      .hb-plan-feature:active{transform:translateY(0);box-shadow:none}.hb-plan-feature.on{border-color:rgba(49,92,72,.5);background:#e8eee8;box-shadow:inset 0 -2px #315c48}
       .hb-plan-feature b{display:block;font:400 13px 'Noto Sans TC',sans-serif;color:var(--plan-ink)}
       .hb-plan-feature small{display:block;margin-top:2px;font-size:10px;color:#81786d}
       .hb-plan-folder-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
@@ -11417,7 +11425,7 @@ function HbDrawingHub({onBack,notify}){
     ),
     u.default.createElement("div",{style:{maxWidth:1320,margin:"0 auto",padding:"6px clamp(20px,4vw,58px) 112px"}},
       u.default.createElement("div",{className:"hb-plan-features"},
-        [["copy","版本控制","每次改版完整保留"],["users","業主共享","只顯示正式發布版"],["send","發布追蹤","新版與查看狀態"],["refresh","雲端同步","手機與電腦共用"]].map((it,i)=>u.default.createElement("div",{className:"hb-plan-feature",key:i},
+        [["copy","版本控制","每次改版完整保留",()=>jumpPlan("all"),!ownerPreview&&statusFilter==="all"],["users","業主共享","只顯示正式發布版",()=>jumpPlan("owner"),ownerPreview],["send","發布追蹤","新版與查看狀態",()=>jumpPlan("pending"),!ownerPreview&&statusFilter==="pending"],["refresh","雲端同步","手機與電腦共用",async()=>{await load();notify("圖面資料已重新同步")},false]].map((it,i)=>u.default.createElement("button",{type:"button",className:"hb-plan-feature"+(it[4]?" on":""),key:i,onClick:it[3]},
           u.default.createElement(E,{name:it[0],size:18,color:i===1?"#315C48":"#B4573A"}),u.default.createElement("div",null,u.default.createElement("b",null,it[1]),u.default.createElement("small",null,it[2]))
         ))
       ),
@@ -11460,7 +11468,7 @@ function HbDrawingHub({onBack,notify}){
               )
             })),
             currentFolderId&&u.default.createElement(u.default.Fragment,null,
-              u.default.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-end",gap:12,margin:"6px 0 10px"}},
+              u.default.createElement("div",{id:"hb-plan-register",style:{display:"flex",justifyContent:"space-between",alignItems:"flex-end",gap:12,margin:"6px 0 10px",scrollMarginTop:18}},
                 u.default.createElement("div",null,u.default.createElement("div",{style:{font:"italic 11px Georgia,serif",letterSpacing:".16em",color:"#8b8277"}},"DRAWING REGISTER"),u.default.createElement("div",{style:{font:"400 20px 'Noto Serif TC',serif",marginTop:4}},currentFolder?currentFolder.name:"圖面清單")),
                 u.default.createElement("div",{style:{fontSize:11,color:s.inkSoft}},`${visibleDrawings.length} 張圖面 · ${folderSharedCount} 張已共享`)
               ),
