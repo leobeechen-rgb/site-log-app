@@ -11170,13 +11170,15 @@ async function HB_loadProjectDrawings(project,opts){
   if(!project||!project.name)return empty;
   let{data:foData,error:foErr}=await q.from("sitelog_drawing_folders").select("*").order("created_at",{ascending:true});
   if(foErr)throw foErr;
-  let all=(foData||[]).map(r=>({id:r.id,name:r.name,parentId:r.parent_id,createdAt:r.created_at}));
+  let all=(foData||[]).map(r=>({id:r.id,name:r.name,parentId:r.parent_id,createdAt:r.created_at,ownerShared:r.owner_shared===true}));
   let root=all.find(f=>f.parentId==null&&String(f.name).trim()===String(project.name||"").trim());
   if(!root)return empty;
   let topOf={},pathOf={};
   let walk=(parentId,top,path)=>{all.filter(f=>f.parentId===parentId).forEach(f=>{let t=top||f.id,p=path.concat(f.name);topOf[f.id]=t;pathOf[f.id]=p;walk(f.id,t,p)})};
   walk(root.id,null,[]);
   let folderIds=[root.id].concat(Object.keys(topOf));
+  let byId={};all.forEach(f=>{byId[f.id]=f});
+  let sharedFolderOf=id=>{let cur=id;while(cur){let f=byId[cur];if(!f)break;if(f.ownerShared)return f;if(cur===root.id)break;cur=f.parentId}return null};
   let{data:drData,error:drErr}=await q.from("sitelog_drawings").select("*").in("folder_id",folderIds).order("created_at",{ascending:false});
   if(drErr)throw drErr;
   let drawings=drData||[];
@@ -11189,8 +11191,9 @@ async function HB_loadProjectDrawings(project,opts){
   let items=[];
   drawings.forEach(d=>{
     let vs=versions.filter(v=>v.drawing_id===d.id);
-    let published=vs.filter(v=>HB_hasDrawingShareTag(v.note)).sort((a,b)=>b.version_no-a.version_no)[0]||null;
     let current=vs.find(v=>v.id===d.current_version_id)||vs.slice().sort((a,b)=>b.version_no-a.version_no)[0]||null;
+    let sharedFolder=sharedFolderOf(d.folder_id);
+    let published=sharedFolder?current:(vs.filter(v=>HB_hasDrawingShareTag(v.note)).sort((a,b)=>b.version_no-a.version_no)[0]||null);
     let v=opts.publishedOnly?published:current;
     if(!v)return;
     let isCad=!!HB_drawingCadExt(v.path||v.url);
@@ -11201,7 +11204,7 @@ async function HB_loadProjectDrawings(project,opts){
       folderPath:d.folder_id===root.id?"":(pathOf[d.folder_id]||[]).join(" / "),
       shared:!!published,pendingPublish:!!(published&&current&&published.id!==current.id),
       isCad,kind:isCad?HB_drawingCadExt(v.path||v.url).toUpperCase():(v.mime==="application/pdf"?"PDF":"IMAGE"),
-      visibleToOwner:!!published,ownerNotifiedAt:null,ownerUpdateNote:"",fromDrawingHub:true
+      sharedByFolder:sharedFolder?sharedFolder.name:"",visibleToOwner:!!published,ownerNotifiedAt:null,ownerUpdateNote:"",fromDrawingHub:true
     });
   });
   items.sort((a,b)=>String(b.uploadedAt||"").localeCompare(String(a.uploadedAt||"")));
@@ -11217,7 +11220,7 @@ function HbProjectDrawingFiles({data,loading,onOpenHub,onReload,onSignature}){
   let shown=items.filter(x=>folderKey==null?true:folderKey===we?x.folderId==null:x.folderId===folderKey);
   let imgs=shown.filter(x=>!x.isCad&&(x.mime||"").startsWith("image/"));
   let others=shown.filter(x=>!imgs.includes(x));
-  let pill=x=>C("span",{style:{display:"inline-flex",alignItems:"center",padding:"3px 8px",borderRadius:999,fontSize:10.5,whiteSpace:"nowrap",border:"1px solid "+(x.shared?s.ocean:s.line),color:x.shared?s.oceanDark:s.inkSoft,background:x.shared?s.paper:s.card}},x.shared?(x.pendingPublish?"業主可見・有新版未發布":"業主可見"):"僅公司可見");
+  let pill=x=>C("span",{style:{display:"inline-flex",alignItems:"center",padding:"3px 8px",borderRadius:999,fontSize:10.5,whiteSpace:"nowrap",border:"1px solid "+(x.shared?s.ocean:s.line),color:x.shared?s.oceanDark:s.inkSoft,background:x.shared?s.paper:s.card}},x.shared?(x.sharedByFolder?"業主可見・資料夾共享":x.pendingPublish?"業主可見・有新版未發布":"業主可見"):"僅公司可見");
   let download=(ev,x)=>{if(x.isCad){HB_downloadDrawingCad(ev,{url:x.url,path:x.path,versionNo:x.versionNo},x.name)}else{ev.preventDefault();window.open(x.url,"_blank","noopener")}};
   let meta=x=>[x.kind,"v"+x.versionNo,x.folderPath,Tl(x.uploadedAt)].filter(Boolean).join("　·　");
   return C(u.default.Fragment,null,
@@ -11272,7 +11275,7 @@ function HbDrawingHub({onBack,notify,project=null,embedded=false}){
       q.from("sitelog_drawings").select("*").order("created_at",{ascending:false}),
       q.from("sitelog_drawing_versions").select("*").order("version_no",{ascending:true})
     ]);
-    let mappedFolders=(foRes.data||[]).map(r=>({id:r.id,name:r.name,parentId:r.parent_id,createdAt:r.created_at}));
+    let mappedFolders=(foRes.data||[]).map(r=>({id:r.id,name:r.name,parentId:r.parent_id,createdAt:r.created_at,ownerShared:r.owner_shared===true}));
     let mappedDrawings=(drRes.data||[]).map(r=>({id:r.id,folderId:r.folder_id,name:r.name,currentVersionId:r.current_version_id,createdAt:r.created_at}));
     let mappedVersions=(vrRes.data||[]).map(r=>({id:r.id,drawingId:r.drawing_id,versionNo:r.version_no,mime:r.mime,size:r.size,url:r.url,path:r.path,note:r.note,uploadedAt:r.uploaded_at}));
     if(project&&project.id){
@@ -11301,7 +11304,17 @@ function HbDrawingHub({onBack,notify,project=null,embedded=false}){
   let folderDrawings=drawings.filter(d=>d.folderId===currentFolderId);
   let versionsFor=id=>versions.filter(v=>v.drawingId===id).sort((a,b)=>b.versionNo-a.versionNo);
   let currentVersionOf=d=>versions.find(v=>v.id===d.currentVersionId)||versionsFor(d.id)[0];
-  let shareOf=d=>shareMeta[d.id]||{shared:false,publishedVersionId:null,publishedAt:null,viewedAt:null};
+  let sharedFolderOf=id=>{let cur=id,guard=0;while(cur&&guard++<50){let f=folders.find(x=>x.id===cur);if(!f)break;if(f.ownerShared)return f;cur=f.parentId}return null};
+  let shareOf=d=>{let sf=sharedFolderOf(d.folderId);if(sf){let cv=versions.find(v=>v.id===d.currentVersionId)||versions.filter(v=>v.drawingId===d.id).sort((a,b)=>b.versionNo-a.versionNo)[0];return{shared:!!cv,byFolder:true,folderName:sf.name,publishedVersionId:cv?cv.id:null,publishedAt:cv?cv.uploadedAt:null,viewedAt:null}}return shareMeta[d.id]||{shared:false,publishedVersionId:null,publishedAt:null,viewedAt:null}};
+  let toggleFolderShare=async f=>{
+    if(!f)return;
+    let next=!f.ownerShared;
+    if(next&&!window.confirm(`將「${f.name}」設為業主共享？\n此資料夾（含子資料夾）裡的每張圖面都會自動顯示最新版本給業主，之後上傳的新版也會直接給業主看到。`))return;
+    let{error}=await q.from("sitelog_drawing_folders").update({owner_shared:next}).eq("id",f.id);
+    if(error){notify(/owner_shared|column|42703|PGRST204/i.test(String(error.message||""))?"資料庫還沒有資料夾共享欄位，請先到 Supabase 執行 drawing_folder_owner_share.sql":"設定失敗："+error.message);return}
+    setFolders(fs=>fs.map(x=>x.id===f.id?{...x,ownerShared:next}:x));
+    notify(next?`「${f.name}」已設為業主共享，業主會看到最新版本`:`「${f.name}」已改回公司內部`);
+  };
   let publishedVersionOf=d=>{let m=shareOf(d);return versions.find(v=>v.id===m.publishedVersionId)||null};
   let updateShare=(id,patch)=>{
     setShareMeta(prev=>{let next={...prev,[id]:{...(prev[id]||{}),...patch}};HB_writeDrawingShare(next);return next});
@@ -11322,6 +11335,7 @@ function HbDrawingHub({onBack,notify,project=null,embedded=false}){
   };
   let toggleDrawingShare=async d=>{
     let m=shareOf(d),cv=currentVersionOf(d);
+    if(m.byFolder){notify(`此圖面位於業主共享資料夾「${m.folderName}」，要停止共享請關閉該資料夾的共享設定`);return}
     if(!m.shared&&!cv){notify("請先上傳圖面版本");return}
     if(!m.shared){publishVersion(d,m.publishedVersionId||cv.id);return}
     let published=publishedVersionOf(d);
@@ -11580,19 +11594,24 @@ function HbDrawingHub({onBack,notify,project=null,embedded=false}){
                 !ownerPreview&&u.default.createElement("button",{onClick:e=>{e.stopPropagation();deleteFolder(f.id)},style:{...at,position:"absolute",right:12,top:12}},u.default.createElement(E,{name:"trash",size:14})),
                 u.default.createElement("div",{className:"hb-plan-folder-index"},String(i+1).padStart(2,"0")+(currentFolderId?" / DOSSIER":" / PROJECT")),
                 u.default.createElement("div",{className:"hb-plan-folder-title"},f.name),
-                u.default.createElement("div",{className:"hb-plan-folder-meta"},ownerPreview?`${shared} 張業主共享圖面`:`${direct.length} 張圖面 · ${shared} 張已共享`)
+                u.default.createElement("div",{className:"hb-plan-folder-meta"},ownerPreview?`${shared} 張業主共享圖面`:`${direct.length} 張圖面 · ${shared} 張已共享`),
+                !ownerPreview&&(()=>{let inherited=!f.ownerShared&&sharedFolderOf(f.parentId);return u.default.createElement("button",{type:"button",disabled:!!inherited,title:inherited?`已由上層「${inherited.name}」共享`:f.ownerShared?"點擊改回公司內部":"點擊設為業主共享：整個資料夾自動給業主看最新版",onClick:e=>{e.stopPropagation();toggleFolderShare(f)},style:{marginTop:12,display:"inline-flex",alignItems:"center",gap:6,padding:"5px 10px",borderRadius:999,fontSize:11,fontFamily:"inherit",cursor:inherited?"default":"pointer",border:"1px solid "+(f.ownerShared||inherited?"rgba(49,92,72,.45)":"rgba(57,51,47,.18)"),background:f.ownerShared?"#315c48":inherited?"#e3eee7":"rgba(255,255,255,.6)",color:f.ownerShared?"#fff":inherited?"#315c48":"#6f675b"}},u.default.createElement(E,{name:f.ownerShared||inherited?"users":"lock",size:12}),f.ownerShared?"業主共享中":inherited?"隨上層共享":"僅公司可見")})()
               )
             })),
             currentFolderId&&u.default.createElement(u.default.Fragment,null,
               u.default.createElement("div",{id:"hb-plan-register",style:{display:"flex",justifyContent:"space-between",alignItems:"flex-end",gap:12,margin:"6px 0 10px",scrollMarginTop:18}},
                 u.default.createElement("div",null,u.default.createElement("div",{style:{font:"italic 11px Georgia,serif",letterSpacing:".16em",color:"#8b8277"}},"DRAWING REGISTER"),u.default.createElement("div",{style:{font:"400 20px 'Noto Serif TC',serif",marginTop:4}},currentFolder?currentFolder.name:"圖面清單")),
-                u.default.createElement("div",{style:{fontSize:11,color:s.inkSoft}},`${visibleDrawings.length} 張圖面 · ${folderSharedCount} 張已共享`)
+                u.default.createElement("div",{style:{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap",justifyContent:"flex-end"}},
+                  !ownerPreview&&currentFolder&&(()=>{let inherited=!currentFolder.ownerShared&&sharedFolderOf(currentFolder.parentId);return inherited
+                    ?u.default.createElement("span",{style:{fontSize:11,color:"#315c48"}},`已由上層「${inherited.name}」設為業主共享`)
+                    :u.default.createElement("button",{type:"button",role:"switch","aria-checked":!!currentFolder.ownerShared,onClick:()=>toggleFolderShare(currentFolder),style:{...ll,padding:"7px 12px",fontSize:12,display:"inline-flex",alignItems:"center",gap:6,background:currentFolder.ownerShared?"#315c48":"rgba(255,255,255,.55)",color:currentFolder.ownerShared?"#fff":s.ink}},u.default.createElement(E,{name:currentFolder.ownerShared?"users":"lock",size:13}),currentFolder.ownerShared?"業主共享資料夾（點擊關閉）":"設為業主共享資料夾")})(),
+                  u.default.createElement("div",{style:{fontSize:11,color:s.inkSoft}},`${visibleDrawings.length} 張圖面 · ${folderSharedCount} 張已共享`))
               ),
               u.default.createElement("div",{className:"hb-plan-table"},
                 u.default.createElement("div",{className:"hb-plan-tr hb-plan-th"},["圖面資料","版本","更新日期","狀態","發布對象","操作"].map(x=>u.default.createElement("div",{className:"hb-plan-cell",key:x},x))),
                 visibleDrawings.map(d=>{
                   let meta=shareOf(d),actualCv=currentVersionOf(d),published=publishedVersionOf(d),cv=ownerPreview?(published||actualCv):actualCv,isPending=meta.shared&&actualCv&&published&&actualCv.id!==published.id;
-                  let status=isPending?"新版待發布":meta.shared?"已正式發布":"公司內部";
+                  let status=meta.byFolder?"資料夾共享・最新版":isPending?"新版待發布":meta.shared?"已正式發布":"公司內部";
                   return u.default.createElement("div",{className:"hb-plan-tr",key:d.id},
                     u.default.createElement("div",{className:"hb-plan-cell hb-plan-name",onClick:()=>setVersionModalId(d.id)},
                       u.default.createElement("div",{className:"hb-plan-thumb"},cv&&cv.mime&&cv.mime.startsWith("image/")?u.default.createElement("img",{src:cv.url,alt:""}):u.default.createElement(E,{name:cv&&HB_drawingIsCad(cv)?"file-text":cv&&cv.mime==="application/pdf"?"file-text":"image",size:21,color:"#B4573A"})),
@@ -11601,11 +11620,11 @@ function HbDrawingHub({onBack,notify,project=null,embedded=false}){
                     u.default.createElement("div",{className:"hb-plan-cell",style:{fontFamily:"Georgia,serif",fontSize:15}},cv?`V${cv.versionNo}`:"—"),
                     u.default.createElement("div",{className:"hb-plan-cell",style:{color:s.inkSoft}},drawingDate(cv)),
                     u.default.createElement("div",{className:"hb-plan-cell"},u.default.createElement("span",{className:"hb-plan-pill",style:{background:isPending?"#eee4d4":meta.shared?"#e3eee7":"#eeeae2",color:isPending?"#80633b":meta.shared?"#315c48":"#746e64"}},status)),
-                    u.default.createElement("div",{className:"hb-plan-cell",style:{color:meta.shared?"#315c48":s.inkSoft}},meta.shared?"業主":"僅公司"),
+                    u.default.createElement("div",{className:"hb-plan-cell",style:{color:meta.shared?"#315c48":s.inkSoft}},meta.byFolder?"業主（資料夾）":meta.shared?"業主":"僅公司"),
                     u.default.createElement("div",{className:"hb-plan-cell hb-plan-actions"},
                       u.default.createElement("button",{className:"hb-plan-iconbtn",title:"開啟圖面詳情",onClick:()=>setVersionModalId(d.id)},u.default.createElement(E,{name:"search",size:15})),
                       !ownerPreview&&u.default.createElement("button",{className:"hb-plan-iconbtn",title:"上傳新版本",onClick:()=>openNewVersionPicker(d.id)},u.default.createElement(E,{name:"upload",size:15})),
-                      !ownerPreview&&(isPending||!meta.shared)&&u.default.createElement("button",{className:"hb-plan-iconbtn",title:"發布給業主",onClick:()=>publishDrawing(d),style:{color:"#315c48"}},u.default.createElement(E,{name:"send",size:15})),
+                      !ownerPreview&&!meta.byFolder&&(isPending||!meta.shared)&&u.default.createElement("button",{className:"hb-plan-iconbtn",title:"發布給業主",onClick:()=>publishDrawing(d),style:{color:"#315c48"}},u.default.createElement(E,{name:"send",size:15})),
                       !ownerPreview&&u.default.createElement("button",{className:"hb-plan-iconbtn",title:"刪除圖面",onClick:()=>deleteDrawing(d.id),style:{color:"#8c493f"}},u.default.createElement(E,{name:"trash",size:15}))
                     )
                   )
@@ -11616,7 +11635,7 @@ function HbDrawingHub({onBack,notify,project=null,embedded=false}){
                 return u.default.createElement("div",{className:"hb-plan-mcard",key:d.id},
                   u.default.createElement("div",{className:"hb-plan-mhero",onClick:()=>setVersionModalId(d.id)},
                     u.default.createElement("div",{className:"hb-plan-thumb"},cv&&cv.mime&&cv.mime.startsWith("image/")?u.default.createElement("img",{src:cv.url,alt:""}):u.default.createElement(E,{name:"file-text",size:24,color:"#B4573A"})),
-                    u.default.createElement("div",{style:{minWidth:0}},u.default.createElement("div",{className:"hb-plan-title"},d.name),u.default.createElement("div",{className:"hb-plan-sub"},cv?`V${cv.versionNo} · ${drawingKind(cv)} · ${drawingDate(cv)}`:"尚無版本"),u.default.createElement("div",{className:"hb-plan-sub"},`路徑：${breadcrumb.map(f=>f.name).join("／")}`),u.default.createElement("span",{className:"hb-plan-pill",style:{marginTop:9,background:isPending?"#eee4d4":meta.shared?"#e3eee7":"#eeeae2",color:isPending?"#80633b":meta.shared?"#315c48":"#746e64"}},isPending?"新版待發布":meta.shared?"業主共享":"公司內部"))
+                    u.default.createElement("div",{style:{minWidth:0}},u.default.createElement("div",{className:"hb-plan-title"},d.name),u.default.createElement("div",{className:"hb-plan-sub"},cv?`V${cv.versionNo} · ${drawingKind(cv)} · ${drawingDate(cv)}`:"尚無版本"),u.default.createElement("div",{className:"hb-plan-sub"},`路徑：${breadcrumb.map(f=>f.name).join("／")}`),u.default.createElement("span",{className:"hb-plan-pill",style:{marginTop:9,background:isPending?"#eee4d4":meta.shared?"#e3eee7":"#eeeae2",color:isPending?"#80633b":meta.shared?"#315c48":"#746e64"}},meta.byFolder?"資料夾共享":isPending?"新版待發布":meta.shared?"業主共享":"公司內部"))
                   ),
                   u.default.createElement("div",{style:{display:"grid",gridTemplateColumns:ownerPreview?"1fr":"1fr 1fr",gap:7,marginTop:11}},
                     u.default.createElement("button",{onClick:()=>setVersionModalId(d.id),style:{...ll,padding:"8px"}},"圖面詳情"),
