@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head><style id="hb-owner-gallery-style">
-/* HERFULSINS v21 — portfolio escapes the centered app frame without affecting other pages. */
+/* HERFULSINS v22 — portfolio uses the proven full-root layout on root and shell. */
 .hb-gallery-video{position:fixed;inset:0;z-index:10000;overflow:hidden;background:#f2efe7;color:#514b3f;font-family:'PingFang TC','Microsoft JhengHei',sans-serif;isolation:isolate;overscroll-behavior:contain;touch-action:none;opacity:1;transition:opacity .36s ease}
 .hb-gallery-video.is-leaving{opacity:0;pointer-events:none}
 .hb-gallery-video *{box-sizing:border-box}
@@ -3916,10 +3916,15 @@ function HbMarketingPhotoHub({onBack,notify}){
   };
   (0,u.useEffect)(()=>{load();loadTags()},[]);
   (0,u.useEffect)(()=>{
-    let rootEl=document.getElementById("root"),body=document.body;
-    if(rootEl)rootEl.classList.add("hb-mkt-wide-root");
-    if(body)body.classList.add("hb-mkt-open");
-    return()=>{if(rootEl)rootEl.classList.remove("hb-mkt-wide-root");if(body)body.classList.remove("hb-mkt-open")}
+    let rootEl=document.getElementById("root"),body=document.body,shell=document.querySelector(".hb-shell");
+    if(rootEl){rootEl.classList.add("hb-mkt-wide-root");rootEl.classList.add("hb-full-root")}
+    if(shell)shell.classList.add("hb-full-root");
+    if(body){body.classList.add("hb-mkt-open");body.classList.add("hb-full-body")}
+    return()=>{
+      if(rootEl){rootEl.classList.remove("hb-mkt-wide-root");rootEl.classList.remove("hb-full-root")}
+      if(shell)shell.classList.remove("hb-full-root");
+      if(body){body.classList.remove("hb-mkt-open");body.classList.remove("hb-full-body")}
+    }
   },[]);
 
   let addCustomTag=async(name,tagType)=>{
@@ -4140,6 +4145,8 @@ function HbMarketingPhotoHub({onBack,notify}){
       body.hb-mkt-open{overflow:hidden!important;}
       body.hb-mkt-open #root{max-width:none!important;width:100vw!important;margin:0!important;box-shadow:none!important;overflow-x:visible!important;}
       @media (min-width:860px){
+        body.hb-mkt-open .hb-shell{max-width:none!important;width:100vw!important;margin:0!important;box-shadow:none!important;overflow:visible!important;}
+        body.hb-mkt-open .hb-pagein{max-width:none!important;width:100vw!important;margin:0!important;overflow:visible!important;}
         body.hb-mkt-open .hb-mkt-page{position:fixed!important;left:0!important;right:0!important;top:0!important;bottom:0!important;width:100vw!important;max-width:none!important;margin:0!important;transform:none!important;}
         body.hb-mkt-open .hb-rail{display:none!important;}
       }
