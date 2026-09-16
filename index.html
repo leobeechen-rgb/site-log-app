@@ -11168,11 +11168,11 @@ function HB_cleanDrawingNote(note){return String(note||"").replaceAll(HB_DRAWING
 async function HB_loadProjectDrawings(project,opts){
   opts=opts||{};
   let empty={rootId:null,folders:[],items:[]};
-  if(!project||!project.name)return empty;
+  if(!project||(!project.id&&!project.name))return empty;
   let{data:foData,error:foErr}=await q.from("sitelog_drawing_folders").select("*").order("created_at",{ascending:true});
   if(foErr)throw foErr;
   let all=(foData||[]).map(r=>({id:r.id,name:r.name,parentId:r.parent_id,projectId:r.project_id||null,createdAt:r.created_at,ownerShared:r.owner_shared===true}));
-  let root=(project.id&&all.find(f=>f.parentId==null&&f.projectId===project.id))||all.find(f=>f.parentId==null&&!f.projectId&&String(f.name).trim()===String(project.name||"").trim());
+  let root=(project.id&&all.find(f=>f.parentId==null&&f.projectId===project.id))||(String(project.name||"").trim()?all.find(f=>f.parentId==null&&!f.projectId&&String(f.name).trim()===String(project.name||"").trim()):null);
   if(!root)return empty;
   let topOf={},pathOf={};
   let walk=(parentId,top,path)=>{all.filter(f=>f.parentId===parentId).forEach(f=>{let t=top||f.id,p=path.concat(f.name);topOf[f.id]=t;pathOf[f.id]=p;walk(f.id,t,p)})};
@@ -11270,6 +11270,8 @@ function HbDrawingHub({onBack,notify,project=null,embedded=false}){
   let[categoryFilter,setCategoryFilter]=(0,u.useState)("");
   let[uploadQueue,setUploadQueue]=(0,u.useState)(null);
   let[dragOver,setDragOver]=(0,u.useState)(false);
+  let[lineNotify,setLineNotify]=(0,u.useState)(null);
+  let[afterUpload,setAfterUpload]=(0,u.useState)(null);
   let fileInputRef=(0,u.useRef)(null);
   let newVersionInputRef=(0,u.useRef)(null);
   let pendingNewVersionDrawing=(0,u.useRef)(null);
@@ -11283,7 +11285,7 @@ function HbDrawingHub({onBack,notify,project=null,embedded=false}){
     ]);
     let mappedFolders=(foRes.data||[]).map(r=>({id:r.id,name:r.name,parentId:r.parent_id,projectId:r.project_id||null,createdAt:r.created_at,ownerShared:r.owner_shared===true}));
     let mappedDrawings=(drRes.data||[]).map(r=>({id:r.id,folderId:r.folder_id,name:r.name,drawingNo:r.drawing_no||"",category:r.category||"",currentVersionId:r.current_version_id,createdAt:r.created_at}));
-    let mappedVersions=(vrRes.data||[]).map(r=>({id:r.id,drawingId:r.drawing_id,versionNo:r.version_no,mime:r.mime,size:r.size,url:r.url,path:r.path,note:r.note,changeNote:r.change_note||"",uploadedBy:r.uploaded_by||"",uploadedAt:r.uploaded_at}));
+    let mappedVersions=(vrRes.data||[]).map(r=>({id:r.id,drawingId:r.drawing_id,versionNo:r.version_no,mime:r.mime,size:r.size,url:r.url,path:r.path,note:r.note,changeNote:r.change_note||"",uploadedBy:r.uploaded_by||"",lineNotifiedAt:r.line_notified_at||null,uploadedAt:r.uploaded_at}));
     if(project&&project.id){
       let projectRoot=mappedFolders.find(f=>f.parentId==null&&f.projectId===project.id)||mappedFolders.find(f=>f.parentId==null&&!f.projectId&&String(f.name).trim()===String(project.name||"").trim());
       if(projectRoot&&!projectRoot.projectId){await q.from("sitelog_drawing_folders").update({project_id:project.id}).eq("id",projectRoot.id);projectRoot.projectId=project.id}
@@ -11307,7 +11309,7 @@ function HbDrawingHub({onBack,notify,project=null,embedded=false}){
   };
   (0,u.useEffect)(()=>{load()},[]);
 
-  (0,u.useEffect)(()=>{setCategoryFilter("")},[currentFolderId]);
+  (0,u.useEffect)(()=>{setCategoryFilter("");setAfterUpload(null)},[currentFolderId]);
   let childFolders=folders.filter(f=>f.parentId===currentFolderId);
   let folderDrawings=drawings.filter(d=>d.folderId===currentFolderId);
   let versionsFor=id=>versions.filter(v=>v.drawingId===id).sort((a,b)=>b.versionNo-a.versionNo);
@@ -11487,6 +11489,7 @@ function HbDrawingHub({onBack,notify,project=null,embedded=false}){
       }
       notify(`已上傳 ${done} 個檔案`);
       setUploadQueue(null);
+      setAfterUpload(Object.keys(added));
     }catch(err){
       let msg=String(err&&err.message||err);
       notify(/drawing_no|category|change_note|uploaded_by|column|42703|PGRST204/i.test(msg)?"資料庫缺少圖號／修改說明欄位，請先完成 Supabase 更新":"上傳失敗（已完成 "+done+" 個）："+msg);
@@ -11515,6 +11518,29 @@ function HbDrawingHub({onBack,notify,project=null,embedded=false}){
       notify(`已儲存方向（V${v.versionNo}），下載與業主看到的都會是轉正後的圖`);
       return true;
     }catch(err){notify("儲存方向失敗："+(err.message||err));return false}
+  };
+
+  let caseRootOf=folderId=>{let chain=folderPathOf(folderId);return chain[0]||null};
+  let openLineNotify=preselectDrawingIds=>{
+    let root=caseRootOf(currentFolderId)||(preselectDrawingIds&&preselectDrawingIds[0]&&caseRootOf((drawings.find(d=>d.id===preselectDrawingIds[0])||{}).folderId));
+    if(!root){notify("請先進入一個案件");return}
+    let now=Date.now();
+    let list=drawings.filter(d=>{let c=folderPathOf(d.folderId);return c[0]&&c[0].id===root.id}).map(d=>{
+      let m=shareOf(d),pv=publishedVersionOf(d)||(m.byFolder?currentVersionOf(d):null),cv=currentVersionOf(d),v=pv||cv;
+      if(!v)return null;
+      let path=folderPathOf(d.folderId).slice(1).map(f=>f.name).join("／");
+      let recent=v.uploadedAt&&now-new Date(v.uploadedAt).getTime()<3*864e5;
+      return{id:d.id,versionId:v.id,title:HB_drawingTitle(d),versionNo:v.versionNo,note:v.changeNote||"",folder:path||"案件根目錄",uploadedAt:v.uploadedAt,notifiedAt:v.lineNotifiedAt,visible:!!m.shared,suggested:!!m.shared&&recent&&!v.lineNotifiedAt,sortKey:path,_d:d};
+    }).filter(Boolean).sort((a,b)=>a.sortKey.localeCompare(b.sortKey,"zh-Hant")||HB_drawingNoCompare(a._d,b._d));
+    let ownerUrl=`${window.location.origin}${window.location.pathname}?owner=1`;
+    setLineNotify({caseName:root.name,ownerUrl,items:list,preselect:preselectDrawingIds||[]});
+  };
+  let markLineNotified=async chosen=>{
+    if(!chosen.length)return;
+    let ts=new Date().toISOString(),ids=chosen.map(x=>x.versionId);
+    let{error}=await q.from("sitelog_drawing_versions").update({line_notified_at:ts}).in("id",ids);
+    if(error){console.warn("line_notified_at",error);return}
+    setVersions(vs=>vs.map(v=>ids.includes(v.id)?{...v,lineNotifiedAt:ts}:v));
   };
 
   let saveDrawingInfo=async(d,info)=>{
@@ -11583,12 +11609,21 @@ function HbDrawingHub({onBack,notify,project=null,embedded=false}){
       .hb-pt.on{background:#315c48;border-color:#315c48;color:#fff}.hb-pt:disabled{opacity:.6;cursor:default}
       .hb-pt .sm{display:none}.hb-pt-preview{margin-left:auto}
       .hb-pt-note{font-size:12px;color:#81786d;padding:0 4px}
+      .hb-pt-after{order:-1;flex:1 1 100%;grid-column:1 / -1;display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:9px 12px;background:#eefaf2;border:1px solid rgba(6,199,85,.45);font-size:13px;color:#1f4d33}
+      .hb-pt-after span{flex:1 1 200px}.hb-pt-after button{height:36px;padding:0 12px;border:1px solid rgba(57,51,47,.2);background:#fff;font-family:inherit;font-size:13px;cursor:pointer}
+      .hb-pt-after button.go{background:#06C755;border-color:#06C755;color:#fff}
+      .hb-pt-line{background:#fff;border-color:#06C755;color:#067a37}.hb-pt-line:hover{background:#eefaf2}
+      .hb-pt-linebadge{display:inline-flex;align-items:center;justify-content:center;height:18px;padding:0 5px;border-radius:4px;background:#06C755;color:#fff;font:700 9.5px sans-serif;letter-spacing:.02em}
+      .hb-plan-casename{display:flex;align-items:flex-start;gap:8px;margin-top:14px;font:400 19px/1.45 'Noto Serif TC',serif;color:#211f1b;overflow-wrap:anywhere}
+      .hb-plan-casename svg{margin-top:5px;color:#b4573a}
       @media(min-width:1100px){
         .hb-plan-system{display:grid;grid-template-columns:clamp(260px,22vw,330px) minmax(0,1fr);column-gap:clamp(24px,3vw,48px);align-items:start;padding:0 clamp(20px,3vw,48px)}
         .hb-plan-system>.hb-dosWrap{position:sticky;top:0;max-width:none;margin:0;padding:34px 0 28px!important;border-right:1px solid rgba(57,51,47,.12);padding-right:clamp(18px,2vw,30px)!important;min-height:calc(100vh - 20px);box-sizing:border-box}
         .hb-plan-system>.hb-dosWrap .hb-arcBack{margin:0 0 30px!important}
         .hb-plan-system>.hb-dosWrap .hb-dosLabel{font-size:11px;letter-spacing:.32em;line-height:1.8}
-        .hb-plan-system>.hb-dosWrap .hb-dosTitle{font-size:clamp(44px,3.6vw,64px);line-height:1.04;margin-top:14px;padding-right:0!important;word-break:keep-all}
+        .hb-plan-system>.hb-dosWrap{container-type:inline-size}
+        .hb-plan-system>.hb-dosWrap .hb-dosTitle{font-size:clamp(44px,3.6vw,64px);font-size:min(64px,22cqw);line-height:1.04;margin-top:14px;padding-right:0!important;overflow-wrap:anywhere}
+        .hb-plan-system>.hb-dosWrap .hb-dosLabel{overflow-wrap:anywhere}
         .hb-plan-system>.hb-dosWrap .hb-dosLede{max-width:none;font-size:13px;line-height:1.9;margin-top:22px}
         .hb-plan-system>.hb-plan-main{max-width:none!important;margin:0!important;padding:34px 0 112px!important;min-width:0}
       }
@@ -11623,11 +11658,11 @@ function HbDrawingHub({onBack,notify,project=null,embedded=false}){
       .hb-plan-timeline{position:relative;padding-left:17px}.hb-plan-timeitem{position:relative;padding:0 0 18px 14px;border-left:1px solid #c8c0b4}.hb-plan-timeitem:before{content:'';position:absolute;width:7px;height:7px;border-radius:50%;background:#315c48;left:-4px;top:5px}.hb-plan-timeitem:last-child{border-left-color:transparent}
       .hb-plan-compare{display:grid;grid-template-columns:1fr 1fr;gap:10px;flex:1;min-height:0}.hb-plan-compare>div{min-width:0;min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr);gap:6px}.hb-plan-compare .hb-plan-preview{min-height:0}
       @media(max-width:900px){.hb-plan-features{grid-template-columns:repeat(2,1fr)}.hb-plan-folder-grid{grid-template-columns:repeat(2,1fr)}.hb-plan-tr{grid-template-columns:74px minmax(200px,1.7fr) 60px 124px 132px}.hb-plan-tr>*:nth-child(3),.hb-plan-tr>*:nth-child(5),.hb-plan-tr>*:nth-child(7){display:none}}
-      @media(max-width:680px){.hb-plan-toolbar{display:grid;grid-template-columns:1fr 1fr;gap:8px}.hb-pt{width:100%;min-width:0;padding:0 8px;font-size:14px}.hb-pt-upload{order:1;height:48px}.hb-pt-folder{order:2;height:48px}.hb-pt-up{order:3;height:42px}.hb-pt-preview{order:4;height:42px;margin-left:0}.hb-pt .lg{display:none}.hb-pt .sm{display:inline}.hb-plan-filters{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px!important;overflow:visible!important}.hb-plan-filters>input{grid-column:1 / -1;min-width:0!important;width:100%!important;box-sizing:border-box}.hb-plan-filters.has-cat>input{grid-column:1 / 3}.hb-plan-filters>select{grid-column:3 / 5;min-width:0!important;width:100%!important;padding:9px 6px!important}.hb-plan-filters>button{min-width:0;padding:0 2px!important;height:40px;font-size:12.5px!important}.hb-plan-reghead{flex-direction:column;align-items:stretch!important}.hb-plan-reghead>div:last-child{justify-content:space-between!important}.hb-plan-features{grid-template-columns:1fr 1fr}.hb-plan-feature{padding:10px}.hb-plan-feature small{display:none}.hb-plan-folder-grid{grid-template-columns:1fr}.hb-plan-folder{min-height:116px;padding:16px}.hb-plan-folder-title{margin-top:14px}.hb-plan-table{display:none}.hb-plan-mobile{display:flex;flex-direction:column;gap:10px}.hb-plan-modal{width:100vw;height:100dvh}.hb-plan-modal-head{padding:11px 12px;gap:8px}.hb-plan-modal-head .hb-plan-pill{max-width:108px;overflow:hidden;text-overflow:ellipsis}.hb-plan-modal-body{display:block;overflow:auto}.hb-plan-stage{padding:12px;display:block;overflow:visible}.hb-plan-side{border-left:0;border-top:1px solid rgba(57,51,47,.13);padding:15px}.hb-plan-preview{height:min(58vh,520px);min-height:320px}.hb-plan-rotatebar{grid-template-columns:1fr;gap:7px;padding:8px}.hb-plan-rotatelabel{display:flex;align-items:center;justify-content:space-between}.hb-plan-rotatelabel strong{display:inline;margin:0;font-size:17px}.hb-plan-angle{min-height:42px}.hb-plan-compare{display:grid;grid-template-columns:1fr;height:auto}.hb-plan-compare>div{display:block}.hb-plan-compare .hb-plan-preview{height:44vh;min-height:280px;margin-top:6px}}
+      @media(max-width:680px){.hb-plan-toolbar{display:grid;grid-template-columns:1fr 1fr;gap:8px}.hb-pt{width:100%;min-width:0;padding:0 8px;font-size:14px}.hb-pt-upload{order:1;height:48px}.hb-pt-folder{order:2;height:48px}.hb-pt-up{order:3;height:42px}.hb-pt-preview{order:4;height:42px;margin-left:0}.hb-pt-line{order:5;grid-column:1 / -1;height:46px}.hb-pt-after span{flex:1 1 100%}.hb-pt-after button.go{flex:1}.hb-pt-after button{height:40px}.hb-pt .lg{display:none}.hb-pt .sm{display:inline}.hb-plan-filters{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px!important;overflow:visible!important}.hb-plan-filters>input{grid-column:1 / -1;min-width:0!important;width:100%!important;box-sizing:border-box}.hb-plan-filters.has-cat>input{grid-column:1 / 3}.hb-plan-filters>select{grid-column:3 / 5;min-width:0!important;width:100%!important;padding:9px 6px!important}.hb-plan-filters>button{min-width:0;padding:0 2px!important;height:40px;font-size:12.5px!important}.hb-plan-reghead{flex-direction:column;align-items:stretch!important}.hb-plan-reghead>div:last-child{justify-content:space-between!important}.hb-plan-features{grid-template-columns:1fr 1fr}.hb-plan-feature{padding:10px}.hb-plan-feature small{display:none}.hb-plan-folder-grid{grid-template-columns:1fr}.hb-plan-folder{min-height:116px;padding:16px}.hb-plan-folder-title{margin-top:14px}.hb-plan-table{display:none}.hb-plan-mobile{display:flex;flex-direction:column;gap:10px}.hb-plan-modal{width:100vw;height:100dvh}.hb-plan-modal-head{padding:11px 12px;gap:8px}.hb-plan-modal-head .hb-plan-pill{max-width:108px;overflow:hidden;text-overflow:ellipsis}.hb-plan-modal-body{display:block;overflow:auto}.hb-plan-stage{padding:12px;display:block;overflow:visible}.hb-plan-side{border-left:0;border-top:1px solid rgba(57,51,47,.13);padding:15px}.hb-plan-preview{height:min(58vh,520px);min-height:320px}.hb-plan-rotatebar{grid-template-columns:1fr;gap:7px;padding:8px}.hb-plan-rotatelabel{display:flex;align-items:center;justify-content:space-between}.hb-plan-rotatelabel strong{display:inline;margin:0;font-size:17px}.hb-plan-angle{min-height:42px}.hb-plan-compare{display:grid;grid-template-columns:1fr;height:auto}.hb-plan-compare>div{display:block}.hb-plan-compare .hb-plan-preview{height:44vh;min-height:280px;margin-top:6px}}
     `),
     u.default.createElement("div",{className:"hb-dosWrap"},
       u.default.createElement("button",{onClick:goUp,className:"hb-arcBack"},u.default.createElement(E,{name:"arrow-left",size:15}),u.default.createElement("span",null,canGoUp?("返回上一層："+(parentFolder?parentFolder.name:"圖面總覽")):(embedded?"返回案件檔案":"返回公司資料庫"))),
-      u.default.createElement("div",{className:"hb-dosLabel"},embedded?"Project Drawing Control":"Gestion des Plans"),u.default.createElement("h1",{className:"hb-dosTitle"},embedded&&project?project.name+"・圖面管理":"圖面管理"),
+      u.default.createElement("div",{className:"hb-dosLabel"},embedded?"Project Drawing Control":"Gestion des Plans"),u.default.createElement("h1",{className:"hb-dosTitle"},"圖面管理"),embedded&&project&&u.default.createElement("div",{className:"hb-plan-casename"},u.default.createElement(E,{name:"folder",size:15}),u.default.createElement("span",null,project.name)),
       u.default.createElement("p",{className:"hb-dosLede"},ownerPreview?"業主預覽模式僅顯示已正式發布的圖面，內部草稿與待發布版本不會出現。":embedded?"此處只管理目前案件的圖面版本、共享與發布紀錄。":"依資料夾管理施工圖面、保留版本紀錄，並決定哪些正式版本提供業主查看。")
     ),
     u.default.createElement("div",{className:"hb-plan-main",style:{maxWidth:1320,margin:"0 auto",padding:"6px clamp(14px,4vw,58px) calc(112px + env(safe-area-inset-bottom))"},
@@ -11656,6 +11691,8 @@ function HbDrawingHub({onBack,notify,project=null,embedded=false}){
         canGoUp&&u.default.createElement("button",{type:"button",className:"hb-pt hb-pt-quiet hb-pt-up",onClick:goUp,title:"回到上一層資料夾"},u.default.createElement(E,{name:"arrow-left",size:15}),"上一層"),
         currentFolderId&&!ownerPreview&&u.default.createElement("button",{type:"button",className:"hb-pt hb-pt-primary hb-pt-upload",disabled:uploading,onClick:()=>fileInputRef.current&&fileInputRef.current.click()},u.default.createElement(E,{name:uploading?"loader":"upload",size:16}),uploading?"上傳中…":"上傳圖面"),
         !ownerPreview&&currentFolderId&&u.default.createElement("button",{type:"button",className:"hb-pt hb-pt-outline hb-pt-folder",onClick:()=>setShowNewFolder(true)},u.default.createElement(E,{name:"folder-plus",size:16}),currentFolderId?u.default.createElement(u.default.Fragment,null,u.default.createElement("span",{className:"lg"},"新增圖面資料夾"),u.default.createElement("span",{className:"sm"},"新增資料夾")):"新增案件"),
+        currentFolderId&&!ownerPreview&&afterUpload&&(()=>{let vis=afterUpload.filter(id=>{let d=drawings.find(x=>x.id===id);return d&&shareOf(d).shared});return vis.length?u.default.createElement("div",{className:"hb-pt-after",role:"status"},u.default.createElement("span",null,`剛上傳的 ${vis.length} 張圖業主看得到，要通知業主嗎？`),u.default.createElement("button",{type:"button",className:"go",onClick:()=>{setAfterUpload(null);openLineNotify(vis)}},"LINE 通知業主"),u.default.createElement("button",{type:"button","aria-label":"不用通知",onClick:()=>setAfterUpload(null)},"×")):null})(),
+        currentFolderId&&!ownerPreview&&u.default.createElement("button",{type:"button",className:"hb-pt hb-pt-line",onClick:()=>openLineNotify(null)},u.default.createElement("span",{className:"hb-pt-linebadge"},"LINE"),"通知業主"),
         !currentFolderId&&!ownerPreview&&u.default.createElement("div",{className:"hb-pt-note"},"案件由「案件資料庫」建立後，會自動出現在這裡，改名也會同步。"),
         u.default.createElement("button",{type:"button",className:"hb-pt hb-pt-quiet hb-pt-preview"+(ownerPreview?" on":""),onClick:()=>{setOwnerPreview(v=>!v);setStatusFilter("all")}},u.default.createElement(E,{name:ownerPreview?"arrow-left":"eye",size:15}),ownerPreview?"返回公司管理":"預覽業主畫面")
       ),
@@ -11736,8 +11773,9 @@ function HbDrawingHub({onBack,notify,project=null,embedded=false}){
       )
     ),
     showNewFolder&&u.default.createElement(HbNewDrawingFolderModal,{isRoot:!currentFolderId&&!embedded,currentPath:breadcrumb.map(f=>f.name).join("／"),onCancel:()=>setShowNewFolder(false),onCreate:createFolder}),
-    viewingDrawing&&u.default.createElement(HbDrawingVersionModal,{drawing:viewingDrawing,folderPath:folderPathOf(viewingDrawing.folderId).map(f=>f.name).join("／"),versions:versionsFor(viewingDrawing.id),publishedVersionId:shareOf(viewingDrawing).publishedVersionId,isShared:shareOf(viewingDrawing).shared,byFolder:!!shareOf(viewingDrawing).byFolder,ownerPreview,siblings:drawings.filter(x=>x.folderId===viewingDrawing.folderId&&(!ownerPreview||shareOf(x).shared)),categories:categoryOptions,notify,onSwitch:id=>setVersionModalId(id),onClose:()=>setVersionModalId(null),onRestore:vid=>restoreVersion(viewingDrawing.id,vid),onPublish:vid=>publishVersion(viewingDrawing,vid),onUpload:()=>openNewVersionPicker(viewingDrawing.id),onToggleShare:()=>toggleDrawingShare(viewingDrawing),onRotate:rotateDrawingVersion,onSaveInfo:info=>saveDrawingInfo(viewingDrawing,info),onBakeRotation:bakePdfRotation}),
+    viewingDrawing&&u.default.createElement(HbDrawingVersionModal,{drawing:viewingDrawing,folderPath:folderPathOf(viewingDrawing.folderId).map(f=>f.name).join("／"),versions:versionsFor(viewingDrawing.id),publishedVersionId:shareOf(viewingDrawing).publishedVersionId,isShared:shareOf(viewingDrawing).shared,byFolder:!!shareOf(viewingDrawing).byFolder,ownerPreview,siblings:drawings.filter(x=>x.folderId===viewingDrawing.folderId&&(!ownerPreview||shareOf(x).shared)),categories:categoryOptions,notify,onSwitch:id=>setVersionModalId(id),onClose:()=>setVersionModalId(null),onRestore:vid=>restoreVersion(viewingDrawing.id,vid),onPublish:vid=>publishVersion(viewingDrawing,vid),onUpload:()=>openNewVersionPicker(viewingDrawing.id),onToggleShare:()=>toggleDrawingShare(viewingDrawing),onRotate:rotateDrawingVersion,onSaveInfo:info=>saveDrawingInfo(viewingDrawing,info),onBakeRotation:bakePdfRotation,onLineNotify:()=>openLineNotify([viewingDrawing.id])}),
     uploadQueue&&(()=>{let forced=uploadQueue.forcedDrawingId&&drawings.find(x=>x.id===uploadQueue.forcedDrawingId);let fid=forced?forced.folderId:currentFolderId;return u.default.createElement(HbDrawingUploadDialog,{key:uploadQueue.files.map(f=>f.name).join("|"),files:uploadQueue.files,folderName:(folders.find(f=>f.id===fid)||{}).name,folderDrawings:drawings.filter(x=>x.folderId===fid),categories:categoryOptions,forcedDrawingId:uploadQueue.forcedDrawingId,versionsOf:versionsFor,busy:uploading,onCancel:()=>!uploading&&setUploadQueue(null),onSubmit:submitUploadQueue})})(),
+    lineNotify&&u.default.createElement(HbDrawingLineNotify,{...lineNotify,notify,onClose:()=>setLineNotify(null),onSent:markLineNotified}),
     dragOver&&u.default.createElement("div",{style:{position:"fixed",inset:12,zIndex:54,border:"2px dashed #315c48",background:"rgba(232,239,233,.82)",display:"flex",alignItems:"center",justifyContent:"center",pointerEvents:"none",font:"400 20px 'Noto Serif TC',serif",color:"#315c48"}},`放開即可上傳到「${currentFolder?currentFolder.name:""}」`)
   );
 }
@@ -11885,6 +11923,81 @@ async function HB_shareDrawingVersion(v,drawing,notify){
   catch{window.prompt("複製這個圖面連結：",v.url)}
 }
 
+function HbDrawingLineNotify({caseName,ownerUrl,items,preselect,notify,onClose,onSent}){
+  let h=u.default.createElement;
+  let visible=items.filter(x=>x.visible);
+  let hidden=items.filter(x=>!x.visible);
+  let[picked,setPicked]=(0,u.useState)(()=>{let pre=new Set((preselect||[]).filter(id=>visible.some(x=>x.id===id)));if(!pre.size)visible.filter(x=>x.suggested).forEach(x=>pre.add(x.id));return pre});
+  let[extra,setExtra]=(0,u.useState)("");
+  let[text,setText]=(0,u.useState)("");
+  let[touched,setTouched]=(0,u.useState)(false);
+  let[sentOnce,setSentOnce]=(0,u.useState)(false);
+  let chosen=visible.filter(x=>picked.has(x.id));
+  let compose=()=>{
+    let lines=["赫柏空間設計　圖面更新通知","","案件："+(caseName||"")];
+    if(chosen.length){
+      lines.push("","本次更新的圖面：");
+      chosen.slice(0,12).forEach(x=>lines.push("・"+x.title+"（V"+x.versionNo+"）"+(x.note&&x.note!=="初版"?"："+x.note:"")));
+      if(chosen.length>12)lines.push("…等共 "+chosen.length+" 張");
+    }
+    if(extra.trim())lines.push("",extra.trim());
+    lines.push("","請點下方連結登入業主專區查看：",ownerUrl,"","有任何問題再跟我們說，謝謝。");
+    return lines.join("\n");
+  };
+  (0,u.useEffect)(()=>{if(!touched)setText(compose())},[picked,extra,touched]);
+  let toggle=id=>{setPicked(p=>{let n=new Set(p);n.has(id)?n.delete(id):n.add(id);return n});setTouched(false)};
+  let finish=()=>{if(!sentOnce){setSentOnce(true);onSent&&onSent(chosen)}};
+  let shareLine=()=>{if(!chosen.length&&!window.confirm("沒有勾選任何圖面，仍要送出通知嗎？"))return;window.open("https://line.me/R/msg/text/?"+encodeURIComponent(text),"_blank");finish()};
+  let shareOther=async()=>{
+    try{if(navigator.share){await navigator.share({text});finish();return}}catch(e){if(e&&e.name==="AbortError")return}
+    try{await navigator.clipboard.writeText(text);notify&&notify("通知內容已複製，可以貼到 LINE");finish()}catch{window.prompt("請複製以下內容：",text)}
+  };
+  let fmt=t=>{if(!t)return"";let d=new Date(t);return String(d.getMonth()+1).padStart(2,"0")+"/"+String(d.getDate()).padStart(2,"0")};
+  let row=(x,disabled)=>h("label",{key:x.id,style:{display:"grid",gridTemplateColumns:"22px 1fr",gap:10,alignItems:"start",padding:"10px 12px",borderTop:"1px solid rgba(57,51,47,.09)",cursor:disabled?"default":"pointer",opacity:disabled?.55:1}},
+    h("input",{type:"checkbox",disabled,checked:!disabled&&picked.has(x.id),onChange:()=>toggle(x.id),style:{width:18,height:18,marginTop:2,accentColor:"#315c48"}}),
+    h("div",{style:{minWidth:0}},
+      h("div",{style:{fontSize:14,color:"#211f1b",overflowWrap:"anywhere"}},x.title,h("span",{style:{font:"500 12px Georgia,serif",color:"#6f675b",marginLeft:6}},"V"+x.versionNo)),
+      h("div",{style:{fontSize:11.5,color:"#81786d",marginTop:2,lineHeight:1.5}},
+        [x.folder,"更新 "+fmt(x.uploadedAt),x.note&&x.note!=="初版"?x.note:""].filter(Boolean).join("・"),
+        disabled?h("span",{style:{color:"#8c493f"}},"・尚未共享，業主看不到"):x.notifiedAt?h("span",{style:{color:"#315c48"}},"・已通知 "+fmt(x.notifiedAt)):h("span",{style:{color:"#b4573a"}},"・尚未通知"))));
+  return h("div",{className:"hb-ln-back",onClick:e=>{if(e.target===e.currentTarget)onClose()}},
+    h("style",null,`
+      .hb-railBtn,.hb-rail,.hb-railSheet,#hbPushBtn,#mnOpen{display:none!important}
+      .hb-ln-back{position:fixed;inset:0;z-index:64;background:rgba(30,27,23,.5);display:flex;align-items:center;justify-content:center;padding:16px}
+      .hb-ln{width:min(560px,100%);max-height:92dvh;display:flex;flex-direction:column;background:#f4f0e7;box-shadow:0 24px 80px rgba(28,24,20,.28);font-family:'Noto Sans TC',sans-serif;color:#211f1b}
+      .hb-ln-head{padding:16px 18px;border-bottom:1px solid rgba(57,51,47,.12);display:flex;align-items:center;gap:10px}
+      .hb-ln-body{flex:1;overflow:auto;padding:14px 18px;-webkit-overflow-scrolling:touch}
+      .hb-ln-list{border:1px solid rgba(57,51,47,.13);background:rgba(255,255,255,.6);max-height:260px;overflow:auto}
+      .hb-ln-foot{display:grid;grid-template-columns:1.4fr 1fr;gap:8px;padding:12px 18px calc(12px + env(safe-area-inset-bottom));border-top:1px solid rgba(57,51,47,.12);background:rgba(255,255,255,.6)}
+      .hb-ln-foot button{min-height:48px;font-size:15px;font-family:inherit;cursor:pointer}
+      .hb-ln-field{width:100%;box-sizing:border-box;padding:10px 11px;border:1px solid rgba(57,51,47,.2);background:#fff;font-size:14px;font-family:inherit;color:#211f1b;border-radius:0}
+      @media(max-width:760px){.hb-ln-back{padding:0;align-items:stretch}.hb-ln{width:100vw;max-height:none;height:100dvh}.hb-ln-head{padding-top:calc(12px + env(safe-area-inset-top))}.hb-ln-list{max-height:none}}
+    `),
+    h("div",{className:"hb-ln fade-in",role:"dialog","aria-modal":"true","aria-label":"LINE 通知業主"},
+      h("div",{className:"hb-ln-head"},
+        h("span",{style:{width:34,height:34,borderRadius:8,background:"#06C755",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",font:"700 11px sans-serif",flexShrink:0}},"LINE"),
+        h("div",{style:{flex:1,minWidth:0}},h("div",{style:{font:"400 18px 'Noto Serif TC',serif"}},"LINE 通知業主"),h("div",{style:{fontSize:11.5,color:"#81786d",marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},caseName)),
+        h("button",{type:"button",onClick:onClose,className:"hb-plan-iconbtn","aria-label":"關閉"},h(E,{name:"x",size:18}))),
+      h("div",{className:"hb-ln-body"},
+        h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"baseline",margin:"0 0 8px"}},
+          h("span",{style:{fontSize:12.5,color:"#6f675b"}},"要通知哪些圖面（已勾選 "+chosen.length+"）"),
+          visible.length>0&&h("button",{type:"button",onClick:()=>{setPicked(picked.size===visible.length?new Set():new Set(visible.map(x=>x.id)));setTouched(false)},style:{border:0,background:"none",color:"#315c48",fontSize:12.5,cursor:"pointer",fontFamily:"inherit"}},picked.size===visible.length?"全部取消":"全選")),
+        h("div",{className:"hb-ln-list"},
+          visible.length===0&&h("div",{style:{padding:14,fontSize:13,color:"#81786d"}},"這個案件目前沒有業主看得到的圖面，請先設定資料夾共享或發布。"),
+          visible.map(x=>row(x,false)),
+          hidden.length>0&&h("div",{style:{padding:"8px 12px",fontSize:11.5,color:"#81786d",background:"rgba(57,51,47,.04)",borderTop:"1px solid rgba(57,51,47,.09)"}},"以下尚未共享（業主點進去看不到，無法勾選）"),
+          hidden.slice(0,20).map(x=>row(x,true))),
+        h("label",{style:{display:"block",fontSize:12.5,color:"#6f675b",margin:"14px 0 5px"}},"補充說明（選填）"),
+        h("input",{className:"hb-ln-field",value:extra,onChange:e=>{setExtra(e.target.value);setTouched(false)},placeholder:"例：麻煩確認廚房電器位置，週五前回覆"}),
+        h("label",{style:{display:"block",fontSize:12.5,color:"#6f675b",margin:"14px 0 5px"}},"送出的內容（可以直接改）"),
+        h("textarea",{className:"hb-ln-field",value:text,rows:9,onChange:e=>{setText(e.target.value);setTouched(true)},style:{resize:"vertical",lineHeight:1.7,fontSize:13.5}}),
+        touched&&h("button",{type:"button",onClick:()=>setTouched(false),style:{border:0,background:"none",color:"#b4573a",fontSize:12,cursor:"pointer",padding:"6px 0",fontFamily:"inherit"}},"↺ 依勾選重新產生內容"),
+        h("div",{style:{fontSize:11.5,color:"#81786d",lineHeight:1.7,marginTop:8}},"按「分享到 LINE」後，LINE 會開啟並讓你選擇要傳給哪位業主（或群組）。業主點連結後，用案件密碼登入即可看到圖面。")),
+      h("div",{className:"hb-ln-foot"},
+        h("button",{type:"button",onClick:shareLine,style:{border:0,background:"#06C755",color:"#fff",fontWeight:500}},"分享到 LINE"),
+        h("button",{type:"button",onClick:shareOther,style:{border:"1px solid rgba(57,51,47,.2)",background:"#fff",color:"#211f1b"}},"其他方式／複製"))));
+}
+
 function HbDrawingUploadDialog({files,folderName,folderDrawings,categories,forcedDrawingId,versionsOf,busy,onCancel,onSubmit}){
   let C=u.default.createElement;
   let byId=id=>folderDrawings.find(d=>d.id===id);
@@ -11972,7 +12085,7 @@ function HbDrawingUploadDialog({files,folderName,folderDrawings,categories,force
         C("button",{type:"button",onClick:submit,disabled:busy,style:{border:"1px solid #315c48",background:"#315c48",color:"#fff",opacity:busy?.6:1}},busy?"上傳中…":`上傳 ${rows.length} 個檔案`))));
 }
 
-function HbDrawingVersionModal({drawing,folderPath,versions,publishedVersionId,isShared,byFolder,ownerPreview,siblings,categories,notify,onSwitch,onClose,onRestore,onPublish,onUpload,onToggleShare,onRotate,onSaveInfo,onBakeRotation}){
+function HbDrawingVersionModal({drawing,folderPath,versions,publishedVersionId,isShared,byFolder,ownerPreview,siblings,categories,notify,onSwitch,onClose,onRestore,onPublish,onUpload,onToggleShare,onRotate,onSaveInfo,onBakeRotation,onLineNotify}){
   let C=u.default.createElement;
   let sorted=versions.slice().sort((a,b)=>b.versionNo-a.versionNo);
   let currentId=drawing.currentVersionId||(sorted[0]&&sorted[0].id);
@@ -12021,6 +12134,7 @@ function HbDrawingVersionModal({drawing,folderPath,versions,publishedVersionId,i
   let startEdit=()=>{setForm({drawingNo:drawing.drawingNo||"",name:drawing.name||"",category:drawing.category||""});setEditing(true);setTab("info")};
   let saveEdit=async()=>{if(!form.name.trim()){notify&&notify("圖名不可空白");return}let ok=await onSaveInfo({drawingNo:form.drawingNo.trim().toUpperCase(),name:form.name.trim(),category:form.category.trim()});if(ok!==false)setEditing(false)};
   let menu=[];
+  if(!ownerPreview&&onLineNotify)menu.push(["message-circle",isShared?"LINE 通知業主":"LINE 通知業主（此圖尚未共享）",isShared?()=>onLineNotify():null]);
   if(!ownerPreview)menu.push(["upload","上傳新版本",()=>onUpload()]);
   if(sorted.length>1)menu.push(["copy",view==="compare"?"回到單張預覽":"版本比較",()=>setView(view==="compare"?"preview":"compare")]);
   if(!ownerPreview&&selected&&!isCurrent)menu.push(["refresh",`將 V${selected.versionNo} 設為目前版本`,()=>onRestore(selected.id)]);
@@ -14413,7 +14527,7 @@ function Fy({projectId:l,onLogout:t}){HB_ctaCss();let[e,n]=(0,u.useState)("loadi
           font-weight: 700; font-size: 11px; letter-spacing: 1px; transform: rotate(-3deg);
           display: inline-block;
         }
-      `),e==="loading"?u.default.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh"}},u.default.createElement(E,{name:"loader",className:"animate-spin",size:28,color:s.ocean})):e==="notfound"?u.default.createElement("div",{style:{textAlign:"center",padding:"80px 20px",color:s.inkSoft}},u.default.createElement("p",null,"\u627E\u4E0D\u5230\u9019\u500B\u6848\u4EF6\uFF0C\u8ACB\u91CD\u65B0\u767B\u5165\u3002"),u.default.createElement("button",{onClick:t,style:{...ll,marginTop:14,display:"inline-block",padding:"9px 20px"}},"\u91CD\u65B0\u767B\u5165")):u.default.createElement("div",{className:"hb-owner-gallery-content hb-owner-project-view"},u.default.createElement(HbOwnerProjectHeader,{project:a,status:Ml,schedule:schL,currentTab:S,albumName:S==="photos"&&j?te?.name:null,onTab:kk=>{T(null);M(kk)},onBackAlbum:()=>T(null),onChangePassword:changePw,onLogout:t}),u.default.createElement(HbOwnerFileNotices,{key:l,projectId:l,files:m,onFiles:p}),u.default.createElement("div",{style:{display:"flex",flexDirection:"column"}},
+      `),e==="loading"?u.default.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh"}},u.default.createElement(E,{name:"loader",className:"animate-spin",size:28,color:s.ocean})):e==="notfound"?u.default.createElement("div",{style:{textAlign:"center",padding:"80px 20px",color:s.inkSoft}},u.default.createElement("p",null,"\u627E\u4E0D\u5230\u9019\u500B\u6848\u4EF6\uFF0C\u8ACB\u91CD\u65B0\u767B\u5165\u3002"),u.default.createElement("button",{onClick:t,style:{...ll,marginTop:14,display:"inline-block",padding:"9px 20px"}},"\u91CD\u65B0\u767B\u5165")):u.default.createElement("div",{className:"hb-owner-gallery-content hb-owner-project-view"},u.default.createElement(HbOwnerProjectHeader,{project:a,status:Ml,schedule:schL,currentTab:S,albumName:S==="photos"&&j?te?.name:null,onTab:kk=>{T(null);M(kk)},onBackAlbum:()=>T(null),onChangePassword:changePw,onLogout:t}),u.default.createElement(HbOwnerFileNotices,{key:l,projectId:l,files:m,onFiles:p,onFolders:FySetFolders}),u.default.createElement("div",{style:{display:"flex",flexDirection:"column"}},
   u.default.createElement("div",null,
     u.default.createElement("style",null,`
       @keyframes pjBreatheAo { 0%,100%{transform:scale(1);opacity:.7} 50%{transform:scale(1.3);opacity:1} }
@@ -15130,13 +15244,13 @@ function HbFileNotifyDialog({project,file,onClose,onSaved}){
     h('div',{className:'hb-file-notify-actions'},h('button',{type:'button',disabled:busy,onClick:onClose},'取消'),h('button',{type:'button',className:'primary',disabled:busy,onClick:send},busy?'發布中…':'發布更新通知'))
   ),document.body);
 }
-function HbOwnerFileNotices({projectId,files,onFiles}){
+function HbOwnerFileNotices({projectId,files,onFiles,onFolders}){
   const h=u.default.createElement,key='hb_owner_file_read_v1:'+projectId;
   const [seen,setSeen]=u.useState(()=>{try{return JSON.parse(localStorage.getItem(key)||'{}')||{}}catch{return{}}}),[expanded,setExpanded]=u.useState(false),[error,setError]=u.useState(''),[preview,setPreview]=u.useState(null),[opening,setOpening]=u.useState(null);
   const openingLock=u.useRef(false);
   u.useEffect(()=>{
     let active=true,busy=false;
-    const refresh=async()=>{if(busy||document.hidden)return;busy=true;try{const {data,error:err}=await q.from('sitelog_files').select('*').eq('project_id',projectId).eq('visible_to_owner',true).order('uploaded_at',{ascending:false});if(err)throw err;if(active){const next=(data||[]).filter(f=>f.visible_to_owner===true).map(es);onFiles(next);setPreview(previous=>previous?next.find(f=>f.id===previous.id)||null:null);setError('')}}catch(err){if(active)setError('更新提醒暫時無法同步，請檢查網路後重試。')}finally{busy=false}};
+    const refresh=async()=>{if(busy||document.hidden)return;busy=true;try{const dw=await HB_loadProjectDrawings({id:projectId,name:''},{publishedOnly:true});if(active){const next=dw.items;onFiles(next);onFolders&&onFolders(dw.folders.filter(f=>next.some(x=>x.folderId===f.id)).map(f=>({id:f.id,name:f.name,createdAt:f.createdAt})));setPreview(previous=>previous?next.find(f=>f.id===previous.id)||null:null);setError('')}}catch(err){if(active)setError('更新提醒暫時無法同步，請檢查網路後重試。')}finally{busy=false}};
     refresh();const timer=setInterval(refresh,30000);window.addEventListener('focus',refresh);document.addEventListener('visibilitychange',refresh);
     return()=>{active=false;clearInterval(timer);window.removeEventListener('focus',refresh);document.removeEventListener('visibilitychange',refresh)};
   },[projectId,onFiles]);
