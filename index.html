@@ -11490,6 +11490,29 @@ function HbDrawingHub({onBack,notify,project=null,embedded=false}){
     setUploading(false);
   };
 
+  let bakePdfRotation=async(v,angle)=>{
+    angle=((Number(angle)||0)%360+360)%360;
+    if(!v||v.mime!=="application/pdf"){notify("此功能僅適用 PDF 圖面");return false}
+    if(!angle&&!HB_getDrawingRotation(v.note)){notify("方向沒有變更");return true}
+    try{
+      let srcBlob=await HB_fetchAsset(v.url);
+      let plib=await window.HB_loadLib("PDFLib");
+      let doc=await plib.PDFDocument.load(await srcBlob.arrayBuffer(),{ignoreEncryption:true});
+      doc.getPages().forEach(p=>{let cur=(p.getRotation()&&p.getRotation().angle)||0;p.setRotation(plib.degrees(((cur+angle)%360+360)%360))});
+      let out=new Blob([await doc.save()],{type:"application/pdf"});
+      let dir=String(v.path||"").includes("/")?String(v.path).slice(0,String(v.path).lastIndexOf("/")):`${currentFolderId}/${v.drawingId}`;
+      let newPath=`${dir}/v${v.versionNo}_${Be()}.pdf`;
+      let url=await r2UploadSitelogFile("sitelog-drawings",newPath,out,"application/pdf");
+      let newNote=HB_setDrawingRotation(v.note,0);
+      let{error}=await q.from("sitelog_drawing_versions").update({url,path:newPath,size:out.size,note:newNote}).eq("id",v.id);
+      if(error)throw error;
+      if(v.path&&v.path!==newPath)r2DeleteSitelogFile("sitelog-drawings",v.path);
+      setVersions(vs=>vs.map(x=>x.id===v.id?{...x,url,path:newPath,size:out.size,note:newNote}:x));
+      notify(`已儲存方向（V${v.versionNo}），下載與業主看到的都會是轉正後的圖`);
+      return true;
+    }catch(err){notify("儲存方向失敗："+(err.message||err));return false}
+  };
+
   let saveDrawingInfo=async(d,info)=>{
     let{error}=await q.from("sitelog_drawings").update({name:info.name,drawing_no:info.drawingNo||null,category:info.category||null}).eq("id",d.id);
     if(error){notify("儲存失敗："+error.message);return false}
@@ -11697,7 +11720,7 @@ function HbDrawingHub({onBack,notify,project=null,embedded=false}){
       )
     ),
     showNewFolder&&u.default.createElement(HbNewDrawingFolderModal,{isRoot:!currentFolderId&&!embedded,currentPath:breadcrumb.map(f=>f.name).join("／"),onCancel:()=>setShowNewFolder(false),onCreate:createFolder}),
-    viewingDrawing&&u.default.createElement(HbDrawingVersionModal,{drawing:viewingDrawing,folderPath:folderPathOf(viewingDrawing.folderId).map(f=>f.name).join("／"),versions:versionsFor(viewingDrawing.id),publishedVersionId:shareOf(viewingDrawing).publishedVersionId,isShared:shareOf(viewingDrawing).shared,byFolder:!!shareOf(viewingDrawing).byFolder,ownerPreview,siblings:drawings.filter(x=>x.folderId===viewingDrawing.folderId&&(!ownerPreview||shareOf(x).shared)),categories:categoryOptions,notify,onSwitch:id=>setVersionModalId(id),onClose:()=>setVersionModalId(null),onRestore:vid=>restoreVersion(viewingDrawing.id,vid),onPublish:vid=>publishVersion(viewingDrawing,vid),onUpload:()=>openNewVersionPicker(viewingDrawing.id),onToggleShare:()=>toggleDrawingShare(viewingDrawing),onRotate:rotateDrawingVersion,onSaveInfo:info=>saveDrawingInfo(viewingDrawing,info)}),
+    viewingDrawing&&u.default.createElement(HbDrawingVersionModal,{drawing:viewingDrawing,folderPath:folderPathOf(viewingDrawing.folderId).map(f=>f.name).join("／"),versions:versionsFor(viewingDrawing.id),publishedVersionId:shareOf(viewingDrawing).publishedVersionId,isShared:shareOf(viewingDrawing).shared,byFolder:!!shareOf(viewingDrawing).byFolder,ownerPreview,siblings:drawings.filter(x=>x.folderId===viewingDrawing.folderId&&(!ownerPreview||shareOf(x).shared)),categories:categoryOptions,notify,onSwitch:id=>setVersionModalId(id),onClose:()=>setVersionModalId(null),onRestore:vid=>restoreVersion(viewingDrawing.id,vid),onPublish:vid=>publishVersion(viewingDrawing,vid),onUpload:()=>openNewVersionPicker(viewingDrawing.id),onToggleShare:()=>toggleDrawingShare(viewingDrawing),onRotate:rotateDrawingVersion,onSaveInfo:info=>saveDrawingInfo(viewingDrawing,info),onBakeRotation:bakePdfRotation}),
     uploadQueue&&(()=>{let forced=uploadQueue.forcedDrawingId&&drawings.find(x=>x.id===uploadQueue.forcedDrawingId);let fid=forced?forced.folderId:currentFolderId;return u.default.createElement(HbDrawingUploadDialog,{key:uploadQueue.files.map(f=>f.name).join("|"),files:uploadQueue.files,folderName:(folders.find(f=>f.id===fid)||{}).name,folderDrawings:drawings.filter(x=>x.folderId===fid),categories:categoryOptions,forcedDrawingId:uploadQueue.forcedDrawingId,versionsOf:versionsFor,busy:uploading,onCancel:()=>!uploading&&setUploadQueue(null),onSubmit:submitUploadQueue})})(),
     dragOver&&u.default.createElement("div",{style:{position:"fixed",inset:12,zIndex:54,border:"2px dashed #315c48",background:"rgba(232,239,233,.82)",display:"flex",alignItems:"center",justifyContent:"center",pointerEvents:"none",font:"400 20px 'Noto Serif TC',serif",color:"#315c48"}},`放開即可上傳到「${currentFolder?currentFolder.name:""}」`)
   );
@@ -11904,7 +11927,7 @@ function HbDrawingUploadDialog({files,folderName,folderDrawings,categories,force
         C("button",{type:"button",onClick:submit,disabled:busy,style:{border:"1px solid #315c48",background:"#315c48",color:"#fff",opacity:busy?.6:1}},busy?"上傳中…":`上傳 ${rows.length} 個檔案`))));
 }
 
-function HbDrawingVersionModal({drawing,folderPath,versions,publishedVersionId,isShared,byFolder,ownerPreview,siblings,categories,notify,onSwitch,onClose,onRestore,onPublish,onUpload,onToggleShare,onRotate,onSaveInfo}){
+function HbDrawingVersionModal({drawing,folderPath,versions,publishedVersionId,isShared,byFolder,ownerPreview,siblings,categories,notify,onSwitch,onClose,onRestore,onPublish,onUpload,onToggleShare,onRotate,onSaveInfo,onBakeRotation}){
   let C=u.default.createElement;
   let sorted=versions.slice().sort((a,b)=>b.versionNo-a.versionNo);
   let currentId=drawing.currentVersionId||(sorted[0]&&sorted[0].id);
@@ -11916,11 +11939,19 @@ function HbDrawingVersionModal({drawing,folderPath,versions,publishedVersionId,i
   let[full,setFull]=(0,u.useState)(false);
   let[editing,setEditing]=(0,u.useState)(false);
   let[form,setForm]=(0,u.useState)({drawingNo:"",name:"",category:""});
+  let[pendingRot,setPendingRot]=(0,u.useState)(0);
+  let[rotBusy,setRotBusy]=(0,u.useState)(false);
   let bodyRef=(0,u.useRef)(null);
   (0,u.useEffect)(()=>{setSelectedId(drawing.currentVersionId||(sorted[0]&&sorted[0].id));setEditing(false);setView("preview");setCompareId(null)},[drawing.id]);
   (0,u.useEffect)(()=>{if(!versions.some(v=>v.id===selectedId))setSelectedId(drawing.currentVersionId||(sorted[0]&&sorted[0].id))},[versions.length,drawing.currentVersionId]);
-  (0,u.useEffect)(()=>{let onKey=e=>{if(e.key==="Escape"){if(full)setFull(false);else if(moreOpen)setMoreOpen(false);else onClose()}};window.addEventListener("keydown",onKey);return()=>window.removeEventListener("keydown",onKey)},[full,moreOpen]);
+  (0,u.useEffect)(()=>{let onKey=e=>{if(e.key==="Escape"){if(full)setFull(false);else if(moreOpen)setMoreOpen(false);else guardClose()}};window.addEventListener("keydown",onKey);return()=>window.removeEventListener("keydown",onKey)},[full,moreOpen,pendingRot]);
   let selected=versions.find(v=>v.id===selectedId)||sorted[0];
+  (0,u.useEffect)(()=>{setPendingRot(0)},[selected&&selected.id,selected&&selected.url]);
+  let rotOf=v=>((HB_getDrawingRotation(v&&v.note)+(v&&selected&&v.id===selected.id?pendingRot:0))%360+360)%360;
+  let rotDirty=!!(selected&&selected.mime==="application/pdf"&&rotOf(selected)!==0);
+  let turn=d=>setPendingRot(p=>((p+d)%360+360)%360);
+  let saveRot=async()=>{if(!selected||rotBusy)return;setRotBusy(true);let ok=await onBakeRotation(selected,rotOf(selected));setRotBusy(false);if(ok!==false)setPendingRot(0)};
+  (0,u.useEffect)(()=>{if(!rotDirty||!pendingRot)return;let h=e=>{e.preventDefault();e.returnValue=""};window.addEventListener("beforeunload",h);return()=>window.removeEventListener("beforeunload",h)},[rotDirty,pendingRot]);
   let compared=versions.find(v=>v.id===compareId)||sorted.find(v=>selected&&v.id!==selected.id)||selected;
   let isCurrent=selected&&selected.id===currentId;
   let isPdf=selected&&selected.mime==="application/pdf";
@@ -11930,9 +11961,10 @@ function HbDrawingVersionModal({drawing,folderPath,versions,publishedVersionId,i
   let fmtMD=t=>{if(!t)return"";let d=new Date(t);return String(d.getMonth()+1).padStart(2,"0")+"/"+String(d.getDate()).padStart(2,"0")};
   let kindOf=v=>!v?"—":HB_drawingIsCad(v)?HB_drawingCadExt(v.path||v.url).toUpperCase():v.mime==="application/pdf"?"PDF":"IMAGE";
   let pill=(text,on)=>C("span",{className:"hb-plan-pill",style:{background:on?"#e3eee7":"#eeeae2",color:on?"#315c48":"#746e64"}},text);
-  let pick=id=>{setSelectedId(id);setView("preview");try{bodyRef.current&&window.innerWidth<=760&&bodyRef.current.scrollTo({top:0,behavior:"smooth"})}catch{}};
+  let guardClose=()=>{if(pendingRot&&!window.confirm("圖面方向還沒儲存，確定要離開嗎？"))return;onClose()};
+  let pick=id=>{if(pendingRot&&id!==selectedId&&!window.confirm("圖面方向還沒儲存，確定要切換版本嗎？"))return;setSelectedId(id);setView("preview");try{bodyRef.current&&window.innerWidth<=760&&bodyRef.current.scrollTo({top:0,behavior:"smooth"})}catch{}};
   let renderPreview=(v,label,allowExpand)=>{
-    let rotation=HB_getDrawingRotation(v&&v.note),mediaStyle={transform:`rotate(${rotation}deg)`,transition:"transform .25s ease"};
+    let rotation=rotOf(v),mediaStyle={transform:`rotate(${rotation}deg)`,transition:"transform .25s ease"};
     return C("div",{className:"hb-plan-preview"},
       !v?C("div",{style:{fontSize:12,color:s.inkSoft}},"尚無圖面"):
       v.mime&&v.mime.startsWith("image/")?C("img",{src:v.url,alt:label||drawing.name,style:mediaStyle}):
@@ -11949,7 +11981,6 @@ function HbDrawingVersionModal({drawing,folderPath,versions,publishedVersionId,i
   if(!ownerPreview&&selected&&!isCurrent)menu.push(["refresh",`將 V${selected.versionNo} 設為目前版本`,()=>onRestore(selected.id)]);
   if(!ownerPreview&&!byFolder&&selected&&selected.id!==publishedVersionId)menu.push(["send",`發布 V${selected.versionNo} 給業主`,()=>onPublish(selected.id)]);
   if(!ownerPreview)menu.push(byFolder?["users","業主共享：由資料夾自動共享中",null]:["users",isShared?"停止業主共享":"開啟業主共享",()=>onToggleShare()]);
-  if(!ownerPreview&&isPdf)menu.push(["refresh",`PDF 旋轉 90°（目前 ${HB_getDrawingRotation(selected.note)}°）`,()=>onRotate(selected)]);
   if(!ownerPreview)menu.push(["pencil","編輯圖號／圖名／類別",startEdit]);
   if(selected)menu.push(["link","在新視窗開啟原檔",()=>window.open(selected.url,"_blank","noopener")]);
   let related=(siblings||[]).filter(d=>d.id!==drawing.id).slice().sort(HB_drawingNoCompare);
@@ -11964,7 +11995,7 @@ function HbDrawingVersionModal({drawing,folderPath,versions,publishedVersionId,i
     ["業主共享",byFolder?"資料夾共享・自動顯示最新版":isShared?`已發布 V${(versions.find(v=>v.id===publishedVersionId)||{}).versionNo||""}`:"公司內部"]
   ];
   let field={width:"100%",boxSizing:"border-box",padding:"10px 11px",border:"1px solid rgba(57,51,47,.2)",background:"#fff",fontSize:14,fontFamily:"inherit",color:"#211f1b",borderRadius:0,minHeight:42};
-  return C("div",{className:"hb-dv-back",onClick:e=>{if(e.target===e.currentTarget)onClose()}},
+  return C("div",{className:"hb-dv-back",onClick:e=>{if(e.target===e.currentTarget)guardClose()}},
     C("style",null,`
       .hb-railBtn,.hb-rail,.hb-railSheet,#hbPushBtn,#mnOpen{display:none!important}
       .hb-dv-back{position:fixed;inset:0;z-index:55;background:rgba(30,27,23,.58);display:flex;align-items:center;justify-content:center}
@@ -11983,6 +12014,15 @@ function HbDrawingVersionModal({drawing,folderPath,versions,publishedVersionId,i
       .hb-dv-label{position:absolute;left:10px;top:10px;z-index:7;background:rgba(33,31,27,.78);color:#fff;font:500 12px Georgia,serif;padding:4px 8px}
       .hb-dv-compare{flex:1;min-height:0;display:grid;grid-template-columns:1fr 1fr;gap:10px}
       .hb-dv-compare>div{display:flex;flex-direction:column;gap:6px;min-height:0;min-width:0}
+      .hb-dv-rot{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:8px 10px;border:1px solid rgba(57,51,47,.13);background:rgba(255,255,255,.6)}
+      .hb-dv-rot.dirty{border-color:#b4573a;background:#fbf3ee}
+      .hb-dv-rot-l{display:flex;align-items:baseline;gap:8px;font-size:12px;color:#81786d}
+      .hb-dv-rot-l b{font:600 18px Georgia,serif;color:#315c48}.hb-dv-rot-l em{font-style:normal;font-size:11.5px;color:#b4573a}
+      .hb-dv-rot-r{display:flex;gap:6px;flex-wrap:wrap}
+      .hb-dv-rot-r button{min-height:40px;padding:0 13px;display:inline-flex;align-items:center;gap:5px;border:1px solid rgba(57,51,47,.2);background:#fff;font-family:inherit;font-size:13.5px;color:#211f1b;cursor:pointer}
+      .hb-dv-rot-r button .g{font-size:17px;line-height:1}
+      .hb-dv-rot-r button.save{background:#315c48;border-color:#315c48;color:#fff}
+      .hb-dv-rot-r button:disabled{opacity:.45;cursor:default}
       .hb-dv-strip{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 4px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
       .hb-dv-vt{flex:0 0 86px;border:1px solid rgba(57,51,47,.15);background:rgba(255,255,255,.6);padding:5px;cursor:pointer;text-align:center;scroll-snap-align:start;font-family:inherit;color:#211f1b}
       .hb-dv-vt.on{border-color:#315c48;box-shadow:inset 0 -3px #315c48;background:#fff}
@@ -12027,6 +12067,8 @@ function HbDrawingVersionModal({drawing,folderPath,versions,publishedVersionId,i
         .hb-dv-compare{grid-template-columns:1fr;flex:none}
         .hb-dv-compare>div{height:38dvh;min-height:220px}
         .hb-dv-vt{flex-basis:74px}.hb-dv-vt .th{height:46px}
+        .hb-dv-rot{padding:8px}.hb-dv-rot-r{width:100%;display:grid;grid-template-columns:1fr 1fr 1.3fr;gap:6px}.hb-dv-rot-r button{justify-content:center;min-height:44px;padding:0 6px}
+        .hb-dv-rot.dirty .hb-dv-rot-r{grid-template-columns:1fr 1fr 1fr 1.3fr}
         .hb-dv-side{border-left:0;border-top:1px solid rgba(57,51,47,.13);margin-top:10px;background:transparent}
         .hb-dv-tabs{position:sticky;top:0;z-index:4;background:#f4f0e7}
         .hb-dv-pane{overflow:visible;padding:4px 14px 24px}
@@ -12037,7 +12079,7 @@ function HbDrawingVersionModal({drawing,folderPath,versions,publishedVersionId,i
     `),
     C("div",{className:"hb-dv fade-in",role:"dialog","aria-modal":"true","aria-label":HB_drawingTitle(drawing)},
       C("div",{className:"hb-dv-head"},
-        C("button",{type:"button",onClick:onClose,className:"hb-plan-iconbtn","aria-label":"返回圖面清單",style:{width:40,height:40}},C(E,{name:"arrow-left",size:18})),
+        C("button",{type:"button",onClick:guardClose,className:"hb-plan-iconbtn","aria-label":"返回圖面清單",style:{width:40,height:40}},C(E,{name:"arrow-left",size:18})),
         C("div",{className:"hb-dv-titlebox"},
           C("div",{className:"hb-dv-title"},HB_drawingTitle(drawing)),
           C("div",{className:"hb-dv-titlesub"},[drawing.category,folderPath].filter(Boolean).join("｜")||"圖面詳情")),
@@ -12050,6 +12092,13 @@ function HbDrawingVersionModal({drawing,folderPath,versions,publishedVersionId,i
               C("div",null,C("select",{value:selected.id,onChange:e=>setSelectedId(e.target.value),style:{...field,minHeight:38,padding:"7px 9px"}},sorted.map(v=>C("option",{value:v.id,key:v.id},`V${v.versionNo}｜${fmtMD(v.uploadedAt)}${v.id===currentId?"（最新）":""}`))),C("div",{className:"hb-dv-stage"},renderPreview(selected,"V"+selected.versionNo,false))),
               C("div",null,C("select",{value:compared.id,onChange:e=>setCompareId(e.target.value),style:{...field,minHeight:38,padding:"7px 9px"}},sorted.map(v=>C("option",{value:v.id,key:v.id},`V${v.versionNo}｜${fmtMD(v.uploadedAt)}${v.id===currentId?"（最新）":""}`))),C("div",{className:"hb-dv-stage"},renderPreview(compared,"V"+compared.versionNo,false))))
             :C("div",{className:"hb-dv-stage"},renderPreview(selected,null,true)),
+          view!=="compare"&&isPdf&&!ownerPreview&&C("div",{className:"hb-dv-rot"+(pendingRot?" dirty":"")},
+            C("div",{className:"hb-dv-rot-l"},C("span",null,"圖面方向"),C("b",null,rotOf(selected)+"°"),pendingRot?C("em",null,"尚未儲存"):null),
+            C("div",{className:"hb-dv-rot-r"},
+              C("button",{type:"button",disabled:rotBusy,onClick:()=>turn(-90),"aria-label":"向左旋轉 90 度"},C("span",{className:"g"},"↺"),"左轉"),
+              C("button",{type:"button",disabled:rotBusy,onClick:()=>turn(90),"aria-label":"向右旋轉 90 度"},C("span",{className:"g"},"↻"),"右轉"),
+              pendingRot?C("button",{type:"button",disabled:rotBusy,onClick:()=>setPendingRot(0)},"還原"):null,
+              C("button",{type:"button",className:"save",disabled:rotBusy||!rotDirty,onClick:saveRot},rotBusy?"儲存中…":"儲存方向"))),
           C("div",{className:"hb-dv-strip",role:"tablist","aria-label":"版本"},sorted.map(v=>C("button",{type:"button",key:v.id,role:"tab","aria-selected":v.id===selected.id,className:"hb-dv-vt"+(v.id===selected.id?" on":""),onClick:()=>pick(v.id)},
             C("div",{className:"th"},v.mime&&v.mime.startsWith("image/")?C("img",{src:v.url,alt:"",loading:"lazy"}):C(E,{name:"file-text",size:20,color:"#B4573A"})),
             C("b",null,"V"+v.versionNo),C("small",null,fmtMD(v.uploadedAt)))))),
@@ -12077,7 +12126,7 @@ function HbDrawingVersionModal({drawing,folderPath,versions,publishedVersionId,i
                   !byFolder&&v.id!==publishedVersionId&&C("button",{type:"button",className:"hb-dv-mini",style:{color:"#315c48"},onClick:()=>onPublish(v.id)},"發布給業主")))))),
             tab==="related"&&(related.length===0
               ?C("div",{style:{fontSize:13,color:s.inkSoft,padding:"18px 0"}},"同資料夾沒有其他圖面")
-              :C("div",null,C("div",{style:{fontSize:11.5,color:"#81786d",padding:"10px 0 2px"}},"同資料夾的其他圖面"),related.map(d=>C("button",{type:"button",key:d.id,className:"hb-dv-rel",onClick:()=>onSwitch(d.id)},
+              :C("div",null,C("div",{style:{fontSize:11.5,color:"#81786d",padding:"10px 0 2px"}},"同資料夾的其他圖面"),related.map(d=>C("button",{type:"button",key:d.id,className:"hb-dv-rel",onClick:()=>{if(pendingRot&&!window.confirm("圖面方向還沒儲存，確定要切換圖面嗎？"))return;onSwitch(d.id)}},
                 C(E,{name:"file-text",size:18,color:"#B4573A"}),
                 C("div",{style:{flex:1,minWidth:0}},C("div",{style:{fontSize:14,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},HB_drawingTitle(d)),C("div",{style:{fontSize:11.5,color:"#81786d"}},d.category||"未分類")),
                 C(E,{name:"arrow-right",size:15,color:"#8b8277"})))))))),
