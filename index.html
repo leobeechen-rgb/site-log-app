@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head><style id="hb-owner-gallery-style">
-/* HERFULSINS v28 — responsive drawing preview with rotation-aware PDF rendering. */
+/* HERFULSINS v29 — always-visible drawing preview with explicit angle controls. */
 .hb-gallery-video{position:fixed;inset:0;z-index:10000;overflow:hidden;background:#f2efe7;color:#514b3f;font-family:'PingFang TC','Microsoft JhengHei',sans-serif;isolation:isolate;overscroll-behavior:contain;touch-action:none;opacity:1;transition:opacity .36s ease}
 .hb-gallery-video.is-leaving{opacity:0;pointer-events:none}
 .hb-gallery-video *{box-sizing:border-box}
@@ -11246,13 +11246,13 @@ function HbDrawingHub({onBack,notify,project=null,embedded=false}){
     updateShare(d.id,{shared:false,publishedVersionId:null,publishedAt:null,viewedAt:null});
     notify("已改為公司內部圖面");
   };
-  let rotateDrawingVersion=async v=>{
+  let rotateDrawingVersion=async(v,targetAngle)=>{
     if(!v||v.mime!=="application/pdf"){notify("此功能僅適用 PDF 圖面");return}
-    let angle=(HB_getDrawingRotation(v.note)+90)%360,newNote=HB_setDrawingRotation(v.note,angle);
+    let angle=targetAngle==null?(HB_getDrawingRotation(v.note)+90)%360:Number(targetAngle)%360,newNote=HB_setDrawingRotation(v.note,angle);
     let{error}=await q.from("sitelog_drawing_versions").update({note:newNote}).eq("id",v.id);
     if(error){notify("旋轉失敗："+error.message);return}
     setVersions(vs=>vs.map(item=>item.id===v.id?{...item,note:newNote}:item));
-    notify(angle?`PDF 已向右旋轉至 ${angle}°`:"PDF 已恢復原始方向");
+    notify(angle?`PDF 方向已設為 ${angle}°`:"PDF 已恢復為 0° 原始方向");
   };
   let visibleDrawings=folderDrawings.filter(d=>{
     let m=shareOf(d),cv=currentVersionOf(d),pv=publishedVersionOf(d),qv=searchText.trim().toLowerCase();
@@ -11440,13 +11440,14 @@ function HbDrawingHub({onBack,notify,project=null,embedded=false}){
       .hb-plan-modal{width:min(1180px,96vw);height:min(820px,92dvh);background:#f4f0e7;display:grid;grid-template-rows:auto minmax(0,1fr);overflow:hidden;box-shadow:0 24px 90px rgba(28,24,20,.25)}
       .hb-plan-modal-head{display:flex;align-items:center;gap:14px;padding:17px 20px;border-bottom:1px solid rgba(57,51,47,.13);background:rgba(255,255,255,.5)}
       .hb-plan-modal-body{display:grid;grid-template-columns:minmax(0,1fr) clamp(280px,29vw,340px);min-height:0;overflow:hidden}.hb-plan-stage{padding:18px;min-width:0;min-height:0;overflow:hidden;display:flex;flex-direction:column}.hb-plan-side{border-left:1px solid rgba(57,51,47,.13);padding:18px;overflow:auto;background:rgba(255,255,255,.36)}
-      .hb-plan-preview{position:relative;flex:1;min-height:0;display:flex;align-items:center;justify-content:center;background:#ddd8ce;border:1px solid rgba(57,51,47,.12);overflow:hidden}.hb-plan-preview img{display:block;max-width:100%;max-height:100%;object-fit:contain}.hb-plan-preview canvas{display:block;max-width:100%;max-height:100%;box-shadow:0 6px 22px rgba(28,24,20,.16);background:#fff}.hb-plan-pdfpages{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);display:flex;align-items:center;gap:8px;padding:5px 8px;background:rgba(35,32,28,.82);color:#fff;border-radius:3px;font-size:10px;box-shadow:0 3px 12px rgba(0,0,0,.16)}.hb-plan-pdfpages button{width:26px;height:25px;border:1px solid rgba(255,255,255,.3);background:transparent;color:#fff;cursor:pointer}.hb-plan-pdfpages button:disabled{opacity:.3;cursor:default}
+      .hb-plan-preview{position:relative;flex:1;min-height:0;display:flex;align-items:center;justify-content:center;background:#ddd8ce;border:1px solid rgba(57,51,47,.12);overflow:hidden}.hb-plan-preview img{display:block;max-width:100%;max-height:100%;object-fit:contain}.hb-plan-preview iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:#fff}.hb-plan-preview canvas{position:relative;z-index:2;display:block;max-width:100%;max-height:100%;box-shadow:0 6px 22px rgba(28,24,20,.16);background:#fff}.hb-plan-pdfpages{position:absolute;z-index:5;left:50%;bottom:10px;transform:translateX(-50%);display:flex;align-items:center;gap:8px;padding:5px 8px;background:rgba(35,32,28,.82);color:#fff;border-radius:3px;font-size:10px;box-shadow:0 3px 12px rgba(0,0,0,.16)}.hb-plan-pdfpages button{width:26px;height:25px;border:1px solid rgba(255,255,255,.3);background:transparent;color:#fff;cursor:pointer}.hb-plan-pdfpages button:disabled{opacity:.3;cursor:default}.hb-plan-rotationbadge{position:absolute;z-index:6;top:10px;left:10px;background:#315c48;color:#fff;padding:7px 10px;font:600 12px Georgia,serif;letter-spacing:.06em;box-shadow:0 3px 12px rgba(0,0,0,.14)}
+      .hb-plan-rotatebar{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:12px;margin:0 0 10px;padding:10px 12px;background:rgba(255,255,255,.58);border:1px solid rgba(57,51,47,.12)}.hb-plan-rotatelabel{font-size:11px;color:#726a60;white-space:nowrap}.hb-plan-rotatelabel strong{display:block;margin-top:2px;font:600 18px Georgia,serif;color:#315c48}.hb-plan-angles{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}.hb-plan-angle{min-height:38px;border:1px solid rgba(57,51,47,.2);background:#faf8f2;color:#625b52;cursor:pointer;font:500 12px Georgia,serif}.hb-plan-angle.on{background:#315c48;border-color:#315c48;color:#fff;box-shadow:0 3px 10px rgba(49,92,72,.18)}
       .hb-plan-tabs{display:flex;gap:4px;overflow:auto;margin-bottom:12px}.hb-plan-tabs button{white-space:nowrap;border:0;border-bottom:2px solid transparent;background:none;padding:8px 11px;font-size:12px;cursor:pointer;color:#766f65}.hb-plan-tabs button.on{color:#211f1b;border-color:#315c48}
       .hb-plan-versions{display:flex;gap:7px;overflow:auto;padding:2px 0 12px}.hb-plan-vthumb{min-width:72px;padding:8px;border:1px solid rgba(57,51,47,.13);background:rgba(255,255,255,.55);cursor:pointer;text-align:left}.hb-plan-vthumb.on{border-color:#315c48;box-shadow:inset 0 -2px #315c48}
       .hb-plan-timeline{position:relative;padding-left:17px}.hb-plan-timeitem{position:relative;padding:0 0 18px 14px;border-left:1px solid #c8c0b4}.hb-plan-timeitem:before{content:'';position:absolute;width:7px;height:7px;border-radius:50%;background:#315c48;left:-4px;top:5px}.hb-plan-timeitem:last-child{border-left-color:transparent}
       .hb-plan-compare{display:grid;grid-template-columns:1fr 1fr;gap:10px;flex:1;min-height:0}.hb-plan-compare>div{min-width:0;min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr);gap:6px}.hb-plan-compare .hb-plan-preview{min-height:0}
       @media(max-width:900px){.hb-plan-features{grid-template-columns:repeat(2,1fr)}.hb-plan-folder-grid{grid-template-columns:repeat(2,1fr)}.hb-plan-tr{grid-template-columns:minmax(240px,1.7fr) 82px 105px 110px 130px}.hb-plan-tr>*:nth-child(3){display:none}}
-      @media(max-width:680px){.hb-plan-features{grid-template-columns:1fr 1fr}.hb-plan-feature{padding:10px}.hb-plan-feature small{display:none}.hb-plan-folder-grid{grid-template-columns:1fr}.hb-plan-folder{min-height:116px;padding:16px}.hb-plan-folder-title{margin-top:14px}.hb-plan-table{display:none}.hb-plan-mobile{display:flex;flex-direction:column;gap:10px}.hb-plan-modal{width:100vw;height:100dvh}.hb-plan-modal-head{padding:11px 12px;gap:8px}.hb-plan-modal-head .hb-plan-pill{max-width:108px;overflow:hidden;text-overflow:ellipsis}.hb-plan-modal-body{display:block;overflow:auto}.hb-plan-stage{padding:12px;display:block;overflow:visible}.hb-plan-side{border-left:0;border-top:1px solid rgba(57,51,47,.13);padding:15px}.hb-plan-preview{height:min(58vh,520px);min-height:320px}.hb-plan-compare{display:grid;grid-template-columns:1fr;height:auto}.hb-plan-compare>div{display:block}.hb-plan-compare .hb-plan-preview{height:44vh;min-height:280px;margin-top:6px}}
+      @media(max-width:680px){.hb-plan-features{grid-template-columns:1fr 1fr}.hb-plan-feature{padding:10px}.hb-plan-feature small{display:none}.hb-plan-folder-grid{grid-template-columns:1fr}.hb-plan-folder{min-height:116px;padding:16px}.hb-plan-folder-title{margin-top:14px}.hb-plan-table{display:none}.hb-plan-mobile{display:flex;flex-direction:column;gap:10px}.hb-plan-modal{width:100vw;height:100dvh}.hb-plan-modal-head{padding:11px 12px;gap:8px}.hb-plan-modal-head .hb-plan-pill{max-width:108px;overflow:hidden;text-overflow:ellipsis}.hb-plan-modal-body{display:block;overflow:auto}.hb-plan-stage{padding:12px;display:block;overflow:visible}.hb-plan-side{border-left:0;border-top:1px solid rgba(57,51,47,.13);padding:15px}.hb-plan-preview{height:min(58vh,520px);min-height:320px}.hb-plan-rotatebar{grid-template-columns:1fr;gap:7px;padding:8px}.hb-plan-rotatelabel{display:flex;align-items:center;justify-content:space-between}.hb-plan-rotatelabel strong{display:inline;margin:0;font-size:17px}.hb-plan-angle{min-height:42px}.hb-plan-compare{display:grid;grid-template-columns:1fr;height:auto}.hb-plan-compare>div{display:block}.hb-plan-compare .hb-plan-preview{height:44vh;min-height:280px;margin-top:6px}}
     `),
     u.default.createElement("div",{className:"hb-dosWrap"},
       u.default.createElement("button",{onClick:onBack,className:"hb-arcBack"},u.default.createElement(E,{name:"arrow-left",size:15}),u.default.createElement("span",null,embedded?"返回案件檔案":"返回公司資料庫")),
@@ -11607,9 +11608,10 @@ function HbPlanPdfPreview({version,label,rotation}){
     return()=>{dead=true;try{renderTask&&renderTask.cancel()}catch(e){}try{loadTask&&loadTask.destroy()}catch(e){}};
   },[version&&version.url,pageNo,rotation,boxTick]);
   return u.default.createElement("div",{ref:wrapRef,style:{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",padding:"12px 12px 38px"}},
+    u.default.createElement("iframe",{src:`${version.url}#view=FitH&toolbar=1`,title:label||"PDF 原始圖面",style:{visibility:state==="ready"?"hidden":"visible"}}),
     u.default.createElement("canvas",{ref:canvasRef,"aria-label":label||"PDF 圖面預覽",style:{visibility:state==="ready"?"visible":"hidden"}}),
-    state==="loading"&&u.default.createElement("div",{style:{position:"absolute",fontSize:12,color:s.inkSoft}},"圖面載入中…"),
-    state==="error"&&u.default.createElement("div",{style:{position:"absolute",textAlign:"center",padding:24,fontSize:12,color:s.inkSoft}},"預覽載入失敗，請使用右側按鈕開啟原始圖面"),
+    state==="loading"&&u.default.createElement("div",{style:{position:"absolute",zIndex:5,right:10,bottom:10,padding:"5px 8px",background:"rgba(255,255,255,.9)",fontSize:10,color:s.inkSoft}},`正在套用 ${rotation||0}° 預覽…`),
+    state==="error"&&u.default.createElement("div",{style:{position:"absolute",zIndex:5,left:10,right:10,bottom:10,padding:"6px 8px",background:"rgba(255,255,255,.92)",textAlign:"center",fontSize:10.5,color:s.inkSoft}},"目前顯示原始 PDF；仍可開啟或下載完整圖面"),
     pageTotal>1&&u.default.createElement("div",{className:"hb-plan-pdfpages"},
       u.default.createElement("button",{type:"button",disabled:pageNo<=1,onClick:()=>setPageNo(v=>Math.max(1,v-1)),"aria-label":"上一頁"},"‹"),
       u.default.createElement("span",null,`${pageNo} / ${pageTotal}`),
@@ -11630,7 +11632,8 @@ function HbDrawingVersionModal({drawing,folderPath,versions,publishedVersionId,i
     !v?u.default.createElement("div",{style:{fontSize:12,color:s.inkSoft}},"尚無圖面"):
     v.mime&&v.mime.startsWith("image/")?u.default.createElement("img",{src:v.url,alt:label||drawing.name,style:mediaStyle}):
     v.mime==="application/pdf"?u.default.createElement(HbPlanPdfPreview,{version:v,label:label||drawing.name,rotation}):
-    u.default.createElement("div",{style:{textAlign:"center",padding:28}},u.default.createElement(E,{name:"file-text",size:42,color:"#B4573A"}),u.default.createElement("div",{style:{font:"400 18px Georgia,serif",marginTop:12}},HB_drawingCadExt(v.path||v.url).toUpperCase()+" DRAWING"),u.default.createElement("div",{style:{fontSize:11,color:s.inkSoft,marginTop:7}},"CAD 圖面請下載後使用繪圖軟體開啟"),u.default.createElement("a",{href:v.url,onClick:ev=>HB_downloadDrawingCad(ev,v,drawing.name),style:{...ll,display:"inline-block",marginTop:14,textDecoration:"none"}},"下載 CAD 原檔"))
+    u.default.createElement("div",{style:{textAlign:"center",padding:28}},u.default.createElement(E,{name:"file-text",size:42,color:"#B4573A"}),u.default.createElement("div",{style:{font:"400 18px Georgia,serif",marginTop:12}},HB_drawingCadExt(v.path||v.url).toUpperCase()+" DRAWING"),u.default.createElement("div",{style:{fontSize:11,color:s.inkSoft,marginTop:7}},"CAD 圖面請下載後使用繪圖軟體開啟"),u.default.createElement("a",{href:v.url,onClick:ev=>HB_downloadDrawingCad(ev,v,drawing.name),style:{...ll,display:"inline-block",marginTop:14,textDecoration:"none"}},"下載 CAD 原檔")),
+    v&&v.mime==="application/pdf"&&u.default.createElement("div",{className:"hb-plan-rotationbadge"},`目前 ${rotation}°`)
   )};
   return u.default.createElement("div",{style:{position:"fixed",inset:0,background:"rgba(30,27,23,.58)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:55}},
     u.default.createElement("div",{className:"hb-plan-modal fade-in"},
@@ -11647,9 +11650,9 @@ function HbDrawingVersionModal({drawing,folderPath,versions,publishedVersionId,i
           ),
           tab==="preview"&&u.default.createElement(u.default.Fragment,null,
             u.default.createElement("div",{className:"hb-plan-versions"},versions.map(v=>u.default.createElement("button",{key:v.id,className:"hb-plan-vthumb "+(v.id===selected.id?"on":""),onClick:()=>setSelectedId(v.id)},u.default.createElement("div",{style:{font:"400 15px Georgia,serif"}},`V${v.versionNo}`),u.default.createElement("div",{style:{fontSize:9,color:s.inkSoft,marginTop:3}},v.id===publishedVersionId?"業主發布版":v.id===drawing.currentVersionId?"目前使用":"歷史版本")))),
-            selected&&selected.mime==="application/pdf"&&u.default.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,margin:"0 0 9px"}},
-              u.default.createElement("div",{style:{fontSize:10.5,color:s.inkSoft}},`目前方向 ${HB_getDrawingRotation(selected.note)}°`),
-              !ownerPreview&&u.default.createElement("button",{type:"button",onClick:()=>onRotate(selected),style:{...ll,padding:"7px 11px",display:"inline-flex",alignItems:"center",gap:6}},u.default.createElement(E,{name:"refresh",size:14}),"向右旋轉 90°")
+            selected&&selected.mime==="application/pdf"&&u.default.createElement("div",{className:"hb-plan-rotatebar"},
+              u.default.createElement("div",{className:"hb-plan-rotatelabel"},u.default.createElement("span",null,"圖面方向"),u.default.createElement("strong",null,`${HB_getDrawingRotation(selected.note)}°`)),
+              u.default.createElement("div",{className:"hb-plan-angles"},[0,90,180,270].map(angle=>u.default.createElement("button",{key:angle,type:"button",disabled:ownerPreview,className:"hb-plan-angle "+(HB_getDrawingRotation(selected.note)===angle?"on":""),onClick:()=>!ownerPreview&&onRotate(selected,angle)},`${angle}°`)))
             ),
             renderPreview(selected)
           ),
