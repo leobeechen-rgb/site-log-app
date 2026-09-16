@@ -46,6 +46,31 @@
 
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<script>
+/* ===== App 版：鎖定整頁雙指縮放／雙擊放大，只允許圖片與 PDF 檢視器內縮放 ===== */
+(function(){
+  try{
+    var ua=navigator.userAgent||"";
+    var iOS=/iPad|iPhone|iPod/.test(ua)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+    var standalone=(window.matchMedia&&window.matchMedia("(display-mode: standalone)").matches)||navigator.standalone===true;
+    var wrapper=!!(window.Capacitor||window.cordova||window.ReactNativeWebView)||/; wv\)|Median|GoNative|HerfulsinsApp/i.test(ua)||(iOS&&!/Safari\//.test(ua));
+    if(/[?&]app=1(&|$)/.test(location.search)){try{localStorage.setItem("hb_app_shell","1")}catch(e){}}
+    if(/[?&]app=0(&|$)/.test(location.search)){try{localStorage.removeItem("hb_app_shell")}catch(e){}}
+    var stored=false;try{stored=localStorage.getItem("hb_app_shell")==="1"}catch(e){}
+    if(!(standalone||wrapper||stored))return;
+    window.HB_IS_APP=true;
+    document.documentElement.classList.add("hb-app");
+    var meta=document.querySelector('meta[name="viewport"]');
+    if(meta)meta.setAttribute("content","width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no");
+    var st=document.createElement("style");
+    st.textContent="html.hb-app{-webkit-text-size-adjust:100%;text-size-adjust:100%;touch-action:manipulation}html.hb-app body{overscroll-behavior-x:none}";
+    document.head.appendChild(st);
+    var inZoom=function(t){return !!(t&&t.closest&&t.closest("[data-hb-zoom]"))};
+    ["gesturestart","gesturechange","gestureend"].forEach(function(n){document.addEventListener(n,function(e){e.preventDefault()},{passive:false,capture:true})});
+    document.addEventListener("touchmove",function(e){if(e.touches&&e.touches.length>1&&!inZoom(e.target))e.preventDefault()},{passive:false,capture:true});
+  }catch(err){}
+})();
+</script>
 <title>赫柏空間設計 · 工地紀錄本</title>
 <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAQ+0lEQVR4nO2be3gUVZrGf6eqOt1NJ+SeJukEIwpGrgpOCBdZLuPMCGFYEYmIZkACsoBhINxZxxFwQMRhuAV1ARNuCjNeFh0YBNlZeWIAQXiEgK5uApiE3EjIpdPd6eo6+0eSXh7XWbkk7Tzufs9Tf3R1VZ3zvuc7X73nO/UJvtsUQLYcOBz24UKIXyLlIOBOEGGA+jfu/aHMB/IaUIQQeVLKfSUl5Uda/hMth/Htm8R3PEhtfhg4HJ2eVASzQPQXAqQEKWU79b9tTAhBa19BHjckG0tKyna2/O3H5r/+W/drgO5wRHUVQntVEcpwKWUraB//zeR3Eff3YPK6Q20mQ2BI44iU+vSSkqqvaMHYesP1QDRAj4uLGaEqyh4hlEjDMHSap4MSQBBtaQZgKIqiSWlc9RlGWmlpxUdcR0IrASrgczjswwVivxDCLKXUWy78MZguhNCklB6JHNkSG1TAJ2gJeJ072xMNn/hMCBEmpfTx9xfkbtd8QghVSnlNUWXfy5fLLwLC79o+nVxFEWEtI/9jAw+gSil1RRFhPp3c1pMKYMTH2dNUVX3QMH5Ubv9dphmG1FVVfTA+zp4GGAqgIlggm0N9wKO7EIFvUkopESwAVOFw2IcqKP8mCTwBQgh0XUfTtEDrCykQwsAYpiDF2BbY/0MltacpioLP5yMqKgpd17//hrY1AwFIMVYRQg5qORmw0dc0jZqaau699162b99BXFwcuq6jKAGTGwJACDlIkZI7W9wvIK1rmkZ1dTW9e9/H2rVrWbZ8GWVlZQQFBeH1egMVE5RmhcudihAiNBAtwvXge/P6668xb948Pjx4EFVV0X0+IiMj0XU9YIFRCBEaMJnbCr5Pnz5s2LCRV199ja+//pqIiAiuXbtGt65d2bFzJ/Hx8Xi9XlQ1IFIkMJNOVdXmke/Th82bX2XRooVs27aN5ORkLBYLSUlJrFu3jhdXrKC8vBxFUWhoaAhITGj3FlRVpa6ujvvuu5/N2ZvJyppLXl4enTrZ2b9/P4MGDeaNnBwWL1nMoUOHqKysZOzYsaSmplJbW9vuntBuBAghUFUVj8fDsGHDyM3NZd68LPLy8oiJiaG8vJyePXsye3YmC+bP55O8TxBCMGLEcDIyMnC5XNzV5S6cTme7xgQR7+jU5gpECIHb7UZVVWpra+nSpQs9evTg0KFDhIaGouteevToyerVq1myZAl5eXkADBgwgJUrV/Lss89y4sQJBg4cSIcOHTh58iQWiwWfz/c9Ld+8tbnul1Li9Xrp168fY8c+itVqYenSpRw+fJjQ0FA8Hg/h4eGsWvUSy5cv5+jRo6iqSkpKCuvXryczM5P8/Hzsdjs1NTXcfffdSClpbGzEYrG0uWJsFw/o3qMHV6uqqKurY9Wql3C5XGRmzqJjx1B8Ph9er5eYmBhqa2upqKhg+PARrFq1iqlTM/B4PCQlJZGfn4+maTQ2NhIUFESvXr04fvw4ZrO5TUlosxigKAoej4d77rmH3//+94SEhFBYWMSCBfMpLPxP6usbqK+vxzAMLBYL1dXVeL1eJk+ezKpVq3jmmWmcPXsWw2hW5B6PB13XqaysJD09nYULF5KQkNDmYqltPEBKDCkxm804nU769evHmjVrmDFjBlVVVSxevISzZz/n888/59y5c1RXV6MoCi6XizFjxhATE8O2bduw2+14vV68Xi/BwcFcuXKF2bNnM2bMPzJ+/GMkJSXh8/koKChos+lw2wS0jnxKSgqJiYl88MH7lJWVk5yczLr169nyL1uora1lyJAhdLvnHoKCTFwsusi5c2epqKjgzJkzOJ1OoqOjKS4uxmYLpr6+jm+++YY5c+YwalQqaWnjuVJWyciHf8bPf/4Lli5dQlRUNLruvW0CbmsKCCGoq6vD4XBQWlrKe++9h2FIIiMjOXXqFJnPZjJ58mTOny9gSsY0xj06lvnz5pGf/wk2WzBmsxm3201ZWRm6rjNjxkxstg4UFV1izpw5pKamsmHDBjp16sTAAf15+eWXuXixCICmJk+bCKVb9gBVVamvr2fSpEmYzWZWr36ZuLhYbDYbuq7T1NRETU0NDzzwABs2bGDlypUcPXqUxsZG3G43hmGgqio2mw2TyeSXv4qikJGRwUMPPcQvfvEwL764Ao+nCUVRqK6+SnZ2NhEREURFRVFYWIjVar2t1+MtU9jQ0IDNZuPcuXOMGTOGWbNm8k3xFfr06cPQoUNxuVzExcWRn5/P0qVLmTVrFkFBQZjNZqKiooiOjiYiIgKTyYSU0r8aTExM5KGHfsaUKVMwDB/de/Tg8OFDLFy4gE2bNqEoggEDBpCTk0NoaChOp/O21OIteYCUksGDB3P8+HGuXr1KdHQ0O3bs5ODBv7Bjxw4AvF4vHTt2pGfPnuTl5WGxWHA6nX7A39kZIWhqasJqtdLY2EhiYiLZ2dk8nvY4nutc3uVyMW7cOCZNmsSECU9QW3sNm812S55wUx6gKAqGYWCz2cjMzCQjIwPDMHC5XEyc+ASpqamMHDmS0tJShBA0NDSQnJyM2WymsbHxfwUP+D3BMAwaGxvp378/xcXFXCm74m9b13UsFgtbt25l27ZtvPXWm4SFhd+yJ9wUAU6nE03TaGhoYNy4caSkDCArK4va2lo8Hg/jx48nPT2dZ555hurqarp17Upubu4Ngb+eBEVR8BkGffv25eTJk0gp/d4hhEBKicPhICcnh61bt7J9+3bCwsJuiYQbJkBKyYgRI5BSoqoqQgjGj3+MkQ+PZNGiRdTW1tLU1ERaWhrp6ek8/9vfUlhURHl5uX9Ub6atIJOJkJAQCgoKsFqt6F4du93O9h07iI6O5lpNDfHx8WzZsoUjRz5iz549hIWF3fQy+nuvFEJgGAbBwcHMmTOXjIwMKioqAEhKSmL+gvkkJyezePFiqqurqa6uZtGiRby/bx9Wq5Vu3brhdrtvSb1duHABp9OJ2+1G9+k4nU4+PHiQTZs2ER4RQVVVFampo9mxYwfZ2dnsfvNNYmJibkot3lAQFEI0Bxgh2LVzJ4cPH+btt9+mW7du5OXloaoqO3fu5FxBAa9ufpX6+joaGhro27cvo3/5S15csYKQkJAb9oJWd+/cuTONjY106tSJkJCOfPTRYXRd5+mnn+aJJ55g+fIVVFVVcuXKFaqqqsjIyCBj6lTSn3qKqqqqG0q339BqUEqJpml4PB4ef/xx9uzZQ0JCAjNnzuKOOzrT0NDAzJkzWbv2DwQH23A21GM2m7HZbHTr2vWGQH+7PbPZzMWLFwkNDWXgwIGkpaVRVFTIlStXyMnJQUrJ6tUvMXr0aJqamrDb7bz77rsUFRVRXV2Nqqo3FHNueLIYhoHZbEYIQVpaGl26dOG55/6ZkpISbDYbHo+HjIynKSkpwRQUhMvlomfPntTX1+Px3JxqUxSFpqYmHA4HiYmJrFmzhuUrVrB9+w5iY5vFVm5uLps2bWLv3r2Eh4fj9XoxmUycOHHipqbbTb0FDMMgKCgIIQTp6ekMGTKExYsXU1paimEYaJqJoKCgFuYlP/lJMp999pl/E+RGOiaEwOv1EhQURHr6rygsLCQqKop/fe89VqxYzu7du/0k7Nq1i127dvHWW3uIjIykqakJm812M5BuXgm2kgAwYcIEHnxwCEuWLPFL21aw0dEx3HHHHRw7dgyLxYLVav3e4NQKPiIiAl3XOXLkI4KDgzEMg4TOnTlz5gzrN2zgjTfeID4+Hikl7777Ls899xw1NTWoqnrTYuiWpPD1njBx4hOkjh7N6NGjqa+vp66ujpqaGu666y4aG52cPXuWqKgo9uzZS+/evXG5XP7p0Jo3VFUVTWsOR1arlS1btjJy5EgOHPgLbrcbj8fDwAEDSE5O5rXXtrB69Wq2bt3KyFGjADh+/Ngt5whuOSXWSkJTUxNPT55MXV0dQgjmzp1LVFQ0167VcP78BVRVIycnh71791JQUEDHjh1xuVxomobX68XpdPpHzWw206FDB55//jesWfMKdXV1vP/++8TExPDXv/4Vs9lMQnwsf/rTnwgLCyPe4cDpdBISEnLLC6LbygkahoHJZKKqqora2lqmTJnCmDFjmDRpEg31DfTo2ZMDB/azZ88e1q/fQP/+yYx77DEOHDjA6c9OkZDQmZ/+9KfceWcXKisrOXXqJGfPnuXDQ0cYM2Y0b7/9DgAffPAB0dHR6LqO2WzmgQce4NNPP+Xrr7+mY8eOt7UabJOMkKZpVFVVsXTpUvLz89n3/n4S4mPZvftN3nnnHTZt2khCQgJWq5Xa2lr/+x0g6d57iYqMpFevXiTd2x2zOYjLly5z7NgxamqqyczM5He/+x379u3DbreTmppKSWkpn+Tl3fZSuM0IaBUuiYmJhIeH88UXX7J7927++Me9ZGdnExsbS0NDA2azGZPJRElJCVOnTqOpyUNubi4dOnTwR/CuXbvSs1cv+if3Z+PGDeheL7vffJNXXnmFgwcPomkaPp+vzTZM2iQp2rqKu3TpEsXFxeTm5rB//342btxIbGwsbrebUaNGERsbS1lZGQMHDmT69GfQNA273Y7NZsNut2O1WiksLGTb1m1UVJSj6z7OX/iSiRMnMmfuXPr164fH48FkMrVFt4E2TosrioLb7aJ79x5cunTJP6oej4f777+f4uJirFYrmzdvJisri48//pioqCgcDgeXLl1C0zT/ZsqyZcvo1as3c+fO8SdSvvrqqzbfL2zTpzWrRQsXLlygvr6e1NRUQkND8Xq9/kC27Y03+PWvf82JEycwmUykpKSwdes2Otk7+XWCqiq88MIyTp8+zbRp0wkNDeXLL79sl83SdtkYac0Ud+/eHZPJxMcff0xKSgrr1q0jKyuLU6dOYRgGQ4cOZdmyZWRmzuarr/4Ds9nM1atXeeSRR/jiiy84c+Y0wcHBKIraLrtC0E6bo60a4dy5c5SWlvLII4+wbt06FixY4Ac/bNgwXnjhBTIyMjh9+jMsFgsVFRU8OPhBfvOb5+ncuTPh4RGEhHRsN/DQjrvDUko6dOhAcXExbreb7Oxsjh49iq7rDBs2jOXLl7N27R8oLCwkMjKK8vJyhg0bxqqXVvHUU0/y4YcfYjab0XW9Xb8ga5cpcL0pikJjYyOapmGxWBg0aDDz589jypQpVFVVMWjQIP785z8zePBgVr30ElMzpnLhwnnCw8MD8vVYuxMAzSR4vV6io6N57fXXWbRwIadPn/YvYydMmMCTTz7FjBn/xPnzgQMPzQT4CMCXIq0rveDgYNxuN4qiUFlZyfDhw1m5ciXTpk3jwoULAQUPGMIRZ68WQoQHorXW1Fqrihs8eDALFy5k+vTpPwR4pJQ1ihAUtSwl2/1L0dbUmq7rhIaGkpk5m6ysLAoKCgI/8s2lNUXCEddpvaKIZwNZI9A6HUJCQnC5XP5cfwDNJ4RQDUNuUBDynebasMCVxUgpMZlMOJ1O/+8Am4IEhHxHAGq8w/6pEMp9UkqDABZL/AAjD82jr0hpnCkuKf+JAviQrBbNgSCw36z/MCV4UgghkKzm+pohR5z931VV+bFXjeiKIjSfzzhaUlr+D1xfM6Rq/Mow5DUhhMa3igt/JOYTQmiGIa+pGr9qPanQ/PpTLl8uL5LIR6WUHiGEynXFhT8C01sqxjwS+ejly+VFtGBv9QAfoJWUlB8xpDEK5FVFUVqLCwNaSdLGZgB6MxZ51ZDGqJaaQb+XX//q0wGttLTiI0PqAwxpHFEURRNCXE+SQYAD5U2apLmPPgAhhKIoimZI44gh9QHfrhqF/y+e/pt1Qv9nyuf/C2KK2wCTcAn6AAAAAElFTkSuQmCC" />
 
@@ -3514,6 +3539,48 @@ table.sign tr:first-child td{height:auto;background:var(--wash)}
 }
 </style>
 
+
+<style id="hb-mobile-chrome-v2">
+/* A2：手機只保留一顆選單鍵，固定在頁首列；各頁自己的選單位不再塞入漢堡鍵 */
+@media(max-width:859px){
+ html[data-hbrail="1"] .hb-project-actions-row>.hb-project-menu-slot,
+ html[data-hbrail="1"] .hb-library-menu-slot{display:none!important}
+ .hb-project-actions-row{grid-template-columns:minmax(0,1fr) auto!important}
+ .hb-shell>.hb-global-menu-slot[data-active]{justify-content:space-between!important;gap:12px}
+ .hb-scroll{padding-bottom:calc(132px + env(safe-area-inset-bottom))!important}
+ .hb-topbar-title{display:flex;align-items:baseline;gap:10px;min-width:0;overflow:hidden;white-space:nowrap}
+ .hb-topbar-brand{font-family:"Cormorant Garamond",serif;font-size:14px;letter-spacing:.3em;color:#2A2622}
+ .hb-topbar-sec{font-size:12.5px;letter-spacing:.08em;color:#7A7266;overflow:hidden;text-overflow:ellipsis}
+ .hb-topbar-sec:not(:empty)::before{content:"／";margin-right:6px;color:#B9B0A2}
+ html[data-hbrail="1"] .hb-dossier .hb-dosLabel,
+ html[data-hbrail="1"] .hb-dossier .hb-dosTitle,
+ html[data-hbrail="1"] .hb-company .hb-dbback,
+ html[data-hbrail="1"] .hb-mktHead{padding-right:0!important}
+}
+body:has(.hb-gallery-video) #hbPushBtn,body:has(.hb-gallery-video) #mnOpen,body:has(.hb-gallery-video) .hb-railBtn,body:has(.hb-gallery-video) .hb-global-menu-slot{display:none!important}
+/* A1：右下角浮動鈕往下捲時收起，往上捲或回到頂端時再出現 */
+#hbPushBtn,#mnOpen{transition:transform .28s cubic-bezier(.22,.61,.36,1),opacity .2s ease!important}
+html.hb-fab-away #hbPushBtn,html.hb-fab-away #mnOpen{transform:translateX(calc(100% + 28px))!important;opacity:0!important;pointer-events:none!important}
+@media(prefers-reduced-motion:reduce){#hbPushBtn,#mnOpen{transition:opacity .15s ease!important}html.hb-fab-away #hbPushBtn,html.hb-fab-away #mnOpen{transform:none!important}}
+</style>
+<script>
+(function(){
+  var root=document.documentElement,last=new WeakMap(),idle=null;
+  function posOf(t){return t===document||t===document.documentElement||t===document.body?(window.scrollY||document.documentElement.scrollTop||0):(t.scrollTop||0)}
+  function setAway(v){if(v)root.classList.add("hb-fab-away");else root.classList.remove("hb-fab-away")}
+  document.addEventListener("scroll",function(e){
+    var t=e.target;if(t&&t.nodeType===1&&t.scrollHeight<=t.clientHeight+4)return;
+    var key=(t&&t.nodeType===1)?t:document,y=posOf(t),prev=last.has(key)?last.get(key):y;last.set(key,y);
+    var d=y-prev;
+    if(y<60)setAway(false);
+    else if(d>6)setAway(true);
+    else if(d<-10)setAway(false);
+  },true);
+  /* 切換頁面時先讓按鈕回來 */
+  var mo=window.MutationObserver&&new MutationObserver(function(){var sc=document.querySelector(".hb-scroll");if(sc&&sc.scrollTop<60)setAway(false)});
+  document.addEventListener("DOMContentLoaded",function(){mo&&mo.observe(document.getElementById("root")||document.body,{childList:true})});
+})();
+</script>
 <style id="hb-portfolio-mobile-layout">
 /* The portfolio is a page, not a full-screen form dialog. */
 @media(max-width:859px){
@@ -14566,7 +14633,7 @@ wrap.addEventListener("touchstart",onStart,{passive:false});wrap.addEventListene
 reset(false);
 return function(){wrap.removeEventListener("touchstart",onStart);wrap.removeEventListener("touchmove",onMove);wrap.removeEventListener("touchend",onEnd);wrap.removeEventListener("touchcancel",onEnd);wrap.removeEventListener("wheel",onWheel);wrap.removeEventListener("dblclick",onDbl)}
 },[src]);
-return u.default.createElement("div",{ref:wrapRef,style:{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden",touchAction:"none"}},u.default.createElement("img",{ref:imgRef,key:src+":"+retry,src:src,alt:"",draggable:false,decoding:"async",onLoad:()=>setLoadState("ready"),onError:()=>setLoadState("error"),style:{width:"100%",height:"100%",maxWidth:"100%",maxHeight:"100%",objectFit:"contain",transformOrigin:"center center",willChange:"transform",userSelect:"none",WebkitUserSelect:"none",WebkitTouchCallout:"none"},onClick:function(e){e.stopPropagation()}}),loadState!=="ready"&&u.default.createElement("div",{role:"status",style:{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:14,color:"#fff",fontSize:14,pointerEvents:"none"}},loadState==="error"?"圖片載入失敗，請重試":loadState==="slow"?"圖片載入較久，請稍候或重試":"圖片載入中…",(loadState==="error"||loadState==="slow")&&u.default.createElement("button",{type:"button",onClick:ev=>{ev.stopPropagation();setLoadState("loading");setRetry(v=>v+1)},style:{pointerEvents:"auto",minHeight:44,padding:"8px 18px",border:"1px solid #aaa",borderRadius:5,background:"#333",color:"#fff",cursor:"pointer"}},"重新載入")))}
+return u.default.createElement("div",{ref:wrapRef,"data-hb-zoom":"1",style:{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden",touchAction:"none"}},u.default.createElement("img",{ref:imgRef,key:src+":"+retry,src:src,alt:"",draggable:false,decoding:"async",onLoad:()=>setLoadState("ready"),onError:()=>setLoadState("error"),style:{width:"100%",height:"100%",maxWidth:"100%",maxHeight:"100%",objectFit:"contain",transformOrigin:"center center",willChange:"transform",userSelect:"none",WebkitUserSelect:"none",WebkitTouchCallout:"none"},onClick:function(e){e.stopPropagation()}}),loadState!=="ready"&&u.default.createElement("div",{role:"status",style:{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:14,color:"#fff",fontSize:14,pointerEvents:"none"}},loadState==="error"?"圖片載入失敗，請重試":loadState==="slow"?"圖片載入較久，請稍候或重試":"圖片載入中…",(loadState==="error"||loadState==="slow")&&u.default.createElement("button",{type:"button",onClick:ev=>{ev.stopPropagation();setLoadState("loading");setRetry(v=>v+1)},style:{pointerEvents:"auto",minHeight:44,padding:"8px 18px",border:"1px solid #aaa",borderRadius:5,background:"#333",color:"#fff",cursor:"pointer"}},"重新載入")))}
 try{window.HBZoomImg=HBZoomImg}catch(e){}
 /* Native modal top layer keeps project images above page containers and headers. */
 function mm({photos,index,onIndexChange,onClose,onAnnotate,onDelete,onDownload}) {
@@ -15553,7 +15620,7 @@ function HB_OwnerPdfViewer({url,name,rotation}){
       h("button",{type:"button",onClick:()=>setZoom(1),title:"符合畫面",style:{...btn,minWidth:64,fontVariantNumeric:"tabular-nums"}},Math.round(zoom*100)+"%"),
       h("button",{type:"button",disabled:zoom>=8,onClick:()=>setZoom(zoomRef.current*1.5),style:{...btn,opacity:zoom>=8?.35:1},"aria-label":"放大"},"＋"),
       h("span",{style:{width:18,display:"inline-flex",justifyContent:"center"}},painted&&busy?h(E,{name:"loader",size:14,color:"#ddd",className:"animate-spin"}):null)),
-    h("div",{ref:boxRef,style:{flex:1,minHeight:0,overflow:"auto",WebkitOverflowScrolling:"touch",position:"relative",touchAction:"pan-x pan-y",overscrollBehavior:"contain"}},
+    h("div",{ref:boxRef,"data-hb-zoom":"1",style:{flex:1,minHeight:0,overflow:"auto",WebkitOverflowScrolling:"touch",position:"relative",touchAction:"pan-x pan-y",overscrollBehavior:"contain"}},
       h("div",{style:{minWidth:"100%",minHeight:"100%",width:cssW+pad*2,height:cssH+pad*2,display:"flex",alignItems:"center",justifyContent:"center",boxSizing:"border-box"}},
         h("canvas",{ref:canvasRef,"aria-label":name||"PDF",onDoubleClick:e=>setZoom(zoomRef.current>1.2?1:2.5,e.clientX,e.clientY),style:{width:cssW,height:cssH,display:"block",background:"#fff",boxShadow:"0 2px 14px rgba(0,0,0,.35)",visibility:painted?"visible":"hidden",cursor:zoom>1?"grab":"zoom-in"}})),
       (!doc||!painted)&&h("div",{style:{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",gap:10,pointerEvents:"none"}},h(E,{name:"loader",size:20,className:"animate-spin"}),"PDF 讀取中…"),
@@ -16317,8 +16384,7 @@ react-dom/cjs/react-dom-client.production.js:
   function placeMenuBtn(show) {
     var mobile = show && isMobile();
     var globalSlot = document.querySelector('.hb-global-menu-slot');
-    var slot = mobile && (document.querySelector('.hb-project-actions-row > .hb-project-menu-slot') ||
-      document.querySelector('.hb-library-menu-slot') || globalSlot);
+    var slot = mobile && globalSlot;
     if (globalSlot) globalSlot.toggleAttribute('data-active', !!slot && slot === globalSlot);
     var host = slot || document.body;
     if (menuBtn.parentNode !== host) host.appendChild(menuBtn);
@@ -16334,6 +16400,7 @@ react-dom/cjs/react-dom-client.production.js:
     }
     menuBtn.setAttribute('data-on', '1');
     document.documentElement.setAttribute('data-hbrail', '1');
+    syncTopbarTitle(slot);
     var active = document.querySelector('.hb-project-nav-row .hb-lt.on');
     if (active && active !== lastActiveProjectTab) {
       var nav = active.parentElement, ar = active.getBoundingClientRect(), nr = nav.getBoundingClientRect();
@@ -16343,6 +16410,26 @@ react-dom/cjs/react-dom-client.production.js:
     lastActiveProjectTab = active;
   }
   function syncBtnVisibility() { menuBtn.removeAttribute('data-away'); }
+  /* 頁首固定列：左邊顯示品牌＋目前區塊，右邊是唯一的選單鍵 */
+  function syncTopbarTitle(slot) {
+    if (!slot) return;
+    var t = slot.querySelector('.hb-topbar-title');
+    if (!t) {
+      t = document.createElement('div');
+      t.className = 'hb-topbar-title';
+      t.innerHTML = '<span class="hb-topbar-brand">HERFULSINS</span><span class="hb-topbar-sec"></span>';
+      slot.insertBefore(t, slot.firstChild);
+    }
+    var sec = '';
+    for (var i = 0; i < HB_RAIL_ITEMS.length; i++) {
+      var btn = dockButton(HB_RAIL_ITEMS[i].label);
+      var circle = btn && btn.querySelector('div');
+      var bg = circle && circle.style ? circle.style.background : '';
+      if (bg && bg !== 'transparent') { sec = HB_RAIL_ITEMS[i].label; break; }
+    }
+    var el = t.querySelector('.hb-topbar-sec');
+    if (el.textContent !== sec) el.textContent = sec;
+  }
 
   /* ---- 收合邏輯：畫面內模式預設收成把手，點一下才展開 ---- */
   var collapseTimer = null;
