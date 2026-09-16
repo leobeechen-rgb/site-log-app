@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head><style id="hb-owner-gallery-style">
-/* HERFULSINS v24 — interactive drawing control shortcuts. */
+/* HERFULSINS v25 — persistent 90-degree PDF preview rotation. */
 .hb-gallery-video{position:fixed;inset:0;z-index:10000;overflow:hidden;background:#f2efe7;color:#514b3f;font-family:'PingFang TC','Microsoft JhengHei',sans-serif;isolation:isolate;overscroll-behavior:contain;touch-action:none;opacity:1;transition:opacity .36s ease}
 .hb-gallery-video.is-leaving{opacity:0;pointer-events:none}
 .hb-gallery-video *{box-sizing:border-box}
@@ -11149,6 +11149,7 @@ async function HB_downloadDrawingCad(ev,v,name){
 
 const HB_DRAWING_SHARE_KEY="herfulsins_drawing_share_v1";
 const HB_DRAWING_SHARE_TAG="[[HB_OWNER_PUBLISHED]]";
+const HB_DRAWING_ROTATION_RE=/\[\[HB_ROTATION:(0|90|180|270)\]\]/g;
 function HB_readDrawingShare(){
   try{return JSON.parse(localStorage.getItem(HB_DRAWING_SHARE_KEY)||"{}")||{}}catch{return{}}
 }
@@ -11158,6 +11159,9 @@ function HB_writeDrawingShare(value){
 function HB_hasDrawingShareTag(note){return String(note||"").includes(HB_DRAWING_SHARE_TAG)}
 function HB_addDrawingShareTag(note){let clean=String(note||"").replaceAll(HB_DRAWING_SHARE_TAG,"").trim();return(clean?clean+"\n":"")+HB_DRAWING_SHARE_TAG}
 function HB_removeDrawingShareTag(note){return String(note||"").replaceAll(HB_DRAWING_SHARE_TAG,"").trim()||null}
+function HB_getDrawingRotation(note){let m=String(note||"").match(/\[\[HB_ROTATION:(0|90|180|270)\]\]/);return m?Number(m[1]):0}
+function HB_setDrawingRotation(note,angle){let clean=String(note||"").replace(HB_DRAWING_ROTATION_RE,"").trim();return angle?(clean?clean+"\n":"")+`[[HB_ROTATION:${angle}]]`:clean||null}
+function HB_cleanDrawingNote(note){return String(note||"").replaceAll(HB_DRAWING_SHARE_TAG,"").replace(HB_DRAWING_ROTATION_RE,"").trim()}
 
 function HbDrawingHub({onBack,notify}){
   let[folders,setFolders]=(0,u.useState)([]);
@@ -11231,6 +11235,14 @@ function HbDrawingHub({onBack,notify}){
       setVersions(vs=>vs.map(v=>v.id===published.id?{...v,note:HB_removeDrawingShareTag(v.note)}:v));}
     updateShare(d.id,{shared:false,publishedVersionId:null,publishedAt:null,viewedAt:null});
     notify("已改為公司內部圖面");
+  };
+  let rotateDrawingVersion=async v=>{
+    if(!v||v.mime!=="application/pdf"){notify("此功能僅適用 PDF 圖面");return}
+    let angle=(HB_getDrawingRotation(v.note)+90)%360,newNote=HB_setDrawingRotation(v.note,angle);
+    let{error}=await q.from("sitelog_drawing_versions").update({note:newNote}).eq("id",v.id);
+    if(error){notify("旋轉失敗："+error.message);return}
+    setVersions(vs=>vs.map(item=>item.id===v.id?{...item,note:newNote}:item));
+    notify(angle?`PDF 已向右旋轉至 ${angle}°`:"PDF 已恢復原始方向");
   };
   let visibleDrawings=folderDrawings.filter(d=>{
     let m=shareOf(d),cv=currentVersionOf(d),pv=publishedVersionOf(d),qv=searchText.trim().toLowerCase();
@@ -11513,7 +11525,7 @@ function HbDrawingHub({onBack,notify}){
       )
     ),
     showNewFolder&&u.default.createElement(HbNewDrawingFolderModal,{onCancel:()=>setShowNewFolder(false),onCreate:createFolder}),
-    viewingDrawing&&u.default.createElement(HbDrawingVersionModal,{drawing:viewingDrawing,versions:versionsFor(viewingDrawing.id),publishedVersionId:shareOf(viewingDrawing).publishedVersionId,isShared:shareOf(viewingDrawing).shared,ownerPreview,onClose:()=>setVersionModalId(null),onRestore:vid=>restoreVersion(viewingDrawing.id,vid),onPublish:vid=>publishVersion(viewingDrawing,vid),onUpload:()=>openNewVersionPicker(viewingDrawing.id),onToggleShare:()=>toggleDrawingShare(viewingDrawing)})
+    viewingDrawing&&u.default.createElement(HbDrawingVersionModal,{drawing:viewingDrawing,versions:versionsFor(viewingDrawing.id),publishedVersionId:shareOf(viewingDrawing).publishedVersionId,isShared:shareOf(viewingDrawing).shared,ownerPreview,onClose:()=>setVersionModalId(null),onRestore:vid=>restoreVersion(viewingDrawing.id,vid),onPublish:vid=>publishVersion(viewingDrawing,vid),onUpload:()=>openNewVersionPicker(viewingDrawing.id),onToggleShare:()=>toggleDrawingShare(viewingDrawing),onRotate:rotateDrawingVersion})
   );
 }
 
@@ -11532,20 +11544,20 @@ function HbNewDrawingFolderModal({onCancel,onCreate}){
   );
 }
 
-function HbDrawingVersionModal({drawing,versions,publishedVersionId,isShared,ownerPreview,onClose,onRestore,onPublish,onUpload,onToggleShare}){
+function HbDrawingVersionModal({drawing,versions,publishedVersionId,isShared,ownerPreview,onClose,onRestore,onPublish,onUpload,onToggleShare,onRotate}){
   let[tab,setTab]=(0,u.useState)("preview");
   let[selectedId,setSelectedId]=(0,u.useState)(drawing.currentVersionId||(versions[0]&&versions[0].id));
   let[compareId,setCompareId]=(0,u.useState)(versions.find(v=>v.id!==selectedId)?.id||selectedId);
   let selected=versions.find(v=>v.id===selectedId)||versions[0];
   let compared=versions.find(v=>v.id===compareId)||versions.find(v=>v.id!==selectedId)||selected;
-  let cleanNote=v=>String(v&&v.note||"").replaceAll(HB_DRAWING_SHARE_TAG,"").trim();
+  let cleanNote=v=>HB_cleanDrawingNote(v&&v.note);
   let fmtSize=n=>!n?"—":n<1024*1024?`${Math.round(n/1024)} KB`:`${(n/1024/1024).toFixed(1)} MB`;
-  let renderPreview=(v,label)=>u.default.createElement("div",{className:"hb-plan-preview"},
+  let renderPreview=(v,label)=>{let rotation=HB_getDrawingRotation(v&&v.note),mediaStyle={transform:`rotate(${rotation}deg) scale(${rotation%180?.72:1})`,transition:"transform .25s ease"};return u.default.createElement("div",{className:"hb-plan-preview"},
     !v?u.default.createElement("div",{style:{fontSize:12,color:s.inkSoft}},"尚無圖面"):
-    v.mime&&v.mime.startsWith("image/")?u.default.createElement("img",{src:v.url,alt:label||drawing.name}):
-    v.mime==="application/pdf"?u.default.createElement("iframe",{src:v.url,title:label||drawing.name}):
+    v.mime&&v.mime.startsWith("image/")?u.default.createElement("img",{src:v.url,alt:label||drawing.name,style:mediaStyle}):
+    v.mime==="application/pdf"?u.default.createElement("iframe",{src:v.url,title:label||drawing.name,style:mediaStyle}):
     u.default.createElement("div",{style:{textAlign:"center",padding:28}},u.default.createElement(E,{name:"file-text",size:42,color:"#B4573A"}),u.default.createElement("div",{style:{font:"400 18px Georgia,serif",marginTop:12}},HB_drawingCadExt(v.path||v.url).toUpperCase()+" DRAWING"),u.default.createElement("div",{style:{fontSize:11,color:s.inkSoft,marginTop:7}},"CAD 圖面請下載後使用繪圖軟體開啟"),u.default.createElement("a",{href:v.url,onClick:ev=>HB_downloadDrawingCad(ev,v,drawing.name),style:{...ll,display:"inline-block",marginTop:14,textDecoration:"none"}},"下載 CAD 原檔"))
-  );
+  )};
   return u.default.createElement("div",{style:{position:"fixed",inset:0,background:"rgba(30,27,23,.58)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:55}},
     u.default.createElement("div",{className:"hb-plan-modal fade-in"},
       u.default.createElement("div",{className:"hb-plan-modal-head"},
@@ -11561,6 +11573,10 @@ function HbDrawingVersionModal({drawing,versions,publishedVersionId,isShared,own
           ),
           tab==="preview"&&u.default.createElement(u.default.Fragment,null,
             u.default.createElement("div",{className:"hb-plan-versions"},versions.map(v=>u.default.createElement("button",{key:v.id,className:"hb-plan-vthumb "+(v.id===selected.id?"on":""),onClick:()=>setSelectedId(v.id)},u.default.createElement("div",{style:{font:"400 15px Georgia,serif"}},`V${v.versionNo}`),u.default.createElement("div",{style:{fontSize:9,color:s.inkSoft,marginTop:3}},v.id===publishedVersionId?"業主發布版":v.id===drawing.currentVersionId?"目前使用":"歷史版本")))),
+            selected&&selected.mime==="application/pdf"&&u.default.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,margin:"0 0 9px"}},
+              u.default.createElement("div",{style:{fontSize:10.5,color:s.inkSoft}},`目前方向 ${HB_getDrawingRotation(selected.note)}°`),
+              !ownerPreview&&u.default.createElement("button",{type:"button",onClick:()=>onRotate(selected),style:{...ll,padding:"7px 11px",display:"inline-flex",alignItems:"center",gap:6}},u.default.createElement(E,{name:"refresh",size:14}),"向右旋轉 90°")
+            ),
             renderPreview(selected)
           ),
           tab==="compare"&&u.default.createElement("div",{className:"hb-plan-compare"},
@@ -11581,7 +11597,7 @@ function HbDrawingVersionModal({drawing,versions,publishedVersionId,isShared,own
         u.default.createElement("aside",{className:"hb-plan-side"},
           u.default.createElement("div",{style:{font:"italic 10px Georgia,serif",letterSpacing:".14em",color:"#8a8177"}},"DRAWING INFORMATION"),
           u.default.createElement("h3",{style:{font:"400 18px 'Noto Serif TC',serif",margin:"7px 0 18px"}},drawing.name),
-          [["目前版本",selected?`V${selected.versionNo}`:"—"],["檔案格式",selected?(HB_drawingIsCad(selected)?HB_drawingCadExt(selected.path||selected.url).toUpperCase():selected.mime==="application/pdf"?"PDF":"IMAGE"):"—"],["檔案大小",selected?fmtSize(selected.size):"—"],["更新日期",selected?new Date(selected.uploadedAt).toLocaleString("zh-TW"):"—"],["共享狀態",isShared?"已與業主共享":"公司內部"]].map((it,i)=>u.default.createElement("div",{key:i,style:{display:"grid",gridTemplateColumns:"76px 1fr",gap:8,padding:"9px 0",borderBottom:"1px solid rgba(57,51,47,.1)",fontSize:11.5}},u.default.createElement("span",{style:{color:s.inkSoft}},it[0]),u.default.createElement("span",null,it[1]))),
+          [["目前版本",selected?`V${selected.versionNo}`:"—"],["檔案格式",selected?(HB_drawingIsCad(selected)?HB_drawingCadExt(selected.path||selected.url).toUpperCase():selected.mime==="application/pdf"?"PDF":"IMAGE"):"—"],["頁面方向",selected&&selected.mime==="application/pdf"?`${HB_getDrawingRotation(selected.note)}°`:"—"],["檔案大小",selected?fmtSize(selected.size):"—"],["更新日期",selected?new Date(selected.uploadedAt).toLocaleString("zh-TW"):"—"],["共享狀態",isShared?"已與業主共享":"公司內部"]].map((it,i)=>u.default.createElement("div",{key:i,style:{display:"grid",gridTemplateColumns:"76px 1fr",gap:8,padding:"9px 0",borderBottom:"1px solid rgba(57,51,47,.1)",fontSize:11.5}},u.default.createElement("span",{style:{color:s.inkSoft}},it[0]),u.default.createElement("span",null,it[1]))),
           cleanNote(selected)&&u.default.createElement("div",{style:{marginTop:17,padding:"12px",background:"rgba(255,255,255,.5)",fontSize:11.5,lineHeight:1.7}},u.default.createElement("div",{style:{fontSize:10,color:s.inkSoft,marginBottom:5}},"本版修改說明"),cleanNote(selected)),
           u.default.createElement("div",{style:{display:"grid",gap:8,marginTop:18}},
             selected&&u.default.createElement("a",{href:selected.url,onClick:HB_drawingIsCad(selected)?ev=>HB_downloadDrawingCad(ev,selected,drawing.name):undefined,target:"_blank",rel:"noreferrer",style:{...Dl,textDecoration:"none",textAlign:"center",display:"block",background:"#315c48"}},HB_drawingIsCad(selected)?"下載 CAD 原檔":"開啟／下載圖面"),
