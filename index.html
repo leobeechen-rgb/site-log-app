@@ -11217,7 +11217,9 @@ function HbProjectDrawingFiles({data,loading,onOpenHub,onReload,onSignature}){
   let[preview,setPreview]=(0,u.useState)(null);
   let folders=data?data.folders:[],items=data?data.items:[];
   let hasLoose=items.some(x=>x.folderId==null);
-  let shown=items.filter(x=>folderKey==null?true:folderKey===we?x.folderId==null:x.folderId===folderKey);
+  let chips=folders.map(f=>({k:f.id,name:f.name})).concat(hasLoose&&folders.length?[{k:we,name:"未分類"}]:[]);
+  let activeKey=chips.length===0?null:(chips.some(c=>c.k===folderKey)?folderKey:chips[0].k);
+  let shown=items.filter(x=>activeKey==null?true:activeKey===we?x.folderId==null:x.folderId===activeKey);
   let imgs=shown.filter(x=>!x.isCad&&(x.mime||"").startsWith("image/"));
   let others=shown.filter(x=>!imgs.includes(x));
   let pill=x=>C("span",{style:{display:"inline-flex",alignItems:"center",padding:"3px 8px",borderRadius:999,fontSize:10.5,whiteSpace:"nowrap",border:"1px solid "+(x.shared?s.ocean:s.line),color:x.shared?s.oceanDark:s.inkSoft,background:x.shared?s.paper:s.card}},x.shared?(x.sharedByFolder?"業主可見・資料夾共享":x.pendingPublish?"業主可見・有新版未發布":"業主可見"):"僅公司可見");
@@ -11229,10 +11231,10 @@ function HbProjectDrawingFiles({data,loading,onOpenHub,onReload,onSignature}){
       C(ke,{label:"重新同步",icon:"refresh",busy:!!loading,onClick:onReload}),
       onSignature&&C(ke,{label:"新增簽名",icon:"pencil",busy:!1,onClick:onSignature})),
     C("p",{style:{fontSize:12,color:s.inkSoft,margin:"10px 0 0",lineHeight:1.7}},"此處的檔案皆由「圖面管理」同步導入，顯示每張圖面的目前版本。新增、改版或發布給業主，請到圖面管理操作。"),
-    C("div",{style:{display:"flex",gap:7,overflowX:"auto",margin:"14px 0 2px",paddingBottom:3}},
-      [{k:null,name:"全部"}].concat(folders.map(f=>({k:f.id,name:f.name}))).concat(hasLoose&&folders.length?[{k:we,name:"未分類"}]:[]).map(cp=>C("button",{key:String(cp.k),onClick:()=>setFolderKey(cp.k),style:{flexShrink:0,border:"1px solid "+(folderKey===cp.k?s.ocean:s.line),background:folderKey===cp.k?s.ocean:"none",color:folderKey===cp.k?"#fff":s.inkSoft,borderRadius:999,padding:"6px 15px",fontSize:12.5,lineHeight:1.4,cursor:"pointer",fontFamily:"inherit",whiteSpace:"nowrap"}},cp.name))),
+    chips.length>0&&C("div",{style:{display:"flex",gap:7,overflowX:"auto",margin:"14px 0 2px",paddingBottom:3}},
+      chips.map(cp=>C("button",{key:String(cp.k),onClick:()=>setFolderKey(cp.k),style:{flexShrink:0,border:"1px solid "+(activeKey===cp.k?s.ocean:s.line),background:activeKey===cp.k?s.ocean:"none",color:activeKey===cp.k?"#fff":s.inkSoft,borderRadius:999,padding:"6px 15px",fontSize:12.5,lineHeight:1.4,cursor:"pointer",fontFamily:"inherit",whiteSpace:"nowrap"}},cp.name))),
     loading&&!data?C("div",{style:{textAlign:"center",padding:40}},C(E,{name:"loader",className:"animate-spin",size:22,color:s.ocean}))
-    :shown.length===0?C(He,{icon:"paperclip",text:!data||!data.rootId?"圖面管理裡還沒有這個案件的圖面，請按上方「開啟圖面管理」上傳":folderKey==null?"圖面管理中尚無圖面檔案":"這個資料夾還沒有圖面"})
+    :shown.length===0?C(He,{icon:"paperclip",text:!data||!data.rootId?"圖面管理裡還沒有這個案件的圖面，請按上方「開啟圖面管理」上傳":activeKey==null?"圖面管理中尚無圖面檔案":"這個資料夾還沒有圖面"})
     :C(u.default.Fragment,null,
       imgs.length>0&&C("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(190px,1fr))",gap:10,marginTop:16}},imgs.map(x=>C("div",{key:x.id,role:"button",tabIndex:0,"aria-label":"預覽圖面："+x.name,onClick:()=>setPreview(x),onKeyDown:ev=>{if(ev.key==="Enter"||ev.key===" "){ev.preventDefault();setPreview(x)}},style:{position:"relative",aspectRatio:"1",borderRadius:6,overflow:"hidden",cursor:"pointer",border:"1px solid "+s.line}},
         C("div",{style:{position:"absolute",top:8,right:8,zIndex:2}},pill(x)),
@@ -11498,6 +11500,15 @@ function HbDrawingHub({onBack,notify,project=null,embedded=false}){
   };
 
   let viewingDrawing=drawings.find(d=>d.id===versionModalId);
+  let canGoUp=!!currentFolderId&&currentFolderId!==lockedRootId;
+  let parentFolder=(()=>{if(!canGoUp)return null;let cur=folders.find(f=>f.id===currentFolderId);return cur&&cur.parentId?folders.find(f=>f.id===cur.parentId)||null:null})();
+  let goUp=()=>{
+    if(!canGoUp){onBack&&onBack();return}
+    let cur=folders.find(f=>f.id===currentFolderId);
+    setSearchText("");setStatusFilter(ownerPreview?"all":statusFilter);
+    setCurrentFolderId(cur&&cur.parentId?cur.parentId:(lockedRootId||null));
+    try{window.scrollTo({top:0,behavior:"smooth"})}catch{}
+  };
 
   let currentFolder=folders.find(f=>f.id===currentFolderId);
   let scopedDrawings=lockedRootId?drawings.filter(d=>folderPathOf(d.folderId).some(f=>f.id===lockedRootId)):drawings;
@@ -11548,7 +11559,7 @@ function HbDrawingHub({onBack,notify,project=null,embedded=false}){
       @media(max-width:680px){.hb-plan-features{grid-template-columns:1fr 1fr}.hb-plan-feature{padding:10px}.hb-plan-feature small{display:none}.hb-plan-folder-grid{grid-template-columns:1fr}.hb-plan-folder{min-height:116px;padding:16px}.hb-plan-folder-title{margin-top:14px}.hb-plan-table{display:none}.hb-plan-mobile{display:flex;flex-direction:column;gap:10px}.hb-plan-modal{width:100vw;height:100dvh}.hb-plan-modal-head{padding:11px 12px;gap:8px}.hb-plan-modal-head .hb-plan-pill{max-width:108px;overflow:hidden;text-overflow:ellipsis}.hb-plan-modal-body{display:block;overflow:auto}.hb-plan-stage{padding:12px;display:block;overflow:visible}.hb-plan-side{border-left:0;border-top:1px solid rgba(57,51,47,.13);padding:15px}.hb-plan-preview{height:min(58vh,520px);min-height:320px}.hb-plan-rotatebar{grid-template-columns:1fr;gap:7px;padding:8px}.hb-plan-rotatelabel{display:flex;align-items:center;justify-content:space-between}.hb-plan-rotatelabel strong{display:inline;margin:0;font-size:17px}.hb-plan-angle{min-height:42px}.hb-plan-compare{display:grid;grid-template-columns:1fr;height:auto}.hb-plan-compare>div{display:block}.hb-plan-compare .hb-plan-preview{height:44vh;min-height:280px;margin-top:6px}}
     `),
     u.default.createElement("div",{className:"hb-dosWrap"},
-      u.default.createElement("button",{onClick:onBack,className:"hb-arcBack"},u.default.createElement(E,{name:"arrow-left",size:15}),u.default.createElement("span",null,embedded?"返回案件檔案":"返回公司資料庫")),
+      u.default.createElement("button",{onClick:goUp,className:"hb-arcBack"},u.default.createElement(E,{name:"arrow-left",size:15}),u.default.createElement("span",null,canGoUp?("返回上一層："+(parentFolder?parentFolder.name:"圖面總覽")):(embedded?"返回案件檔案":"返回公司資料庫"))),
       u.default.createElement("div",{className:"hb-dosLabel"},embedded?"Project Drawing Control":"Gestion des Plans"),u.default.createElement("h1",{className:"hb-dosTitle"},embedded&&project?project.name+"・圖面管理":"圖面管理"),
       u.default.createElement("p",{className:"hb-dosLede"},ownerPreview?"業主預覽模式僅顯示已正式發布的圖面，內部草稿與待發布版本不會出現。":embedded?"此處只管理目前案件的圖面版本、共享與發布紀錄。":"依資料夾管理施工圖面、保留版本紀錄，並決定哪些正式版本提供業主查看。")
     ),
@@ -11572,6 +11583,7 @@ function HbDrawingHub({onBack,notify,project=null,embedded=false}){
         ))
       ),
       u.default.createElement("div",{style:{display:"flex",gap:8,marginBottom:10,flexWrap:"wrap"}},
+        canGoUp&&u.default.createElement("button",{type:"button",onClick:goUp,title:"回到上一層資料夾",style:{...ll,padding:"9px 14px",display:"inline-flex",alignItems:"center",gap:6,background:"rgba(255,255,255,.55)",color:s.ink}},u.default.createElement(E,{name:"arrow-left",size:14}),"上一層"),
         !ownerPreview&&u.default.createElement(ke,{label:currentFolderId?"新增圖面資料夾":"新增案件",icon:"folder-plus",busy:false,onClick:()=>setShowNewFolder(true)}),
         currentFolderId&&u.default.createElement(ke,{label:uploading?"上傳中…":"上傳圖面",icon:"upload",busy:uploading,onClick:()=>fileInputRef.current&&fileInputRef.current.click()}),
         u.default.createElement("button",{onClick:()=>{setOwnerPreview(v=>!v);setStatusFilter("all")},style:{...ll,padding:"9px 14px",background:ownerPreview?"#315C48":"rgba(255,255,255,.55)",color:ownerPreview?"#fff":s.ink}},ownerPreview?"返回公司管理":"預覽業主畫面")
