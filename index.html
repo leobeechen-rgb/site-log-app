@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head><style id="hb-owner-gallery-style">
-/* HERFULSINS v19 — responsive portfolio repair plus drawing version control. */
+/* HERFULSINS v20 — restored desktop portfolio workspace and compact mobile browsing. */
 .hb-gallery-video{position:fixed;inset:0;z-index:10000;overflow:hidden;background:#f2efe7;color:#514b3f;font-family:'PingFang TC','Microsoft JhengHei',sans-serif;isolation:isolate;overscroll-behavior:contain;touch-action:none;opacity:1;transition:opacity .36s ease}
 .hb-gallery-video.is-leaving{opacity:0;pointer-events:none}
 .hb-gallery-video *{box-sizing:border-box}
@@ -3855,7 +3855,7 @@ function HbMarketingPhotoHub({onBack,notify}){
   let[loading,setLoading]=(0,u.useState)(true);
   let[uploading,setUploading]=(0,u.useState)(false);
   let[tagList,setTagList]=(0,u.useState)([]);
-  let[filterTag,setFilterTagState]=(0,u.useState)("");
+  let[filterTag,setFilterTagState]=(0,u.useState)("__ALL__");
   let[showManageTags,setShowManageTags]=(0,u.useState)(false);
   let[search,setSearch]=(0,u.useState)("");
   let[selected,setSelected]=(0,u.useState)(()=>new Set());
@@ -4135,13 +4135,14 @@ function HbMarketingPhotoHub({onBack,notify}){
       .hb-mkt-body{flex:1 1 auto;min-height:0;overflow-y:auto;}
       .hb-mkt-sidebar{width:100%;margin-bottom:14px;}
       .hb-mkt-main{width:100%;min-width:0;}
-      @media (min-width:960px){
+      @media (min-width:860px){
         .hb-mkt-body{overflow:hidden;}
-        .hb-mkt-shell{display:grid !important;grid-template-columns:22% 1fr;gap:34px;height:100%;}
+        .hb-mkt-shell{display:grid !important;grid-template-columns:280px minmax(0,1fr);gap:24px;height:100%;}
         .hb-mkt-sidebar{overflow-y:auto;height:100%;margin-bottom:0;min-width:0;}
         .hb-mkt-main{height:100%;min-height:0;min-width:0;display:flex;flex-direction:column;}
         .hb-mkt-grid-scroll{flex:1;min-height:0;overflow-y:auto;}
       }
+      @media (min-width:1200px){.hb-mkt-shell{grid-template-columns:310px minmax(0,1fr);gap:30px;}}
       .hb-mktBrand{display:flex;align-items:baseline;justify-content:space-between;gap:20px;
         font-family:"Cormorant Garamond",serif;font-size:11px;letter-spacing:.26em;
         text-transform:uppercase;color:#8C857A;margin-bottom:6px;}
@@ -4157,17 +4158,29 @@ function HbMarketingPhotoHub({onBack,notify}){
       .hb-mktGrid{grid-template-columns:1fr;}
       @media (min-width:640px){ .hb-mktGrid{grid-template-columns:repeat(2,minmax(0,1fr));} }
       @media (min-width:1100px){ .hb-mktGrid{grid-template-columns:repeat(3,minmax(0,1fr));} }
+      @media (min-width:1680px){ .hb-mktGrid{grid-template-columns:repeat(4,minmax(0,1fr));} }
+      @media (max-width:859px){
+        .hb-mktBrand .r{display:none;}
+        .hb-mktTitle{font-size:clamp(34px,11vw,48px);letter-spacing:.015em;overflow-wrap:anywhere;}
+        .hb-mktSub{font-size:14px;}
+        .hb-mkt-upload-panel,.hb-mkt-browse-panel{border-radius:6px!important;}
+        .hb-mkt-browse-list{display:flex!important;flex-direction:row!important;flex-wrap:wrap!important;gap:7px!important;}
+        .hb-mkt-browse-list>button{width:auto!important;flex:0 0 auto;text-align:center!important;border-radius:999px!important;padding:7px 12px!important;}
+        .hb-mkt-browse-label{width:100%;margin:8px 0 0!important;}
+        .hb-mkt-main{padding-top:2px;}
+        .hb-mktGrid{gap:12px!important;}
+      }
     `),
-    u.default.createElement("div",{style:{maxWidth:1320,margin:"0 auto",padding:"16px 16px 0",width:"100%",flexShrink:0,boxSizing:"border-box"}},
+    u.default.createElement("div",{style:{maxWidth:1600,margin:"0 auto",padding:"16px clamp(16px,2.4vw,38px) 0",width:"100%",flexShrink:0,boxSizing:"border-box"}},
       u.default.createElement("div",{className:"hb-mktHead",style:{padding:"4px 2px 8px",position:"relative",overflow:"hidden"}},
         u.default.createElement("button",{onClick:onBack,className:"hb-mktBack"},u.default.createElement(E,{name:"arrow-left",size:16}),u.default.createElement("span",null,"返回")),
         u.default.createElement("div",{className:"hb-mktBrand"},u.default.createElement("span",null,"HERFULSINS \u00B7 MAISON D\u2019INT\u00C9RIEUR"),u.default.createElement("span",{className:"r"},"Espaces & mati\u00E8res")),u.default.createElement("h1",{className:"hb-mktTitle"},"R\u00C9ALISATIONS"),u.default.createElement("h2",{className:"hb-mktSub"},"赫柏空間作品案例")
       )
     ),
     u.default.createElement("div",{className:"hb-mkt-body"},
-    u.default.createElement("div",{className:"hb-mkt-shell",style:{maxWidth:1320,margin:"0 auto",padding:16,boxSizing:"border-box"}},
+    u.default.createElement("div",{className:"hb-mkt-shell",style:{maxWidth:1600,margin:"0 auto",padding:"16px clamp(16px,2.4vw,38px)",boxSizing:"border-box"}},
       u.default.createElement("div",{className:"hb-mkt-sidebar"},
-        u.default.createElement("div",{style:{background:MP.card,borderRadius:10,padding:14,marginBottom:14,border:`1px solid ${MP.line}`}},
+        u.default.createElement("div",{className:"hb-mkt-upload-panel",style:{background:MP.card,borderRadius:10,padding:14,marginBottom:14,border:`1px solid ${MP.line}`}},
           u.default.createElement("div",{style:{fontSize:13,fontWeight:400,color:MP.oliveDark,marginBottom:8}},"上傳前先選擇空間標籤"),
           tagsProblem?u.default.createElement("div",{style:{background:"#FBF3E4",border:`1px solid ${MP.line}`,borderRadius:8,padding:"10px 12px",marginBottom:12,fontSize:12.5,lineHeight:1.65,color:MP.ink}},tagsProblem==="error"?"\u6A19\u7C64\u8B80\u53D6\u5931\u6557\uFF0C\u591A\u534A\u662F\u9023\u7DDA\u554F\u984C\u3002\u6A19\u7C64\u9084\u5728\u8CC7\u6599\u5EAB\u88E1\uFF0C\u91CD\u65B0\u8F09\u5165\u901A\u5E38\u5C31\u6703\u56DE\u4F86\u3002":"\u6C92\u6709\u8B80\u5230\u4EFB\u4F55\u6A19\u7C64\u3002\u82E5\u4EE5\u524D\u5EFA\u904E\u6A19\u7C64\uFF0C\u8ACB\u5148\u91CD\u65B0\u8F09\u5165\uFF1B\u78BA\u5B9A\u662F\u5168\u65B0\u74B0\u5883\u518D\u5EFA\u7ACB\u9810\u8A2D\u6A19\u7C64\u3002",u.default.createElement("div",{style:{display:"flex",gap:8,marginTop:9,flexWrap:"wrap"}},u.default.createElement("button",{onClick:()=>loadTags(),style:{background:MP.olive,color:MP.cream,border:"none",borderRadius:6,padding:"6px 12px",fontSize:12,cursor:"pointer",fontFamily:"inherit"}},"\u91CD\u65B0\u8F09\u5165"),tagsProblem==="empty"&&u.default.createElement("button",{onClick:()=>seedPresetTags(),style:{background:"#fff",color:MP.inkSoft,border:`1px solid ${MP.line}`,borderRadius:6,padding:"6px 12px",fontSize:12,cursor:"pointer",fontFamily:"inherit"}},"\u5EFA\u7ACB\u9810\u8A2D\u6A19\u7C64"))):null,
           u.default.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:6,marginBottom:12}},
@@ -4189,13 +4202,13 @@ function HbMarketingPhotoHub({onBack,notify}){
           u.default.createElement("button",{onClick:()=>fileInputRef.current&&fileInputRef.current.click(),disabled:uploading,style:{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:8,background:MP.olive,color:MP.cream,border:"none",borderRadius:8,padding:"11px 0",fontWeight:400,fontSize:14,cursor:"pointer",opacity:uploading?.6:1}},uploading?u.default.createElement(E,{name:"loader",size:16,className:"animate-spin"}):u.default.createElement(E,{name:"upload",size:16}),uploading?"上傳中...":"選擇照片上傳"),
           u.default.createElement("button",{onClick:()=>setShowManageTags(true),style:{width:"100%",marginTop:8,border:`1px solid ${MP.line}`,background:"#fff",color:MP.inkSoft,borderRadius:8,padding:"8px 0",fontSize:12.5,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:4}},u.default.createElement(E,{name:"pencil",size:12}),"管理標籤")
         ),
-        u.default.createElement("div",{style:{background:MP.card,borderRadius:10,padding:14,border:`1px solid ${MP.line}`}},
+        u.default.createElement("div",{className:"hb-mkt-browse-panel",style:{background:MP.card,borderRadius:10,padding:14,border:`1px solid ${MP.line}`}},
           u.default.createElement("div",{style:{fontSize:12.5,fontWeight:400,color:MP.oliveDark,marginBottom:8}},"瀏覽"),
-          u.default.createElement("div",{style:{display:"flex",flexDirection:"column",gap:6}},
+          u.default.createElement("div",{className:"hb-mkt-browse-list",style:{display:"flex",flexDirection:"column",gap:6}},
             u.default.createElement("button",{key:"__ALL__",onClick:()=>setFilterTag("__ALL__"),style:{textAlign:"left",border:`1px solid ${filterTag==="__ALL__"?MP.olive:MP.line}`,background:filterTag==="__ALL__"?MP.olive:"#fff",color:filterTag==="__ALL__"?MP.cream:MP.ink,borderRadius:8,padding:"7px 12px",fontSize:12.5,cursor:"pointer",fontWeight:400}},"全部",` (${filtered.length})`),
-            spaceTagRows.length>0&&u.default.createElement("div",{style:{fontSize:11,color:MP.inkSoft,margin:"6px 0 2px",paddingLeft:2}},"空間標籤"),
+            spaceTagRows.length>0&&u.default.createElement("div",{className:"hb-mkt-browse-label",style:{fontSize:11,color:MP.inkSoft,margin:"6px 0 2px",paddingLeft:2}},"空間標籤"),
             spaceTagRows.map(t=>u.default.createElement("button",{key:t.id,onClick:()=>setFilterTag(t.name),style:{textAlign:"left",border:`1px solid ${filterTag===t.name?MP.olive:MP.line}`,background:filterTag===t.name?MP.olive:"#fff",color:filterTag===t.name?MP.cream:MP.ink,borderRadius:8,padding:"7px 12px",fontSize:12.5,cursor:"pointer"}},t.name,` (${photosByTag(t.name).length})`)),
-            caseTagRows.length>0&&u.default.createElement("div",{style:{fontSize:11,color:MP.inkSoft,margin:"10px 0 2px",paddingLeft:2}},"空間案例"),
+            caseTagRows.length>0&&u.default.createElement("div",{className:"hb-mkt-browse-label",style:{fontSize:11,color:MP.inkSoft,margin:"10px 0 2px",paddingLeft:2}},"空間案例"),
             caseTagRows.map(t=>u.default.createElement("button",{key:t.id,onClick:()=>setFilterTag(t.name),style:{textAlign:"left",border:`1px solid ${filterTag===t.name?MP.olive:MP.line}`,background:filterTag===t.name?MP.olive:"#fff",color:filterTag===t.name?MP.cream:MP.ink,borderRadius:8,padding:"7px 12px",fontSize:12.5,cursor:"pointer"}},t.name,` (${photosByTag(t.name).length})`))
           )
         )
@@ -4220,7 +4233,7 @@ function HbMarketingPhotoHub({onBack,notify}){
           return list.length===0?u.default.createElement(He,{icon:"image",text:"此分類尚無照片"}):
           u.default.createElement("div",{className:"hb-mktGrid",style:{display:"grid",gap:18}},
             list.map((p,idx)=>u.default.createElement("div",{key:p.id,style:{position:"relative",borderRadius:8,overflow:"hidden",border:`2px solid ${selected.has(p.id)?MP.olive:"transparent"}`,cursor:"pointer"}},
-              u.default.createElement("img",{src:p.url,onClick:e=>handlePhotoClick(e,idx,list),style:{width:"100%",height:190,objectFit:"cover",display:"block",userSelect:"none"}}),
+              u.default.createElement("img",{src:p.url,onClick:e=>handlePhotoClick(e,idx,list),style:{width:"100%",aspectRatio:"4 / 3",height:"auto",objectFit:"cover",display:"block",userSelect:"none"}}),
               u.default.createElement("button",{onClick:e=>{e.stopPropagation();setPreviewId(p.id)},style:{position:"absolute",top:4,left:4,background:"rgba(0,0,0,0.5)",border:"none",borderRadius:6,padding:4,cursor:"pointer",display:"flex"}},u.default.createElement(E,{name:"eye",size:13,color:"#fff"})),
               u.default.createElement("div",{style:{position:"absolute",top:4,right:4,display:"flex",gap:4}},
                 u.default.createElement("button",{onClick:e=>{e.stopPropagation();downloadSinglePhoto(p)},style:{background:"rgba(0,0,0,0.5)",border:"none",borderRadius:6,padding:4,cursor:"pointer",display:"flex"}},u.default.createElement(E,{name:"download",size:13,color:"#fff"})),
