@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head><style id="hb-owner-gallery-style">
-/* HERFULSINS v27 — drawing control integrated into project files. */
+/* HERFULSINS v28 — responsive drawing preview with rotation-aware PDF rendering. */
 .hb-gallery-video{position:fixed;inset:0;z-index:10000;overflow:hidden;background:#f2efe7;color:#514b3f;font-family:'PingFang TC','Microsoft JhengHei',sans-serif;isolation:isolate;overscroll-behavior:contain;touch-action:none;opacity:1;transition:opacity .36s ease}
 .hb-gallery-video.is-leaving{opacity:0;pointer-events:none}
 .hb-gallery-video *{box-sizing:border-box}
@@ -11437,16 +11437,16 @@ function HbDrawingHub({onBack,notify,project=null,embedded=false}){
       .hb-plan-sub{font-size:10px;color:#8b8277;margin-top:4px}.hb-plan-pill{display:inline-flex;padding:4px 8px;border-radius:20px;font-size:10px;white-space:nowrap}
       .hb-plan-actions{display:flex;gap:5px;justify-content:flex-end}.hb-plan-iconbtn{width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;border:1px solid rgba(57,51,47,.16);background:rgba(255,255,255,.62);color:#403a33;cursor:pointer}
       .hb-plan-mobile{display:none}.hb-plan-mcard{border:1px solid rgba(57,51,47,.13);background:rgba(255,255,255,.56);padding:12px}.hb-plan-mhero{display:grid;grid-template-columns:84px 1fr;gap:12px;align-items:center}.hb-plan-mhero .hb-plan-thumb{width:84px;height:84px}
-      .hb-plan-modal{width:min(1120px,96vw);height:min(790px,92vh);background:#f4f0e7;display:grid;grid-template-rows:auto 1fr;overflow:hidden;box-shadow:0 24px 90px rgba(28,24,20,.25)}
+      .hb-plan-modal{width:min(1180px,96vw);height:min(820px,92dvh);background:#f4f0e7;display:grid;grid-template-rows:auto minmax(0,1fr);overflow:hidden;box-shadow:0 24px 90px rgba(28,24,20,.25)}
       .hb-plan-modal-head{display:flex;align-items:center;gap:14px;padding:17px 20px;border-bottom:1px solid rgba(57,51,47,.13);background:rgba(255,255,255,.5)}
-      .hb-plan-modal-body{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(300px,.72fr);min-height:0}.hb-plan-stage{padding:18px;min-width:0;overflow:auto}.hb-plan-side{border-left:1px solid rgba(57,51,47,.13);padding:18px;overflow:auto;background:rgba(255,255,255,.36)}
-      .hb-plan-preview{height:100%;min-height:390px;display:flex;align-items:center;justify-content:center;background:#ddd8ce;border:1px solid rgba(57,51,47,.12);overflow:hidden}.hb-plan-preview img{width:100%;height:100%;object-fit:contain}.hb-plan-preview iframe{width:100%;height:100%;border:0;background:white}
+      .hb-plan-modal-body{display:grid;grid-template-columns:minmax(0,1fr) clamp(280px,29vw,340px);min-height:0;overflow:hidden}.hb-plan-stage{padding:18px;min-width:0;min-height:0;overflow:hidden;display:flex;flex-direction:column}.hb-plan-side{border-left:1px solid rgba(57,51,47,.13);padding:18px;overflow:auto;background:rgba(255,255,255,.36)}
+      .hb-plan-preview{position:relative;flex:1;min-height:0;display:flex;align-items:center;justify-content:center;background:#ddd8ce;border:1px solid rgba(57,51,47,.12);overflow:hidden}.hb-plan-preview img{display:block;max-width:100%;max-height:100%;object-fit:contain}.hb-plan-preview canvas{display:block;max-width:100%;max-height:100%;box-shadow:0 6px 22px rgba(28,24,20,.16);background:#fff}.hb-plan-pdfpages{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);display:flex;align-items:center;gap:8px;padding:5px 8px;background:rgba(35,32,28,.82);color:#fff;border-radius:3px;font-size:10px;box-shadow:0 3px 12px rgba(0,0,0,.16)}.hb-plan-pdfpages button{width:26px;height:25px;border:1px solid rgba(255,255,255,.3);background:transparent;color:#fff;cursor:pointer}.hb-plan-pdfpages button:disabled{opacity:.3;cursor:default}
       .hb-plan-tabs{display:flex;gap:4px;overflow:auto;margin-bottom:12px}.hb-plan-tabs button{white-space:nowrap;border:0;border-bottom:2px solid transparent;background:none;padding:8px 11px;font-size:12px;cursor:pointer;color:#766f65}.hb-plan-tabs button.on{color:#211f1b;border-color:#315c48}
       .hb-plan-versions{display:flex;gap:7px;overflow:auto;padding:2px 0 12px}.hb-plan-vthumb{min-width:72px;padding:8px;border:1px solid rgba(57,51,47,.13);background:rgba(255,255,255,.55);cursor:pointer;text-align:left}.hb-plan-vthumb.on{border-color:#315c48;box-shadow:inset 0 -2px #315c48}
       .hb-plan-timeline{position:relative;padding-left:17px}.hb-plan-timeitem{position:relative;padding:0 0 18px 14px;border-left:1px solid #c8c0b4}.hb-plan-timeitem:before{content:'';position:absolute;width:7px;height:7px;border-radius:50%;background:#315c48;left:-4px;top:5px}.hb-plan-timeitem:last-child{border-left-color:transparent}
-      .hb-plan-compare{display:grid;grid-template-columns:1fr 1fr;gap:10px;height:100%}.hb-plan-compare>div{min-width:0;display:grid;grid-template-rows:auto 1fr;gap:6px}.hb-plan-compare .hb-plan-preview{min-height:330px}
+      .hb-plan-compare{display:grid;grid-template-columns:1fr 1fr;gap:10px;flex:1;min-height:0}.hb-plan-compare>div{min-width:0;min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr);gap:6px}.hb-plan-compare .hb-plan-preview{min-height:0}
       @media(max-width:900px){.hb-plan-features{grid-template-columns:repeat(2,1fr)}.hb-plan-folder-grid{grid-template-columns:repeat(2,1fr)}.hb-plan-tr{grid-template-columns:minmax(240px,1.7fr) 82px 105px 110px 130px}.hb-plan-tr>*:nth-child(3){display:none}}
-      @media(max-width:680px){.hb-plan-features{grid-template-columns:1fr 1fr}.hb-plan-feature{padding:10px}.hb-plan-feature small{display:none}.hb-plan-folder-grid{grid-template-columns:1fr}.hb-plan-folder{min-height:116px;padding:16px}.hb-plan-folder-title{margin-top:14px}.hb-plan-table{display:none}.hb-plan-mobile{display:flex;flex-direction:column;gap:10px}.hb-plan-modal{width:100vw;height:100dvh}.hb-plan-modal-head{padding:13px 14px}.hb-plan-modal-body{display:block;overflow:auto}.hb-plan-stage{padding:12px}.hb-plan-side{border-left:0;border-top:1px solid rgba(57,51,47,.13);padding:15px}.hb-plan-preview{height:46vh;min-height:300px}.hb-plan-compare{grid-template-columns:1fr;height:auto}.hb-plan-compare .hb-plan-preview{height:38vh;min-height:260px}}
+      @media(max-width:680px){.hb-plan-features{grid-template-columns:1fr 1fr}.hb-plan-feature{padding:10px}.hb-plan-feature small{display:none}.hb-plan-folder-grid{grid-template-columns:1fr}.hb-plan-folder{min-height:116px;padding:16px}.hb-plan-folder-title{margin-top:14px}.hb-plan-table{display:none}.hb-plan-mobile{display:flex;flex-direction:column;gap:10px}.hb-plan-modal{width:100vw;height:100dvh}.hb-plan-modal-head{padding:11px 12px;gap:8px}.hb-plan-modal-head .hb-plan-pill{max-width:108px;overflow:hidden;text-overflow:ellipsis}.hb-plan-modal-body{display:block;overflow:auto}.hb-plan-stage{padding:12px;display:block;overflow:visible}.hb-plan-side{border-left:0;border-top:1px solid rgba(57,51,47,.13);padding:15px}.hb-plan-preview{height:min(58vh,520px);min-height:320px}.hb-plan-compare{display:grid;grid-template-columns:1fr;height:auto}.hb-plan-compare>div{display:block}.hb-plan-compare .hb-plan-preview{height:44vh;min-height:280px;margin-top:6px}}
     `),
     u.default.createElement("div",{className:"hb-dosWrap"},
       u.default.createElement("button",{onClick:onBack,className:"hb-arcBack"},u.default.createElement(E,{name:"arrow-left",size:15}),u.default.createElement("span",null,embedded?"返回案件檔案":"返回公司資料庫")),
@@ -11564,6 +11564,60 @@ function HbNewDrawingFolderModal({isRoot,currentPath,onCancel,onCreate}){
   );
 }
 
+function HbPlanPdfPreview({version,label,rotation}){
+  let wrapRef=(0,u.useRef)(null),canvasRef=(0,u.useRef)(null);
+  let[pageNo,setPageNo]=(0,u.useState)(1),[pageTotal,setPageTotal]=(0,u.useState)(1),[state,setState]=(0,u.useState)("loading"),[boxTick,setBoxTick]=(0,u.useState)(0);
+  (0,u.useEffect)(()=>{setPageNo(1)},[version&&version.id]);
+  (0,u.useEffect)(()=>{
+    if(!wrapRef.current||typeof ResizeObserver==="undefined")return;
+    let timer=null,ro=new ResizeObserver(()=>{clearTimeout(timer);timer=setTimeout(()=>setBoxTick(v=>v+1),80)});
+    ro.observe(wrapRef.current);
+    return()=>{clearTimeout(timer);ro.disconnect()};
+  },[]);
+  (0,u.useEffect)(()=>{
+    let dead=false,loadTask=null,renderTask=null;
+    (async()=>{
+      setState("loading");
+      try{
+        let pjs=await window.HB_loadLib("pdfjsLib");
+        try{pjs.GlobalWorkerOptions.workerSrc=HB_PDFROT_WORKER}catch(e){}
+        loadTask=pjs.getDocument(version.url);
+        let doc=await loadTask.promise;
+        if(dead)return;
+        setPageTotal(doc.numPages||1);
+        let safePage=Math.min(Math.max(1,pageNo),doc.numPages||1);
+        if(safePage!==pageNo){setPageNo(safePage);return}
+        let page=await doc.getPage(safePage);
+        if(dead)return;
+        let host=wrapRef.current,canvas=canvasRef.current;
+        if(!host||!canvas)return;
+        let finalRotation=((Number(page.rotate||0)+Number(rotation||0))%360+360)%360;
+        let base=page.getViewport({scale:1,rotation:finalRotation});
+        let availableW=Math.max(180,host.clientWidth-28),availableH=Math.max(220,host.clientHeight-48);
+        let cssScale=Math.max(.08,Math.min(availableW/base.width,availableH/base.height));
+        let dpr=Math.min(window.devicePixelRatio||1,2);
+        let viewport=page.getViewport({scale:cssScale*dpr,rotation:finalRotation});
+        canvas.width=Math.max(1,Math.floor(viewport.width));canvas.height=Math.max(1,Math.floor(viewport.height));
+        canvas.style.width=`${Math.floor(viewport.width/dpr)}px`;canvas.style.height=`${Math.floor(viewport.height/dpr)}px`;
+        renderTask=page.render({canvasContext:canvas.getContext("2d"),viewport});
+        await renderTask.promise;
+        if(!dead)setState("ready");
+      }catch(err){if(!dead&&!(err&&err.name==="RenderingCancelledException"))setState("error")}
+    })();
+    return()=>{dead=true;try{renderTask&&renderTask.cancel()}catch(e){}try{loadTask&&loadTask.destroy()}catch(e){}};
+  },[version&&version.url,pageNo,rotation,boxTick]);
+  return u.default.createElement("div",{ref:wrapRef,style:{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",padding:"12px 12px 38px"}},
+    u.default.createElement("canvas",{ref:canvasRef,"aria-label":label||"PDF 圖面預覽",style:{visibility:state==="ready"?"visible":"hidden"}}),
+    state==="loading"&&u.default.createElement("div",{style:{position:"absolute",fontSize:12,color:s.inkSoft}},"圖面載入中…"),
+    state==="error"&&u.default.createElement("div",{style:{position:"absolute",textAlign:"center",padding:24,fontSize:12,color:s.inkSoft}},"預覽載入失敗，請使用右側按鈕開啟原始圖面"),
+    pageTotal>1&&u.default.createElement("div",{className:"hb-plan-pdfpages"},
+      u.default.createElement("button",{type:"button",disabled:pageNo<=1,onClick:()=>setPageNo(v=>Math.max(1,v-1)),"aria-label":"上一頁"},"‹"),
+      u.default.createElement("span",null,`${pageNo} / ${pageTotal}`),
+      u.default.createElement("button",{type:"button",disabled:pageNo>=pageTotal,onClick:()=>setPageNo(v=>Math.min(pageTotal,v+1)),"aria-label":"下一頁"},"›")
+    )
+  );
+}
+
 function HbDrawingVersionModal({drawing,folderPath,versions,publishedVersionId,isShared,ownerPreview,onClose,onRestore,onPublish,onUpload,onToggleShare,onRotate}){
   let[tab,setTab]=(0,u.useState)("preview");
   let[selectedId,setSelectedId]=(0,u.useState)(drawing.currentVersionId||(versions[0]&&versions[0].id));
@@ -11572,10 +11626,10 @@ function HbDrawingVersionModal({drawing,folderPath,versions,publishedVersionId,i
   let compared=versions.find(v=>v.id===compareId)||versions.find(v=>v.id!==selectedId)||selected;
   let cleanNote=v=>HB_cleanDrawingNote(v&&v.note);
   let fmtSize=n=>!n?"—":n<1024*1024?`${Math.round(n/1024)} KB`:`${(n/1024/1024).toFixed(1)} MB`;
-  let renderPreview=(v,label)=>{let rotation=HB_getDrawingRotation(v&&v.note),mediaStyle={transform:`rotate(${rotation}deg) scale(${rotation%180?.72:1})`,transition:"transform .25s ease"};return u.default.createElement("div",{className:"hb-plan-preview"},
+  let renderPreview=(v,label)=>{let rotation=HB_getDrawingRotation(v&&v.note),mediaStyle={transform:`rotate(${rotation}deg)`,transition:"transform .25s ease"};return u.default.createElement("div",{className:"hb-plan-preview"},
     !v?u.default.createElement("div",{style:{fontSize:12,color:s.inkSoft}},"尚無圖面"):
     v.mime&&v.mime.startsWith("image/")?u.default.createElement("img",{src:v.url,alt:label||drawing.name,style:mediaStyle}):
-    v.mime==="application/pdf"?u.default.createElement("iframe",{src:v.url,title:label||drawing.name,style:mediaStyle}):
+    v.mime==="application/pdf"?u.default.createElement(HbPlanPdfPreview,{version:v,label:label||drawing.name,rotation}):
     u.default.createElement("div",{style:{textAlign:"center",padding:28}},u.default.createElement(E,{name:"file-text",size:42,color:"#B4573A"}),u.default.createElement("div",{style:{font:"400 18px Georgia,serif",marginTop:12}},HB_drawingCadExt(v.path||v.url).toUpperCase()+" DRAWING"),u.default.createElement("div",{style:{fontSize:11,color:s.inkSoft,marginTop:7}},"CAD 圖面請下載後使用繪圖軟體開啟"),u.default.createElement("a",{href:v.url,onClick:ev=>HB_downloadDrawingCad(ev,v,drawing.name),style:{...ll,display:"inline-block",marginTop:14,textDecoration:"none"}},"下載 CAD 原檔"))
   )};
   return u.default.createElement("div",{style:{position:"fixed",inset:0,background:"rgba(30,27,23,.58)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:55}},
