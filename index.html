@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head><style id="hb-owner-gallery-style">
-/* HERFULSINS v20 — restored desktop portfolio workspace and compact mobile browsing. */
+/* HERFULSINS v21 — portfolio escapes the centered app frame without affecting other pages. */
 .hb-gallery-video{position:fixed;inset:0;z-index:10000;overflow:hidden;background:#f2efe7;color:#514b3f;font-family:'PingFang TC','Microsoft JhengHei',sans-serif;isolation:isolate;overscroll-behavior:contain;touch-action:none;opacity:1;transition:opacity .36s ease}
 .hb-gallery-video.is-leaving{opacity:0;pointer-events:none}
 .hb-gallery-video *{box-sizing:border-box}
@@ -3915,7 +3915,12 @@ function HbMarketingPhotoHub({onBack,notify}){
     setTagList(rows.slice().sort((a,b)=>(a.sort_order||0)-(b.sort_order||0)));
   };
   (0,u.useEffect)(()=>{load();loadTags()},[]);
-  (0,u.useEffect)(()=>{let rootEl=document.getElementById("root");if(rootEl)rootEl.classList.add("hb-mkt-wide-root");return()=>{if(rootEl)rootEl.classList.remove("hb-mkt-wide-root")}},[]);
+  (0,u.useEffect)(()=>{
+    let rootEl=document.getElementById("root"),body=document.body;
+    if(rootEl)rootEl.classList.add("hb-mkt-wide-root");
+    if(body)body.classList.add("hb-mkt-open");
+    return()=>{if(rootEl)rootEl.classList.remove("hb-mkt-wide-root");if(body)body.classList.remove("hb-mkt-open")}
+  },[]);
 
   let addCustomTag=async(name,tagType)=>{
     let t=(name||"").trim();
@@ -4132,6 +4137,13 @@ function HbMarketingPhotoHub({onBack,notify}){
       .iy-breathe-a { animation: iyBreatheA 3.8s ease-in-out infinite; transform-origin:center; }
       .iy-breathe-b { animation: iyBreatheB 4.6s ease-in-out infinite; animation-delay:1s; transform-origin:center; }
       #root.hb-mkt-wide-root{max-width:none !important;width:100% !important;margin:0 !important;box-shadow:none !important;}
+      body.hb-mkt-open{overflow:hidden!important;}
+      body.hb-mkt-open #root{max-width:none!important;width:100vw!important;margin:0!important;box-shadow:none!important;overflow-x:visible!important;}
+      @media (min-width:860px){
+        body.hb-mkt-open .hb-mkt-page{position:fixed!important;left:0!important;right:0!important;top:0!important;bottom:0!important;width:100vw!important;max-width:none!important;margin:0!important;transform:none!important;}
+        body.hb-mkt-open .hb-rail{display:none!important;}
+      }
+      @media (max-width:859px){body.hb-mkt-open{overflow:auto!important;}body.hb-mkt-open #root{width:100%!important;overflow-x:hidden!important;}}
       .hb-mkt-body{flex:1 1 auto;min-height:0;overflow-y:auto;}
       .hb-mkt-sidebar{width:100%;margin-bottom:14px;}
       .hb-mkt-main{width:100%;min-width:0;}
