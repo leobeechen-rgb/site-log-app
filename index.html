@@ -11726,6 +11726,10 @@ function HbDrawingHub({onBack,notify,project=null,embedded=false}){
       .hb-plan-versions{display:flex;gap:7px;overflow:auto;padding:2px 0 12px}.hb-plan-vthumb{min-width:72px;padding:8px;border:1px solid rgba(57,51,47,.13);background:rgba(255,255,255,.55);cursor:pointer;text-align:left}.hb-plan-vthumb.on{border-color:#315c48;box-shadow:inset 0 -2px #315c48}
       .hb-plan-timeline{position:relative;padding-left:17px}.hb-plan-timeitem{position:relative;padding:0 0 18px 14px;border-left:1px solid #c8c0b4}.hb-plan-timeitem:before{content:'';position:absolute;width:7px;height:7px;border-radius:50%;background:#315c48;left:-4px;top:5px}.hb-plan-timeitem:last-child{border-left-color:transparent}
       .hb-plan-compare{display:grid;grid-template-columns:1fr 1fr;gap:10px;flex:1;min-height:0}.hb-plan-compare>div{min-width:0;min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr);gap:6px}.hb-plan-compare .hb-plan-preview{min-height:0}
+      /* B3：手機版隱藏大標題、說明文字與功能卡，一打開就看到資料夾／圖面清單（返回鈕、案件名保留） */
+      @media(max-width:680px){.hb-plan-system .hb-dosWrap .hb-dosLabel,.hb-plan-system .hb-dosWrap .hb-dosTitle,.hb-plan-system .hb-dosWrap .hb-dosLede,.hb-plan-system .hb-plan-features{display:none!important}.hb-plan-system .hb-dosWrap{padding-bottom:4px}}
+      /* B4：統計卡手機版固定 2×2 兩排（不再出現 3＋1 落單） */
+      @media(max-width:680px){.hb-plan-stats{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important;margin-bottom:12px!important}.hb-plan-stat{padding:10px 12px!important}.hb-plan-stat>div:first-child{font-size:20px!important;line-height:1.1}}
       @media(max-width:900px){.hb-plan-features{grid-template-columns:repeat(2,1fr)}.hb-plan-folder-grid{grid-template-columns:repeat(2,1fr)}.hb-plan-tr{grid-template-columns:74px minmax(200px,1.7fr) 60px 124px 132px}.hb-plan-tr>*:nth-child(3),.hb-plan-tr>*:nth-child(5),.hb-plan-tr>*:nth-child(7){display:none}}
       @media(max-width:680px){.hb-plan-toolbar{display:grid;grid-template-columns:1fr 1fr;gap:8px}.hb-pt{width:100%;min-width:0;padding:0 8px;font-size:14px}.hb-pt-upload{order:1;height:48px}.hb-pt-folder{order:2;height:48px}.hb-pt-up{order:3;height:42px}.hb-pt-preview{order:4;height:42px;margin-left:0}.hb-pt-line{order:5;grid-column:1 / -1;height:46px}.hb-pt-after span{flex:1 1 100%}.hb-pt-after button.go{flex:1}.hb-pt-after button{height:40px}.hb-pt .lg{display:none}.hb-pt .sm{display:inline}.hb-plan-filters{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px!important;overflow:visible!important}.hb-plan-filters>input{grid-column:1 / -1;min-width:0!important;width:100%!important;box-sizing:border-box}.hb-plan-filters.has-cat>input{grid-column:1 / 3}.hb-plan-filters>select{grid-column:3 / 5;min-width:0!important;width:100%!important;padding:9px 6px!important}.hb-plan-filters>button{min-width:0;padding:0 2px!important;height:40px;font-size:12.5px!important}.hb-plan-reghead{flex-direction:column;align-items:stretch!important}.hb-plan-reghead>div:last-child{justify-content:space-between!important}.hb-plan-features{grid-template-columns:1fr 1fr}.hb-plan-feature{padding:10px}.hb-plan-feature small{display:none}.hb-plan-folder-grid{grid-template-columns:1fr}.hb-plan-folder{min-height:116px;padding:16px}.hb-plan-folder-title{margin-top:14px}.hb-plan-table{display:none}.hb-plan-mobile{display:flex;flex-direction:column;gap:10px}.hb-plan-modal{width:100vw;height:100dvh}.hb-plan-modal-head{padding:11px 12px;gap:8px}.hb-plan-modal-head .hb-plan-pill{max-width:108px;overflow:hidden;text-overflow:ellipsis}.hb-plan-modal-body{display:block;overflow:auto}.hb-plan-stage{padding:12px;display:block;overflow:visible}.hb-plan-side{border-left:0;border-top:1px solid rgba(57,51,47,.13);padding:15px}.hb-plan-preview{height:min(58vh,520px);min-height:320px}.hb-plan-rotatebar{grid-template-columns:1fr;gap:7px;padding:8px}.hb-plan-rotatelabel{display:flex;align-items:center;justify-content:space-between}.hb-plan-rotatelabel strong{display:inline;margin:0;font-size:17px}.hb-plan-angle{min-height:42px}.hb-plan-compare{display:grid;grid-template-columns:1fr;height:auto}.hb-plan-compare>div{display:block}.hb-plan-compare .hb-plan-preview{height:44vh;min-height:280px;margin-top:6px}}
     `),
@@ -11743,8 +11747,8 @@ function HbDrawingHub({onBack,notify,project=null,embedded=false}){
           u.default.createElement(E,{name:it[0],size:18,color:i===1?"#315C48":"#B4573A"}),u.default.createElement("div",null,u.default.createElement("b",null,it[1]),u.default.createElement("small",null,it[2]))
         ))
       ),
-      u.default.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(118px,1fr))",gap:8,marginBottom:14}},
-        [[scopedDrawings.length,"全部圖面"],[scopedDrawings.filter(d=>shareOf(d).shared).length,"業主共享"],[scopedDrawings.filter(d=>{let cv=currentVersionOf(d),pv=publishedVersionOf(d);return shareOf(d).shared&&cv&&pv&&cv.id!==pv.id}).length,"新版待發布"],[scopedDrawings.filter(d=>shareOf(d).viewedAt).length,"業主已查看"]].map((it,i)=>u.default.createElement("div",{key:i,style:{background:"rgba(255,255,255,.55)",border:"1px solid rgba(57,51,47,.12)",padding:"12px 14px",minWidth:0}},
+      u.default.createElement("div",{className:"hb-plan-stats",style:{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(118px,1fr))",gap:8,marginBottom:14}},
+        [[scopedDrawings.length,"全部圖面"],[scopedDrawings.filter(d=>shareOf(d).shared).length,"業主共享"],[scopedDrawings.filter(d=>{let cv=currentVersionOf(d),pv=publishedVersionOf(d);return shareOf(d).shared&&cv&&pv&&cv.id!==pv.id}).length,"新版待發布"],[scopedDrawings.filter(d=>shareOf(d).viewedAt).length,"業主已查看"]].map((it,i)=>u.default.createElement("div",{key:i,className:"hb-plan-stat",style:{background:"rgba(255,255,255,.55)",border:"1px solid rgba(57,51,47,.12)",padding:"12px 14px",minWidth:0}},
           u.default.createElement("div",{style:{fontFamily:"Georgia,serif",fontSize:22,color:i===1?"#315C48":"#17150F"}},it[0]),
           u.default.createElement("div",{style:{fontSize:11,color:s.inkSoft,marginTop:3}},it[1])
         ))
@@ -14695,7 +14699,17 @@ function $y(l){return l==null?null:(l/(1024*1024)).toFixed(1)}function Iy({proje
           !hbPM&&u.default.createElement("button",{onClick:()=>hbSetMenuOpen(v=>!v),style:{background:"none",border:"none",color:s.inkSoft,cursor:"pointer",display:"flex",padding:0}},u.default.createElement(E,{name:"more-vertical",size:19})),
           !hbPM&&hbMenuOpen&&u.default.createElement(u.default.Fragment,null,
             u.default.createElement("div",{onClick:()=>hbSetMenuOpen(!1),style:{position:"fixed",inset:0,zIndex:49}}),
-            u.default.createElement("div",{style:{position:"absolute",top:"calc(100% + 6px)",right:0,background:s.card,border:`1px solid ${s.line}`,borderRadius:4,width:170,overflow:"hidden",zIndex:50}},
+            u.default.createElement("div",{style:{position:"absolute",top:"calc(100% + 6px)",right:0,background:s.card,border:`1px solid ${s.line}`,borderRadius:4,width:210,overflow:"hidden",zIndex:50}},
+              /* B6：儲存空間用量移到選單裡，不再夾在案件列表上方 */
+              r!=null&&u.default.createElement("div",{style:{padding:"12px 14px 11px",borderBottom:`1px solid ${s.line}`}},
+                u.default.createElement("div",{style:{display:"flex",justifyContent:"space-between",fontSize:11.5,color:s.inkSoft,marginBottom:6,gap:8}},
+                  u.default.createElement("span",null,"\u5132\u5B58\u7A7A\u9593"),
+                  u.default.createElement("span",{className:"mono"},c," / 10240 MB")
+                ),
+                u.default.createElement("div",{style:{background:"rgba(0,0,0,0.06)",borderRadius:999,height:5,overflow:"hidden"}},
+                  u.default.createElement("div",{style:{width:`${r}%`,height:"100%",background:r>90?s.cane:r>70?s.lemon:s.shoal,borderRadius:999}})
+                )
+              ),
               u.default.createElement("button",{onClick:()=>{hbSetMenuOpen(!1),o()},style:ri},u.default.createElement(E,{name:"user",size:16,color:s.ocean})," \u5E33\u865F\u7BA1\u7406"),
               u.default.createElement("button",{onClick:()=>{hbSetMenuOpen(!1);try{localStorage.removeItem("sitelog_admin_unlocked"),localStorage.removeItem("sitelog_admin_username"),localStorage.removeItem("hb_staff_session")}catch{}window.location.reload()},style:{...ri,color:s.danger}},u.default.createElement(E,{name:"log-out",size:16,color:s.danger})," \u767B\u51FA")
             )
@@ -14711,15 +14725,6 @@ function $y(l){return l==null?null:(l/(1024*1024)).toFixed(1)}function Iy({proje
     ),
 
     u.default.createElement("div",{style:{padding:"6px 16px 112px",position:"relative",zIndex:1}},
-      r!=null&&u.default.createElement("div",{style:{background:s.card,border:`1px solid ${s.line}`,borderRadius:4,padding:"10px 14px",marginBottom:16}},
-        u.default.createElement("div",{style:{display:"flex",justifyContent:"space-between",fontSize:12,color:s.inkSoft,marginBottom:6}},
-          u.default.createElement("span",null,"\u5DF2\u4F7F\u7528\u5132\u5B58\u7A7A\u9593"),
-          u.default.createElement("span",{className:"mono"},c," MB / 10240 MB")
-        ),
-        u.default.createElement("div",{style:{background:"rgba(255,255,255,0.45)",borderRadius:999,height:6,overflow:"hidden"}},
-          u.default.createElement("div",{style:{width:`${r}%`,height:"100%",background:r>90?s.cane:r>70?s.lemon:s.shoal,borderRadius:999}})
-        )
-      ),
       !hbPM&&u.default.createElement("button",{onClick:e,style:{...Dl,width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:8,marginBottom:20,fontSize:15,padding:"13px 0",borderRadius:24}},u.default.createElement(E,{name:"plus",size:18})," \u65B0\u589E\u6848\u4EF6"),
       l.length===0?u.default.createElement("div",{style:{textAlign:"center",color:s.inkSoft,marginTop:60}},
         u.default.createElement(E,{name:"clipboard-list",size:36,style:{margin:"0 auto 10px",opacity:.5}}),
