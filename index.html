@@ -3661,8 +3661,7 @@ var Qy="https://rqndozhhvuimqjqtmeli.supabase.co",Xy="eyJhbGciOiJIUzI1NiIsInR5cC
 /* ===== Cloudflare R2（行銷照片庫）設定與簽章上傳 ===== */
 var R2_CONFIG={
   publicUrl:"https://pub-2063c1ccef9742fbb3a0513c9f792077.r2.dev",
-  workerUrl:"https://herfulsins-r2-proxy.3chyienian05.workers.dev",
-  token:"a316ef6f5c3d41ebb9266a3656c764bcab9f0126968849c28d8bf50509ab0b64"
+  workerUrl:"https://herfulsins-r2-proxy.3chyienian05.workers.dev"
 };
 /* ===================================================================
    現場實用性優化套件 v1（赫柏空間設計 · 工地紀錄本）
@@ -3766,10 +3765,13 @@ async function r2Sha256Hex(buf){let h=await crypto.subtle.digest("SHA-256",buf);
 async function r2Hmac(key,data){let ck=await crypto.subtle.importKey("raw",key,{name:"HMAC",hash:"SHA-256"},false,["sign"]);return new Uint8Array(await crypto.subtle.sign("HMAC",ck,typeof data==="string"?new TextEncoder().encode(data):data))}
 async function r2SigningKey(secret,dateStamp,region,service){let kDate=await r2Hmac(new TextEncoder().encode("AWS4"+secret),dateStamp);let kRegion=await r2Hmac(kDate,region);let kService=await r2Hmac(kRegion,service);return r2Hmac(kService,"aws4_request")}
 function r2Hex(buf){return Array.from(buf).map(b=>b.toString(16).padStart(2,"0")).join("")}
+/* 收尾 2：R2 上傳改帶登入身分（管理者＝會員通行證、業主＝業主通行證）。舊固定金鑰已停用。 */
+async function HB_r2AuthHeaders(){let h={};try{let{data:ss}=await q.auth.getSession();if(ss&&ss.session)h.Authorization="Bearer "+ss.session.access_token}catch{}
+  try{let ot=localStorage.getItem("hb_owner_token");if(ot)h["x-hb-owner"]=ot}catch{}return h}
 async function r2Request(method,key,bodyBuf,contentType){
   let encodedKey=key.split("/").map(encodeURIComponent).join("/");
   let url=`${R2_CONFIG.workerUrl}/marketing/${encodedKey}`;
-  let headers={"x-hb-token":R2_CONFIG.token};
+  let headers=await HB_r2AuthHeaders();
   if(method==="PUT") headers["content-type"]=contentType||"application/octet-stream";
   let res=await fetch(url,{method,headers,body:method==="PUT"?bodyBuf:undefined});
   if(!res.ok){let txt=await res.text().catch(()=>"");throw new Error(`R2 ${method} \u5931\u6557 (${res.status}): ${txt.slice(0,200)}`)}
@@ -3795,13 +3797,12 @@ async function r2DeleteObj(key){try{await r2Request("DELETE",key,null,null)}catc
 /* ===== Cloudflare R2（施工照片 / 專案檔案）設定與簽章上傳 ===== */
 var R2_SITELOG_CONFIG={
   publicUrl:"https://pub-0a93db6b495e4243a9a71d5d0c6dd3e8.r2.dev",
-  workerUrl:"https://herfulsins-r2-proxy.3chyienian05.workers.dev",
-  token:"a316ef6f5c3d41ebb9266a3656c764bcab9f0126968849c28d8bf50509ab0b64"
+  workerUrl:"https://herfulsins-r2-proxy.3chyienian05.workers.dev"
 };
 async function r2SitelogRequest(method,key,bodyBuf,contentType){
   let encodedKey=key.split("/").map(encodeURIComponent).join("/");
   let url=`${R2_SITELOG_CONFIG.workerUrl}/sitelog/${encodedKey}`;
-  let headers={"x-hb-token":R2_SITELOG_CONFIG.token};
+  let headers=await HB_r2AuthHeaders();
   if(method==="PUT") headers["content-type"]=contentType||"application/octet-stream";
   let res=await fetch(url,{method,headers,body:method==="PUT"?bodyBuf:undefined});
   if(!res.ok){let txt=await res.text().catch(()=>"");throw new Error(`R2 ${method} \u5931\u6557 (${res.status}): ${txt.slice(0,200)}`)}
@@ -3850,7 +3851,7 @@ async function HB_fetchAsset(url,opts){
   var proxy=HB_assetProxyUrl(url);
   if(proxy){
     try{
-      var rp=await fetch(proxy,{mode:"cors",headers:{"x-hb-token":R2_SITELOG_CONFIG.token}});
+      var rp=await fetch(proxy,{mode:"cors"});
       if(rp.ok)return await rp.blob();
       last=new Error("Worker 回應 "+rp.status);
     }catch(e){last=e}
