@@ -3678,10 +3678,43 @@ const HB_OWNER_AUTH="https://rqndozhhvuimqjqtmeli.supabase.co/functions/v1/hb-ow
 async function HB_ownerApi(path,body){let t="";try{t=localStorage.getItem("hb_owner_token")||""}catch{}
   let r=await fetch(HB_OWNER_AUTH+path,{method:"POST",headers:{"Content-Type":"application/json",...(t?{"x-hb-owner":t}:{})},body:JSON.stringify(body||{})});
   let d={};try{d=await r.json()}catch{}return{ok:r.ok,status:r.status,data:d}}
+/* App 原生功能（只在「赫柏空間設計」iOS App 內啟用，網頁版不受影響）：推播通知＋原生相機 */
+function HB_nativeHandler(n){try{return window.webkit&&window.webkit.messageHandlers&&window.webkit.messageHandlers[n]||null}catch{return null}}
+function HB_isNative(){return!!HB_nativeHandler("herfulsinsPush")}
+window.__hbNativePushToken=async function(tk){if(!tk||!/^[0-9a-f]{32,200}$/.test(tk))return;try{localStorage.setItem("hb_push_token",tk)}catch{}
+  try{let{error}=await q.rpc("hb_register_device",{p_token:tk,p_platform:"ios"});if(error)console.warn("push register",error.message)}catch{}};
+async function HB_nativePushRegister(){let h=HB_nativeHandler("herfulsinsPush");if(!h)return;try{h.postMessage("register")}catch{}}
+async function HB_nativePushUnregister(){
+  if(!HB_isNative())return;let tk="";try{tk=localStorage.getItem("hb_push_token")||""}catch{}
+  if(tk){try{await q.rpc("hb_unregister_device",{p_token:tk})}catch{}try{localStorage.removeItem("hb_push_token")}catch{}}
+}
+function HB_sheet(options){return new Promise(res=>{let w=document.createElement("div");
+  w.style.cssText="position:fixed;inset:0;z-index:2147483000;background:rgba(20,18,16,.45);display:flex;align-items:flex-end;justify-content:center";
+  let box=document.createElement("div");box.style.cssText="width:100%;max-width:520px;background:#F4F1EA;border-radius:14px 14px 0 0;padding:10px 14px calc(14px + env(safe-area-inset-bottom));font-family:inherit";
+  options.concat([{label:"取消",value:null}]).forEach(o=>{let b=document.createElement("button");b.type="button";b.textContent=o.label;
+    b.style.cssText="display:block;width:100%;padding:15px;margin:6px 0;border:0;border-radius:10px;font-size:16px;background:"+(o.value===null?"transparent":"#fff")+";color:#2b2a26";
+    b.onclick=()=>{w.remove();res(o.value)};box.appendChild(b)});
+  w.onclick=e=>{if(e.target===w){w.remove();res(null)}};w.appendChild(box);document.body.appendChild(w)})}
+const HB_camWait={};
+window.__hbNativeCameraResult=function(id,list){let f=HB_camWait[id];if(f){delete HB_camWait[id];f(Array.isArray(list)?list:[])}};
+function HB_b64File(b64,i){let bin=atob(b64),len=bin.length,arr=new Uint8Array(len);for(let k=0;k<len;k++)arr[k]=bin.charCodeAt(k);
+  return new File([arr],"IMG_"+Date.now()+(i?"_"+i:"")+".jpg",{type:"image/jpeg"})}
+if(HB_nativeHandler("herfulsinsCamera")){document.addEventListener("click",async ev=>{
+  let el=ev.target&&ev.target.closest?ev.target.closest('input[type="file"]'):null;if(!el||el.disabled)return;
+  let acc=(el.getAttribute("accept")||"").toLowerCase();if(!acc||acc.split(",").some(a=>!/^\s*image\//.test(a)))return;
+  ev.preventDefault();ev.stopPropagation();
+  let choice=await HB_sheet([{label:"拍照",value:"camera"},{label:el.multiple?"從相簿選擇（最多 20 張）":"從相簿選擇",value:"photos"}]);if(!choice)return;
+  let id="c"+Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+  let list=await new Promise(res=>{HB_camWait[id]=res;try{HB_nativeHandler("herfulsinsCamera").postMessage({id:id,source:choice,multiple:!!el.multiple})}catch(e){delete HB_camWait[id];res([])}});
+  if(!list.length)return;
+  try{let dt=new DataTransfer();list.forEach((b,i)=>dt.items.add(HB_b64File(b,list.length>1?i+1:0)));el.files=dt.files;
+    el.dispatchEvent(new Event("input",{bubbles:!0}));el.dispatchEvent(new Event("change",{bubbles:!0}))}
+  catch(e){alert("無法讀取照片，請再試一次")}
+},!0)}
 function HB_clearOwner(){try{localStorage.removeItem("hb_owner_token"),localStorage.removeItem("sitelog_owner_project_id")}catch{}}
 function HB_clearStaffFlags(){try{localStorage.removeItem("sitelog_admin_unlocked"),localStorage.removeItem("sitelog_admin_username"),localStorage.removeItem("hb_staff_session")}catch{}}
-async function HB_staffLogout(){try{await q.auth.signOut()}catch{}HB_clearStaffFlags();window.location.reload()}
-async function HB_ownerLogout(){try{await HB_ownerApi("/logout")}catch{}HB_clearOwner()}
+async function HB_staffLogout(){await HB_nativePushUnregister();try{await q.auth.signOut()}catch{}HB_clearStaffFlags();window.location.reload()}
+async function HB_ownerLogout(){await HB_nativePushUnregister();try{await HB_ownerApi("/logout")}catch{}HB_clearOwner()}
 var Qy="https://rqndozhhvuimqjqtmeli.supabase.co",Xy="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxbmRvemhodnVpbXFqcXRtZWxpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5Njc1ODIsImV4cCI6MjA5OTU0MzU4Mn0.meaGT1veRt9acHCl4Dcrpk9jxjNzrkFKWfs_96C6qLw",q=window.supabase.createClient(Qy,Xy,{global:{fetch:HB_authFetch}});var HB_SCHEDULE_ICS_URL="https://rqndozhhvuimqjqtmeli.supabase.co/functions/v1/schedule-ics-feed";async function qe(l,t,e,n){let{error:a}=await q.storage.from(l).upload(t,e,{contentType:n,upsert:!0});if(a)throw a;let{data:i}=q.storage.from(l).getPublicUrl(t);return i.publicUrl}async function Ue(l,t){try{await q.storage.from(l).remove([t])}catch{}}
 
 /* ===== Cloudflare R2（行銷照片庫）設定與簽章上傳 ===== */
@@ -13598,7 +13631,7 @@ function SSOEntry(){
   (0,u.useEffect)(()=>{let alive=!0;(async()=>{
     try{if(localStorage.getItem("sitelog_admin_unlocked")==="true"){
       let{data:ss}=await q.auth.getSession();
-      let ok=!1;if(ss&&ss.session){let{data:adm,error:ae}=await q.rpc("is_hb_admin");ok=!ae&&adm===!0;if(ae&&!navigator.onLine)ok=!0}
+      let ok=!1;if(ss&&ss.session){let{data:adm,error:ae}=await q.rpc("hb_staff_access");ok=!ae&&adm===!0;if(ae&&!navigator.onLine)ok=!0}
       if(!ok){HB_clearStaffFlags();try{await q.auth.signOut()}catch{}alive&&setStaffOn(!1)}
     }}catch{}
     try{if(localStorage.getItem("sitelog_owner_project_id")){
@@ -13606,6 +13639,7 @@ function SSOEntry(){
       else{let r=await HB_ownerApi("/verify");if(r.status===401||(r.ok&&r.data.projectId!==localStorage.getItem("sitelog_owner_project_id"))){HB_clearOwner();alive&&setOwnerPid(null)}}
     }}catch{}
   })();return()=>{alive=!1}},[]);
+  (0,u.useEffect)(()=>{if(staffOn||ownerPid){let t=setTimeout(()=>{HB_nativePushRegister()},1500);return()=>clearTimeout(t)}},[staffOn,ownerPid]);
   if(staffOn)return u.default.createElement(Gy,null);
   if(ownerPid)return u.default.createElement(Fy,{projectId:ownerPid,onLogout:async()=>{await HB_ownerLogout();setOwnerPid(null)}});
   return u.default.createElement(SSOForm,{
@@ -13641,7 +13675,7 @@ function SSOForm({onStaff:l,onOwner:t}){
         const {data:auth,error:aerr}=await q.auth.signInWithPassword({email:su.trim(),password:sp});
         if(!alive.current)return;
         if(aerr)throw new Error(/invalid|credentials/i.test(aerr.message||'')?'Email 或密碼不正確':(/fetch|network/i.test(aerr.message||'')?'無法連線，請確認網路後再試一次':'登入失敗，請稍後再試'));
-        const {data:adm,error:admErr}=await q.rpc('is_hb_admin');
+        const {data:adm,error:admErr}=await q.rpc('hb_staff_access');
         if(admErr||adm!==true){try{await q.auth.signOut()}catch{}throw new Error('這個帳號沒有公司管理權限')}
         await enter(()=>l(auth.user.email));
       }else{
