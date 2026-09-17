@@ -1200,15 +1200,69 @@ const SITELOG_URL = "https://rqndozhhvuimqjqtmeli.supabase.co";
 const SITELOG_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxbmRvemhodnVpbXFqcXRtZWxpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5Njc1ODIsImV4cCI6MjA5OTU0MzU4Mn0.meaGT1veRt9acHCl4Dcrpk9jxjNzrkFKWfs_96C6qLw";
 const SITELOG_BUCKET = "sitelog-quotes";
 
-async function sitelogFetch(path, options = {}) {
+// E：工地紀錄本資料需要管理端登入（Supabase 會員＋管理者名單）。
+// 登入狀態存在這個頁面自己的 localStorage，約一小時自動續期。
+const HB_PROP_AUTH_KEY = "hb_proposal_auth";
+function hbPropLoad() { try { return JSON.parse(localStorage.getItem(HB_PROP_AUTH_KEY) || "null"); } catch (e) { return null; } }
+function hbPropSave(d) { try { localStorage.setItem(HB_PROP_AUTH_KEY, JSON.stringify({ access_token: d.access_token, refresh_token: d.refresh_token, expires_at: Math.floor(Date.now() / 1000) + (d.expires_in || 3600) })); } catch (e) {} }
+function hbPropClear() { try { localStorage.removeItem(HB_PROP_AUTH_KEY); } catch (e) {} }
+async function hbPropAuthCall(grant, body) {
+  const r = await fetch(`${SITELOG_URL}/auth/v1/token?grant_type=${grant}`, { method: "POST", headers: { apikey: SITELOG_ANON_KEY, "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(d.error_description || d.msg || "登入失敗");
+  return d;
+}
+function hbPropAskLogin(message) {
+  return new Promise((resolve, reject) => {
+    const wrap = document.createElement("div");
+    wrap.style.cssText = "position:fixed;inset:0;background:rgba(20,20,18,.55);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;font-family:inherit";
+    wrap.innerHTML = `<form style="background:#FAF8F3;color:#2b2a26;width:100%;max-width:340px;padding:24px 22px;border-radius:10px;box-shadow:0 10px 40px rgba(0,0,0,.25)">
+      <div style="font-size:16px;margin-bottom:6px">工地紀錄本登入</div>
+      <div style="font-size:12px;color:#77726a;margin-bottom:16px;line-height:1.7">${message || "讀取案件資料需要先登入管理端帳號。"}</div>
+      <input name="email" type="email" autocomplete="username" placeholder="Email" required style="width:100%;box-sizing:border-box;padding:10px;margin-bottom:10px;border:1px solid #d8d3c8;border-radius:6px;font-size:14px">
+      <input name="password" type="password" autocomplete="current-password" placeholder="密碼" required style="width:100%;box-sizing:border-box;padding:10px;margin-bottom:8px;border:1px solid #d8d3c8;border-radius:6px;font-size:14px">
+      <div data-err style="color:#b3402f;font-size:12px;min-height:18px;margin-bottom:8px"></div>
+      <div style="display:flex;gap:8px"><button type="button" data-cancel style="flex:1;padding:10px;border:1px solid #d8d3c8;background:transparent;border-radius:6px;cursor:pointer">取消</button>
+      <button type="submit" style="flex:1;padding:10px;border:0;background:#22392F;color:#EDEAE0;border-radius:6px;cursor:pointer">登入</button></div></form>`;
+    document.body.appendChild(wrap);
+    const form = wrap.querySelector("form"), err = wrap.querySelector("[data-err]");
+    form.email.focus();
+    wrap.querySelector("[data-cancel]").onclick = () => { wrap.remove(); reject(new Error("尚未登入")); };
+    form.onsubmit = async (ev) => {
+      ev.preventDefault(); err.textContent = "驗證中…";
+      try {
+        const d = await hbPropAuthCall("password", { email: form.email.value.trim(), password: form.password.value });
+        const chk = await fetch(`${SITELOG_URL}/rest/v1/rpc/is_hb_admin`, { method: "POST", headers: { apikey: SITELOG_ANON_KEY, Authorization: "Bearer " + d.access_token, "Content-Type": "application/json" }, body: "{}" });
+        if (!chk.ok || (await chk.json()) !== true) throw new Error("這個帳號沒有公司管理權限");
+        hbPropSave(d); wrap.remove(); resolve(d.access_token);
+      } catch (e) { err.textContent = /invalid/i.test(e.message) ? "Email 或密碼不正確" : e.message; }
+    };
+  });
+}
+async function hbPropToken() {
+  const a = hbPropLoad();
+  if (a && a.access_token && a.expires_at - 60 > Date.now() / 1000) return a.access_token;
+  if (a && a.refresh_token) {
+    try { const d = await hbPropAuthCall("refresh_token", { refresh_token: a.refresh_token }); hbPropSave(d); return d.access_token; } catch (e) { hbPropClear(); }
+  }
+  return hbPropAskLogin();
+}
+
+async function sitelogFetch(path, options = {}, _retried = false) {
+  const token = await hbPropToken();
   const res = await fetch(SITELOG_URL + path, {
     ...options,
     headers: {
       "apikey": SITELOG_ANON_KEY,
-      "Authorization": "Bearer " + SITELOG_ANON_KEY,
+      "Authorization": "Bearer " + token,
       ...(options.headers || {}),
     },
   });
+  if ((res.status === 401 || res.status === 403) && !_retried) {
+    hbPropClear();
+    await hbPropAskLogin("登入已過期或沒有權限，請重新登入。");
+    return sitelogFetch(path, options, true);
+  }
   if (!res.ok) {
     const text = await res.text().catch(() => "");
     throw new Error(`(${res.status}) ${text || res.statusText}`);

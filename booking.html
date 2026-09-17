@@ -318,12 +318,9 @@ async function loadMonthData(y, m){
   closedCache[mk] = new Set();
 
   try{
+    // 只向伺服器查「哪些時段已被約走」，不會拿到其他客人的個資
     const { data: bookings, error: e1 } = await sb
-      .from('sitelog_bookings')
-      .select('date,time')
-      .gte('date', startStr)
-      .lte('date', endStr)
-      .in('status', ['pending','confirmed']);
+      .rpc('hb_booked_slots', { p_start: startStr, p_end: endStr });
     if(e1) throw e1;
     (bookings||[]).forEach(b=>{
       if(!bookedCache[mk][b.date]) bookedCache[mk][b.date] = [];
@@ -584,13 +581,9 @@ async function submitBooking(){
   try{
     // 送出前重新確認一次時段是否已被搶走（避免兩人同時預約同一時段），或已被管理員手動設為已滿額
     const { data: clash, error: checkErr } = await sb
-      .from('sitelog_bookings')
-      .select('id')
-      .eq('date', state.date)
-      .eq('time', state.time)
-      .in('status', ['pending','confirmed'])
-      .limit(1);
+      .rpc('hb_booked_slots', { p_start: state.date, p_end: state.date });
     if(checkErr) throw checkErr;
+    const clashHit = (clash||[]).filter(b => b.time === state.time);
     const { data: overrideClash, error: overrideErr } = await sb
       .from('sitelog_booking_slot_overrides')
       .select('id')
@@ -598,7 +591,7 @@ async function submitBooking(){
       .eq('time', state.time)
       .limit(1);
     if(overrideErr) throw overrideErr;
-    if((clash && clash.length) || (overrideClash && overrideClash.length)){
+    if(clashHit.length || (overrideClash && overrideClash.length)){
       alert('抱歉，這個時段剛被其他人預約走了，請重新選擇時段');
       state.time = null;
       goStep(2);
@@ -606,20 +599,21 @@ async function submitBooking(){
       return;
     }
 
-    const { data: inserted, error: insertErr } = await sb
-      .from('sitelog_bookings')
-      .insert({
-        date: state.date,
-        time: state.time,
-        service_type: state.svc,
-        name, phone,
-        email: email || null,
-        address: addr || null,
-        note: note || null,
-        status: 'pending'
-      })
-      .select()
-      .single();
+    // 由伺服器再確認一次時段並建立預約，只回傳預約編號
+    const { data: newId, error: insertErr } = await sb
+      .rpc('hb_booking_create', {
+        p_date: state.date, p_time: state.time, p_service_type: state.svc,
+        p_name: name, p_phone: phone,
+        p_email: email || null, p_address: addr || null, p_note: note || null
+      });
+    if(insertErr && /slot_taken/.test(insertErr.message||'')){
+      alert('抱歉，這個時段剛被其他人預約走了，請重新選擇時段');
+      state.time = null;
+      goStep(2);
+      renderCalendar(); renderSlots(); renderFooter(2);
+      return;
+    }
+    const inserted = { id: newId };
     if(insertErr) throw insertErr;
 
     // 通知 LINE（失敗不影響預約成立，只記錄錯誤）
