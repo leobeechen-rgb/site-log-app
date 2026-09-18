@@ -5409,7 +5409,8 @@ function HB_estMeasureQuantity(item){
  else if(['m³','立方公尺'].includes(unit)&&w>0&&d>0)result=l*w*d/1000000;
  else return null;
  if(!Number.isFinite(result))return null;
- return Math.round(result*10000)/10000;
+ /* 換算結果只要有小數就進位到整數（7.2 尺 → 8 尺），1e-9 是浮點誤差的容忍值 */
+ return Math.ceil(result-1e-9);
 }
 function HB_estItemSpec(item){
  const spec=String(item.spec||'');
