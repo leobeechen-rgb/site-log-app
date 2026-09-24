@@ -16250,7 +16250,8 @@ react-dom/cjs/react-dom-client.production.js:
 
     /* 收合把手：紙面小標籤 */
     '.hb-rail__handle{display:none;position:absolute;right:0;top:50%;',
-    '  transform:translateY(-50%);width:18px;height:58px;padding:0;',
+    '  opacity:.28;transition:opacity .2s ease;',
+    '  transform:translateY(-50%);width:14px;height:46px;padding:0;',
     '  border:1px solid rgba(160,146,124,.55);border-right:0;',
     '  border-radius:3px 0 0 3px;background:#F4F0E7;cursor:pointer;',
     '  align-items:center;justify-content:center;color:#8A6E32;',
@@ -16262,6 +16263,8 @@ react-dom/cjs/react-dom-client.production.js:
     '  border:0!important;box-shadow:none!important;padding:0;}',
     '.hb-rail[data-collapsed="1"] .hb-rail__items{display:none;}',
     '.hb-rail[data-collapsed="1"] .hb-rail__handle{display:flex;}',
+    '.hb-rail__handle:hover,.hb-rail__handle:focus-visible,.hb-rail__handle:active{opacity:1;}',
+    '.hb-rail:hover .hb-rail__handle{opacity:1;}',
 
     '.hb-rail__top{display:none;}',
     '.hb-rail[data-scrolled="1"] .hb-rail__top{display:flex;}',
