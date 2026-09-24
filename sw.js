@@ -118,3 +118,24 @@ self.addEventListener("notificationclick", (event) => {
     }),
   );
 });
+
+/* ── 網頁更新：HTML 一律先向伺服器要新版，拿不到才用最後一次成功的版本 ── */
+const HB_HTML_CACHE = "sitelog-html-v1";
+self.addEventListener("fetch", (event) => {
+  const req = event.request;
+  if (req.method !== "GET" || req.mode !== "navigate") return;
+  event.respondWith((async () => {
+    try {
+      const fresh = await fetch(new Request(req, { cache: "reload" }));
+      if (fresh && fresh.ok) {
+        const copy = fresh.clone();
+        caches.open(HB_HTML_CACHE).then((c) => c.put(req, copy)).catch(() => {});
+      }
+      return fresh;
+    } catch (e) {
+      const cached = await caches.match(req);
+      if (cached) return cached;
+      throw e;
+    }
+  })());
+});
