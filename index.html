@@ -3681,14 +3681,9 @@ async function HB_ownerApi(path,body){let t="";try{t=localStorage.getItem("hb_ow
 /* App 原生功能（只在「赫柏空間設計」iOS App 內啟用，網頁版不受影響）：推播通知＋原生相機 */
 function HB_nativeHandler(n){try{return window.webkit&&window.webkit.messageHandlers&&window.webkit.messageHandlers[n]||null}catch{return null}}
 function HB_isNative(){return!!HB_nativeHandler("herfulsinsPush")}
-function HB_pushDebug(tag,msg){try{q.rpc("hb_debug",{p_tag:tag,p_message:String(msg).slice(0,400)})}catch{}}
-window.__hbNativePushToken=async function(tk){HB_pushDebug("push","token callback len="+(tk?String(tk).length:0));
-  if(!tk||!/^[0-9a-f]{32,200}$/.test(tk)){HB_pushDebug("push","token format rejected");return}
-  try{localStorage.setItem("hb_push_token",tk)}catch{}
-  try{let{error}=await q.rpc("hb_register_device",{p_token:tk,p_platform:"ios"});HB_pushDebug("push",error?("register error: "+error.message):"register ok")}catch(e){HB_pushDebug("push","register threw: "+(e&&e.message||e))}};
-async function HB_nativePushRegister(){let h=HB_nativeHandler("herfulsinsPush");
-  HB_pushDebug("push","register called, handler="+(h?"yes":"no")+", native="+(HB_isNative()?"yes":"no"));
-  if(!h)return;try{h.postMessage("register");HB_pushDebug("push","postMessage sent")}catch(e){HB_pushDebug("push","postMessage failed: "+(e&&e.message||e))}}
+window.__hbNativePushToken=async function(tk){if(!tk||!/^[0-9a-f]{32,200}$/.test(tk))return;try{localStorage.setItem("hb_push_token",tk)}catch{}
+  try{let{error}=await q.rpc("hb_register_device",{p_token:tk,p_platform:"ios"});if(error)console.warn("push register",error.message)}catch{}};
+async function HB_nativePushRegister(){let h=HB_nativeHandler("herfulsinsPush");if(!h)return;try{h.postMessage("register")}catch{}}
 async function HB_nativePushUnregister(){
   if(!HB_isNative())return;let tk="";try{tk=localStorage.getItem("hb_push_token")||""}catch{}
   if(tk){try{await q.rpc("hb_unregister_device",{p_token:tk})}catch{}try{localStorage.removeItem("hb_push_token")}catch{}}
