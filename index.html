@@ -4195,6 +4195,11 @@ function HbMarketingPhotoHub({onBack,notify}){
   /* 一次只渲染一部分照片，避免一口氣載入上千張造成卡頓 */
   let HB_PAGE=48;
   let[shown,setShown]=(0,u.useState)(HB_PAGE);
+  /* 縮圖顯示大小：小 / 中 / 大，記在這台裝置上 */
+  let HB_TILES=[{k:"s",label:"小",px:170},{k:"m",label:"中",px:260},{k:"l",label:"大",px:420}];
+  let[tileKey,setTileKey]=(0,u.useState)(()=>{try{return localStorage.getItem("hb_mkt_tile")||"m"}catch{return "m"}});
+  let tilePx=(HB_TILES.find(t=>t.k===tileKey)||HB_TILES[1]).px;
+  let pickTile=k=>{setTileKey(k);try{localStorage.setItem("hb_mkt_tile",k)}catch{}};
   let setFilterTag=tag=>{setFilterTagState(p=>p===tag?"":tag);setSelected(new Set());setLastClickedIdx(null);setShown(HB_PAGE)};
   let toggleSelect=id=>setSelected(sset=>{let n=new Set(sset);n.has(id)?n.delete(id):n.add(id);return n});
   let handlePhotoClick=(e,idx,list)=>{
@@ -4386,7 +4391,12 @@ function HbMarketingPhotoHub({onBack,notify}){
         u.default.createElement("div",{style:{flexShrink:0}},
           u.default.createElement("input",{value:search,onChange:e=>setSearch(e.target.value),placeholder:"搜尋標籤或備註...",style:{width:"100%",boxSizing:"border-box",border:`1px solid ${MP.line}`,borderRadius:8,padding:"9px 11px",fontSize:14,marginBottom:14,background:"#fff",color:MP.ink,fontFamily:"inherit"}}),
           u.default.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10,gap:8,flexWrap:"wrap"}},
-            u.default.createElement("div",{style:{fontSize:12.5,color:MP.inkSoft}},`共 ${filtered.length} 張${selected.size?`，已選 ${selected.size} 張`:""}`),
+            u.default.createElement("div",{style:{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}},
+              u.default.createElement("div",{style:{fontSize:12.5,color:MP.inkSoft}},`共 ${filtered.length} 張${selected.size?`，已選 ${selected.size} 張`:""}`),
+              u.default.createElement("div",{style:{display:"flex",alignItems:"center",gap:4}},
+                u.default.createElement("span",{style:{fontSize:11.5,color:MP.inkSoft,letterSpacing:".08em"}},"縮圖"),
+                HB_TILES.map(t=>u.default.createElement("button",{key:t.k,onClick:()=>pickTile(t.k),
+                  style:{border:`1px solid ${tileKey===t.k?MP.olive:MP.line}`,background:tileKey===t.k?MP.olive:"transparent",color:tileKey===t.k?"#FAF7F0":MP.inkSoft,borderRadius:6,padding:"4px 10px",fontSize:12,cursor:"pointer",fontFamily:"inherit"}},t.label)))),
             u.default.createElement("div",{style:{display:"flex",gap:8,flexWrap:"wrap"}},
               filterTag&&u.default.createElement("button",{onClick:()=>toggleSelectAllInList(photosByTag(filterTag)),style:{display:"flex",alignItems:"center",gap:6,background:"none",border:`1px solid ${MP.line}`,color:MP.inkSoft,borderRadius:8,padding:"6px 12px",fontSize:12.5,cursor:"pointer"}},photosByTag(filterTag).length>0&&photosByTag(filterTag).every(p=>selected.has(p.id))?"取消全選":"全選"),
               selected.size>0&&u.default.createElement("button",{onClick:deleteSelectedPhotos,style:{display:"flex",alignItems:"center",gap:6,background:"none",border:"1px solid #B3413B",color:"#B3413B",borderRadius:8,padding:"6px 12px",fontSize:12.5,cursor:"pointer"}},u.default.createElement(E,{name:"trash",size:14}),`刪除選取 (${selected.size})`),
@@ -4401,7 +4411,7 @@ function HbMarketingPhotoHub({onBack,notify}){
           let list=photosByTag(filterTag);
           return list.length===0?u.default.createElement(He,{icon:"image",text:"此分類尚無照片"}):
           u.default.createElement(u.default.Fragment,null,
-          u.default.createElement("div",{className:"hb-mktGrid",style:{display:"grid",gap:18}},
+          u.default.createElement("div",{className:"hb-mktGrid",style:{display:"grid",gap:18,gridTemplateColumns:`repeat(auto-fill,minmax(min(100%,${tilePx}px),1fr))`}},
             list.slice(0,shown).map((p,idx)=>u.default.createElement("div",{key:p.id,style:{position:"relative",borderRadius:8,overflow:"hidden",border:`2px solid ${selected.has(p.id)?MP.olive:"transparent"}`,cursor:"pointer"}},
               u.default.createElement("img",{src:p.url,loading:"lazy",decoding:"async",onClick:e=>handlePhotoClick(e,idx,list),style:{width:"100%",aspectRatio:"4 / 3",height:"auto",objectFit:"cover",display:"block",userSelect:"none",background:"#EFEAE0"}}),
               u.default.createElement("button",{onClick:e=>{e.stopPropagation();setPreviewId(p.id)},style:{position:"absolute",top:4,left:4,background:"rgba(0,0,0,0.5)",border:"none",borderRadius:6,padding:4,cursor:"pointer",display:"flex"}},u.default.createElement(E,{name:"eye",size:13,color:"#fff"})),
@@ -4452,11 +4462,11 @@ function HbMarketingPreviewModal({photo,onClose,onDownload,onCopy,onPrev,onNext}
     return()=>window.removeEventListener("keydown",handler);
   },[onPrev,onNext,onClose]);
   let navBtnStyle=side=>({position:"absolute",[side]:8,top:"50%",transform:"translateY(-50%)",background:"rgba(255,255,255,0.15)",border:"1px solid rgba(255,255,255,0.4)",borderRadius:"50%",width:42,height:42,color:"#fff",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",zIndex:71});
-  return u.default.createElement("div",{onClick:onClose,style:{position:"fixed",inset:0,background:"rgba(20,18,14,0.85)",display:"flex",alignItems:"center",justifyContent:"center",padding:20,zIndex:70}},
+  return u.default.createElement("div",{onClick:onClose,style:{position:"fixed",inset:0,background:"rgba(20,18,14,0.9)",display:"flex",alignItems:"center",justifyContent:"center",padding:"10px 8px",zIndex:70}},
     onPrev&&u.default.createElement("button",{onClick:e=>{e.stopPropagation();onPrev()},style:navBtnStyle("left")},u.default.createElement(E,{name:"arrow-left",size:20})),
     onNext&&u.default.createElement("button",{onClick:e=>{e.stopPropagation();onNext()},style:navBtnStyle("right")},u.default.createElement(E,{name:"arrow-left",size:20,style:{transform:"rotate(180deg)"}})),
-    u.default.createElement("div",{onClick:e=>e.stopPropagation(),style:{maxWidth:"92vw",maxHeight:"90vh",display:"flex",flexDirection:"column",alignItems:"center",gap:12}},
-      u.default.createElement("div",{style:{position:"relative",width:"92vw",height:"70vh",borderRadius:8,overflow:"hidden",boxShadow:"0 10px 40px rgba(0,0,0,0.5)"}},u.default.createElement(window.HBZoomImg,{src:photo.url})),
+    u.default.createElement("div",{onClick:e=>e.stopPropagation(),style:{maxWidth:"98vw",maxHeight:"98vh",display:"flex",flexDirection:"column",alignItems:"center",gap:8,width:"100%"}},
+      u.default.createElement("div",{style:{position:"relative",width:"min(98vw, 1600px)",height:"calc(100vh - 150px)",minHeight:320,borderRadius:8,overflow:"hidden",boxShadow:"0 10px 40px rgba(0,0,0,0.5)"}},u.default.createElement(window.HBZoomImg,{src:photo.url})),
       photo.tags&&photo.tags.length>0&&u.default.createElement("div",{style:{color:"#fff",fontSize:12.5,opacity:.85,textAlign:"center"}},photo.tags.join("、")),
       u.default.createElement("div",{style:{display:"flex",gap:10,flexWrap:"wrap",justifyContent:"center"}},
         u.default.createElement("button",{onClick:doCopy,disabled:copying,style:{display:"flex",alignItems:"center",gap:6,background:"#fff",color:"#1C1B18",border:"none",borderRadius:8,padding:"9px 16px",fontSize:13.5,cursor:"pointer",opacity:copying?.6:1}},u.default.createElement(E,{name:copying?"loader":"copy",size:15,className:copying?"animate-spin":""}),copying?"複製中...":"複製圖片"),
