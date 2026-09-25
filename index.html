@@ -4192,7 +4192,10 @@ function HbMarketingPhotoHub({onBack,notify}){
   };
 
   let[lastClickedIdx,setLastClickedIdx]=(0,u.useState)(null);
-  let setFilterTag=tag=>{setFilterTagState(p=>p===tag?"":tag);setSelected(new Set());setLastClickedIdx(null)};
+  /* 一次只渲染一部分照片，避免一口氣載入上千張造成卡頓 */
+  let HB_PAGE=48;
+  let[shown,setShown]=(0,u.useState)(HB_PAGE);
+  let setFilterTag=tag=>{setFilterTagState(p=>p===tag?"":tag);setSelected(new Set());setLastClickedIdx(null);setShown(HB_PAGE)};
   let toggleSelect=id=>setSelected(sset=>{let n=new Set(sset);n.has(id)?n.delete(id):n.add(id);return n});
   let handlePhotoClick=(e,idx,list)=>{
     if(e.shiftKey&&lastClickedIdx!==null){
@@ -4397,16 +4400,20 @@ function HbMarketingPhotoHub({onBack,notify}){
         (()=>{
           let list=photosByTag(filterTag);
           return list.length===0?u.default.createElement(He,{icon:"image",text:"此分類尚無照片"}):
+          u.default.createElement(u.default.Fragment,null,
           u.default.createElement("div",{className:"hb-mktGrid",style:{display:"grid",gap:18}},
-            list.map((p,idx)=>u.default.createElement("div",{key:p.id,style:{position:"relative",borderRadius:8,overflow:"hidden",border:`2px solid ${selected.has(p.id)?MP.olive:"transparent"}`,cursor:"pointer"}},
-              u.default.createElement("img",{src:p.url,onClick:e=>handlePhotoClick(e,idx,list),style:{width:"100%",aspectRatio:"4 / 3",height:"auto",objectFit:"cover",display:"block",userSelect:"none"}}),
+            list.slice(0,shown).map((p,idx)=>u.default.createElement("div",{key:p.id,style:{position:"relative",borderRadius:8,overflow:"hidden",border:`2px solid ${selected.has(p.id)?MP.olive:"transparent"}`,cursor:"pointer"}},
+              u.default.createElement("img",{src:p.url,loading:"lazy",decoding:"async",onClick:e=>handlePhotoClick(e,idx,list),style:{width:"100%",aspectRatio:"4 / 3",height:"auto",objectFit:"cover",display:"block",userSelect:"none",background:"#EFEAE0"}}),
               u.default.createElement("button",{onClick:e=>{e.stopPropagation();setPreviewId(p.id)},style:{position:"absolute",top:4,left:4,background:"rgba(0,0,0,0.5)",border:"none",borderRadius:6,padding:4,cursor:"pointer",display:"flex"}},u.default.createElement(E,{name:"eye",size:13,color:"#fff"})),
               u.default.createElement("div",{style:{position:"absolute",top:4,right:4,display:"flex",gap:4}},
                 u.default.createElement("button",{onClick:e=>{e.stopPropagation();downloadSinglePhoto(p)},style:{background:"rgba(0,0,0,0.5)",border:"none",borderRadius:6,padding:4,cursor:"pointer",display:"flex"}},u.default.createElement(E,{name:"download",size:13,color:"#fff"})),
                 u.default.createElement("button",{onClick:e=>{e.stopPropagation();deletePhoto(p)},style:{background:"rgba(0,0,0,0.5)",border:"none",borderRadius:6,padding:4,cursor:"pointer",display:"flex"}},u.default.createElement(E,{name:"trash",size:13,color:"#fff"}))
               ),
               p.tags.length>0&&u.default.createElement("div",{style:{position:"absolute",bottom:0,left:0,right:0,background:"rgba(0,0,0,0.55)",padding:"3px 6px"}},u.default.createElement("div",{style:{fontSize:9.5,color:"#fff",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},p.tags.join("、")))
-            ))
+            )),
+          list.length>shown&&u.default.createElement("div",{style:{gridColumn:"1 / -1",display:"flex",justifyContent:"center",padding:"18px 0"}},
+            u.default.createElement("button",{onClick:()=>setShown(n=>n+96),style:{background:"none",border:`1px solid ${MP.line}`,color:MP.oliveDark,borderRadius:8,padding:"10px 22px",fontSize:13,cursor:"pointer",fontFamily:"inherit"}},
+              `載入更多（已顯示 ${shown} / ${list.length}）`)))
           );
         })()
         )
