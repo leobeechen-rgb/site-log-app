@@ -4413,8 +4413,10 @@ function HbMarketingPhotoHub({onBack,notify}){
           u.default.createElement(u.default.Fragment,null,
           u.default.createElement("div",{className:"hb-mktGrid",style:{display:"grid",gap:18,gridTemplateColumns:`repeat(auto-fill,minmax(min(100%,${tilePx}px),1fr))`}},
             list.slice(0,shown).map((p,idx)=>u.default.createElement("div",{key:p.id,style:{position:"relative",borderRadius:8,overflow:"hidden",border:`2px solid ${selected.has(p.id)?MP.olive:"transparent"}`,cursor:"pointer"}},
-              u.default.createElement("img",{src:p.url,loading:"lazy",decoding:"async",onClick:e=>handlePhotoClick(e,idx,list),style:{width:"100%",aspectRatio:"4 / 3",height:"auto",objectFit:"cover",display:"block",userSelect:"none",background:"#EFEAE0"}}),
-              u.default.createElement("button",{onClick:e=>{e.stopPropagation();setPreviewId(p.id)},style:{position:"absolute",top:4,left:4,background:"rgba(0,0,0,0.5)",border:"none",borderRadius:6,padding:4,cursor:"pointer",display:"flex"}},u.default.createElement(E,{name:"eye",size:13,color:"#fff"})),
+              u.default.createElement("img",{src:p.url,loading:"lazy",decoding:"async",title:"點一下選取，連點兩下放大",
+                onClick:e=>handlePhotoClick(e,idx,list),
+                onDoubleClick:e=>{e.stopPropagation();setPreviewId(p.id)},
+                style:{width:"100%",aspectRatio:"4 / 3",height:"auto",objectFit:"cover",display:"block",userSelect:"none",background:"#EFEAE0"}}),
               u.default.createElement("div",{style:{position:"absolute",top:4,right:4,display:"flex",gap:4}},
                 u.default.createElement("button",{onClick:e=>{e.stopPropagation();downloadSinglePhoto(p)},style:{background:"rgba(0,0,0,0.5)",border:"none",borderRadius:6,padding:4,cursor:"pointer",display:"flex"}},u.default.createElement(E,{name:"download",size:13,color:"#fff"})),
                 u.default.createElement("button",{onClick:e=>{e.stopPropagation();deletePhoto(p)},style:{background:"rgba(0,0,0,0.5)",border:"none",borderRadius:6,padding:4,cursor:"pointer",display:"flex"}},u.default.createElement(E,{name:"trash",size:13,color:"#fff"}))
@@ -4466,13 +4468,14 @@ function HbMarketingPreviewModal({photo,onClose,onDownload,onCopy,onPrev,onNext}
     onPrev&&u.default.createElement("button",{onClick:e=>{e.stopPropagation();onPrev()},style:navBtnStyle("left")},u.default.createElement(E,{name:"arrow-left",size:20})),
     onNext&&u.default.createElement("button",{onClick:e=>{e.stopPropagation();onNext()},style:navBtnStyle("right")},u.default.createElement(E,{name:"arrow-left",size:20,style:{transform:"rotate(180deg)"}})),
     u.default.createElement("div",{onClick:e=>e.stopPropagation(),style:{maxWidth:"98vw",maxHeight:"98vh",display:"flex",flexDirection:"column",alignItems:"center",gap:8,width:"100%"}},
-      u.default.createElement("div",{style:{position:"relative",width:"min(98vw, 1600px)",height:"calc(100vh - 150px)",minHeight:320,borderRadius:8,overflow:"hidden",boxShadow:"0 10px 40px rgba(0,0,0,0.5)"}},u.default.createElement(window.HBZoomImg,{src:photo.url})),
-      photo.tags&&photo.tags.length>0&&u.default.createElement("div",{style:{color:"#fff",fontSize:12.5,opacity:.85,textAlign:"center"}},photo.tags.join("、")),
-      u.default.createElement("div",{style:{display:"flex",gap:10,flexWrap:"wrap",justifyContent:"center"}},
+      u.default.createElement("div",{style:{position:"relative",width:"min(98vw, 1600px)",height:"calc(100vh - 40px)",minHeight:320,borderRadius:8,overflow:"hidden",boxShadow:"0 10px 40px rgba(0,0,0,0.5)"}},
+        u.default.createElement(window.HBZoomImg,{src:photo.url}),
+        photo.tags&&photo.tags.length>0&&u.default.createElement("div",{style:{position:"absolute",top:0,left:0,right:0,background:"linear-gradient(rgba(0,0,0,.5),rgba(0,0,0,0))",color:"#fff",fontSize:12.5,padding:"10px 14px 22px",textAlign:"center",pointerEvents:"none"}},photo.tags.join("、")),
+      u.default.createElement("div",{style:{position:"absolute",left:0,right:0,bottom:0,display:"flex",gap:10,flexWrap:"wrap",justifyContent:"center",padding:"14px 12px calc(14px + env(safe-area-inset-bottom))",background:"linear-gradient(rgba(0,0,0,0),rgba(0,0,0,.55))"}},
         u.default.createElement("button",{onClick:doCopy,disabled:copying,style:{display:"flex",alignItems:"center",gap:6,background:"#fff",color:"#1C1B18",border:"none",borderRadius:8,padding:"9px 16px",fontSize:13.5,cursor:"pointer",opacity:copying?.6:1}},u.default.createElement(E,{name:copying?"loader":"copy",size:15,className:copying?"animate-spin":""}),copying?"複製中...":"複製圖片"),
         u.default.createElement("button",{onClick:()=>onDownload(photo),style:{display:"flex",alignItems:"center",gap:6,background:"rgba(255,255,255,0.15)",color:"#fff",border:"1px solid rgba(255,255,255,0.4)",borderRadius:8,padding:"9px 16px",fontSize:13.5,cursor:"pointer"}},u.default.createElement(E,{name:"download",size:15}),"下載"),
         u.default.createElement("button",{onClick:onClose,style:{display:"flex",alignItems:"center",gap:6,background:"none",color:"#fff",border:"1px solid rgba(255,255,255,0.4)",borderRadius:8,padding:"9px 16px",fontSize:13.5,cursor:"pointer"}},u.default.createElement(E,{name:"x",size:15}),"關閉")
-      )
+      ))
     )
   );
 }
