@@ -18031,16 +18031,52 @@ react-dom/cjs/react-dom-client.production.js:
       return true;
     }
 
-    if (!attach()) {
+    /* 手機／App：側邊列收進頁首「☰」的底部選單，工具也放進去 */
+    var FR = { cd: 'PLANS', plate: 'PLATE' };
+    function attachSheet() {
+      var body = document.querySelector('.hb-railSheet__body');
+      if (!body) return false;
+      if (body.querySelector('.hb-railOpt--tool')) return true;
+      var opts = body.querySelectorAll('.hb-railOpt');
+      var last = opts.length ? opts[opts.length - 1] : null;      // 「回到頂端」留在最後
+      var head = document.createElement('div');
+      head.className = 'hb-railOpt--tool';
+      head.style.cssText = 'font:500 11px/1 "Cormorant Garamond",serif;letter-spacing:.24em;color:#A79E8D;padding:16px 10px 6px;';
+      head.textContent = '工具 OUTILS';
+      body.insertBefore(head, last);
+      TOOLS.forEach(function (tool) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'hb-railOpt hb-railOpt--tool';
+        b.innerHTML =
+          '<span class="hb-railOpt__no" aria-hidden="true"><svg viewBox="0 0 24 24" style="width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round">' + tool.svg + '</svg></span>' +
+          '<span class="hb-railOpt__cn">' + tool.label + '</span>' +
+          '<span class="hb-railOpt__fr" aria-hidden="true">' + (FR[tool.key] || '') + '</span>' +
+          '<span class="hb-railOpt__tick" aria-hidden="true"></span>';
+        b.addEventListener('click', function () {
+          var x = document.querySelector('.hb-railSheet__x');
+          if (x) x.click();
+          setTimeout(function () { open(tool); }, 60);
+        });
+        body.insertBefore(b, last);
+      });
+      return true;
+    }
+
+    var okRail = attach(), okSheet = attachSheet();
+    if (!okRail || !okSheet) {
       var tries = 0;
       var timer = setInterval(function () {
-        if (attach() || ++tries > 100) clearInterval(timer);   // 最多等 20 秒
+        if (!okRail) okRail = attach();
+        if (!okSheet) okSheet = attachSheet();
+        if ((okRail && okSheet) || ++tries > 100) clearInterval(timer);   // 最多等 20 秒
       }, 200);
     }
 
     window.__hbToolsStatus = function () {
       return {
         railFound: !!document.querySelector('.hb-rail__items'),
+        sheetTools: document.querySelectorAll('.hb-railSheet__body .hb-railOpt--tool').length,
         buttons: made.length,
         open: current ? current.key : null
       };
