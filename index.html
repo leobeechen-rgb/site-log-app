@@ -17879,10 +17879,10 @@ react-dom/cjs/react-dom-client.production.js:
 
 <!--
   =====================================================================
-  hb-tools v1 — 行銷工具（廣告觀察台 / 作品資訊卡）
-  作法：在既有側邊列 .hb-rail 追加兩顆按鈕，點擊開全螢幕 iframe，
+  hb-tools v1 — 行銷工具（作品資訊卡）
+  作法：在既有側邊列 .hb-rail 追加按鈕，點擊開全螢幕 iframe，
         不改任何 React 程式碼，也不動 hb-rail 原本的邏輯
-  需要：同目錄放 ad-watch.html 與 plate-maker.html
+  需要：同目錄放 plate-maker.html（廣告觀察台已於 2026-09-29 移除）
   排錯：console 輸入 __hbToolsStatus()
   =====================================================================
 -->
@@ -17892,12 +17892,6 @@ react-dom/cjs/react-dom-client.production.js:
   window.__HB_TOOLS__ = true;
 
   var TOOLS = [
-    {
-      key: 'adwatch',
-      label: '廣告觀察台',
-      src: './ad-watch.html',
-      svg: '<circle cx="11" cy="11" r="6"/><path d="m20 20-4.4-4.4"/><path d="M11 8.5v2.5l1.8 1.1"/>'
-    },
     {
       key: 'plate',
       label: '作品資訊卡',
