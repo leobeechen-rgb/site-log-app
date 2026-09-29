@@ -7751,7 +7751,7 @@ function HbLanding({onCase:l,onCompany:t,onManageStaff:e,onLogout:n,onQuickQuote
     `),
 
 
-    u.default.createElement("div",{className:"hb-topnav"},u.default.createElement("div",{className:"hb-topnav-brand"},u.default.createElement("div",null,u.default.createElement("div",{className:"hb-topnav-word"},"HERFULSINS"),u.default.createElement("div",{className:"hb-topnav-sub"},"MAISON DE DESIGN"))),u.default.createElement("div",{className:"hb-topnav-right"},u.default.createElement("button",{onClick:td,className:"hb-topnav-btn",style:{fontSize:14,padding:"10px 12px",border:"1px solid currentColor",borderRadius:4}},"今日待辦"),u.default.createElement("span",{className:"hb-topnav-hi"},"歡迎回來，今天也要好好照顧每個工地"),u.default.createElement("span",{className:"hb-topnav-div"}),null,u.default.createElement("button",{onClick:n,title:"登出",className:"hb-topnav-btn"},u.default.createElement(E,{name:"log-out",size:16})))),
+    u.default.createElement("div",{className:"hb-topnav"},u.default.createElement("div",{className:"hb-topnav-brand"},u.default.createElement("div",null,u.default.createElement("div",{className:"hb-topnav-word"},"HERFULSINS"),u.default.createElement("div",{className:"hb-topnav-sub"},"MAISON DE DESIGN"))),u.default.createElement("div",{className:"hb-topnav-right"},u.default.createElement("button",{onClick:td,className:"hb-topnav-btn",style:{fontSize:14,padding:"10px 12px",border:"1px solid currentColor",borderRadius:4}},"今日待辦"),u.default.createElement("button",{onClick:()=>{window.__hbOpenTool&&window.__hbOpenTool("wardrobe")},className:"hb-topnav-btn",style:{fontSize:14,padding:"10px 12px",border:"1px solid currentColor",borderRadius:4}},"數位衣櫃"),u.default.createElement("span",{className:"hb-topnav-hi"},"歡迎回來，今天也要好好照顧每個工地"),u.default.createElement("span",{className:"hb-topnav-div"}),null,u.default.createElement("button",{onClick:n,title:"登出",className:"hb-topnav-btn"},u.default.createElement(E,{name:"log-out",size:16})))),
     u.default.createElement("div",{className:"hb-scroll",style:{width:"100%",flex:"1 1 auto",minHeight:0,overflowY:"auto",padding:0}},
 
       
@@ -17879,7 +17879,7 @@ react-dom/cjs/react-dom-client.production.js:
 
 <!--
   =====================================================================
-  hb-tools v1 — 工具（施工圖 / 作品資訊卡 / 數位衣櫃）
+  hb-tools v1 — 工具（施工圖 / 作品資訊卡；數位衣櫃由首頁今日待辦旁開啟）
   作法：在既有側邊列 .hb-rail 追加按鈕，點擊開全螢幕 iframe，
         不改任何 React 程式碼，也不動 hb-rail 原本的邏輯
   需要：同目錄放 shigongtu.html、plate-maker.html、wardrobe.html（廣告觀察台已於 2026-09-29 移除）
@@ -17908,6 +17908,7 @@ react-dom/cjs/react-dom-client.production.js:
       key: 'wardrobe',
       label: '數位衣櫃',
       src: './wardrobe.html',
+      rail: false,          // 不放側邊列；由首頁「今日待辦」旁的按鈕開啟
       svg: '<path d="M12 7.2a1.9 1.9 0 1 1 1.9-1.9"/><path d="M12 7.2v1.5L3.6 15a1.3 1.3 0 0 0 .8 2.3h15.2a1.3 1.3 0 0 0 .8-2.3L12 8.7"/>'
     }
   ];
@@ -18029,6 +18030,7 @@ react-dom/cjs/react-dom-client.production.js:
       if (box.querySelector('.hb-rail__tool')) return true;   // 已經掛過
       var top = box.querySelector('.hb-rail__top');           // 「回到頂端」永遠留在最後
       TOOLS.forEach(function (tool) {
+        if (tool.rail === false) return;
         var el = makeItem(tool);
         if (top) box.insertBefore(el, top);
         else box.appendChild(el);
@@ -18043,6 +18045,11 @@ react-dom/cjs/react-dom-client.production.js:
         if (attach() || ++tries > 100) clearInterval(timer);   // 最多等 20 秒
       }, 200);
     }
+
+    window.__hbOpenTool = function (key) {
+      for (var i = 0; i < TOOLS.length; i++) if (TOOLS[i].key === key) { open(TOOLS[i]); return true; }
+      return false;
+    };
 
     window.__hbToolsStatus = function () {
       return {
