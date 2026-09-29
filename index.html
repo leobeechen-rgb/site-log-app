@@ -17879,10 +17879,10 @@ react-dom/cjs/react-dom-client.production.js:
 
 <!--
   =====================================================================
-  hb-tools v1 — 行銷工具（作品資訊卡）
+  hb-tools v1 — 工具（施工圖 / 作品資訊卡）
   作法：在既有側邊列 .hb-rail 追加按鈕，點擊開全螢幕 iframe，
         不改任何 React 程式碼，也不動 hb-rail 原本的邏輯
-  需要：同目錄放 plate-maker.html（廣告觀察台已於 2026-09-29 移除）
+  需要：同目錄放 shigongtu.html 與 plate-maker.html（廣告觀察台已於 2026-09-29 移除）
   排錯：console 輸入 __hbToolsStatus()
   =====================================================================
 -->
@@ -17892,6 +17892,12 @@ react-dom/cjs/react-dom-client.production.js:
   window.__HB_TOOLS__ = true;
 
   var TOOLS = [
+    {
+      key: 'cd',
+      label: '施工圖',
+      src: './shigongtu.html',
+      svg: '<rect x="3.5" y="3.5" width="17" height="17"/><path d="M3.5 17h17M9 3.5V17M9 10h11.5"/><path d="M13 17v3.5"/>'
+    },
     {
       key: 'plate',
       label: '作品資訊卡',
@@ -17932,7 +17938,7 @@ react-dom/cjs/react-dom-client.production.js:
     sheet.className = 'hb-tool-sheet';
     sheet.setAttribute('role', 'dialog');
     sheet.setAttribute('aria-modal', 'true');
-    sheet.setAttribute('aria-label', '行銷工具');
+    sheet.setAttribute('aria-label', '工具');
 
     var bar = document.createElement('div');
     bar.className = 'hb-tool-bar';
@@ -17949,7 +17955,7 @@ react-dom/cjs/react-dom-client.production.js:
     bar.appendChild(close);
 
     var frame = document.createElement('iframe');
-    frame.setAttribute('title', '行銷工具');
+    frame.setAttribute('title', '工具');
     frame.setAttribute('allow', 'clipboard-write');
 
     sheet.appendChild(bar);
