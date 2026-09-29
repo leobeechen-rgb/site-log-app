@@ -598,7 +598,8 @@ function buildPlan(sh){
   else if(c.type==='none')hatchPoly(r.pts,45,40*k,[0,0]).forEach(([p,q])=>b.l(p,q,{L:'C-CEIL',w:.1,col:'lg',dash:'dot'}));});
  if(kind.czone)P.czones.forEach(z=>{b.pg(z.pts,{hit:1,fill:'none',h:'czone:'+z.id,under:1});b.pg(z.pts,{L:'C-ZONE',w:.25,col:'b',dash:'center'});const c=centroid(z.pts);b.t(c,`${z.label?z.label+' ':''}CH=${z.ch}`,2.2,{L:'C-ZONE',col:'b',anc:'middle',bl:'mid',bold:1});});
  /* cabinets */
- P.cabs.forEach(c=>{const pts=rectPts(c.x,c.y,c.W,c.D,c.rot||0);const hid=sh.kind==='ceil'||sh.kind==='light';const st={L:'CAB',w:.25,col:hid?'g':'k',dash:hid?'hidden':null,h:'cab:'+c.id};
+ P.cabs.forEach(c=>{if(c.src==='cad'){const g=cabPlace(c);const pts=rectPts(g.x,g.y,g.W,g.D,g.rot);const hid=sh.kind==='ceil'||sh.kind==='light';b.pg(pts,{hit:1,fill:'none',h:'cab:'+c.id});if(!hid){const st={L:'CAB',w:.25,col:c.lost?'r':'k',h:'cab:'+c.id};b.c([g.x,g.y],2.6*k,{...st,fill:'w'});b.t([g.x,g.y],c.tag,2.2,{...st,anc:'middle',bl:'mid',bold:1});}return;}
+  const pts=rectPts(c.x,c.y,c.W,c.D,c.rot||0);const hid=sh.kind==='ceil'||sh.kind==='light';const st={L:'CAB',w:.25,col:hid?'g':'k',dash:hid?'hidden':null,h:'cab:'+c.id};
   b.pg(pts,{...st,fill:hid?null:'w'});if(!hid){b.l(pts[2],pts[3],{...st,w:.4});b.l(pts[0],pts[2],{...st,w:.13});if(c.H>=150)b.l(pts[1],pts[3],{...st,w:.13});}
   b.c([c.x,c.y],2.6*k,{...st,dash:null,fill:'w'});b.t([c.x,c.y],c.tag,2.2,{...st,dash:null,anc:'middle',bl:'mid',bold:1});});
  /* walls: outlines first (double weight), fills over them hide inner joints, then hatch */
@@ -1004,7 +1005,7 @@ function newProject(name){
   sheets:['floor','ceil','light','elec'].map(k=>({id:k,kind:k,scale:50,ox:-1100,oy:-700,frame:false,legend:true,showH:true,code:SHEETKIND[k].code+'-01'}))};
  return p;
 }
-function planBounds(noBg){const pts=[];const cb=typeof cadBounds==='function'?cadBounds():null;if(cb)pts.push([cb[0],cb[1]],[cb[2],cb[3]]);P.walls.forEach(w=>{pts.push(w.a,w.b);});P.rooms.forEach(r=>pts.push(...r.pts));P.cabs.forEach(c=>pts.push(...rectPts(c.x,c.y,c.W,c.D,c.rot||0)));P.syms.forEach(s=>pts.push([s.x,s.y]));P.dims.forEach(d=>{const L=dist(d.a,d.b)||1;const n=[-(d.b[1]-d.a[1])/L,(d.b[0]-d.a[0])/L];const o=d.off+Math.sign(d.off)*25;pts.push([d.a[0]+n[0]*o,d.a[1]+n[1]*o],[d.b[0]+n[0]*o,d.b[1]+n[1]*o]);});
+function planBounds(noBg){const pts=[];const cb=typeof cadBounds==='function'?cadBounds():null;if(cb)pts.push([cb[0],cb[1]],[cb[2],cb[3]]);P.walls.forEach(w=>{pts.push(w.a,w.b);});P.rooms.forEach(r=>pts.push(...r.pts));P.cabs.forEach(c=>{const g=cabPlace(c);pts.push(...rectPts(g.x,g.y,g.W,g.D,g.rot));});P.syms.forEach(s=>pts.push([s.x,s.y]));P.dims.forEach(d=>{const L=dist(d.a,d.b)||1;const n=[-(d.b[1]-d.a[1])/L,(d.b[0]-d.a[0])/L];const o=d.off+Math.sign(d.off)*25;pts.push([d.a[0]+n[0]*o,d.a[1]+n[1]*o],[d.b[0]+n[0]*o,d.b[1]+n[1]*o]);});
  if(!noBg&&P.bg&&BG&&!P.bg.hidden){pts.push(...bgCorners());}
  return pts.length?bb(pts):null;}
 function fitPlanFrame(sh,autoScale){
@@ -1193,7 +1194,7 @@ async function importCAD(f){
  CADG=g;cadIndex=null;cadPathCache=null;
  P.cad={name:f.name,unit,unitAuto:!CAD_UNITS[ins],ox:r1(ox),oy:r1(oy),print:true,ink:'k',layers:lay,core:cb};
  P.sheets.forEach(sh=>{delete sh.cadOff;delete sh.cadHide;});
- saveCAD();commit();if(sheet().kind==='cab')gotoSheet('floor');
+ saveCAD();cadRectCache=null;relinkCadCabs(true);commit();if(sheet().kind==='cab')gotoSheet('floor');
  P.sheets.filter(s=>s.kind!=='cab').forEach(sh=>fitPlanFrame(sh,true));commit();
  cur.tab='sheet';openPanel();renderAll();fitView();
  const nPts=g.pl.reduce((a,o)=>a+o.p.length/2,0);
@@ -1620,6 +1621,8 @@ function hdl(x,y,h,shape){const r=5.5/view.z;return shape==='sq'?OV('rect',{clas
 function otext(x,y,s){return `<text class="otx" x="${fx(x)}" y="${fx(y)}" font-size="${fx(12/view.z)}" text-anchor="middle">${esc(s)}</text>`;}
 function overlaySVG(){
  let s='';const px=1/view.z;const o=selObj();const sh=sheet();
+ if(cur.tool==='cabpick'&&cursorW){if(cabA){const p=snapHit||cursorW;const x0=Math.min(cabA[0],p.x),y0=Math.min(cabA[1],p.y);s+=OV('rect',{class:'odraft',x:x0,y:y0,width:Math.abs(p.x-cabA[0]),height:Math.abs(p.y-cabA[1])});s+=otext((cabA[0]+p.x)/2,Math.min(cabA[1],p.y)-8*px,Math.round(Math.abs(p.x-cabA[0]))+' × '+Math.round(Math.abs(p.y-cabA[1])));}
+  else{const r=cadRectAt(cursorW);if(r){const g=rawRectGeom(r.raw);const ex=cabByRaw(r);s+=OV('polygon',{class:'odraft',points:g.pts.map(p=>p.join(',')).join(' ')});s+=otext(g.x,g.y-10*px,ex?`已建立 ${ex.tag}`:`${g.W} × ${g.D}`);}}}
  if(o&&cur.tool==='select'){
   switch(o.t){
    case 'wall':{const w=o.o,{pieces}=wallPieces(w);pieces.forEach(q=>s+=OV('polygon',{class:'osel',points:q.map(p=>p.join(',')).join(' ')}));if(w.j)s+=OV('line',{class:'oref',x1:w.a[0],y1:w.a[1],x2:w.b[0],y2:w.b[1]});
@@ -1631,7 +1634,7 @@ function overlaySVG(){
    case 'line':{s+=OV('polyline',{class:'osel',points:o.o.pts.map(p=>p.join(',')).join(' ')});o.o.pts.forEach((p,i)=>s+=hdl(p[0],p[1],'lvtx:'+i));break;}
    case 'dim':{const d=o.o;const L=dist(d.a,d.b)||1;const n=[-(d.b[1]-d.a[1])/L,(d.b[0]-d.a[0])/L];s+=OV('line',{class:'osel',x1:d.a[0]+n[0]*d.off,y1:d.a[1]+n[1]*d.off,x2:d.b[0]+n[0]*d.off,y2:d.b[1]+n[1]*d.off});s+=hdl(d.a[0],d.a[1],'dend:0','sq')+hdl(d.b[0],d.b[1],'dend:1','sq');break;}
    case 'text':{const t=o.o;const k=sh.scale/10;const hh=(t.size||2.5)*k;const lines=String(t.str).split('\n');const w=Math.max(...lines.map(x=>tw(x,hh)),2*k);s+=OV('rect',{class:'osel',x:t.anc==='middle'?t.x-w/2:t.x,y:t.y-hh,width:w,height:hh*1.45*lines.length});break;}
-   case 'cab':{const c=o.o;s+=OV('polygon',{class:'osel',points:rectPts(c.x,c.y,c.W,c.D,c.rot||0).map(p=>p.join(',')).join(' ')});break;}
+   case 'cab':{const c=o.o,g=cabPlace(c);s+=OV('polygon',{class:'osel',points:rectPts(g.x,g.y,g.W,g.D,g.rot).map(p=>p.join(',')).join(' ')});break;}
   }
  }
  /* drafts */
@@ -1697,6 +1700,7 @@ const TOOLS={
  wall:{n:'牆',key:'W',ic:'<rect x="3" y="9" width="18" height="6"/><path d="M7.5 9l-3 6M12.5 9l-3 6M17.5 9l-3 6"/>'},
  open:{n:'門窗',key:'D',ic:'<path d="M4 20V4M4 4a14 14 0 0114 14"/><path d="M4 20h16"/>'},
  room:{n:'空間',key:'A',ic:'<path d="M4 4h16v16H4z"/><path d="M8 12h8" opacity=".5"/>'},
+ cabpick:{n:'櫃體',key:'K',ic:'<rect x="4" y="3" width="16" height="18"/><path d="M12 3v18M9 12h1M14 12h1"/>'},
  cab:{n:'櫃體',key:'K',ic:'<rect x="4" y="3" width="16" height="18"/><path d="M12 3v18M9 12h1M14 12h1"/>'},
  dim:{n:'尺寸',key:'M',ic:'<path d="M3 17h18M3 14v6M21 14v6M6 12L3 17M21 17l-3-5"/>'},
  text:{n:'文字',key:'T',ic:'<path d="M5 6V4h14v2M12 4v16M9 20h6"/>'},
@@ -1713,7 +1717,7 @@ const TOOLS={
 };
 function toolList(){const k=sheet().kind;if(k==='cab')return[['select','text']];
  const extra={floor:['paint'],ceil:['autolight','sym','autodim','indirect','track','czone'],light:['autolight','sym','autodim','circuit'],elec:['sym','autodim']}[k];
- return[['select'],['wall','open','room','cab'],['dim','text'],extra];}
+ return[['select'],['wall','open','room','cabpick'],['dim','text'],extra];}
 function renderTools(){
  const groups=toolList();const labels=['','基本圖','標註',{floor:'地坪',ceil:'天花',light:'燈具',elec:'水電'}[sheet().kind]||''];
  let h='';groups.forEach((g,i)=>{if(i)h+='<span class="tsep"></span>'+(labels[i]?`<span class="tgroup">${labels[i]}</span>`:'');
@@ -1723,7 +1727,7 @@ function renderTools(){
 function activeTool(){if(cur.tool==='line')return cur.lineType;return cur.tool;}
 function setTool(t){
  if(['indirect','track','circuit'].includes(t)){cur.lineType=t;t='line';}
- cur.tool=t;draft=[];dimDraft=null;calibA=null;snapHit=null;adDraft=null;if(t!=='setpick')setPick=[];
+ cur.tool=t;draft=[];dimDraft=null;calibA=null;cabA=null;snapHit=null;adDraft=null;if(t!=='setpick')setPick=[];
  stage.classList.toggle('cross',t!=='select');
  if(t!=='select'){cur.sel=null;}
  if(t==='sym'||t==='wall'||t==='open'||t==='paint'||t==='set'||t==='setpick'){cur.tab='lib';openPanel();}
@@ -1731,7 +1735,7 @@ function setTool(t){
  if(t==='autolight'){cur.tab='props';openPanel();al.msg='';}else{al.region=null;al.pts=[];}
  setHint();renderTools();renderPanel();render();
 }
-const HINTS={autodim:'沿著有插座的那面牆：點牆的起點、再點終點，最後移動滑鼠決定尺寸線在哪一側再點一下',set:'移到牆邊點一下放下整組；按住 Alt 自由擺放',setpick:'點選要放進套組的符號，選好後在右側按「儲存套組」',autolight:'點一下要配燈的空間；還沒畫空間的話，點在 CAD 平面圖的房間裡面會自動偵測範圍',select:'點選物件編輯；拖曳空白處平移畫面，滾輪縮放',wall:'點一下開始，連續點畫出牆，雙擊或 Esc 結束；按住拖曳畫單一道牆',open:'把游標移到牆上，點一下放置；門往游標那一側開',room:'拖曳拉出矩形空間，或逐點點出形狀，點回起點完成',cab:'點一下放置櫃體，會自動建立一張櫃體施工圖',dim:'點兩個點，再移動滑鼠決定尺寸線位置',text:'點一下放置文字，在右側面板輸入內容',paint:'在右側選材質，再點空間套用',sym:'在右側選符號，點一下放置；靠近牆會自動貼齊牆面',line:'逐點畫線，雙擊或 Esc 結束',czone:'拖曳拉出天花分區（包樑、降板），或逐點點出形狀',calib:'在底圖上點一段已知長度的兩端'};
+const HINTS={cabpick:'在 CAD 平面圖上點一下櫃體的外框裡面，會依外框自動帶入寬、深並建立施工圖；沒有封閉外框時改點兩個對角',autodim:'沿著有插座的那面牆：點牆的起點、再點終點，最後移動滑鼠決定尺寸線在哪一側再點一下',set:'移到牆邊點一下放下整組；按住 Alt 自由擺放',setpick:'點選要放進套組的符號，選好後在右側按「儲存套組」',autolight:'點一下要配燈的空間；還沒畫空間的話，點在 CAD 平面圖的房間裡面會自動偵測範圍',select:'點選物件編輯；拖曳空白處平移畫面，滾輪縮放',wall:'點一下開始，連續點畫出牆，雙擊或 Esc 結束；按住拖曳畫單一道牆',open:'把游標移到牆上，點一下放置；門往游標那一側開',room:'拖曳拉出矩形空間，或逐點點出形狀，點回起點完成',cab:'點一下放置櫃體，會自動建立一張櫃體施工圖',dim:'點兩個點，再移動滑鼠決定尺寸線位置',text:'點一下放置文字，在右側面板輸入內容',paint:'在右側選材質，再點空間套用',sym:'在右側選符號，點一下放置；靠近牆會自動貼齊牆面',line:'逐點畫線，雙擊或 Esc 結束',czone:'拖曳拉出天花分區（包樑、降板），或逐點點出形狀',calib:'在底圖上點一段已知長度的兩端'};
 function setHint(){let t=HINTS[cur.tool]||'';if(cur.tool==='line')t=cur.lineType==='circuit'?'從開關開始，依序點燈具，雙擊結束；會自動吸附符號中心':'逐點畫出'+LINE[cur.lineType].n+'，雙擊或 Esc 結束';if(sheet().kind==='cab'&&cur.tool==='select')t='點一格可以直接編輯；櫃體尺寸、分格和材料在右側面板';$('#hint').textContent=t;}
 
 /* ---------- create ---------- */
@@ -1740,6 +1744,50 @@ function finishPoly(){if(draft.length>=3){const pts=clean(draft);if(pts.length>=
 function clean(pts){const c=pts.filter((p,i)=>i===0||dist(p,pts[i-1])>1);if(c.length>2&&dist(c[0],c[c.length-1])<1)c.pop();return c;}
 function finishLine(){if(draft.length>=2){const ln={id:uid(),type:cur.lineType,pts:draft.map(p=>[...p])};if(ln.type==='circuit')ln.label=String.fromCharCode(97+P.lines.filter(l=>l.type==='circuit').length%26);P.lines.push(ln);commit();}draft=[];render();}
 function nextTag(){let n=1;while(P.cabs.some(c=>c.tag==='C'+n))n++;return 'C'+n;}
+/* ===== cabinets linked to the CAD plan ===== */
+let cadRectCache=null,cabA=null;
+function cadRects(){
+ if(!P.cad||!CADG)return[];const fl=P.sheets.find(s=>s.kind==='floor');const key=CADG.pl.length+'|'+P.cad.unit+'|'+(fl&&fl.cadOff||P.cad.layers.map(l=>l.on?1:0)).join(',');
+ if(cadRectCache&&cadRectCache.key===key)return cadRectCache.list;
+ const u=P.cad.unit,out=[];
+ CADG.pl.forEach((o,oi)=>{const p=o.p;let n=p.length/2;if(n<4||n>5)return;
+  if(n===5){if(Math.hypot(p[0]-p[8],p[1]-p[9])*u>1)return;n=4;}else if(!o.c&&Math.hypot(p[0]-p[6],p[1]-p[7])*u>1)return;
+  if(fl&&!cadLayerOn(fl,o.L))return;
+  const q=[0,1,2,3].map(i=>[p[i*2],p[i*2+1]]);
+  for(let i=0;i<4;i++){const a=q[i],b=q[(i+1)%4],c=q[(i+2)%4];const v1=[b[0]-a[0],b[1]-a[1]],v2=[c[0]-b[0],c[1]-b[1]];const l1=Math.hypot(...v1),l2=Math.hypot(...v2);if(!l1||!l2)return;if(Math.abs((v1[0]*v2[0]+v1[1]*v2[1])/(l1*l2))>.02)return;}
+  const e1=Math.hypot(q[1][0]-q[0][0],q[1][1]-q[0][1])*u,e2=Math.hypot(q[2][0]-q[1][0],q[2][1]-q[1][1])*u;const lo=Math.min(e1,e2),hi=Math.max(e1,e2);
+  if(lo<15||lo>150||hi>900)return;
+  out.push({oi,L:o.L,raw:q,area:e1*e2,rc:[(q[0][0]+q[2][0])/2,(q[0][1]+q[2][1])/2]});});
+ cadRectCache={key,list:out};return out;}
+function cadRectAt(w){if(!P.cad||!CADG)return null;const[rx,ry]=cadR(w.x,w.y);let best=null;for(const r of cadRects()){if(inPoly(rx,ry,r.raw)&&(!best||r.area<best.area))best=r;}return best;}
+function rawRectGeom(q){/* raw 4 points -> world geometry (W long side) */
+ const W=q.map(p=>cadW(p[0],p[1]));const e1=dist(W[0],W[1]),e2=dist(W[1],W[2]);const long=e1>=e2?[W[0],W[1]]:[W[1],W[2]];
+ let deg=Math.atan2(long[1][1]-long[0][1],long[1][0]-long[0][0])*180/Math.PI;deg=((deg%180)+180)%180;if(deg>=135)deg-=180;
+ const cx=(W[0][0]+W[2][0])/2,cy=(W[0][1]+W[2][1])/2;const rr=v=>Math.round(v*10)/10;return{x:cx,y:cy,W:rr(Math.max(e1,e2)),D:rr(Math.min(e1,e2)),rot:rr(deg),pts:W};}
+function setCabW(c,n){const tot=c.cols.reduce((s,x)=>s+x.w,0)||1;let acc=0;c.cols.forEach((col,i)=>{if(i===c.cols.length-1)col.w=r1(n-acc);else{col.w=r1(col.w/tot*n);acc+=col.w;}});c.W=n;}
+function cabPlace(c){if(c.src==='cad'&&c.link&&P.cad){const r=c.link;if(r.raw){const g=rawRectGeom(r.raw);return{x:g.x,y:g.y,rot:g.rot,W:g.W,D:g.D};}}return{x:c.x,y:c.y,rot:c.rot||0,W:c.W,D:c.D};}
+function cabByRaw(r){return P.cabs.find(c=>c.src==='cad'&&c.link&&Math.hypot(c.link.rc[0]-r.rc[0],c.link.rc[1]-r.rc[1])*P.cad.unit<2);}
+function addCadCab(r){const g=rawRectGeom(r.raw);const c={id:uid(),tag:nextTag(),name:'櫃體',x:g.x,y:g.y,rot:g.rot,...cabDefaults(),src:'cad',link:{raw:r.raw.map(p=>[...p]),rc:[...r.rc],L:r.L}};
+ setCabW(c,g.W);c.D=g.D;if(c.D<=45&&c.H>=200){c.H=90;c.cols.forEach(col=>col.cells=[{t:'door',h:80,hinge:col===c.cols[0]?'L':'R'}]);}
+ P.cabs.push(c);addCabSheet(c);return c;}
+function addRectCab(a,b){const x0=Math.min(a[0],b[0]),x1=Math.max(a[0],b[0]),y0=Math.min(a[1],b[1]),y1=Math.max(a[1],b[1]);const w=x1-x0,h=y1-y0;if(Math.min(w,h)<10){toast('範圍太小，請點櫃體的兩個對角');return null;}
+ const c={id:uid(),tag:nextTag(),name:'櫃體',x:(x0+x1)/2,y:(y0+y1)/2,rot:w>=h?0:90,...cabDefaults()};setCabW(c,Math.round(Math.max(w,h)*10)/10);c.D=Math.round(Math.min(w,h)*10)/10;P.cabs.push(c);addCabSheet(c);return c;}
+function cabPickClick(w,e){
+ if(cabA){const p=snapPt(w,e);const c=addRectCab(cabA,[p.x,p.y]);cabA=null;if(c){commit();renderSheets();toast(`${c.tag} 寬 ${c.W} × 深 ${c.D}，已建立施工圖 ${P.sheets.find(s=>s.cab===c.id).code}`,4000);}render();return;}
+ const r=cadRectAt(w);
+ if(r){const ex=cabByRaw(r);if(ex){cur.sel='cab:'+ex.id;setTool('select');toast(`這座已經是 ${ex.tag} ${ex.name}`);return;}
+  const c=addCadCab(r);commit();renderSheets();render();toast(`${c.tag} 寬 ${c.W} × 深 ${c.D}（依 CAD），已建立施工圖 ${P.sheets.find(s=>s.cab===c.id).code}。高度和分格到施工圖設定`,5000);return;}
+ const p=snapPt(w,e);cabA=[p.x,p.y];toast(P.cad?'這裡沒有封閉的櫃體外框，改用兩點：再點櫃體的對角':'再點櫃體的對角',3500);render();}
+/* re-sync after the CAD is re-imported or its unit changes */
+function relinkCadCabs(rematch){
+ const cabs=P.cabs.filter(c=>c.src==='cad'&&c.link);if(!cabs.length||!P.cad||!CADG)return;cadRectCache=null;const msgs=[],lost=[];
+ cabs.forEach(c=>{let r=null;if(rematch){const rects=cadRects();const hit=rects.filter(x=>inPoly(c.link.rc[0],c.link.rc[1],x.raw)).sort((a,b)=>a.area-b.area);r=hit[0]||null;if(!r){lost.push(c.tag);c.lost=true;return;}c.link={raw:r.raw.map(p=>[...p]),rc:[...r.rc],L:r.L};}
+  delete c.lost;const g=rawRectGeom(c.link.raw);const oW=c.W,oD=c.D;c.x=g.x;c.y=g.y;c.rot=g.rot;
+  if(Math.abs(g.W-c.W)>=.1)setCabW(c,g.W);if(Math.abs(g.D-c.D)>=.1)c.D=g.D;
+  if(oW!==c.W||oD!==c.D){msgs.push(`${c.tag} ${oW}×${oD} → ${c.W}×${c.D}`);c.linkNote=`${today()} 依平面圖更新：寬深 ${oW}×${oD} → ${c.W}×${c.D}`;}});
+ const sh=P.sheets.filter(s=>s.kind==='cab');sh.forEach(s=>{const c=cabOfSheet(s);if(c&&c.src==='cad'){s.scale=cabAutoScale(c);cabFit(s,c);}});
+ if(msgs.length||lost.length)setTimeout(()=>ask((msgs.length?'櫃體施工圖已依新的平面圖更新：\n'+msgs.join('\n'):'櫃體尺寸都沒有變。')+(lost.length?`\n\n在新的平面圖找不到 ${lost.join('、')} 的外框，尺寸先保留原本的；請到平面圖用「櫃體」工具重新點選。`:''),'知道了'),400);
+ else if(rematch)toast('櫃體尺寸都沒有變',3000);}
 function addCab(p){const c={id:uid(),tag:nextTag(),name:'櫃體',x:snapv(p.x),y:snapv(p.y),rot:0,...cabDefaults()};P.cabs.push(c);addCabSheet(c);cur.sel='cab:'+c.id;commit();setTool('select');renderSheets();toast(`${c.tag} 已放置，施工圖在左側「${P.sheets.find(s=>s.cab===c.id).code}」`);}
 
 /* ---- dimension alignment ---- */
@@ -1768,8 +1816,8 @@ function dimAlignChain(d0){
 function delSel(){const o=selObj();if(!o)return;const map={wall:'walls',open:'opens',room:'rooms',sym:'syms',line:'lines',dim:'dims',text:'texts',cab:'cabs',czone:'czones'};
  P[map[o.t]]=P[map[o.t]].filter(x=>x!==o.o);if(o.t==='wall')P.opens=P.opens.filter(x=>x.wall!==o.o.id);if(o.t==='cab')P.sheets=P.sheets.filter(s=>s.cab!==o.o.id);
  cur.sel=null;commit();renderSheets();renderPanel();render();}
-function dupSel(){const o=selObj();if(!o||!['sym','cab','text'].includes(o.t))return;const c=clone(o.o);c.id=uid();c.x+=30;c.y+=30;const map={sym:'syms',cab:'cabs',text:'texts'};if(o.t==='cab'){c.tag=nextTag();P.cabs.push(c);addCabSheet(c);renderSheets();}else P[map[o.t]].push(c);cur.sel=o.t+':'+c.id;commit();renderPanel();render();}
-function rotSel(){const o=selObj();if(!o)return;if(o.t==='sym'||o.t==='cab'){o.o.rot=((o.o.rot||0)+90)%360;commit();render();renderPanel();}else if(o.t==='open'){o.o.side=-(o.o.side||1);commit();render();renderPanel();}}
+function dupSel(){const o=selObj();if(!o||!['sym','cab','text'].includes(o.t))return;if(o.t==='cab'&&o.o.src==='cad'){toast('這座櫃體跟著 CAD 平面圖，請到 CAD 裡複製後重新匯入，再用「櫃體」工具點選');return;}const c=clone(o.o);c.id=uid();c.x+=30;c.y+=30;const map={sym:'syms',cab:'cabs',text:'texts'};if(o.t==='cab'){c.tag=nextTag();P.cabs.push(c);addCabSheet(c);renderSheets();}else P[map[o.t]].push(c);cur.sel=o.t+':'+c.id;commit();renderPanel();render();}
+function rotSel(){const o=selObj();if(!o)return;if(o.t==='cab'&&o.o.src==='cad')return;if(o.t==='sym'||o.t==='cab'){o.o.rot=((o.o.rot||0)+90)%360;commit();render();renderPanel();}else if(o.t==='open'){o.o.side=-(o.o.side||1);commit();render();renderPanel();}}
 
 /* ---------- pointer ---------- */
 svg.addEventListener('contextmenu',e=>e.preventDefault());
@@ -1833,7 +1881,7 @@ function moveObj(o,d,w,e){
   case 'wall':x.a=[g.a[0]+dx,g.a[1]+dy];x.b=[g.b[0]+dx,g.b[1]+dy];break;
   case 'room':case 'czone':x.pts=g.pts.map(p=>[p[0]+dx,p[1]+dy]);if(g.lp)x.lp=[g.lp[0]+dx,g.lp[1]+dy];break;
   case 'line':x.pts=g.pts.map(p=>[p[0]+dx,p[1]+dy]);break;
-  case 'text':case 'cab':x.x=g.x+dx;x.y=g.y+dy;break;
+  case 'text':case 'cab':if(x.src==='cad')break;x.x=g.x+dx;x.y=g.y+dy;break;
   case 'sym':{const def=SYM[x.type];if(def.wall&&!e.altKey){const keep=cur.sym;cur.sym=x.type;const p=symPlace({x:g.x+dx0,y:g.y+dy0},e);cur.sym=keep;x.x=p.x;x.y=p.y;if(nearestFace({x:g.x+dx0,y:g.y+dy0},22))x.rot=p.rot;}else{x.x=snapv(g.x+dx0,step);x.y=snapv(g.y+dy0,step);}break;}
   case 'dim':{const L=dist(x.a,x.b)||1;const n=[-(x.b[1]-x.a[1])/L,(x.b[0]-x.a[0])/L];x.off=dimOffSnap(x.a,x.b,Math.round((w.x-x.a[0])*n[0]+(w.y-x.a[1])*n[1]),x.id,e);break;}
   case 'open':{const wl=byId(P.walls,x.wall);if(!wl)break;const q=segProj([w.x,w.y],wl.a,wl.b);const L=wlen(wl);x.s=Math.max(x.w/2,Math.min(L-x.w/2,snapv(q.t*L,step<5?1:5)));break;}
@@ -1876,6 +1924,7 @@ function toolClick(w,e){
   case 'sym':{const p=symPlace(w,e);const d=SYM[cur.sym];const s={id:uid(),type:cur.sym,x:p.x,y:p.y,rot:p.rot,h:d.h??null};if(d.real)s.len=d.real;P.syms.push(s);commit();render();break;}
   case 'text':{const sh=sheet();const t={id:uid(),x:snapv(w.x),y:snapv(w.y),str:'文字',size:2.5,sheet:sh.id};P.texts.push(t);commit();setTool('select');cur.sel='text:'+t.id;cur.tab='props';openPanel();renderPanel();render();setTimeout(()=>{const i=pb.querySelector('[data-f="text.str"]');if(i){i.focus();i.select();}},40);break;}
   case 'cab':addCab(w);break;
+  case 'cabpick':cabPickClick(w,e);break;
   case 'paint':{const hits=P.rooms.filter(r=>inPoly(w.x,w.y,r.pts)).sort((a,b)=>area(a.pts)-area(b.pts));if(!hits.length){toast('請點在空間範圍內');return;}const r=hits[0];r.floor=Object.assign({},r.floor||{},{mat:cur.mat});commit();render();toast(`${r.name}：${FM[cur.mat].n}`);break;}
   case 'calib':calibClick(w);break;
   case 'autolight':alPick(w);break;
@@ -1896,7 +1945,7 @@ document.addEventListener('keydown',e=>{
  if(mod&&k.toLowerCase()==='d'){e.preventDefault();dupSel();return;}
  if(mod&&k.toLowerCase()==='s'){e.preventDefault();saveNow();toast('已儲存在這台裝置');return;}
  if(k==='Delete'||k==='Backspace'){if(cur.sel){e.preventDefault();delSel();}return;}
- if(k==='Escape'){if(cur.tool==='line'&&draft.length>=2){finishLine();return;}if(draft.length||dimDraft||calibA||adDraft){draft=[];dimDraft=null;calibA=null;adDraft=null;render();return;}if(cur.tool!=='select'){setTool('select');return;}if(cur.sel||cur.cell){cur.sel=null;cur.cell=null;dirty=true;renderPanel();render();}return;}
+ if(k==='Escape'){if(cur.tool==='line'&&draft.length>=2){finishLine();return;}if(draft.length||dimDraft||calibA||adDraft||cabA){draft=[];dimDraft=null;calibA=null;adDraft=null;cabA=null;render();return;}if(cur.tool!=='select'){setTool('select');return;}if(cur.sel||cur.cell){cur.sel=null;cur.cell=null;dirty=true;renderPanel();render();}return;}
  if(k==='Enter'){if(cur.tool==='room'||cur.tool==='czone'){finishPoly();return;}if(cur.tool==='line'){finishLine();return;}if(cur.tool==='wall'){draft=[];render();return;}}
  if(mod)return;
  const o=selObj();
@@ -1994,8 +2043,8 @@ function propsHTML(){
   case 'text':return `<section class="sec"><h3>文字<small>TEXT</small></h3><label class="fld"><span>內容（可換行）</span><textarea data-f="text.str">${esc(x.str)}</textarea></label>
    <div class="r2">${SEL('text.size',x.size||2.5,[[1.8,'1.8 mm'],[2.2,'2.2 mm'],[2.5,'2.5 mm'],[3,'3 mm'],[3.5,'3.5 mm'],[5,'5 mm']],{label:'字高（出圖）'})}<span></span></div>${CHK('text.bold',x.bold,'粗體')}${CHK('text.all',x.sheet==='all','顯示在所有平面圖')}${del}</section>`;
   case 'cab':return `<section class="sec"><h3>${esc(x.tag)} ${esc(x.name)}<small>CABINET</small></h3>
-   <p class="mut">W${x.W} × D${x.D} × H${x.H}</p>${SEL('cab.rot',x.rot||0,[[0,'正面朝下'],[90,'正面朝左'],[180,'正面朝上'],[270,'正面朝右']],{label:'擺放方向（平面）'})}
-   <button class="btn pri full" data-act="opencab" style="margin-bottom:8px">開啟 ${esc(x.tag)} 施工圖</button><div class="acts" style="margin-bottom:8px"><button class="btn" data-act="dup">複製</button><button class="btn" data-act="rot">旋轉 90°</button></div>${del}</section>`;
+   <p class="mut">W${x.W} × D${x.D} × H${x.H}</p>${x.src==='cad'?`<p class="fine" style="margin:0 0 10px">${x.lost?'<b style="color:var(--warn)">新的平面圖找不到這座櫃體的外框，尺寸先保留原本的。</b>':'寬、深跟著 CAD 平面圖，重新匯入 CAD 會自動更新施工圖。'}</p><button class="btn pri full" data-act="opencab" style="margin-bottom:8px">開啟 ${esc(x.tag)} 施工圖</button>${del}</section>`:''}${x.src==='cad'?'':`${SEL('cab.rot',x.rot||0,[[0,'正面朝下'],[90,'正面朝左'],[180,'正面朝上'],[270,'正面朝右']],{label:'擺放方向（平面）'})}
+   <button class="btn pri full" data-act="opencab" style="margin-bottom:8px">開啟 ${esc(x.tag)} 施工圖</button><div class="acts" style="margin-bottom:8px"><button class="btn" data-act="dup">複製</button><button class="btn" data-act="rot">旋轉 90°</button></div>${del}</section>`}`;
   case 'czone':return `<section class="sec"><h3>天花分區<small>ZONE</small></h3>${I('czone.label',x.label||'',{label:'名稱（包樑、降板…）'})}${I('czone.ch',x.ch,{label:'天花高度 CH',type:'number'})}${del}</section>`;
  }
  return '';
@@ -2026,8 +2075,9 @@ function cabPanelHTML(c,tab){
  tab=tab||'size';
  if(!c)return '<section class="sec"><p class="mut">找不到這座櫃體。</p></section>';
  const inner=cabInner(c);const ic=(p)=>`<svg viewBox="0 0 24 24">${p}</svg>`;
- const DR=(f,v,b,i)=>`<label class="dimrow"><b>${b}</b><i>${i}</i><input type="number" data-f="${f}" value="${esc(v)}" min="0" inputmode="decimal" aria-label="${b} ${i}"><span>cm</span></label>`;
- if(tab==='size')return `<section class="sec">${DR('cab.W',c.W,'寬','W')}${DR('cab.H',c.H,'高','H')}${DR('cab.D',c.D,'深','D')}${DR('cab.kick',c.kick,'踢','K')}<p class="fine" style="margin:2px 0 0">改寬度會依比例分配到各欄。內部可用高度 ${inner} cm。</p></section>
+ const lk=c.src==='cad';const DR=(f,v,b,i,ro)=>`<label class="dimrow"><b>${b}</b><i>${i}</i><input type="number" data-f="${f}" value="${esc(v)}" min="0" inputmode="decimal" aria-label="${b} ${i}"${ro?' readonly title="跟著平面圖" style="background:var(--chrome2);color:var(--ink2)"':''}><span>cm</span></label>`;
+ const linkBox=lk?`<div style="border:1px solid ${c.lost?'var(--warn)':'var(--rule)'};background:${c.lost?'var(--warn-soft)':'var(--chrome2)'};border-radius:5px;padding:10px 12px;margin:0 0 12px"><p style="margin:0 0 4px;font-weight:600">${c.lost?'平面圖找不到這座櫃體':'已連動平面圖 CAD'}</p><p class="fine" style="margin:0 0 8px">${c.lost?'重新匯入的 CAD 裡找不到原本的外框，寬深先保留。可到平面圖用「櫃體」工具重新點選。':'寬、深依 CAD 外框自動帶入；改 CAD 後重新匯入，施工圖會一起更新。'}${c.linkNote?'<br>'+esc(c.linkNote):''}</p><div class="acts"><button class="btn sm" data-act="cabResync">重新比對平面圖</button><button class="btn sm" data-act="cabUnlink">解除連動</button></div></div>`:'';
+ if(tab==='size')return `<section class="sec">${linkBox}${DR('cab.W',c.W,'寬','W',lk)}${DR('cab.H',c.H,'高','H')}${DR('cab.D',c.D,'深','D',lk)}${DR('cab.kick',c.kick,'踢','K')}<p class="fine" style="margin:2px 0 0">改寬度會依比例分配到各欄。內部可用高度 ${inner} cm。</p></section>
   <section class="sec">${cabPreview(c)}<div class="r2">${I('cab.tag',c.tag,{label:'編號'})}${I('cab.name',c.name,{label:'名稱'})}</div></section>
   <section class="sec"><div class="acts" style="margin-bottom:8px"><button class="btn" data-act="cabAuto">自動比例並置中</button><button class="btn" data-act="cabPlan">在平面圖上找到它</button></div><button class="btn dng full" data-act="cabDel">刪除櫃體</button></section>`;
  if(tab==='mat')return `<section class="sec"><h3>材料說明<small>SPEC</small></h3>${CAB_SPEC.map(([k,l])=>I('spec.'+k,(c.spec||{})[k]||'',{label:l})).join('')}<p class="fine" style="margin:0">會標註在施工圖上。</p></section>`;
@@ -2153,7 +2203,7 @@ function onField(el,final){
   case 'czone.label':if(x)x.label=v;break;case 'czone.ch':if(x&&ok)x.ch=n;break;
   case 'bg.opacity':if(P.bg)P.bg.opacity=+v;break;
   case 'bg.print':if(P.bg)P.bg.print=!!v;break;
-  case 'cad.unit':if(P.cad&&ok){const c=P.cad,b0=c.core||(CADG?CADG.bb:[0,0,0,0]);const w0=cadW(b0[0],b0[1]);c.unit=n;c.unitAuto=false;const w1=cadW(b0[0],b0[1]);c.ox=r1(c.ox+w0[0]-w1[0]);c.oy=r1(c.oy+w0[1]-w1[1]);cadIndex=null;rp=true;if(final)setTimeout(()=>{P.sheets.filter(s=>s.kind!=='cab').forEach(s=>fitPlanFrame(s,true));commit();fitView();});}break;
+  case 'cad.unit':if(P.cad&&ok){const c=P.cad,b0=c.core||(CADG?CADG.bb:[0,0,0,0]);const w0=cadW(b0[0],b0[1]);c.unit=n;c.unitAuto=false;const w1=cadW(b0[0],b0[1]);c.ox=r1(c.ox+w0[0]-w1[0]);c.oy=r1(c.oy+w0[1]-w1[1]);cadIndex=null;rp=true;if(final)setTimeout(()=>{relinkCadCabs(false);P.sheets.filter(s=>s.kind!=='cab').forEach(s=>fitPlanFrame(s,true));commit();fitView();});}break;
   case 'al.fix':al.fix=v;al.lm=AL_FIX[v].lm;alRecalc();rp=true;render();break;
   case 'al.mode':al.mode=v;alRecalc();rp=true;break;
   case 'al.lux':if(ok&&n>0){al.lux=n;alRecalc();rp=final;}break;
@@ -2200,8 +2250,10 @@ async function act(a,el){
   case 'oside':if(o){o.o.side=-(o.o.side||1);commit();render();}break;
   case 'oflip':if(o){o.o.flip=!o.o.flip;commit();render();}break;
   case 'opencab':if(o)gotoSheet('cab-'+o.o.id);break;
-  case 'newcab':{if(!isPlan())gotoSheet('floor');setTool('cab');toast('在平面圖上點一下放置櫃體');break;}
-  case 'cabPlan':if(c){gotoSheet('floor');cur.sel='cab:'+c.id;cur.tab='props';renderPanel();view.x=c.x-vpSize().W/view.z/2;view.y=c.y-vpSize().H/view.z/2;render();}break;
+  case 'newcab':{if(!isPlan())gotoSheet('floor');setTool('cabpick');toast(P.cad?'在 CAD 平面圖上點一下要做施工圖的櫃體':'先到「圖面」匯入 CAD 平面圖；沒有 CAD 也可以點櫃體的兩個對角',4500);break;}
+  case 'cabUnlink':if(c&&await ask(`解除 ${c.tag} 跟平面圖的連動？之後重新匯入 CAD 不會再更新這座櫃體的寬深，可以自己輸入。`,'解除連動')){const g=cabPlace(c);Object.assign(c,{x:g.x,y:g.y,rot:g.rot});delete c.src;delete c.link;delete c.lost;commit();renderPanel();render();}break;
+  case 'cabResync':relinkCadCabs(true);commit();renderAll();break;
+  case 'cabPlan':if(c){const g=cabPlace(c);gotoSheet('floor');cur.sel='cab:'+c.id;cur.tab='props';renderPanel();view.x=g.x-vpSize().W/view.z/2;view.y=g.y-vpSize().H/view.z/2;render();}break;
   case 'cabDel':if(c&&await ask(`刪除 ${c.tag} ${c.name} 和它的施工圖？`,'刪除',true)){P.cabs=P.cabs.filter(x=>x!==c);P.sheets=P.sheets.filter(s=>s.cab!==c.id);cur.sheet='floor';commit();renderAll();fitView();}break;
   case 'cabAuto':if(c){sh.scale=cabAutoScale(c);cabFit(sh,c);commit();renderPanel();fitView();}break;
   case 'colAdd':if(c){const inner=cabInner(c);c.cols.push({w:60,cells:[{t:'door',h:inner,hinge:'R'}]});c.W=r1(c.cols.reduce((s,x)=>s+x.w,0));cur.col=c.cols.length-1;cabFit(sh,c);commit();renderPanel();render();}break;
@@ -2325,7 +2377,7 @@ function init(){
  if(document.fonts)document.fonts.ready.then(()=>{dirty=true;render();});
 }
 init();
-window.HERF_CD={adSyms,adPoints,get adDraft(){return adDraft;},get tool(){return cur.tool;},readDWG,flattenDXF,get G(){return CADG;},detectRegion,dpSimplify,orthoClean,get P(){return P;},renderSheetCanvas,toDXF,buildSheet,exportPDF,exportDXF};
+window.HERF_CD={cadW,cadRects,cadRectAt,relinkCadCabs,adSyms,adPoints,get adDraft(){return adDraft;},get tool(){return cur.tool;},readDWG,flattenDXF,get G(){return CADG;},detectRegion,dpSimplify,orthoClean,get P(){return P;},renderSheetCanvas,toDXF,buildSheet,exportPDF,exportDXF};
 
 })();
 </script>
