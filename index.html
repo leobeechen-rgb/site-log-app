@@ -3715,7 +3715,8 @@ function HB_clearOwner(){try{localStorage.removeItem("hb_owner_token"),localStor
 function HB_clearStaffFlags(){try{localStorage.removeItem("sitelog_admin_unlocked"),localStorage.removeItem("sitelog_admin_username"),localStorage.removeItem("hb_staff_session")}catch{}}
 async function HB_staffLogout(){await HB_nativePushUnregister();try{await q.auth.signOut()}catch{}HB_clearStaffFlags();window.location.reload()}
 async function HB_ownerLogout(){await HB_nativePushUnregister();try{await HB_ownerApi("/logout")}catch{}HB_clearOwner()}
-var Qy="https://rqndozhhvuimqjqtmeli.supabase.co",Xy="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxbmRvemhodnVpbXFqcXRtZWxpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5Njc1ODIsImV4cCI6MjA5OTU0MzU4Mn0.meaGT1veRt9acHCl4Dcrpk9jxjNzrkFKWfs_96C6qLw",q=window.supabase.createClient(Qy,Xy,{global:{fetch:HB_authFetch}});var HB_SCHEDULE_ICS_URL="https://rqndozhhvuimqjqtmeli.supabase.co/functions/v1/schedule-ics-feed";async function qe(l,t,e,n){let{error:a}=await q.storage.from(l).upload(t,e,{contentType:n,upsert:!0});if(a)throw a;let{data:i}=q.storage.from(l).getPublicUrl(t);return i.publicUrl}async function Ue(l,t){try{await q.storage.from(l).remove([t])}catch{}}
+var Qy="https://rqndozhhvuimqjqtmeli.supabase.co",Xy="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxbmRvemhodnVpbXFqcXRtZWxpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5Njc1ODIsImV4cCI6MjA5OTU0MzU4Mn0.meaGT1veRt9acHCl4Dcrpk9jxjNzrkFKWfs_96C6qLw",q=window.supabase.createClient(Qy,Xy,{global:{fetch:HB_authFetch}});var HB_SCHEDULE_ICS_URL="";/* 行事曆訂閱網址含私密金鑰，只在管理端登入後向伺服器取得，不寫在程式碼裡 */
+async function HB_loadIcsUrl(reset){try{let{data,error}=await q.rpc("hb_calendar_feed_token",{p_reset:!!reset});if(!error&&data)HB_SCHEDULE_ICS_URL="https://rqndozhhvuimqjqtmeli.supabase.co/functions/v1/schedule-ics-feed?t="+data;else if(reset)throw error||Error("no")}catch(e){if(reset)throw e}return HB_SCHEDULE_ICS_URL}async function qe(l,t,e,n){let{error:a}=await q.storage.from(l).upload(t,e,{contentType:n,upsert:!0});if(a)throw a;let{data:i}=q.storage.from(l).getPublicUrl(t);return i.publicUrl}async function Ue(l,t){try{await q.storage.from(l).remove([t])}catch{}}
 
 /* ===== Cloudflare R2（行銷照片庫）設定與簽章上傳 ===== */
 var R2_CONFIG={
@@ -12783,6 +12784,24 @@ var HB_TL_UI={
  tick:'<path d="M6.5 12.5l3.6 3.6 7.4-8"/>',x:'<path d="M6 6l12 12M18 6L6 18"/>',
  back:'<path d="M14.5 6l-6 6 6 6"/>'
 };
+function HbTodayCalLink(){
+ const h=u.default.createElement,[url,setUrl]=u.useState(HB_SCHEDULE_ICS_URL),[msg,setMsg]=u.useState(''),[busy,setBusy]=u.useState(!HB_SCHEDULE_ICS_URL);
+ u.useEffect(()=>{let alive=true;HB_loadIcsUrl().then(v=>{if(alive){setUrl(v);setBusy(false)}});return()=>{alive=false}},[]);
+ const web=url?url.replace(/^https:/,'webcal:'):'';
+ const copy=()=>{if(!url)return;(navigator.clipboard?navigator.clipboard.writeText(url):Promise.reject()).then(()=>setMsg('已複製連結')).catch(()=>{window.prompt('請複製這個連結',url)})};
+ const reset=async()=>{if(!confirm('重新產生連結後，舊的連結會立刻失效，已訂閱的裝置要重新訂閱一次。確定嗎？'))return;setBusy(true);try{setUrl(await HB_loadIcsUrl(true));setMsg('已產生新連結，請重新訂閱')}catch{setMsg('無法重新產生，請確認已用管理帳號登入')}setBusy(false)};
+ return h('section',{className:'tl-panel tl-cal'},h('div',{className:'tl-panelhead'},h('h3',null,'連結 iPhone 行事曆')),
+  h('p',{className:'tl-panelnote'},'訂閱後，客戶預約、工程行程和有日期的待辦會出現在 iPhone「行事曆」App，大約每小時自動更新。這是單向同步：在行事曆裡修改不會回到工地紀錄本。'),
+  busy?h('p',{className:'tl-empty'},'正在取得連結…'):!url?h('p',{className:'tl-empty'},'取不到連結，請用管理帳號登入後再試。'):
+  h(u.default.Fragment,null,
+   h('a',{className:'tl-calbtn',href:web},'訂閱到 iPhone 行事曆'),
+   h('button',{type:'button',className:'tl-calbtn out',onClick:copy},'複製訂閱連結'),
+   msg&&h('p',{className:'tl-calmsg',role:'status'},msg),
+   h('details',{className:'tl-calhelp'},h('summary',null,'按了沒反應？手動加入的步驟'),
+    h('ol',null,h('li',null,'先按「複製訂閱連結」'),h('li',null,'打開 iPhone「設定」→「App」→「行事曆」→「行事曆帳號」'),h('li',null,'選「加入帳號」→「其他」→「加入已訂閱的行事曆」'),h('li',null,'貼上連結，按「下一步」→「儲存」'))),
+   h('p',{className:'tl-calwarn'},'這個連結含有客戶聯絡資料，請不要分享給別人。如果不小心外流，按下面重新產生，舊連結就會失效。'),
+   h('button',{type:'button',className:'tl-link',style:{marginLeft:0},onClick:reset},'重新產生連結')));
+}
 function HbTodayTimeline(P){
  const h=u.default.createElement;
  const {all,today,onBack,onOpenProject,complete,update,setEditing,addTask,bulkDelete,syncText,loading,reload,error,onList}=P;
@@ -12889,6 +12908,7 @@ function HbTodayTimeline(P){
        h('button',{type:'button',role:'menuitem',onClick:()=>{setMenu(false);setDay(today)}},'回到今天'),
        h('button',{type:'button',role:'menuitem',onClick:()=>{setMenu(false);setShowDone(!showDone)}},showDone?'隱藏已完成':'顯示已完成'),
        h('button',{type:'button',role:'menuitem',onClick:()=>{setMenu(false);reload()},disabled:loading},'重新整理'),
+       h('button',{type:'button',role:'menuitem',onClick:()=>{setMenu(false);setSheet('cal')}},'連結 iPhone 行事曆'),
        h('button',{type:'button',role:'menuitem',onClick:()=>{setMenu(false);onList()}},'切換成清單檢視')))),
     query!==null&&h('div',{className:'tl-search'},ui('search',18),h('input',{autoFocus:true,value:query,placeholder:'搜尋標題、內容或案場',onChange:e=>setQuery(e.target.value)}),h('button',{type:'button','aria-label':'關閉搜尋',onClick:()=>setQuery(null)},ui('x',16))),
     h('div',{className:'tl-week',onTouchStart:e=>{touch.current=e.touches[0].clientX},onTouchEnd:e=>{const x=touch.current;touch.current=null;if(x==null)return;const dx=e.changedTouches[0].clientX-x;if(Math.abs(dx)>50)shiftWeek(dx<0?1:-1)}},
@@ -12908,8 +12928,8 @@ function HbTodayTimeline(P){
    h('aside',{className:'tl-side'},panel('later'),panel('shop'))),
   h('div',{className:'tl-bottom'},h('button',{type:'button',onClick:()=>setSheet('later')},'稍後辦',h('span',{className:'tl-badge'},later.length)),h('i'),h('button',{type:'button',onClick:()=>setSheet('shop')},'購物清單',h('span',{className:'tl-badge'},shop.filter(t=>!t.done).length))),
   h('button',{type:'button',className:'tl-fab','aria-label':'新增行程',onClick:()=>setEditing(newTask({time:fabTime}))},ui('plus',28)),
-  sheet&&h('div',{className:'tl-sheet',onClick:e=>{if(e.target===e.currentTarget)setSheet(null)}},h('div',{className:'tl-sheetpanel',role:'dialog','aria-modal':true,'aria-label':sheet==='later'?'稍後辦':'購物清單'},
-   h('div',{className:'tl-grab'}),h('button',{type:'button',className:'tl-sheetx','aria-label':'關閉',onClick:()=>setSheet(null)},ui('x',18)),panel(sheet))),
+  sheet&&h('div',{className:'tl-sheet',onClick:e=>{if(e.target===e.currentTarget)setSheet(null)}},h('div',{className:'tl-sheetpanel',role:'dialog','aria-modal':true,'aria-label':sheet==='later'?'稍後辦':sheet==='cal'?'連結 iPhone 行事曆':'購物清單'},
+   h('div',{className:'tl-grab'}),h('button',{type:'button',className:'tl-sheetx','aria-label':'關閉',onClick:()=>setSheet(null)},ui('x',18)),sheet==='cal'?h(HbTodayCalLink,null):panel(sheet))),
   menu&&h('div',{className:'tl-scrim',onClick:()=>setMenu(false)}));
 }
 var HB_TL_CSS=`
@@ -13028,6 +13048,12 @@ var HB_TL_CSS=`
 .tl-plist li.done .tl-ptext span{text-decoration:line-through;color:var(--tl-mute)}
 .tl-mini{height:30px;padding:0 10px;border:1px solid var(--tl-line);border-radius:8px;background:#fff;font-size:12px;color:var(--tl-acc);white-space:nowrap}
 .tl-mini:hover{border-color:var(--tl-acc)}
+.tl-calbtn{display:flex;align-items:center;justify-content:center;width:100%;height:46px;border-radius:12px;background:var(--tl-acc);color:#fff!important;font-weight:600;font-size:15px;text-decoration:none;border:0;margin:6px 0 0}
+.tl-calbtn.out{background:#fff;color:var(--tl-acc)!important;border:1px solid var(--tl-acc)}
+.tl-calmsg{margin:8px 0 0;font-size:13px;color:var(--tl-acc);text-align:center}
+.tl-calhelp{margin:14px 0 0;font-size:13px}.tl-calhelp summary{cursor:pointer;color:var(--tl-acc);font-weight:600}
+.tl-calhelp ol{margin:8px 0 0;padding-left:20px;line-height:1.8;color:#5E594F}
+.tl-calwarn{margin:14px 0 4px;padding:10px 12px;border-radius:10px;background:#F7EBDF;color:#8A4B24;font-size:12.5px;line-height:1.6}
 .tl-empty{margin:14px 0 4px;font-size:13px;color:var(--tl-mute);text-align:center}
 .tl-bottom{position:sticky;bottom:0;z-index:20;margin:24px -16px 0;display:grid;grid-template-columns:1fr 1px 1fr;align-items:center;min-height:62px;padding-bottom:env(safe-area-inset-bottom);
  background:rgba(255,255,255,.96);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border-top:1px solid var(--tl-line);border-radius:18px 18px 0 0;box-shadow:0 -6px 20px rgba(40,30,20,.05)}
@@ -14000,7 +14026,7 @@ function SSOEntry(){
       else{let r=await HB_ownerApi("/verify");if(r.status===401||(r.ok&&r.data.projectId!==localStorage.getItem("sitelog_owner_project_id"))){HB_clearOwner();alive&&setOwnerPid(null)}}
     }}catch{}
   })();return()=>{alive=!1}},[]);
-  (0,u.useEffect)(()=>{if(staffOn||ownerPid){let t=setTimeout(()=>{HB_nativePushRegister()},1500);return()=>clearTimeout(t)}},[staffOn,ownerPid]);
+  (0,u.useEffect)(()=>{if(staffOn||ownerPid){let t=setTimeout(()=>{HB_nativePushRegister();if(staffOn)HB_loadIcsUrl()},1500);return()=>clearTimeout(t)}},[staffOn,ownerPid]);
   if(staffOn)return u.default.createElement(Gy,null);
   if(ownerPid)return u.default.createElement(Fy,{projectId:ownerPid,onLogout:async()=>{await HB_ownerLogout();setOwnerPid(null)}});
   return u.default.createElement(SSOForm,{
