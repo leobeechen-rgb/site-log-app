@@ -4861,6 +4861,10 @@ async function shareToLine(){
   var btn=document.querySelector('.lineshare');
   var orig=btn.textContent;
   btn.textContent='產生中…';btn.disabled=true;
+  var mobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)||(navigator.maxTouchPoints>1&&/Macintosh/.test(navigator.userAgent));
+  var helper=null,pop=null;
+  try{helper=window.opener&&window.opener.HB_sharePdfLink}catch(e){helper=null}
+  if(!mobile&&helper){pop=window.open('','hbline','width=560,height=680');if(pop){try{pop.document.write('<p style="font:15px sans-serif;padding:24px;color:#555">正在產生 PDF 並準備 LINE 分享…</p>')}catch(e){}}}
   try{
     var filename=(document.title||'contract').split(' · ')[0].replace(/[\\\\/:*?"<>|]+/g,'').trim()+'.pdf';
     var content=document.body.cloneNode(true);
@@ -4869,23 +4873,32 @@ async function shareToLine(){
     var opt={margin:0,filename:filename,image:{type:'jpeg',quality:0.98},html2canvas:{scale:2,useCORS:true},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}};
     var blob=await html2pdf().set(opt).from(content).outputPdf('blob');
     var file=new File([blob],filename,{type:'application/pdf'});
-    var mobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)||(navigator.maxTouchPoints>1&&/Macintosh/.test(navigator.userAgent));
     var dl=function(){var url=URL.createObjectURL(blob);var a=document.createElement('a');a.href=url;a.download=filename;a.style.display='none';document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(url);a.remove();},60000);};
     var doShare=function(){return navigator.share({files:[file],title:document.title});};
+    var name=(document.title||'').split(' · ')[0];
     if(mobile&&navigator.canShare&&navigator.canShare({files:[file]})){
+      /* 手機：直接把 PDF 檔分享到 LINE */
       try{await doShare();}
       catch(se){
         if(!se||se.name!=='AbortError'){
-          /* PDF 產生較久時，瀏覽器會要求再點一次才能開分享選單 */
           btn.textContent='PDF 完成，點這裡傳送';btn.disabled=false;
           await new Promise(function(res){btn.onclick=function(){btn.onclick=function(){shareToLine();};doShare().then(res,function(e2){if(!e2||e2.name!=='AbortError'){dl();alert('無法開啟分享，PDF 已下載；請在 LINE 選「檔案」附加傳送。');}res();});};});
         }
       }
+    }else if(helper){
+      /* 電腦：上傳成私密連結，直接開 LINE 分享視窗 */
+      btn.textContent='上傳中…';
+      var link=await helper(blob,filename);
+      var shareUrl='https://social-plugins.line.me/lineit/share?url='+encodeURIComponent(link)+'&text='+encodeURIComponent('赫柏空間設計｜'+name+'（PDF，30 天內有效）');
+      try{navigator.clipboard&&navigator.clipboard.writeText(name+' PDF：'+link);}catch(e){}
+      if(pop&&!pop.closed){pop.location.href=shareUrl;}
+      else if(!window.open(shareUrl,'hbline','width=560,height=680')){window.prompt('瀏覽器擋住了 LINE 視窗。PDF 連結已產生（也已複製），可以直接貼到 LINE：',link);}
     }else{
       dl();
       alert(mobile?'這台裝置無法直接分享，PDF 已下載；請在 LINE 選「檔案」附加傳送。':'PDF 已下載到電腦的「下載」資料夾。\\n請打開 LINE 電腦版，把這個 PDF 拖進聊天視窗就能傳送。');
     }
   }catch(err){
+    if(pop&&!pop.closed){try{pop.close()}catch(e){}}
     console.error(err);
     alert('產生PDF失敗，請改用「列印 / 存 PDF」手動另存後再傳送。');
   }finally{
@@ -4897,6 +4910,16 @@ async function shareToLine(){
 </html>`;
 }
 
+/* 分享到 LINE：把 PDF 放到私密雲端空間，取得 30 天有效的連結（只有管理端登入可用） */
+window.HB_sharePdfLink=async function(blob,filename){
+  const d=new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Taipei'}).format(new Date());
+  const path=d.slice(0,7)+'/'+(crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random().toString(36).slice(2))+'.pdf';
+  const up=await q.storage.from('hb-share').upload(path,blob,{contentType:'application/pdf',upsert:false});
+  if(up.error)throw up.error;
+  const sg=await q.storage.from('hb-share').createSignedUrl(path,60*60*24*30);
+  if(sg.error)throw sg.error;
+  return sg.data.signedUrl;
+};
 function HB_openPrintableHTML(html){
   const bridge=window.webkit?.messageHandlers?.herfulsinsPrint;
   if(window.HB_NATIVE_DOCUMENT_PREVIEW===true&&bridge){
@@ -5075,6 +5098,10 @@ async function shareToLine(){
   var btn=document.querySelector('.lineshare');
   var orig=btn.textContent;
   btn.textContent='產生中…';btn.disabled=true;
+  var mobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)||(navigator.maxTouchPoints>1&&/Macintosh/.test(navigator.userAgent));
+  var helper=null,pop=null;
+  try{helper=window.opener&&window.opener.HB_sharePdfLink}catch(e){helper=null}
+  if(!mobile&&helper){pop=window.open('','hbline','width=560,height=680');if(pop){try{pop.document.write('<p style="font:15px sans-serif;padding:24px;color:#555">正在產生 PDF 並準備 LINE 分享…</p>')}catch(e){}}}
   try{
     var filename=(document.title||'contract').split(' · ')[0].replace(/[\\\\/:*?"<>|]+/g,'').trim()+'.pdf';
     var content=document.body.cloneNode(true);
@@ -5083,23 +5110,32 @@ async function shareToLine(){
     var opt={margin:0,filename:filename,image:{type:'jpeg',quality:0.98},html2canvas:{scale:2,useCORS:true},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}};
     var blob=await html2pdf().set(opt).from(content).outputPdf('blob');
     var file=new File([blob],filename,{type:'application/pdf'});
-    var mobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)||(navigator.maxTouchPoints>1&&/Macintosh/.test(navigator.userAgent));
     var dl=function(){var url=URL.createObjectURL(blob);var a=document.createElement('a');a.href=url;a.download=filename;a.style.display='none';document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(url);a.remove();},60000);};
     var doShare=function(){return navigator.share({files:[file],title:document.title});};
+    var name=(document.title||'').split(' · ')[0];
     if(mobile&&navigator.canShare&&navigator.canShare({files:[file]})){
+      /* 手機：直接把 PDF 檔分享到 LINE */
       try{await doShare();}
       catch(se){
         if(!se||se.name!=='AbortError'){
-          /* PDF 產生較久時，瀏覽器會要求再點一次才能開分享選單 */
           btn.textContent='PDF 完成，點這裡傳送';btn.disabled=false;
           await new Promise(function(res){btn.onclick=function(){btn.onclick=function(){shareToLine();};doShare().then(res,function(e2){if(!e2||e2.name!=='AbortError'){dl();alert('無法開啟分享，PDF 已下載；請在 LINE 選「檔案」附加傳送。');}res();});};});
         }
       }
+    }else if(helper){
+      /* 電腦：上傳成私密連結，直接開 LINE 分享視窗 */
+      btn.textContent='上傳中…';
+      var link=await helper(blob,filename);
+      var shareUrl='https://social-plugins.line.me/lineit/share?url='+encodeURIComponent(link)+'&text='+encodeURIComponent('赫柏空間設計｜'+name+'（PDF，30 天內有效）');
+      try{navigator.clipboard&&navigator.clipboard.writeText(name+' PDF：'+link);}catch(e){}
+      if(pop&&!pop.closed){pop.location.href=shareUrl;}
+      else if(!window.open(shareUrl,'hbline','width=560,height=680')){window.prompt('瀏覽器擋住了 LINE 視窗。PDF 連結已產生（也已複製），可以直接貼到 LINE：',link);}
     }else{
       dl();
       alert(mobile?'這台裝置無法直接分享，PDF 已下載；請在 LINE 選「檔案」附加傳送。':'PDF 已下載到電腦的「下載」資料夾。\\n請打開 LINE 電腦版，把這個 PDF 拖進聊天視窗就能傳送。');
     }
   }catch(err){
+    if(pop&&!pop.closed){try{pop.close()}catch(e){}}
     console.error(err);
     alert('產生PDF失敗，請改用「列印 / 存 PDF」手動另存後再傳送。');
   }finally{
@@ -6347,6 +6383,10 @@ async function shareToLine(){
   var btn=document.querySelector('.lineshare');
   var orig=btn.textContent;
   btn.textContent='產生中…';btn.disabled=true;
+  var mobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)||(navigator.maxTouchPoints>1&&/Macintosh/.test(navigator.userAgent));
+  var helper=null,pop=null;
+  try{helper=window.opener&&window.opener.HB_sharePdfLink}catch(e){helper=null}
+  if(!mobile&&helper){pop=window.open('','hbline','width=560,height=680');if(pop){try{pop.document.write('<p style="font:15px sans-serif;padding:24px;color:#555">正在產生 PDF 並準備 LINE 分享…</p>')}catch(e){}}}
   try{
     var filename=(document.title||'estimate').split(' · ')[0].replace(/[\\\\/:*?"<>|]+/g,'').trim()+'.pdf';
     var content=document.body.cloneNode(true);
@@ -6356,23 +6396,32 @@ async function shareToLine(){
     var opt={margin:[14,5,14,5],filename:filename,image:{type:'jpeg',quality:0.98},html2canvas:{scale:2,useCORS:true},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}};
     var blob=await html2pdf().set(opt).from(content).outputPdf('blob');
     var file=new File([blob],filename,{type:'application/pdf'});
-    var mobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)||(navigator.maxTouchPoints>1&&/Macintosh/.test(navigator.userAgent));
     var dl=function(){var url=URL.createObjectURL(blob);var a=document.createElement('a');a.href=url;a.download=filename;a.style.display='none';document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(url);a.remove();},60000);};
     var doShare=function(){return navigator.share({files:[file],title:document.title});};
+    var name=(document.title||'').split(' · ')[0];
     if(mobile&&navigator.canShare&&navigator.canShare({files:[file]})){
+      /* 手機：直接把 PDF 檔分享到 LINE */
       try{await doShare();}
       catch(se){
         if(!se||se.name!=='AbortError'){
-          /* PDF 產生較久時，瀏覽器會要求再點一次才能開分享選單 */
           btn.textContent='PDF 完成，點這裡傳送';btn.disabled=false;
           await new Promise(function(res){btn.onclick=function(){btn.onclick=function(){shareToLine();};doShare().then(res,function(e2){if(!e2||e2.name!=='AbortError'){dl();alert('無法開啟分享，PDF 已下載；請在 LINE 選「檔案」附加傳送。');}res();});};});
         }
       }
+    }else if(helper){
+      /* 電腦：上傳成私密連結，直接開 LINE 分享視窗 */
+      btn.textContent='上傳中…';
+      var link=await helper(blob,filename);
+      var shareUrl='https://social-plugins.line.me/lineit/share?url='+encodeURIComponent(link)+'&text='+encodeURIComponent('赫柏空間設計｜'+name+'（PDF，30 天內有效）');
+      try{navigator.clipboard&&navigator.clipboard.writeText(name+' PDF：'+link);}catch(e){}
+      if(pop&&!pop.closed){pop.location.href=shareUrl;}
+      else if(!window.open(shareUrl,'hbline','width=560,height=680')){window.prompt('瀏覽器擋住了 LINE 視窗。PDF 連結已產生（也已複製），可以直接貼到 LINE：',link);}
     }else{
       dl();
       alert(mobile?'這台裝置無法直接分享，PDF 已下載；請在 LINE 選「檔案」附加傳送。':'PDF 已下載到電腦的「下載」資料夾。\\n請打開 LINE 電腦版，把這個 PDF 拖進聊天視窗就能傳送。');
     }
   }catch(err){
+    if(pop&&!pop.closed){try{pop.close()}catch(e){}}
     console.error(err);
     alert('產生PDF失敗，請改用「列印 / 存 PDF」手動另存後再傳送。');
   }finally{
