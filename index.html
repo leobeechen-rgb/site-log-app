@@ -7610,6 +7610,19 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
           a.clientName&&u.default.createElement("div",{className:"hb-est-client-title",style:{fontSize:11.5,color:sc.inkSoft,fontWeight:300}},"客戶 · "+a.clientName)
         )
       ),
+      (function(){
+        let st=autoState.s,hm=autoState.at?String(autoState.at.getHours()).padStart(2,"0")+":"+String(autoState.at.getMinutes()).padStart(2,"0"):"";
+        let lab,bg,fg,dot;
+        if(!a.engName){lab="未儲存";bg="#F1ECE4";fg="#8A7F70";dot="#C9BFB0"}
+        else if(st==="saving"){lab="儲存中…";bg="#EAF1F5";fg="#4C6F85";dot="#6E9BB5"}
+        else if(st==="pending"){lab="未儲存變更";bg="#FFF4DD";fg="#8A6A1E";dot="#E0B04A"}
+        else if(st==="error"){lab="儲存失敗";bg="#FBE7E4";fg="#A5412F";dot="#D0604B"}
+        else if(st==="saved"){lab="已儲存 "+hm;bg="#E5F1E8";fg="#3E6B4C";dot="#5E9A70"}
+        else if(t||estIdRef.current){lab="已儲存";bg="#E5F1E8";fg="#3E6B4C";dot="#5E9A70"}
+        else{lab="自動儲存";bg="#EEF0EC";fg="#6B7568";dot="#9AA597"}
+        return u.default.createElement("div",{"aria-live":"polite",title:"估價單會在修改後約 2 秒自動存到雲端",onClick:st==="error"?()=>flushAutosave():void 0,style:{display:"flex",alignItems:"center",gap:5,background:bg,color:fg,borderRadius:99,padding:"4px 10px",fontSize:11.5,whiteSpace:"nowrap",flexShrink:0,marginRight:10,cursor:st==="error"?"pointer":"default"}},
+          u.default.createElement("span",{style:{width:7,height:7,borderRadius:"50%",background:dot,flex:"none"}}),lab)
+      })(),
       u.default.createElement("button",{onClick:()=>setCalcOpen(!0),title:"計算機",style:{background:"none",border:"none",color:sc.inkSoft,cursor:"pointer",display:"flex",alignItems:"center",padding:0}},u.default.createElement(E,{name:"calculator",size:17}))
     ),
     u.default.createElement("div",{className:"hb-est-arc","aria-hidden":"true",style:{flexShrink:0,height:24,marginTop:-1,position:"relative",zIndex:1,lineHeight:0}},
