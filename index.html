@@ -13079,6 +13079,11 @@ var HB_TL_CSS=`
 }
 @media (max-width:380px){.tl-row{grid-template-columns:36px 50px minmax(0,1fr)}.tl-dot{width:46px;min-height:46px}.tl-toggle span{display:none}.tl-toggle{padding:0 4px}}
 @media (prefers-reduced-motion:reduce){.hb-tl *,.tl-sheet,.tl-sheetpanel{animation:none!important;transition:none!important}}
+/* App／手機全站規則把 button 設成至少 44px 高，會把圓形按鈕拉成橢圓；這裡改回正圓，點擊範圍用外圈補足 */
+.hb-tl button,.hb-tl [role=button],.hb-tl summary{min-height:0}
+.hb-tl .tl-check,.hb-tl .tl-ib,.hb-tl .tl-sheetx,.hb-tl .tl-fab,.hb-tl .tl-quick button{aspect-ratio:1/1;flex-shrink:0;padding:0}
+.hb-tl .tl-check{position:relative}.hb-tl .tl-check::after{content:'';position:absolute;inset:-9px;border-radius:50%}
+.hb-tl .tl-dn{aspect-ratio:1/1;flex:none}
 `;
 
 /* HERFULSINS — 今日待辦。Manual tasks are cached locally and synchronized through the workspace API. */
