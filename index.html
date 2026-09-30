@@ -9831,7 +9831,7 @@ function HbBookingsHub({onBack:l,notify:g}){
     showAddSchedule&&u.default.createElement("div",{style:{position:"fixed",inset:0,background:"rgba(43,38,32,0.45)",display:"flex",alignItems:"center",justifyContent:"center",padding:20,zIndex:55}},
       u.default.createElement("div",{className:"fade-in",style:{background:s.card,borderRadius:10,padding:22,width:"100%",maxWidth:360}},
         u.default.createElement("h3",{style:{margin:"0 0 12px",fontSize:17,fontWeight:400,color:s.oceanDark}},scEditId?"編輯行程":"新增行程"),
-        u.default.createElement("button",{onClick:startScVoice,disabled:scListening,style:{...ll,width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:8,marginBottom:scHeard?6:12,borderColor:scListening?s.ocean:undefined,color:scListening?s.ocean:undefined}},
+        (()=>{try{return!!(window.webkit&&window.webkit.messageHandlers&&window.webkit.messageHandlers.herfulsinsPush)}catch{return!1}})()&&u.default.createElement("button",{onClick:startScVoice,disabled:scListening,style:{...ll,width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:8,marginBottom:scHeard?6:12,borderColor:scListening?s.ocean:undefined,color:scListening?s.ocean:undefined}},
           u.default.createElement(E,{name:"mic",size:15}),
           scListening?"聆聽中…請說話":"語音自動填寫"
         ),
@@ -17236,6 +17236,8 @@ react-dom/cjs/react-dom-client.production.js:
 (function(){
   var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) return;                       // 不支援就整個不出現，不佔版面
+  /* 只在 iOS App 內提供；網頁版不顯示語音功能 */
+  try { if (!(window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.herfulsinsPush)) return; } catch (e) { return; }
 
   var btn = null, hint = null, target = null, rec = null, listening = false, hideTimer = null;
 
