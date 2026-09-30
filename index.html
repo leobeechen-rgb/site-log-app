@@ -7183,34 +7183,96 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
   let estT=HB_estTotals(a);
   let grandProfit=estT.net-grandCost;
   let lockedCount=(a.categories||[]).reduce((n2,c)=>n2+((c.items||[]).filter(HB_estHidden).length),0);
+  /* ── 自動儲存：內容變動 2 秒後自動存到雲端；新估價單第一次存會建立一筆，之後都更新同一筆 ── */
+  let estIdRef=(0,u.useRef)(t&&t.id||null);
+  let saveChainRef=(0,u.useRef)(Promise.resolve());
+  let autoTimerRef=(0,u.useRef)(null);
+  let latestFormRef=(0,u.useRef)(a);latestFormRef.current=a;
+  let buildEstPayload=fm=>{
+    let base={project_id:l?.id||null,client_name:fm.clientName,contact_name:fm.contactName,eng_name:fm.engName,site_address:fm.siteAddress,quote_date:fm.quoteDate||null,valid_days:fm.validDays,deposit_note:fm.depositNote,categories:fm.categories};
+    return{base,payload:{...base,discount:HB_num(fm.discount)||0,tax_rate:HB_num(fm.taxRate)||0}};
+  };
+  let lastSavedRef=(0,u.useRef)(JSON.stringify(buildEstPayload(a).payload)); /* 剛打開不算變更；新估價單要等真的動過才建立 */
+  let[autoState,setAutoState]=(0,u.useState)({s:"",at:null});
+  let mountedRef=(0,u.useRef)(!0);
+  (0,u.useEffect)(()=>()=>{mountedRef.current=!1},[]);
+  let setAuto=v=>{mountedRef.current&&setAutoState(v)};
+  /* 所有儲存排隊依序執行，避免新估價單被重複新增 */
+  let persistEst=fm=>{
+    let job=saveChainRef.current.then(async()=>{
+      let{base,payload}=buildEstPayload(fm);
+      let json=JSON.stringify(payload);
+      let run=pl=>estIdRef.current
+        ?q.from("sitelog_estimates").update(pl).eq("id",estIdRef.current)
+        :q.from("sitelog_estimates").insert(pl).select("id").single();
+      let res=await run(payload);
+      let degraded=!1;
+      if(res.error&&/discount|tax_rate|column|PGRST204|42703/i.test(String(res.error.message||"")+String(res.error.code||""))){
+        /* sitelog_estimates 還沒加 discount / tax_rate 欄位 → 先存其餘內容，並提醒去補跑 SQL */
+        res=await run(base);degraded=!0;
+      }
+      if(!res.error){
+        if(!estIdRef.current&&res.data&&res.data.id)estIdRef.current=res.data.id;
+        lastSavedRef.current=json;
+      }
+      return{error:res.error,degraded};
+    });
+    saveChainRef.current=job.catch(()=>{});
+    return job;
+  };
+  let isDirty=()=>{
+    let fm=latestFormRef.current;
+    return!!(fm&&fm.engName)&&JSON.stringify(buildEstPayload(fm).payload)!==lastSavedRef.current;
+  };
+  let flushAutosave=async()=>{
+    if(autoTimerRef.current){clearTimeout(autoTimerRef.current);autoTimerRef.current=null}
+    if(!isDirty())return{error:null};
+    setAuto({s:"saving",at:null});
+    let r=await persistEst(latestFormRef.current).catch(err=>({error:err}));
+    setAuto(r.error?{s:"error",at:null}:{s:"saved",at:new Date()});
+    return r;
+  };
+  (0,u.useEffect)(()=>{
+    if(!isDirty())return;
+    setAuto(p=>p.s==="saving"?p:{s:"pending",at:p.at});
+    if(autoTimerRef.current)clearTimeout(autoTimerRef.current);
+    autoTimerRef.current=setTimeout(()=>{autoTimerRef.current=null;flushAutosave()},2000);
+  },[a]);
+  (0,u.useEffect)(()=>{
+    let onHide=ev=>{if(document.visibilityState==="hidden"||ev&&ev.type==="pagehide")flushAutosave()};
+    document.addEventListener("visibilitychange",onHide);
+    window.addEventListener("pagehide",onHide);
+    return()=>{
+      document.removeEventListener("visibilitychange",onHide);
+      window.removeEventListener("pagehide",onHide);
+      /* 離開編輯畫面時，把還沒存的內容補存 */
+      if(isDirty())persistEst(latestFormRef.current).catch(()=>{});
+    };
+  },[]);
+  let goBack=async()=>{await flushAutosave();n()};
   let save=async()=>{
     if(!a.engName){setShowBasic(!0);notify("請先輸入工程名稱");return}
+    if(autoTimerRef.current){clearTimeout(autoTimerRef.current);autoTimerRef.current=null}
     f(!0);
-    let base={project_id:l?.id||null,client_name:a.clientName,contact_name:a.contactName,eng_name:a.engName,site_address:a.siteAddress,quote_date:a.quoteDate||null,valid_days:a.validDays,deposit_note:a.depositNote,categories:a.categories};
-    let payload={...base,discount:HB_num(a.discount)||0,tax_rate:HB_num(a.taxRate)||0};
-    let run=pl=>t?q.from("sitelog_estimates").update(pl).eq("id",t.id):q.from("sitelog_estimates").insert(pl);
-    let res=await run(payload);
-    let degraded=!1;
-    if(res.error&&/discount|tax_rate|column|PGRST204|42703/i.test(String(res.error.message||"")+String(res.error.code||""))){
-      /* sitelog_estimates 還沒加 discount / tax_rate 欄位 → 先存其餘內容，並提醒去補跑 SQL */
-      res=await run(base);degraded=!0;
-    }
+    let res=await persistEst(a).catch(err=>({error:err}));
     f(!1);
-    if(res.error){notify("儲存失敗："+res.error.message);return}
-    if(degraded){notify("已儲存，但折讓與稅率沒能存入雲端。請先到 Supabase 執行 estimates_discount_tax.sql");return}
+    if(res.error){notify("儲存失敗："+(res.error.message||res.error));return}
+    if(res.degraded){notify("已儲存，但折讓與稅率沒能存入雲端。請先到 Supabase 執行 estimates_discount_tax.sql");return}
     notify("已儲存估價單"),n()
   };
   let hbMakeClientLink=async()=>{
-    if(!t||!t.id){notify("請先儲存估價單，才能產生客戶連結");return}
+    if(!a.engName){setShowBasic(!0);notify("請先輸入工程名稱");return}
+    await flushAutosave();
+    if(!estIdRef.current){notify("估價單還沒存好，請稍後再試");return}
     let{data,error}=await q.from("sitelog_estimates")
-      .select("share_token,share_expires_at,signed_at,signer_name").eq("id",t.id).maybeSingle();
+      .select("share_token,share_expires_at,signed_at,signer_name").eq("id",estIdRef.current).maybeSingle();
     if(error){notify("讀取失敗："+error.message);return}
     if(data&&data.signed_at)notify("此報價已由 "+(data.signer_name||"客戶")+" 確認");
     let tok=data&&data.share_token,exp=data&&data.share_expires_at,now=Date.now();
     if(!tok||!exp||new Date(exp).getTime()<now){
       tok=HB_estShareToken();
       exp=new Date(now+30*864e5).toISOString();
-      let up=await q.from("sitelog_estimates").update({share_token:tok,share_expires_at:exp}).eq("id",t.id);
+      let up=await q.from("sitelog_estimates").update({share_token:tok,share_expires_at:exp}).eq("id",estIdRef.current);
       if(up.error){notify("產生連結失敗（請先執行 estimates_share.sql）："+up.error.message);return}
     }
     let url=location.origin+location.pathname+"?est="+tok;
@@ -7538,7 +7600,7 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
     ),
     localToast&&u.default.createElement("div",{className:"hb-toast",style:{position:"fixed",bottom:20,left:"50%",background:sc.ink,color:sc.card,padding:"10px 18px",borderRadius:99,fontSize:13,boxShadow:"0 4px 14px rgba(0,0,0,0.35)",zIndex:99,maxWidth:"90vw",textAlign:"center"}},localToast),
     u.default.createElement("div",{className:"hb-est-header",style:{background:"rgba(247,250,252,0.94)",position:"relative",zIndex:2,backdropFilter:"blur(14px)",WebkitBackdropFilter:"blur(14px)",padding:"13px 20px",display:"flex",alignItems:"center",gap:6,flexShrink:0,borderBottom:"none"}},
-      u.default.createElement("button",{onClick:n,style:{background:"none",border:"none",color:sc.inkSoft,cursor:"pointer",display:"flex",alignItems:"center",gap:4,fontSize:12.5}},u.default.createElement(E,{name:"arrow-left",size:15})),
+      u.default.createElement("button",{onClick:goBack,style:{background:"none",border:"none",color:sc.inkSoft,cursor:"pointer",display:"flex",alignItems:"center",gap:4,fontSize:12.5}},u.default.createElement(E,{name:"arrow-left",size:15})),
       u.default.createElement("div",{style:{flex:1,display:"flex",alignItems:"center",gap:13,minWidth:0,marginLeft:4}},
         u.default.createElement("div",{"aria-hidden":"true",style:{width:44,height:44,borderRadius:"50%",flex:"none",position:"relative",overflow:"hidden",background:sc.card,boxShadow:"0 2px 10px rgba(30,60,80,.10)"}},
           u.default.createElement("div",{style:{position:"absolute",left:0,right:0,bottom:0,height:"56%",opacity:.72,background:"linear-gradient(180deg,#DCE9F1,"+sc.ocean+")"}})),
@@ -7747,7 +7809,9 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
       u.default.createElement("div",{style:{display:"flex",gap:7,marginBottom:7}},
         u.default.createElement("button",{onClick:openWholeFileImport,disabled:localImportBusy,style:{flex:1,border:`1px solid ${sc.line}`,background:"none",borderRadius:99,padding:"9px 0",fontSize:12,color:sc.ink,cursor:"pointer",opacity:localImportBusy?.6:1}},localImportBusy?"載入中…":"↓ 從 Excel 檔案載入")
       ),
-      u.default.createElement("div",{style:{display:"flex",gap:7,marginTop:grandCost>0?0:8,flexWrap:"wrap"}},
+      u.default.createElement("div",{"aria-live":"polite",style:{fontSize:11.5,color:autoState.s==="error"?sc.danger:sc.inkSoft,textAlign:"right",margin:"6px 4px 0",minHeight:15,letterSpacing:.3}},
+        !a.engName?"輸入工程名稱後會自動儲存":autoState.s==="saving"?"自動儲存中…":autoState.s==="pending"?"有變更，稍後自動儲存":autoState.s==="error"?"自動儲存失敗，請按「儲存估價單」重試":autoState.s==="saved"&&autoState.at?("✓ 已自動儲存 "+String(autoState.at.getHours()).padStart(2,"0")+":"+String(autoState.at.getMinutes()).padStart(2,"0")):"自動儲存已開啟"),
+        u.default.createElement("div",{style:{display:"flex",gap:7,marginTop:grandCost>0?0:8,flexWrap:"wrap"}},
         u.default.createElement("button",{onClick:save,disabled:o,style:{flex:2,minWidth:120,background:sc.action,color:"#F2F4F1",border:"none",borderRadius:99,padding:"11px 0",fontWeight:300,fontSize:13.5,cursor:"pointer",opacity:o?.6:1}},o?"儲存中…":"儲存估價單"),
         u.default.createElement("button",{onClick:hbMakeClientLink,style:{flex:1,minWidth:132,background:"#22392F",color:"#EDEAE0",border:"none",borderRadius:99,padding:"11px 0",fontWeight:300,fontSize:13.5,cursor:"pointer",fontFamily:"inherit"}},"客戶確認連結"),
         u.default.createElement("button",{onClick:()=>HB_openEstimatePrint(a),style:{flex:1,minWidth:70,border:`1px solid ${sc.line}`,background:"none",borderRadius:99,padding:"10px 0",fontSize:12.5,color:sc.ink,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:5}},u.default.createElement(E,{name:"printer",size:14}),"PDF"),
