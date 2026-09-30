@@ -13119,9 +13119,11 @@ function HbTodayHub({projects=[],onBack,onOpenProject}){
  u.useEffect(()=>{load()},[]);
  const save=next=>{if(!ready){setError('雲端資料尚未就緒，無法儲存。請確認登入與網路連線。');return false}try{localStorage.setItem(HB_todoKey(),JSON.stringify(next));setData(next);setSyncText('正在同步…');saveQueue.current=saveQueue.current.then(async()=>{try{const result=await HB_workspaceRequest('/today',{method:'PUT',body:JSON.stringify({revision:revision.current,payload:next})});revision.current=result.revision;if(mounted.current)setSyncText('已跨裝置同步')}catch(e){if(mounted.current){setReady(false);setSyncText('同步失敗');setError((e.message||'同步失敗')+' 請重新開啟今日待辦取得最新資料。')}}});return true}catch{setError('本機快取失敗，本次變更尚未保存。');return false}};
  const names=new Map(projects.map(p=>[p.id,p.name]));
+ /* 示範案件（App 審核用）只在審核帳號顯示；公司帳號的今日待辦自動略過 */
+ const demoIds=new Set(projects.filter(p=>/^示範案件/.test(p.name||'')).map(p=>p.id)),hideDemo=projects.some(p=>!demoIds.has(p.id));
  const combined=[...data.manual,...auto.map(t=>({...t,...data.overrides[t.id]}))];
  Object.entries(data.overrides).forEach(([id,v])=>{if(v.done&&!combined.some(t=>t.id===id))combined.push({...v,id})});
- const all=combined.filter(t=>!t.deleted).map(t=>({...t,projectName:names.get(t.projectId)||t.projectName||'公司事務'}));
+ const all=combined.filter(t=>!t.deleted&&!(hideDemo&&t.source==='auto'&&demoIds.has(t.projectId))).map(t=>({...t,projectName:names.get(t.projectId)||t.projectName||'公司事務'}));
  const overdue=t=>!t.done&&t.due&&t.due<today;
  const dueToday=t=>!t.done&&(!t.due||t.due<=today);
  const metrics=[['today','今日待處理',all.filter(dueToday).length],['overdue','已逾期',all.filter(overdue).length],['upcoming','後續待辦',all.filter(t=>!t.done&&t.due>today).length],['done','今日完成',all.filter(t=>t.done&&t.completedAt===today).length]];
