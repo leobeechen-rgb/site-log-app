@@ -6804,6 +6804,7 @@ var HB_COLD={
   line:"#CFC7B8", danger:"#8B1220",
   action:"#B4573A", actionDeep:"#8E4229"
 };
+function HB_localToday(){let d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
 function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
   let sc=HB_COLD;
   // Use the actual left gutter, so the title never takes width from the quotation.
@@ -6840,7 +6841,7 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
     localToastTimerRef.current=setTimeout(()=>setLocalToast(null),3200);
     e&&e(msg)
   };
-  let[a,i]=(0,u.useState)(()=>t?{clientName:t.client_name||"",contactName:t.contact_name||"",engName:t.eng_name||l?.name||"",siteAddress:t.site_address||l?.address||"",quoteDate:t.quote_date||new Date().toISOString().slice(0,10),validDays:t.valid_days||"5",depositNote:t.deposit_note||"如蒙惠顧請先付訂金3成，或雙方議定金額。",discount:t.discount??"",taxRate:t.tax_rate??"",categories:(t.categories&&t.categories.length?t.categories:[HB_newEstCategory("裝修工程")])}:{clientName:"",contactName:"",engName:l?.name||"",siteAddress:l?.address||"",quoteDate:new Date().toISOString().slice(0,10),validDays:"5",depositNote:"如蒙惠顧請先付訂金3成，或雙方議定金額。",discount:"",taxRate:"",categories:[HB_newEstCategory("裝修工程")]});
+  let[a,i]=(0,u.useState)(()=>t?{clientName:t.client_name||"",contactName:t.contact_name||"",engName:t.eng_name||l?.name||"",siteAddress:t.site_address||l?.address||"",quoteDate:t.quote_date||HB_localToday(),validDays:t.valid_days||"5",depositNote:t.deposit_note||"如蒙惠顧請先付訂金3成，或雙方議定金額。",discount:t.discount??"",taxRate:t.tax_rate??"",categories:(t.categories&&t.categories.length?t.categories:[HB_newEstCategory("裝修工程")])}:{clientName:"",contactName:"",engName:l?.name||"",siteAddress:l?.address||"",quoteDate:HB_localToday(),validDays:"5",depositNote:"如蒙惠顧請先付訂金3成，或雙方議定金額。",discount:"",taxRate:"",categories:[HB_newEstCategory("裝修工程")]});
   let[o,f]=(0,u.useState)(!1);
   let[showBasic,setShowBasic]=(0,u.useState)(!t);
   let[pasteOpen,setPasteOpen]=(0,u.useState)({});
@@ -7232,8 +7233,15 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
     setAuto(r.error?{s:"error",at:null}:{s:"saved",at:new Date()});
     return r;
   };
+  /* 報價日期：內容有修改時自動改成今天（已簽名或手動選過日期則不動） */
+  let dateManualRef=(0,u.useRef)(!1);
+  let withToday=fm=>{
+    let td=HB_localToday();
+    return(!dateManualRef.current&&!(t&&t.signed_at)&&fm.quoteDate!==td)?{...fm,quoteDate:td}:fm;
+  };
   (0,u.useEffect)(()=>{
     if(!isDirty())return;
+    {let nx=withToday(a);if(nx!==a){i(p=>withToday(p));return}}
     setAuto(p=>p.s==="saving"?p:{s:"pending",at:p.at});
     if(autoTimerRef.current)clearTimeout(autoTimerRef.current);
     autoTimerRef.current=setTimeout(()=>{autoTimerRef.current=null;flushAutosave()},2000);
@@ -7254,7 +7262,8 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
     if(!a.engName){setShowBasic(!0);notify("請先輸入工程名稱");return}
     if(autoTimerRef.current){clearTimeout(autoTimerRef.current);autoTimerRef.current=null}
     f(!0);
-    let res=await persistEst(a).catch(err=>({error:err}));
+    let fmNow=withToday(a);if(fmNow!==a)i(p=>withToday(p));
+    let res=await persistEst(fmNow).catch(err=>({error:err}));
     f(!1);
     if(res.error){notify("儲存失敗："+(res.error.message||res.error));return}
     if(res.degraded){notify("已儲存，但折讓與稅率沒能存入雲端。請先到 Supabase 執行 estimates_discount_tax.sql");return}
@@ -7649,7 +7658,7 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
           u.default.createElement("input",{placeholder:"工程名稱",value:a.engName,onChange:v=>set("engName",v.target.value),style:inputStyle}),
           u.default.createElement("input",{placeholder:"施工地點",value:a.siteAddress,onChange:v=>set("siteAddress",v.target.value),style:inputStyle}),
           u.default.createElement("div",{style:{display:"flex",gap:7}},
-            u.default.createElement("input",{type:"date",value:a.quoteDate,onChange:v=>set("quoteDate",v.target.value),style:inputStyle}),
+            u.default.createElement("input",{type:"date",value:a.quoteDate,title:"修改內容時會自動改成今天；手動選日期後就不再自動更改",onChange:v=>{dateManualRef.current=!0;set("quoteDate",v.target.value)},style:inputStyle}),
             u.default.createElement("input",{type:"text",inputMode:window.HB_COARSE?"numeric":void 0,placeholder:"有效天數",value:a.validDays,onChange:v=>set("validDays",v.target.value),style:{...inputStyle,width:90}})
           )
         )
