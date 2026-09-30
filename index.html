@@ -7769,7 +7769,7 @@ function HbLanding({onCase:l,onCompany:t,onManageStaff:e,onLogout:n,onQuickQuote
 
       u.default.createElement("div",{className:"hb-landing-tri"},
         u.default.createElement(HbCompanyGridCard,{icon:"users",title:"\u5ba2\u6236\u9810\u7d04\u9801\u9762",desc:"\u958b\u555f\u5ba2\u6236\u7dda\u4e0a\u9810\u7d04\u8af8\u8a62\u9801\u9762",onClick:ob}),
-        u.default.createElement(HbCompanyGridCard,{icon:"calendar",title:"\u9810\u7d04\u7ba1\u7406",desc:"\u67e5\u770b\u5ba2\u6236\u9810\u7d04\u3001\u4fee\u6539\u6642\u6bb5\u3001\u8a2d\u5b9a\u516c\u4f11\u65e5",onClick:bk}),
+        u.default.createElement(HbCompanyGridCard,{icon:"calendar",title:"施工圖",desc:"地坪、天花、水電與櫃體施工圖，出 A3 PDF／DXF",onClick:()=>{window.__hbOpenTool&&window.__hbOpenTool("cd")}}),
         u.default.createElement(HbCompanyGridCard,{icon:"presentation",title:"\u63d0\u6848\u7c21\u5831",desc:"\u63d0\u6848\u7c21\u5831\u7528PPT\u7522\u751f\u5668\uff0c\u65bc\u65b0\u8996\u7a97\u958b\u555f",onClick:pg})
       ),
       u.default.createElement("div",{className:"hb-footline"},u.default.createElement("span",{className:"hb-footline-b"},"HERFULSINS"),u.default.createElement("span",{className:"hb-footline-r"}),u.default.createElement("span",{className:"hb-footline-c"},"嘉義　雲林　台南"))
@@ -11262,6 +11262,7 @@ var HB_ENTRY_META={
   "赫柏空間作品案例":{cat:"COLLECTIONS",catCn:"作品輯",fr:"Collections Herfulsins",go:"EXPLORER",goCn:"瀏覽",img:HB_MAT.swatches},
   "圖面管理":{cat:"PLANS",catCn:"圖面",fr:"Gestion des Plans",go:"PARCOURIR",goCn:"檢視",img:HB_MAT.plans},
   "客戶預約頁面":{cat:"RENDEZ-VOUS",catCn:"預約",fr:"Prise de Rendez-vous",go:"OUVRIR",goCn:"開啟",img:HB_MAT.calendar},
+  "施工圖":{cat:"DESSINS",catCn:"施工圖",fr:"Dessins d’Exécution",go:"DESSINER",goCn:"繪製",img:HB_MAT.agenda},
   "預約管理":{cat:"AGENDA",catCn:"行事曆",fr:"Gestion de l’Agenda",go:"GÉRER",goCn:"管理",img:HB_MAT.agenda},
   "提案簡報":{cat:"PRÉSENTATION",catCn:"簡報",fr:"Présentation de Projet",go:"CRÉER",goCn:"製作",img:HB_MAT.lookbook},
   "公司合約":{cat:"CONTRATS",catCn:"合約",fr:"Contrats de la Maison",go:"RÉDIGER",goCn:"擬定"},
@@ -18256,6 +18257,7 @@ react-dom/cjs/react-dom-client.production.js:
       key: 'cd',
       label: '施工圖',
       src: './shigongtu.html',
+      rail: false,          // 不放側邊列；由首頁 06「施工圖」卡片開啟
       svg: '<rect x="3.5" y="3.5" width="17" height="17"/><path d="M3.5 17h17M9 3.5V17M9 10h11.5"/><path d="M13 17v3.5"/>'
     },
     {
