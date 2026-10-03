@@ -3697,6 +3697,76 @@ button.wb-proj:hover{background:#e6eee7;color:var(--wb-green)}
   .wb-follow li{grid-template-columns:minmax(0,1fr)}.wb-fnext{flex-direction:row;align-items:baseline;gap:8px;border-left:0;padding-left:0}.wb-follow li>.wb-btn{grid-column:1;justify-self:start}
   .wb-grid2{grid-template-columns:1fr}
 }
+/* ===== 精簡工作台（專案首頁） ===== */
+.wbc{--wb-ink:#262722;--wb-soft:#7b7466;--wb-gold:#b89b6a;--wb-line:#e2d8c6;--wb-green:#2E4A3C;--wb-green-2:#3d5e4c;--wb-wine:#8a2c34}
+.hb-wb.wbc{max-width:1320px;margin:4px auto 0;padding:18px 26px 16px;background:rgba(255,253,248,.55);border:1px solid #d8c7a4;border-radius:4px;scroll-margin-top:16px}
+.wbc-goldrule{display:block;width:110px;height:1px;background:#b89b6a;margin:16px auto 0}
+.wbc-head{display:flex;align-items:center;gap:14px 18px;flex-wrap:wrap;padding-bottom:14px;border-bottom:1px solid var(--wb-line)}
+.wbc-titlewrap{display:flex;align-items:baseline;gap:18px}
+.wbc-titlewrap h2{font-family:'Noto Serif TC',serif;font-size:28px;font-weight:500;letter-spacing:.2em;margin:0;color:var(--wb-ink)}
+.wbc-fr{font-size:11px;letter-spacing:.42em;color:#b2895a}
+.wbc-date{font-size:14px;letter-spacing:.08em;color:#4f4a40;padding:0 16px;border-right:1px solid var(--wb-line);white-space:nowrap}
+.wbc-filter{position:relative;display:inline-flex;align-items:center}
+.wbc-filter select{appearance:none;-webkit-appearance:none;border:1px solid var(--wb-line);background:#f4efe5;border-radius:999px;padding:7px 34px 7px 18px;font:inherit;font-size:13.5px;color:var(--wb-ink);max-width:220px;min-height:36px;cursor:pointer}
+.wbc-filter svg{position:absolute;right:13px;pointer-events:none;color:#5a5448}
+.wbc-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.wbc-grow{flex:1}
+.wbc-sync{font-size:11px}
+.hb-wb .wbc-hublink{display:inline-flex;align-items:center;gap:5px;border:0;background:none;padding:4px 14px 4px 0;border-right:1px solid var(--wb-line);color:var(--wb-green);font-size:13.5px;letter-spacing:.06em;text-decoration:underline;text-underline-offset:4px;min-height:0!important}
+.hb-wb .wbc-add{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--wb-ink);background:transparent;border-radius:6px;padding:9px 20px;font-size:13.5px;letter-spacing:.08em;color:var(--wb-ink)}
+.hb-wb .wbc-add:hover{background:var(--wb-green);border-color:var(--wb-green);color:#f5f1e8!important}
+.wbc-cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin-top:6px}
+.wbc-col{min-width:0;padding:14px 24px 4px;display:flex;flex-direction:column}
+.wbc-col:first-child{padding-left:8px}.wbc-col:last-child{padding-right:8px}
+.wbc-col+.wbc-col{border-left:1px solid var(--wb-line)}
+.wbc-colhead{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.wbc-colhead h3{font-family:'Noto Serif TC',serif;font-size:21px;font-weight:500;letter-spacing:.12em;margin:0;color:var(--wb-ink)}
+.wbc-num{display:inline-grid;place-items:center;min-width:26px;height:26px;padding:0 7px;border-radius:999px;background:var(--wb-green);color:#f5f1e8;font-size:13px;font-family:'JetBrains Mono',ui-monospace,monospace}
+.wbc-alert{margin-left:auto;font-size:12.5px;color:var(--wb-wine);letter-spacing:.06em}
+.wbc-list{list-style:none;margin:0;padding:0;flex:1}
+.wbc-empty{color:var(--wb-soft);font-size:13px;padding:18px 0;margin:0;flex:1}
+.wbc-row{display:grid;grid-template-columns:28px minmax(0,1fr) auto 18px;align-items:center;gap:12px;padding:10px 0}
+.wbc-row+.wbc-row{border-top:1px dashed #ece3d3}
+.hb-wb .wbc-body,.wb-modal .wbc-body{display:block;text-align:left;border:0;background:none;padding:2px 0;min-width:0;min-height:0!important;color:var(--wb-ink);width:100%}
+.wbc-body strong{display:block;font-weight:500;font-size:15px;letter-spacing:.04em;line-height:1.45;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:0!important}
+.wbc-body:hover strong{color:var(--wb-green)}
+.wbc-proj{display:block;font-size:12.5px;color:var(--wb-soft);letter-spacing:.04em;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hb-wb .wbc-check,.wb-modal .wbc-check{width:24px;height:24px;min-height:0!important;min-width:0!important;border-radius:50%;border:1.5px solid #8f887a;background:#fff;display:grid;place-items:center;color:transparent!important;padding:0;cursor:pointer}
+.hb-wb .wbc-check:hover,.wb-modal .wbc-check:hover{border-color:#2E4A3C;color:#2E4A3C!important}
+.wbc-ficon{color:#5a5448;display:grid;place-items:center}
+.wbc-badge{font-size:12px;padding:4px 12px;border-radius:4px;background:#ece7de;color:#5c564b;white-space:nowrap;letter-spacing:.04em}
+.wbc-b-late{background:#f6dcdc;color:#8a2c34}.wbc-b-today{background:#f3e5c6;color:#7a5a1d}.wbc-b-follow{background:#e3e9e2;color:#2E4A3C}
+.wbc-b-soft{background:none;border:1px dashed #cfc5b3;color:#7b7466}
+.wbc-chev{color:#6d675b;display:grid;place-items:center}
+.wbc-ag{display:grid;grid-template-columns:48px 11px minmax(0,1fr);gap:12px;align-items:start;padding:7px 0;position:relative}
+.wbc-ag+.wbc-ag:before{content:'';position:absolute;left:65px;top:-24px;height:34px;width:1px;background:var(--wb-green)}
+.wbc-time{font-size:13px;color:var(--wb-soft);padding-top:4px;text-align:right}
+.wbc-dot{width:11px;height:11px;border-radius:50%;background:var(--wb-green);margin-top:7px}
+.hb-wb .wbc-more{display:inline-flex;align-items:center;gap:8px;align-self:flex-start;border:0;background:none;padding:12px 0 4px;color:var(--wb-green);font-size:14px;letter-spacing:.1em;text-decoration:underline;text-underline-offset:5px;min-height:0!important}
+.wbc-full{--wb-ink:#262722;padding:6px 20px 16px}
+.wbc-full .wbc-list{max-height:min(60vh,520px);overflow:auto}
+.wbc-projline{flex:1;height:1px;background:#c9ad7c;margin:0 18px}
+.wb-projhead{border-top:0!important;padding-top:6px!important}
+.wb-projhead h2{white-space:nowrap}
+.hb-plate .wb-pcount{display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
+.hb-plate .wb-pcount button{border:0;background:none;padding:2px 0;font:inherit;font-size:12px;color:#b2895a;letter-spacing:.08em;cursor:pointer;min-height:0!important}
+.hb-plate .wb-pcount button:hover{text-decoration:underline}
+.hb-plate .wb-pcount button b{color:inherit;font-weight:500}
+.wb-modal{overflow:auto}
+@media (max-width:1100px){.wbc-sync{display:none}}
+@media (max-width:899px){
+  .hb-wb.wbc{padding:14px 14px 10px}
+  .wbc-head{gap:10px}
+  .wbc-titlewrap h2{font-size:23px}.wbc-date{border-right:0;padding:0;font-size:13px;margin-left:auto}
+  .wbc-filter{order:5;flex:1 1 100%}.wbc-filter select{width:100%;max-width:none}
+  .wbc-grow{display:none}
+  .hb-wb .wbc-hublink{order:6;border-right:0}.hb-wb .wbc-add{order:7;margin-left:auto}
+  .wbc-cols{grid-template-columns:minmax(0,1fr)}
+  .wbc-col,.wbc-col:first-child,.wbc-col:last-child{padding:14px 2px 6px}
+  .wbc-col+.wbc-col{border-left:0;border-top:1px solid var(--wb-line)}
+  .wbc-projline{display:none}
+}
+@media (max-width:420px){.wbc-fr{display:none}.wbc-row{gap:9px}.wbc-badge{padding:3px 8px;font-size:11.5px}.wbc-full{padding:4px 14px 14px}}
 </style>
 <style id="hb-vq-rfq-css">
 #hb-vq-rfq{margin:18px 0 26px;padding:22px;border:1px solid #c7c1b5;border-radius:10px;background:rgba(255,255,255,.48);color:#283d31;font-size:13px}
@@ -13593,94 +13663,74 @@ function HB_wbIcon(name,size){const s=size||16,p={width:s,height:s,viewBox:'0 0 
     check:[['path',{d:'M5 12.5l4.5 4.5L19 7.5'}]],caret:[['path',{d:'M7 10l5 5 5-5'}]]}[name]||[];
   return C('svg',p,...d.map((x,i)=>C(x[0],{key:i,...x[1]})))}
 
-function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub}){
+function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setProj,wbRef}){
   const h=u.default.createElement,{all,today,ready,error,sync}=tk;
-  const [day,setDay]=u.useState(today),[filter,setFilter]=u.useState(''),[editing,setEditing]=u.useState(null),[following,setFollowing]=u.useState(null);
-  const [quick,setQuick]=u.useState(''),[showAllOpen,setShowAllOpen]=u.useState(false),[showAllFollow,setShowAllFollow]=u.useState(false),[toast,setToast]=u.useState('');
+  const [editing,setEditing]=u.useState(null),[following,setFollowing]=u.useState(null),[full,setFull]=u.useState(''),[toast,setToast]=u.useState('');
   u.useEffect(()=>{if(!toast)return;const t=setTimeout(()=>setToast(''),3200);return()=>clearTimeout(t)},[toast]);
-  const say=m=>setToast(m);
+  const say=m=>setToast(m),LIM=3;
+  const pv=proj||'';
+  const projOk=pv&&pv!=='__co'&&!projects.some(p=>p.id===pv);
+  u.useEffect(()=>{if(projOk&&setProj)setProj('')},[projOk]);
+  const inProj=t=>!pv?true:pv==='__co'?!t.projectId||!projects.some(p=>p.id===t.projectId):t.projectId===pv;
+  const list=all.filter(inProj);
   const overdue=t=>!t.done&&t.due&&t.due<today;
-  /* 今日安排：選定日期中有時間的事項、工程行程與預約（追蹤事項另列） */
-  const agendaOf=d=>all.filter(t=>!HB_wbIsFollow(t)&&HB_wbOnDate(t,d)&&(HB_wbIsAgenda(t)||t.time))
-    .sort((a,b)=>Number(!!a.done)-Number(!!b.done)||(a.time||'99').localeCompare(b.time||'99')||a.title.localeCompare(b.title));
-  const agenda=agendaOf(day),agendaToday=agendaOf(today).filter(t=>!t.done);
-  const openTasks=all.filter(HB_wbOpenTask).sort((a,b)=>Number(!!overdue(b))-Number(!!overdue(a))||(a.due||'9999').localeCompare(b.due||'9999')||Number(!!b.urgent)-Number(!!a.urgent)||a.title.localeCompare(b.title));
-  const follows=all.filter(HB_wbOpenFollow).sort((a,b)=>(a.due||'9999').localeCompare(b.due||'9999')||a.title.localeCompare(b.title));
-  const overdueCount=openTasks.filter(overdue).length+follows.filter(overdue).length;
-  const pick=(list,lim)=>filter==='overdue'?list.filter(overdue):filter==='today'?list.filter(t=>t.due&&t.due<=today):list;
-  const openShown=pick(openTasks),followShown=pick(follows);
-  const openLimit=showAllOpen||filter==='open'?openShown.length:5,followLimit=showAllFollow||filter==='follow'?followShown.length:4;
-  const refs={today:u.useRef(null),open:u.useRef(null),follow:u.useRef(null)};
-  const tapMetric=k=>{const next=filter===k?'':k;setFilter(next);if(next==='today')setDay(today);
-    const el=refs[k==='overdue'?'open':k]&&refs[k==='overdue'?'open':k].current;
-    if(next&&el&&window.matchMedia('(max-width:899px)').matches)el.scrollIntoView({behavior:'smooth',block:'start'})};
+  const agenda=list.filter(t=>!t.done&&!HB_wbIsFollow(t)&&HB_wbOnDate(t,today)&&(HB_wbIsAgenda(t)||t.time))
+    .sort((a,b)=>(a.time||'99').localeCompare(b.time||'99')||a.title.localeCompare(b.title));
+  const rank=t=>overdue(t)?0:t.due===today?1:t.due?2:3;
+  const openTasks=list.filter(HB_wbOpenTask).sort((a,b)=>rank(a)-rank(b)||(a.due||'9999').localeCompare(b.due||'9999')||Number(!!b.urgent)-Number(!!a.urgent)||a.title.localeCompare(b.title));
+  const follows=list.filter(HB_wbOpenFollow).sort((a,b)=>(a.due||'9999').localeCompare(b.due||'9999')||a.title.localeCompare(b.title));
+  const lateOpen=openTasks.filter(overdue).length,dueFollow=follows.filter(t=>t.due&&t.due<=today).length;
   const complete=t=>{if(tk.update(t,{done:!t.done,completedAt:t.done?null:today}))say(t.done?'已恢復為未完成':'已完成（可在今日待辦恢復）')};
-  const newTask=extra=>setEditing({id:crypto.randomUUID(),title:'',projectId:'',assignee:'',due:today,time:'',category:'一般',note:'',urgent:false,source:'manual',isNew:true,...extra});
-  const addQuick=()=>{const v=quick.trim();if(!v)return;if(tk.add({id:crypto.randomUUID(),title:v.slice(0,200),projectId:'',assignee:'',due:'',time:'',category:'一般',note:'',urgent:false,source:'manual',createdAt:today})){setQuick('');say('已記下，日期空白會放在「稍後辦」')}};
-  const dueBadge=t=>{if(!t.due)return h('span',{className:'wb-badge wb-b-soft'},'未排期');const d=HB_wbDiff(t.due,today);
-    if(d<0)return h('span',{className:'wb-badge wb-b-late'},'逾期 '+(-d)+' 天');if(d===0)return h('span',{className:'wb-badge wb-b-today'},'今日到期');
-    return h('span',{className:'wb-badge'},t.due.slice(5).replace('-','/'))};
-  const menu=(t,items)=>h('details',{className:'wb-more'},h('summary',{'aria-label':'更多操作：'+t.title},HB_wbIcon('more',16)),
-    h('div',{className:'wb-menu'},items.filter(Boolean).map((it,i)=>h('button',{key:i,type:'button',className:it[2]||'',onClick:e=>{e.currentTarget.closest('details').open=false;it[1]()}},it[0]))));
-  const projLink=t=>t.projectId&&projects.some(p=>p.id===t.projectId)
-    ?h('button',{type:'button',className:'wb-proj',onClick:()=>onOpenProject(t.projectId),title:'進入「'+t.projectName+'」'},t.projectName)
-    :h('span',{className:'wb-proj wb-proj-plain'},t.projectName);
-  const metrics=[['today','今日安排',agendaToday.length,'calendar'],['open','未完成',openTasks.length,'clock'],['follow','待追蹤',follows.length,'chat'],['overdue','已逾期',overdueCount,'alert']];
-  const days=[-1,0,1].map(n=>HB_wbAddDays(day,n));
-  return h('section',{className:'hb-wb','aria-label':'專案工作台'},
-    h('header',{className:'wb-head'},
-      h('div',{className:'wb-date'},h('span',{className:'wb-mono'},HB_wbDot(today)),' ',HB_wbWeek(today).replace('週','星期')),
-      h('div',{className:'wb-title'},h('span',{className:'wb-rule'}),h('div',null,h('h1',null,'Le Carnet du Jour'),h('p',null,'專案工作台')),h('span',{className:'wb-rule'})),
-      h('div',{className:'wb-headact'},h('span',{className:'wb-sync'+(ready?'':' wb-sync-off'),title:error||''},sync),
-        h('button',{type:'button',className:'wb-btn wb-btn-line',onClick:()=>newTask({})},HB_wbIcon('plus',15),'新增事項'))),
+  const newTask=extra=>setEditing({id:crypto.randomUUID(),title:'',projectId:pv&&pv!=='__co'?pv:'',assignee:'',due:today,time:'',category:'一般',note:'',urgent:false,source:'manual',isNew:true,...extra});
+  const projName=t=>h('small',{className:'wbc-proj'},t.projectName);
+  const dueBadge=t=>{if(!t.due)return h('span',{className:'wbc-badge wbc-b-soft'},'未排期');const d=HB_wbDiff(t.due,today);
+    if(d<0)return h('span',{className:'wbc-badge wbc-b-late'},'逾期'+(d<-1?' '+(-d)+' 天':''));if(d===0)return h('span',{className:'wbc-badge wbc-b-today'},'今日到期');
+    return h('span',{className:'wbc-badge'},t.due.slice(5).replace('-','/'))};
+  const followBadge=t=>{if(!t.due)return h('span',{className:'wbc-badge wbc-b-soft'},'未定');const d=HB_wbDiff(t.due,today);
+    if(d<0)return h('span',{className:'wbc-badge wbc-b-late'},'逾期 '+(-d)+' 天');if(d===0)return h('span',{className:'wbc-badge wbc-b-follow'},'今天追蹤');
+    return h('span',{className:'wbc-badge'},t.due.slice(5).replace('-','/'))};
+  const chev=h('span',{className:'wbc-chev','aria-hidden':'true'},HB_wbIcon('right',16));
+  const agendaRow=t=>h('li',{key:t.id,className:'wbc-ag'},
+    h('span',{className:'wbc-time wb-mono'},t.time||'整天'),h('i',{className:'wbc-dot'}),
+    h('button',{type:'button',className:'wbc-body',onClick:()=>t.source==='auto'&&t.projectId&&projects.some(p=>p.id===t.projectId)?onOpenProject(t.projectId):setEditing({...t})},
+      h('strong',null,t.title),projName(t)));
+  const openRow=t=>h('li',{key:t.id,className:'wbc-row'+(overdue(t)?' is-late':'')},
+    h('button',{type:'button',className:'wbc-check','aria-label':'完成：'+t.title,title:'勾選完成',onClick:()=>complete(t)},HB_wbIcon('check',13)),
+    h('button',{type:'button',className:'wbc-body',onClick:()=>setEditing({...t})},h('strong',null,t.title),projName(t)),
+    dueBadge(t),chev);
+  const followRow=t=>h('li',{key:t.id,className:'wbc-row wbc-frow'+(t.due&&t.due<=today?' is-due':'')},
+    h('span',{className:'wbc-ficon'},HB_wbIcon('chat',19)),
+    h('button',{type:'button',className:'wbc-body',onClick:()=>setFollowing({...t}),title:'更新追蹤紀錄或結案'},h('strong',null,t.title),
+      h('small',{className:'wbc-proj'},(t.waitingFor?'等'+t.waitingFor+(/(回覆|回應|確認|報價)$/.test(t.waitingFor)?'':'回覆'):'等待回覆')+'・'+t.projectName)),
+    followBadge(t),chev);
+  const col=(title,count,extra,rows,render,emptyTxt,moreLabel,onMore,cls)=>h('article',{className:'wbc-col '+cls},
+    h('div',{className:'wbc-colhead'},h('h3',null,title),h('span',{className:'wbc-num'},count),extra),
+    rows.length===0?h('p',{className:'wbc-empty'},emptyTxt):h('ul',{className:'wbc-list'},rows.slice(0,LIM).map(render)),
+    h('button',{type:'button',className:'wbc-more',onClick:onMore},moreLabel,HB_wbIcon('arrow',14)));
+  const d=new Date(today+'T00:00:00');
+  const fullList=full==='open'?openTasks:full==='follow'?follows:[];
+  return h('section',{className:'hb-wb wbc',ref:wbRef,'aria-label':'工作台'},
+    h('header',{className:'wbc-head'},
+      h('div',{className:'wbc-titlewrap'},h('h2',null,'工作台'),h('span',{className:'wbc-fr'},'MON ATELIER')),
+      h('div',{className:'wbc-date'},String(d.getMonth()+1).padStart(2,'0')+'月'+String(d.getDate()).padStart(2,'0')+'日　'+HB_wbWeek(today).replace('週','星期')),
+      h('label',{className:'wbc-filter'},h('span',{className:'wbc-sr'},'專案篩選'),
+        h('select',{value:pv,onChange:e=>setProj&&setProj(e.target.value)},
+          h('option',{value:''},'全部專案'),h('option',{value:'__co'},'公司事務'),
+          projects.map(p=>h('option',{key:p.id,value:p.id},p.name))),HB_wbIcon('caret',15)),
+      h('span',{className:'wbc-grow'}),
+      h('span',{className:'wb-sync wbc-sync'+(ready?'':' wb-sync-off'),title:error||''},sync),
+      h('button',{type:'button',className:'wbc-hublink',onClick:onTodayHub},'開啟今日待辦',HB_wbIcon('out',13)),
+      h('button',{type:'button',className:'wbc-add',onClick:()=>newTask({})},HB_wbIcon('plus',15),'新增事項')),
     error&&h('div',{className:'wb-error',role:'alert'},error,h('button',{type:'button',onClick:tk.reload},'重新整理')),
-    h('nav',{className:'wb-metrics','aria-label':'篩選'},metrics.map(m=>h('button',{key:m[0],type:'button','aria-pressed':filter===m[0],
-      className:'wb-metric'+(filter===m[0]?' on':'')+(m[0]==='overdue'&&m[2]?' wb-red':''),onClick:()=>tapMetric(m[0])},
-      HB_wbIcon(m[3],19),h('span',null,m[1]),h('strong',null,m[2])))),
-    filter&&h('div',{className:'wb-filtering'},'篩選中：',metrics.find(m=>m[0]===filter)[1],h('button',{type:'button',onClick:()=>setFilter('')},'清除')),
-    h('div',{className:'wb-cols'},
-      /* 今日安排 */
-      h('article',{ref:refs.today,className:'wb-card'+(filter==='today'?' wb-focus':'')},
-        h('div',{className:'wb-cardhead'},h('h2',null,'今日安排'),h('button',{type:'button',className:'wb-link',onClick:onCalendar},'完整行事曆',HB_wbIcon('out',13))),
-        h('div',{className:'wb-days'},h('button',{type:'button',className:'wb-arrow','aria-label':'前一天',onClick:()=>setDay(HB_wbAddDays(day,-1))},HB_wbIcon('left',18)),
-          days.map(d=>h('button',{key:d,type:'button',className:'wb-day'+(d===day?' on':'')+(d===today?' is-today':''),onClick:()=>setDay(d)},h('small',null,HB_wbWeek(d)),h('b',null,Number(d.slice(8))))),
-          h('button',{type:'button',className:'wb-arrow','aria-label':'後一天',onClick:()=>setDay(HB_wbAddDays(day,1))},HB_wbIcon('right',18))),
-        day!==today&&h('button',{type:'button',className:'wb-backtoday',onClick:()=>setDay(today)},'回到今天'),
-        agenda.length===0?h('p',{className:'wb-empty'},day===today?'今天沒有排定的行程':'這天沒有排定的行程'):
-        h('ul',{className:'wb-agenda'},agenda.map(t=>h('li',{key:t.id,className:t.done?'is-done':''},
-          h('span',{className:'wb-time wb-mono'},t.time||'整天'),h('i',{className:'wb-dot'}),
-          h('div',{className:'wb-agbody'},h('strong',null,t.title),h('div',{className:'wb-chips'},projLink(t),t.category==='預約'&&h('span',{className:'wb-tag'},'預約'))),
-          menu(t,[[t.done?'恢復未完成':'標記完成',()=>complete(t)],['編輯',()=>setEditing({...t})],t.projectId&&['進入專案',()=>onOpenProject(t.projectId)]])))),
-        h('button',{type:'button',className:'wb-softbtn',onClick:()=>newTask({due:day,time:'09:00'})},HB_wbIcon('plus',15),'安排時間')),
-      /* 未完成事項 */
-      h('article',{ref:refs.open,className:'wb-card'+(filter==='open'||filter==='overdue'?' wb-focus':'')},
-        h('div',{className:'wb-cardhead'},h('h2',null,'未完成事項'),h('span',{className:'wb-note'},'逾期優先・依期限')),
-        openShown.length===0?h('p',{className:'wb-empty'},filter?'沒有符合篩選的事項':'目前沒有未完成事項'):
-        h('ul',{className:'wb-list'},openShown.slice(0,openLimit).map(t=>h('li',{key:t.id,className:overdue(t)?'is-late':''},
-          h('button',{type:'button',className:'wb-check','aria-label':'完成：'+t.title,onClick:()=>complete(t)},HB_wbIcon('check',13)),
-          h('div',{className:'wb-lbody'},h('strong',{onClick:()=>setEditing({...t}),role:'button',tabIndex:0},t.title),h('div',{className:'wb-chips'},projLink(t),t.category==='缺失'&&h('span',{className:'wb-tag'},'缺失'))),
-          h('div',{className:'wb-due'},dueBadge(t),t.due&&h('small',{className:'wb-mono'},HB_wbDot(t.due))),
-          menu(t,[['編輯',()=>setEditing({...t})],t.projectId&&['進入專案',()=>onOpenProject(t.projectId)],['改為追蹤',()=>{if(tk.update(t,{kind:'follow',waitingFor:t.waitingFor||'',due:t.due||HB_wbAddDays(today,3)}))say('已移到待追蹤')}],
-            t.source!=='auto'?['刪除',()=>{if(confirm('確定刪除「'+t.title+'」？'))tk.update(t,{deleted:true})&&say('已刪除')},'wb-danger']:['隱藏提醒',()=>{tk.update(t,{deleted:true})&&say('已隱藏')},'wb-danger']])))),
-        openShown.length>5&&filter!=='open'&&h('button',{type:'button',className:'wb-more-link',onClick:()=>setShowAllOpen(v=>!v)},showAllOpen?'收合':'查看全部 '+openShown.length+' 項',HB_wbIcon('arrow',14))),
-      /* 待追蹤 */
-      h('article',{ref:refs.follow,className:'wb-card'+(filter==='follow'?' wb-focus':'')},
-        h('div',{className:'wb-cardhead'},h('h2',null,'待追蹤'),h('button',{type:'button',className:'wb-link',onClick:()=>newTask({kind:'follow',waitingFor:'',due:HB_wbAddDays(today,3),time:''})},HB_wbIcon('plus',13),'新增追蹤')),
-        followShown.length===0?h('p',{className:'wb-empty'},filter?'沒有符合篩選的追蹤':'目前沒有等待回覆的事'):
-        h('ul',{className:'wb-follow'},followShown.slice(0,followLimit).map(t=>h('li',{key:t.id,className:overdue(t)||t.due===today?'is-due':''},
-          h('div',{className:'wb-fbody'},h('strong',{onClick:()=>setEditing({...t}),role:'button',tabIndex:0},t.title),
-            h('div',{className:'wb-fmeta'},projLink(t),h('span',null,'等待｜',t.waitingFor||'未填')),
-            t.followLog&&t.followLog.length?h('div',{className:'wb-flast'},'上次：',t.followLog[t.followLog.length-1].note):null),
-          h('div',{className:'wb-fnext'},h('small',null,'下次追蹤'),h('b',{className:'wb-mono'},HB_wbDot(t.due)||'未定'),overdue(t)?h('em',null,'已過 '+(-HB_wbDiff(t.due,today))+' 天'):null),
-          h('button',{type:'button',className:'wb-btn wb-btn-line wb-btn-sm',onClick:()=>setFollowing({...t})},'更新追蹤')))),
-        followShown.length>4&&filter!=='follow'&&h('button',{type:'button',className:'wb-more-link',onClick:()=>setShowAllFollow(v=>!v)},showAllFollow?'收合':'查看全部 '+followShown.length+' 項',HB_wbIcon('arrow',14)))),
-    /* 快速新增 */
-    h('form',{className:'wb-quick',onSubmit:e=>{e.preventDefault();addQuick()}},
-      h('span',{className:'wb-qlabel'},HB_wbIcon('bulb',17),'靈感與待辦'),
-      h('input',{value:quick,onChange:e=>setQuick(e.target.value),maxLength:200,placeholder:'快速記下待辦，稍後再安排日期與專案…','aria-label':'快速新增待辦'}),
-      h('button',{type:'submit',className:'wb-qadd','aria-label':'新增',disabled:!quick.trim()},HB_wbIcon('plus',20))),
-    h('div',{className:'wb-foot'},h('button',{type:'button',className:'wb-link',onClick:onTodayHub},'開啟完整今日待辦',HB_wbIcon('arrow',14))),
+    h('div',{className:'wbc-cols'},
+      col('今日安排',agenda.length,null,agenda,agendaRow,'今天沒有排定的行程','查看完整行程',onCalendar,'wbc-today'),
+      col('未完成',openTasks.length,lateOpen?h('span',{className:'wbc-alert'},'逾期 '+lateOpen):null,openTasks,openRow,pv?'這個專案目前沒有未完成事項':'目前沒有未完成事項','查看全部 '+openTasks.length+' 項',()=>setFull('open'),'wbc-open'),
+      col('待追蹤',follows.length,dueFollow?h('span',{className:'wbc-alert'},'待處理 '+dueFollow):null,follows,followRow,pv?'這個專案目前沒有追蹤事項':'目前沒有等待回覆的事','查看全部 '+follows.length+' 項',()=>setFull('follow'),'wbc-follow')),
     toast&&h('div',{className:'wb-toast',role:'status'},toast),
+    full&&h(HbWbModal,{title:(full==='open'?'未完成':'待追蹤')+'（'+fullList.length+'）',sub:pv?(pv==='__co'?'公司事務':(projects.find(p=>p.id===pv)||{}).name||''):'全部專案',onClose:()=>setFull('')},
+      h('div',{className:'wbc wbc-full'},fullList.length===0?h('p',{className:'wbc-empty'},'沒有事項'):h('ul',{className:'wbc-list'},fullList.map(full==='open'?openRow:followRow)),
+        h('div',{className:'wb-mact',style:{padding:'12px 0 2px'}},h('button',{type:'button',className:'wb-btn wb-btn-ghost',onClick:()=>newTask(full==='follow'?{kind:'follow',waitingFor:'',due:HB_wbAddDays(today,3)}:{})},HB_wbIcon('plus',14),full==='follow'?'新增追蹤':'新增事項'),
+          h('span',{style:{flex:1}}),h('button',{type:'button',className:'wb-btn wb-btn-solid',onClick:()=>setFull('')},'完成')))),
     editing&&h(HbWbEditor,{key:editing.id,initial:editing,projects,today,onClose:()=>setEditing(null),
       onSave:v=>{const {isNew,...task}=v;if(isNew?tk.add(task):tk.replace(task)){setEditing(null);say(isNew?'已新增':'已儲存')}},
       onDelete:v=>{if(confirm('確定刪除「'+v.title+'」？')&&tk.update(v,{deleted:true})){setEditing(null);say('已刪除')}}}),
@@ -15916,7 +15966,8 @@ function mm({photos,index,onIndexChange,onClose,onAnnotate,onDelete,onDownload})
 
 function $y(l){return l==null?null:(l/(1024*1024)).toFixed(1)}function Iy({projects:l,onOpen:t,onNew:e,onRefresh:n,refreshing:a,storageUsedBytes:i,onManageStaff:o,pickerMode:hbPM,onBack:hbBack,onGoCompany:hbGoCo,progressRanges:hbProg={},onWbOpen:hbWbOpen,onCalendar:hbCal,onTodayHub:hbTodayHub}){
   let c=$y(i),r=i!=null?Math.min(100,i/10737418240*100):null,[hbMenuOpen,hbSetMenuOpen]=(0,u.useState)(!1);
-  const hbTk=HB_useToday(l,!hbPM),hbCounts=hbPM?{}:HB_wbProjectCounts(hbTk.all);
+  const hbTk=HB_useToday(l,!hbPM),hbCounts=hbPM?{}:HB_wbProjectCounts(hbTk.all),[hbProj,hbSetProj]=(0,u.useState)(""),hbWbRef=(0,u.useRef)(null);
+  const hbShowProj=id=>{hbSetProj(id);setTimeout(()=>{const el=hbWbRef.current;if(el)el.scrollIntoView({behavior:"smooth",block:"start"})},30)};
   return u.default.createElement("div",{className:hbPM?undefined:"hb-project-library",style:{background:s.paper,minHeight:"100vh",position:"relative"}},
     u.default.createElement("style",null,`
       @keyframes iyBreatheA { 0%,100%{transform:scale(1);opacity:.7} 50%{transform:scale(1.3);opacity:1} }
@@ -15950,7 +16001,7 @@ function $y(l){return l==null?null:(l/(1024*1024)).toFixed(1)}function Iy({proje
           )
         )
       ),
-      hbPM&&u.default.createElement("div",{className:"hb-library-intro",style:{textAlign:"center",padding:"8px 0 22px"}},
+      u.default.createElement("div",{className:"hb-library-intro",style:{textAlign:"center",padding:"8px 0 22px"}},
         u.default.createElement("img",{className:"hb-logo-mark",src:HB_LOGO_MARK,alt:"\u8d6b\u67cf\u7a7a\u9593\u8a2d\u8a08",style:{width:44,height:44,display:"block",margin:"0 auto 10px",objectFit:"contain"}}),
         u.default.createElement("div",{className:"mono",style:{color:s.ocean,fontSize:10.5,letterSpacing:3,marginBottom:12,fontWeight:400}},"HERFULSINS INTERIOR DESIGN"),
         u.default.createElement("h1",{style:{color:s.ink,fontSize:22,fontWeight:300,margin:0,letterSpacing:"0.08em",fontFamily:"'IansuiTitle',serif"}},hbPM?"\u5DE5\u7A0B\u5831\u50F9\u55AE":"\u8D6B\u67CF\u7A7A\u9593\u8A2D\u8A08"),
@@ -15959,20 +16010,20 @@ function $y(l){return l==null?null:(l/(1024*1024)).toFixed(1)}function Iy({proje
     ),
 
     !hbPM&&u.default.createElement("div",{style:{padding:"0 16px",position:"relative",zIndex:2}},
-      u.default.createElement(HbWorkbench,{tk:hbTk,projects:l,onOpenProject:id=>{(hbWbOpen||t)(id)},onCalendar:()=>{hbCal&&hbCal()},onTodayHub:()=>{hbTodayHub&&hbTodayHub()}})),
+      u.default.createElement(HbWorkbench,{tk:hbTk,projects:l,proj:hbProj,setProj:hbSetProj,wbRef:hbWbRef,onOpenProject:id=>{(hbWbOpen||t)(id)},onCalendar:()=>{hbCal&&hbCal()},onTodayHub:()=>{hbTodayHub&&hbTodayHub()}})),
     u.default.createElement("div",{style:{padding:"6px 16px 112px",position:"relative",zIndex:1}},
       !hbPM&&u.default.createElement("div",{className:"wb-projhead"},
-        u.default.createElement("h2",null,"\u5C08\u6848",u.default.createElement("small",null,l.length," \u6848")),
+        u.default.createElement("h2",null,"\u5C08\u6848\u4E00\u89BD",u.default.createElement("small",null,l.length," \u6848")),u.default.createElement("span",{className:"wbc-projline","aria-hidden":"true"}),
         u.default.createElement("button",{type:"button",onClick:e,className:"wb-btn wb-btn-solid",style:{fontFamily:"inherit"}},u.default.createElement(E,{name:"plus",size:16})," \u65B0\u589E\u6848\u4EF6")),
       l.length===0?u.default.createElement("div",{style:{textAlign:"center",color:s.inkSoft,marginTop:60}},
         u.default.createElement(E,{name:"clipboard-list",size:36,style:{margin:"0 auto 10px",opacity:.5}}),
         u.default.createElement("p",{style:{fontSize:14}},hbPM?"\u76EE\u524D\u9084\u6C92\u6709\u4EFB\u4F55\u6848\u4EF6":"\u9084\u6C92\u6709\u6848\u4EF6\uFF0C\u9EDE\u64CA\u4E0A\u65B9\u6309\u9215\u958B\u59CB\u5EFA\u7ACB\u7B2C\u4E00\u7B46\u7D00\u9304")
       ):u.default.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(178px, 1fr))",gap:"0 16px"}},
-        [...l].sort((hbA,hbB)=>(/^示範案件/.test(hbA.name||"")?2:0)+(hbA.status==="\u6D41\u6A19"?1:0)-(/^示範案件/.test(hbB.name||"")?2:0)-(hbB.status==="\u6D41\u6A19"?1:0)).map((d,idx)=>u.default.createElement(Ry,{key:d.id,project:d,motionIndex:idx,enableMotion:!hbPM,range:hbProg[d.id]||hbProg["name:"+d.name],wbCount:hbPM?null:hbCounts[d.id]||{open:0,follow:0},onClick:()=>t(d.id)}))
+        [...l].sort((hbA,hbB)=>(/^示範案件/.test(hbA.name||"")?2:0)+(hbA.status==="\u6D41\u6A19"?1:0)-(/^示範案件/.test(hbB.name||"")?2:0)-(hbB.status==="\u6D41\u6A19"?1:0)).map((d,idx)=>u.default.createElement(Ry,{key:d.id,project:d,motionIndex:idx,enableMotion:!hbPM,range:hbProg[d.id]||hbProg["name:"+d.name],wbCount:hbPM?null:hbCounts[d.id]||{open:0,follow:0},onCount:hbPM?null:()=>hbShowProj(d.id),onClick:()=>t(d.id)}))
       )
     )
   );
-}function Ry({project:l,onClick:t,range:hbR,motionIndex=0,enableMotion=false,wbCount:hbWc=null}){
+}function Ry({project:l,onClick:t,range:hbR,motionIndex=0,enableMotion=false,wbCount:hbWc=null,onCount:hbOnCount=null}){
 let hbEN={};hbEN[fn[0]]="EARLY DESIGN";hbEN[fn[1]]="IN PROGRESS";hbEN[fn[2]]="COMPLETED";hbEN[fn[3]]="WITHDRAWN";
 let hbDone=l.status===fn[2];
 let hbYr=String(l.updatedAt||"").slice(0,4)||String(new Date().getFullYear());
@@ -16000,7 +16051,7 @@ return C("div",{onClick:t,role:"button",tabIndex:0,"aria-label":"開啟專案：
     C("div",{className:"lab mono"},hbStagePct,"%",hbTxt?" \xB7 "+hbTxt:"")
   ):null,
   C("div",{className:"meta mono"},(l.photoCount||0)," \u5E40 \xB7 ",(l.quoteCount||0)," \u4EFD \xB7 ",Tl(l.updatedAt)),
-  hbWc&&(hbWc.open||hbWc.follow)?C("div",{className:"wb-pcount"},"\u672A\u5B8C\u6210 ",C("b",null,hbWc.open),"\u3000\u5F85\u8FFD\u8E64 ",C("b",null,hbWc.follow)):null
+  hbWc&&(hbWc.open||hbWc.follow)?C("div",{className:"wb-pcount"},hbWc.open?C("button",{type:"button",onClick:ev=>{ev.stopPropagation();hbOnCount&&hbOnCount()},"aria-label":"查看「"+l.name+"」的未完成事項"},"未完成 ",C("b",null,hbWc.open)," ›"):null,hbWc.follow?C("button",{type:"button",onClick:ev=>{ev.stopPropagation();hbOnCount&&hbOnCount()},"aria-label":"查看「"+l.name+"」的待追蹤事項"},"待追蹤 ",C("b",null,hbWc.follow)," ›"):null):null
 )}
 function Py({onCancel:l,onCreate:t}){let[e,n]=(0,u.useState)(""),[a,i]=(0,u.useState)(""),[o,f]=(0,u.useState)(null),[c,r]=(0,u.useState)(!1),[d,h]=(0,u.useState)(""),m=()=>{if(!navigator.geolocation){h("\u9019\u500B\u88DD\u7F6E\u4E0D\u652F\u63F4\u5B9A\u4F4D");return}r(!0),h(""),navigator.geolocation.getCurrentPosition(p=>{f({lat:p.coords.latitude,lng:p.coords.longitude}),r(!1)},()=>{h("\u7121\u6CD5\u53D6\u5F97\u76EE\u524D\u4F4D\u7F6E\uFF0C\u8ACB\u78BA\u8A8D\u5DF2\u5141\u8A31\u5B9A\u4F4D\u6B0A\u9650"),r(!1)},{enableHighAccuracy:!0,timeout:1e4})};return u.default.createElement("div",{style:{position:"fixed",inset:0,background:"rgba(43,38,32,0.45)",display:"flex",alignItems:"center",justifyContent:"center",padding:20,zIndex:50}},u.default.createElement("div",{className:"fade-in",style:{background:s.card,borderRadius:10,padding:22,width:"100%",maxWidth:360}},u.default.createElement("h3",{style:{margin:"0 0 14px",fontSize:17,fontWeight:400,color:s.oceanDark}},"\u65B0\u589E\u6848\u4EF6"),u.default.createElement("label",{style:{fontSize:12.5,color:s.inkSoft}},"\u6848\u4EF6\u540D\u7A31"),u.default.createElement("input",{value:e,onChange:p=>n(p.target.value),placeholder:"\u4F8B\uFF1A\u9673\u5B85\u5BA4\u5167\u88DD\u4FEE",style:el}),u.default.createElement("label",{style:{fontSize:12.5,color:s.inkSoft}},"\u5730\u5740\uFF08\u9078\u586B\uFF09"),u.default.createElement("input",{value:a,onChange:p=>i(p.target.value),placeholder:"\u65BD\u5DE5\u5730\u9EDE",style:el}),u.default.createElement("button",{type:"button",onClick:m,disabled:c,style:{...ll,width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:6,marginBottom:6,padding:"9px 0",fontSize:13}},c?u.default.createElement(E,{name:"loader",size:14,className:"animate-spin"}):u.default.createElement(E,{name:"map-pin",size:14}),o?"\u91CD\u65B0\u5B9A\u4F4D\u76EE\u524D\u4F4D\u7F6E":"\u6A19\u8A18\u76EE\u524D\u4F4D\u7F6E"),o&&u.default.createElement("p",{className:"mono",style:{fontSize:11,color:s.shoal,margin:"0 0 10px"}},"\u5DF2\u5B9A\u4F4D ",o.lat.toFixed(5),", ",o.lng.toFixed(5)),d&&u.default.createElement("p",{style:{fontSize:11.5,color:s.danger,margin:"0 0 10px"}},d),u.default.createElement("div",{style:{display:"flex",gap:10,marginTop:12}},u.default.createElement("button",{onClick:l,style:{...ll,flex:1}},"\u53D6\u6D88"),u.default.createElement("button",{disabled:!e.trim(),onClick:()=>t(e.trim(),a.trim(),o?.lat,o?.lng),style:{...Dl,flex:1,opacity:e.trim()?1:.5}},"\u5EFA\u7ACB"))))}var el={width:"100%",boxSizing:"border-box",border:`1px solid ${s.line}`,borderRadius:8,padding:"9px 11px",fontSize:14,marginBottom:12,marginTop:4,background:"#fff",color:s.ink,fontFamily:"inherit"},Dl={background:s.lemon,color:s.oceanDark,border:"none",borderRadius:8,padding:"11px 0",fontWeight:400,fontSize:14,cursor:"pointer"},lo={background:s.danger,color:"#fff",border:"none",borderRadius:8,padding:"11px 0",fontWeight:400,fontSize:14,cursor:"pointer"},ll={background:"transparent",color:s.oceanDark,border:`1px solid ${s.ocean}`,borderRadius:8,padding:"11px 0",fontWeight:400,fontSize:14,cursor:"pointer"},ri={width:"100%",background:"none",border:"none",cursor:"pointer",display:"flex",alignItems:"center",gap:10,padding:"12px 14px",fontSize:13.5,fontWeight:400,color:s.ink,textAlign:"left"};function HbSignatureModal({project,files,folders,onClose,notify,onSaved,onStore}){
   let [step,setStep]=u.default.useState("pick");
