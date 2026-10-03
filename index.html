@@ -13504,7 +13504,7 @@ function Gy(){let[l,t]=(0,u.useState)(!0),[e,n]=(0,u.useState)(!1),[a,i]=(0,u.us
 /* ===================================================================
    設計需求問卷：公司端建立連結 → 業主線上填 → 答案回到案件
    =================================================================== */
-var HB_SURVEY=[
+var HB_SURVEY_ALL=[
  {g:"基本資料",q:[
    {k:"name",t:"text",l:"稱呼",ph:"例：陳先生"},
    {k:"phone",t:"text",l:"聯絡電話"},
@@ -13521,7 +13521,8 @@ var HB_SURVEY=[
    {k:"who",t:"many",l:"家庭成員（可複選）",o:["夫妻","小孩","長輩","寵物","單身","三代同堂"]},
    {k:"pet",t:"text",l:"寵物種類與數量（選填）"}]},
  {g:"預算與時程",q:[
-   {k:"budget",t:"one",l:"裝修預算",o:["100 萬以下","100–200 萬","200–300 萬","300–500 萬","500 萬以上","還在評估"]},
+   {k:"budget",t:"one",l:"裝修預算",o:["100 萬以下","100–200 萬","200–300 萬","300–500 萬","500 萬以上","還在評估","其他"],other:"budgetOther",otherPh:"請填寫預算金額，例：250 萬"},
+   {k:"budgetOther",t:"hidden",l:"其他預算"},
    {k:"budgetInc",t:"many",l:"預算希望包含（可複選）",o:["系統櫃","活動家具","家電","窗簾","燈具","冷氣","全屋清潔"]},
    {k:"start",t:"text",l:"希望進場時間",ph:"例：明年三月"},
    {k:"deadline",t:"text",l:"希望完工時間（選填）"}]},
@@ -13538,6 +13539,11 @@ var HB_SURVEY=[
    {k:"from",t:"one",l:"從哪裡知道我們",o:["Google 搜尋","Instagram","Facebook","朋友介紹","經過看到","其他"]},
    {k:"note",t:"textarea",l:"其他想告訴我們的事（選填）"}]}
 ];
+/* 2026-10：問卷只留「基本資料」與「預算」；HB_SURVEY_ALL 保留完整欄位，舊問卷的答案照樣顯示 */
+var HB_SURVEY=[
+ {g:"基本資料",q:HB_SURVEY_ALL[0].q},
+ {g:"預算",q:HB_SURVEY_ALL.find(x=>x.g==="預算與時程").q.filter(x=>x.k==="budget"||x.k==="budgetOther"||x.k==="budgetInc")}
+];
 function HB_svToken(){return Math.random().toString(36).slice(2,10)+Math.random().toString(36).slice(2,6)}
 function HB_svUrl(token){
   var base=window.location.origin+window.location.pathname;
@@ -13552,7 +13558,7 @@ function HB_svSummary(a){
   if(a.htype)bits.push(a.htype);
   if(a.size)bits.push(a.size);
   if(a.layout)bits.push(a.layout);
-  if(a.budget)bits.push("預算 "+a.budget);
+  if(a.budget)bits.push("預算 "+(a.budget==="其他"&&a.budgetOther?a.budgetOther:a.budget));
   if(Array.isArray(a.style)&&a.style.length)bits.push(a.style.slice(0,2).join("、"));
   return bits.join("　·　");
 }
@@ -13618,6 +13624,7 @@ function HbSurveyPublic({token}){
         let val=a[qq.k];
         let inp={width:"100%",boxSizing:"border-box",border:`1px solid ${s.line}`,borderRadius:9,padding:"10px 12px",
           fontSize:15,background:"#fff",color:s.ink,fontFamily:"inherit",marginTop:5};
+        if(qq.t==="hidden")return null;
         return h("div",{key:qq.k,style:{marginBottom:14}},
           h("label",{style:{fontSize:12.5,color:s.inkSoft}},qq.l),
           qq.t==="text"?h("input",{value:val||"",onChange:e=>set(qq.k,e.target.value),placeholder:qq.ph||"",style:inp}):
@@ -13628,7 +13635,8 @@ function HbSurveyPublic({token}){
               return h("button",{key:op,type:"button",onClick:()=>qq.t==="one"?set(qq.k,val===op?"":op):toggle(qq.k,op),
                 style:{border:`1px solid ${on?s.ocean:s.line}`,background:on?"rgba(46,74,60,0.12)":"#fff",
                   color:on?s.oceanDark:s.inkSoft,borderRadius:999,padding:"7px 14px",fontSize:13,cursor:"pointer",fontFamily:"inherit"}},op);
-            }))
+            })),
+          qq.other&&val==="其他"?h("input",{value:a[qq.other]||"",onChange:e=>set(qq.other,e.target.value),placeholder:qq.otherPh||"請填寫",autoFocus:!0,style:{...inp,marginTop:9}}):null
         );
       })
     )),
@@ -13799,7 +13807,7 @@ function HbSurveyHub({onBack,notify,projects,onProjectCreated}){
                 h("button",{onClick:()=>remove(r),
                   style:{border:"none",background:"none",color:s.danger,cursor:"pointer",padding:"8px 12px",fontSize:12.5,fontFamily:"inherit"}},"刪除")),
               done?h("div",null,
-                HB_SURVEY.map(sec=>{
+                HB_SURVEY_ALL.map(sec=>{
                   let rows=sec.q.map(qq=>{
                     let v=r.answers[qq.k];
                     if(Array.isArray(v))v=v.join("、");
