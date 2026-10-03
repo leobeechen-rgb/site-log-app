@@ -13541,8 +13541,7 @@ var HB_SURVEY_ALL=[
 ];
 /* 2026-10：問卷只留「基本資料」與「預算」；HB_SURVEY_ALL 保留完整欄位，舊問卷的答案照樣顯示 */
 var HB_SURVEY=[
- {g:"基本資料",q:[...HB_SURVEY_ALL[0].q,{k:"addr",t:"text",l:"地址（施工地點）",ph:"例：嘉義市西區新民路168號"}]},
- {g:"預算",q:HB_SURVEY_ALL.find(x=>x.g==="預算與時程").q.filter(x=>x.k==="budget"||x.k==="budgetOther")}
+ {g:"基本資料",q:[...HB_SURVEY_ALL[0].q,{k:"addr",t:"text",l:"地址（施工地點）",ph:"例：嘉義市西區新民路168號"}]}
 ];
 function HB_svToken(){return Math.random().toString(36).slice(2,10)+Math.random().toString(36).slice(2,6)}
 function HB_svUrl(token){
