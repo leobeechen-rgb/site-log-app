@@ -3705,6 +3705,8 @@ button.wb-proj:hover{background:#e6eee7;color:var(--wb-green)}
 .wbc-titlewrap{display:flex;align-items:baseline;gap:18px}
 .wbc-titlewrap h2{font-family:'Noto Serif TC',serif;font-size:28px;font-weight:500;letter-spacing:.2em;margin:0;color:var(--wb-ink)}
 .wbc-fr{font-size:11px;letter-spacing:.42em;color:#b2895a}
+.wbc-titlewrap h2.wbc-carnet{font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:500;font-size:32px;letter-spacing:.02em;white-space:nowrap}
+@media (max-width:899px){.wbc-titlewrap h2.wbc-carnet{font-size:25px}}
 .wbc-date{font-size:14px;letter-spacing:.08em;color:#4f4a40;padding:0 16px;border-right:1px solid var(--wb-line);white-space:nowrap}
 .wbc-filter{position:relative;display:inline-flex;align-items:center}
 .wbc-filter select{appearance:none;-webkit-appearance:none;border:1px solid var(--wb-line);background:#f4efe5;border-radius:999px;padding:7px 34px 7px 18px;font:inherit;font-size:13.5px;color:var(--wb-ink);max-width:220px;min-height:36px;cursor:pointer}
@@ -13711,7 +13713,7 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
   const fullList=full==='open'?openTasks:full==='follow'?follows:[];
   return h('section',{className:'hb-wb wbc',ref:wbRef,'aria-label':'工作台'},
     h('header',{className:'wbc-head'},
-      h('div',{className:'wbc-titlewrap'},h('h2',null,'工作台'),h('span',{className:'wbc-fr'},'MON ATELIER')),
+      h('div',{className:'wbc-titlewrap'},h('h2',{className:'wbc-carnet'},'Le Carnet du Jour'),h('span',{className:'wbc-fr'},'工作台')),
       h('div',{className:'wbc-date'},String(d.getMonth()+1).padStart(2,'0')+'月'+String(d.getDate()).padStart(2,'0')+'日　'+HB_wbWeek(today).replace('週','星期')),
       h('label',{className:'wbc-filter'},h('span',{className:'wbc-sr'},'專案篩選'),
         h('select',{value:pv,onChange:e=>setProj&&setProj(e.target.value)},
@@ -13855,7 +13857,7 @@ function HbTodayHub({projects=[],onBack,onOpenProject}){
  return h('main',{className:'hb-today td-arch-edition','data-today-layout':'arch-b'},h('style',null,HB_TODAY_CSS),
  h('div',{className:'td-top'},h('button',{className:'td-back',onClick:onBack},'← 返回首頁'),h('span',{className:'td-brand'},h('button',{className:'td-back',style:{marginRight:14},onClick:()=>pickLayout('timeline')},'時間軸檢視'),'HERFULSINS / WORKSPACE')),
  h('div',{className:'td-notebook'},h(HbTodayArch),
- h('header',{className:'td-header'},h('div',{className:'td-heading'},h('p',{className:'td-eyebrow'},'HERFULSINS'),h('p',{className:'td-studio'},'赫柏空間設計'),h('p',{className:'td-date'},new Intl.DateTimeFormat('zh-TW',{timeZone:'Asia/Taipei',dateStyle:'full'}).format(new Date())),h('h1',{style:{fontFamily:"'Noto Serif TC',serif",fontStyle:'normal',fontWeight:500,letterSpacing:'.24em',paddingLeft:'.24em'}},'今日待辦')),h('button',{className:'td-primary',onClick:create,disabled:!ready},'＋ 新增待辦')),
+ h('header',{className:'td-header'},h('div',{className:'td-heading'},h('p',{className:'td-eyebrow'},'HERFULSINS'),h('p',{className:'td-studio'},'赫柏空間設計'),h('p',{className:'td-date'},new Intl.DateTimeFormat('zh-TW',{timeZone:'Asia/Taipei',dateStyle:'full'}).format(new Date())),h('h1',null,'Le Carnet du Jour'),h('p',{className:'td-title-cn'},'今日待辦')),h('button',{className:'td-primary',onClick:create,disabled:!ready},'＋ 新增待辦')),
  h('section',{className:'td-priorities','aria-labelledby':'td-priority-title'},h('div',{className:'td-sectionhead'},h('h2',{id:'td-priority-title'},'今日重點'),h('span',null,'LES PRIORITÉS')),
  priorities.length?h('div',{className:'td-focusgrid'},priorities.map((t,i)=>h('button',{key:t.id,className:'td-focuscard',onClick:()=>setEditing({...t}),'aria-label':'編輯重點：'+t.title},h('span',{className:'td-focusno'},String(i+1).padStart(2,'0')),h('span',{className:'td-focusbody'},h('strong',null,t.title),h('span',null,t.projectName),h('small',{className:overdue(t)||t.urgent?'td-focusurgent':''},overdue(t)?'已逾期':t.urgent?'優先處理':t.due?'今天到期':'尚未排日期'))))):h('div',{className:'td-focusempty'},h('span',null,loading?'正在整理今日工作…':'今天的待辦已清空。'),h('span',null,loading?'':nextTasks.length?'接下來的安排已列在今日摘要。':'留一點空白，給下一個好想法。'))),
  error&&h('div',{className:'td-error',role:'alert'},error),
