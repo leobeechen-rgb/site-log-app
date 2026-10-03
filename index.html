@@ -13614,9 +13614,7 @@ function HbSurveyPublic({token}){
     h("div",{style:{textAlign:"center",marginBottom:26}},
       h("img",{src:HB_LOGO_MARK,alt:"",style:{width:44,height:44,margin:"0 auto 10px",display:"block",objectFit:"contain"}}),
       h("div",{className:"mono",style:{color:s.ocean,fontSize:10,letterSpacing:3,marginBottom:12}},"HERFULSINS INTERIOR DESIGN"),
-      h("h1",{style:{fontSize:22,fontWeight:300,margin:"0 0 8px",letterSpacing:"0.06em"}},row&&row.title?row.title:"設計需求問卷"),
-      h("p",{style:{fontSize:13,color:s.inkSoft,lineHeight:1.9,margin:0}},
-        "填得越清楚，我們第一次提案就能越接近你想要的樣子。",h("br"),"不確定的欄位可以留白，之後再聊。")),
+      h("h1",{style:{fontSize:22,fontWeight:300,margin:"0 0 8px",letterSpacing:"0.06em"}},row&&row.title?row.title:"設計需求問卷")),
 
     HB_SURVEY.map(sec=>h("div",{key:sec.g,style:{marginBottom:24}},
       h("div",{style:{fontSize:13,color:s.oceanDark,borderLeft:`3px solid ${s.ocean}`,paddingLeft:9,marginBottom:12,letterSpacing:"0.04em"}},sec.g),
