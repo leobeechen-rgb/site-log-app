@@ -14040,7 +14040,7 @@ function HB_svCaseName(a){
 }
 function HB_svGenPw(){let c="abcdefghjkmnpqrstuvwxyz23456789",o="",b=new Uint32Array(8);crypto.getRandomValues(b);for(let i=0;i<8;i++)o+=c[b[i]%c.length];return o}
 function HB_svLoginMsg(name,pw){
-  return "您好，這是赫柏空間設計為您建立的專屬案件頁「"+name+"」。\n之後的設計進度、照片、圖面都會放在這裡：\n"+window.location.origin+window.location.pathname+"\n\n登入時選「業主登入」，輸入案件密碼："+pw+"\n（也可以下載「赫柏空間設計」App 使用）";
+  return "您好，這是赫柏空間設計為您建立的專屬案件頁「"+name+"」。\n之後的設計進度、照片、圖面都會放在這裡：\n"+window.location.origin+window.location.pathname+"\n\n登入時選「業主登入」，輸入案件密碼："+pw+"\n\niPhone 也可以下載「赫柏空間設計」App 使用：\nhttps://apps.apple.com/tw/app/id6815527075";
 }
 function HbSurveyHub({onBack,notify,projects,onProjectCreated}){
   let h=u.default.createElement;
