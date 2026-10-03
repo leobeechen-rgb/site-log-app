@@ -3549,6 +3549,155 @@ table.sign tr:first-child td{height:auto;background:var(--wash)}
  .hb-unit-editor.hb-hide-est-costs .hb-est-details tbody td:nth-child(10),.hb-unit-editor.hb-hide-est-costs .hb-est-details tbody td:nth-child(11){display:none!important}
 }
 </style>
+<style id="hb-wb-css">
+/* ===== Le Carnet du Jour／專案工作台 ===== */
+.hb-wb{--wb-ink:#262722;--wb-soft:#7b7466;--wb-gold:#b89b6a;--wb-line:#e2d8c6;--wb-green:#2E4A3C;--wb-green-2:#3d5e4c;--wb-wine:#8a2c34;--wb-card:rgba(255,253,248,.72);
+  max-width:1320px;margin:0 auto;padding:0 6px 6px;color:var(--wb-ink);font-family:'Noto Sans TC',sans-serif;font-size:14px;box-sizing:border-box}
+.hb-wb *,.wb-modal *{box-sizing:border-box}
+.hb-wb button,.wb-modal button{font:inherit;cursor:pointer;color:inherit}
+.wb-mono{font-family:'JetBrains Mono',ui-monospace,monospace;letter-spacing:.02em}
+.wb-head{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:16px;padding:2px 0 14px}
+.wb-date{font-size:13px;color:var(--wb-soft);letter-spacing:.06em;white-space:nowrap}
+.wb-title{display:flex;align-items:center;gap:22px;text-align:center}
+.wb-rule{display:block;width:clamp(40px,7vw,96px);height:1px;background:var(--wb-gold)}
+.wb-title h1{font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:500;font-size:clamp(30px,3.4vw,46px);line-height:1.05;margin:0;letter-spacing:.01em;color:var(--wb-ink)}
+.wb-title p{font-family:'Noto Serif TC',serif;font-size:15px;letter-spacing:.42em;padding-left:.42em;margin:6px 0 0;color:var(--wb-ink)}
+.wb-headact{display:flex;align-items:center;justify-content:flex-end;gap:12px}
+.wb-sync{font-size:11px;color:var(--wb-soft);letter-spacing:.04em;white-space:nowrap}.wb-sync:before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;background:#7e9a83;margin-right:6px;vertical-align:1px}
+.wb-sync-off:before{background:#c9a24a}
+.wb-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:40px;padding:8px 16px;border-radius:999px;font-size:13.5px;letter-spacing:.06em;white-space:nowrap;transition:background .15s,color .15s,border-color .15s}
+.wb-btn-line{border:1px solid var(--wb-green);background:transparent;color:var(--wb-green)!important}.wb-btn-line:hover{background:var(--wb-green);color:#f5f1e8!important}
+.wb-btn-solid{border:1px solid var(--wb-green);background:var(--wb-green);color:#f5f1e8!important}.wb-btn-solid:hover{background:var(--wb-green-2)}
+.wb-btn-ghost{border:1px solid var(--wb-line);background:#fff;color:var(--wb-ink)}
+.wb-btn-sm{min-height:34px;padding:5px 13px;font-size:12.5px;border-radius:7px}
+.wb-btn:disabled{opacity:.5;cursor:default}
+.wb-error{display:flex;align-items:center;gap:12px;justify-content:space-between;background:#fbf1ee;border:1px solid #e3c2bb;color:var(--wb-wine);font-size:12.5px;padding:8px 12px;border-radius:8px;margin:0 0 12px}
+.wb-error button{border:1px solid currentColor;background:none;border-radius:999px;padding:3px 11px;font-size:12px;color:inherit}
+.wb-metrics{display:grid;grid-template-columns:repeat(4,1fr);background:var(--wb-card);border:1px solid var(--wb-line);border-radius:12px;box-shadow:inset 0 0 0 4px rgba(255,255,255,.35);overflow:hidden}
+.wb-metric{display:flex;align-items:center;justify-content:center;gap:12px;min-height:58px;padding:10px 12px;border:0;background:none;position:relative;color:var(--wb-ink)}
+.wb-metric+.wb-metric:before{content:'';position:absolute;left:0;top:22%;bottom:22%;width:1px;background:var(--wb-line)}
+.wb-metric span{font-size:14px;letter-spacing:.08em}
+.wb-metric strong{font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:500;font-size:32px;line-height:1;min-width:.6em}
+.wb-metric svg{color:var(--wb-green)}
+.wb-metric.wb-red,.wb-metric.wb-red svg{color:var(--wb-wine)}
+.wb-metric:hover{background:rgba(46,74,60,.05)}
+.wb-metric.on{background:rgba(46,74,60,.1)}.wb-metric.on:after{content:'';position:absolute;left:18%;right:18%;bottom:0;height:2px;background:var(--wb-green)}
+.wb-metric.wb-red.on:after{background:var(--wb-wine)}
+.wb-filtering{font-size:12px;color:var(--wb-soft);margin:8px 2px 0}.wb-filtering button{border:0;background:none;color:var(--wb-green);text-decoration:underline;margin-left:8px;padding:0}
+.wb-cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:16px;align-items:start}
+.wb-card{background:var(--wb-card);border:1px solid var(--wb-line);border-radius:12px;padding:16px 18px 14px;min-width:0;scroll-margin-top:70px;transition:box-shadow .2s,border-color .2s}
+.wb-card.wb-focus{border-color:#b9c7bb;box-shadow:0 0 0 3px rgba(46,74,60,.08)}
+.wb-cardhead{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding-bottom:10px;border-bottom:1px solid var(--wb-line);margin-bottom:10px}
+.wb-cardhead h2{font-family:'Noto Serif TC',serif;font-size:21px;font-weight:500;letter-spacing:.14em;margin:0;white-space:nowrap}
+.wb-note{font-size:11.5px;color:var(--wb-soft);letter-spacing:.04em}
+.wb-link{display:inline-flex;align-items:center;gap:4px;border:0;background:none;padding:4px 0;font-size:12.5px;color:var(--wb-green);letter-spacing:.05em;white-space:nowrap}
+.wb-link:hover{text-decoration:underline}
+.wb-empty{color:var(--wb-soft);font-size:13px;text-align:center;padding:18px 6px;margin:0}
+.wb-days{display:flex;align-items:center;justify-content:space-between;gap:4px;margin:2px 0 10px}
+.wb-arrow{border:0;background:none;color:var(--wb-soft);width:34px;height:34px;display:grid;place-items:center;border-radius:50%}.wb-arrow:hover{background:rgba(0,0,0,.04)}
+.wb-day{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;border:0;background:none;padding:6px 0;border-radius:999px;max-width:72px;color:var(--wb-ink)}
+.wb-day small{font-size:11.5px;color:var(--wb-soft)}.wb-day b{font-family:'Cormorant Garamond',Georgia,serif;font-size:24px;font-weight:500;line-height:1.1}
+.wb-day.is-today b{text-decoration:underline;text-decoration-color:var(--wb-gold);text-underline-offset:4px}
+.wb-day.on{background:var(--wb-green);color:#f5f1e8}.wb-day.on small{color:#d9e1d8}.wb-day.on b{text-decoration:none}
+.wb-backtoday{display:block;margin:-4px auto 8px;border:0;background:none;color:var(--wb-green);font-size:12px;text-decoration:underline}
+.wb-agenda{list-style:none;margin:0 0 10px;padding:0;display:flex;flex-direction:column;gap:8px}
+.wb-agenda li{display:grid;grid-template-columns:46px 10px minmax(0,1fr) 28px;align-items:start;gap:8px;background:#fff;border:1px solid #efe7da;border-radius:10px;padding:11px 8px 11px 12px}
+.wb-agenda li.is-done{opacity:.55}.wb-agenda li.is-done strong{text-decoration:line-through}
+.wb-time{font-size:13px;color:var(--wb-soft);padding-top:2px}
+.wb-dot{width:7px;height:7px;border-radius:50%;background:var(--wb-green);margin-top:8px}
+.wb-agbody strong,.wb-lbody strong,.wb-fbody strong{display:block;font-weight:500;font-size:14.5px;line-height:1.5;overflow-wrap:anywhere}
+.wb-lbody strong,.wb-fbody strong{cursor:pointer}.wb-lbody strong:hover,.wb-fbody strong:hover{color:var(--wb-green)}
+.wb-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:5px;align-items:center}
+.wb-proj{border:0;background:#f1ece2;color:#5a5448;border-radius:5px;padding:2px 9px;font-size:12px;line-height:1.6;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+button.wb-proj:hover{background:#e6eee7;color:var(--wb-green)}
+.wb-proj-plain{background:none;padding-left:0;color:var(--wb-soft)}
+.wb-tag{font-size:11px;border:1px solid var(--wb-line);border-radius:4px;padding:0 6px;color:var(--wb-soft)}
+.wb-softbtn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;min-height:40px;border:0;border-radius:999px;background:#ece6db;color:var(--wb-ink);font-size:13.5px;letter-spacing:.06em}
+.wb-softbtn:hover{background:#e4dccd}
+.wb-list,.wb-follow{list-style:none;margin:0;padding:0}
+.wb-list li{display:grid;grid-template-columns:26px minmax(0,1fr) auto 26px;gap:10px;align-items:center;padding:12px 0;border-bottom:1px solid #eee6d8}
+.hb-wb .wb-check{width:24px;height:24px;min-height:0!important;min-width:0!important;border-radius:50%;border:1.5px solid #9d9686;background:#fff;display:grid;place-items:center;color:transparent!important;padding:0}
+.hb-wb .wb-check:hover{border-color:var(--wb-green);color:var(--wb-green)!important}
+.hb-wb .wb-proj{font-size:12px!important;line-height:1.6!important}
+.hb-wb .wb-agbody strong,.hb-wb .wb-lbody strong,.hb-wb .wb-fbody strong{margin:0!important}
+.hb-wb .wb-proj,.hb-wb .wb-link,.hb-wb .wb-arrow,.hb-wb .wb-backtoday,.hb-wb .wb-more-link,.hb-wb .wb-filtering button,.hb-wb .wb-error button{min-height:0!important}
+.wb-due{display:flex;flex-direction:column;align-items:flex-end;gap:3px}.wb-due small{font-size:11px;color:var(--wb-soft)}
+.wb-badge{font-size:11.5px;padding:2px 10px;border-radius:999px;background:#ece7de;color:#5c564b;white-space:nowrap}
+.wb-b-late{background:#f6dcdc;color:var(--wb-wine)}.wb-b-today{background:#f3e5c6;color:#7a5a1d}.wb-b-soft{background:none;border:1px dashed #cfc5b3;color:var(--wb-soft)}
+.wb-more-link{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;border:0;background:none;padding:12px 0 2px;color:var(--wb-green);font-size:13px;letter-spacing:.06em}
+.wb-follow li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 12px;align-items:center;padding:12px 0 12px 14px;border-bottom:1px solid #eee6d8;position:relative}
+.wb-follow li:before{content:'';position:absolute;left:0;top:20px;width:6px;height:6px;border-radius:50%;background:#8aa08f}
+.wb-follow li.is-due:before{background:var(--wb-wine)}
+.wb-fmeta{display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:4px;font-size:12px;color:var(--wb-soft);align-items:center}
+.wb-flast{font-size:11.5px;color:var(--wb-soft);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wb-fnext{display:flex;flex-direction:column;align-items:flex-end;gap:1px;padding-left:12px;border-left:1px solid var(--wb-line)}
+.wb-fnext small{font-size:11px;color:var(--wb-soft)}.wb-fnext b{font-size:13.5px;font-weight:500}.wb-fnext em{font-style:normal;font-size:11px;color:var(--wb-wine)}
+.wb-follow li.is-due .wb-fnext b{color:var(--wb-wine)}
+.wb-follow li>.wb-btn{grid-column:2;justify-self:end}
+.wb-more{position:relative}
+.wb-more>summary{list-style:none;width:28px;height:28px;display:grid;place-items:center;border-radius:50%;color:var(--wb-soft);cursor:pointer}
+.wb-more>summary::-webkit-details-marker{display:none}.wb-more>summary:hover{background:rgba(0,0,0,.05)}
+.wb-menu{position:absolute;right:0;top:30px;z-index:30;background:#fff;border:1px solid var(--wb-line);border-radius:8px;box-shadow:0 10px 26px -10px rgba(40,34,24,.28);min-width:132px;padding:4px;display:flex;flex-direction:column}
+.wb-menu button{border:0;background:none;text-align:left;padding:9px 12px;border-radius:6px;font-size:13px;white-space:nowrap}.wb-menu button:hover{background:#f4efe6}
+.wb-danger{color:var(--wb-wine)!important}
+.wb-quick{display:flex;align-items:center;gap:14px;margin:16px auto 0;max-width:1240px;background:#fff;border:1px solid var(--wb-line);border-radius:12px;padding:8px 8px 8px 18px}
+.wb-qlabel{display:flex;align-items:center;gap:8px;font-size:14px;letter-spacing:.08em;white-space:nowrap;padding-right:14px;border-right:1px solid var(--wb-line)}
+.wb-quick input{flex:1;min-width:0;border:0;background:none;outline:none;font:inherit;font-size:14.5px;color:var(--wb-ink);padding:8px 0}
+.wb-qadd{width:42px;height:42px;border-radius:50%;border:0;background:var(--wb-green);color:#f5f1e8!important;display:grid;place-items:center;flex-shrink:0}
+.wb-qadd:disabled{opacity:.45;cursor:default}
+.wb-foot{display:flex;justify-content:flex-end;padding:6px 4px 0}
+.wb-toast{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom));transform:translateX(-50%);background:rgba(28,27,24,.93);color:#f3eee5;font-size:13px;padding:9px 18px;border-radius:999px;z-index:1000;pointer-events:none;max-width:calc(100vw - 32px);text-align:center}
+.wb-modal{border:1px solid var(--wb-line,#e2d8c6);border-radius:14px;padding:0;width:min(560px,calc(100vw - 24px));max-height:calc(100dvh - 40px);background:#fffdf8;color:#262722;font-family:'Noto Sans TC',sans-serif;box-shadow:0 30px 60px -24px rgba(40,34,24,.45)}
+.wb-modal::backdrop{background:rgba(38,36,30,.42)}
+.wb-mhead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:18px 20px 12px;border-bottom:1px solid #ebe3d4}
+.wb-mhead p{margin:0 0 3px;font:italic 12px 'Cormorant Garamond',Georgia,serif;letter-spacing:.18em;color:#9b8a6a}
+.wb-mhead h3{margin:0;font-family:'Noto Serif TC',serif;font-size:19px;font-weight:500;letter-spacing:.06em;overflow-wrap:anywhere}
+.wb-mhead button{border:0;background:none;font-size:24px;line-height:1;color:#7b7466;width:36px;height:36px;flex-shrink:0}
+.wb-form{display:flex;flex-direction:column;gap:12px;padding:16px 20px 18px}
+.wb-field{display:flex;flex-direction:column;gap:5px;min-width:0}.wb-field>span{font-size:12px;color:#7b7466}
+.wb-field input,.wb-field select,.wb-field textarea{width:100%;min-width:0;border:1px solid #d9cfbd;border-radius:8px;background:#fff;padding:9px 11px;font:inherit;font-size:16px;color:#262722;min-height:42px}
+.wb-field textarea{resize:vertical;line-height:1.55}
+.wb-grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.wb-seg{display:flex;background:#f1ece2;border-radius:999px;padding:3px}.wb-seg button{flex:1;border:0;background:none;border-radius:999px;padding:8px 10px;font-size:13px;color:#6b665d}
+.wb-seg button.on{background:#2E4A3C;color:#f5f1e8}
+.wb-mact{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-top:4px}
+.wb-fsum{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12.5px;color:#7b7466}
+.wb-log{list-style:none;margin:0;padding:8px 12px;background:#f6f2ea;border-radius:8px;display:flex;flex-direction:column;gap:5px;font-size:12.5px;max-height:150px;overflow:auto}
+.wb-log b{font-weight:500;margin-right:8px;color:#5a5448}
+.wb-quickdays{display:flex;gap:8px;flex-wrap:wrap}.wb-quickdays button{border:1px solid #d9cfbd;background:#fff;border-radius:999px;padding:5px 12px;font-size:12.5px}
+.wb-quickdays button.on{border-color:#2E4A3C;color:#2E4A3C;background:#eef3ee}
+/* 專案入口區（沿用原本卡片與線條插畫） */
+.wb-projhead,.wb-modal{--wb-ink:#262722;--wb-soft:#7b7466;--wb-gold:#b89b6a;--wb-line:#e2d8c6;--wb-green:#2E4A3C;--wb-green-2:#3d5e4c;--wb-wine:#8a2c34}
+.wb-projhead{display:flex;align-items:center;justify-content:space-between;gap:12px;max-width:1320px;margin:22px auto 6px;padding:16px 4px 0;border-top:1px solid #d9ccb4}
+.wb-projhead h2{font-family:'Noto Serif TC',serif;font-size:24px;font-weight:500;letter-spacing:.16em;margin:0}
+.wb-projhead small{font-size:12px;color:#7b7466;letter-spacing:.06em;margin-left:10px}
+.hb-plate .wb-pcount{font-size:11px;color:#6d675b;letter-spacing:.04em;margin-top:4px}
+.hb-plate .wb-pcount b{font-weight:500;color:#2E4A3C}.hb-plate .wb-pcount b.late{color:#8a2c34}
+@media (max-width:1100px){.wb-head{grid-template-columns:1fr auto}.wb-date{display:none}}
+@media (max-width:899px){
+  .hb-wb{padding:0 2px}
+  .wb-head{grid-template-columns:1fr;justify-items:center;gap:10px;padding-bottom:12px}
+  .wb-date{display:block;order:-1;font-size:12px}
+  .wb-title{gap:12px}.wb-title h1{font-size:27px;white-space:nowrap}.wb-title p{font-size:13px}.wb-rule{width:28px}
+  .wb-headact{justify-content:center;flex-wrap:wrap}
+  .wb-metrics{grid-template-columns:repeat(2,1fr)}
+  .wb-metric{min-height:52px;gap:8px;justify-content:flex-start;padding:8px 14px}
+  .wb-metric:nth-child(3):before{display:none}.wb-metric:nth-child(n+3){border-top:1px solid var(--wb-line)}
+  .wb-metric strong{font-size:28px;margin-left:auto}
+  .wb-cols{grid-template-columns:minmax(0,1fr);gap:12px}
+  .wb-card{padding:14px 14px 12px}
+  .wb-quick{gap:10px;padding:6px 6px 6px 12px}.wb-qlabel{padding-right:10px;font-size:13px}.wb-qlabel span{display:none}
+  .wb-foot{justify-content:center}
+  .wb-projhead h2{font-size:20px}
+}
+@media (max-width:420px){
+  .wb-qlabel{display:none}
+  .wb-list li{grid-template-columns:24px minmax(0,1fr) 26px;row-gap:4px}.wb-list li .wb-due{grid-column:2;grid-row:2;flex-direction:row;align-items:center;justify-content:flex-start;gap:8px}
+  .wb-list li .wb-more{grid-column:3;grid-row:1}
+  .wb-follow li{grid-template-columns:minmax(0,1fr)}.wb-fnext{flex-direction:row;align-items:baseline;gap:8px;border-left:0;padding-left:0}.wb-follow li>.wb-btn{grid-column:1;justify-self:start}
+  .wb-grid2{grid-template-columns:1fr}
+}
+</style>
 <style id="hb-vq-rfq-css">
 #hb-vq-rfq{margin:18px 0 26px;padding:22px;border:1px solid #c7c1b5;border-radius:10px;background:rgba(255,255,255,.48);color:#283d31;font-size:13px}
 #hb-vq-rfq *{box-sizing:border-box}
@@ -13358,6 +13507,242 @@ var HB_TL_CSS=`
 .hb-tl .tl-dn{aspect-ratio:1/1;flex:none}
 `;
 
+/* =====================================================================
+   HERFULSINS — Le Carnet du Jour／專案工作台（2026-10）
+   放在「案件資料庫」頁上方。資料與「今日待辦」共用同一份雲端紀錄
+   （hb-workspace-api /today：manual＋overrides），所以兩邊新增、修改、完成會雙向同步。
+   追蹤事項 = manual 任務加上 kind:'follow'、waitingFor、followLog；due 當作「下次追蹤日」。
+   未排日期（due 空白）= 今日待辦裡的「稍後辦」。
+   ===================================================================== */
+const HB_WB_EMPTY=()=>({manual:[],overrides:{}});
+function HB_wbValid(v){return v&&Array.isArray(v.manual)&&v.overrides&&typeof v.overrides==='object'}
+function HB_wbAddDays(ymd,n){const d=new Date(ymd+'T00:00:00');d.setDate(d.getDate()+n);const p=x=>String(x).padStart(2,'0');return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())}
+function HB_wbDiff(a,b){return Math.round((new Date(a+'T00:00:00')-new Date(b+'T00:00:00'))/864e5)}
+function HB_wbDot(ymd){return ymd?ymd.replace(/-/g,'.'):''}
+function HB_wbWeek(ymd){return['週日','週一','週二','週三','週四','週五','週六'][new Date(ymd+'T00:00:00').getDay()]}
+async function HB_wbLoadAuto(){
+  const rows=[],errors=[];
+  const fetchPages=async(table,select)=>{let out=[];for(let offset=0;;offset+=500){const {data:r,error:e}=await q.from(table).select(select).order('id',{ascending:true}).range(offset,offset+499);if(e)throw e;out.push(...(r||[]));if(!r||r.length<500)break}return out};
+  const res=await Promise.allSettled([
+    fetchPages('sitelog_schedule_events','id,title,project_id,project_name,start_date,end_date,assignee,note,status,time,all_day'),
+    fetchPages('sitelog_defects','id,project_id,description,location,completed'),
+    fetchPages('sitelog_bookings','id,date,time,service_type,name,status')]);
+  if(res[0].status==='fulfilled')res[0].value.filter(r=>r.status!=='cancelled'&&r.status!=='completed'&&r.start_date).forEach(r=>rows.push({id:'schedule:'+r.id,title:r.title||'工程行程',projectId:r.project_id||'',projectName:r.project_name||'',assignee:r.assignee||'',due:r.start_date.slice(0,10),dueEnd:(r.end_date||'').slice(0,10),time:!r.all_day&&/^\d{1,2}:\d{2}/.test(r.time||'')?String(r.time).slice(0,5):'',note:r.note||'',category:'行程',source:'auto',sourceId:r.id}));else errors.push('工程行程');
+  if(res[1].status==='fulfilled')res[1].value.filter(r=>!r.completed).forEach(r=>rows.push({id:'defect:'+r.id,title:r.description||'缺失改善',projectId:r.project_id||'',assignee:'',due:'',note:r.location?'位置：'+r.location:'',category:'缺失',source:'auto',sourceId:r.id}));else errors.push('缺失紀錄');
+  if(res[2].status==='fulfilled'){const t0=HB_todoDate(),lim=HB_wbAddDays(t0,7);
+    res[2].value.filter(r=>r.date&&['pending','confirmed'].includes(r.status)&&String(r.date).slice(0,10)>=t0&&String(r.date).slice(0,10)<=lim)
+      .forEach(r=>rows.push({id:'booking:'+r.id,time:/^\d{1,2}:\d{2}/.test(r.time||'')?String(r.time).slice(0,5):'',title:'客戶預約・'+(r.name||'')+(r.service_type?'（'+r.service_type+'）':''),projectId:'',projectName:'',assignee:'',due:String(r.date).slice(0,10),note:(r.time?r.time+' ':'')+(r.status==='pending'?'待確認':'已確認'),category:'預約',source:'auto',sourceId:r.id}))}
+  else errors.push('客戶預約');
+  return {rows,errors};
+}
+/* 共用資料 hook：與 HbTodayHub 同一個雲端端點、同一個本機快取鍵 */
+function HB_useToday(projects,enabled=true){
+  const [payload,setPayload]=u.useState(()=>{try{return HB_todoRead()}catch{return HB_WB_EMPTY()}});
+  const [ready,setReady]=u.useState(false),[auto,setAuto]=u.useState([]),[loading,setLoading]=u.useState(true);
+  const [error,setError]=u.useState(''),[sync,setSync]=u.useState('正在連接雲端…'),[today,setToday]=u.useState(HB_todoDate);
+  const rev=u.useRef(0),payRef=u.useRef(payload),queue=u.useRef(Promise.resolve()),busy=u.useRef(false),pending=u.useRef(0),alive=u.useRef(true);
+  const apply=p=>{payRef.current=p;if(alive.current)setPayload(p);try{localStorage.setItem(HB_todoKey(),JSON.stringify(p))}catch{}};
+  const pull=async force=>{
+    if(busy.current||pending.current>0||(!force&&document.hidden))return;busy.current=true;
+    try{const c=await HB_workspaceRequest('/today');if(pending.current>0)return;rev.current=Number(c.revision)||0;apply(HB_wbValid(c.payload)?c.payload:HB_WB_EMPTY());
+      if(alive.current){setReady(true);setSync('已跨裝置同步');setError('')}}
+    catch(e){if(alive.current){setSync('未連線（僅供檢視）');setError(e.message||'無法連接雲端')}}
+    finally{busy.current=false}};
+  const loadAuto=async()=>{setLoading(true);try{const {rows,errors}=await HB_wbLoadAuto();if(alive.current){setAuto(rows);if(errors.length)setError(errors.join('、')+'暫時無法讀取，其餘資料仍可使用。')}}catch(e){}finally{if(alive.current)setLoading(false)}};
+  u.useEffect(()=>{if(!enabled)return;alive.current=true;pull(true);loadAuto();
+    const iv=setInterval(()=>pull(false),30000),focus=()=>pull(false),tick=setInterval(()=>setToday(HB_todoDate()),30000);
+    window.addEventListener('focus',focus);document.addEventListener('visibilitychange',focus);
+    return()=>{alive.current=false;clearInterval(iv);clearInterval(tick);window.removeEventListener('focus',focus);document.removeEventListener('visibilitychange',focus)}},[]);
+  /* 修改：先更新畫面，再排隊寫入雲端；若另一部裝置剛更新（409），取回最新版重新套用這次修改再寫一次 */
+  const mutate=fn=>{
+    if(!ready){setError('雲端資料尚未就緒，暫時不能修改。請確認登入與網路連線。');return false}
+    apply(fn(payRef.current));pending.current++;setSync('正在同步…');
+    queue.current=queue.current.then(async()=>{
+      const put=body=>HB_workspaceRequest('/today',{method:'PUT',body:JSON.stringify({revision:rev.current,payload:body})});
+      try{let r;try{r=await put(payRef.current)}catch(e){if(!/另一部裝置/.test(e.message||''))throw e;
+          const c=await HB_workspaceRequest('/today');rev.current=Number(c.revision)||0;apply(fn(HB_wbValid(c.payload)?c.payload:HB_WB_EMPTY()));r=await put(payRef.current)}
+        rev.current=Number(r.revision)||rev.current;if(alive.current)setSync('已跨裝置同步')}
+      catch(e){if(alive.current){setSync('同步失敗');setError((e.message||'同步失敗')+' 已重新取得雲端資料。')}pending.current--;await pull(true);return}
+      pending.current--});
+    return true};
+  const names=new Map((projects||[]).map(p=>[p.id,p.name]));
+  const demoIds=new Set((projects||[]).filter(p=>/^示範案件/.test(p.name||'')).map(p=>p.id)),hideDemo=(projects||[]).some(p=>!demoIds.has(p.id));
+  const all=[...payload.manual,...auto.map(t=>({...t,...payload.overrides[t.id]}))]
+    .filter(t=>t&&t.id&&!t.deleted&&!(hideDemo&&demoIds.has(t.projectId)))
+    .map(t=>({...t,projectName:names.get(t.projectId)||t.projectName||'公司事務'}));
+  const update=(task,patch)=>mutate(p=>task.source==='auto'
+    ?{...p,overrides:{...p.overrides,[task.id]:{...(p.overrides[task.id]||task),...patch}}}
+    :{...p,manual:p.manual.map(t=>t.id===task.id?{...t,...patch}:t)});
+  const add=task=>mutate(p=>({...p,manual:[...p.manual,task]}));
+  const replace=task=>mutate(p=>task.source==='auto'
+    ?{...p,overrides:{...p.overrides,[task.id]:task}}
+    :(p.manual.some(t=>t.id===task.id)?{...p,manual:p.manual.map(t=>t.id===task.id?task:t)}:{...p,manual:[...p.manual,task]}));
+  return {all,today,ready,loading,error,setError,sync,update,add,replace,reload:()=>{setError('');pull(true);loadAuto()}};
+}
+/* 分類工具：首頁三欄與專案卡片共用 */
+function HB_wbIsFollow(t){return t.kind==='follow'}
+function HB_wbIsAgenda(t){return t.category==='行程'||t.category==='預約'}
+function HB_wbOnDate(t,d){if(!t.due)return false;if(t.due===d)return true;return !!(t.dueEnd&&t.due<=d&&t.dueEnd>=d)}
+function HB_wbOpenTask(t){return !t.done&&!HB_wbIsFollow(t)&&!HB_wbIsAgenda(t)}
+function HB_wbOpenFollow(t){return !t.done&&HB_wbIsFollow(t)}
+function HB_wbProjectCounts(all){const m={};all.forEach(t=>{if(!t.projectId)return;const c=m[t.projectId]||(m[t.projectId]={open:0,follow:0});if(HB_wbOpenTask(t))c.open++;else if(HB_wbOpenFollow(t))c.follow++});return m}
+function HB_wbIcon(name,size){const s=size||16,p={width:s,height:s,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:1.6,strokeLinecap:'round',strokeLinejoin:'round','aria-hidden':'true'},C=u.default.createElement;
+  const d={calendar:[['rect',{x:3.5,y:5,width:17,height:15,rx:1.5}],['path',{d:'M3.5 9.5h17M8 3v4M16 3v4M7.5 13h2M11 13h2M14.5 13h2M7.5 16.5h2M11 16.5h2'}]],
+    clock:[['circle',{cx:12,cy:12,r:8.5}],['path',{d:'M12 7.5V12l3 2'}]],
+    chat:[['path',{d:'M20 11.5a8 8 0 0 1-11.8 7L4 20l1.4-3.9A8 8 0 1 1 20 11.5z'}]],
+    alert:[['circle',{cx:12,cy:12,r:8.5}],['path',{d:'M12 7.5v5.5M12 16.2v.3'}]],
+    left:[['path',{d:'M14.5 6l-6 6 6 6'}]],right:[['path',{d:'M9.5 6l6 6-6 6'}]],
+    bulb:[['path',{d:'M9 18h6M10 21h4M12 3a6 6 0 0 0-3.6 10.8c.6.5 1.1 1.3 1.1 2.2h5c0-.9.5-1.7 1.1-2.2A6 6 0 0 0 12 3z'}]],
+    plus:[['path',{d:'M12 5v14M5 12h14'}]],out:[['path',{d:'M8 16L16 8M9.5 8H16v6.5'}]],arrow:[['path',{d:'M5 12h13M13 7l5 5-5 5'}]],
+    more:[['circle',{cx:12,cy:5.5,r:1.1,fill:'currentColor'}],['circle',{cx:12,cy:12,r:1.1,fill:'currentColor'}],['circle',{cx:12,cy:18.5,r:1.1,fill:'currentColor'}]],
+    check:[['path',{d:'M5 12.5l4.5 4.5L19 7.5'}]],caret:[['path',{d:'M7 10l5 5 5-5'}]]}[name]||[];
+  return C('svg',p,...d.map((x,i)=>C(x[0],{key:i,...x[1]})))}
+
+function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub}){
+  const h=u.default.createElement,{all,today,ready,error,sync}=tk;
+  const [day,setDay]=u.useState(today),[filter,setFilter]=u.useState(''),[editing,setEditing]=u.useState(null),[following,setFollowing]=u.useState(null);
+  const [quick,setQuick]=u.useState(''),[showAllOpen,setShowAllOpen]=u.useState(false),[showAllFollow,setShowAllFollow]=u.useState(false),[toast,setToast]=u.useState('');
+  u.useEffect(()=>{if(!toast)return;const t=setTimeout(()=>setToast(''),3200);return()=>clearTimeout(t)},[toast]);
+  const say=m=>setToast(m);
+  const overdue=t=>!t.done&&t.due&&t.due<today;
+  /* 今日安排：選定日期中有時間的事項、工程行程與預約（追蹤事項另列） */
+  const agendaOf=d=>all.filter(t=>!HB_wbIsFollow(t)&&HB_wbOnDate(t,d)&&(HB_wbIsAgenda(t)||t.time))
+    .sort((a,b)=>Number(!!a.done)-Number(!!b.done)||(a.time||'99').localeCompare(b.time||'99')||a.title.localeCompare(b.title));
+  const agenda=agendaOf(day),agendaToday=agendaOf(today).filter(t=>!t.done);
+  const openTasks=all.filter(HB_wbOpenTask).sort((a,b)=>Number(!!overdue(b))-Number(!!overdue(a))||(a.due||'9999').localeCompare(b.due||'9999')||Number(!!b.urgent)-Number(!!a.urgent)||a.title.localeCompare(b.title));
+  const follows=all.filter(HB_wbOpenFollow).sort((a,b)=>(a.due||'9999').localeCompare(b.due||'9999')||a.title.localeCompare(b.title));
+  const overdueCount=openTasks.filter(overdue).length+follows.filter(overdue).length;
+  const pick=(list,lim)=>filter==='overdue'?list.filter(overdue):filter==='today'?list.filter(t=>t.due&&t.due<=today):list;
+  const openShown=pick(openTasks),followShown=pick(follows);
+  const openLimit=showAllOpen||filter==='open'?openShown.length:5,followLimit=showAllFollow||filter==='follow'?followShown.length:4;
+  const refs={today:u.useRef(null),open:u.useRef(null),follow:u.useRef(null)};
+  const tapMetric=k=>{const next=filter===k?'':k;setFilter(next);if(next==='today')setDay(today);
+    const el=refs[k==='overdue'?'open':k]&&refs[k==='overdue'?'open':k].current;
+    if(next&&el&&window.matchMedia('(max-width:899px)').matches)el.scrollIntoView({behavior:'smooth',block:'start'})};
+  const complete=t=>{if(tk.update(t,{done:!t.done,completedAt:t.done?null:today}))say(t.done?'已恢復為未完成':'已完成（可在今日待辦恢復）')};
+  const newTask=extra=>setEditing({id:crypto.randomUUID(),title:'',projectId:'',assignee:'',due:today,time:'',category:'一般',note:'',urgent:false,source:'manual',isNew:true,...extra});
+  const addQuick=()=>{const v=quick.trim();if(!v)return;if(tk.add({id:crypto.randomUUID(),title:v.slice(0,200),projectId:'',assignee:'',due:'',time:'',category:'一般',note:'',urgent:false,source:'manual',createdAt:today})){setQuick('');say('已記下，日期空白會放在「稍後辦」')}};
+  const dueBadge=t=>{if(!t.due)return h('span',{className:'wb-badge wb-b-soft'},'未排期');const d=HB_wbDiff(t.due,today);
+    if(d<0)return h('span',{className:'wb-badge wb-b-late'},'逾期 '+(-d)+' 天');if(d===0)return h('span',{className:'wb-badge wb-b-today'},'今日到期');
+    return h('span',{className:'wb-badge'},t.due.slice(5).replace('-','/'))};
+  const menu=(t,items)=>h('details',{className:'wb-more'},h('summary',{'aria-label':'更多操作：'+t.title},HB_wbIcon('more',16)),
+    h('div',{className:'wb-menu'},items.filter(Boolean).map((it,i)=>h('button',{key:i,type:'button',className:it[2]||'',onClick:e=>{e.currentTarget.closest('details').open=false;it[1]()}},it[0]))));
+  const projLink=t=>t.projectId&&projects.some(p=>p.id===t.projectId)
+    ?h('button',{type:'button',className:'wb-proj',onClick:()=>onOpenProject(t.projectId),title:'進入「'+t.projectName+'」'},t.projectName)
+    :h('span',{className:'wb-proj wb-proj-plain'},t.projectName);
+  const metrics=[['today','今日安排',agendaToday.length,'calendar'],['open','未完成',openTasks.length,'clock'],['follow','待追蹤',follows.length,'chat'],['overdue','已逾期',overdueCount,'alert']];
+  const days=[-1,0,1].map(n=>HB_wbAddDays(day,n));
+  return h('section',{className:'hb-wb','aria-label':'專案工作台'},
+    h('header',{className:'wb-head'},
+      h('div',{className:'wb-date'},h('span',{className:'wb-mono'},HB_wbDot(today)),' ',HB_wbWeek(today).replace('週','星期')),
+      h('div',{className:'wb-title'},h('span',{className:'wb-rule'}),h('div',null,h('h1',null,'Le Carnet du Jour'),h('p',null,'專案工作台')),h('span',{className:'wb-rule'})),
+      h('div',{className:'wb-headact'},h('span',{className:'wb-sync'+(ready?'':' wb-sync-off'),title:error||''},sync),
+        h('button',{type:'button',className:'wb-btn wb-btn-line',onClick:()=>newTask({})},HB_wbIcon('plus',15),'新增事項'))),
+    error&&h('div',{className:'wb-error',role:'alert'},error,h('button',{type:'button',onClick:tk.reload},'重新整理')),
+    h('nav',{className:'wb-metrics','aria-label':'篩選'},metrics.map(m=>h('button',{key:m[0],type:'button','aria-pressed':filter===m[0],
+      className:'wb-metric'+(filter===m[0]?' on':'')+(m[0]==='overdue'&&m[2]?' wb-red':''),onClick:()=>tapMetric(m[0])},
+      HB_wbIcon(m[3],19),h('span',null,m[1]),h('strong',null,m[2])))),
+    filter&&h('div',{className:'wb-filtering'},'篩選中：',metrics.find(m=>m[0]===filter)[1],h('button',{type:'button',onClick:()=>setFilter('')},'清除')),
+    h('div',{className:'wb-cols'},
+      /* 今日安排 */
+      h('article',{ref:refs.today,className:'wb-card'+(filter==='today'?' wb-focus':'')},
+        h('div',{className:'wb-cardhead'},h('h2',null,'今日安排'),h('button',{type:'button',className:'wb-link',onClick:onCalendar},'開啟月曆',HB_wbIcon('out',13))),
+        h('div',{className:'wb-days'},h('button',{type:'button',className:'wb-arrow','aria-label':'前一天',onClick:()=>setDay(HB_wbAddDays(day,-1))},HB_wbIcon('left',18)),
+          days.map(d=>h('button',{key:d,type:'button',className:'wb-day'+(d===day?' on':'')+(d===today?' is-today':''),onClick:()=>setDay(d)},h('small',null,HB_wbWeek(d)),h('b',null,Number(d.slice(8))))),
+          h('button',{type:'button',className:'wb-arrow','aria-label':'後一天',onClick:()=>setDay(HB_wbAddDays(day,1))},HB_wbIcon('right',18))),
+        day!==today&&h('button',{type:'button',className:'wb-backtoday',onClick:()=>setDay(today)},'回到今天'),
+        agenda.length===0?h('p',{className:'wb-empty'},day===today?'今天沒有排定的行程':'這天沒有排定的行程'):
+        h('ul',{className:'wb-agenda'},agenda.map(t=>h('li',{key:t.id,className:t.done?'is-done':''},
+          h('span',{className:'wb-time wb-mono'},t.time||'整天'),h('i',{className:'wb-dot'}),
+          h('div',{className:'wb-agbody'},h('strong',null,t.title),h('div',{className:'wb-chips'},projLink(t),t.category==='預約'&&h('span',{className:'wb-tag'},'預約'))),
+          menu(t,[[t.done?'恢復未完成':'標記完成',()=>complete(t)],['編輯',()=>setEditing({...t})],t.projectId&&['進入專案',()=>onOpenProject(t.projectId)]])))),
+        h('button',{type:'button',className:'wb-softbtn',onClick:()=>newTask({due:day,time:'09:00'})},HB_wbIcon('plus',15),'安排時間')),
+      /* 未完成事項 */
+      h('article',{ref:refs.open,className:'wb-card'+(filter==='open'||filter==='overdue'?' wb-focus':'')},
+        h('div',{className:'wb-cardhead'},h('h2',null,'未完成事項'),h('span',{className:'wb-note'},'逾期優先・依期限')),
+        openShown.length===0?h('p',{className:'wb-empty'},filter?'沒有符合篩選的事項':'目前沒有未完成事項'):
+        h('ul',{className:'wb-list'},openShown.slice(0,openLimit).map(t=>h('li',{key:t.id,className:overdue(t)?'is-late':''},
+          h('button',{type:'button',className:'wb-check','aria-label':'完成：'+t.title,onClick:()=>complete(t)},HB_wbIcon('check',13)),
+          h('div',{className:'wb-lbody'},h('strong',{onClick:()=>setEditing({...t}),role:'button',tabIndex:0},t.title),h('div',{className:'wb-chips'},projLink(t),t.category==='缺失'&&h('span',{className:'wb-tag'},'缺失'))),
+          h('div',{className:'wb-due'},dueBadge(t),t.due&&h('small',{className:'wb-mono'},HB_wbDot(t.due))),
+          menu(t,[['編輯',()=>setEditing({...t})],t.projectId&&['進入專案',()=>onOpenProject(t.projectId)],['改為追蹤',()=>{if(tk.update(t,{kind:'follow',waitingFor:t.waitingFor||'',due:t.due||HB_wbAddDays(today,3)}))say('已移到待追蹤')}],
+            t.source!=='auto'?['刪除',()=>{if(confirm('確定刪除「'+t.title+'」？'))tk.update(t,{deleted:true})&&say('已刪除')},'wb-danger']:['隱藏提醒',()=>{tk.update(t,{deleted:true})&&say('已隱藏')},'wb-danger']])))),
+        openShown.length>5&&filter!=='open'&&h('button',{type:'button',className:'wb-more-link',onClick:()=>setShowAllOpen(v=>!v)},showAllOpen?'收合':'查看全部 '+openShown.length+' 項',HB_wbIcon('arrow',14))),
+      /* 待追蹤 */
+      h('article',{ref:refs.follow,className:'wb-card'+(filter==='follow'?' wb-focus':'')},
+        h('div',{className:'wb-cardhead'},h('h2',null,'待追蹤'),h('button',{type:'button',className:'wb-link',onClick:()=>newTask({kind:'follow',waitingFor:'',due:HB_wbAddDays(today,3),time:''})},HB_wbIcon('plus',13),'新增追蹤')),
+        followShown.length===0?h('p',{className:'wb-empty'},filter?'沒有符合篩選的追蹤':'目前沒有等待回覆的事'):
+        h('ul',{className:'wb-follow'},followShown.slice(0,followLimit).map(t=>h('li',{key:t.id,className:overdue(t)||t.due===today?'is-due':''},
+          h('div',{className:'wb-fbody'},h('strong',{onClick:()=>setEditing({...t}),role:'button',tabIndex:0},t.title),
+            h('div',{className:'wb-fmeta'},projLink(t),h('span',null,'等待｜',t.waitingFor||'未填')),
+            t.followLog&&t.followLog.length?h('div',{className:'wb-flast'},'上次：',t.followLog[t.followLog.length-1].note):null),
+          h('div',{className:'wb-fnext'},h('small',null,'下次追蹤'),h('b',{className:'wb-mono'},HB_wbDot(t.due)||'未定'),overdue(t)?h('em',null,'已過 '+(-HB_wbDiff(t.due,today))+' 天'):null),
+          h('button',{type:'button',className:'wb-btn wb-btn-line wb-btn-sm',onClick:()=>setFollowing({...t})},'更新追蹤')))),
+        followShown.length>4&&filter!=='follow'&&h('button',{type:'button',className:'wb-more-link',onClick:()=>setShowAllFollow(v=>!v)},showAllFollow?'收合':'查看全部 '+followShown.length+' 項',HB_wbIcon('arrow',14)))),
+    /* 快速新增 */
+    h('form',{className:'wb-quick',onSubmit:e=>{e.preventDefault();addQuick()}},
+      h('span',{className:'wb-qlabel'},HB_wbIcon('bulb',17),'靈感與待辦'),
+      h('input',{value:quick,onChange:e=>setQuick(e.target.value),maxLength:200,placeholder:'快速記下待辦，稍後再安排日期與專案…','aria-label':'快速新增待辦'}),
+      h('button',{type:'submit',className:'wb-qadd','aria-label':'新增',disabled:!quick.trim()},HB_wbIcon('plus',20))),
+    h('div',{className:'wb-foot'},h('button',{type:'button',className:'wb-link',onClick:onTodayHub},'開啟完整今日待辦',HB_wbIcon('arrow',14))),
+    toast&&h('div',{className:'wb-toast',role:'status'},toast),
+    editing&&h(HbWbEditor,{key:editing.id,initial:editing,projects,today,onClose:()=>setEditing(null),
+      onSave:v=>{const {isNew,...task}=v;if(isNew?tk.add(task):tk.replace(task)){setEditing(null);say(isNew?'已新增':'已儲存')}},
+      onDelete:v=>{if(confirm('確定刪除「'+v.title+'」？')&&tk.update(v,{deleted:true})){setEditing(null);say('已刪除')}}}),
+    following&&h(HbWbFollow,{key:following.id,task:following,today,onClose:()=>setFollowing(null),
+      onSave:(patch,msg)=>{if(tk.update(following,patch)){setFollowing(null);say(msg)}}}));
+}
+function HbWbModal({title,sub,onClose,children}){const h=u.default.createElement,ref=u.useRef(null);
+  u.useEffect(()=>{const el=ref.current;try{el.showModal()}catch{el.setAttribute('open','')}return()=>{try{el.close()}catch{}}},[]);
+  return h('dialog',{ref,className:'wb-modal',onCancel:e=>{e.preventDefault();onClose()},onClick:e=>{if(e.target===ref.current)onClose()}},
+    h('div',{className:'wb-mhead'},h('div',null,h('p',null,sub),h('h3',null,title)),h('button',{type:'button',onClick:onClose,'aria-label':'關閉'},'×')),children)}
+function HbWbEditor({initial,projects,today,onClose,onSave,onDelete}){
+  const h=u.default.createElement,[v,setV]=u.useState({...initial}),set=(k,x)=>setV(p=>({...p,[k]:x}));
+  const isFollow=v.kind==='follow',auto=v.source==='auto';
+  const submit=e=>{e.preventDefault();const t=(v.title||'').trim();if(!t)return;const out={...v,title:t.slice(0,200),assignee:(v.assignee||'').trim()};
+    if(isFollow){out.time='';out.waitingFor=(v.waitingFor||'').trim()}else{delete out.waitingFor}onSave(out)};
+  const field=(label,el)=>h('label',{className:'wb-field'},h('span',null,label),el);
+  return h(HbWbModal,{title:v.isNew?(isFollow?'新增追蹤':'新增事項'):(isFollow?'編輯追蹤':'編輯事項'),sub:v.isNew?'NOUVELLE ENTRÉE':'DÉTAILS',onClose},
+    h('form',{onSubmit:submit,className:'wb-form'},
+      !auto&&h('div',{className:'wb-seg',role:'group','aria-label':'類型'},
+        h('button',{type:'button',className:!isFollow?'on':'',onClick:()=>setV(p=>({...p,kind:undefined}))},'待辦'),
+        h('button',{type:'button',className:isFollow?'on':'',onClick:()=>setV(p=>({...p,kind:'follow',due:p.due||HB_wbAddDays(today,3)}))},'追蹤（等待回覆）')),
+      field('事項名稱 *',h('input',{value:v.title||'',required:true,maxLength:200,autoFocus:true,onChange:e=>set('title',e.target.value)})),
+      h('div',{className:'wb-grid2'},
+        field('所屬專案',h('select',{value:v.projectId||'',onChange:e=>set('projectId',e.target.value)},h('option',{value:''},'公司事務'),projects.map(p=>h('option',{key:p.id,value:p.id},p.name)))),
+        isFollow?field('等待誰回覆',h('input',{value:v.waitingFor||'',maxLength:60,placeholder:'例：冷氣廠商、業主',onChange:e=>set('waitingFor',e.target.value)}))
+          :field('負責人',h('input',{value:v.assignee||'',maxLength:60,onChange:e=>set('assignee',e.target.value)})),
+        field(isFollow?'下次追蹤日':'日期（空白＝稍後辦）',h('input',{type:'date',value:v.due||'',onChange:e=>set('due',e.target.value)})),
+        !isFollow&&field('時間（有時間會排進今日安排）',h('input',{type:'time',value:v.time||'',onChange:e=>set('time',e.target.value)}))),
+      field('備註',h('textarea',{rows:2,value:v.note||'',maxLength:500,onChange:e=>set('note',e.target.value)})),
+      h('div',{className:'wb-mact'},
+        !v.isNew&&!auto&&h('button',{type:'button',className:'wb-btn wb-btn-ghost wb-danger',onClick:()=>onDelete(v)},'刪除'),
+        h('span',{style:{flex:1}}),
+        h('button',{type:'button',className:'wb-btn wb-btn-ghost',onClick:onClose},'取消'),
+        h('button',{type:'submit',className:'wb-btn wb-btn-solid'},'儲存'))));
+}
+function HbWbFollow({task,today,onClose,onSave}){
+  const h=u.default.createElement,[note,setNote]=u.useState(''),[next,setNext]=u.useState(task.due&&task.due>today?task.due:HB_wbAddDays(today,3)),[who,setWho]=u.useState(task.waitingFor||'');
+  const log=Array.isArray(task.followLog)?task.followLog:[];
+  const entry=txt=>({date:today,note:txt});
+  const save=()=>{const patch={due:next,waitingFor:who.trim()};if(note.trim())patch.followLog=[...log,entry(note.trim())];onSave(patch,'已更新，下次追蹤 '+HB_wbDot(next))};
+  const close=()=>onSave({done:true,completedAt:today,waitingFor:who.trim(),followLog:[...log,entry(note.trim()?'結案：'+note.trim():'結案')]},'已結案');
+  return h(HbWbModal,{title:task.title,sub:'SUIVI · 更新追蹤',onClose},
+    h('div',{className:'wb-form'},
+      h('div',{className:'wb-fsum'},h('span',null,task.projectName),h('span',null,'等待｜',task.waitingFor||'未填'),h('span',null,'原定 ',HB_wbDot(task.due)||'未定')),
+      log.length?h('ol',{className:'wb-log'},log.slice(-5).map((x,i)=>h('li',{key:i},h('b',{className:'wb-mono'},HB_wbDot(x.date)),x.note))):h('p',{className:'wb-empty',style:{margin:'4px 0 2px'}},'還沒有追蹤紀錄'),
+      h('label',{className:'wb-field'},h('span',null,'這次追蹤結果'),h('textarea',{rows:2,value:note,maxLength:300,autoFocus:true,placeholder:'例：已電話聯絡，廠商週四回覆報價',onChange:e=>setNote(e.target.value)})),
+      h('div',{className:'wb-grid2'},
+        h('label',{className:'wb-field'},h('span',null,'等待誰回覆'),h('input',{value:who,maxLength:60,onChange:e=>setWho(e.target.value)})),
+        h('label',{className:'wb-field'},h('span',null,'下次追蹤日（改期）'),h('input',{type:'date',value:next,onChange:e=>setNext(e.target.value)}))),
+      h('div',{className:'wb-quickdays'},[['明天',1],['3 天後',3],['下週',7]].map(x=>h('button',{key:x[1],type:'button',className:next===HB_wbAddDays(today,x[1])?'on':'',onClick:()=>setNext(HB_wbAddDays(today,x[1]))},x[0]))),
+      h('div',{className:'wb-mact'},
+        h('button',{type:'button',className:'wb-btn wb-btn-ghost',onClick:close},HB_wbIcon('check',14),'標記結案'),
+        h('span',{style:{flex:1}}),
+        h('button',{type:'button',className:'wb-btn wb-btn-ghost',onClick:onClose},'取消'),
+        h('button',{type:'button',className:'wb-btn wb-btn-solid',onClick:save,disabled:!next},'儲存更新'))));
+}
+
 /* HERFULSINS — 今日待辦。Manual tasks are cached locally and synchronized through the workspace API. */
 const HB_WORKSPACE_API='https://rqndozhhvuimqjqtmeli.supabase.co/functions/v1/hb-workspace-api';
 async function HB_workspaceRequest(path,options={}){let token='';try{const {data:ss}=await q.auth.getSession();token=ss&&ss.session?ss.session.access_token:''}catch{};headers={'Content-Type':'application/json',...(options.headers||{})};if(token)headers.Authorization='Bearer '+token;const response=await fetch(HB_WORKSPACE_API+path,{...options,headers});let data={};try{data=await response.json()}catch{}if(response.status===401){throw Error('請登出後重新登入，才能使用跨裝置同步。')}if(response.status===409)throw Error('另一部裝置已有更新，正在重新取得最新待辦。');if(!response.ok)throw Error(data.error||'同步服務暫時無法使用');return data}
@@ -13499,7 +13884,7 @@ function Gy(){let[l,t]=(0,u.useState)(!0),[e,n]=(0,u.useState)(!1),[a,i]=(0,u.us
         }
         .fade-in { animation: hbFadeIn .2s var(--hb-ease-out) both; }
         @media (prefers-reduced-motion: reduce){ .fade-in { animation-name: hbFadeInSoft; } }
-      `),u.default.createElement("div",{key:o,className:"hb-pagein",style:{height:"100%",overflowY:o==="landing"?"hidden":"auto",WebkitOverflowScrolling:"touch",paddingBottom:o==="landing"?0:92}},l?u.default.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh"}},u.default.createElement(E,{name:"loader",className:"animate-spin",size:28,color:s.ocean})):o==="landing"?u.default.createElement(HbLanding,{onToday:()=>f("today"),onCase:()=>f("home"),onCompany:()=>f("companyHub"),onManageStaff:()=>f("staff"),onQuickQuote:()=>f("estimateHub"),onProposal:()=>HB_openProposalSystem(),onMarketingPhotos:()=>f("marketingPhotos"),onBookings:()=>f("bookings"),onOpenBooking:()=>HB_openBookingSystem(),onDrawings:()=>f("drawings"),onLogout:()=>{HB_staffLogout()}}):o==="today"?u.default.createElement(HbWorkHub,{projects:a,notify:g,initialView:"today",onBack:()=>f("landing"),onOpenProject:id=>{if(a.some(p=>p.id===id)){r(id);hbSetOpenTab("overview");f("detail")}else g("找不到這個案場，請重新整理")}}):o==="companyHub"?u.default.createElement(HbCompanyHub,{onBack:()=>f("landing"),onContracts:()=>f("contracts"),onQuotes:()=>f("estimateHub"),onReceipts:()=>f("receipts"),onVendorReceipts:()=>f("vendorReceipts"),onQuickQuote:()=>f("estimateHub"),onGoHome:()=>f("home"),onVendorQuotes:()=>f("vendorQuotes"),onProposal:()=>HB_openProposalSystem(),onMarketingPhotos:()=>f("marketingPhotos"),onBookings:()=>f("bookings"),onOpenBooking:()=>HB_openBookingSystem(),onDrawings:()=>f("drawings"),onAttendance:()=>f("attendance"),onPriceBook:()=>f("priceBook"),onSurvey:()=>f("survey"),onChangeOrders:()=>f("changeOrders"),onPdfRotate:()=>f("pdfRotate"),onDocs:()=>f("docsHub")}):o==="docsHub"?u.default.createElement(HbDocsHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="changeOrders"?u.default.createElement(HbChangeOrderHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="survey"?u.default.createElement(HbSurveyHub,{onBack:()=>f("companyHub"),notify:g,projects:a,onProjectCreated:pj=>i(v=>[cm(pj),...v])}):o==="priceBook"?u.default.createElement(HbPriceBookHub,{onBack:()=>f("companyHub"),notify:g}):o==="attendance"?u.default.createElement(HbAttendanceHub,{onBack:()=>f("companyHub"),notify:g}):o==="marketingPhotos"?u.default.createElement(HbMarketingPhotoHub,{onBack:()=>f("landing"),notify:g}):o==="bookings"?u.default.createElement(HbWorkHub,{projects:a,notify:g,initialView:"calendar",onBack:()=>f("landing"),onOpenProject:id=>{if(a.some(p=>p.id===id)){r(id);hbSetOpenTab("overview");f("detail")}else g("找不到這個案場，請重新整理")}}):o==="vendorQuotes"?u.default.createElement(HbVendorQuoteHub,{onBack:()=>f("companyHub"),notify:g}):o==="drawings"?u.default.createElement(HbDrawingHub,{onBack:()=>f("companyHub"),notify:g}):o==="receipts"?u.default.createElement(HbReceiptsHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="vendorReceipts"?u.default.createElement(HbVendorReceiptsHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="quoteImportPick"?u.default.createElement(Iy,{projects:a,onOpen:hbImportQuote,onNew:()=>h(!0),onRefresh:()=>{D(!0),y()},refreshing:e,storageUsedBytes:z,onManageStaff:()=>f("staff"),pickerMode:!0,progressRanges:hbProg,onBack:()=>f("companyHub")}):o==="estimateHub"?u.default.createElement(HerfulsinsEstimateHub,{project:null,notify:g,onClose:()=>f("companyHub")}):o==="home"?u.default.createElement(Iy,{projects:a,onOpen:T=>{r(T),hbSetOpenTab("photos"),f("detail")},onNew:()=>h(!0),onRefresh:()=>{D(!0),y()},refreshing:e,storageUsedBytes:z,onManageStaff:()=>f("staff"),progressRanges:hbProg,onBack:()=>f("landing"),onGoCompany:()=>f("companyHub")}):o==="staff"?u.default.createElement(Ky,{onBack:()=>f("landing")}):o==="pdfRotate"?u.default.createElement(HbPdfRotate,{onBack:()=>f("companyHub"),notify:g}):o==="contracts"?u.default.createElement(HerfulsinsContractsHub,{onBack:()=>f("landing"),notify:g}):o==="digitalCard"?u.default.createElement(HbDigitalCard,{onBack:()=>f("landing"),notify:g}):u.default.createElement(lh,{project:j,onBack:()=>f("home"),onUpdateMeta:S,onDelete:M,notify:g,initialTab:"overview"})),d&&u.default.createElement(Py,{onCancel:()=>h(!1),onCreate:b}),m&&u.default.createElement("div",{className:"hb-toast",style:{position:"fixed",bottom:20,left:"50%",background:s.ink,color:s.card,padding:"10px 18px",borderRadius:8,fontSize:13,boxShadow:"0 4px 14px rgba(0,0,0,0.25)",zIndex:60}},m),u.default.createElement(HbBottomNav,{active:o,onNavigate:T=>f(T)}))}
+      `),u.default.createElement("div",{key:o,className:"hb-pagein",style:{height:"100%",overflowY:o==="landing"?"hidden":"auto",WebkitOverflowScrolling:"touch",paddingBottom:o==="landing"?0:92}},l?u.default.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh"}},u.default.createElement(E,{name:"loader",className:"animate-spin",size:28,color:s.ocean})):o==="landing"?u.default.createElement(HbLanding,{onToday:()=>f("today"),onCase:()=>f("home"),onCompany:()=>f("companyHub"),onManageStaff:()=>f("staff"),onQuickQuote:()=>f("estimateHub"),onProposal:()=>HB_openProposalSystem(),onMarketingPhotos:()=>f("marketingPhotos"),onBookings:()=>f("bookings"),onOpenBooking:()=>HB_openBookingSystem(),onDrawings:()=>f("drawings"),onLogout:()=>{HB_staffLogout()}}):o==="today"?u.default.createElement(HbWorkHub,{projects:a,notify:g,initialView:"today",onBack:()=>f("landing"),onOpenProject:id=>{if(a.some(p=>p.id===id)){r(id);hbSetOpenTab("overview");f("detail")}else g("找不到這個案場，請重新整理")}}):o==="companyHub"?u.default.createElement(HbCompanyHub,{onBack:()=>f("landing"),onContracts:()=>f("contracts"),onQuotes:()=>f("estimateHub"),onReceipts:()=>f("receipts"),onVendorReceipts:()=>f("vendorReceipts"),onQuickQuote:()=>f("estimateHub"),onGoHome:()=>f("home"),onVendorQuotes:()=>f("vendorQuotes"),onProposal:()=>HB_openProposalSystem(),onMarketingPhotos:()=>f("marketingPhotos"),onBookings:()=>f("bookings"),onOpenBooking:()=>HB_openBookingSystem(),onDrawings:()=>f("drawings"),onAttendance:()=>f("attendance"),onPriceBook:()=>f("priceBook"),onSurvey:()=>f("survey"),onChangeOrders:()=>f("changeOrders"),onPdfRotate:()=>f("pdfRotate"),onDocs:()=>f("docsHub")}):o==="docsHub"?u.default.createElement(HbDocsHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="changeOrders"?u.default.createElement(HbChangeOrderHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="survey"?u.default.createElement(HbSurveyHub,{onBack:()=>f("companyHub"),notify:g,projects:a,onProjectCreated:pj=>i(v=>[cm(pj),...v])}):o==="priceBook"?u.default.createElement(HbPriceBookHub,{onBack:()=>f("companyHub"),notify:g}):o==="attendance"?u.default.createElement(HbAttendanceHub,{onBack:()=>f("companyHub"),notify:g}):o==="marketingPhotos"?u.default.createElement(HbMarketingPhotoHub,{onBack:()=>f("landing"),notify:g}):o==="bookings"?u.default.createElement(HbWorkHub,{projects:a,notify:g,initialView:"calendar",onBack:()=>f("landing"),onOpenProject:id=>{if(a.some(p=>p.id===id)){r(id);hbSetOpenTab("overview");f("detail")}else g("找不到這個案場，請重新整理")}}):o==="vendorQuotes"?u.default.createElement(HbVendorQuoteHub,{onBack:()=>f("companyHub"),notify:g}):o==="drawings"?u.default.createElement(HbDrawingHub,{onBack:()=>f("companyHub"),notify:g}):o==="receipts"?u.default.createElement(HbReceiptsHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="vendorReceipts"?u.default.createElement(HbVendorReceiptsHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="quoteImportPick"?u.default.createElement(Iy,{projects:a,onOpen:hbImportQuote,onNew:()=>h(!0),onRefresh:()=>{D(!0),y()},refreshing:e,storageUsedBytes:z,onManageStaff:()=>f("staff"),pickerMode:!0,progressRanges:hbProg,onBack:()=>f("companyHub")}):o==="estimateHub"?u.default.createElement(HerfulsinsEstimateHub,{project:null,notify:g,onClose:()=>f("companyHub")}):o==="home"?u.default.createElement(Iy,{projects:a,onOpen:T=>{r(T),hbSetOpenTab("photos"),f("detail")},onWbOpen:T=>{r(T),hbSetOpenTab("overview"),f("detail")},onCalendar:()=>f("bookings"),onTodayHub:()=>f("today"),onNew:()=>h(!0),onRefresh:()=>{D(!0),y()},refreshing:e,storageUsedBytes:z,onManageStaff:()=>f("staff"),progressRanges:hbProg,onBack:()=>f("landing"),onGoCompany:()=>f("companyHub")}):o==="staff"?u.default.createElement(Ky,{onBack:()=>f("landing")}):o==="pdfRotate"?u.default.createElement(HbPdfRotate,{onBack:()=>f("companyHub"),notify:g}):o==="contracts"?u.default.createElement(HerfulsinsContractsHub,{onBack:()=>f("landing"),notify:g}):o==="digitalCard"?u.default.createElement(HbDigitalCard,{onBack:()=>f("landing"),notify:g}):u.default.createElement(lh,{project:j,onBack:()=>f("home"),onUpdateMeta:S,onDelete:M,notify:g,initialTab:"overview"})),d&&u.default.createElement(Py,{onCancel:()=>h(!1),onCreate:b}),m&&u.default.createElement("div",{className:"hb-toast",style:{position:"fixed",bottom:20,left:"50%",background:s.ink,color:s.card,padding:"10px 18px",borderRadius:8,fontSize:13,boxShadow:"0 4px 14px rgba(0,0,0,0.25)",zIndex:60}},m),u.default.createElement(HbBottomNav,{active:o,onNavigate:T=>f(T)}))}
 
 /* ===================================================================
    設計需求問卷：公司端建立連結 → 業主線上填 → 答案回到案件
@@ -15533,8 +15918,9 @@ function mm({photos,index,onIndexChange,onClose,onAnnotate,onDelete,onDownload})
   ), document.body);
 }
 
-function $y(l){return l==null?null:(l/(1024*1024)).toFixed(1)}function Iy({projects:l,onOpen:t,onNew:e,onRefresh:n,refreshing:a,storageUsedBytes:i,onManageStaff:o,pickerMode:hbPM,onBack:hbBack,onGoCompany:hbGoCo,progressRanges:hbProg={}}){
+function $y(l){return l==null?null:(l/(1024*1024)).toFixed(1)}function Iy({projects:l,onOpen:t,onNew:e,onRefresh:n,refreshing:a,storageUsedBytes:i,onManageStaff:o,pickerMode:hbPM,onBack:hbBack,onGoCompany:hbGoCo,progressRanges:hbProg={},onWbOpen:hbWbOpen,onCalendar:hbCal,onTodayHub:hbTodayHub}){
   let c=$y(i),r=i!=null?Math.min(100,i/10737418240*100):null,[hbMenuOpen,hbSetMenuOpen]=(0,u.useState)(!1);
+  const hbTk=HB_useToday(l,!hbPM),hbCounts=hbPM?{}:HB_wbProjectCounts(hbTk.all);
   return u.default.createElement("div",{className:hbPM?undefined:"hb-project-library",style:{background:s.paper,minHeight:"100vh",position:"relative"}},
     u.default.createElement("style",null,`
       @keyframes iyBreatheA { 0%,100%{transform:scale(1);opacity:.7} 50%{transform:scale(1.3);opacity:1} }
@@ -15568,7 +15954,7 @@ function $y(l){return l==null?null:(l/(1024*1024)).toFixed(1)}function Iy({proje
           )
         )
       ),
-      u.default.createElement("div",{className:"hb-library-intro",style:{textAlign:"center",padding:"8px 0 22px"}},
+      hbPM&&u.default.createElement("div",{className:"hb-library-intro",style:{textAlign:"center",padding:"8px 0 22px"}},
         u.default.createElement("img",{className:"hb-logo-mark",src:HB_LOGO_MARK,alt:"\u8d6b\u67cf\u7a7a\u9593\u8a2d\u8a08",style:{width:44,height:44,display:"block",margin:"0 auto 10px",objectFit:"contain"}}),
         u.default.createElement("div",{className:"mono",style:{color:s.ocean,fontSize:10.5,letterSpacing:3,marginBottom:12,fontWeight:400}},"HERFULSINS INTERIOR DESIGN"),
         u.default.createElement("h1",{style:{color:s.ink,fontSize:22,fontWeight:300,margin:0,letterSpacing:"0.08em",fontFamily:"'IansuiTitle',serif"}},hbPM?"\u5DE5\u7A0B\u5831\u50F9\u55AE":"\u8D6B\u67CF\u7A7A\u9593\u8A2D\u8A08"),
@@ -15576,17 +15962,21 @@ function $y(l){return l==null?null:(l/(1024*1024)).toFixed(1)}function Iy({proje
       )
     ),
 
+    !hbPM&&u.default.createElement("div",{style:{padding:"0 16px",position:"relative",zIndex:2}},
+      u.default.createElement(HbWorkbench,{tk:hbTk,projects:l,onOpenProject:id=>{(hbWbOpen||t)(id)},onCalendar:()=>{hbCal&&hbCal()},onTodayHub:()=>{hbTodayHub&&hbTodayHub()}})),
     u.default.createElement("div",{style:{padding:"6px 16px 112px",position:"relative",zIndex:1}},
-      !hbPM&&u.default.createElement("button",{onClick:e,style:{...Dl,width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:8,marginBottom:20,fontSize:15,padding:"13px 0",borderRadius:24}},u.default.createElement(E,{name:"plus",size:18})," \u65B0\u589E\u6848\u4EF6"),
+      !hbPM&&u.default.createElement("div",{className:"wb-projhead"},
+        u.default.createElement("h2",null,"\u5C08\u6848",u.default.createElement("small",null,l.length," \u6848")),
+        u.default.createElement("button",{type:"button",onClick:e,className:"wb-btn wb-btn-solid",style:{fontFamily:"inherit"}},u.default.createElement(E,{name:"plus",size:16})," \u65B0\u589E\u6848\u4EF6")),
       l.length===0?u.default.createElement("div",{style:{textAlign:"center",color:s.inkSoft,marginTop:60}},
         u.default.createElement(E,{name:"clipboard-list",size:36,style:{margin:"0 auto 10px",opacity:.5}}),
         u.default.createElement("p",{style:{fontSize:14}},hbPM?"\u76EE\u524D\u9084\u6C92\u6709\u4EFB\u4F55\u6848\u4EF6":"\u9084\u6C92\u6709\u6848\u4EF6\uFF0C\u9EDE\u64CA\u4E0A\u65B9\u6309\u9215\u958B\u59CB\u5EFA\u7ACB\u7B2C\u4E00\u7B46\u7D00\u9304")
       ):u.default.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(178px, 1fr))",gap:"0 16px"}},
-        [...l].sort((hbA,hbB)=>(hbA.status==="\u6D41\u6A19"?1:0)-(hbB.status==="\u6D41\u6A19"?1:0)).map((d,idx)=>u.default.createElement(Ry,{key:d.id,project:d,motionIndex:idx,enableMotion:!hbPM,range:hbProg[d.id]||hbProg["name:"+d.name],onClick:()=>t(d.id)}))
+        [...l].sort((hbA,hbB)=>(hbA.status==="\u6D41\u6A19"?1:0)-(hbB.status==="\u6D41\u6A19"?1:0)).map((d,idx)=>u.default.createElement(Ry,{key:d.id,project:d,motionIndex:idx,enableMotion:!hbPM,range:hbProg[d.id]||hbProg["name:"+d.name],wbCount:hbPM?null:hbCounts[d.id]||{open:0,follow:0},onClick:()=>t(d.id)}))
       )
     )
   );
-}function Ry({project:l,onClick:t,range:hbR,motionIndex=0,enableMotion=false}){
+}function Ry({project:l,onClick:t,range:hbR,motionIndex=0,enableMotion=false,wbCount:hbWc=null}){
 let hbEN={};hbEN[fn[0]]="EARLY DESIGN";hbEN[fn[1]]="IN PROGRESS";hbEN[fn[2]]="COMPLETED";hbEN[fn[3]]="WITHDRAWN";
 let hbDone=l.status===fn[2];
 let hbYr=String(l.updatedAt||"").slice(0,4)||String(new Date().getFullYear());
@@ -15613,7 +16003,8 @@ return C("div",{onClick:t,role:"button",tabIndex:0,"aria-label":"開啟專案：
     C("div",{className:"t"},C("i",{style:{width:Math.max(2,hbStagePct)+"%"}})),
     C("div",{className:"lab mono"},hbStagePct,"%",hbTxt?" \xB7 "+hbTxt:"")
   ):null,
-  C("div",{className:"meta mono"},(l.photoCount||0)," \u5E40 \xB7 ",(l.quoteCount||0)," \u4EFD \xB7 ",Tl(l.updatedAt))
+  C("div",{className:"meta mono"},(l.photoCount||0)," \u5E40 \xB7 ",(l.quoteCount||0)," \u4EFD \xB7 ",Tl(l.updatedAt)),
+  hbWc&&(hbWc.open||hbWc.follow)?C("div",{className:"wb-pcount"},"\u672A\u5B8C\u6210 ",C("b",null,hbWc.open),"\u3000\u5F85\u8FFD\u8E64 ",C("b",null,hbWc.follow)):null
 )}
 function Py({onCancel:l,onCreate:t}){let[e,n]=(0,u.useState)(""),[a,i]=(0,u.useState)(""),[o,f]=(0,u.useState)(null),[c,r]=(0,u.useState)(!1),[d,h]=(0,u.useState)(""),m=()=>{if(!navigator.geolocation){h("\u9019\u500B\u88DD\u7F6E\u4E0D\u652F\u63F4\u5B9A\u4F4D");return}r(!0),h(""),navigator.geolocation.getCurrentPosition(p=>{f({lat:p.coords.latitude,lng:p.coords.longitude}),r(!1)},()=>{h("\u7121\u6CD5\u53D6\u5F97\u76EE\u524D\u4F4D\u7F6E\uFF0C\u8ACB\u78BA\u8A8D\u5DF2\u5141\u8A31\u5B9A\u4F4D\u6B0A\u9650"),r(!1)},{enableHighAccuracy:!0,timeout:1e4})};return u.default.createElement("div",{style:{position:"fixed",inset:0,background:"rgba(43,38,32,0.45)",display:"flex",alignItems:"center",justifyContent:"center",padding:20,zIndex:50}},u.default.createElement("div",{className:"fade-in",style:{background:s.card,borderRadius:10,padding:22,width:"100%",maxWidth:360}},u.default.createElement("h3",{style:{margin:"0 0 14px",fontSize:17,fontWeight:400,color:s.oceanDark}},"\u65B0\u589E\u6848\u4EF6"),u.default.createElement("label",{style:{fontSize:12.5,color:s.inkSoft}},"\u6848\u4EF6\u540D\u7A31"),u.default.createElement("input",{value:e,onChange:p=>n(p.target.value),placeholder:"\u4F8B\uFF1A\u9673\u5B85\u5BA4\u5167\u88DD\u4FEE",style:el}),u.default.createElement("label",{style:{fontSize:12.5,color:s.inkSoft}},"\u5730\u5740\uFF08\u9078\u586B\uFF09"),u.default.createElement("input",{value:a,onChange:p=>i(p.target.value),placeholder:"\u65BD\u5DE5\u5730\u9EDE",style:el}),u.default.createElement("button",{type:"button",onClick:m,disabled:c,style:{...ll,width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:6,marginBottom:6,padding:"9px 0",fontSize:13}},c?u.default.createElement(E,{name:"loader",size:14,className:"animate-spin"}):u.default.createElement(E,{name:"map-pin",size:14}),o?"\u91CD\u65B0\u5B9A\u4F4D\u76EE\u524D\u4F4D\u7F6E":"\u6A19\u8A18\u76EE\u524D\u4F4D\u7F6E"),o&&u.default.createElement("p",{className:"mono",style:{fontSize:11,color:s.shoal,margin:"0 0 10px"}},"\u5DF2\u5B9A\u4F4D ",o.lat.toFixed(5),", ",o.lng.toFixed(5)),d&&u.default.createElement("p",{style:{fontSize:11.5,color:s.danger,margin:"0 0 10px"}},d),u.default.createElement("div",{style:{display:"flex",gap:10,marginTop:12}},u.default.createElement("button",{onClick:l,style:{...ll,flex:1}},"\u53D6\u6D88"),u.default.createElement("button",{disabled:!e.trim(),onClick:()=>t(e.trim(),a.trim(),o?.lat,o?.lng),style:{...Dl,flex:1,opacity:e.trim()?1:.5}},"\u5EFA\u7ACB"))))}var el={width:"100%",boxSizing:"border-box",border:`1px solid ${s.line}`,borderRadius:8,padding:"9px 11px",fontSize:14,marginBottom:12,marginTop:4,background:"#fff",color:s.ink,fontFamily:"inherit"},Dl={background:s.lemon,color:s.oceanDark,border:"none",borderRadius:8,padding:"11px 0",fontWeight:400,fontSize:14,cursor:"pointer"},lo={background:s.danger,color:"#fff",border:"none",borderRadius:8,padding:"11px 0",fontWeight:400,fontSize:14,cursor:"pointer"},ll={background:"transparent",color:s.oceanDark,border:`1px solid ${s.ocean}`,borderRadius:8,padding:"11px 0",fontWeight:400,fontSize:14,cursor:"pointer"},ri={width:"100%",background:"none",border:"none",cursor:"pointer",display:"flex",alignItems:"center",gap:10,padding:"12px 14px",fontSize:13.5,fontWeight:400,color:s.ink,textAlign:"left"};function HbSignatureModal({project,files,folders,onClose,notify,onSaved,onStore}){
   let [step,setStep]=u.default.useState("pick");
