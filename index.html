@@ -15972,7 +15972,7 @@ function $y(l){return l==null?null:(l/(1024*1024)).toFixed(1)}function Iy({proje
         u.default.createElement(E,{name:"clipboard-list",size:36,style:{margin:"0 auto 10px",opacity:.5}}),
         u.default.createElement("p",{style:{fontSize:14}},hbPM?"\u76EE\u524D\u9084\u6C92\u6709\u4EFB\u4F55\u6848\u4EF6":"\u9084\u6C92\u6709\u6848\u4EF6\uFF0C\u9EDE\u64CA\u4E0A\u65B9\u6309\u9215\u958B\u59CB\u5EFA\u7ACB\u7B2C\u4E00\u7B46\u7D00\u9304")
       ):u.default.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(178px, 1fr))",gap:"0 16px"}},
-        [...l].sort((hbA,hbB)=>(hbA.status==="\u6D41\u6A19"?1:0)-(hbB.status==="\u6D41\u6A19"?1:0)).map((d,idx)=>u.default.createElement(Ry,{key:d.id,project:d,motionIndex:idx,enableMotion:!hbPM,range:hbProg[d.id]||hbProg["name:"+d.name],wbCount:hbPM?null:hbCounts[d.id]||{open:0,follow:0},onClick:()=>t(d.id)}))
+        [...l].sort((hbA,hbB)=>(/^示範案件/.test(hbA.name||"")?2:0)+(hbA.status==="\u6D41\u6A19"?1:0)-(/^示範案件/.test(hbB.name||"")?2:0)-(hbB.status==="\u6D41\u6A19"?1:0)).map((d,idx)=>u.default.createElement(Ry,{key:d.id,project:d,motionIndex:idx,enableMotion:!hbPM,range:hbProg[d.id]||hbProg["name:"+d.name],wbCount:hbPM?null:hbCounts[d.id]||{open:0,follow:0},onClick:()=>t(d.id)}))
       )
     )
   );
