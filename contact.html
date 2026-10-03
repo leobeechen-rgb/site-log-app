@@ -38,6 +38,11 @@ figure{margin:28px 0 0 -10px;max-width:440px}
 .field textarea::placeholder{font-size:13px;color:#93958a}.field textarea:focus{border-color:#353d30;background:#ffffff30}
 @media(max-width:700px){.contact-list li{grid-template-columns:40px 56px minmax(0,1fr)}.contact-list a{font-size:15px}.contact-list small{display:block;margin:2px 0 0}}
 @media print{.contact-list{display:none}}
+
+/* 嵌入模式（?embed=1）：放進官網頁面時使用，背景透明、不留外框留白，高度自動回報給外層頁面 */
+html.is-embed,html.is-embed body{background:transparent!important;min-height:0!important;height:auto!important}
+html.is-embed main{margin:0 auto;padding-top:28px;padding-bottom:20px}
+html.is-embed footer{display:none}
 </style></head><body><main>
 <div class="layout"><section class="left" aria-labelledby="page-title">
 <header><p class="brand-line"><span>HERFULSINS</span> — Interior Architecture &amp; Design</p><h1 id="page-title">聯絡我們</h1><p class="caption">CONTACT / HERFULSINS</p><p class="intro">預約諮詢、詢問設計，歡迎直接與我們聯繫。</p></header>
@@ -1026,6 +1031,15 @@ figure{margin:28px 0 0 -10px;max-width:440px}
 <figcaption><span>FLOOR PLAN</span><span>平面配置圖</span></figcaption></figure>
 <div class="endnote"><h2>A PLACE TO BEGIN<br>理想生活的起點</h2><p>關於採光、動線，與每一天的生活習慣，<br>我們期待聽見您的想法。</p></div></aside></div>
 <p id="print-date"></p><footer><span>HERFULSINS — 嘉義　雲林　台南</span><span>CONTACT</span></footer></main>
+<script>
+(function(){if(!/[?&]embed=1(&|$)/.test(location.search))return;document.documentElement.classList.add('is-embed');
+  /* 連結在外層開啟（電話、LINE、地圖、Email） */
+  document.addEventListener('DOMContentLoaded',function(){document.querySelectorAll('.contact-list a').forEach(function(a){if(!/^(tel|mailto):/.test(a.getAttribute('href')))a.setAttribute('target','_blank');else a.setAttribute('target','_top')})});
+  var last=0;function send(){var m=document.querySelector('main');if(!m)return;var h=Math.ceil(m.getBoundingClientRect().bottom+window.scrollY+(parseFloat(getComputedStyle(m).marginBottom)||0)+8);if(Math.abs(h-last)>2){last=h;try{parent.postMessage({type:'herfulsins-contact-height',height:h},'*')}catch(e){}}}
+  window.addEventListener('load',send);window.addEventListener('resize',send);
+  if(window.ResizeObserver)new ResizeObserver(send).observe(document.querySelector('main')||document.body);setInterval(send,1000);
+})();
+</script>
 <script>
 
 'use strict';
