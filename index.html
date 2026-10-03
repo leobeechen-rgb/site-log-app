@@ -13499,7 +13499,7 @@ function Gy(){let[l,t]=(0,u.useState)(!0),[e,n]=(0,u.useState)(!1),[a,i]=(0,u.us
         }
         .fade-in { animation: hbFadeIn .2s var(--hb-ease-out) both; }
         @media (prefers-reduced-motion: reduce){ .fade-in { animation-name: hbFadeInSoft; } }
-      `),u.default.createElement("div",{key:o,className:"hb-pagein",style:{height:"100%",overflowY:o==="landing"?"hidden":"auto",WebkitOverflowScrolling:"touch",paddingBottom:o==="landing"?0:92}},l?u.default.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh"}},u.default.createElement(E,{name:"loader",className:"animate-spin",size:28,color:s.ocean})):o==="landing"?u.default.createElement(HbLanding,{onToday:()=>f("today"),onCase:()=>f("home"),onCompany:()=>f("companyHub"),onManageStaff:()=>f("staff"),onQuickQuote:()=>f("estimateHub"),onProposal:()=>HB_openProposalSystem(),onMarketingPhotos:()=>f("marketingPhotos"),onBookings:()=>f("bookings"),onOpenBooking:()=>HB_openBookingSystem(),onDrawings:()=>f("drawings"),onLogout:()=>{HB_staffLogout()}}):o==="today"?u.default.createElement(HbWorkHub,{projects:a,notify:g,initialView:"today",onBack:()=>f("landing"),onOpenProject:id=>{if(a.some(p=>p.id===id)){r(id);hbSetOpenTab("overview");f("detail")}else g("找不到這個案場，請重新整理")}}):o==="companyHub"?u.default.createElement(HbCompanyHub,{onBack:()=>f("landing"),onContracts:()=>f("contracts"),onQuotes:()=>f("estimateHub"),onReceipts:()=>f("receipts"),onVendorReceipts:()=>f("vendorReceipts"),onQuickQuote:()=>f("estimateHub"),onGoHome:()=>f("home"),onVendorQuotes:()=>f("vendorQuotes"),onProposal:()=>HB_openProposalSystem(),onMarketingPhotos:()=>f("marketingPhotos"),onBookings:()=>f("bookings"),onOpenBooking:()=>HB_openBookingSystem(),onDrawings:()=>f("drawings"),onAttendance:()=>f("attendance"),onPriceBook:()=>f("priceBook"),onSurvey:()=>f("survey"),onChangeOrders:()=>f("changeOrders"),onPdfRotate:()=>f("pdfRotate"),onDocs:()=>f("docsHub")}):o==="docsHub"?u.default.createElement(HbDocsHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="changeOrders"?u.default.createElement(HbChangeOrderHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="survey"?u.default.createElement(HbSurveyHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="priceBook"?u.default.createElement(HbPriceBookHub,{onBack:()=>f("companyHub"),notify:g}):o==="attendance"?u.default.createElement(HbAttendanceHub,{onBack:()=>f("companyHub"),notify:g}):o==="marketingPhotos"?u.default.createElement(HbMarketingPhotoHub,{onBack:()=>f("landing"),notify:g}):o==="bookings"?u.default.createElement(HbWorkHub,{projects:a,notify:g,initialView:"calendar",onBack:()=>f("landing"),onOpenProject:id=>{if(a.some(p=>p.id===id)){r(id);hbSetOpenTab("overview");f("detail")}else g("找不到這個案場，請重新整理")}}):o==="vendorQuotes"?u.default.createElement(HbVendorQuoteHub,{onBack:()=>f("companyHub"),notify:g}):o==="drawings"?u.default.createElement(HbDrawingHub,{onBack:()=>f("companyHub"),notify:g}):o==="receipts"?u.default.createElement(HbReceiptsHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="vendorReceipts"?u.default.createElement(HbVendorReceiptsHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="quoteImportPick"?u.default.createElement(Iy,{projects:a,onOpen:hbImportQuote,onNew:()=>h(!0),onRefresh:()=>{D(!0),y()},refreshing:e,storageUsedBytes:z,onManageStaff:()=>f("staff"),pickerMode:!0,progressRanges:hbProg,onBack:()=>f("companyHub")}):o==="estimateHub"?u.default.createElement(HerfulsinsEstimateHub,{project:null,notify:g,onClose:()=>f("companyHub")}):o==="home"?u.default.createElement(Iy,{projects:a,onOpen:T=>{r(T),hbSetOpenTab("photos"),f("detail")},onNew:()=>h(!0),onRefresh:()=>{D(!0),y()},refreshing:e,storageUsedBytes:z,onManageStaff:()=>f("staff"),progressRanges:hbProg,onBack:()=>f("landing"),onGoCompany:()=>f("companyHub")}):o==="staff"?u.default.createElement(Ky,{onBack:()=>f("landing")}):o==="pdfRotate"?u.default.createElement(HbPdfRotate,{onBack:()=>f("companyHub"),notify:g}):o==="contracts"?u.default.createElement(HerfulsinsContractsHub,{onBack:()=>f("landing"),notify:g}):o==="digitalCard"?u.default.createElement(HbDigitalCard,{onBack:()=>f("landing"),notify:g}):u.default.createElement(lh,{project:j,onBack:()=>f("home"),onUpdateMeta:S,onDelete:M,notify:g,initialTab:"overview"})),d&&u.default.createElement(Py,{onCancel:()=>h(!1),onCreate:b}),m&&u.default.createElement("div",{className:"hb-toast",style:{position:"fixed",bottom:20,left:"50%",background:s.ink,color:s.card,padding:"10px 18px",borderRadius:8,fontSize:13,boxShadow:"0 4px 14px rgba(0,0,0,0.25)",zIndex:60}},m),u.default.createElement(HbBottomNav,{active:o,onNavigate:T=>f(T)}))}
+      `),u.default.createElement("div",{key:o,className:"hb-pagein",style:{height:"100%",overflowY:o==="landing"?"hidden":"auto",WebkitOverflowScrolling:"touch",paddingBottom:o==="landing"?0:92}},l?u.default.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh"}},u.default.createElement(E,{name:"loader",className:"animate-spin",size:28,color:s.ocean})):o==="landing"?u.default.createElement(HbLanding,{onToday:()=>f("today"),onCase:()=>f("home"),onCompany:()=>f("companyHub"),onManageStaff:()=>f("staff"),onQuickQuote:()=>f("estimateHub"),onProposal:()=>HB_openProposalSystem(),onMarketingPhotos:()=>f("marketingPhotos"),onBookings:()=>f("bookings"),onOpenBooking:()=>HB_openBookingSystem(),onDrawings:()=>f("drawings"),onLogout:()=>{HB_staffLogout()}}):o==="today"?u.default.createElement(HbWorkHub,{projects:a,notify:g,initialView:"today",onBack:()=>f("landing"),onOpenProject:id=>{if(a.some(p=>p.id===id)){r(id);hbSetOpenTab("overview");f("detail")}else g("找不到這個案場，請重新整理")}}):o==="companyHub"?u.default.createElement(HbCompanyHub,{onBack:()=>f("landing"),onContracts:()=>f("contracts"),onQuotes:()=>f("estimateHub"),onReceipts:()=>f("receipts"),onVendorReceipts:()=>f("vendorReceipts"),onQuickQuote:()=>f("estimateHub"),onGoHome:()=>f("home"),onVendorQuotes:()=>f("vendorQuotes"),onProposal:()=>HB_openProposalSystem(),onMarketingPhotos:()=>f("marketingPhotos"),onBookings:()=>f("bookings"),onOpenBooking:()=>HB_openBookingSystem(),onDrawings:()=>f("drawings"),onAttendance:()=>f("attendance"),onPriceBook:()=>f("priceBook"),onSurvey:()=>f("survey"),onChangeOrders:()=>f("changeOrders"),onPdfRotate:()=>f("pdfRotate"),onDocs:()=>f("docsHub")}):o==="docsHub"?u.default.createElement(HbDocsHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="changeOrders"?u.default.createElement(HbChangeOrderHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="survey"?u.default.createElement(HbSurveyHub,{onBack:()=>f("companyHub"),notify:g,projects:a,onProjectCreated:pj=>i(v=>[cm(pj),...v])}):o==="priceBook"?u.default.createElement(HbPriceBookHub,{onBack:()=>f("companyHub"),notify:g}):o==="attendance"?u.default.createElement(HbAttendanceHub,{onBack:()=>f("companyHub"),notify:g}):o==="marketingPhotos"?u.default.createElement(HbMarketingPhotoHub,{onBack:()=>f("landing"),notify:g}):o==="bookings"?u.default.createElement(HbWorkHub,{projects:a,notify:g,initialView:"calendar",onBack:()=>f("landing"),onOpenProject:id=>{if(a.some(p=>p.id===id)){r(id);hbSetOpenTab("overview");f("detail")}else g("找不到這個案場，請重新整理")}}):o==="vendorQuotes"?u.default.createElement(HbVendorQuoteHub,{onBack:()=>f("companyHub"),notify:g}):o==="drawings"?u.default.createElement(HbDrawingHub,{onBack:()=>f("companyHub"),notify:g}):o==="receipts"?u.default.createElement(HbReceiptsHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="vendorReceipts"?u.default.createElement(HbVendorReceiptsHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="quoteImportPick"?u.default.createElement(Iy,{projects:a,onOpen:hbImportQuote,onNew:()=>h(!0),onRefresh:()=>{D(!0),y()},refreshing:e,storageUsedBytes:z,onManageStaff:()=>f("staff"),pickerMode:!0,progressRanges:hbProg,onBack:()=>f("companyHub")}):o==="estimateHub"?u.default.createElement(HerfulsinsEstimateHub,{project:null,notify:g,onClose:()=>f("companyHub")}):o==="home"?u.default.createElement(Iy,{projects:a,onOpen:T=>{r(T),hbSetOpenTab("photos"),f("detail")},onNew:()=>h(!0),onRefresh:()=>{D(!0),y()},refreshing:e,storageUsedBytes:z,onManageStaff:()=>f("staff"),progressRanges:hbProg,onBack:()=>f("landing"),onGoCompany:()=>f("companyHub")}):o==="staff"?u.default.createElement(Ky,{onBack:()=>f("landing")}):o==="pdfRotate"?u.default.createElement(HbPdfRotate,{onBack:()=>f("companyHub"),notify:g}):o==="contracts"?u.default.createElement(HerfulsinsContractsHub,{onBack:()=>f("landing"),notify:g}):o==="digitalCard"?u.default.createElement(HbDigitalCard,{onBack:()=>f("landing"),notify:g}):u.default.createElement(lh,{project:j,onBack:()=>f("home"),onUpdateMeta:S,onDelete:M,notify:g,initialTab:"overview"})),d&&u.default.createElement(Py,{onCancel:()=>h(!1),onCreate:b}),m&&u.default.createElement("div",{className:"hb-toast",style:{position:"fixed",bottom:20,left:"50%",background:s.ink,color:s.card,padding:"10px 18px",borderRadius:8,fontSize:13,boxShadow:"0 4px 14px rgba(0,0,0,0.25)",zIndex:60}},m),u.default.createElement(HbBottomNav,{active:o,onNavigate:T=>f(T)}))}
 
 /* ===================================================================
    設計需求問卷：公司端建立連結 → 業主線上填 → 答案回到案件
@@ -13545,7 +13545,7 @@ function HB_svUrl(token){
 }
 function HB_svMap(r){
   return{id:r.id,token:r.token,projectId:r.project_id,title:r.title||"",clientName:r.client_name||"",
-    status:r.status||"sent",answers:r.answers||{},submittedAt:r.submitted_at,createdAt:r.created_at};
+    status:r.status||"sent",answers:r.answers||{},submittedAt:r.submitted_at,createdAt:r.created_at,source:r.source||""};
 }
 function HB_svSummary(a){
   var bits=[];
@@ -13566,7 +13566,9 @@ function HbSurveyPublic({token}){
   let[busy,setBusy]=(0,u.useState)(!1);
   let[err,setErr]=(0,u.useState)("");
 
+  let isOpen=token==="open";
   (0,u.useEffect)(()=>{(async()=>{
+    if(isOpen){setRow({title:"設計需求問卷"});setSt("form");return}
     let{data,error}=await q.from("sitelog_questionnaires").select("*").eq("token",token).maybeSingle();
     if(error||!data){setSt("bad");return}
     let r=HB_svMap(data);
@@ -13580,10 +13582,12 @@ function HbSurveyPublic({token}){
   let submit=async()=>{
     if(!String(a.name||"").trim()||!String(a.phone||"").trim()){setErr("請至少填寫稱呼與聯絡電話");return}
     setErr("");setBusy(!0);
-    let{error}=await q.from("sitelog_questionnaires").update({answers:a,status:"submitted",
+    let{error}=isOpen
+      ?await q.rpc("hb_survey_submit_open",{p_answers:a})
+      :await q.from("sitelog_questionnaires").update({answers:a,status:"submitted",
       client_name:HB_pbClean(a.name),submitted_at:new Date().toISOString(),updated_at:new Date().toISOString()}).eq("id",row.id);
     setBusy(!1);
-    if(error){setErr("送出失敗："+error.message);return}
+    if(error){let m=String(error.message||"");setErr(/rate_limited/.test(m)?"目前填寫的人比較多，請稍後再試，或直接用 LINE 聯絡我們。":/too_large/.test(m)?"內容太長了，請精簡一些再送出。":"送出失敗，請稍後再試。");return}
     setSt("done");
   };
 
@@ -13638,8 +13642,20 @@ function HbSurveyPublic({token}){
 }
 
 /* ---------- 公司端：問卷管理 ---------- */
-function HbSurveyHub({onBack,notify,projects}){
+function HB_svCaseName(a){
+  let n=HB_pbClean(a&&a.name);let m=n.match(/^(.{1,2}?)(先生|小姐|太太|女士|老師|醫師)$/);
+  return m?m[1]+"公館":(n?n.replace(/公館$/,"")+"公館":"新案件");
+}
+function HB_svGenPw(){let c="abcdefghjkmnpqrstuvwxyz23456789",o="",b=new Uint32Array(8);crypto.getRandomValues(b);for(let i=0;i<8;i++)o+=c[b[i]%c.length];return o}
+function HB_svLoginMsg(name,pw){
+  return "您好，這是赫柏空間設計為您建立的專屬案件頁「"+name+"」。\n之後的設計進度、照片、圖面都會放在這裡：\n"+window.location.origin+window.location.pathname+"\n\n登入時選「業主登入」，輸入案件密碼："+pw+"\n（也可以下載「赫柏空間設計」App 使用）";
+}
+function HbSurveyHub({onBack,notify,projects,onProjectCreated}){
   let h=u.default.createElement;
+  let[mk,setMk]=(0,u.useState)(null);      // {id,name}：正在建立案件的問卷
+  let[mkBusy,setMkBusy]=(0,u.useState)(!1);
+  let[made,setMade]=(0,u.useState)({});    // 問卷id → {name,pw}
+  let[newProj,setNewProj]=(0,u.useState)([]);
   let[list,setList]=(0,u.useState)([]);
   let[loading,setLoading]=(0,u.useState)(!0);
   let[err,setErr]=(0,u.useState)(null);
@@ -13678,15 +13694,46 @@ function HbSurveyHub({onBack,notify,projects}){
     let txt="赫柏空間設計　設計需求問卷\n填一下讓我們更了解你的需求：\n"+HB_svUrl(r.token);
     window.open("https://line.me/R/msg/text/?"+encodeURIComponent(txt),"_blank");
   };
-  let projName=id=>{let p=(projects||[]).find(x=>x.id===id);return p?p.name:""};
+  let projName=id=>{let p=[...newProj,...(projects||[])].find(x=>x.id===id);return p?p.name:""};
+  let makeProject=async r=>{
+    let name=HB_pbClean(mk&&mk.name);if(!name){notify("請輸入案件名稱");return}
+    setMkBusy(!0);
+    try{
+      let a=r.answers||{},pw="";
+      for(let t=0;t<5;t++){pw=HB_svGenPw();let{data:dup}=await q.from("sitelog_projects").select("id").eq("owner_password",pw).limit(1);if(!dup||!dup.length)break}
+      let area=parseFloat(String(a.size||"").replace(/[^0-9.]/g,""));
+      let row={name,address:HB_pbClean(a.addr)||null,status:fn[0],owner_password:pw};
+      if(!isNaN(area)&&area>0)row.floor_area=area;
+      let{data:pj,error}=await q.from("sitelog_projects").insert(row).select().single();
+      if(error)throw error;
+      let{error:e2}=await q.from("sitelog_questionnaires").update({project_id:pj.id,updated_at:new Date().toISOString()}).eq("id",r.id);
+      if(e2)console.warn("questionnaire link",e2.message);
+      setList(v=>v.map(x=>x.id===r.id?{...x,projectId:pj.id}:x));
+      setNewProj(v=>[{id:pj.id,name:pj.name},...v]);
+      setMade(v=>({...v,[r.id]:{name:pj.name,pw}}));
+      setMk(null);
+      try{onProjectCreated&&onProjectCreated(pj)}catch(_e){}
+      notify("案件「"+pj.name+"」已建立");
+    }catch(err){notify("建立失敗："+(err.message||err))}
+    finally{setMkBusy(!1)}
+  };
 
   return h("div",{className:"hb-archive hb-dossier",style:{minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},
     h("div",{style:{maxWidth:1320,margin:"0 auto",padding:"0 clamp(20px,4vw,58px) 112px"}},
       h("button",{onClick:onBack,className:"hb-arcBack"},h(E,{name:"arrow-left",size:15}),h("span",null,"返回公司資料庫")),
       h("div",{className:"hb-dosLabel"},"Questionnaire Client"),h("h1",{className:"hb-dosTitle"},"設計需求問卷"),
       h("p",{className:"hb-dosLede"},
-        "產生一個專屬連結傳給業主，他填完你這邊就看得到。初次接洽時先發一份，可以省掉很多來回。"),
+        "客戶填完需求，你這邊確認後一鍵建立案件。初次接洽時先發一份，可以省掉很多來回。"),
 
+      h("div",{style:{background:"#fff",border:"1px solid #B4573A55",borderRadius:2,padding:"14px 15px",marginBottom:14}},
+        h("div",{style:{fontSize:13.5,color:"#17150F",marginBottom:3}},"公開問卷連結"),
+        h("div",{style:{fontSize:12,color:s.inkSoft,lineHeight:1.7,marginBottom:10}},"固定一條網址，可放在 LINE 官方帳號、官網、IG。客戶填完會出現在下方清單，按「建立案件」就自動建好案件與業主密碼。"),
+        h("div",{className:"mono",style:{fontSize:11.5,color:s.inkSoft,background:"#FBFAF7",border:`1px solid ${s.line}`,padding:"7px 9px",marginBottom:10,wordBreak:"break-all"}},HB_svUrl("open")),
+        h("div",{style:{display:"flex",gap:8,flexWrap:"wrap"}},
+          h("button",{onClick:()=>HB_vdCopy(HB_svUrl("open"),notify,"公開問卷連結"),style:{flex:"1 1 110px",border:`1px solid ${s.line}`,background:"#fff",borderRadius:2,padding:"8px 0",fontSize:12.5,color:"#17150F",cursor:"pointer",fontFamily:"inherit"}},"複製連結"),
+          h("button",{onClick:()=>window.open("https://line.me/R/msg/text/?"+encodeURIComponent("赫柏空間設計　設計需求問卷\n填一下讓我們更了解你的需求：\n"+HB_svUrl("open")),"_blank"),style:{flex:"1 1 110px",border:"none",background:"#06C755",color:"#fff",borderRadius:2,padding:"8px 0",fontSize:12.5,cursor:"pointer",fontFamily:"inherit"}},"分享到 LINE"),
+          h("button",{onClick:()=>window.open(HB_svUrl("open"),"_blank"),style:{border:`1px solid ${s.line}`,background:"#fff",borderRadius:2,padding:"8px 12px",fontSize:12.5,color:"#17150F",cursor:"pointer",fontFamily:"inherit"}},"預覽"))),
+      h("div",{style:{fontSize:12,color:s.inkSoft,margin:"0 0 6px"}},"或：為特定客戶建立專屬問卷"),
       h("div",{style:{background:"rgba(255,255,255,.55)",border:"1px solid rgba(57,51,47,.12)",borderRadius:2,padding:"14px 15px",marginBottom:18}},
         h("label",{style:{fontSize:12,color:s.inkSoft}},"問卷標題"),
         h("input",{value:title,onChange:e=>setTitle(e.target.value),placeholder:"例：陳宅設計需求問卷",
@@ -13712,7 +13759,9 @@ function HbSurveyHub({onBack,notify,projects}){
             h("div",{onClick:()=>setOpenId(open?null:r.id),style:{padding:"11px 13px",cursor:"pointer"}},
               h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"baseline",gap:8,flexWrap:"wrap"}},
                 h("span",{style:{fontSize:14}},r.title||"設計需求問卷",
-                  r.clientName?h("span",{style:{fontSize:11.5,color:s.inkSoft,marginLeft:6}},r.clientName):null),
+                  r.clientName?h("span",{style:{fontSize:11.5,color:s.inkSoft,marginLeft:6}},r.clientName):null,
+                  r.source==="open"?h("span",{style:{fontSize:10,color:"#B4573A",border:"1px solid #B4573A66",borderRadius:999,padding:"1px 7px",marginLeft:6}},"公開連結"):null,
+                  done&&!r.projectId?h("span",{style:{fontSize:10,color:"#fff",background:"#B4573A",borderRadius:999,padding:"1px 7px",marginLeft:6}},"待建立案件"):null),
                 h("span",{style:{fontSize:10.5,color:done?"#fff":s.inkSoft,background:done?s.tree:"transparent",
                   border:done?"none":`1px solid ${s.line}`,borderRadius:999,padding:"2px 9px",whiteSpace:"nowrap"}},done?"已填寫":"等待填寫")),
               h("div",{style:{fontSize:11,color:s.inkSoft,marginTop:5,display:"flex",gap:10,flexWrap:"wrap"}},
@@ -13720,12 +13769,32 @@ function HbSurveyHub({onBack,notify,projects}){
                 h("span",null,String(r.createdAt||"").slice(0,10)),
                 done&&r.answers?h("span",{style:{color:"#17150F"}},HB_svSummary(r.answers)):null)),
             open&&h("div",{style:{borderTop:`1px solid ${s.line}`,background:"#FBFAF7",padding:"11px 13px"}},
+              done&&!r.projectId?h("div",{style:{background:"#fff",border:"1px solid #B4573A55",padding:"11px 12px",marginBottom:12}},
+                mk&&mk.id===r.id?h(u.default.Fragment,null,
+                  h("label",{style:{fontSize:12,color:s.inkSoft}},"案件名稱"),
+                  h("input",{value:mk.name,onChange:e=>setMk({id:r.id,name:e.target.value}),autoFocus:!0,
+                    style:{width:"100%",boxSizing:"border-box",border:`1px solid ${s.line}`,borderRadius:2,padding:"9px 11px",fontSize:15,margin:"4px 0 8px",background:"#fff",color:s.ink,fontFamily:"inherit"}}),
+                  h("div",{style:{fontSize:11.5,color:s.inkSoft,lineHeight:1.7,marginBottom:9}},
+                    "會一起帶入：地址「",HB_pbClean(r.answers.addr)||"（未填）","」、坪數「",HB_pbClean(r.answers.size)||"（未填）","」，並自動產生業主登入密碼。"),
+                  h("div",{style:{display:"flex",gap:8}},
+                    h("button",{onClick:()=>makeProject(r),disabled:mkBusy,style:{flex:2,border:"none",background:"#B4573A",color:"#fff",borderRadius:2,padding:"9px 0",fontSize:13,cursor:"pointer",fontFamily:"inherit",opacity:mkBusy?.6:1}},mkBusy?"建立中…":"確認建立案件"),
+                    h("button",{onClick:()=>setMk(null),style:{flex:1,border:`1px solid ${s.line}`,background:"#fff",borderRadius:2,padding:"9px 0",fontSize:13,cursor:"pointer",fontFamily:"inherit",color:"#17150F"}},"取消")))
+                :h("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,flexWrap:"wrap"}},
+                  h("span",{style:{fontSize:12.5,color:"#17150F"}},"這位客戶還沒有案件"),
+                  h("button",{onClick:()=>setMk({id:r.id,name:HB_svCaseName(r.answers)}),style:{border:"none",background:"#B4573A",color:"#fff",borderRadius:2,padding:"8px 16px",fontSize:13,cursor:"pointer",fontFamily:"inherit"}},"＋ 建立案件"))):null,
+              made[r.id]?h("div",{style:{background:"#F3F6F1",border:"1px solid #5E6B5866",padding:"11px 12px",marginBottom:12}},
+                h("div",{style:{fontSize:12.5,color:"#17150F",marginBottom:4}},"已建立案件「",made[r.id].name,"」"),
+                h("div",{style:{fontSize:12.5,color:"#17150F",marginBottom:9}},"業主登入密碼：",h("b",{className:"mono",style:{letterSpacing:".08em"}},made[r.id].pw)),
+                h("div",{style:{display:"flex",gap:8,flexWrap:"wrap"}},
+                  h("button",{onClick:()=>HB_vdCopy(HB_svLoginMsg(made[r.id].name,made[r.id].pw),notify,"登入訊息"),style:{flex:"1 1 120px",border:`1px solid ${s.line}`,background:"#fff",borderRadius:2,padding:"8px 0",fontSize:12.5,color:"#17150F",cursor:"pointer",fontFamily:"inherit"}},"複製登入訊息"),
+                  h("button",{onClick:()=>window.open("https://line.me/R/msg/text/?"+encodeURIComponent(HB_svLoginMsg(made[r.id].name,made[r.id].pw)),"_blank"),style:{flex:"1 1 120px",border:"none",background:"#06C755",color:"#fff",borderRadius:2,padding:"8px 0",fontSize:12.5,cursor:"pointer",fontFamily:"inherit"}},"用 LINE 傳給客戶"))):
+              r.projectId&&done?h("div",{style:{fontSize:12,color:s.inkSoft,marginBottom:10}},"已建立案件：",projName(r.projectId)||"（案件）"):null,
               h("div",{style:{display:"flex",gap:8,flexWrap:"wrap",marginBottom:done?12:0}},
-                h("button",{onClick:()=>HB_vdCopy(HB_svUrl(r.token),notify,"問卷連結"),
+                r.source!=="open"&&h("button",{onClick:()=>HB_vdCopy(HB_svUrl(r.token),notify,"問卷連結"),
                   style:{flex:"1 1 110px",border:`1px solid ${s.line}`,background:"#fff",borderRadius:2,padding:"8px 0",fontSize:12.5,color:"#17150F",cursor:"pointer",fontFamily:"inherit"}},"複製連結"),
-                h("button",{onClick:()=>shareLine(r),
+                r.source!=="open"&&h("button",{onClick:()=>shareLine(r),
                   style:{flex:"1 1 110px",border:"none",background:"#06C755",color:"#fff",borderRadius:2,padding:"8px 0",fontSize:12.5,cursor:"pointer",fontFamily:"inherit"}},"分享到 LINE"),
-                h("button",{onClick:()=>window.open(HB_svUrl(r.token),"_blank"),
+                r.source!=="open"&&h("button",{onClick:()=>window.open(HB_svUrl(r.token),"_blank"),
                   style:{border:`1px solid ${s.line}`,background:"#fff",borderRadius:2,padding:"8px 12px",fontSize:12.5,color:"#17150F",cursor:"pointer",fontFamily:"inherit"}},"預覽"),
                 h("button",{onClick:()=>remove(r),
                   style:{border:"none",background:"none",color:s.danger,cursor:"pointer",padding:"8px 12px",fontSize:12.5,fontFamily:"inherit"}},"刪除")),
