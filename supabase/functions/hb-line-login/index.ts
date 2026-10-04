@@ -5,7 +5,7 @@
 // POST /unlink  (x-hb-owner) -> {ok}
 // 需要 Secrets：LINE_LOGIN_CHANNEL_ID、LINE_LOGIN_CHANNEL_SECRET
 const BASE = Deno.env.get('SUPABASE_URL')!, KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-const CID = Deno.env.get('LINE_LOGIN_CHANNEL_ID') || '', CSECRET = Deno.env.get('LINE_LOGIN_CHANNEL_SECRET') || '';
+const CID = (Deno.env.get('LINE_LOGIN_CHANNEL_ID') || '').trim(), CSECRET = (Deno.env.get('LINE_LOGIN_CHANNEL_SECRET') || '').trim();
 const CALLBACK = BASE + '/functions/v1/hb-line-login/callback';
 const SITE = 'https://www.herfulsinsvip.com/';
 const RETURNS = ['https://www.herfulsinsvip.com/', 'https://herfulsinsvip.com/'];
@@ -27,7 +27,7 @@ Deno.serve(async (req: Request) => {
   try {
     if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors(req) });
     const url = new URL(req.url), route = url.pathname.split('/').pop();
-    if (route === 'health') return json(req, { ok: true, configured: !!(CID && CSECRET), version: '2026-10-05.1' });
+    if (route === 'health') return json(req, { ok: true, configured: !!(CID && CSECRET), cid_ok: /^\d{10}$/.test(CID), secret_len: CSECRET.length, version: '2026-10-05.2' });
     if (req.method === 'POST' && route === 'begin') {
       if (!CID || !CSECRET) return json(req, { error: 'LINE 登入尚未設定完成，請先用案件密碼登入' }, 503);
       const b = await req.json().catch(() => ({}));
@@ -43,7 +43,7 @@ Deno.serve(async (req: Request) => {
     }
     if (req.method === 'GET' && route === 'callback') {
       const state = url.searchParams.get('state') || '', code = url.searchParams.get('code') || '';
-      if (!/^[\w-]{20,64}$/.test(state)) return go(back(SITE, { hbline: 'error' }));
+      if (!/^[\w-]{20,64}$/.test(state)) return go(back(SITE, { hbline: 'error', why: 'state' }));
       const st = (await db('hb_line_states?id=eq.' + state + '&used_at=is.null&select=*'))?.[0];
       if (!st || Date.now() - new Date(st.created_at).getTime() > 10 * 60000) return go(back(SITE, { hbline: 'expired' }));
       await db('hb_line_states?id=eq.' + state, { method: 'PATCH', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ used_at: new Date().toISOString() }) });
