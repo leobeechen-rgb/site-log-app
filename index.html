@@ -3769,6 +3769,91 @@ button.wb-proj:hover{background:#e6eee7;color:var(--wb-green)}
   .wbc-projline{display:none}
 }
 @media (max-width:420px){.wbc-fr{display:none}.wbc-row{gap:9px}.wbc-badge{padding:3px 8px;font-size:11.5px}.wbc-full{padding:4px 14px 14px}}
+/* ===== 追蹤詳情側欄 ===== */
+.wbc-row.wbc-frow{grid-template-columns:28px minmax(0,1fr) auto 18px}
+.wbc-frow.is-open{background:rgba(46,74,60,.06);border-radius:6px}
+.wbc-last{display:flex;gap:6px;align-items:baseline;font-size:12px;color:#5c564b;margin-top:5px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.wbc-last em{font-style:normal;font-size:11px;background:#ece7de;border-radius:3px;padding:0 6px;flex-shrink:0;color:#6d675b}
+.wbc-facts{grid-column:2/-1;display:flex;gap:6px;margin-top:-2px}
+.hb-wb .wbc-facts button,.wb-modal .wbc-facts button{border:1px solid #d9cfbd;background:#fff;border-radius:4px;padding:3px 12px;font-size:12px;letter-spacing:.06em;color:#4f4a40;min-height:0!important;cursor:pointer}
+.hb-wb .wbc-facts button:hover,.wb-modal .wbc-facts button:hover{border-color:#2E4A3C;color:#2E4A3C}
+.hb-wb .wbc-closedlink,.wb-modal .wbc-closedlink{border:0;background:none;padding:0;font-size:12px;color:#7b7466;text-decoration:underline;text-underline-offset:3px;min-height:0!important;cursor:pointer}
+.wbc-closedlink.push{margin-left:auto}
+.wbc-frow.is-closed strong{color:#7b7466}
+dialog.wbd{--ink:#262722;--soft:#7b7466;--line:#e2d8c6;--gold:#b89b6a;--green:#2E4A3C;--wine:#8a2c34;
+  position:fixed;inset:0 0 0 auto;margin:0;padding:0;border:0;height:100dvh;max-height:none;width:clamp(420px,38vw,640px);max-width:100vw;background:transparent;overflow:visible;color:var(--ink);font-family:'Noto Sans TC',sans-serif}
+dialog.wbd::backdrop{background:rgba(38,36,30,0);transition:background .25s}
+dialog.wbd.on::backdrop{background:rgba(38,36,30,.32)}
+.wbd-panel{height:100%;display:flex;flex-direction:column;background:#fbf8f1;border-left:1px solid #d8c7a4;box-shadow:-24px 0 48px -28px rgba(40,34,24,.45);transform:translateX(100%);transition:transform .28s cubic-bezier(.2,.8,.2,1)}
+dialog.wbd.on .wbd-panel{transform:none}
+@media (prefers-reduced-motion:reduce){.wbd-panel{transition:none}}
+.wbd *{box-sizing:border-box}
+.wbd button{font:inherit;cursor:pointer;color:inherit}
+.wbd-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:26px 30px 10px}
+.wbd-eyebrow{margin:0 0 6px;font:11px 'JetBrains Mono',ui-monospace,monospace;letter-spacing:.32em;color:#a5522f}
+.wbd-head h2{margin:0;font-family:'Noto Serif TC',serif;font-weight:500;font-size:32px;letter-spacing:.14em}
+.wbd .wbd-x{border:0;background:none;font-size:30px!important;padding:0;line-height:1;width:40px;height:40px;color:#4f4a40;margin:-6px -8px 0 0}
+.wbd-back{display:none}
+.wbd-body{flex:1;overflow-y:auto;overscroll-behavior:contain;padding:6px 30px 24px;-webkit-overflow-scrolling:touch}
+.wbd .wbd-proj{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--green);background:transparent;color:var(--green);border-radius:4px;padding:4px 14px;font-size:13px;letter-spacing:.06em}
+.wbd .wbd-proj{color:var(--green)}.wbd .wbd-proj:hover{background:var(--green);color:#f5f1e8}
+.wbd .wbd-proj-plain{border-color:var(--line);color:var(--soft)}
+.wbd-titlerow{display:flex;align-items:center;flex-wrap:wrap;gap:10px 14px;margin:22px 0 18px}
+.wbd-titlerow h3{margin:0;font-family:'Noto Serif TC',serif;font-weight:500;font-size:26px;letter-spacing:.1em;overflow-wrap:anywhere}
+.wbd-st{font-size:12.5px;padding:3px 12px;border-radius:4px;background:#e3e9e2;color:var(--green);white-space:nowrap}
+.wbd-st-late{background:#f6dcdc;color:var(--wine)}.wbd-st-closed{background:#ece7de;color:#6d675b}
+.wbd-facts{display:grid;grid-template-columns:1fr 1fr;gap:0 18px;padding-bottom:20px;border-bottom:1px solid #d8c7a4}
+.wbd-facts>div{border-left:1px solid var(--gold);padding:2px 0 2px 14px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.wbd-facts small{font-size:13px;color:#4f4a40;letter-spacing:.06em}
+.wbd-facts b{display:flex;align-items:center;gap:8px;font-weight:400;font-size:15px;letter-spacing:.04em;overflow-wrap:anywhere}
+.wbd-facts b.wbd-late{color:var(--wine)}
+.wbd-sec{padding:20px 0;border-bottom:1px solid #d8c7a4}
+.wbd-sec h4{margin:0 0 12px;font-family:'Noto Serif TC',serif;font-weight:500;font-size:19px;letter-spacing:.12em}
+.wbd-sechead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}.wbd-sechead h4{margin:0}
+.wbd-latest{background:#efebe3;border-radius:4px;padding:14px 16px;font-size:15px;line-height:1.6;letter-spacing:.04em;overflow-wrap:anywhere}
+.wbd-upd{margin:10px 0 0;font-size:12.5px;color:var(--soft);letter-spacing:.04em}
+.wbd-addlog{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--green);background:transparent;color:var(--green)!important;border-radius:4px;padding:6px 14px;font-size:13px;letter-spacing:.06em}
+.wbd-addlog:hover{background:var(--green);color:#f5f1e8!important}
+.wbd-empty{color:var(--soft);font-size:13px;margin:8px 0 0}
+.wbd-tl{list-style:none;margin:10px 0 0;padding:0}
+.wbd-tl li{display:grid;grid-template-columns:92px 12px minmax(0,1fr);gap:14px;position:relative;padding-bottom:18px}
+.wbd-tl li:not(:last-child):after{content:'';position:absolute;left:111px;top:16px;bottom:-2px;width:1.5px;background:var(--green)}
+.wbd-tltime{font-size:13px;color:#4f4a40;padding-top:2px;white-space:nowrap}
+.wbd-tldot{width:12px;height:12px;border-radius:50%;background:var(--green);margin-top:5px;position:relative;z-index:1}
+.wbd-tldot.sys{background:#fbf8f1;border:2px solid var(--green)}
+.wbd-tl b{display:block;font-weight:500;font-size:15px;letter-spacing:.06em}
+.wbd-tl p{margin:4px 0 0;font-size:13.5px;color:#4f4a40;line-height:1.6;overflow-wrap:anywhere;white-space:pre-wrap}
+.wbd-form{border-bottom:0;scroll-margin-top:12px}
+.wbd-methods{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.wbd-methods button{border:1px solid #d9cfbd;background:#fff;border-radius:999px;padding:5px 16px;font-size:13px}
+.wbd-methods button.on{background:var(--green);border-color:var(--green);color:#f5f1e8}
+.wbd textarea{width:100%;border:1px solid #d9cfbd;border-radius:4px;background:#fff;padding:10px 12px;font:inherit;font-size:16px;line-height:1.55;resize:vertical;min-height:84px;color:var(--ink)}
+.wbd textarea:focus,.wbd input:focus{outline:2px solid rgba(46,74,60,.25);border-color:var(--green)}
+.wbd-daterow{display:flex;align-items:center;flex-wrap:wrap;gap:8px 10px;margin-top:12px}
+.wbd-daterow label{font-size:14px;letter-spacing:.06em;margin-right:4px}
+.wbd-daterow input{border:1px solid #d9cfbd;border-radius:4px;background:#fff;padding:8px 10px;font:inherit;font-size:16px;min-height:42px;color:var(--ink);flex:1 1 150px;min-width:0}
+.wbd-daterow button{border:1px solid #d9cfbd;background:#fff;border-radius:4px;padding:8px 14px;font-size:13px;min-height:42px}
+.wbd-daterow button.on{border-color:var(--green);color:var(--green);background:#eef3ee}
+.wbd-foot{flex-shrink:0;border-top:1px solid #d8c7a4;background:#fbf8f1;padding:14px 30px calc(14px + env(safe-area-inset-bottom))}
+.wbd-btns{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.wbd-btns .wb-btn{border-radius:4px;min-height:48px;font-size:15px;letter-spacing:.12em}
+.wbd-btns .wb-btn:only-child{grid-column:1/-1}
+.wbd-hint{margin:10px 0 0;font-size:12.5px;color:var(--soft)}.wbd-hint.ok{color:var(--green)}
+.wbd-fail{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#fbf1ee;border:1px solid #e3c2bb;color:var(--wine);border-radius:4px;padding:8px 12px;font-size:13px;margin-bottom:10px}
+.wbd-fail button{border:1px solid currentColor;background:none;border-radius:999px;padding:3px 14px;color:inherit}
+@media (max-width:720px){
+  dialog.wbd{width:100vw;inset:0}
+  .wbd-panel{border-left:0;transform:translateX(100%)}
+  .wbd-head{padding:calc(10px + env(safe-area-inset-top)) 16px 6px;align-items:center;flex-wrap:wrap}
+  .wbd-back{display:inline-flex;align-items:center;gap:2px;border:0;background:none;font-size:14px;color:#4f4a40;padding:6px 4px 6px 0;width:100%}
+  .wbd-x{display:none}
+  .wbd-head h2{font-size:25px}
+  .wbd-body{padding:4px 16px 20px}
+  .wbd-titlerow{margin:16px 0 14px}.wbd-titlerow h3{font-size:22px}
+  .wbd-tl li{grid-template-columns:96px 12px minmax(0,1fr);gap:10px}.wbd-tl li:not(:last-child):after{left:111px}
+  .wbd-foot{padding:12px 16px calc(12px + env(safe-area-inset-bottom))}
+  .wbd-btns{gap:10px}
+}
 </style>
 <style id="hb-vq-rfq-css">
 #hb-vq-rfq{margin:18px 0 26px;padding:22px;border:1px solid #c7c1b5;border-radius:10px;background:rgba(255,255,255,.48);color:#283d31;font-size:13px}
@@ -13624,14 +13709,15 @@ function HB_useToday(projects,enabled=true){
   const mutate=fn=>{
     if(!ready){setError('雲端資料尚未就緒，暫時不能修改。請確認登入與網路連線。');return false}
     apply(fn(payRef.current));pending.current++;setSync('正在同步…');
+    let settle;const result=new Promise(r=>{settle=r});
     queue.current=queue.current.then(async()=>{
       const put=body=>HB_workspaceRequest('/today',{method:'PUT',body:JSON.stringify({revision:rev.current,payload:body})});
       try{let r;try{r=await put(payRef.current)}catch(e){if(!/另一部裝置/.test(e.message||''))throw e;
           const c=await HB_workspaceRequest('/today');rev.current=Number(c.revision)||0;apply(fn(HB_wbValid(c.payload)?c.payload:HB_WB_EMPTY()));r=await put(payRef.current)}
         rev.current=Number(r.revision)||rev.current;if(alive.current)setSync('已跨裝置同步')}
-      catch(e){if(alive.current){setSync('同步失敗');setError((e.message||'同步失敗')+' 已重新取得雲端資料。')}pending.current--;await pull(true);return}
-      pending.current--});
-    return true};
+      catch(e){if(alive.current){setSync('同步失敗');setError((e.message||'同步失敗')+' 已重新取得雲端資料。')}pending.current--;await pull(true);settle(false);return}
+      pending.current--;settle(true)});
+    return result};
   const names=new Map((projects||[]).map(p=>[p.id,p.name]));
   const demoIds=new Set((projects||[]).filter(p=>/^示範案件/.test(p.name||'')).map(p=>p.id)),hideDemo=(projects||[]).some(p=>!demoIds.has(p.id));
   const all=[...payload.manual,...auto.map(t=>({...t,...payload.overrides[t.id]}))]
@@ -13641,10 +13727,14 @@ function HB_useToday(projects,enabled=true){
     ?{...p,overrides:{...p.overrides,[task.id]:{...(p.overrides[task.id]||task),...patch}}}
     :{...p,manual:p.manual.map(t=>t.id===task.id?{...t,...patch}:t)});
   const add=task=>mutate(p=>({...p,manual:[...p.manual,task]}));
+  /* 以雲端最新內容為基礎計算修改（避免另一部裝置剛新增的追蹤紀錄被覆蓋） */
+  const updateWith=(task,f)=>mutate(p=>task.source==='auto'
+    ?{...p,overrides:{...p.overrides,[task.id]:(c=>({...c,...f(c)}))(p.overrides[task.id]||task)}}
+    :{...p,manual:p.manual.map(t=>t.id===task.id?{...t,...f(t)}:t)});
   const replace=task=>mutate(p=>task.source==='auto'
     ?{...p,overrides:{...p.overrides,[task.id]:task}}
     :(p.manual.some(t=>t.id===task.id)?{...p,manual:p.manual.map(t=>t.id===task.id?task:t)}:{...p,manual:[...p.manual,task]}));
-  return {all,today,ready,loading,error,setError,sync,update,add,replace,reload:()=>{setError('');pull(true);loadAuto()}};
+  return {all,today,ready,loading,error,setError,sync,update,updateWith,add,replace,reload:()=>{setError('');pull(true);loadAuto()}};
 }
 /* 分類工具：首頁三欄與專案卡片共用 */
 function HB_wbIsFollow(t){return t.kind==='follow'}
@@ -13667,7 +13757,7 @@ function HB_wbIcon(name,size){const s=size||16,p={width:s,height:s,viewBox:'0 0 
 
 function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setProj,wbRef}){
   const h=u.default.createElement,{all,today,ready,error,sync}=tk;
-  const [editing,setEditing]=u.useState(null),[following,setFollowing]=u.useState(null),[full,setFull]=u.useState(''),[toast,setToast]=u.useState('');
+  const [editing,setEditing]=u.useState(null),[drawer,setDrawer]=u.useState(null),[full,setFull]=u.useState(''),[toast,setToast]=u.useState('');
   u.useEffect(()=>{if(!toast)return;const t=setTimeout(()=>setToast(''),3200);return()=>clearTimeout(t)},[toast]);
   const say=m=>setToast(m),LIM=3;
   const pv=proj||'';
@@ -13681,6 +13771,13 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
   const rank=t=>overdue(t)?0:t.due===today?1:t.due?2:3;
   const openTasks=list.filter(HB_wbOpenTask).sort((a,b)=>rank(a)-rank(b)||(a.due||'9999').localeCompare(b.due||'9999')||Number(!!b.urgent)-Number(!!a.urgent)||a.title.localeCompare(b.title));
   const follows=list.filter(HB_wbOpenFollow).sort((a,b)=>(a.due||'9999').localeCompare(b.due||'9999')||a.title.localeCompare(b.title));
+  const closedFollows=list.filter(t=>t.done&&HB_wbIsFollow(t)).sort((a,b)=>String(b.completedAt||'').localeCompare(String(a.completedAt||'')));
+  const openDrawer=(t,focus)=>setDrawer({id:t.id,focus:focus||'',n:Date.now()});
+  const drawerTask=drawer?all.find(t=>t.id===drawer.id):null;
+  const quickClose=t=>{if(!confirm('確定將「'+t.title+'」結案？\n結案後會移出待追蹤，可在「已結案」重新開啟。'))return;
+    const p=tk.updateWith(t,c=>({done:true,completedAt:today,followLog:[...(Array.isArray(c.followLog)?c.followLog:[]),{date:today,at:HB_wbNowISO(),method:'系統',note:'結案'}]}));
+    if(p)p.then(ok=>say(ok?'已結案（可在「已結案」重新開啟）':'結案失敗，請再試一次'))};
+  const lastNote=t=>{const l=Array.isArray(t.followLog)?t.followLog.filter(x=>x.note&&x.method!=='系統'):[];return l.length?l[l.length-1].note:''};
   const lateOpen=openTasks.filter(overdue).length,dueFollow=follows.filter(t=>t.due&&t.due<=today).length;
   const complete=t=>{if(tk.update(t,{done:!t.done,completedAt:t.done?null:today}))say(t.done?'已恢復為未完成':'已完成（可在今日待辦恢復）')};
   const newTask=extra=>setEditing({id:crypto.randomUUID(),title:'',projectId:pv&&pv!=='__co'?pv:'',assignee:'',due:today,time:'',category:'一般',note:'',urgent:false,source:'manual',isNew:true,...extra});
@@ -13700,17 +13797,26 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
     h('button',{type:'button',className:'wbc-check','aria-label':'完成：'+t.title,title:'勾選完成',onClick:()=>complete(t)},HB_wbIcon('check',13)),
     h('button',{type:'button',className:'wbc-body',onClick:()=>setEditing({...t})},h('strong',null,t.title),projName(t)),
     dueBadge(t),chev);
-  const followRow=t=>h('li',{key:t.id,className:'wbc-row wbc-frow'+(t.due&&t.due<=today?' is-due':'')},
+  const followRow=t=>h('li',{key:t.id,className:'wbc-row wbc-frow'+(t.due&&t.due<=today?' is-due':'')+(drawer&&drawer.id===t.id?' is-open':'')},
     h('span',{className:'wbc-ficon'},HB_wbIcon('chat',19)),
-    h('button',{type:'button',className:'wbc-body',onClick:()=>setFollowing({...t}),title:'更新追蹤紀錄或結案'},h('strong',null,t.title),
-      h('small',{className:'wbc-proj'},(t.waitingFor?'等'+t.waitingFor+(/(回覆|回應|確認|報價)$/.test(t.waitingFor)?'':'回覆'):'等待回覆')+'・'+t.projectName)),
-    followBadge(t),chev);
+    h('button',{type:'button',className:'wbc-body',onClick:()=>openDrawer(t),title:'查看追蹤詳情'},h('strong',null,t.title),
+      h('small',{className:'wbc-proj'},(t.waitingFor?'等'+t.waitingFor+(/(回覆|回應|確認|報價)$/.test(t.waitingFor)?'':'回覆'):'等待回覆')+'・'+t.projectName),
+      lastNote(t)&&h('small',{className:'wbc-last'},h('em',null,'最新進度'),lastNote(t))),
+    followBadge(t),chev,
+    h('div',{className:'wbc-facts'},
+      h('button',{type:'button',onClick:()=>openDrawer(t,'log')},'已聯絡'),
+      h('button',{type:'button',onClick:()=>openDrawer(t,'date')},'改期'),
+      h('button',{type:'button',onClick:()=>quickClose(t)},'結案')));
+  const closedRow=t=>h('li',{key:t.id,className:'wbc-row wbc-frow is-closed'},
+    h('span',{className:'wbc-ficon'},HB_wbIcon('check',17)),
+    h('button',{type:'button',className:'wbc-body',onClick:()=>openDrawer(t)},h('strong',null,t.title),h('small',{className:'wbc-proj'},t.projectName+(t.waitingFor?'・'+t.waitingFor:''))),
+    h('span',{className:'wbc-badge wbc-b-soft'},t.completedAt?t.completedAt.slice(5).replace('-','/')+' 結案':'已結案'),chev);
   const col=(title,count,extra,rows,render,emptyTxt,moreLabel,onMore,cls)=>h('article',{className:'wbc-col '+cls},
     h('div',{className:'wbc-colhead'},h('h3',null,title),h('span',{className:'wbc-num'},count),extra),
     rows.length===0?h('p',{className:'wbc-empty'},emptyTxt):h('ul',{className:'wbc-list'},rows.slice(0,LIM).map(render)),
     h('button',{type:'button',className:'wbc-more',onClick:onMore},moreLabel,HB_wbIcon('arrow',14)));
   const d=new Date(today+'T00:00:00');
-  const fullList=full==='open'?openTasks:full==='follow'?follows:[];
+  const fullList=full==='open'?openTasks:full==='follow'?follows:full==='closed'?closedFollows:[];
   return h('section',{className:'hb-wb wbc',ref:wbRef,'aria-label':'工作台'},
     h('header',{className:'wbc-head'},
       h('div',{className:'wbc-titlewrap'},h('h2',{className:'wbc-carnet'},'Le Carnet du Jour'),h('span',{className:'wbc-fr'},'工作台')),
@@ -13727,17 +13833,94 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
     h('div',{className:'wbc-cols'},
       col('今日安排',agenda.length,null,agenda,agendaRow,'今天沒有排定的行程','查看完整行程',onCalendar,'wbc-today'),
       col('未完成',openTasks.length,lateOpen?h('span',{className:'wbc-alert'},'逾期 '+lateOpen):null,openTasks,openRow,pv?'這個專案目前沒有未完成事項':'目前沒有未完成事項','查看全部 '+openTasks.length+' 項',()=>setFull('open'),'wbc-open'),
-      col('待追蹤',follows.length,dueFollow?h('span',{className:'wbc-alert'},'待處理 '+dueFollow):null,follows,followRow,pv?'這個專案目前沒有追蹤事項':'目前沒有等待回覆的事','查看全部 '+follows.length+' 項',()=>setFull('follow'),'wbc-follow')),
+      col('待追蹤',follows.length,h(u.default.Fragment,null,dueFollow?h('span',{className:'wbc-alert'},'待處理 '+dueFollow):null,closedFollows.length?h('button',{type:'button',className:'wbc-closedlink'+(dueFollow?'':' push'),onClick:()=>setFull('closed')},'已結案 '+closedFollows.length):null),follows,followRow,pv?'這個專案目前沒有追蹤事項':'目前沒有等待回覆的事','查看全部 '+follows.length+' 項',()=>setFull('follow'),'wbc-follow')),
     toast&&h('div',{className:'wb-toast',role:'status'},toast),
-    full&&h(HbWbModal,{title:(full==='open'?'未完成':'待追蹤')+'（'+fullList.length+'）',sub:pv?(pv==='__co'?'公司事務':(projects.find(p=>p.id===pv)||{}).name||''):'全部專案',onClose:()=>setFull('')},
-      h('div',{className:'wbc wbc-full'},fullList.length===0?h('p',{className:'wbc-empty'},'沒有事項'):h('ul',{className:'wbc-list'},fullList.map(full==='open'?openRow:followRow)),
-        h('div',{className:'wb-mact',style:{padding:'12px 0 2px'}},h('button',{type:'button',className:'wb-btn wb-btn-ghost',onClick:()=>newTask(full==='follow'?{kind:'follow',waitingFor:'',due:HB_wbAddDays(today,3)}:{})},HB_wbIcon('plus',14),full==='follow'?'新增追蹤':'新增事項'),
+    full&&h(HbWbModal,{title:(full==='open'?'未完成':full==='closed'?'已結案追蹤':'待追蹤')+'（'+fullList.length+'）',sub:pv?(pv==='__co'?'公司事務':(projects.find(p=>p.id===pv)||{}).name||''):'全部專案',onClose:()=>setFull('')},
+      h('div',{className:'wbc wbc-full'},fullList.length===0?h('p',{className:'wbc-empty'},'沒有事項'):h('ul',{className:'wbc-list'},fullList.map(full==='open'?openRow:full==='closed'?closedRow:followRow)),
+        h('div',{className:'wb-mact',style:{padding:'12px 0 2px'}},full!=='closed'&&h('button',{type:'button',className:'wb-btn wb-btn-ghost',onClick:()=>newTask(full==='follow'?{kind:'follow',waitingFor:'',due:HB_wbAddDays(today,3)}:{})},HB_wbIcon('plus',14),full==='follow'?'新增追蹤':'新增事項'),
           h('span',{style:{flex:1}}),h('button',{type:'button',className:'wb-btn wb-btn-solid',onClick:()=>setFull('')},'完成')))),
     editing&&h(HbWbEditor,{key:editing.id,initial:editing,projects,today,onClose:()=>setEditing(null),
       onSave:v=>{const {isNew,...task}=v;if(isNew?tk.add(task):tk.replace(task)){setEditing(null);say(isNew?'已新增':'已儲存')}},
       onDelete:v=>{if(confirm('確定刪除「'+v.title+'」？')&&tk.update(v,{deleted:true})){setEditing(null);say('已刪除')}}}),
-    following&&h(HbWbFollow,{key:following.id,task:following,today,onClose:()=>setFollowing(null),
-      onSave:(patch,msg)=>{if(tk.update(following,patch)){setFollowing(null);say(msg)}}}));
+    drawerTask&&h(HbWbDrawer,{key:drawer.id+':'+drawer.n,task:drawerTask,focus:drawer.focus,today,projects,tk,say,onOpenProject,onClose:()=>setDrawer(null)}));
+}
+/* 追蹤詳情側欄：電腦版右側滑出、手機版全螢幕。資料直接讀寫 HB_useToday（同一份雲端資料） */
+const HB_WB_METHODS=['電話','LINE','Email','其他'];
+function HB_wbLogTime(x){const d=(x&&(x.at||x.date))||'';if(!d)return '';const ymd=d.slice(0,10);const md=ymd.slice(5).replace('-','/');
+  if(x.at&&/T\d{2}:\d{2}/.test(x.at))return md+' '+x.at.slice(11,16);return md}
+function HB_wbNowISO(){let hm='';try{hm=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Taipei',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date()).replace(/^24/,'00')}catch{const d=new Date();hm=String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')}return HB_todoDate()+'T'+hm}
+function HbWbDrawer({task,today,projects,tk,focus,onClose,onOpenProject,say}){
+  const h=u.default.createElement,ref=u.useRef(null),bodyRef=u.useRef(null),formRef=u.useRef(null),noteRef=u.useRef(null),dateRef=u.useRef(null);
+  const [method,setMethod]=u.useState('電話'),[note,setNote]=u.useState(''),[base]=u.useState(()=>!task.done&&task.due&&task.due>=today?task.due:task.done?(task.due||''):HB_wbAddDays(today,3)),[next,setNext]=u.useState(base);
+  const [busy,setBusy]=u.useState(''),[fail,setFail]=u.useState(''),[saved,setSaved]=u.useState(false);
+  const closed=!!task.done,log=Array.isArray(task.followLog)?task.followLog:[];
+  const dirty=!!note.trim()||(!closed&&next!==base);
+  const dirtyRef=u.useRef(false);dirtyRef.current=dirty&&!busy;
+  const tryClose=()=>{if(dirtyRef.current&&!confirm('還有尚未儲存的修改，確定要關閉嗎？'))return;onClose()};
+  u.useEffect(()=>{const el=ref.current;try{el.showModal()}catch{el.setAttribute('open','')}
+    const t=setTimeout(()=>{el.classList.add('on');
+      if(focus==='log'&&formRef.current){formRef.current.scrollIntoView({block:'start'});noteRef.current&&noteRef.current.focus({preventScroll:true})}
+      else if(focus==='date'&&dateRef.current){formRef.current&&formRef.current.scrollIntoView({block:'start'});dateRef.current.focus({preventScroll:true});try{dateRef.current.showPicker&&dateRef.current.showPicker()}catch{}}},30);
+    const before=e=>{if(dirtyRef.current){e.preventDefault();e.returnValue=''}};window.addEventListener('beforeunload',before);
+    return()=>{clearTimeout(t);window.removeEventListener('beforeunload',before);try{el.close()}catch{}}},[]);
+  const proj=task.projectId&&projects.find(p=>p.id===task.projectId);
+  const sorted=log.map((x,i)=>({...x,_i:i})).sort((a,b)=>String(b.at||b.date||'').localeCompare(String(a.at||a.date||''))||b._i-a._i);
+  const latest=sorted.find(x=>x.note&&!/^(結案|重新開啟)/.test(x.note))||null,last=sorted[0]||null;
+  const overdue=!closed&&task.due&&task.due<today;
+  const status=closed?['已結案','wbd-st-closed']:overdue?['逾期 '+(-HB_wbDiff(task.due,today))+' 天','wbd-st-late']:['追蹤中',''];
+  const run=async(kind,f,okMsg)=>{setBusy(kind);setFail('');setSaved(false);
+    const p=tk.updateWith(task,f);const ok=p&&await p;setBusy('');
+    if(!ok){setFail(kind);return false}setSaved(true);say(okMsg);return true};
+  const save=async()=>{const txt=note.trim(),nd=next;
+    if(!txt&&nd===base)return;
+    const ok=await run('save',c=>{const out={due:nd};if(txt)out.followLog=[...(Array.isArray(c.followLog)?c.followLog:[]),{date:today,at:HB_wbNowISO(),method,note:txt}];return out},
+      txt?'已儲存紀錄，下次追蹤 '+HB_wbDot(nd):'已改期至 '+HB_wbDot(nd));
+    if(ok)setNote('')};
+  const close=async()=>{if(!confirm('確定將「'+task.title+'」結案？\n結案後會移出待追蹤，可在「已結案」重新開啟。'))return;
+    const txt=note.trim();
+    const ok=await run('close',c=>({done:true,completedAt:today,followLog:[...(Array.isArray(c.followLog)?c.followLog:[]),
+      ...(txt?[{date:today,at:HB_wbNowISO(),method,note:txt}]:[]),{date:today,at:HB_wbNowISO(),method:'系統',note:'結案'}]}),'已結案');
+    if(ok){setNote('');onClose()}};
+  const reopen=async()=>{const nd=next&&next>=today?next:HB_wbAddDays(today,1);
+    const ok=await run('reopen',c=>({done:false,completedAt:null,due:nd,followLog:[...(Array.isArray(c.followLog)?c.followLog:[]),{date:today,at:HB_wbNowISO(),method:'系統',note:'重新開啟'}]}),'已重新開啟，下次追蹤 '+HB_wbDot(nd));
+    if(ok)setNext(nd)};
+  const retry=()=>fail==='close'?close():fail==='reopen'?reopen():save();
+  const quick=[['明天',1],['三天後',3],['下週',7]];
+  return h('dialog',{ref,className:'wbd',onCancel:e=>{e.preventDefault();tryClose()},onClick:e=>{if(e.target===ref.current)tryClose()},'aria-label':'追蹤詳情'},
+    h('div',{className:'wbd-panel'},
+      h('header',{className:'wbd-head'},
+        h('button',{type:'button',className:'wbd-back',onClick:tryClose,'aria-label':'返回'},HB_wbIcon('left',20),'返回'),
+        h('div',null,h('p',{className:'wbd-eyebrow'},'SUIVI DU PROJET'),h('h2',null,'追蹤詳情')),
+        h('button',{type:'button',className:'wbd-x',onClick:tryClose,'aria-label':'關閉'},'×')),
+      h('div',{className:'wbd-body',ref:bodyRef},
+        proj?h('button',{type:'button',className:'wbd-proj',onClick:()=>{if(dirtyRef.current&&!confirm('還有尚未儲存的修改，確定要離開嗎？'))return;onClose();onOpenProject(proj.id)}},proj.name,HB_wbIcon('out',12))
+          :h('span',{className:'wbd-proj wbd-proj-plain'},task.projectName||'公司事務'),
+        h('div',{className:'wbd-titlerow'},h('h3',null,task.title),h('span',{className:'wbd-st '+status[1]},status[0])),
+        h('div',{className:'wbd-facts'},
+          h('div',null,h('small',null,'追蹤對象'),h('b',null,task.waitingFor||'未填')),
+          h('div',null,h('small',null,closed?'結案日期':'下次追蹤'),h('b',{className:overdue?'wbd-late':''},HB_wbIcon('calendar',15),HB_wbDot(closed?(task.completedAt||''):task.due)||'未定'))),
+        h('section',{className:'wbd-sec'},h('h4',null,'最新進度'),
+          h('div',{className:'wbd-latest'},latest?latest.note:'還沒有聯絡紀錄'),
+          last&&h('p',{className:'wbd-upd'},'最後更新 ',HB_wbLogTime(last))),
+        h('section',{className:'wbd-sec'},
+          h('div',{className:'wbd-sechead'},h('h4',null,'聯絡紀錄'),!closed&&h('button',{type:'button',className:'wbd-addlog',onClick:()=>{formRef.current&&formRef.current.scrollIntoView({behavior:'smooth',block:'start'});noteRef.current&&noteRef.current.focus({preventScroll:true})}},HB_wbIcon('plus',14),'新增紀錄')),
+          sorted.length===0?h('p',{className:'wbd-empty'},'尚無紀錄，第一次聯絡後在下方新增。'):
+          h('ol',{className:'wbd-tl'},sorted.map((x,i)=>h('li',{key:i},
+            h('span',{className:'wbd-tltime wb-mono'},HB_wbLogTime(x)),h('i',{className:'wbd-tldot'+(x.method==='系統'?' sys':'')}),
+            h('div',null,h('b',null,x.method==='系統'?x.note:x.method==='電話'?'電話聯絡':x.method==='其他'?'其他':x.method?x.method+' 聯絡':'追蹤紀錄'),x.method!=='系統'&&h('p',null,x.note)))))),
+        !closed&&h('section',{className:'wbd-sec wbd-form',ref:formRef},h('h4',null,'新增聯絡紀錄'),
+          h('div',{className:'wbd-methods',role:'radiogroup','aria-label':'聯絡方式'},HB_WB_METHODS.map(m=>h('button',{key:m,type:'button',role:'radio','aria-checked':method===m,className:method===m?'on':'',onClick:()=>setMethod(m)},m))),
+          h('textarea',{ref:noteRef,rows:3,maxLength:500,value:note,placeholder:'輸入這次聯絡結果…（只改期可以留空）',onChange:e=>{setNote(e.target.value);setSaved(false)}}),
+          h('div',{className:'wbd-daterow'},h('label',null,'下次追蹤日期'),
+            h('input',{ref:dateRef,type:'date',value:next,onChange:e=>{setNext(e.target.value);setSaved(false)}}),
+            quick.map(q=>h('button',{key:q[1],type:'button',className:next===HB_wbAddDays(today,q[1])?'on':'',onClick:()=>{setNext(HB_wbAddDays(today,q[1]));setSaved(false)}},q[0]))))),
+      h('footer',{className:'wbd-foot'},
+        fail&&h('div',{className:'wbd-fail',role:'alert'},'儲存失敗，輸入內容已保留。',h('button',{type:'button',onClick:retry,disabled:!!busy},'重試')),
+        closed?h('div',{className:'wbd-btns'},h('button',{type:'button',className:'wb-btn wb-btn-solid',onClick:reopen,disabled:!!busy},busy==='reopen'?'處理中…':'重新開啟追蹤'))
+        :h('div',{className:'wbd-btns'},
+          h('button',{type:'button',className:'wb-btn wb-btn-solid',onClick:save,disabled:!!busy||!dirty||!next},busy==='save'?'儲存中…':(!note.trim()&&next!==base?'儲存改期':'儲存紀錄')),
+          h('button',{type:'button',className:'wb-btn wb-btn-line',onClick:close,disabled:!!busy},busy==='close'?'處理中…':'標記結案')),
+        h('p',{className:'wbd-hint'+(saved?' ok':'')},saved?'✓ 已儲存，工作台已同步更新。':dirty?'有尚未儲存的修改。':'儲存後同步更新工作台。'))));
 }
 function HbWbModal({title,sub,onClose,children}){const h=u.default.createElement,ref=u.useRef(null);
   u.useEffect(()=>{const el=ref.current;try{el.showModal()}catch{el.setAttribute('open','')}return()=>{try{el.close()}catch{}}},[]);
