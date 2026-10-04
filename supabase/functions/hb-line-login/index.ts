@@ -49,11 +49,11 @@ Deno.serve(async (req: Request) => {
       await db('hb_line_states?id=eq.' + state, { method: 'PATCH', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ used_at: new Date().toISOString() }) });
       if (!code) return go(back(st.return_to, { hbline: 'cancel' }));
       const tr = await fetch('https://api.line.me/oauth2/v2.1/token', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ grant_type: 'authorization_code', code, redirect_uri: CALLBACK, client_id: CID, client_secret: CSECRET }) });
-      if (!tr.ok) return go(back(st.return_to, { hbline: 'error' }));
+      if (!tr.ok) { const t = await tr.text(); console.error('line token', tr.status, t.slice(0, 300)); return go(back(st.return_to, { hbline: 'error', why: 'token' + tr.status + (/invalid_client/.test(t) ? '_client' : /invalid_grant/.test(t) ? '_grant' : '') })) }
       const tk = await tr.json();
       const vr = await fetch('https://api.line.me/oauth2/v2.1/verify', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ id_token: tk.id_token || '', client_id: CID }) });
-      if (!vr.ok) return go(back(st.return_to, { hbline: 'error' }));
-      const idt = await vr.json(); const sub = String(idt.sub || ''); if (!/^U[0-9a-f]{32}$/.test(sub)) return go(back(st.return_to, { hbline: 'error' }));
+      if (!vr.ok) { const t = await vr.text(); console.error('line verify', vr.status, t.slice(0, 300)); return go(back(st.return_to, { hbline: 'error', why: 'verify' + vr.status })) }
+      const idt = await vr.json(); const sub = String(idt.sub || ''); if (!/^U[0-9a-f]{32}$/.test(sub)) { console.error('line sub', sub.slice(0, 40)); return go(back(st.return_to, { hbline: 'error', why: 'sub' })) }
       const name = String(idt.name || '').slice(0, 60);
       if (st.mode === 'link') {
         await db('hb_owner_line_links?on_conflict=line_user_id,project_id', { method: 'POST', headers: { Prefer: 'resolution=merge-duplicates,return=minimal' }, body: JSON.stringify({ line_user_id: sub, project_id: st.project_id, display_name: name }) });

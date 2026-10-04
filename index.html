@@ -4141,7 +4141,7 @@ async function HB_ownerApi(path,body){let t="";try{t=localStorage.getItem("hb_ow
 const HB_LINE_LOGIN="https://rqndozhhvuimqjqtmeli.supabase.co/functions/v1/hb-line-login";
 (function(){try{let h=location.hash.replace(/^#/,"");if(!/(^|&)hbline=/.test(h))return;let p=new URLSearchParams(h),st=p.get("hbline");
   if(st==="ok"&&/^[A-Za-z0-9_-]{43}$/.test(p.get("t")||"")&&/^[0-9a-f-]{36}$/.test(p.get("p")||"")){localStorage.setItem("hb_owner_token",p.get("t"));localStorage.setItem("sitelog_owner_project_id",p.get("p"))}
-  else sessionStorage.setItem("hb_line_msg",st||"error");
+  else{sessionStorage.setItem("hb_line_msg",st||"error");if(p.get("why"))sessionStorage.setItem("hb_line_why",String(p.get("why")).slice(0,30))}
   history.replaceState(null,"",location.pathname+location.search)}catch{}})();
 const HB_LINE_MSG={notlinked:"這個 LINE 還沒有綁定案件。請先用案件密碼登入一次，登入後按「綁定 LINE」，下次就能用 LINE 直接登入。",expired:"登入逾時，請再按一次「用 LINE 登入」。",cancel:"已取消 LINE 登入。",error:"LINE 登入失敗，請再試一次，或改用案件密碼登入。",linked:"已綁定 LINE，下次可以直接用 LINE 登入。"};
 async function HB_lineBegin(mode){let t="";try{t=localStorage.getItem("hb_owner_token")||""}catch{}
@@ -4157,7 +4157,7 @@ function HbLineLinkBar({projectId}){
   (0,u.useEffect)(()=>{if(!msg)return;let t=setTimeout(()=>setMsg(""),5000);return()=>clearTimeout(t)},[msg]);
   let dismissed=false;try{dismissed=localStorage.getItem(key)==="1"}catch{}
   const box={position:"fixed",left:"50%",transform:"translateX(-50%)",bottom:"calc(96px + env(safe-area-inset-bottom))",zIndex:70,width:"min(440px,calc(100vw - 24px))",background:"#fbf8f2",border:"1px solid #d8c7a4",borderRadius:10,boxShadow:"0 14px 34px -16px rgba(40,34,24,.45)",padding:"12px 12px 12px 16px",display:"flex",alignItems:"center",gap:10,fontSize:13.5,color:"#3b372f"};
-  if(msg)return h("div",{role:"status",style:box},h("span",{style:{flex:1}},HB_LINE_MSG[msg]||HB_LINE_MSG.error),h("button",{type:"button",onClick:()=>setMsg(""),"aria-label":"關閉",style:{border:0,background:"none",fontSize:20,color:"#7b7466",cursor:"pointer"}},"×"));
+  if(msg)return h("div",{role:"status",style:box},h("span",{style:{flex:1}},HB_LINE_MSG[msg]||HB_LINE_MSG.error,(()=>{let w="";try{w=sessionStorage.getItem("hb_line_why")||""}catch{}return w?h("small",{style:{display:"block",color:"#9b9285",marginTop:2}},"錯誤代碼："+w):null})()),h("button",{type:"button",onClick:()=>setMsg(""),"aria-label":"關閉",style:{border:0,background:"none",fontSize:20,color:"#7b7466",cursor:"pointer"}},"×"));
   if(!st||!st.configured||st.linked||dismissed)return null;
   return h("div",{style:box},
     h("span",{style:{color:"#06C755",display:"grid"}},h(HbLineIcon)),
