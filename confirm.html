@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<title>設計確認｜赫柏空間設計</title>
+<link rel="icon" href="./hb-logo-mark.png">
+<link rel="apple-touch-icon" href="./apple-touch-icon-180.png">
+<style>
+:root{--paper:#f6f2ea;--card:#fffdf8;--ink:#262722;--soft:#7b7466;--line:#e2d8c6;--gold:#b89b6a;--green:#2E4A3C;--green2:#3d5e4c;--wine:#8a2c34;--amber:#a5642f;--sab:env(safe-area-inset-bottom)}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;font-size:15px;line-height:1.55}
+.serif{font-family:"Noto Serif TC","Songti TC","PMingLiU",serif}
+.mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace}
+button{font:inherit;cursor:pointer;color:inherit}
+.wrap{max-width:560px;margin:0 auto;padding:0 18px calc(110px + var(--sab))}
+.brand{text-align:center;padding:26px 0 14px;border-bottom:1px solid var(--gold);margin-bottom:18px}
+.brand img{width:40px;height:40px;display:block;margin:0 auto 8px}
+.brand small{display:block;font:11px Georgia,serif;letter-spacing:.32em;color:#a5522f}
+.brand b{display:block;font-weight:500;font-size:14px;letter-spacing:.3em;margin-top:2px}
+.chip{display:inline-block;background:#e3e9e2;color:var(--green);font-size:12.5px;border-radius:3px;padding:2px 10px;letter-spacing:.06em}
+h1{font-weight:500;font-size:30px;letter-spacing:.14em;margin:12px 0 4px}
+h2{font-weight:500;font-size:21px;letter-spacing:.08em;margin:0 0 10px;overflow-wrap:anywhere}
+.pill{display:inline-block;font-size:13px;border-radius:4px;padding:3px 12px;letter-spacing:.06em}
+.pill.wait{background:#f3e5c6;color:#7a5a1d}.pill.done{background:#e3e9e2;color:var(--green)}.pill.closed{background:#ece7de;color:#6d675b}
+.duerow{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin:6px 0 12px;font-size:14px;color:#4f4a40}
+.intro{color:#4f4a40;margin:0 0 16px;white-space:pre-wrap}
+.item{margin:0 0 18px}
+.item-h{display:flex;align-items:baseline;gap:10px;margin:0 0 8px}
+.item-h .n{font-size:14px;color:var(--amber)}
+.item-h .t{font-weight:500;font-size:16.5px;letter-spacing:.06em;flex:1;min-width:0;overflow-wrap:anywhere}
+.ver{font-size:12px;background:#f3ead8;color:#7a5a1d;border-radius:3px;padding:1px 8px;white-space:nowrap}
+.carried{font-size:12.5px;color:var(--green);margin:-2px 0 8px}
+.file{display:block;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px;margin-bottom:10px}
+.file .th{height:170px;border-radius:5px;background:#f2eee6;overflow:hidden;display:grid;place-items:center}
+.file .th img,.file .th canvas{width:100%;height:100%;object-fit:cover}
+.file .th .pdf{font:600 22px "JetBrains Mono",monospace;color:#b3312a;letter-spacing:.12em}
+.file .fm{display:flex;align-items:center;gap:10px;padding:10px 4px 2px}
+.file .fi{font:700 10px "JetBrains Mono",monospace;color:#fff;background:#b3312a;border-radius:2px;padding:2px 4px;flex-shrink:0}
+.file .fn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14.5px}
+.file .zoom{color:var(--green);font-size:14px;white-space:nowrap;letter-spacing:.06em}
+.note{font-size:13px;color:#4f4a40;margin:14px 0 0}
+.bar{position:fixed;left:0;right:0;bottom:0;background:linear-gradient(rgba(246,242,234,0),var(--paper) 30%);padding:18px 18px calc(14px + var(--sab));z-index:5}
+.bar .in{max-width:560px;margin:0 auto}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:54px;border-radius:6px;border:1px solid var(--green);background:var(--green);color:#f5f1e8;font-size:17px;letter-spacing:.18em}
+.btn:active{background:var(--green2)}.btn:disabled{opacity:.5}
+.btn.line{background:transparent;color:var(--green)}
+.link{display:block;margin:14px auto 0;border:0;background:none;color:var(--green);text-decoration:underline;text-underline-offset:4px;font-size:14.5px;letter-spacing:.08em}
+.top{display:flex;align-items:center;gap:8px;padding:16px 0 12px;border-bottom:1px solid var(--gold);margin-bottom:16px;position:relative}
+.top button{border:0;background:none;font-size:15px;color:#4f4a40;padding:8px 8px 8px 0;min-height:44px}
+.top b{position:absolute;left:50%;transform:translateX(-50%);font-weight:500;font-size:17px;letter-spacing:.16em}
+.q{border-top:1px solid var(--line);padding:16px 0 18px}
+.choices{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.choice{display:flex;align-items:center;justify-content:center;gap:10px;min-height:54px;border:1px solid #cfc5b3;background:#fff;border-radius:6px;font-size:15.5px;letter-spacing:.08em}
+.choice .dot{width:22px;height:22px;border-radius:50%;border:1.5px solid #8f887a;display:grid;place-items:center;flex-shrink:0}
+.choice.on.ok{background:var(--green);border-color:var(--green);color:#f5f1e8}
+.choice.on.ch{background:var(--amber);border-color:var(--amber);color:#fff}
+.choice.on .dot{border-color:#fff;background:#fff}
+.choice.on .dot:after{content:'';width:9px;height:5px;border:2px solid currentColor;border-top:0;border-right:0;transform:rotate(-45deg) translate(1px,-1px)}
+.choice.on.ok .dot{color:var(--green)}.choice.on.ch .dot{color:var(--amber)}
+.sel{font-size:13px;color:var(--soft);margin:8px 0 0}
+.fld{margin-top:14px}.fld label{display:block;font-size:14px;margin-bottom:6px;letter-spacing:.06em}.fld label em{font-style:normal;color:var(--wine)}
+textarea{width:100%;border:1px solid #cfc5b3;border-radius:6px;background:#fff;padding:12px;font:inherit;font-size:16px;line-height:1.55;min-height:96px;resize:vertical;color:var(--ink)}
+textarea.err{border-color:var(--wine);background:#fff8f7}
+.photo-add{display:inline-flex;align-items:center;gap:6px;margin-top:10px;border:1px solid var(--green);background:transparent;color:var(--green);border-radius:6px;padding:9px 14px;font-size:14px;min-height:44px}
+.photos{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.photos div{position:relative;width:76px;height:76px}
+.photos img{width:100%;height:100%;object-fit:cover;border-radius:5px;border:1px solid var(--line)}
+.photos button{position:absolute;top:-8px;right:-8px;width:28px;height:28px;border-radius:50%;border:0;background:rgba(38,36,30,.85);color:#fff;font-size:15px;line-height:1}
+.sum{background:#f1ebdf;border-radius:6px;padding:12px 14px;text-align:center;font-size:14.5px;letter-spacing:.06em;margin:6px 0 14px}
+.err-box{background:#fbf1ee;border:1px solid #e3c2bb;color:var(--wine);border-radius:6px;padding:10px 12px;font-size:14px;margin:0 0 12px}
+.hint{text-align:center;font-size:13px;color:var(--soft);margin:10px 0 0}
+.done-ic{width:64px;height:64px;border-radius:50%;background:var(--green);display:grid;place-items:center;margin:8px auto 14px}
+.done-ic:after{content:'';width:24px;height:12px;border:3.5px solid #fff;border-top:0;border-right:0;transform:rotate(-45deg) translate(2px,-3px)}
+.center{text-align:center}
+.res{border-top:1px solid var(--line);margin-top:16px}
+.res-row{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--line)}
+.res-row .t{flex:1;min-width:0;font-size:15.5px;letter-spacing:.06em}
+.st{font-size:13px;border-radius:4px;padding:4px 12px;white-space:nowrap}.st.ok{background:#e3e9e2;color:var(--green)}.st.ch{background:#f3e5c6;color:#7a5a1d}
+.cmt{background:#f1ebdf;border-radius:6px;padding:10px 12px;font-size:14px;margin:8px 0 4px;white-space:pre-wrap;overflow-wrap:anywhere}
+.info{display:flex;gap:10px;align-items:center;background:#f3ead8;border-radius:6px;padding:11px 12px;font-size:13.5px;color:#5a4a2c;margin:14px 0}
+.info b{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--amber);color:#fff;font:600 12px Georgia,serif;flex-shrink:0}
+.hist{margin-top:10px}
+.hist h3{font-weight:500;font-size:16px;letter-spacing:.08em;margin:20px 0 6px}
+.state{padding:60px 10px;text-align:center;color:var(--soft)}
+.viewer{position:fixed;inset:0;background:#1f1e1b;z-index:20;display:flex;flex-direction:column}
+.viewer .vh{display:flex;align-items:center;gap:10px;padding:calc(10px + env(safe-area-inset-top)) 14px 10px;color:#eee;font-size:14px}
+.viewer .vh span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.viewer .vh a{color:#d9c79f}
+.viewer .vh button{border:0;background:none;color:#fff;font-size:28px;line-height:1;width:44px;height:44px}
+.viewer .vb{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y pinch-zoom;padding-bottom:var(--sab)}
+.viewer .vb img{display:block;width:100%;height:auto}
+.viewer .vb canvas{display:block;width:100%;height:auto;margin:0 auto 8px;background:#fff}
+.viewer .vb .msg{color:#ccc;text-align:center;padding:40px 20px}
+@media (min-width:700px){.wrap{padding-top:10px}.file .th{height:220px}}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"><div class="state">讀取中…</div></div>
+<div class="bar" id="bar" hidden><div class="in" id="barIn"></div></div>
+<script>
+'use strict';
+const API='https://rqndozhhvuimqjqtmeli.supabase.co/functions/v1/hb-confirm-api/public/';
+const TOKEN=new URLSearchParams(location.search).get('t')||'';
+const $app=document.getElementById('app'),$bar=document.getElementById('bar'),$barIn=document.getElementById('barIn');
+let V=null,step='view',answers={},sending=false,errMsg='',lastSubmit=null;
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const dot=d=>d?String(d).slice(0,10).replace(/-/g,'.'):'';
+const md=d=>d?String(d).slice(5,10).replace('-','/'):'';
+const dt=s=>{try{const p=new Intl.DateTimeFormat('zh-TW',{timeZone:'Asia/Taipei',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}).formatToParts(new Date(s));const g=t=>(p.find(x=>x.type===t)||{}).value||'';return g('year')+'.'+g('month')+'.'+g('day')+'  '+g('hour').replace(/^24/,'00')+':'+g('minute')}catch{return s}};
+const draftKey=()=>'hbcf:'+TOKEN.slice(0,12)+':'+(V&&V.round?V.round.id:'');
+function saveDraft(){try{const o={};for(const k in answers){const a=answers[k];o[k]={result:a.result,comment:a.comment}}localStorage.setItem(draftKey(),JSON.stringify({a:o,nonce:lastSubmit&&lastSubmit.nonce}))}catch{}}
+function loadDraft(){try{const o=JSON.parse(localStorage.getItem(draftKey())||'null');if(o&&o.a)for(const k in o.a)answers[k]={result:o.a[k].result||'',comment:o.a[k].comment||'',photos:[]};if(o&&o.nonce)lastSubmit={nonce:o.nonce,uploaded:{}}}catch{}}
+function clearDraft(){try{localStorage.removeItem(draftKey())}catch{}}
+async function api(path,body){
+  let r;try{r=await fetch(API+path,{method:body?'POST':'GET',headers:{'Content-Type':'application/json','x-hb-confirm':TOKEN},body:body?JSON.stringify(body):undefined,cache:'no-store'})}
+  catch(e){throw Error('網路連線不穩定，請確認網路後再試一次')}
+  let d={};try{d=await r.json()}catch{}if(!r.ok){const e=Error(d.error||'伺服器暫時無法處理，請稍後再試');e.status=r.status;throw e}return d}
+const need=()=>V&&V.round?V.round.items.filter(x=>!x.carried):[];
+const curReply=()=>V&&V.replies?V.replies.find(x=>x.current):null;
+async function load(keepStep){
+  if(!TOKEN){renderError('連結不完整，請向設計師索取確認連結。');return}
+  try{V=await api('view');}catch(e){renderError(e.message);return}
+  if(!V.round){renderError('目前沒有需要確認的內容。');return}
+  answers={};loadDraft();need().forEach(x=>{if(!answers[x.id])answers[x.id]={result:'',comment:'',photos:[]}});
+  step=keepStep||(curReply()?'done':'view');render();
+}
+function renderError(m){$bar.hidden=true;$app.innerHTML=brand()+'<div class="state">'+esc(m)+'</div>'}
+function brand(){return '<div class="brand"><img src="./hb-logo-mark.png" alt=""><small>HERFULSINS</small><b class="serif">赫柏空間設計</b></div>'}
+function fileCard(f,itemId,i){const img=/^image\//.test(f.mime||'');
+  return '<button class="file" data-view="'+esc(itemId)+'|'+i+'"><div class="th" data-th="'+esc(itemId)+'|'+i+'">'+(img&&f.url?'<img src="'+esc(f.url)+'" alt="" loading="lazy">':'<span class="pdf">PDF</span>')+'</div>'+
+    '<div class="fm"><span class="fi">'+(img?'IMG':'PDF')+'</span><span class="fn">'+esc(f.name)+'</span><span class="ver">v'+f.version+'</span><span class="zoom">放大查看 ↗</span></div></button>'}
+function verLine(){return V.round.items.map(x=>x.files.map(f=>esc(x.title)+' v'+f.version).join('、')).filter(Boolean).join('・')}
+function render(){window.scrollTo(0,0);if(step==='view')renderView();else if(step==='answer')renderAnswer();else if(step==='done')renderDone();else renderHistory()}
+function renderView(){const R=V.round,rep=curReply();
+  let h=brand()+(V.project?'<span class="chip">'+esc(V.project)+'</span>':'')+'<h1 class="serif">設計確認</h1><h2 class="serif">'+esc(V.title)+'</h2>'+
+   '<div class="duerow">'+(V.closed?'<span class="pill closed">已結案</span>':rep?'<span class="pill done">已回覆</span>':'<span class="pill wait">待您回覆</span>')+(R.due_date&&!rep&&!V.closed?'<span>請於 '+md(R.due_date)+' 前回覆</span>':'')+'</div>'+
+   (R.intro?'<p class="intro">'+esc(R.intro)+'</p>':'<p class="intro">請先查看附件，再逐項回覆。</p>');
+  R.items.forEach((x,n)=>{h+='<div class="item"><div class="item-h"><span class="n mono">'+String(n+1).padStart(2,'0')+'</span><span class="t serif">'+esc(x.title)+'</span>'+(x.files[0]?'<span class="ver">v'+x.files.map(f=>f.version).join('/')+'</span>':'')+'</div>'+
+    (x.carried?'<p class="carried">✓ 已於先前確認（版本未變動，不需再回覆）</p>':'')+x.files.map((f,i)=>fileCard(f,x.id,i)).join('')+'</div>'});
+  h+='<p class="note">本次確認版本：'+(verLine()||'（無附件）')+'。</p>';
+  if(V.replies.length)h+='<button class="link" data-act="history">查看回覆紀錄</button>';
+  $app.innerHTML=h;
+  if(V.closed||rep){$bar.hidden=false;$barIn.innerHTML=rep?'<button class="btn line" data-act="done">查看本次回覆結果</button>':'<p class="hint">這筆確認已結案，如需調整請聯絡設計師。</p>'}
+  else if(!need().length){$bar.hidden=true}
+  else{$bar.hidden=false;$barIn.innerHTML='<button class="btn" data-act="answer">開始回覆 →</button>'}
+  drawThumbs();
+}
+function counts(){let ok=0,ch=0;need().forEach(x=>{const a=answers[x.id];if(a.result==='ok')ok++;else if(a.result==='change')ch++});return {ok,ch,left:need().length-ok-ch}}
+function canSubmit(){const c=counts();return c.left===0&&need().every(x=>answers[x.id].result!=='change'||answers[x.id].comment.trim())}
+function renderAnswer(){const R=V.round;$bar.hidden=true;
+  let h='<div class="top"><button data-act="view">‹ 返回</button><b class="serif">業主回覆</b></div>'+(V.project?'<span class="chip">'+esc(V.project)+'</span>':'')+
+    '<h2 class="serif" style="margin-top:10px">'+esc(V.title)+'</h2><p class="intro" style="margin-bottom:10px">本次版本：'+(verLine()||'（無附件）')+'。</p>';
+  need().forEach((x,n)=>{const a=answers[x.id];
+    h+='<div class="q" id="q-'+esc(x.id)+'"><div class="item-h"><span class="n mono">'+String(n+1).padStart(2,'0')+'</span><span class="t serif">'+esc(x.title)+'</span>'+(x.files[0]?'<span class="ver">v'+x.files.map(f=>f.version).join('/')+'</span>':'')+'</div>'+
+      '<div class="choices" role="radiogroup" aria-label="'+esc(x.title)+'"><button role="radio" aria-checked="'+(a.result==='ok')+'" class="choice ok'+(a.result==='ok'?' on':'')+'" data-res="'+esc(x.id)+'|ok"><span class="dot"></span>確認此項</button>'+
+      '<button role="radio" aria-checked="'+(a.result==='change')+'" class="choice ch'+(a.result==='change'?' on':'')+'" data-res="'+esc(x.id)+'|change"><span class="dot"></span>需要修改</button></div>'+
+      (a.result?'<p class="sel">已選擇，尚未送出。</p>':'')+
+      (a.result==='change'?'<div class="fld"><label for="c-'+esc(x.id)+'">修改意見 <em>（必填）</em></label><textarea id="c-'+esc(x.id)+'" data-cm="'+esc(x.id)+'" maxlength="1000" placeholder="請說明希望怎麼調整">'+esc(a.comment)+'</textarea>'+
+        '<button class="photo-add" data-photo="'+esc(x.id)+'">＋ 附上參考照片</button><div class="photos">'+a.photos.map((p,i)=>'<div><img src="'+p.url+'" alt="參考照片"><button aria-label="移除照片" data-rmph="'+esc(x.id)+'|'+i+'">×</button></div>').join('')+'</div></div>':'')+'</div>'});
+  const c=counts();
+  h+='<div class="sum" id="sum">本次回覆：'+c.ok+' 項確認・'+c.ch+' 項需修改'+(c.left?'・尚有 '+c.left+' 項未選':'')+'。</div>'+
+    (errMsg?'<div class="err-box" role="alert">'+esc(errMsg)+'</div>':'')+
+    '<button class="btn" data-act="submit" '+(sending||!canSubmit()?'disabled':'')+'>'+(sending?'送出中…':errMsg?'重新送出':'送出回覆')+'</button><p class="hint">送出後將通知赫柏空間設計。</p>';
+  $app.innerHTML=h;
+}
+function updateSum(){const c=counts(),s=document.getElementById('sum');if(s)s.textContent='本次回覆：'+c.ok+' 項確認・'+c.ch+' 項需修改'+(c.left?'・尚有 '+c.left+' 項未選':'')+'。';
+  const b=document.querySelector('[data-act="submit"]');if(b)b.disabled=sending||!canSubmit()}
+function renderDone(){const rep=curReply(),R=V.round;$bar.hidden=true;if(!rep){step='view';return render()}
+  const byId={};rep.results.forEach(x=>byId[x.item_id]=x);const anyCh=rep.results.some(x=>x.result==='change');
+  let h=brand()+'<div class="done-ic" aria-hidden="true"></div><h1 class="serif center" style="font-size:28px">回覆已送出</h1><p class="center" style="margin:0 0 18px;color:#4f4a40">'+(anyCh?'我們已收到您的修改意見。':'謝謝您的確認。')+'</p>'+
+    (V.project?'<span class="chip">'+esc(V.project)+'</span>':'')+'<h2 class="serif" style="margin-top:10px">'+esc(V.title)+'</h2><p style="margin:0;color:#4f4a40;font-size:14px">回覆時間　'+esc(dt(rep.created_at))+'</p><div class="res">';
+  R.items.forEach(x=>{const r=byId[x.id],ok=r?r.result==='ok':!!x.carried;
+    h+='<div class="res-row"><span class="t serif">'+esc(x.title)+'</span>'+(x.files[0]?'<span class="ver">v'+x.files.map(f=>f.version).join('/')+'</span>':'')+'<span class="st '+(ok?'ok':'ch')+'">'+(ok?(r?'✓ 已確認':'✓ 先前已確認'):'待修改')+'</span></div>'+
+      (r&&r.comment?'<div class="cmt">'+esc(r.comment)+'</div>':'')+(r&&r.photo_urls&&r.photo_urls.length?'<div class="photos">'+r.photo_urls.map(p=>'<div><img src="'+esc(p)+'" alt="參考照片"></div>').join('')+'</div>':'')});
+  h+='</div>'+(anyCh?'<div class="info"><b>i</b>設計師更新後，會再請您確認新版。</div>':'')+'<p style="font-size:13.5px;color:#4f4a40">本次回覆與版本已留存。</p>'+
+    '<button class="btn line" data-act="history">查看回覆紀錄</button><button class="link" data-act="view">返回確認內容</button>';
+  $app.innerHTML=h}
+function renderHistory(){$bar.hidden=true;
+  let h='<div class="top"><button data-act="back">‹ 返回</button><b class="serif">回覆紀錄</b></div><h2 class="serif">'+esc(V.title)+'</h2>';
+  if(!V.replies.length)h+='<div class="state">尚未回覆</div>';
+  V.replies.forEach(r=>{h+='<div class="hist"><h3 class="serif">第 '+(r.round_no||'')+' 次確認・'+esc(dt(r.created_at))+'</h3>'+r.results.map(x=>'<div class="res-row"><span class="t">'+esc(x.title)+'</span>'+((x.files||[]).length?'<span class="ver">v'+x.files.map(f=>f.version).join('/')+'</span>':'')+'<span class="st '+(x.result==='ok'?'ok':'ch')+'">'+(x.result==='ok'?'✓ 確認':'需修改')+'</span></div>'+(x.comment?'<div class="cmt">'+esc(x.comment)+'</div>':'')).join('')+'</div>'});
+  $app.innerHTML=h}
+let prevStep='view';
+document.addEventListener('click',async e=>{const t=e.target.closest('[data-act],[data-res],[data-view],[data-photo],[data-rmph]');if(!t)return;
+  if(t.dataset.act){const a=t.dataset.act;
+    if(a==='answer'){step='answer';errMsg='';render()}
+    else if(a==='view'){step='view';render()}
+    else if(a==='done'){step='done';render()}
+    else if(a==='history'){prevStep=step;step='history';render()}
+    else if(a==='back'){step=prevStep||'view';render()}
+    else if(a==='submit')submit();return}
+  if(t.dataset.res){const [id,res]=t.dataset.res.split('|');answers[id].result=res;saveDraft();const y=t.getBoundingClientRect().top;renderAnswer();
+    const el=document.getElementById('q-'+id);if(el){window.scrollBy(0,el.getBoundingClientRect().top-y+70-(el.querySelector('.choices').getBoundingClientRect().top-el.getBoundingClientRect().top))}
+    if(res==='change'){const ta=document.getElementById('c-'+id);if(ta&&!ta.value)ta.focus({preventScroll:false})}return}
+  if(t.dataset.view){const [id,i]=t.dataset.view.split('|');const it=V.round.items.find(x=>x.id===id);openViewer(it.files[+i]);return}
+  if(t.dataset.photo){pickPhotos(t.dataset.photo);return}
+  if(t.dataset.rmph){const [id,i]=t.dataset.rmph.split('|');answers[id].photos.splice(+i,1);renderAnswer();return}
+});
+document.addEventListener('input',e=>{const id=e.target.dataset&&e.target.dataset.cm;if(!id)return;answers[id].comment=e.target.value;e.target.classList.remove('err');saveDraft();updateSum()});
+function pickPhotos(id){const inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.multiple=true;
+  inp.onchange=async()=>{const fs=[...inp.files].slice(0,6-answers[id].photos.length);for(const f of fs){try{const blob=await shrink(f);answers[id].photos.push({blob,url:URL.createObjectURL(blob)})}catch{}}renderAnswer();const el=document.getElementById('q-'+id);el&&el.scrollIntoView({block:'center'})};inp.click()}
+function shrink(file){return new Promise((ok,no)=>{const img=new Image(),u=URL.createObjectURL(file);img.onload=()=>{const m=1600,s=Math.min(1,m/Math.max(img.width,img.height)),c=document.createElement('canvas');c.width=Math.round(img.width*s);c.height=Math.round(img.height*s);c.getContext('2d').drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(u);c.toBlob(b=>b?ok(b):no(),'image/jpeg',.85)};img.onerror=()=>{URL.revokeObjectURL(u);file.type.startsWith('image/')?ok(file):no()};img.src=u})}
+async function submit(){if(sending)return;
+  const miss=need().find(x=>answers[x.id].result==='change'&&!answers[x.id].comment.trim());
+  if(miss){const ta=document.getElementById('c-'+miss.id);if(ta){ta.classList.add('err');ta.focus()}return}
+  if(!canSubmit())return;
+  sending=true;errMsg='';updateSum();const btn=document.querySelector('[data-act="submit"]');if(btn)btn.textContent='送出中…';
+  if(!lastSubmit)lastSubmit={nonce:(crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random()).replace(/-/g,''),uploaded:{}};saveDraft();
+  try{
+    const results=[];
+    for(const x of need()){const a=answers[x.id],photos=[];
+      if(a.result==='change')for(const p of a.photos){if(!p.path){const s=await api('photo-url',{mime:p.blob.type||'image/jpeg',size:p.blob.size});
+          let r;try{r=await fetch(s.upload_url,{method:'PUT',headers:{'Content-Type':p.blob.type||'image/jpeg','x-upsert':'false'},body:p.blob})}catch{throw Error('照片上傳失敗，請確認網路後再試一次')}
+          if(!r.ok)throw Error('照片上傳失敗，請再試一次');p.path=s.path}photos.push(p.path)}
+      results.push({item_id:x.id,result:a.result,comment:a.result==='change'?a.comment.trim():'',photos})}
+    await api('submit',{round_id:V.round.id,nonce:lastSubmit.nonce,results});
+    clearDraft();lastSubmit=null;sending=false;await load('done');
+  }catch(e){sending=false;errMsg=e.message||'送出失敗，請再試一次';
+    if(e.status===409&&/更新內容|回覆過/.test(errMsg)){renderAnswer();return}
+    renderAnswer();const b=document.querySelector('.err-box');b&&b.scrollIntoView({block:'center'})}
+}
+/* 縮圖與放大檢視：PDF 用 pdf.js 繪製；載入失敗就直接開啟原檔 */
+let pdfjs=null;
+function loadPdfjs(){if(pdfjs)return pdfjs;pdfjs=new Promise((ok,no)=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';s.onload=()=>{try{window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';ok(window.pdfjsLib)}catch(e){no(e)}};s.onerror=no;document.head.appendChild(s)});return pdfjs}
+async function drawThumbs(){for(const el of document.querySelectorAll('[data-th]')){const [id,i]=el.dataset.th.split('|');const f=V.round.items.find(x=>x.id===id).files[+i];
+  if(!f.url||/^image\//.test(f.mime||''))continue;
+  try{const lib=await loadPdfjs();const doc=await lib.getDocument({url:f.url}).promise;const pg=await doc.getPage(1);const vp0=pg.getViewport({scale:1});const sc=Math.min(2,900/vp0.width);const vp=pg.getViewport({scale:sc});
+    const c=document.createElement('canvas');c.width=vp.width;c.height=vp.height;await pg.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;c.style.objectFit='cover';c.style.objectPosition='top';el.innerHTML='';el.appendChild(c)}catch{}}}
+function openViewer(f){const v=document.createElement('div');v.className='viewer';v.setAttribute('role','dialog');v.setAttribute('aria-label',f.name);
+  v.innerHTML='<div class="vh"><span>'+esc(f.name)+'・v'+f.version+'</span>'+(f.url?'<a href="'+esc(f.url)+'" target="_blank" rel="noopener">原檔</a>':'')+'<button aria-label="關閉">×</button></div><div class="vb"><div class="msg">載入中…</div></div>';
+  document.body.appendChild(v);document.body.style.overflow='hidden';
+  const close=()=>{v.remove();document.body.style.overflow='';history.state&&history.state.hbv&&history.back()};
+  v.querySelector('button').onclick=close;history.pushState({hbv:1},'');const pop=()=>{window.removeEventListener('popstate',pop);if(document.body.contains(v)){v.remove();document.body.style.overflow=''}};window.addEventListener('popstate',pop);
+  const vb=v.querySelector('.vb');
+  if(!f.url){vb.innerHTML='<div class="msg">連結已過期，請重新整理頁面</div>';return}
+  if(/^image\//.test(f.mime||'')){vb.innerHTML='<img src="'+esc(f.url)+'" alt="'+esc(f.name)+'">';return}
+  (async()=>{try{const lib=await loadPdfjs();const doc=await lib.getDocument({url:f.url}).promise;vb.innerHTML='';const w=Math.min(vb.clientWidth||400,1200)*(window.devicePixelRatio>1?2:1.5);
+    for(let p=1;p<=doc.numPages;p++){const pg=await doc.getPage(p);const vp0=pg.getViewport({scale:1}),vp=pg.getViewport({scale:w/vp0.width});const c=document.createElement('canvas');c.width=vp.width;c.height=vp.height;vb.appendChild(c);await pg.render({canvasContext:c.getContext('2d'),viewport:vp}).promise}}
+   catch{vb.innerHTML='<div class="msg">無法在此預覽，請按右上角「原檔」開啟。</div>'}})()}
+load();
+</script>
+</body>
+</html>

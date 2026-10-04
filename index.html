@@ -3854,6 +3854,81 @@ dialog.wbd.on .wbd-panel{transform:none}
   .wbd-foot{padding:12px 16px calc(12px + env(safe-area-inset-bottom))}
   .wbd-btns{gap:10px}
 }
+/* ===== 業主確認（公司端） ===== */
+.hb-wb .wbc-cfbtn{display:inline-flex;align-items:center;gap:8px;border:1px solid #2E4A3C;background:transparent;color:#2E4A3C!important;border-radius:6px;padding:7px 12px 7px 16px;font-size:13.5px;letter-spacing:.08em;min-height:0!important;cursor:pointer}
+.hb-wb .wbc-cfbtn b{display:inline-grid;place-items:center;min-width:24px;height:24px;border-radius:999px;background:#2E4A3C;color:#f5f1e8;font-weight:500;font-size:12.5px;padding:0 6px}
+.hb-wb .wbc-cfbtn.has-ch b{background:#8a2c34}
+.hb-wb .wbc-cfbtn:hover{background:#eef3ee}
+.wbc-cfi{font-size:15px;color:#8a2c34}
+.wbc-cfrow .wbc-badge{font-size:11.5px}
+.cf-list{padding:6px 20px 16px;max-height:min(70vh,640px);overflow:auto}
+.cf-list section{margin-top:12px}
+.cf-list h4{display:flex;align-items:center;gap:8px;margin:0 0 6px;font-family:'Noto Serif TC',serif;font-weight:500;font-size:15px;letter-spacing:.1em;color:#4f4a40}
+.cf-list h4 b{font:500 12px 'JetBrains Mono',monospace;background:#ece7de;border-radius:999px;padding:1px 8px}
+.cf-list h4.cf-gh-ch{color:#8a2c34}.cf-list h4.cf-gh-ch b{background:#f6dcdc}
+.cf-list ul{list-style:none;margin:0;padding:0}
+.wb-modal .cf-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:10px;align-items:center;width:100%;text-align:left;border:0;border-top:1px dashed #ece3d3;background:none;padding:11px 2px;cursor:pointer}
+.wb-modal .cf-row:hover strong{color:#2E4A3C}
+.cf-rowmain strong{display:block;font-weight:500;font-size:14.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cf-rowmain small{display:block;font-size:12px;color:#7b7466;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cf-rowcount{display:flex;gap:6px;font-size:11.5px;color:#6d675b;white-space:nowrap}.cf-rowcount .ok{color:#2E4A3C}.cf-rowcount .ch{color:#8a2c34}
+.cf-more{border:0;background:none;color:#7b7466;text-decoration:underline;font-size:12.5px;margin-top:12px;padding:0;cursor:pointer}
+.cf-st{font-size:12px;padding:3px 10px;border-radius:4px;white-space:nowrap;background:#ece7de;color:#6d675b}
+.cf-st-wait{background:#f3e5c6;color:#7a5a1d}.cf-st-change{background:#f6dcdc;color:#8a2c34}.cf-st-ok{background:#e3e9e2;color:#2E4A3C}
+.cfd .cf-textbtn,.cf-textbtn{border:0;background:none;padding:2px 4px;font-size:13px;color:#2E4A3C!important;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.cf-items{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.cf-items li{display:grid;grid-template-columns:10px minmax(0,1fr) auto;gap:12px;align-items:start}
+.cf-items i{width:9px;height:9px;border-radius:50%;background:#a5642f;margin-top:7px}
+.cf-items span{font-size:15px;letter-spacing:.05em}.cf-items small{font-size:12px;color:#7b7466;margin-left:4px}
+.cf-chnote{margin:4px 0 0;font-size:13px;color:#8a2c34;line-height:1.5;overflow-wrap:anywhere}
+.cf-ic{font-size:12px;padding:2px 10px;border-radius:4px;background:#ece7de;color:#6d675b;white-space:nowrap}
+.cf-ic.ok{background:#e3e9e2;color:#2E4A3C}.cf-ic.ch{background:#f6dcdc;color:#8a2c34}.cf-ic.wait{background:#f3e5c6;color:#7a5a1d}
+.cf-info{display:flex;gap:10px;align-items:center;margin-top:14px;background:#f3ead8;border-radius:4px;padding:10px 14px;font-size:13.5px;color:#5a4a2c;letter-spacing:.04em}
+.cf-info b{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:#a5642f;color:#fff;font:600 12px Georgia,serif;flex-shrink:0}
+.cf-addfile{position:relative}
+.cfd .cf-addfile select{appearance:none;-webkit-appearance:none;border:1px solid #2E4A3C;background:#fff;color:#2E4A3C;border-radius:4px;padding:7px 14px;font:inherit;font-size:13px;letter-spacing:.06em;cursor:pointer;max-width:220px}
+.cf-files{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
+.cf-file{border:1px solid #e2d8c6;border-radius:6px;background:#fff;padding:8px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.cfd .cf-thumb{display:grid;place-items:center;height:110px;border:0;border-radius:4px;background:#f2eee6;overflow:hidden;padding:0;cursor:zoom-in}
+.cf-thumb img{width:100%;height:100%;object-fit:cover}
+.cf-pdf{font:600 18px 'JetBrains Mono',monospace;color:#b3312a;letter-spacing:.1em}
+.cf-fname{display:flex;gap:6px;align-items:center;min-width:0}.cf-fname b{font-weight:500;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cf-ficon{flex-shrink:0;font:600 9.5px 'JetBrains Mono',monospace;color:#fff;background:#b3312a;border-radius:2px;padding:1px 3px}
+.cf-fmeta{display:flex;gap:6px;align-items:center;min-width:0}.cf-fmeta small{font-size:11px;color:#7b7466;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cf-ver{font-size:11.5px;background:#e3e9e2;color:#2E4A3C;border-radius:3px;padding:1px 7px;white-space:nowrap}
+.cf-fact{display:flex;flex-wrap:wrap;gap:4px 10px}
+.cfd .cf-fact button,.cfd .cf-hist button{border:0;background:none;padding:2px 0;font-size:12.5px;color:#2E4A3C!important;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.cf-hist{list-style:none;margin:2px 0 0;padding:6px 0 0;border-top:1px dashed #e2d8c6;display:flex;flex-direction:column;gap:3px}
+.cf-hist li{display:flex;justify-content:space-between;gap:6px;font-size:12px}.cf-hist small{color:#7b7466}
+.cf-up{font-size:12.5px;color:#7a5a1d;margin:10px 0 0}
+.cf-sentver{font-size:12.5px;color:#4f4a40;margin:12px 0 0;line-height:1.6}
+.cf-rep{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:13px}
+.cf-rep li>span{font-size:12px;border-radius:3px;padding:1px 7px}
+.cf-rep li.ok>span{background:#e3e9e2;color:#2E4A3C}.cf-rep li.change>span{background:#f6dcdc;color:#8a2c34}
+.cf-rep p{margin:3px 0 0;color:#4f4a40;font-size:13px}
+.cf-photos{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}.cf-photos img{width:64px;height:64px;object-fit:cover;border-radius:4px;border:1px solid #e2d8c6}
+.cf-linkrow{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;padding:16px 0 4px;font-size:12.5px;color:#7b7466}
+.cfd .cf-linkrow button{border:0;background:none;padding:2px 0;color:#2E4A3C!important;text-decoration:underline;text-underline-offset:3px;font-size:12.5px;cursor:pointer}
+.cf-linkbox{display:flex;gap:8px;margin-top:14px}
+.cf-linkbox input{flex:1;min-width:0;border:1px solid #d9cfbd;border-radius:4px;padding:8px 10px;font-size:13px;background:#fff}
+.cfd .cf-linkbox button{border:1px solid #2E4A3C;background:#2E4A3C;color:#f5f1e8!important;border-radius:4px;padding:0 14px}
+.cf-form{display:flex;flex-direction:column;gap:12px;padding:6px 0 16px}
+.cf-itemedit{display:grid;grid-template-columns:26px minmax(0,1fr) 34px;gap:8px;align-items:center;margin-bottom:6px}
+.cf-itemedit b{font:500 13px 'JetBrains Mono',monospace;color:#a5642f}
+.cf-itemedit input{border:1px solid #d9cfbd;border-radius:6px;padding:9px 11px;font:inherit;font-size:16px;min-width:0}
+.cfd .cf-x{border:0;background:none;font-size:22px;color:#7b7466;cursor:pointer}
+.cfd .cf-resend{display:block;width:100%;margin-top:10px;border:1px dashed #b89b6a;background:transparent;border-radius:4px;padding:9px;font-size:13px;color:#5a4a2c;cursor:pointer}
+dialog.cf-viewer{border:0;padding:0;width:min(1100px,96vw);height:min(92dvh,900px);max-width:none;max-height:none;background:#1f1e1b;border-radius:8px;overflow:hidden}
+dialog.cf-viewer::backdrop{background:rgba(20,19,17,.7)}
+.cf-vhead{display:flex;align-items:center;gap:14px;padding:10px 14px;color:#eee;font-size:13px}
+.cf-vhead span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cf-vhead a{color:#d9c79f}
+.cf-vhead button{border:0;background:none;color:#eee;font-size:26px;line-height:1;cursor:pointer}
+.cf-vbody{height:calc(100% - 46px);overflow:auto;display:grid;place-items:center;background:#2a2925}
+.cf-vbody img{max-width:100%;max-height:100%;object-fit:contain}.cf-vbody iframe{width:100%;height:100%;border:0;background:#fff}
+@media (max-width:1440px){.wbc-sync{display:none}.wbc-date{padding:0 10px}.wbc-titlewrap{gap:12px}}
+@media (max-width:899px){.hb-wb .wbc-cfbtn{order:4}}
+@media (max-width:720px){.cfd .wbd-hint{display:none}.cfd .cf-resend{margin-top:8px;padding:7px}}
+@media (max-width:720px){.cf-files{grid-template-columns:1fr 1fr}.wb-modal .cf-row{grid-template-columns:minmax(0,1fr) auto}.cf-rowcount{grid-column:1;grid-row:2}}
 </style>
 <style id="hb-vq-rfq-css">
 #hb-vq-rfq{margin:18px 0 26px;padding:22px;border:1px solid #c7c1b5;border-radius:10px;background:rgba(255,255,255,.48);color:#283d31;font-size:13px}
@@ -13757,7 +13832,7 @@ function HB_wbIcon(name,size){const s=size||16,p={width:s,height:s,viewBox:'0 0 
 
 function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setProj,wbRef}){
   const h=u.default.createElement,{all,today,ready,error,sync}=tk;
-  const [editing,setEditing]=u.useState(null),[drawer,setDrawer]=u.useState(null),[full,setFull]=u.useState(''),[toast,setToast]=u.useState('');
+  const [editing,setEditing]=u.useState(null),[drawer,setDrawer]=u.useState(null),[cfList,setCfList]=u.useState(false),[cfOpen,setCfOpen]=u.useState(null),[full,setFull]=u.useState(''),[toast,setToast]=u.useState('');
   u.useEffect(()=>{if(!toast)return;const t=setTimeout(()=>setToast(''),3200);return()=>clearTimeout(t)},[toast]);
   const say=m=>setToast(m),LIM=3;
   const pv=proj||'';
@@ -13778,6 +13853,16 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
     const p=tk.updateWith(t,c=>({done:true,completedAt:today,followLog:[...(Array.isArray(c.followLog)?c.followLog:[]),{date:today,at:HB_wbNowISO(),method:'系統',note:'結案'}]}));
     if(p)p.then(ok=>say(ok?'已結案（可在「已結案」重新開啟）':'結案失敗，請再試一次'))};
   const lastNote=t=>{const l=Array.isArray(t.followLog)?t.followLog.filter(x=>x.note&&x.method!=='系統'):[];return l.length?l[l.length-1].note:''};
+  const cf=HB_useConfirms(true);
+  const cfMine=cf.list.filter(r=>!pv||(pv==='__co'?!r.project_id:r.project_id===pv));
+  const cfActive=cfMine.filter(r=>r.status==='waiting'||r.status==='changes').length,cfChangeN=cfMine.filter(r=>r.status==='changes').length;
+  const pName=new Map(projects.map(p=>[p.id,p.name]));
+  const cfTodo=cfMine.filter(r=>r.status==='changes').flatMap(r=>(r.items||[]).filter(it=>r.item_state&&r.item_state[it.id]&&r.item_state[it.id].result==='change').map(it=>({key:r.id+':'+it.id,rid:r.id,title:it.title,req:r.title,projectName:pName.get(r.project_id)||'未指定專案',comment:r.item_state[it.id].comment||''})));
+  const cfRow=x=>h('li',{key:x.key,className:'wbc-row wbc-cfrow'},
+    h('span',{className:'wbc-ficon wbc-cfi','aria-hidden':'true'},'✎'),
+    h('button',{type:'button',className:'wbc-body',onClick:()=>setCfOpen({id:x.rid}),title:'開啟業主確認'},h('strong',null,x.title),h('small',{className:'wbc-proj'},x.req+'・'+x.projectName),x.comment&&h('small',{className:'wbc-last'},h('em',null,'業主'),x.comment)),
+    h('span',{className:'wbc-badge wbc-b-late'},'業主要修改'),chev);
+  const openMixed=[...cfTodo.map(x=>({_cf:x})),...openTasks],mixRow=t=>t._cf?cfRow(t._cf):openRow(t);
   const lateOpen=openTasks.filter(overdue).length,dueFollow=follows.filter(t=>t.due&&t.due<=today).length;
   const complete=t=>{if(tk.update(t,{done:!t.done,completedAt:t.done?null:today}))say(t.done?'已恢復為未完成':'已完成（可在今日待辦恢復）')};
   const newTask=extra=>setEditing({id:crypto.randomUUID(),title:'',projectId:pv&&pv!=='__co'?pv:'',assignee:'',due:today,time:'',category:'一般',note:'',urgent:false,source:'manual',isNew:true,...extra});
@@ -13816,7 +13901,7 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
     rows.length===0?h('p',{className:'wbc-empty'},emptyTxt):h('ul',{className:'wbc-list'},rows.slice(0,LIM).map(render)),
     h('button',{type:'button',className:'wbc-more',onClick:onMore},moreLabel,HB_wbIcon('arrow',14)));
   const d=new Date(today+'T00:00:00');
-  const fullList=full==='open'?openTasks:full==='follow'?follows:full==='closed'?closedFollows:[];
+  const fullList=full==='open'?openMixed:full==='follow'?follows:full==='closed'?closedFollows:[];
   return h('section',{className:'hb-wb wbc',ref:wbRef,'aria-label':'工作台'},
     h('header',{className:'wbc-head'},
       h('div',{className:'wbc-titlewrap'},h('h2',{className:'wbc-carnet'},'Le Carnet du Jour'),h('span',{className:'wbc-fr'},'工作台')),
@@ -13825,6 +13910,7 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
         h('select',{value:pv,onChange:e=>setProj&&setProj(e.target.value)},
           h('option',{value:''},'全部專案'),h('option',{value:'__co'},'公司事務'),
           projects.map(p=>h('option',{key:p.id,value:p.id},p.name))),HB_wbIcon('caret',15)),
+      h('button',{type:'button',className:'wbc-cfbtn'+(cfChangeN?' has-ch':''),onClick:()=>setCfList(true)},'待業主確認',h('b',null,cfActive)),
       h('span',{className:'wbc-grow'}),
       h('span',{className:'wb-sync wbc-sync'+(ready?'':' wb-sync-off'),title:error||''},sync),
       h('button',{type:'button',className:'wbc-hublink',onClick:onTodayHub},'開啟今日待辦',HB_wbIcon('out',13)),
@@ -13832,16 +13918,18 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
     error&&h('div',{className:'wb-error',role:'alert'},error,h('button',{type:'button',onClick:tk.reload},'重新整理')),
     h('div',{className:'wbc-cols'},
       col('今日安排',agenda.length,null,agenda,agendaRow,'今天沒有排定的行程','查看完整行程',onCalendar,'wbc-today'),
-      col('未完成',openTasks.length,lateOpen?h('span',{className:'wbc-alert'},'逾期 '+lateOpen):null,openTasks,openRow,pv?'這個專案目前沒有未完成事項':'目前沒有未完成事項','查看全部 '+openTasks.length+' 項',()=>setFull('open'),'wbc-open'),
+      col('未完成',openMixed.length,lateOpen||cfTodo.length?h('span',{className:'wbc-alert'},[lateOpen?'逾期 '+lateOpen:'',cfTodo.length?'業主修改 '+cfTodo.length:''].filter(Boolean).join('・')):null,openMixed,mixRow,pv?'這個專案目前沒有未完成事項':'目前沒有未完成事項','查看全部 '+openMixed.length+' 項',()=>setFull('open'),'wbc-open'),
       col('待追蹤',follows.length,h(u.default.Fragment,null,dueFollow?h('span',{className:'wbc-alert'},'待處理 '+dueFollow):null,closedFollows.length?h('button',{type:'button',className:'wbc-closedlink'+(dueFollow?'':' push'),onClick:()=>setFull('closed')},'已結案 '+closedFollows.length):null),follows,followRow,pv?'這個專案目前沒有追蹤事項':'目前沒有等待回覆的事','查看全部 '+follows.length+' 項',()=>setFull('follow'),'wbc-follow')),
     toast&&h('div',{className:'wb-toast',role:'status'},toast),
     full&&h(HbWbModal,{title:(full==='open'?'未完成':full==='closed'?'已結案追蹤':'待追蹤')+'（'+fullList.length+'）',sub:pv?(pv==='__co'?'公司事務':(projects.find(p=>p.id===pv)||{}).name||''):'全部專案',onClose:()=>setFull('')},
-      h('div',{className:'wbc wbc-full'},fullList.length===0?h('p',{className:'wbc-empty'},'沒有事項'):h('ul',{className:'wbc-list'},fullList.map(full==='open'?openRow:full==='closed'?closedRow:followRow)),
+      h('div',{className:'wbc wbc-full'},fullList.length===0?h('p',{className:'wbc-empty'},'沒有事項'):h('ul',{className:'wbc-list'},fullList.map(full==='open'?mixRow:full==='closed'?closedRow:followRow)),
         h('div',{className:'wb-mact',style:{padding:'12px 0 2px'}},full!=='closed'&&h('button',{type:'button',className:'wb-btn wb-btn-ghost',onClick:()=>newTask(full==='follow'?{kind:'follow',waitingFor:'',due:HB_wbAddDays(today,3)}:{})},HB_wbIcon('plus',14),full==='follow'?'新增追蹤':'新增事項'),
           h('span',{style:{flex:1}}),h('button',{type:'button',className:'wb-btn wb-btn-solid',onClick:()=>setFull('')},'完成')))),
     editing&&h(HbWbEditor,{key:editing.id,initial:editing,projects,today,onClose:()=>setEditing(null),
       onSave:v=>{const {isNew,...task}=v;if(isNew?tk.add(task):tk.replace(task)){setEditing(null);say(isNew?'已新增':'已儲存')}},
       onDelete:v=>{if(confirm('確定刪除「'+v.title+'」？')&&tk.update(v,{deleted:true})){setEditing(null);say('已刪除')}}}),
+    cfList&&h(HbConfirmList,{cf,projects,pv,onClose:()=>setCfList(false),onOpen:id=>setCfOpen({id}),onNew:()=>setCfOpen({id:null,n:Date.now()})}),
+    cfOpen&&h(HbConfirmDrawer,{key:(cfOpen.id||'new')+(cfOpen.n||''),id:cfOpen.id,projects,pv,say,onOpenProject,onChanged:cf.reload,onClose:()=>{setCfOpen(null);cf.reload()}}),
     drawerTask&&h(HbWbDrawer,{key:drawer.id+':'+drawer.n,task:drawerTask,focus:drawer.focus,today,projects,tk,say,onOpenProject,onClose:()=>setDrawer(null)}));
 }
 /* 追蹤詳情側欄：電腦版右側滑出、手機版全螢幕。資料直接讀寫 HB_useToday（同一份雲端資料） */
@@ -13921,6 +14009,167 @@ function HbWbDrawer({task,today,projects,tk,focus,onClose,onOpenProject,say}){
           h('button',{type:'button',className:'wb-btn wb-btn-solid',onClick:save,disabled:!!busy||!dirty||!next},busy==='save'?'儲存中…':(!note.trim()&&next!==base?'儲存改期':'儲存紀錄')),
           h('button',{type:'button',className:'wb-btn wb-btn-line',onClick:close,disabled:!!busy},busy==='close'?'處理中…':'標記結案')),
         h('p',{className:'wbd-hint'+(saved?' ok':'')},saved?'✓ 已儲存，工作台已同步更新。':dirty?'有尚未儲存的修改。':'儲存後同步更新工作台。'))));
+}
+/* ===== 業主確認＋附件（公司端）：資料存在 Supabase hb_confirm_*，透過 hb-confirm-api 讀寫 ===== */
+const HB_CONFIRM_API='https://rqndozhhvuimqjqtmeli.supabase.co/functions/v1/hb-confirm-api/staff/';
+const HB_CONFIRM_PAGE=(/herfulsinsvip\.com$/.test(location.hostname)?location.origin:'https://www.herfulsinsvip.com')+'/confirm.html';
+async function HB_confirmApi(path,body){let token='';try{const {data:ss}=await q.auth.getSession();token=ss&&ss.session?ss.session.access_token:''}catch{}
+  const opt={method:body?'POST':'GET',headers:{'Content-Type':'application/json'}};if(token)opt.headers.Authorization='Bearer '+token;if(body)opt.body=JSON.stringify(body);
+  let r;try{r=await fetch(HB_CONFIRM_API+path,opt)}catch(e){throw Error('網路連線中斷，請稍後再試')}
+  let d={};try{d=await r.json()}catch{}if(r.status===401)throw Error('請登出後重新登入');if(!r.ok)throw Error(d.error||'伺服器暫時無法處理');return d}
+const HB_CF_STATUS={draft:['草稿','cf-st-draft'],waiting:['待業主回覆','cf-st-wait'],changes:['需修改','cf-st-change'],confirmed:['已全部確認','cf-st-ok'],closed:['已結案','cf-st-closed']};
+function HB_useConfirms(enabled=true){
+  const [list,setList]=u.useState([]),[ready,setReady]=u.useState(false),[error,setError]=u.useState('');
+  const alive=u.useRef(true),busy=u.useRef(false);
+  const load=async()=>{if(busy.current)return;busy.current=true;try{const d=await HB_confirmApi('list');if(alive.current){setList(Array.isArray(d)?d:[]);setReady(true);setError('')}}catch(e){if(alive.current)setError(e.message||'讀取失敗')}finally{busy.current=false}};
+  u.useEffect(()=>{if(!enabled)return;alive.current=true;load();const iv=setInterval(()=>{if(!document.hidden)load()},60000),f=()=>{if(!document.hidden)load()};
+    window.addEventListener('focus',f);document.addEventListener('visibilitychange',f);return()=>{alive.current=false;clearInterval(iv);window.removeEventListener('focus',f);document.removeEventListener('visibilitychange',f)}},[]);
+  return {list,ready,error,reload:load};
+}
+function HB_cfFileIcon(f){return /^image\//.test(f.mime||'')?'圖':'PDF'}
+function HB_cfDate(s){return s?String(s).slice(0,10).replace(/-/g,'.'):''}
+function HB_cfDT(s){if(!s)return '';try{const p=new Intl.DateTimeFormat('zh-TW',{timeZone:'Asia/Taipei',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}).formatToParts(new Date(s));const g=t=>(p.find(x=>x.type===t)||{}).value||'';return g('month')+'/'+g('day')+' '+g('hour').replace(/^24/,'00')+':'+g('minute')}catch{return String(s).slice(5,16).replace('T',' ')}}
+async function HB_cfCopy(text){try{await navigator.clipboard.writeText(text);return true}catch{try{const t=document.createElement('textarea');t.value=text;t.style.position='fixed';t.style.opacity='0';document.body.appendChild(t);t.select();const ok=document.execCommand('copy');t.remove();return ok}catch{return false}}}
+/* 清單：依狀態分組 */
+function HbConfirmList({cf,projects,pv,onOpen,onNew,onClose}){
+  const h=u.default.createElement,[showClosed,setShowClosed]=u.useState(false);
+  const names=new Map(projects.map(p=>[p.id,p.name]));
+  const rows=cf.list.filter(r=>!pv||(pv==='__co'?!r.project_id:r.project_id===pv));
+  const groups=[['changes','需修改・待處理'],['waiting','等待業主回覆'],['draft','草稿（尚未送出）'],['confirmed','已全部確認'],['closed','已結案']];
+  const row=r=>h('li',{key:r.id},h('button',{type:'button',className:'cf-row',onClick:()=>onOpen(r.id)},
+    h('div',{className:'cf-rowmain'},h('strong',null,r.title),h('small',null,(names.get(r.project_id)||'未指定專案')+(r.due_date&&r.status==='waiting'?'・預計 '+HB_cfDate(r.due_date)+' 回覆':''))),
+    h('div',{className:'cf-rowcount'},r.counts.ok?h('span',{className:'ok'},'✓ '+r.counts.ok):null,r.counts.change?h('span',{className:'ch'},'需修改 '+r.counts.change):null,r.status!=='draft'&&r.counts.pending?h('span',null,'待回覆 '+r.counts.pending):null),
+    h('span',{className:'cf-st '+(HB_CF_STATUS[r.status]||['',''])[1]},(HB_CF_STATUS[r.status]||[r.status])[0])));
+  return h(HbWbModal,{title:'待業主確認',sub:'VALIDATION CLIENT',onClose},
+    h('div',{className:'cf-list'},
+      cf.error&&h('div',{className:'wb-error',role:'alert'},cf.error,h('button',{type:'button',onClick:cf.reload},'重新整理')),
+      !cf.ready&&!cf.error?h('p',{className:'wbc-empty'},'讀取中…'):rows.length===0?h('p',{className:'wbc-empty'},'目前沒有需要業主確認的事項'):
+      groups.map(g=>{const rs=rows.filter(r=>r.status===g[0]);if(!rs.length)return null;
+        if(g[0]==='closed'&&!showClosed)return h('button',{key:g[0],type:'button',className:'cf-more',onClick:()=>setShowClosed(true)},'顯示已結案（'+rs.length+'）');
+        return h('section',{key:g[0]},h('h4',{className:g[0]==='changes'?'cf-gh-ch':''},g[1],h('b',null,rs.length)),h('ul',null,rs.map(row)))}),
+      h('div',{className:'wb-mact',style:{padding:'14px 0 2px'}},h('span',{style:{flex:1}}),h('button',{type:'button',className:'wb-btn wb-btn-solid',onClick:onNew},HB_wbIcon('plus',14),'新增確認'))));
+}
+/* 檢視附件：圖片放大、PDF 內嵌（手機另開） */
+function HbCfViewer({file,onClose}){const h=u.default.createElement,ref=u.useRef(null);
+  u.useEffect(()=>{const el=ref.current;try{el.showModal()}catch{el.setAttribute('open','')}return()=>{try{el.close()}catch{}}},[]);
+  const isImg=/^image\//.test(file.mime||'');
+  return h('dialog',{ref,className:'cf-viewer',onCancel:e=>{e.preventDefault();onClose()},onClick:e=>{if(e.target===ref.current)onClose()}},
+    h('div',{className:'cf-vhead'},h('span',null,file.name+' ・ v'+file.version),h('a',{href:file.url,target:'_blank',rel:'noopener'},'新視窗開啟'),h('button',{type:'button',onClick:onClose,'aria-label':'關閉'},'×')),
+    h('div',{className:'cf-vbody'},!file.url?h('p',null,'連結已過期，請重新整理'):isImg?h('img',{src:file.url,alt:file.name}):h('iframe',{src:file.url,title:file.name})));
+}
+function HbConfirmDrawer({id,projects,pv,onClose,onChanged,onOpenProject,say}){
+  const h=u.default.createElement,ref=u.useRef(null),fileRef=u.useRef(null);
+  const [data,setData]=u.useState(null),[err,setErr]=u.useState(''),[busy,setBusy]=u.useState(''),[fail,setFail]=u.useState(null);
+  const [edit,setEdit]=u.useState(!id),[form,setForm]=u.useState({title:'',intro:'確認後才能安排下單。',project_id:pv&&pv!=='__co'?pv:'',due_date:HB_wbAddDays(HB_todoDate(),3),items:[{id:crypto.randomUUID().slice(0,8),title:''}]});
+  const [linkBox,setLinkBox]=u.useState(''),[note,setNote]=u.useState(''),[hist,setHist]=u.useState({}),[viewer,setViewer]=u.useState(null),[upItem,setUpItem]=u.useState(''),[upGroup,setUpGroup]=u.useState(''),[upMsg,setUpMsg]=u.useState('');
+  const curId=u.useRef(id);
+  const req=data&&data.request;
+  const dirty=!!note.trim()||(edit&&(!req||JSON.stringify(form)!==JSON.stringify(HB_cfForm(req))));
+  const dirtyRef=u.useRef(false);dirtyRef.current=dirty&&!busy;
+  function HB_cfForm(r){return {title:r.title||'',intro:r.intro||'',project_id:r.project_id||'',due_date:r.due_date||'',items:(r.items||[]).map(x=>({id:x.id,title:x.title}))}}
+  const load=async(rid)=>{try{const d=await HB_confirmApi('get?id='+encodeURIComponent(rid||curId.current));setData(d);setErr('');if(!edit)setForm(HB_cfForm(d.request));return d}catch(e){setErr(e.message);return null}};
+  u.useEffect(()=>{const el=ref.current;try{el.showModal()}catch{el.setAttribute('open','')}const t=setTimeout(()=>el.classList.add('on'),30);if(id)load(id);
+    const before=e=>{if(dirtyRef.current){e.preventDefault();e.returnValue=''}};window.addEventListener('beforeunload',before);
+    return()=>{clearTimeout(t);window.removeEventListener('beforeunload',before);try{el.close()}catch{}}},[]);
+  const tryClose=()=>{if(dirtyRef.current&&!confirm('還有尚未儲存的修改，確定要關閉嗎？'))return;onClose()};
+  const run=async(kind,fn,okMsg)=>{if(busy)return false;setBusy(kind);setFail(null);try{const r=await fn();if(okMsg)say(okMsg);onChanged&&onChanged();return r||true}catch(e){setFail({kind,msg:e.message||'失敗',retry:()=>run(kind,fn,okMsg)});return false}finally{setBusy('')}};
+  const saveForm=async()=>{const items=form.items.map(x=>({...x,title:x.title.trim()})).filter(x=>x.title);
+    if(!form.title.trim()){setFail({kind:'save',msg:'請填寫事項名稱'});return false}
+    const d=await HB_confirmApi('save',{id:curId.current||undefined,...form,items});curId.current=d.request.id;await load(d.request.id);setEdit(false);return d};
+  const saveAll=()=>run('save',async()=>{if(edit)await saveForm();if(note.trim()){await HB_confirmApi('note',{id:curId.current,text:note.trim()});setNote('');await load()}},'已儲存');
+  const linkOf=t=>HB_CONFIRM_PAGE+'?t='+encodeURIComponent(t);
+  const copyLink=async t=>{const ok=await HB_cfCopy(linkOf(t));if(ok){setLinkBox('');say('已複製確認連結，可貼到 LINE 給業主')}else{setLinkBox(linkOf(t));say('請按「複製」取得確認連結')}};
+  const send=()=>run('send',async()=>{if(edit){const ok=await saveForm();if(!ok)throw Error('請先完成必填欄位')}
+    const d=await HB_confirmApi('send',{id:curId.current,due_date:form.due_date||undefined});await load();if(d.request.link_token)await copyLink(d.request.link_token);return d},null);
+  const linkAct=(action)=>run('link',async()=>{if(action==='revoke'&&!confirm('撤銷後，目前的確認連結會立即失效。確定撤銷？'))return;const d=await HB_confirmApi('link',{id:curId.current,action});await load();if(d.link_token)await copyLink(d.link_token);else say('已撤銷確認連結')},null);
+  const closeReq=(closed)=>run('close',async()=>{if(closed&&!confirm('確定將這筆確認結案？'))return;await HB_confirmApi('close',{id:curId.current,closed});await load()},closed?'已結案':'已重新開啟');
+  const pickFile=(itemId,group)=>{if(!curId.current||edit){say('請先儲存項目，再加入附件');return}setUpItem(itemId);setUpGroup(group||'');setTimeout(()=>fileRef.current&&fileRef.current.click(),0)};
+  const upload=async file=>{if(!file)return;if(!/^(application\/pdf|image\/)/.test(file.type)){say('只支援 PDF 與圖片');return}
+    await run('upload',async()=>{setUpMsg('上傳中… '+file.name);
+      const s=await HB_confirmApi('upload-url',{request_id:curId.current,item_id:upItem,group_key:upGroup||undefined,name:file.name,mime:file.type,size:file.size});
+      const put=await fetch(s.upload_url,{method:'PUT',headers:{'Content-Type':file.type,'x-upsert':'false'},body:file});if(!put.ok)throw Error('檔案上傳失敗（'+put.status+'）');
+      await HB_confirmApi('upload-done',{request_id:curId.current,item_id:upItem,group_key:s.group_key,version:s.version,name:file.name,mime:file.type,size:file.size,path:s.path});
+      await load();setUpMsg('')},(upGroup?'已上傳新版':'已加入附件'));setUpMsg('')};
+  const files=(data&&data.files)||[],groups={};files.forEach(f=>{(groups[f.group_key]=groups[f.group_key]||[]).push(f)});
+  Object.values(groups).forEach(g=>g.sort((a,b)=>b.version-a.version));
+  const round=data&&data.rounds&&data.rounds[0],replies=(data&&data.replies)||[],repById=new Map(replies.map(x=>[x.id,x]));
+  const st=req?req.item_state||{}:{},status=req?req.status:'draft',closed=status==='closed';
+  const proj=(req?req.project_id:form.project_id)&&projects.find(p=>p.id===(req?req.project_id:form.project_id));
+  const itemChip=it=>{const x=st[it.id];if(!req||status==='draft')return h('span',{className:'cf-ic'},'未送出');
+    if(x&&x.result==='ok')return h('span',{className:'cf-ic ok'},'✓ 已確認');if(x&&x.result==='change')return h('span',{className:'cf-ic ch'},'待修改');return h('span',{className:'cf-ic wait'},'待回覆')};
+  const verOf=(itemId)=>{const s=round&&round.snapshot&&round.snapshot.items.find(x=>x.id===itemId);return s?s.files.map(f=>'v'+f.version).join('、'):''};
+  const items=edit?form.items:(req?req.items:[]);
+  const setItem=(i,v)=>setForm(f=>({...f,items:f.items.map((x,j)=>j===i?{...x,title:v}:x)}));
+  return h('dialog',{ref,className:'wbd cfd',onCancel:e=>{e.preventDefault();tryClose()},onClick:e=>{if(e.target===ref.current)tryClose()},'aria-label':'業主確認'},
+    h('div',{className:'wbd-panel'},
+      h('header',{className:'wbd-head'},h('button',{type:'button',className:'wbd-back',onClick:tryClose},HB_wbIcon('left',20),'返回'),
+        h('div',null,h('p',{className:'wbd-eyebrow'},'VALIDATION CLIENT'),h('h2',null,'業主確認')),h('button',{type:'button',className:'wbd-x',onClick:tryClose,'aria-label':'關閉'},'×')),
+      h('div',{className:'wbd-body'},
+        err&&h('div',{className:'wb-error',role:'alert'},err,h('button',{type:'button',onClick:()=>load()},'重試')),
+        id&&!data&&!err?h('p',{className:'wbd-empty'},'讀取中…'):h(u.default.Fragment,null,
+        edit?h('div',{className:'cf-form'},
+          h('label',{className:'wb-field'},h('span',null,'所屬專案'),h('select',{value:form.project_id,onChange:e=>setForm(f=>({...f,project_id:e.target.value}))},h('option',{value:''},'（未指定）'),projects.map(p=>h('option',{key:p.id,value:p.id},p.name)))),
+          h('label',{className:'wb-field'},h('span',null,'事項名稱 *'),h('input',{value:form.title,maxLength:120,placeholder:'例：客廳櫃體木皮與配置',onChange:e=>setForm(f=>({...f,title:e.target.value}))})),
+          h('label',{className:'wb-field'},h('span',null,'給業主的說明'),h('textarea',{rows:2,value:form.intro,maxLength:600,onChange:e=>setForm(f=>({...f,intro:e.target.value}))})),
+          h('label',{className:'wb-field'},h('span',null,'預計回覆日期'),h('input',{type:'date',value:form.due_date||'',onChange:e=>setForm(f=>({...f,due_date:e.target.value}))})),
+          h('div',{className:'wb-field'},h('span',null,'待確認項目（業主會逐項回覆）'),
+            form.items.map((x,i)=>h('div',{key:x.id,className:'cf-itemedit'},h('b',null,String(i+1).padStart(2,'0')),h('input',{value:x.title,maxLength:120,placeholder:'例：木皮色號與紋理',onChange:e=>setItem(i,e.target.value)}),
+              h('button',{type:'button',className:'cf-x','aria-label':'移除',onClick:()=>setForm(f=>({...f,items:f.items.filter((_,j)=>j!==i)}))},'×'))),
+            h('button',{type:'button',className:'wbd-addlog',style:{alignSelf:'flex-start'},onClick:()=>setForm(f=>({...f,items:[...f.items,{id:crypto.randomUUID().slice(0,8),title:''}]}))},HB_wbIcon('plus',14),'新增項目')),
+          req&&h('button',{type:'button',className:'cf-textbtn',onClick:()=>{setForm(HB_cfForm(req));setEdit(false)}},'取消編輯'))
+        :h(u.default.Fragment,null,
+          proj?h('button',{type:'button',className:'wbd-proj',onClick:()=>{if(dirtyRef.current&&!confirm('還有尚未儲存的修改，確定要離開嗎？'))return;onClose();onOpenProject(proj.id)}},proj.name,HB_wbIcon('out',12)):h('span',{className:'wbd-proj wbd-proj-plain'},'未指定專案'),
+          h('div',{className:'wbd-titlerow'},h('h3',null,req.title),h('span',{className:'cf-st '+(HB_CF_STATUS[status]||['',''])[1]},(HB_CF_STATUS[status]||[status])[0]),
+            !closed&&h('button',{type:'button',className:'cf-textbtn',onClick:()=>setEdit(true)},'編輯')),
+          h('div',{className:'wbd-facts'},
+            h('div',null,h('small',null,'送出日期'),h('b',null,HB_wbIcon('calendar',15),HB_cfDate(req.sent_at)||'尚未送出')),
+            h('div',null,h('small',null,'預計回覆'),h('b',null,HB_wbIcon('calendar',15),HB_cfDate(req.due_date)||'未定')))),
+        !edit&&h('section',{className:'wbd-sec'},h('h4',null,'待確認內容'),
+          h('ul',{className:'cf-items'},items.map(it=>h('li',{key:it.id},h('i',null),h('div',null,h('span',null,it.title),verOf(it.id)&&h('small',null,'（'+verOf(it.id)+'）'),
+            st[it.id]&&st[it.id].result==='change'&&st[it.id].comment&&h('p',{className:'cf-chnote'},'業主：',st[it.id].comment)),itemChip(it)))),
+          req.intro&&h('div',{className:'cf-info'},h('b',null,'i'),req.intro)),
+        /* 附件與版本 */
+        h('section',{className:'wbd-sec'},h('div',{className:'wbd-sechead'},h('h4',null,'附件與版本'),
+            !closed&&!edit&&items.length>0&&h('label',{className:'cf-addfile'},h('select',{value:'','aria-label':'加入附件到項目',onChange:e=>{if(e.target.value)pickFile(e.target.value,'')}},h('option',{value:''},'＋ 加入附件'),items.map(it=>h('option',{key:it.id,value:it.id},'加到「'+it.title+'」'))))),
+          edit?h('p',{className:'wbd-empty'},'儲存項目後即可加入附件。'):Object.keys(groups).length===0?h('p',{className:'wbd-empty'},'尚未加入附件（PDF、圖片）'):
+          h('div',{className:'cf-files'},Object.entries(groups).map(([g,vs])=>{const f=vs[0],it=items.find(x=>x.id===f.item_id);
+            return h('div',{key:g,className:'cf-file'},
+              h('button',{type:'button',className:'cf-thumb',onClick:()=>setViewer(f),'aria-label':'預覽 '+f.name},/^image\//.test(f.mime)&&f.url?h('img',{src:f.url,alt:'',loading:'lazy'}):h('span',{className:'cf-pdf'},'PDF')),
+              h('div',{className:'cf-fname'},h('span',{className:'cf-ficon'},HB_cfFileIcon(f)),h('b',null,f.name)),
+              h('div',{className:'cf-fmeta'},h('span',{className:'cf-ver'},'最新 v'+f.version),it&&h('small',null,it.title)),
+              h('div',{className:'cf-fact'},h('button',{type:'button',onClick:()=>setViewer(f)},'預覽 ↗'),!closed&&h('button',{type:'button',onClick:()=>pickFile(f.item_id,g)},'上傳新版'),
+                vs.length>1&&h('button',{type:'button',onClick:()=>setHist(x=>({...x,[g]:!x[g]}))},hist[g]?'收合':'歷史版本（'+(vs.length-1)+'）')),
+              hist[g]&&h('ul',{className:'cf-hist'},vs.slice(1).map(v=>h('li',{key:v.id},h('button',{type:'button',onClick:()=>setViewer(v)},'v'+v.version+'・'+v.name),h('small',null,HB_cfDT(v.created_at))))))})),
+          upMsg&&h('p',{className:'cf-up'},upMsg),
+          round&&h('p',{className:'cf-sentver'},'第 '+round.round_no+' 次送出：'+round.snapshot.items.map(x=>x.title+(x.files.length?'（'+x.files.map(f=>'v'+f.version).join('、')+'）':'')+(x.carried?'・沿用確認':'')).join('；'))),
+        /* 回覆紀錄 */
+        req&&h('section',{className:'wbd-sec'},h('h4',null,'回覆紀錄'),
+          (data.events||[]).length===0?h('p',{className:'wbd-empty'},'尚無紀錄'):
+          h('ol',{className:'wbd-tl'},(data.events||[]).map(ev=>{const rep=ev.kind==='reply'&&ev.meta&&repById.get(ev.meta.reply_id);
+            return h('li',{key:ev.id},h('span',{className:'wbd-tltime wb-mono'},HB_cfDT(ev.created_at)),h('i',{className:'wbd-tldot'+(ev.kind==='reply'?'':' sys')}),
+              h('div',null,h('b',null,ev.kind==='reply'?'業主回覆（第 '+(ev.meta.round_no||'')+' 次）':({note:'補充說明',sent:'已送出確認',file:'附件',create:'建立確認單',link:'確認連結',revoke:'確認連結',close:'結案',reopen:'重新開啟'})[ev.kind]||'紀錄'),
+                ev.kind!=='reply'&&ev.kind!=='create'&&h('p',null,ev.kind==='sent'?ev.text.replace(/^第 (\d+) 次送出確認：/,'第 $1 次・'):ev.text),
+                rep&&h('ul',{className:'cf-rep'},rep.results.map(x=>h('li',{key:x.item_id,className:x.result},h('span',null,x.result==='ok'?'✓ 確認':'✎ 需修改'),' ',x.title,x.files&&x.files.length?' （'+x.files.map(f=>'v'+f.version).join('、')+'）':'',
+                  x.comment&&h('p',null,x.comment),x.photo_urls&&x.photo_urls.length?h('div',{className:'cf-photos'},x.photo_urls.map((p,i)=>h('a',{key:i,href:p,target:'_blank',rel:'noopener'},h('img',{src:p,alt:'業主參考照片'})))):null))),
+                rep&&rep.message&&h('p',null,'留言：'+rep.message)))}))),
+        !edit&&req&&!closed&&h('section',{className:'wbd-sec wbd-form'},h('h4',null,'補充說明'),h('textarea',{rows:2,maxLength:1000,value:note,placeholder:'輸入補充說明或記錄業主電話回覆…',onChange:e=>setNote(e.target.value)})),
+        linkBox&&h('div',{className:'cf-linkbox'},h('input',{readOnly:true,value:linkBox,onFocus:e=>e.target.select()}),h('button',{type:'button',onClick:async()=>{const ok=await HB_cfCopy(linkBox);say(ok?'已複製確認連結':'請長按連結手動複製');if(ok)setLinkBox('')}},'複製')),
+        req&&h('div',{className:'cf-linkrow'},
+          req.link_token?h(u.default.Fragment,null,h('span',null,'確認連結：有效'),h('button',{type:'button',onClick:()=>linkAct('revoke'),disabled:!!busy},'撤銷連結'),h('button',{type:'button',onClick:()=>{if(confirm('重新產生後，舊連結會失效。確定？'))linkAct('create')},disabled:!!busy},'重新產生')):
+            h(u.default.Fragment,null,h('span',null,req.current_round?'確認連結：已撤銷':'送出後產生確認連結'),req.current_round>0&&h('button',{type:'button',onClick:()=>linkAct('create'),disabled:!!busy},'產生新連結')),
+          h('span',{style:{flex:1}}),
+          closed?h('button',{type:'button',onClick:()=>closeReq(false),disabled:!!busy},'重新開啟'):req.current_round>0&&h('button',{type:'button',onClick:()=>closeReq(true),disabled:!!busy},'結案')))),
+      h('footer',{className:'wbd-foot'},
+        fail&&h('div',{className:'wbd-fail',role:'alert'},fail.msg+(fail.retry?'，輸入內容已保留。':''),fail.retry&&h('button',{type:'button',onClick:fail.retry,disabled:!!busy},'重試')),
+        h('div',{className:'wbd-btns'},
+          h('button',{type:'button',className:'wb-btn wb-btn-solid',onClick:saveAll,disabled:!!busy||!dirty},busy==='save'?'儲存中…':'儲存紀錄'),
+          closed?h('button',{type:'button',className:'wb-btn wb-btn-line',disabled:true},'已結案'):
+          !req||status==='draft'||edit?h('button',{type:'button',className:'wb-btn wb-btn-line',onClick:send,disabled:!!busy||(!req&&!form.title.trim())},busy==='send'?'送出中…':'送出並複製連結')
+          :h('button',{type:'button',className:'wb-btn wb-btn-line',onClick:()=>req.link_token?copyLink(req.link_token):linkAct('create'),disabled:!!busy},'複製確認連結')),
+        req&&!closed&&status!=='draft'&&!edit&&h('button',{type:'button',className:'cf-resend',onClick:send,disabled:!!busy},busy==='send'?'送出中…':'上傳新版後，重新送出給業主確認'),
+        h('p',{className:'wbd-hint'},'業主可查看附件，逐項選擇確認或提出修改。連結請自行貼到 LINE 或簡訊傳給業主。')),
+      h('input',{ref:fileRef,type:'file',accept:'application/pdf,image/*',hidden:true,onChange:e=>{const f=e.target.files&&e.target.files[0];e.target.value='';upload(f)}}),
+      viewer&&h(HbCfViewer,{file:viewer,onClose:()=>setViewer(null)})));
 }
 function HbWbModal({title,sub,onClose,children}){const h=u.default.createElement,ref=u.useRef(null);
   u.useEffect(()=>{const el=ref.current;try{el.showModal()}catch{el.setAttribute('open','')}return()=>{try{el.close()}catch{}}},[]);
