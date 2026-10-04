@@ -4141,13 +4141,28 @@ async function HB_ownerApi(path,body){let t="";try{t=localStorage.getItem("hb_ow
 const HB_LINE_LOGIN="https://rqndozhhvuimqjqtmeli.supabase.co/functions/v1/hb-line-login";
 (function(){try{let h=location.hash.replace(/^#/,"");if(!/(^|&)hbline=/.test(h))return;let p=new URLSearchParams(h),st=p.get("hbline");
   if(st==="ok"&&/^[A-Za-z0-9_-]{43}$/.test(p.get("t")||"")&&/^[0-9a-f-]{36}$/.test(p.get("p")||"")){localStorage.setItem("hb_owner_token",p.get("t"));localStorage.setItem("sitelog_owner_project_id",p.get("p"))}
+  else if(st==="staff"&&/^[A-Za-z0-9_-]{10,200}$/.test(p.get("th")||""))sessionStorage.setItem("hb_line_staff_th",p.get("th"))
   else{sessionStorage.setItem("hb_line_msg",st||"error");if(p.get("why"))sessionStorage.setItem("hb_line_why",String(p.get("why")).slice(0,30))}
   history.replaceState(null,"",location.pathname+location.search)}catch{}})();
-const HB_LINE_MSG={notlinked:"這個 LINE 還沒有綁定案件。請先用案件密碼登入一次，登入後按「綁定 LINE」，下次就能用 LINE 直接登入。",expired:"登入逾時，請再按一次「用 LINE 登入」。",cancel:"已取消 LINE 登入。",error:"LINE 登入失敗，請再試一次，或改用案件密碼登入。",linked:"已綁定 LINE，下次可以直接用 LINE 登入。"};
-async function HB_lineBegin(mode){let t="";try{t=localStorage.getItem("hb_owner_token")||""}catch{}
-  let r=await fetch(HB_LINE_LOGIN+"/begin",{method:"POST",headers:{"Content-Type":"application/json",...(mode==="link"&&t?{"x-hb-owner":t}:{})},body:JSON.stringify({mode,return_to:/herfulsinsvip\.com$/.test(location.hostname)?location.origin+"/":"https://www.herfulsinsvip.com/"})});
+const HB_LINE_MSG={notlinked:"這個 LINE 還沒有綁定案件。請先用案件密碼登入一次，登入後按「綁定 LINE」，下次就能用 LINE 直接登入。",expired:"登入逾時，請再按一次「用 LINE 登入」。",cancel:"已取消 LINE 登入。",error:"LINE 登入失敗，請再試一次，或改用案件密碼登入。",linked:"已綁定 LINE，下次可以直接用 LINE 登入。",staff_linked:"公司帳號已綁定 LINE，下次在「公司登入」按「用 LINE 登入」即可。",staff_notlinked:"這個 LINE 還沒有綁定公司帳號。請先用 Email 登入，在「案件資料庫」右上角 ⋮ 選單按「綁定 LINE 快速登入」。"};
+async function HB_lineBegin(mode){let t="",at="";try{t=localStorage.getItem("hb_owner_token")||""}catch{}
+  if(mode==="staff_link"){try{let{data:ss}=await q.auth.getSession();at=ss&&ss.session?ss.session.access_token:""}catch{}}
+  let r=await fetch(HB_LINE_LOGIN+"/begin",{method:"POST",headers:{"Content-Type":"application/json",...(mode==="link"&&t?{"x-hb-owner":t}:{}),...(at?{Authorization:"Bearer "+at}:{})},body:JSON.stringify({mode,return_to:/herfulsinsvip\.com$/.test(location.hostname)?location.origin+"/":"https://www.herfulsinsvip.com/"})});
   let d={};try{d=await r.json()}catch{}if(!r.ok||!d.url)throw new Error(d.error||"LINE 登入暫時無法使用");location.href=d.url}
 function HbLineIcon(){return u.default.createElement("svg",{width:20,height:20,viewBox:"0 0 24 24","aria-hidden":"true"},u.default.createElement("path",{fill:"currentColor",d:"M12 3C6.5 3 2 6.6 2 11c0 3.9 3.5 7.2 8.3 7.9.3.1.8.2.9.5.1.3.1.7 0 1l-.1.9c0 .3-.2 1 .9.5s5.9-3.5 8-5.9C21.4 14.3 22 12.7 22 11c0-4.4-4.5-8-10-8zM8.3 13.5H6.4c-.3 0-.5-.2-.5-.5V9.2c0-.3.2-.5.5-.5s.5.2.5.5v3.3h1.4c.3 0 .5.2.5.5s-.2.5-.5.5zm2 -.5c0 .3-.2.5-.5.5s-.5-.2-.5-.5V9.2c0-.3.2-.5.5-.5s.5.2.5.5V13zm4.6 0c0 .2-.1.4-.3.5h-.2c-.2 0-.3-.1-.4-.2l-1.9-2.6V13c0 .3-.2.5-.5.5s-.5-.2-.5-.5V9.2c0-.2.1-.4.3-.5h.2c.2 0 .3.1.4.2l1.9 2.6V9.2c0-.3.2-.5.5-.5s.5.2.5.5V13zm3.1-2.4c.3 0 .5.2.5.5s-.2.5-.5.5h-1.4v.9H18c.3 0 .5.2.5.5s-.2.5-.5.5h-1.9c-.3 0-.5-.2-.5-.5V9.2c0-.3.2-.5.5-.5H18c.3 0 .5.2.5.5s-.2.5-.5.5h-1.4v.9H18z"}))}
+function HbLineMsgToast(){const h=u.default.createElement,[msg,setMsg]=(0,u.useState)(()=>{try{let m=sessionStorage.getItem("hb_line_msg");sessionStorage.removeItem("hb_line_msg");return m||""}catch{return ""}});
+  (0,u.useEffect)(()=>{if(!msg)return;let t=setTimeout(()=>setMsg(""),6000);return()=>clearTimeout(t)},[msg]);if(!msg)return null;
+  return h("div",{role:"status",style:{position:"fixed",left:"50%",transform:"translateX(-50%)",bottom:"calc(96px + env(safe-area-inset-bottom))",zIndex:2000,width:"min(440px,calc(100vw - 24px))",background:"#fbf8f2",border:"1px solid #d8c7a4",borderRadius:10,boxShadow:"0 14px 34px -16px rgba(40,34,24,.45)",padding:"12px 14px",display:"flex",gap:10,fontSize:13.5,color:"#3b372f"}},
+    h("span",{style:{flex:1}},HB_LINE_MSG[msg]||HB_LINE_MSG.error),h("button",{type:"button",onClick:()=>setMsg(""),"aria-label":"關閉",style:{border:0,background:"none",fontSize:20,color:"#7b7466",cursor:"pointer"}},"×"))}
+/* 公司帳號：綁定／解除 LINE 快速登入（放在案件資料庫右上角選單） */
+function HbStaffLineMenuItem({style,onDone}){const h=u.default.createElement,[st,setSt]=(0,u.useState)(null),[busy,setBusy]=(0,u.useState)(false);
+  const auth=async()=>{try{let{data:ss}=await q.auth.getSession();return ss&&ss.session?ss.session.access_token:""}catch{return ""}};
+  (0,u.useEffect)(()=>{let a=true;(async()=>{let at=await auth();try{let r=await fetch(HB_LINE_LOGIN+"/staff-status",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+at},body:"{}"});if(r.ok){let d=await r.json();a&&setSt(d)}}catch{}})();return()=>{a=false}},[]);
+  if(!st||!st.configured)return null;
+  return h("button",{type:"button",disabled:busy,style:{...style,color:"#06A847"},onClick:async()=>{setBusy(true);
+      if(st.linked){if(!confirm("解除後就不能用 LINE 登入公司帳號（可再重新綁定）。確定解除？")){setBusy(false);return}let at=await auth();try{await fetch(HB_LINE_LOGIN+"/staff-unlink",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+at},body:"{}"});setSt({...st,linked:false});onDone&&onDone()}catch{}setBusy(false);return}
+      try{await HB_lineBegin("staff_link")}catch(e){setBusy(false);alert(e.message)}}},
+    h(HbLineIcon)," ",busy?"處理中…":st.linked?"解除 LINE 快速登入"+(st.name?"（"+st.name+"）":""):"綁定 LINE 快速登入")}
 /* 業主登入後：提示綁定 LINE（未綁定才顯示，可關閉） */
 function HbLineLinkBar({projectId}){
   const h=u.default.createElement,[st,setSt]=(0,u.useState)(null),[busy,setBusy]=(0,u.useState)(false),[msg,setMsg]=(0,u.useState)(()=>{try{let m=sessionStorage.getItem("hb_line_msg");sessionStorage.removeItem("hb_line_msg");return m||""}catch{return ""}});
@@ -15318,7 +15333,7 @@ function SSOEntry(){
     }}catch{}
   })();return()=>{alive=!1}},[]);
   (0,u.useEffect)(()=>{if(staffOn||ownerPid){let t=setTimeout(()=>{HB_nativePushRegister();if(staffOn)HB_loadIcsUrl()},1500);return()=>clearTimeout(t)}},[staffOn,ownerPid]);
-  if(staffOn)return u.default.createElement(Gy,null);
+  if(staffOn)return u.default.createElement(u.default.Fragment,null,u.default.createElement(Gy,null),u.default.createElement(HbLineMsgToast,null));
   if(ownerPid)return u.default.createElement(u.default.Fragment,null,u.default.createElement(Fy,{projectId:ownerPid,onLogout:async()=>{await HB_ownerLogout();setOwnerPid(null)}}),u.default.createElement(HbLineLinkBar,{key:ownerPid,projectId:ownerPid}));
   return u.default.createElement(SSOForm,{
     onStaff:e=>{try{localStorage.setItem("sitelog_admin_unlocked","true"),localStorage.setItem("sitelog_admin_username",e)}catch{}setStaffOn(!0)},
@@ -15331,6 +15346,12 @@ function SSOForm({onStaff:l,onOwner:t}){
   const [su,setSu]=(0,u.useState)(""),[sp,setSp]=(0,u.useState)(""),[op,setOp]=(0,u.useState)("");
   const [error,setError]=(0,u.useState)(""),[busy,setBusy]=(0,u.useState)(false);
   const [attempt,setAttempt]=(0,u.useState)(0),[skip,setSkip]=(0,u.useState)(false),[lineBusy,setLineBusy]=(0,u.useState)(false),[lineOn,setLineOn]=(0,u.useState)(false);
+  (0,u.useEffect)(()=>{let th="";try{th=sessionStorage.getItem('hb_line_staff_th')||'';sessionStorage.removeItem('hb_line_staff_th')}catch{}if(!th)return;
+    (async()=>{setTab('staff');setBusy(true);lock.current=true;try{
+      let res=await q.auth.verifyOtp({token_hash:th,type:'magiclink'});if(res.error)res=await q.auth.verifyOtp({token_hash:th,type:'email'});if(res.error)throw new Error('LINE 登入逾時，請再試一次');
+      const {data:adm,error:admErr}=await q.rpc('hb_staff_access');if(admErr||adm!==true){try{await q.auth.signOut()}catch{}throw new Error('這個帳號沒有公司管理權限')}
+      const em=res.data&&res.data.user?res.data.user.email:'';await enter(()=>l(em))}
+    catch(e){if(alive.current){setError(e.message||'LINE 登入失敗');setAttempt(n=>n+1)}}finally{lock.current=false;if(alive.current)setBusy(false)}})()},[]);
   (0,u.useEffect)(()=>{let a=true;fetch(HB_LINE_LOGIN+'/health').then(r=>r.ok?r.json():null).then(d=>{if(a&&d&&d.configured)setLineOn(true)}).catch(()=>{});return()=>{a=false}},[]);
   const [lineMsg]=(0,u.useState)(()=>{try{let m=sessionStorage.getItem("hb_line_msg");if(m&&m!=="linked"){sessionStorage.removeItem("hb_line_msg");return HB_LINE_MSG[m]||HB_LINE_MSG.error}}catch{}return ""});
   const lock=(0,u.useRef)(false),alive=(0,u.useRef)(true),root=(0,u.useRef)(null);
@@ -15394,9 +15415,9 @@ function SSOForm({onStaff:l,onOwner:t}){
         h('button',{type:'submit',className:'hb-motion-submit',disabled:busy||(tab==='staff'?(!su.trim()||!sp.trim()):!op.trim()),onPointerMove:ev=>{if(ev.pointerType!=='mouse'||!window.matchMedia('(hover:hover) and (prefers-reduced-motion: no-preference)').matches)return;const r=ev.currentTarget.getBoundingClientRect();ev.currentTarget.style.setProperty('--hb-bx',((ev.clientX-r.left)/r.width-.5)*6+'px');ev.currentTarget.style.setProperty('--hb-by',((ev.clientY-r.top)/r.height-.5)*4+'px')},onPointerLeave:ev=>{ev.currentTarget.style.setProperty('--hb-bx','0px');ev.currentTarget.style.setProperty('--hb-by','0px')}},
           h('span',null,busy?'驗證中…':tab==='staff'?'登入':'進入案件'),h('span',{'aria-hidden':true,className:busy?'hb-submit-spinner':'hb-submit-arrow'},busy?'':'⟶'))
       ),
-      tab==='owner'&&(lineOn||lineMsg)&&h('div',{className:'hb-line-login'},
+      (lineOn||lineMsg)&&h('div',{className:'hb-line-login'},
         lineOn&&h('div',{className:'hb-line-or','aria-hidden':true},h('span',null,'或')),
-        lineOn&&h('button',{type:'button',className:'hb-line-btn',disabled:busy||lineBusy,onClick:async()=>{setLineBusy(true);setError('');try{await HB_lineBegin('login')}catch(e){setLineBusy(false);setError(e.message)}}},h(HbLineIcon),lineBusy?'前往 LINE…':'用 LINE 登入'),
+        lineOn&&h('button',{type:'button',className:'hb-line-btn',disabled:busy||lineBusy,onClick:async()=>{setLineBusy(true);setError('');try{await HB_lineBegin(tab==='staff'?'staff_login':'login')}catch(e){setLineBusy(false);setError(e.message)}}},h(HbLineIcon),lineBusy?'前往 LINE…':'用 LINE 登入'),
         lineMsg&&h('p',{className:'hb-line-msg',role:'status'},lineMsg)),
       h('p',{className:'hb-motion-note'},'HERFULSINS / 專屬案件空間')
     ),
@@ -16505,6 +16526,7 @@ function $y(l){return l==null?null:(l/(1024*1024)).toFixed(1)}function Iy({proje
                 )
               ),
               /* E：帳號管理改由 Supabase 後台處理，入口先隱藏 */
+              u.default.createElement(HbStaffLineMenuItem,{style:ri,onDone:()=>hbSetMenuOpen(!1)}),
               u.default.createElement("button",{onClick:()=>{hbSetMenuOpen(!1);HB_staffLogout()},style:{...ri,color:s.danger}},u.default.createElement(E,{name:"log-out",size:16,color:s.danger})," \u767B\u51FA")
             )
           )

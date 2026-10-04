@@ -12,3 +12,11 @@ create index if not exists hb_owner_line_links_user on public.hb_owner_line_link
 alter table public.hb_owner_line_links enable row level security;
 alter table public.hb_line_states enable row level security;
 revoke all on public.hb_owner_line_links, public.hb_line_states from anon, authenticated;
+-- 公司帳號 LINE 快速登入
+alter table public.hb_line_states add column if not exists staff_user uuid;
+create table if not exists public.hb_staff_line_links (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  line_user_id text not null unique, display_name text,
+  created_at timestamptz not null default now(), last_login_at timestamptz);
+alter table public.hb_staff_line_links enable row level security;
+revoke all on public.hb_staff_line_links from anon, authenticated;
