@@ -4137,6 +4137,34 @@ const HB_OWNER_AUTH="https://rqndozhhvuimqjqtmeli.supabase.co/functions/v1/hb-ow
 async function HB_ownerApi(path,body){let t="";try{t=localStorage.getItem("hb_owner_token")||""}catch{}
   let r=await fetch(HB_OWNER_AUTH+path,{method:"POST",headers:{"Content-Type":"application/json",...(t?{"x-hb-owner":t}:{})},body:JSON.stringify(body||{})});
   let d={};try{d=await r.json()}catch{}return{ok:r.ok,status:r.status,data:d}}
+/* 業主 LINE 快速登入：從 LINE 授權頁回來時，網址 # 後面會帶結果 */
+const HB_LINE_LOGIN="https://rqndozhhvuimqjqtmeli.supabase.co/functions/v1/hb-line-login";
+(function(){try{let h=location.hash.replace(/^#/,"");if(!/(^|&)hbline=/.test(h))return;let p=new URLSearchParams(h),st=p.get("hbline");
+  if(st==="ok"&&/^[A-Za-z0-9_-]{43}$/.test(p.get("t")||"")&&/^[0-9a-f-]{36}$/.test(p.get("p")||"")){localStorage.setItem("hb_owner_token",p.get("t"));localStorage.setItem("sitelog_owner_project_id",p.get("p"))}
+  else sessionStorage.setItem("hb_line_msg",st||"error");
+  history.replaceState(null,"",location.pathname+location.search)}catch{}})();
+const HB_LINE_MSG={notlinked:"這個 LINE 還沒有綁定案件。請先用案件密碼登入一次，登入後按「綁定 LINE」，下次就能用 LINE 直接登入。",expired:"登入逾時，請再按一次「用 LINE 登入」。",cancel:"已取消 LINE 登入。",error:"LINE 登入失敗，請再試一次，或改用案件密碼登入。",linked:"已綁定 LINE，下次可以直接用 LINE 登入。"};
+async function HB_lineBegin(mode){let t="";try{t=localStorage.getItem("hb_owner_token")||""}catch{}
+  let r=await fetch(HB_LINE_LOGIN+"/begin",{method:"POST",headers:{"Content-Type":"application/json",...(mode==="link"&&t?{"x-hb-owner":t}:{})},body:JSON.stringify({mode,return_to:/herfulsinsvip\.com$/.test(location.hostname)?location.origin+"/":"https://www.herfulsinsvip.com/"})});
+  let d={};try{d=await r.json()}catch{}if(!r.ok||!d.url)throw new Error(d.error||"LINE 登入暫時無法使用");location.href=d.url}
+function HbLineIcon(){return u.default.createElement("svg",{width:20,height:20,viewBox:"0 0 24 24","aria-hidden":"true"},u.default.createElement("path",{fill:"currentColor",d:"M12 3C6.5 3 2 6.6 2 11c0 3.9 3.5 7.2 8.3 7.9.3.1.8.2.9.5.1.3.1.7 0 1l-.1.9c0 .3-.2 1 .9.5s5.9-3.5 8-5.9C21.4 14.3 22 12.7 22 11c0-4.4-4.5-8-10-8zM8.3 13.5H6.4c-.3 0-.5-.2-.5-.5V9.2c0-.3.2-.5.5-.5s.5.2.5.5v3.3h1.4c.3 0 .5.2.5.5s-.2.5-.5.5zm2 -.5c0 .3-.2.5-.5.5s-.5-.2-.5-.5V9.2c0-.3.2-.5.5-.5s.5.2.5.5V13zm4.6 0c0 .2-.1.4-.3.5h-.2c-.2 0-.3-.1-.4-.2l-1.9-2.6V13c0 .3-.2.5-.5.5s-.5-.2-.5-.5V9.2c0-.2.1-.4.3-.5h.2c.2 0 .3.1.4.2l1.9 2.6V9.2c0-.3.2-.5.5-.5s.5.2.5.5V13zm3.1-2.4c.3 0 .5.2.5.5s-.2.5-.5.5h-1.4v.9H18c.3 0 .5.2.5.5s-.2.5-.5.5h-1.9c-.3 0-.5-.2-.5-.5V9.2c0-.3.2-.5.5-.5H18c.3 0 .5.2.5.5s-.2.5-.5.5h-1.4v.9H18z"}))}
+/* 業主登入後：提示綁定 LINE（未綁定才顯示，可關閉） */
+function HbLineLinkBar({projectId}){
+  const h=u.default.createElement,[st,setSt]=(0,u.useState)(null),[busy,setBusy]=(0,u.useState)(false),[msg,setMsg]=(0,u.useState)(()=>{try{let m=sessionStorage.getItem("hb_line_msg");sessionStorage.removeItem("hb_line_msg");return m||""}catch{return ""}});
+  const key="hb_line_dismiss_"+projectId;
+  (0,u.useEffect)(()=>{let alive=true;let t="";try{t=localStorage.getItem("hb_owner_token")||""}catch{}
+    fetch(HB_LINE_LOGIN+"/status",{method:"POST",headers:{"Content-Type":"application/json","x-hb-owner":t},body:"{}"}).then(r=>r.ok?r.json():null).then(d=>{if(alive&&d)setSt(d)}).catch(()=>{});return()=>{alive=false}},[projectId]);
+  (0,u.useEffect)(()=>{if(!msg)return;let t=setTimeout(()=>setMsg(""),5000);return()=>clearTimeout(t)},[msg]);
+  let dismissed=false;try{dismissed=localStorage.getItem(key)==="1"}catch{}
+  const box={position:"fixed",left:"50%",transform:"translateX(-50%)",bottom:"calc(96px + env(safe-area-inset-bottom))",zIndex:70,width:"min(440px,calc(100vw - 24px))",background:"#fbf8f2",border:"1px solid #d8c7a4",borderRadius:10,boxShadow:"0 14px 34px -16px rgba(40,34,24,.45)",padding:"12px 12px 12px 16px",display:"flex",alignItems:"center",gap:10,fontSize:13.5,color:"#3b372f"};
+  if(msg)return h("div",{role:"status",style:box},h("span",{style:{flex:1}},HB_LINE_MSG[msg]||HB_LINE_MSG.error),h("button",{type:"button",onClick:()=>setMsg(""),"aria-label":"關閉",style:{border:0,background:"none",fontSize:20,color:"#7b7466",cursor:"pointer"}},"×"));
+  if(!st||!st.configured||st.linked||dismissed)return null;
+  return h("div",{style:box},
+    h("span",{style:{color:"#06C755",display:"grid"}},h(HbLineIcon)),
+    h("span",{style:{flex:1,lineHeight:1.5}},"綁定 LINE，下次不用輸入案件密碼"),
+    h("button",{type:"button",disabled:busy,onClick:async()=>{setBusy(true);try{await HB_lineBegin("link")}catch(e){setBusy(false);alert(e.message)}},style:{border:0,background:"#06C755",color:"#fff",borderRadius:999,padding:"8px 14px",fontSize:13.5,fontWeight:500,cursor:"pointer",whiteSpace:"nowrap"}},busy?"前往 LINE…":"綁定 LINE"),
+    h("button",{type:"button","aria-label":"不要再顯示",onClick:()=>{try{localStorage.setItem(key,"1")}catch{}setSt(x=>({...x,linked:true}))},style:{border:0,background:"none",fontSize:20,color:"#7b7466",cursor:"pointer",padding:"0 2px"}},"×"));
+}
 /* App 原生功能（只在「赫柏空間設計」iOS App 內啟用，網頁版不受影響）：推播通知＋原生相機 */
 function HB_nativeHandler(n){try{return window.webkit&&window.webkit.messageHandlers&&window.webkit.messageHandlers[n]||null}catch{return null}}
 function HB_isNative(){return!!HB_nativeHandler("herfulsinsPush")}
@@ -15291,7 +15319,7 @@ function SSOEntry(){
   })();return()=>{alive=!1}},[]);
   (0,u.useEffect)(()=>{if(staffOn||ownerPid){let t=setTimeout(()=>{HB_nativePushRegister();if(staffOn)HB_loadIcsUrl()},1500);return()=>clearTimeout(t)}},[staffOn,ownerPid]);
   if(staffOn)return u.default.createElement(Gy,null);
-  if(ownerPid)return u.default.createElement(Fy,{projectId:ownerPid,onLogout:async()=>{await HB_ownerLogout();setOwnerPid(null)}});
+  if(ownerPid)return u.default.createElement(u.default.Fragment,null,u.default.createElement(Fy,{projectId:ownerPid,onLogout:async()=>{await HB_ownerLogout();setOwnerPid(null)}}),u.default.createElement(HbLineLinkBar,{key:ownerPid,projectId:ownerPid}));
   return u.default.createElement(SSOForm,{
     onStaff:e=>{try{localStorage.setItem("sitelog_admin_unlocked","true"),localStorage.setItem("sitelog_admin_username",e)}catch{}setStaffOn(!0)},
     onOwner:(pid,token)=>{try{localStorage.setItem("hb_owner_token",token),localStorage.setItem("sitelog_owner_project_id",pid)}catch{}setOwnerPid(pid)}
@@ -15302,7 +15330,9 @@ function SSOForm({onStaff:l,onOwner:t}){
   const [tab,setTab]=(0,u.useState)("owner");
   const [su,setSu]=(0,u.useState)(""),[sp,setSp]=(0,u.useState)(""),[op,setOp]=(0,u.useState)("");
   const [error,setError]=(0,u.useState)(""),[busy,setBusy]=(0,u.useState)(false);
-  const [attempt,setAttempt]=(0,u.useState)(0),[skip,setSkip]=(0,u.useState)(false);
+  const [attempt,setAttempt]=(0,u.useState)(0),[skip,setSkip]=(0,u.useState)(false),[lineBusy,setLineBusy]=(0,u.useState)(false),[lineOn,setLineOn]=(0,u.useState)(false);
+  (0,u.useEffect)(()=>{let a=true;fetch(HB_LINE_LOGIN+'/health').then(r=>r.ok?r.json():null).then(d=>{if(a&&d&&d.configured)setLineOn(true)}).catch(()=>{});return()=>{a=false}},[]);
+  const [lineMsg]=(0,u.useState)(()=>{try{let m=sessionStorage.getItem("hb_line_msg");if(m&&m!=="linked"){sessionStorage.removeItem("hb_line_msg");return HB_LINE_MSG[m]||HB_LINE_MSG.error}}catch{}return ""});
   const lock=(0,u.useRef)(false),alive=(0,u.useRef)(true),root=(0,u.useRef)(null);
   (0,u.useEffect)(()=>{alive.current=true;return()=>{alive.current=false}},[]);
   (0,u.useEffect)(()=>{
@@ -15364,12 +15394,23 @@ function SSOForm({onStaff:l,onOwner:t}){
         h('button',{type:'submit',className:'hb-motion-submit',disabled:busy||(tab==='staff'?(!su.trim()||!sp.trim()):!op.trim()),onPointerMove:ev=>{if(ev.pointerType!=='mouse'||!window.matchMedia('(hover:hover) and (prefers-reduced-motion: no-preference)').matches)return;const r=ev.currentTarget.getBoundingClientRect();ev.currentTarget.style.setProperty('--hb-bx',((ev.clientX-r.left)/r.width-.5)*6+'px');ev.currentTarget.style.setProperty('--hb-by',((ev.clientY-r.top)/r.height-.5)*4+'px')},onPointerLeave:ev=>{ev.currentTarget.style.setProperty('--hb-bx','0px');ev.currentTarget.style.setProperty('--hb-by','0px')}},
           h('span',null,busy?'驗證中…':tab==='staff'?'登入':'進入案件'),h('span',{'aria-hidden':true,className:busy?'hb-submit-spinner':'hb-submit-arrow'},busy?'':'⟶'))
       ),
+      tab==='owner'&&(lineOn||lineMsg)&&h('div',{className:'hb-line-login'},
+        lineOn&&h('div',{className:'hb-line-or','aria-hidden':true},h('span',null,'或')),
+        lineOn&&h('button',{type:'button',className:'hb-line-btn',disabled:busy||lineBusy,onClick:async()=>{setLineBusy(true);setError('');try{await HB_lineBegin('login')}catch(e){setLineBusy(false);setError(e.message)}}},h(HbLineIcon),lineBusy?'前往 LINE…':'用 LINE 登入'),
+        lineMsg&&h('p',{className:'hb-line-msg',role:'status'},lineMsg)),
       h('p',{className:'hb-motion-note'},'HERFULSINS / 專屬案件空間')
     ),
     h('footer',{className:'hb-motion-footer'},h('span',null,'HERFULSINS / INTERIOR DESIGN'),h('span',null,'PRIVATE ACCESS / 01'))
   );
 }
 
+(function(){if(document.getElementById('hb-line-css'))return;let st=document.createElement('style');st.id='hb-line-css';st.textContent=`
+.hb-line-login{margin-top:14px}
+.hb-line-or{display:flex;align-items:center;gap:12px;color:#9b9285;font-size:12px;letter-spacing:.2em;margin:4px 0 12px}
+.hb-line-or:before,.hb-line-or:after{content:'';flex:1;height:1px;background:rgba(120,110,95,.25)}
+.hb-line-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:50px;border:0;border-radius:6px;background:#06C755;color:#fff;font:inherit;font-size:15.5px;font-weight:500;letter-spacing:.08em;cursor:pointer}
+.hb-line-btn:hover{background:#05b34c}.hb-line-btn:disabled{opacity:.6;cursor:default}
+.hb-line-msg{margin:10px 0 0;font-size:13px;line-height:1.6;color:#6d4b2c;background:#f3ead8;border-radius:6px;padding:9px 12px}`;document.head.appendChild(st)})();
 let ssoLine={width:"100%",boxSizing:"border-box",border:"none",borderBottom:`1px solid ${s.line}`,borderRadius:0,padding:"6px 2px",fontSize:11,fontWeight:400,marginBottom:10,background:"transparent",color:s.ink,fontFamily:"'Noto Sans TC', sans-serif",outline:"none"};
 let ssoBtn={background:"#1C1B18",color:"#FFFFFF",border:"none",borderRadius:4,padding:"9px 0",fontWeight:400,fontSize:11,letterSpacing:"0.02em",cursor:"pointer",width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:6,fontFamily:"'Noto Sans TC', sans-serif"};
 
