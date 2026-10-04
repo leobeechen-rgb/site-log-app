@@ -12093,6 +12093,7 @@ function HbDrawingHub({onBack,notify,project=null,embedded=false}){
   let[lockedRootId,setLockedRootId]=(0,u.useState)(null);
   let[categoryFilter,setCategoryFilter]=(0,u.useState)("");
   let[uploadQueue,setUploadQueue]=(0,u.useState)(null);
+  let[moveDrawingId,setMoveDrawingId]=(0,u.useState)(null);
   let[dragOver,setDragOver]=(0,u.useState)(false);
   let[lineNotify,setLineNotify]=(0,u.useState)(null);
   let[afterUpload,setAfterUpload]=(0,u.useState)(null);
@@ -12381,6 +12382,15 @@ function HbDrawingHub({onBack,notify,project=null,embedded=false}){
     notify("已切換為此版本");
   };
 
+  /* 移動圖面到同一案件的其他資料夾（只改 folder_id，版本與發布紀錄不變） */
+  let moveDrawing=async(d,folderId)=>{
+    if(!d||!folderId||d.folderId===folderId)return;
+    let{error}=await q.from("sitelog_drawings").update({folder_id:folderId}).eq("id",d.id);
+    if(error){notify("移動失敗："+error.message);return}
+    setDrawings(ds=>ds.map(x=>x.id===d.id?{...x,folderId}:x));
+    let f=folders.find(x=>x.id===folderId);setMoveDrawingId(null);
+    notify("已移到「"+(f&&f.parentId?f.name:"案件根目錄")+"」");
+  };
   let deleteDrawing=async id=>{
     if(!window.confirm("確定要刪除這個圖面（含所有版本）嗎？"))return;
     let vers=versions.filter(v=>v.drawingId===id);
@@ -12578,6 +12588,7 @@ function HbDrawingHub({onBack,notify,project=null,embedded=false}){
                       u.default.createElement("button",{className:"hb-plan-iconbtn",title:"開啟圖面詳情",onClick:()=>setVersionModalId(d.id)},u.default.createElement(E,{name:"search",size:15})),
                       !ownerPreview&&u.default.createElement("button",{className:"hb-plan-iconbtn",title:"上傳新版本",onClick:()=>openNewVersionPicker(d.id)},u.default.createElement(E,{name:"upload",size:15})),
                       !ownerPreview&&!meta.byFolder&&(isPending||!meta.shared)&&u.default.createElement("button",{className:"hb-plan-iconbtn",title:"發布給業主",onClick:()=>publishDrawing(d),style:{color:"#315c48"}},u.default.createElement(E,{name:"send",size:15})),
+                      !ownerPreview&&u.default.createElement("button",{className:"hb-plan-iconbtn",title:"移動到資料夾",onClick:()=>setMoveDrawingId(d.id)},u.default.createElement(E,{name:"folder",size:15})),
                       !ownerPreview&&u.default.createElement("button",{className:"hb-plan-iconbtn",title:"刪除圖面",onClick:()=>deleteDrawing(d.id),style:{color:"#8c493f"}},u.default.createElement(E,{name:"trash",size:15}))
                     )
                   )
@@ -12590,9 +12601,10 @@ function HbDrawingHub({onBack,notify,project=null,embedded=false}){
                     u.default.createElement("div",{className:"hb-plan-thumb"},cv&&cv.mime&&cv.mime.startsWith("image/")?u.default.createElement("img",{src:cv.url,alt:""}):u.default.createElement(E,{name:"file-text",size:24,color:"#B4573A"})),
                     u.default.createElement("div",{style:{minWidth:0}},u.default.createElement("div",{className:"hb-plan-title",style:{whiteSpace:"normal"}},d.drawingNo&&u.default.createElement("span",{style:{font:"500 13px Georgia,serif",marginRight:6}},d.drawingNo),d.name),u.default.createElement("div",{className:"hb-plan-sub"},[d.category,cv?`V${cv.versionNo}`:"尚無版本",cv&&drawingKind(cv),cv&&drawingDate(cv)].filter(Boolean).join(" · ")),actualCv&&(actualCv.changeNote||actualCv.uploadedBy)&&u.default.createElement("div",{className:"hb-plan-sub",style:{whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},[actualCv.changeNote,actualCv.uploadedBy].filter(Boolean).join("｜")),u.default.createElement("span",{className:"hb-plan-pill",style:{marginTop:9,background:isPending?"#eee4d4":meta.shared?"#e3eee7":"#eeeae2",color:isPending?"#80633b":meta.shared?"#315c48":"#746e64"}},meta.byFolder?"資料夾共享":isPending?"新版待發布":meta.shared?"業主共享":"公司內部"))
                   ),
-                  u.default.createElement("div",{style:{display:"grid",gridTemplateColumns:ownerPreview?"1fr":"1fr 1fr",gap:7,marginTop:11}},
+                  u.default.createElement("div",{style:{display:"grid",gridTemplateColumns:ownerPreview?"1fr":"1fr 1fr 1fr",gap:7,marginTop:11}},
                     u.default.createElement("button",{onClick:()=>setVersionModalId(d.id),style:{...ll,padding:"8px",minHeight:44}},"圖面詳情"),
-                    !ownerPreview&&u.default.createElement("button",{onClick:()=>openNewVersionPicker(d.id),style:{...ll,padding:"8px",minHeight:44}},"上傳新版")
+                    !ownerPreview&&u.default.createElement("button",{onClick:()=>openNewVersionPicker(d.id),style:{...ll,padding:"8px",minHeight:44}},"上傳新版"),
+                    !ownerPreview&&u.default.createElement("button",{onClick:()=>setMoveDrawingId(d.id),style:{...ll,padding:"8px",minHeight:44}},"移到資料夾")
                   )
                 )
               }))
@@ -12602,12 +12614,34 @@ function HbDrawingHub({onBack,notify,project=null,embedded=false}){
     ),
     showNewFolder&&u.default.createElement(HbNewDrawingFolderModal,{isRoot:!currentFolderId&&!embedded,currentPath:breadcrumb.map(f=>f.name).join("／"),onCancel:()=>setShowNewFolder(false),onCreate:createFolder}),
     viewingDrawing&&u.default.createElement(HbDrawingVersionModal,{drawing:viewingDrawing,folderPath:folderPathOf(viewingDrawing.folderId).map(f=>f.name).join("／"),versions:versionsFor(viewingDrawing.id),publishedVersionId:shareOf(viewingDrawing).publishedVersionId,isShared:shareOf(viewingDrawing).shared,byFolder:!!shareOf(viewingDrawing).byFolder,ownerPreview,siblings:drawings.filter(x=>x.folderId===viewingDrawing.folderId&&(!ownerPreview||shareOf(x).shared)),categories:categoryOptions,notify,onSwitch:id=>setVersionModalId(id),onClose:()=>setVersionModalId(null),onRestore:vid=>restoreVersion(viewingDrawing.id,vid),onPublish:vid=>publishVersion(viewingDrawing,vid),onUpload:()=>openNewVersionPicker(viewingDrawing.id),onToggleShare:()=>toggleDrawingShare(viewingDrawing),onRotate:rotateDrawingVersion,onSaveInfo:info=>saveDrawingInfo(viewingDrawing,info),onBakeRotation:bakePdfRotation,onLineNotify:()=>openLineNotify([viewingDrawing.id])}),
+    moveDrawingId&&(()=>{let d=drawings.find(x=>x.id===moveDrawingId);if(!d)return null;let root=caseRootOf(d.folderId);if(!root)return null;
+      let rows=[],walk=(f,depth)=>{rows.push({f,depth});folders.filter(x=>x.parentId===f.id).sort((a,b)=>String(a.name).localeCompare(String(b.name),"zh-Hant")).forEach(c=>walk(c,depth+1))};walk(root,0);
+      return u.default.createElement(HbDrawingMoveModal,{drawing:d,rows,sharedOf:id=>!!sharedFolderOf(id),onCancel:()=>setMoveDrawingId(null),onMove:fid=>moveDrawing(d,fid)})})(),
     uploadQueue&&(()=>{let forced=uploadQueue.forcedDrawingId&&drawings.find(x=>x.id===uploadQueue.forcedDrawingId);let fid=forced?forced.folderId:currentFolderId;return u.default.createElement(HbDrawingUploadDialog,{key:uploadQueue.files.map(f=>f.name).join("|"),files:uploadQueue.files,folderName:(folders.find(f=>f.id===fid)||{}).name,folderDrawings:drawings.filter(x=>x.folderId===fid),categories:categoryOptions,forcedDrawingId:uploadQueue.forcedDrawingId,versionsOf:versionsFor,busy:uploading,onCancel:()=>!uploading&&setUploadQueue(null),onSubmit:submitUploadQueue})})(),
     lineNotify&&u.default.createElement(HbDrawingLineNotify,{...lineNotify,notify,onClose:()=>setLineNotify(null),onSent:markLineNotified}),
     dragOver&&u.default.createElement("div",{style:{position:"fixed",inset:12,zIndex:54,border:"2px dashed #315c48",background:"rgba(232,239,233,.82)",display:"flex",alignItems:"center",justifyContent:"center",pointerEvents:"none",font:"400 20px 'Noto Serif TC',serif",color:"#315c48"}},`放開即可上傳到「${currentFolder?currentFolder.name:""}」`)
   );
 }
 
+function HbDrawingMoveModal({drawing,rows,sharedOf,onCancel,onMove}){
+  let C=u.default.createElement,[pick,setPick]=(0,u.useState)(null),[busy,setBusy]=(0,u.useState)(false);
+  let wasShared=sharedOf(drawing.folderId),willShare=pick?sharedOf(pick):false;
+  return C("div",{onClick:e=>{if(e.target===e.currentTarget&&!busy)onCancel()},style:{position:"fixed",inset:0,background:"rgba(43,38,32,.45)",display:"flex",alignItems:"center",justifyContent:"center",padding:16,zIndex:80}},
+    C("div",{role:"dialog","aria-label":"移動到資料夾",style:{background:"#fbf8f2",border:"1px solid #e2d8c6",borderRadius:8,width:"100%",maxWidth:440,maxHeight:"86vh",display:"flex",flexDirection:"column",boxShadow:"0 24px 50px -20px rgba(40,34,24,.45)"}},
+      C("div",{style:{padding:"18px 20px 12px",borderBottom:"1px solid #ebe3d4"}},
+        C("div",{style:{font:"italic 12px Georgia,serif",letterSpacing:".18em",color:"#9b8a6a",marginBottom:4}},"DÉPLACER"),
+        C("div",{style:{fontFamily:"'Noto Serif TC',serif",fontSize:19,letterSpacing:".08em"}},"移動到資料夾"),
+        C("div",{style:{fontSize:13,color:"#7b7466",marginTop:6,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},(drawing.drawingNo?drawing.drawingNo+"　":"")+drawing.name)),
+      C("div",{style:{overflowY:"auto",padding:"8px 10px"}},rows.map(({f,depth})=>{let cur=f.id===drawing.folderId,on=pick===f.id;
+        return C("button",{key:f.id,type:"button",disabled:cur||busy,onClick:()=>setPick(f.id),style:{display:"flex",alignItems:"center",gap:10,width:"100%",textAlign:"left",border:0,borderRadius:6,background:on?"#e3eee7":"transparent",color:cur?"#b3aa9e":"#262722",padding:"11px 10px 11px "+(10+depth*20)+"px",fontSize:15,cursor:cur?"default":"pointer",minHeight:44}},
+          C(E,{name:"folder",size:17,color:on?"#2E4A3C":cur?"#c9c0b2":"#a5642f"}),
+          C("span",{style:{flex:1,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},depth===0?"案件根目錄（"+f.name+"）":f.name),
+          cur?C("small",{style:{fontSize:12}},"目前位置"):f.ownerShared?C("small",{style:{fontSize:11.5,color:"#315c48",background:"#e3eee7",borderRadius:3,padding:"1px 6px"}},"業主共享"):null)})),
+      pick&&willShare!==wasShared&&C("div",{style:{margin:"0 20px",padding:"9px 12px",background:"#f3ead8",borderRadius:6,fontSize:12.5,color:"#5a4a2c",lineHeight:1.6}},willShare?"這個資料夾設為業主共享，移入後業主會看到這張圖的最新版本。":"移出業主共享資料夾後，業主將看不到這張圖（除非另外發布）。"),
+      C("div",{style:{display:"flex",gap:10,justifyContent:"flex-end",padding:"14px 20px 18px"}},
+        C("button",{type:"button",onClick:onCancel,disabled:busy,style:{border:"1px solid #d9cfbd",background:"#fff",borderRadius:999,padding:"9px 18px",fontSize:14,cursor:"pointer"}},"取消"),
+        C("button",{type:"button",disabled:!pick||busy,onClick:async()=>{setBusy(true);await onMove(pick);setBusy(false)},style:{border:"1px solid #2E4A3C",background:"#2E4A3C",color:"#f5f1e8",borderRadius:999,padding:"9px 20px",fontSize:14,cursor:pick&&!busy?"pointer":"default",opacity:pick&&!busy?1:.5}},busy?"移動中…":"移動"))));
+}
 function HbNewDrawingFolderModal({isRoot,currentPath,onCancel,onCreate}){
   let[name,setName]=(0,u.useState)("");
   return u.default.createElement("div",{style:{position:"fixed",inset:0,background:"rgba(43,38,32,0.45)",display:"flex",alignItems:"center",justifyContent:"center",padding:20,zIndex:55}},
