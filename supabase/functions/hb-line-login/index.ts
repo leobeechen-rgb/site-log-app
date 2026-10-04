@@ -30,12 +30,17 @@ async function staffUser(req: Request) {
   const u = await r.json(); if (!u?.id) return null;
   const rows = await db('hb_admins?user_id=eq.' + u.id + '&select=role'); return rows?.[0]?.role ? u.id as string : null;
 }
-const back = (ret: string, params: Record<string, string>) => { const u = new URL(RETURNS.includes(ret) ? ret : SITE); u.hash = new URLSearchParams(params).toString(); return u.toString() };
+const back0 = (ret: string, params: Record<string, string>) => { const u = new URL(RETURNS.includes(ret) ? ret : SITE); u.hash = new URLSearchParams(params).toString(); return u.toString() };
+// App（iOS）登入：LINE 在外部瀏覽器完成後，結果暫存在 hb_line_states，App 用 handoff 代碼取回
+async function finish(st: { id: string; handoff: string | null; return_to: string }, params: Record<string, string>) {
+  if (st.handoff) { await db('hb_line_states?id=eq.' + st.id, { method: 'PATCH', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ result: params }) }); return go(back0(st.return_to, { hbline: 'handoff', h: st.handoff })) }
+  return go(back0(st.return_to, params));
+}
 Deno.serve(async (req: Request) => {
   try {
     if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors(req) });
     const url = new URL(req.url), route = url.pathname.split('/').pop();
-    if (route === 'health') return json(req, { ok: true, configured: !!(CID && CSECRET), cid_ok: /^\d{10}$/.test(CID), secret_len: CSECRET.length, version: '2026-10-05.3' });
+    if (route === 'health') return json(req, { ok: true, configured: !!(CID && CSECRET), cid_ok: /^\d{10}$/.test(CID), secret_len: CSECRET.length, version: '2026-10-05.4' });
     if (req.method === 'POST' && route === 'begin') {
       if (!CID || !CSECRET) return json(req, { error: 'LINE 登入尚未設定完成，請先用案件密碼登入' }, 503);
       const b = await req.json().catch(() => ({}));
@@ -44,54 +49,63 @@ Deno.serve(async (req: Request) => {
       if (mode === 'link') { project_id = await ownerProject(req); if (!project_id) return json(req, { error: '請先用案件密碼登入' }, 401) }
       if (mode === 'staff_link') { staff_user = await staffUser(req); if (!staff_user) return json(req, { error: '請先用公司帳號登入' }, 401) }
       const ret = RETURNS.includes(String(b.return_to || '')) ? String(b.return_to) : SITE;
+      const handoff = /^[\w-]{32,64}$/.test(String(b.handoff || '')) ? String(b.handoff) : null;
       const state = rand(24), nonce = rand(16);
-      await db('hb_line_states', { method: 'POST', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ id: state, mode, project_id, staff_user, return_to: ret }) });
+      await db('hb_line_states', { method: 'POST', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ id: state, mode, project_id, staff_user, return_to: ret, handoff }) });
       db('hb_line_states?created_at=lt.' + encodeURIComponent(new Date(Date.now() - 86400000).toISOString()), { method: 'DELETE', headers: { Prefer: 'return=minimal' } }).catch(() => {});
       const q = new URLSearchParams({ response_type: 'code', client_id: CID, redirect_uri: CALLBACK, state, scope: 'profile openid', nonce });
       return json(req, { url: 'https://access.line.me/oauth2/v2.1/authorize?' + q.toString() });
     }
     if (req.method === 'GET' && route === 'callback') {
       const state = url.searchParams.get('state') || '', code = url.searchParams.get('code') || '';
-      if (!/^[\w-]{20,64}$/.test(state)) return go(back(SITE, { hbline: 'error', why: 'state' }));
+      if (!/^[\w-]{20,64}$/.test(state)) return go(back0(SITE, { hbline: 'error', why: 'state' }));
       const st = (await db('hb_line_states?id=eq.' + state + '&used_at=is.null&select=*'))?.[0];
-      if (!st || Date.now() - new Date(st.created_at).getTime() > 10 * 60000) return go(back(SITE, { hbline: 'expired' }));
+      if (!st || Date.now() - new Date(st.created_at).getTime() > 10 * 60000) return go(back0(SITE, { hbline: 'expired' }));
       await db('hb_line_states?id=eq.' + state, { method: 'PATCH', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ used_at: new Date().toISOString() }) });
-      if (!code) return go(back(st.return_to, { hbline: 'cancel' }));
+      if (!code) return await finish(st, { hbline: 'cancel' });
       const tr = await fetch('https://api.line.me/oauth2/v2.1/token', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ grant_type: 'authorization_code', code, redirect_uri: CALLBACK, client_id: CID, client_secret: CSECRET }) });
-      if (!tr.ok) { const t = await tr.text(); console.error('line token', tr.status, t.slice(0, 300)); return go(back(st.return_to, { hbline: 'error', why: 'token' + tr.status + (/invalid_client/.test(t) ? '_client' : /invalid_grant/.test(t) ? '_grant' : '') })) }
+      if (!tr.ok) { const t = await tr.text(); console.error('line token', tr.status, t.slice(0, 300)); return await finish(st, { hbline: 'error', why: 'token' + tr.status + (/invalid_client/.test(t) ? '_client' : /invalid_grant/.test(t) ? '_grant' : '') }) }
       const tk = await tr.json();
       const vr = await fetch('https://api.line.me/oauth2/v2.1/verify', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ id_token: tk.id_token || '', client_id: CID }) });
-      if (!vr.ok) { const t = await vr.text(); console.error('line verify', vr.status, t.slice(0, 300)); return go(back(st.return_to, { hbline: 'error', why: 'verify' + vr.status })) }
-      const idt = await vr.json(); const sub = String(idt.sub || ''); if (!/^U[0-9a-f]{32}$/.test(sub)) { console.error('line sub', sub.slice(0, 40)); return go(back(st.return_to, { hbline: 'error', why: 'sub' })) }
+      if (!vr.ok) { const t = await vr.text(); console.error('line verify', vr.status, t.slice(0, 300)); return await finish(st, { hbline: 'error', why: 'verify' + vr.status }) }
+      const idt = await vr.json(); const sub = String(idt.sub || ''); if (!/^U[0-9a-f]{32}$/.test(sub)) { console.error('line sub', sub.slice(0, 40)); return await finish(st, { hbline: 'error', why: 'sub' }) }
       const name = String(idt.name || '').slice(0, 60);
       if (st.mode === 'staff_link') {
         await db('hb_staff_line_links?line_user_id=eq.' + sub, { method: 'DELETE', headers: { Prefer: 'return=minimal' } });
         await db('hb_staff_line_links?on_conflict=user_id', { method: 'POST', headers: { Prefer: 'resolution=merge-duplicates,return=minimal' }, body: JSON.stringify({ user_id: st.staff_user, line_user_id: sub, display_name: name, created_at: new Date().toISOString() }) });
-        return go(back(st.return_to, { hbline: 'staff_linked' }));
+        return await finish(st, { hbline: 'staff_linked' });
       }
       if (st.mode === 'staff_login') {
         const lk = (await db('hb_staff_line_links?line_user_id=eq.' + sub + '&select=user_id'))?.[0];
-        if (!lk) return go(back(st.return_to, { hbline: 'staff_notlinked' }));
-        const adm = await db('hb_admins?user_id=eq.' + lk.user_id + '&select=role'); if (!adm?.[0]) return go(back(st.return_to, { hbline: 'staff_notlinked' }));
+        if (!lk) return await finish(st, { hbline: 'staff_notlinked' });
+        const adm = await db('hb_admins?user_id=eq.' + lk.user_id + '&select=role'); if (!adm?.[0]) return await finish(st, { hbline: 'staff_notlinked' });
         const ur = await fetch(BASE + '/auth/v1/admin/users/' + lk.user_id, { headers: { apikey: KEY, Authorization: 'Bearer ' + KEY } }); const usr = ur.ok ? await ur.json() : null;
-        if (!usr?.email) return go(back(st.return_to, { hbline: 'error', why: 'staff_user' }));
+        if (!usr?.email) return await finish(st, { hbline: 'error', why: 'staff_user' });
         const gl = await fetch(BASE + '/auth/v1/admin/generate_link', { method: 'POST', headers: { apikey: KEY, Authorization: 'Bearer ' + KEY, 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'magiclink', email: usr.email }) });
         const gj = gl.ok ? await gl.json() : null; const th = gj?.hashed_token || gj?.properties?.hashed_token;
-        if (!th) { console.error('generate_link', gl.status); return go(back(st.return_to, { hbline: 'error', why: 'staff_link' + gl.status })) }
+        if (!th) { console.error('generate_link', gl.status); return await finish(st, { hbline: 'error', why: 'staff_link' + gl.status }) }
         await db('hb_staff_line_links?user_id=eq.' + lk.user_id, { method: 'PATCH', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ last_login_at: new Date().toISOString(), display_name: name }) });
-        return go(back(st.return_to, { hbline: 'staff', th }));
+        return await finish(st, { hbline: 'staff', th });
       }
       if (st.mode === 'link') {
         await db('hb_owner_line_links?on_conflict=line_user_id,project_id', { method: 'POST', headers: { Prefer: 'resolution=merge-duplicates,return=minimal' }, body: JSON.stringify({ line_user_id: sub, project_id: st.project_id, display_name: name }) });
-        return go(back(st.return_to, { hbline: 'linked' }));
+        return await finish(st, { hbline: 'linked' });
       }
       const links = await db('hb_owner_line_links?line_user_id=eq.' + sub + '&select=id,project_id,created_at,last_login_at&order=last_login_at.desc.nullslast,created_at.desc');
-      if (!links?.length) return go(back(st.return_to, { hbline: 'notlinked' }));
+      if (!links?.length) return await finish(st, { hbline: 'notlinked' });
       const pid = links[0].project_id;
       const token = rand(32), expiresAt = new Date(Date.now() + 30 * 86400000).toISOString();
       await db('hb_owner_sessions', { method: 'POST', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ token_hash: await sha(token), project_id: pid, expires_at: expiresAt }) });
       await db('hb_owner_line_links?id=eq.' + links[0].id, { method: 'PATCH', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ last_login_at: new Date().toISOString(), display_name: name }) });
-      return go(back(st.return_to, { hbline: 'ok', t: token, p: pid }));
+      return await finish(st, { hbline: 'ok', t: token, p: pid });
+    }
+    if (req.method === 'GET' && route === 'handoff') {
+      const h = url.searchParams.get('h') || ''; if (!/^[\w-]{32,64}$/.test(h)) return json(req, { error: 'bad' }, 400);
+      const row = (await db('hb_line_states?handoff=eq.' + h + '&select=id,result,created_at'))?.[0];
+      if (!row || Date.now() - new Date(row.created_at).getTime() > 15 * 60000) return json(req, { gone: true });
+      if (!row.result) return json(req, { pending: true });
+      await db('hb_line_states?id=eq.' + row.id, { method: 'PATCH', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ result: null, handoff: null }) });
+      return json(req, { result: row.result });
     }
     if (req.method === 'POST' && (route === 'staff-status' || route === 'staff-unlink')) {
       const uid = await staffUser(req); if (!uid) return json(req, { error: '請重新登入' }, 401);

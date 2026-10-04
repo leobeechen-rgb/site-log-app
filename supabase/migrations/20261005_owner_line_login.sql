@@ -20,3 +20,6 @@ create table if not exists public.hb_staff_line_links (
   created_at timestamptz not null default now(), last_login_at timestamptz);
 alter table public.hb_staff_line_links enable row level security;
 revoke all on public.hb_staff_line_links from anon, authenticated;
+-- App（iOS）登入交接：外部瀏覽器完成後，App 用 handoff 代碼取回結果
+alter table public.hb_line_states add column if not exists handoff text, add column if not exists result jsonb;
+create index if not exists hb_line_states_handoff on public.hb_line_states(handoff) where handoff is not null;
