@@ -423,7 +423,7 @@ function setSaveState(t){const el=$('#savest');if(el)el.textContent=t;}
 /* ---------- history ---------- */
 const hist={st:[],i:-1};
 function histReset(){hist.st=[JSON.stringify(P)];hist.i=0;updUndo();}
-function commit(){const s=JSON.stringify(P);if(hist.st[hist.i]===s){return;}hist.st=hist.st.slice(0,hist.i+1);hist.st.push(s);if(hist.st.length>120)hist.st.shift();hist.i=hist.st.length-1;saveSoon();updUndo();dirty=true;}
+function commit(){try{legendAutoCorner();}catch(e){}const s=JSON.stringify(P);if(hist.st[hist.i]===s){return;}hist.st=hist.st.slice(0,hist.i+1);hist.st.push(s);if(hist.st.length>120)hist.st.shift();hist.i=hist.st.length-1;saveSoon();updUndo();dirty=true;}
 function restore(i){hist.i=i;const keepSheet=cur.sheet;P=JSON.parse(hist.st[i]);if(!P.sheets.find(s=>s.id===keepSheet))cur.sheet=P.sheets[0].id;cur.sel=null;cur.cell=null;if(!P.bg)BG=null;saveSoon();updUndo();dirty=true;renderAll();}
 function undo(){if(hist.i>0)restore(hist.i-1);}
 function redo(){if(hist.i<hist.st.length-1)restore(hist.i+1);}
@@ -830,7 +830,7 @@ function drawFrame(b,sh,k,rows){
  if(sh.kind!=='cab'){const mpm=100/k;let step=100,n=3;if(mpm*3>70){n=2;}if(mpm<8){step=500;n=2;}const x1=404,x0=x1-step/k*n;
   for(let i=0;i<n;i++){b.rect(X(x0+i*step/k),Y(257),step/k*k,1.4*k,{...F,w:.18,fill:i%2?'w':'k'});}
   for(let i=0;i<=n;i++)T(x0+i*step/k,255.8,i*step/100+(i===n?' m':''),1.6);}
- if(sh.legend!==false&&rows)drawLegend(b,sh,k,rows,X,Y);
+ if(sh.legend!==false&&rows&&rows.length){const lr=legendFrameRect(sh,rows);drawLegend(b,sh,k,rows,X,Y,[X(lr[0]),Y(lr[1])]);}
 }
 
 /* ---------- cabinet drawing ---------- */
@@ -1069,12 +1069,29 @@ function fitPlanFrame(sh,autoScale){
  const b=sheetContentBounds(sh,sh.scale)||planBounds();if(!b)return;const k=sh.scale/10;const wm=(b[2]-b[0])/k,hm=(b[3]-b[1])/k;
  let px=(X0+X1)/2-wm/2,py=(Y0+Y1)/2-hm/2;
  const rows=sh.legend!==false?legendRows(sh):[];
- if(rows.length){const[LW,LH]=legendSize(sh,rows);const g=3;const L=cfActive()?[A[2]-4-LW-g,A[1]+4-g,A[2]-4+g,A[1]+4+LH+g]:[406-LW-g,14-g,406+g,14+LH+g];
-  const over=(x,y)=>x<L[2]&&x+wm>L[0]&&y<L[3]&&y+hm>L[1];
-  if(over(px,py)){const okA=L[0]-wm>=X0,okB=L[3]+hm<=Y1;const pxA=okA?(X0+L[0])/2-wm/2:L[0]-wm,pyB=okB?(L[3]+Y1)/2-hm/2:L[3];const dA=px-pxA,dB=pyB-py;
-   if(okA&&(!okB||dA<=dB))px=pxA;else if(okB)py=pyB;else{px=Math.max(X0,pxA);if(over(px,py))py=Math.min(Math.max(Y0,pyB),Math.max(Y0,Y1-hm));}}}
+ if(rows.length){const g=3;const cx=px,cy=py;
+  /* 圖示說明放在四個角落之一：先找不會壓到圖的角落，圖也可以往旁邊讓；都放不下時選重疊最少的 */
+  const place=c=>{const r=legendFrameRect(sh,rows,c);const L=[r[0]-g,r[1]-g,r[2]+g,r[3]+g];
+   const ov=(x,y)=>Math.max(0,Math.min(x+wm,L[2])-Math.max(x,L[0]))*Math.max(0,Math.min(y+hm,L[3])-Math.max(y,L[1]));
+   const clx=x=>Math.min(Math.max(x,X0),Math.max(X0,X1-wm)),cly=y=>Math.min(Math.max(y,Y0),Math.max(Y0,Y1-hm));
+   const right=c[1]==='r',bottom=c[0]==='b';
+   const sideX=right?(X0+L[0])/2-wm/2:(L[2]+X1)/2-wm/2,fitX=right?L[0]-wm>=X0:L[2]+wm<=X1;
+   const sideY=bottom?(Y0+L[1])/2-hm/2:(L[3]+Y1)/2-hm/2,fitY=bottom?L[1]-hm>=Y0:L[3]+hm<=Y1;
+   const cands=[[cx,cy],[fitX?sideX:(right?L[0]-wm:L[2]),cy],[cx,fitY?sideY:(bottom?L[1]-hm:L[3])],[right?X0:X1-wm,bottom?Y0:Y1-hm]].map(([x,y])=>[clx(x),cly(y)]);
+   let best=null;cands.forEach(([x,y],i)=>{const o=ov(x,y);const d=Math.abs(x-cx)+Math.abs(y-cy);if(!best||o<best.o-1e-6||Math.abs(o-best.o)<1e-6&&d<best.d)best={x,y,o,d,c};});return best;};
+  const order=sh.legendCornerFixed?[sh.legendCorner||'tr']:['tr','br','tl','bl'];
+  let pick=null;for(const c of order){const r=place(c);if(!pick||r.o<pick.o-1e-6)pick=r;if(r.o<1e-6)break;}
+  px=pick.x;py=pick.y;sh.legendCorner=pick.c;}
  sh.ox=b[0]-px*k;sh.oy=b[1]-py*k;}
-function refitFramesOnce(){if(!P||P.prefs.fitV2)return;if(P.cad&&!CADG)return;P.sheets.forEach(s=>{if(s.kind!=='cab'&&s.frame!==false)fitPlanFrame(s,false);});P.prefs.fitV2=1;saveSoon();dirty=true;}
+function legendHitsPlan(sh){if(sh.legend===false)return false;const rows=legendRows(sh);if(!rows.length)return false;const b=sheetContentBounds(sh,sh.scale);if(!b)return false;const k=sh.scale/10;
+ const x0=(b[0]-sh.ox)/k,y0=(b[1]-sh.oy)/k,x1=(b[2]-sh.ox)/k,y1=(b[3]-sh.oy)/k;const r=legendFrameRect(sh,rows);return x0<r[2]&&x1>r[0]&&y0<r[3]&&y1>r[1];}
+/* 圖示說明變高壓到圖時：圖不動，改把圖示說明換到空的角落 */
+function legendAutoCorner(){if(!P||!P.sheets)return;P.sheets.forEach(sh=>{if(sh.kind==='cab'||sh.frame===false||sh.legend===false||sh.legendCornerFixed)return;
+ const rows=legendRows(sh);if(!rows.length)return;const b=sheetContentBounds(sh,sh.scale);if(!b)return;const k=sh.scale/10;
+ const x0=(b[0]-sh.ox)/k,y0=(b[1]-sh.oy)/k,x1=(b[2]-sh.ox)/k,y1=(b[3]-sh.oy)/k;
+ const ov=c=>{const r=legendFrameRect(sh,rows,c);return Math.max(0,Math.min(x1,r[2])-Math.max(x0,r[0]))*Math.max(0,Math.min(y1,r[3])-Math.max(y0,r[1]));};
+ const curC=sh.legendCorner||'tr';if(ov(curC)<1)return;let best=curC,bo=ov(curC);for(const c of ['tr','br','tl','bl']){const o=ov(c);if(o<bo-1){best=c;bo=o;}}sh.legendCorner=best;});}
+function refitFramesOnce(){if(!P||P.prefs.fitV3)return;if(P.cad&&!CADG)return;P.sheets.forEach(s=>{if(s.kind!=='cab'&&s.frame!==false&&(!P.prefs.fitV2||legendHitsPlan(s)))fitPlanFrame(s,false);});P.prefs.fitV2=1;P.prefs.fitV3=1;saveSoon();dirty=true;}
 function syncFrames(sh){if(sh.kind==='cab')return;P.sheets.forEach(s=>{if(s!==sh&&s.kind!=='cab'&&s.scale===sh.scale){s.ox=sh.ox;s.oy=sh.oy;}});}
 function addCabSheet(c){let n=P.sheets.filter(s=>s.kind==='cab').length+1;const code=()=>'CB-'+String(n).padStart(2,'0');while(P.sheets.some(s=>s.code===code()))n++;
  const sh={id:'cab-'+c.id,kind:'cab',cab:c.id,scale:cabAutoScale(c),ox:0,oy:0,frame:true,code:code()};cabFit(sh,c);P.sheets.push(sh);return sh;}
@@ -1377,6 +1394,9 @@ function cfLoad(){try{const s=localStorage.getItem(CF_KEY);CF=s?JSON.parse(s):nu
 function cfSave(){cfCache=null;try{if(CF)localStorage.setItem(CF_KEY,JSON.stringify(CF));else localStorage.removeItem(CF_KEY);}catch(e){toast('這台裝置存不下圖框資料');}}
 function cfLoadImg(){CF_IMG=null;if(CF){const im=new Image();im.onload=()=>{CF_IMG=im;if(typeof render==='function'){dirty=true;render();}};im.src=cfLogoSrc();}}
 function cfActive(){return !!(CF&&CF.use!==false&&CF.pl&&CF.pl.length);}
+/* 圖框模式下圖示說明的位置（紙面 mm）：四個角落擇一 */
+function legendFrameRect(sh,rows,corner){const A=frameArea();const[LW,LH]=legendSize(sh,rows);const c=corner||sh.legendCorner||'tr';
+ const x0=c[1]==='l'?A[0]+4:A[2]-4-LW,y0=c[0]==='b'?A[3]-4-LH:A[1]+4;return[x0,y0,x0+LW,y0+LH];}
 function frameArea(){const g=cfActive()?cfGeom():null;return g?g.area:[20,10,410,252];}
 
 /* normalise the imported frame to A3 paper millimetres (rotation, fit into 410×287, centred) */
@@ -1421,7 +1441,7 @@ function drawCustomFrame(b,sh,k,rows){
  });
  if(g.logo&&CF_IMG){const r=g.logo,pd=1.5;const bw=r[2]-r[0]-2*pd,bh=r[3]-r[1]-2*pd;const ar=CF_IMG.width/CF_IMG.height;let w=bw,h=bw/ar;if(h>bh){h=bh;w=bh*ar;}
   b.list.push({k:'i',x:X((r[0]+r[2])/2-w/2),y:Y((r[1]+r[3])/2-h/2),w:w*k,h:h*k,src:cfLogoSrc(),img:CF_IMG,L:'0-FRAME'});}
- if(sh.legend!==false&&rows&&rows.length){const[W]=legendSize(sh,rows);drawLegend(b,sh,k,rows,null,null,[X(g.area[2]-4-W),Y(g.area[1]+4)]);}
+ if(sh.legend!==false&&rows&&rows.length){const lr=legendFrameRect(sh,rows);drawLegend(b,sh,k,rows,null,null,[X(lr[0]),Y(lr[1])]);}
  return true;
 }
 async function importFrame(f){
@@ -2204,7 +2224,7 @@ function sheetHTML(){
  const sh=sheet();const cab=cabOfSheet(sh);
  let h=`<section class="sec"><h3>${esc(sh.code)} ${esc(sheetTitle(sh))}<small>SHEET</small></h3>
   ${I('sh.title',sh.title||'',{label:'圖名（空白則自動）'})}<div class="r2">${I('sh.code',sh.code||'',{label:'圖號'})}${SEL('sh.scale',sh.scale,SCALES.map(s=>[s,'1/'+s]),{label:'比例'})}</div>
-  ${CHK('sh.frame',sh.frame!==false,'使用 A3 圖框與圖說欄（預設不用）')}${sh.kind!=='cab'?CHK('sh.legend',sh.legend!==false,'顯示圖示說明'):''}${sh.kind!=='cab'&&sh.kind!=='floor'?CHK('sh.legendCount',!!sh.legendCount,'圖示說明加上數量欄'):''}${sh.kind==='elec'||sh.kind==='light'?CHK('sh.showH',sh.showH!==false,'標示離地高度 H'):''}
+  ${CHK('sh.frame',sh.frame!==false,'使用 A3 圖框與圖說欄（預設不用）')}${sh.kind!=='cab'?CHK('sh.legend',sh.legend!==false,'顯示圖示說明'):''}${sh.kind!=='cab'&&sh.kind!=='floor'?CHK('sh.legendCount',!!sh.legendCount,'圖示說明加上數量欄'):''}${sh.kind!=='cab'&&sh.frame!==false&&sh.legend!==false?SEL('sh.legendCorner',sh.legendCornerFixed?(sh.legendCorner||'tr'):'auto',[['auto','自動（避開圖面）'+(sh.legendCornerFixed?'':'・目前'+({tr:'右上',br:'右下',tl:'左上',bl:'左下'}[sh.legendCorner||'tr']))],['tr','右上'],['br','右下'],['tl','左上'],['bl','左下']],{label:'圖示說明位置'}):''}${sh.kind==='elec'||sh.kind==='light'?CHK('sh.showH',sh.showH!==false,'標示離地高度 H'):''}
   ${sh.kind==='cab'||sh.frame!==false?`${sh.kind!=='cab'?CHK('sh.lock',!!sh.lock,'固定版面（圖框和圖的位置不再自動移動）'):''}${sh.lock?'<p class="lockline">版面已固定</p>':`<div class="acts"><button class="btn" data-act="${sh.kind==='cab'?'cabAuto':'fitFrame'}">${sh.kind==='cab'?'自動比例並置中':'圖框置中到圖面'}</button><button class="btn" data-act="frameTool" aria-pressed="${cur.tool==='frame'}">拖曳移動圖框</button></div>`}`:(sh.legend!==false?'<div class="acts"><button class="btn" data-act="legendReset">圖示說明放回圖的右邊</button></div><p class="fine" style="margin:0 0 6px">圖示說明可以直接用「選取」拖曳到想要的位置。</p>':'')+'<p class="fine" style="margin:0">沒有圖框時，出圖會自動把畫好的內容置中在 A3 上；放不下時會自動改用較小的比例。</p>'}</section>`;
  h+=cfPanelHTML();
  if(sh.kind!=='cab')h+=cadPanelHTML(sh);
@@ -2261,7 +2281,7 @@ function onField(el,final){
   case 'sh.code':sh.code=v.trim();if(final)renderSheets();break;
   case 'sh.scale':{const k0=sh.scale/10;const cx=sh.ox+210*k0,cy=sh.oy+148.5*k0;sh.scale=+v;const k1=sh.scale/10;sh.ox=cx-210*k1;sh.oy=cy-148.5*k1;rp=true;if(final)setTimeout(fitView);break;}
   case 'sh.lock':sh.lock=!!v;if(sh.lock&&cur.tool==='frame')setTool('select');rp=true;break;
-  case 'cf.use':if(CF){CF.use=!!v;cfSave();P.sheets.forEach(s=>{if(s.kind!=='cab'&&s.frame!==false)fitPlanFrame(s,false);});}break;case 'sh.frame':sh.frame=!!v;rp=true;if(sh.frame&&sh.kind!=='cab'){fitPlanFrame(sh,false);frameChecked.add(sh.id);}break;case 'sh.legend':sh.legend=!!v;break;case 'sh.legendCount':sh.legendCount=!!v;break;case 'sh.showH':sh.showH=!!v;break;
+  case 'cf.use':if(CF){CF.use=!!v;cfSave();P.sheets.forEach(s=>{if(s.kind!=='cab'&&s.frame!==false)fitPlanFrame(s,false);});}break;case 'sh.frame':sh.frame=!!v;rp=true;if(sh.frame&&sh.kind!=='cab'){fitPlanFrame(sh,false);frameChecked.add(sh.id);}break;case 'sh.legend':sh.legend=!!v;break;case 'sh.legendCorner':if(v==='auto'){delete sh.legendCornerFixed;}else{sh.legendCornerFixed=1;sh.legendCorner=v;}fitPlanFrame(sh,false);rp=true;break;case 'sh.legendCount':sh.legendCount=!!v;break;case 'sh.showH':sh.showH=!!v;break;
   case 'wall.kind':if(x){x.kind=v;x.t=WK[v].t;rp=true;}break;
   case 'wall.t':if(x&&ok&&n>0&&n<=80)x.t=n;break;
   case 'wall.j':if(x)x.j=+v;break;
