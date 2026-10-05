@@ -13059,7 +13059,7 @@ function HbDrawingVersionModal({drawing,folderPath,versions,publishedVersionId,i
       v.mime==="application/pdf"?C(HbPlanPdfPreview,{version:v,label:label||drawing.name,rotation}):
       C("div",{style:{textAlign:"center",padding:28}},C(E,{name:"file-text",size:42,color:"#B4573A"}),C("div",{style:{font:"400 18px Georgia,serif",marginTop:12}},kindOf(v)+" DRAWING"),C("div",{style:{fontSize:11,color:s.inkSoft,marginTop:7}},"CAD 圖面請下載後以繪圖軟體開啟")),
       label&&C("div",{className:"hb-dv-label"},label),
-      allowExpand&&v&&!HB_drawingIsCad(v)&&C("button",{type:"button",className:"hb-dv-expand","aria-label":"全螢幕檢視",onClick:()=>setFull(true)},C(E,{name:"search",size:17})));
+      allowExpand&&v&&!HB_drawingIsCad(v)&&C("button",{type:"button",className:"hb-dv-expand","aria-label":"放大瀏覽",onClick:()=>setFull(true)},C(E,{name:"search",size:15}),C("span",null,"放大瀏覽")));
   };
   let startEdit=()=>{setForm({drawingNo:drawing.drawingNo||"",name:drawing.name||"",category:drawing.category||""});setEditing(true);setTab("info")};
   let saveEdit=async()=>{if(!form.name.trim()){notify&&notify("圖名不可空白");return}let ok=await onSaveInfo({drawingNo:form.drawingNo.trim().toUpperCase(),name:form.name.trim(),category:form.category.trim()});if(ok!==false)setEditing(false)};
@@ -13099,7 +13099,7 @@ function HbDrawingVersionModal({drawing,folderPath,versions,publishedVersionId,i
       .hb-dv-main{display:flex;flex-direction:column;gap:12px;min-width:0;min-height:0;padding:16px}
       .hb-dv-stage{position:relative;flex:1;min-height:0;display:flex}
       .hb-dv .hb-plan-preview{flex:1;height:auto;min-height:0}
-      .hb-dv-expand{position:absolute;right:10px;bottom:10px;z-index:7;width:40px;height:40px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(57,51,47,.2);background:rgba(255,255,255,.92);cursor:pointer;color:#211f1b}
+      .hb-dv-expand{position:absolute;right:10px;bottom:10px;z-index:7;height:38px;padding:0 13px;gap:6px;font:inherit;font-size:13px;letter-spacing:.06em;display:flex;align-items:center;justify-content:center;border:1px solid rgba(57,51,47,.2);background:rgba(255,255,255,.92);cursor:pointer;color:#211f1b}
       .hb-dv-label{position:absolute;left:10px;top:10px;z-index:7;background:rgba(33,31,27,.78);color:#fff;font:500 12px Georgia,serif;padding:4px 8px}
       .hb-dv-compare{flex:1;min-height:0;display:grid;grid-template-columns:1fr 1fr;gap:10px}
       .hb-dv-compare>div{display:flex;flex-direction:column;gap:6px;min-height:0;min-width:0}
