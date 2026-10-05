@@ -19722,12 +19722,14 @@ react-dom/cjs/react-dom-client.production.js:
         frame.setAttribute('data-key', tool.key);
       }
       sheet.setAttribute('data-open', '1');
+      try { sessionStorage.setItem('hbOpenTool', tool.key); } catch (e) {}   // 重新整理後留在這個工具
       document.documentElement.style.overflow = 'hidden';
       syncActive();
       close.focus();
     }
     function shut() {
       sheet.removeAttribute('data-open');
+      try { sessionStorage.removeItem('hbOpenTool'); } catch (e) {}
       document.documentElement.style.overflow = '';
       current = null;
       syncActive();
@@ -19792,6 +19794,12 @@ react-dom/cjs/react-dom-client.production.js:
       for (var i = 0; i < TOOLS.length; i++) if (TOOLS[i].key === key) { open(TOOLS[i]); return true; }
       return false;
     };
+
+    /* 重新整理時：如果剛才開著工具，直接回到那個工具（只在同一個分頁有效，按「關閉」就清掉） */
+    try {
+      var keep = sessionStorage.getItem('hbOpenTool');
+      if (keep) window.__hbOpenTool(keep);
+    } catch (e) {}
 
     window.__hbToolsStatus = function () {
       return {
