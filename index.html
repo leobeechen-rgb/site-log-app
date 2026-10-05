@@ -12868,7 +12868,7 @@ function HbDrawingLineNotify({caseName,ownerUrl,items,preselect,notify,onClose,o
       if(chosen.length>12)lines.push("…等共 "+chosen.length+" 張");
     }
     if(extra.trim())lines.push("",extra.trim());
-    lines.push("","請點下方連結登入業主專區查看：",ownerUrl,"","有任何問題再跟我們說，謝謝。");
+    lines.push("","請點下方連結登入業主專區查看：",ownerUrl,"","用 iPhone 的話，也可以下載「赫柏空間設計」App，登入後直接在手機上看圖面：","https://apps.apple.com/tw/app/id6815527075","","有任何問題再跟我們說，謝謝。");
     return lines.join("\n");
   };
   (0,u.useEffect)(()=>{if(!touched)setText(compose())},[picked,extra,touched]);
