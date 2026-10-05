@@ -340,6 +340,13 @@ function inPoly(x,y,p){let c=false;for(let i=0,j=p.length-1;i<p.length;j=i++){co
 function segProj(p,a,b){const dx=b[0]-a[0],dy=b[1]-a[1],L=dx*dx+dy*dy;let t=L?((p[0]-a[0])*dx+(p[1]-a[1])*dy)/L:0;t=Math.max(0,Math.min(1,t));const q=[a[0]+t*dx,a[1]+t*dy];return{t,q,d:dist(p,q)};}
 const rot=(p,a)=>{const c=Math.cos(a),s=Math.sin(a);return[p[0]*c-p[1]*s,p[0]*s+p[1]*c];};
 function rectPts(cx,cy,w,d,deg){const a=deg*Math.PI/180;return[[-w/2,-d/2],[w/2,-d/2],[w/2,d/2],[-w/2,d/2]].map(p=>{const r=rot(p,a);return[cx+r[0],cy+r[1]];});}
+/* 天花：窗簾盒／冷氣包管 */
+function czBox(pts){const xs=pts.map(p=>p[0]),ys=pts.map(p=>p[1]);const x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys),y1=Math.max(...ys);return{x0,x1,y0,y1,w:x1-x0,h:y1-y0,cx:(x0+x1)/2,cy:(y0+y1)/2};}
+function czText(z){const bb=czBox(z.pts);const d=Math.round(Math.min(bb.w,bb.h));
+ if(z.kind==='curtain')return `${z.label||'窗簾盒'} 深${d}${z.drop!=null&&z.drop!==''?' 下降'+z.drop:''}`;
+ if(z.kind==='ac')return `${z.label||'冷氣包管'} ${d}×${Math.round(Math.max(bb.w,bb.h))}${z.ch!=null&&z.ch!==''?' H='+z.ch:''}`;
+ return z.label||'';}
+const CZK={curtain:{n:'窗簾盒',label:'窗簾盒',ch:null,drop:20},ac:{n:'冷氣包管',label:'冷氣包管',ch:230}};
 /* parallel hatch lines clipped to polygon */
 function hatchPoly(poly,deg,sp,org){
  if(!(sp>0.05)||poly.length<3)return[];
@@ -528,7 +535,7 @@ const CAB_SPEC=[['body','桶身','18mm 木心板，內部貼美耐板'],['back',
    prim: {k:'l'|'p'|'c'|'a'|'t', geometry in world cm, L:layer, w:pen mm, col, fill, dash, h:handle, hit:screen-only hit target}
    The same list feeds the screen (SVG), the PDF (canvas) and the DXF writer. */
 const COL={k:'#141414',g:'#6b7280',lg:'#a3a9ae',r:'#d7191f',m:'#c026d3',b:'#1f5fbf',o:'#d35400',t:'#0d6a87',poche:'#b9bec3',w:'#ffffff'};
-const LAYERS={'0-FRAME':7,'A-WALL':7,'A-WALL-NEW':3,'A-HATCH':8,'A-DOOR':2,'A-GLASS':4,'A-ROOM':7,'F-FLOOR':8,'C-CEIL':5,'C-ZONE':5,'E-LAMP':6,'E-SWITCH':1,'E-CIRCUIT':1,'E-POWER':1,'E-WEAK':1,'P-PLUMB':1,'CAB':30,'CAB-HIDDEN':8,'DIM':2,'TEXT':7,'LEGEND':7};
+const LAYERS={'0-FRAME':7,'A-WALL':7,'A-WALL-NEW':3,'A-HATCH':8,'A-DOOR':2,'A-GLASS':4,'A-ROOM':7,'F-FLOOR':8,'C-CEIL':5,'C-ZONE':5,'C-CURTAIN':4,'C-ACPIPE':3,'E-LAMP':6,'E-SWITCH':1,'E-CIRCUIT':1,'E-POWER':1,'E-WEAK':1,'P-PLUMB':1,'CAB':30,'CAB-HIDDEN':8,'DIM':2,'TEXT':7,'LEGEND':7};
 const CATLAYER={lamp:'E-LAMP',ceildev:'C-CEIL',switch:'E-SWITCH',power:'E-POWER',weak:'E-WEAK',plumb:'P-PLUMB'};
 const CATCOL={lamp:'m',ceildev:'k',switch:'r',power:'r',weak:'r',plumb:'r'};
 
@@ -624,7 +631,16 @@ function buildPlan(sh){
  if(sh.kind==='floor')P.rooms.forEach(r=>{const sp=floorSpec(r);if(sp.m.pat==='dots'){floorDots(r.pts).forEach(p=>b.c(p,.28*k,{L:'F-FLOOR',w:.1,col:'lg',fill:'lg'}));}else floorLines(r.pts,sp).forEach(([p,q])=>b.l(p,q,{L:'F-FLOOR',w:.1,col:'lg'}));});
  if(sh.kind==='ceil')P.rooms.forEach(r=>{const c=r.ceil||{};if(c.type==='grid'){hatchPoly(r.pts,0,60,[0,0]).concat(hatchPoly(r.pts,90,60,[0,0])).forEach(([p,q])=>b.l(p,q,{L:'C-CEIL',w:.1,col:'lg'}));}
   else if(c.type==='none')hatchPoly(r.pts,45,40*k,[0,0]).forEach(([p,q])=>b.l(p,q,{L:'C-CEIL',w:.1,col:'lg',dash:'dot'}));});
- if(kind.czone)P.czones.forEach(z=>{b.pg(z.pts,{hit:1,fill:'none',h:'czone:'+z.id,under:1});b.pg(z.pts,{L:'C-ZONE',w:.25,col:'b',dash:'center'});const c=centroid(z.pts);b.t(c,`${z.label?z.label+' ':''}CH=${z.ch}`,2.2,{L:'C-ZONE',col:'b',anc:'middle',bl:'mid',bold:1});});
+ if(kind.czone)P.czones.forEach(z=>{b.pg(z.pts,{hit:1,fill:'none',h:'czone:'+z.id,under:1});const c=centroid(z.pts);
+  if(z.kind==='curtain'||z.kind==='ac'){const cur_=z.kind==='curtain',L=cur_?'C-CURTAIN':'C-ACPIPE',bb=czBox(z.pts);
+   b.pg(z.pts,{L,w:.3,col:'k'});
+   if(cur_){/* 窗簾軌道：沿長邊的中心虛線 */const hz=bb.w>=bb.h;const a=hz?[bb.x0+2,bb.cy]:[bb.cx,bb.y0+2],e=hz?[bb.x1-2,bb.cy]:[bb.cx,bb.y1-2];b.l(a,e,{L,w:.18,col:'g',dash:'hidden'});}
+   else hatchPoly(z.pts,45,Math.max(4,6*k),[0,0]).forEach(([p,q])=>b.l(p,q,{L,w:.1,col:'g'}));
+   const tx=czText(z);const short=Math.min(bb.w,bb.h);const hz=bb.w>=bb.h;
+   /* 細長條放不下字：字放在外側 */
+   const off=short<14*k?(short/2+2.2*k):0;const tp=off?(hz?[c[0],bb.y0-2.2*k]:[bb.x1+1.5*k,c[1]]):c;
+   b.t(tp,tx,2.1,{L,col:'k',anc:off&&!hz?'start':'middle',bl:'mid',bold:1,h:'czone:'+z.id});return;}
+  b.pg(z.pts,{L:'C-ZONE',w:.25,col:'b',dash:'center'});b.t(c,`${z.label?z.label+' ':''}CH=${z.ch}`,2.2,{L:'C-ZONE',col:'b',anc:'middle',bl:'mid',bold:1});});
  /* cabinets */
  P.cabs.forEach(c=>{if(c.src==='cad'){const g=cabPlace(c);const pts=rectPts(g.x,g.y,g.W,g.D,g.rot);const hid=sh.kind==='ceil'||sh.kind==='light';b.pg(pts,{hit:1,fill:'none',h:'cab:'+c.id});if(!hid){const st={L:'CAB',w:.25,col:c.lost?'r':'k',h:'cab:'+c.id};b.c([g.x,g.y],2.6*k,{...st,fill:'w'});b.t([g.x,g.y],c.tag,2.2,{...st,anc:'middle',bl:'mid',bold:1});}return;}
   const pts=rectPts(c.x,c.y,c.W,c.D,c.rot||0);const hid=sh.kind==='ceil'||sh.kind==='light';const st={L:'CAB',w:.25,col:hid?'g':'k',dash:hid?'hidden':null,h:'cab:'+c.id};
@@ -1755,6 +1771,8 @@ const TOOLS={
  indirect:{n:'間接照明',ic:'<path d="M3 12h3M9 12h3M15 12h3M21 12h0" stroke-width="2.2"/>'},
  track:{n:'軌道燈',ic:'<path d="M3 12h18" stroke-width="2.2"/><circle cx="8" cy="12" r="2"/><circle cx="16" cy="12" r="2"/>'},
  czone:{n:'天花分區',ic:'<path d="M4 4h16v16H4z" stroke-dasharray="4 2 1 2"/>'},
+ curtain:{n:'窗簾盒',ic:'<rect x="3" y="5" width="18" height="5"/><path d="M5 7.5h14" stroke-dasharray="2 1.5"/><path d="M7 10v9M11 10c0 3-1 6 0 9M15 10c0 3 1 6 0 9M18 10v9"/>'},
+ ac:{n:'冷氣包管',ic:'<rect x="3" y="8" width="18" height="8"/><path d="M6 16l8-8M11 16l8-8M3 13l5-5M16 16l5-5"/>'},
  autolight:{n:'自動配燈',ic:'<circle cx="7" cy="7" r="2.2"/><circle cx="17" cy="7" r="2.2"/><circle cx="7" cy="17" r="2.2"/><circle cx="17" cy="17" r="2.2"/><path d="M3 3h18v18H3z" stroke-dasharray="2 2"/>'},
  autodim:{n:'自動尺寸',key:'N',ic:'<path d="M3 18h18M3 15v6M9 15v6M15 15v6M21 15v6"/><circle cx="9" cy="7" r="3"/><circle cx="15" cy="7" r="3"/>'},
  set:{n:'套組',ic:'<circle cx="7" cy="12" r="3"/><circle cx="17" cy="12" r="3"/>'},
@@ -1762,7 +1780,7 @@ const TOOLS={
  circuit:{n:'迴路線',key:'L',ic:'<path d="M4 18C6 8 14 6 20 6"/><circle cx="4" cy="18" r="1.6" fill="currentColor"/>'},
 };
 function toolList(){const k=sheet().kind;if(k==='cab')return[['select','text']];
- const extra={floor:['paint'],ceil:['autolight','sym','autodim','indirect','track','czone'],light:['autolight','sym','autodim','circuit'],elec:['sym','autodim']}[k];
+ const extra={floor:['paint'],ceil:['autolight','sym','autodim','indirect','track','czone','curtain','ac'],light:['autolight','sym','autodim','circuit'],elec:['sym','autodim']}[k];
  return[['select'],['wall','open','room','cabpick'],['dim','text'],extra];}
 function renderTools(){
  const groups=toolList();const labels=['','基本圖','標註',{floor:'地坪',ceil:'天花',light:'燈具',elec:'水電'}[sheet().kind]||''];
@@ -1770,9 +1788,10 @@ function renderTools(){
   g.forEach(t=>{const T=TOOLS[t];const on=activeTool()===t;h+=`<button class="tl" data-tool="${t}" aria-pressed="${on}" title="${T.n}${T.key?'（'+T.key+'）':''}" aria-label="${T.n}"><svg viewBox="0 0 24 24">${T.ic}</svg><span class="tn">${T.n}</span></button>`;});});
  $('#tools').innerHTML=h;
 }
-function activeTool(){if(cur.tool==='line')return cur.lineType;return cur.tool;}
+function activeTool(){if(cur.tool==='line')return cur.lineType;if(cur.tool==='czone'&&cur.czKind)return cur.czKind;return cur.tool;}
 function setTool(t){
  if(['indirect','track','circuit'].includes(t)){cur.lineType=t;t='line';}
+ if(t==='curtain'||t==='ac'){cur.czKind=t;t='czone';}else if(t==='czone')cur.czKind=null;
  cur.tool=t;draft=[];dimDraft=null;calibA=null;cabA=null;snapHit=null;adDraft=null;if(t!=='setpick')setPick=[];
  stage.classList.toggle('cross',t!=='select');
  if(t!=='select'){cur.sel=null;}
@@ -1782,11 +1801,11 @@ function setTool(t){
  setHint();renderTools();renderPanel();render();
 }
 const HINTS={cabpick:'在 CAD 平面圖上點一下櫃體的外框裡面，會依外框自動帶入寬、深並建立施工圖；沒有封閉外框時改點兩個對角',autodim:'沿著有插座的那面牆：點牆的起點、再點終點，最後移動滑鼠決定尺寸線在哪一側再點一下',set:'移到牆邊點一下放下整組；按住 Alt 自由擺放',setpick:'點選要放進套組的符號，選好後在右側按「儲存套組」',autolight:'點一下要配燈的空間；還沒畫空間的話，點在 CAD 平面圖的房間裡面會自動偵測範圍',select:'點選物件編輯；拖曳空白處平移畫面，滾輪縮放',wall:'點一下開始，連續點畫出牆，雙擊或 Esc 結束；按住拖曳畫單一道牆',open:'把游標移到牆上，點一下放置；門往游標那一側開',room:'拖曳拉出矩形空間，或逐點點出形狀，點回起點完成',cab:'點一下放置櫃體，會自動建立一張櫃體施工圖',dim:'點兩個點，再移動滑鼠決定尺寸線位置',text:'點一下放置文字，在右側面板輸入內容',paint:'在右側選材質，再點空間套用',sym:'在右側選符號，點一下放置；靠近牆會自動貼齊牆面',line:'逐點畫線，雙擊或 Esc 結束',czone:'拖曳拉出天花分區（包樑、降板），或逐點點出形狀',calib:'在底圖上點一段已知長度的兩端'};
-function setHint(){let t=HINTS[cur.tool]||'';if(cur.tool==='line')t=cur.lineType==='circuit'?'從開關開始，依序點燈具，雙擊結束；會自動吸附符號中心':'逐點畫出'+LINE[cur.lineType].n+'，雙擊或 Esc 結束';if(sheet().kind==='cab'&&cur.tool==='select')t='點一格可以直接編輯；櫃體尺寸、分格和材料在右側面板';$('#hint').textContent=t;}
+function setHint(){let t=HINTS[cur.tool]||'';if(cur.tool==='czone'&&cur.czKind==='curtain')t='沿著窗邊拖曳拉出窗簾盒（深度通常 15–20 公分）；放大畫面比較好拉細長條';if(cur.tool==='czone'&&cur.czKind==='ac')t='沿著冷氣管線路徑拖曳拉出包管範圍，或逐點點出 L 形';if(cur.tool==='line')t=cur.lineType==='circuit'?'從開關開始，依序點燈具，雙擊結束；會自動吸附符號中心':'逐點畫出'+LINE[cur.lineType].n+'，雙擊或 Esc 結束';if(sheet().kind==='cab'&&cur.tool==='select')t='點一格可以直接編輯；櫃體尺寸、分格和材料在右側面板';$('#hint').textContent=t;}
 
 /* ---------- create ---------- */
 function addWall(a,b){if(dist(a,b)<5)return false;P.walls.push({id:uid(),a:[...a],b:[...b],kind:cur.wallKind,t:WK[cur.wallKind].t,j:cur.wallJ});commit();return true;}
-function finishPoly(){if(draft.length>=3){const pts=clean(draft);if(pts.length>=3&&area(pts)>400){if(cur.tool==='czone'){const z={id:uid(),pts,ch:240,label:''};P.czones.push(z);cur.sel='czone:'+z.id;}else{const r={id:uid(),name:'空間 '+(P.rooms.length+1),pts,floor:{mat:'keep'},ceil:{type:'flat',ch:260}};P.rooms.push(r);cur.sel='room:'+r.id;}commit();cur.tab='props';renderPanel();}}draft=[];render();}
+function finishPoly(){if(draft.length>=3){const pts=clean(draft);if(pts.length>=3&&area(pts)>(cur.tool==='czone'&&cur.czKind?20:400)){if(cur.tool==='czone'){const K=CZK[cur.czKind];const z=K?{id:uid(),pts,kind:cur.czKind,label:'',ch:K.ch,...(K.drop!=null?{drop:K.drop}:{})}:{id:uid(),pts,ch:240,label:''};P.czones.push(z);cur.sel='czone:'+z.id;}else{const r={id:uid(),name:'空間 '+(P.rooms.length+1),pts,floor:{mat:'keep'},ceil:{type:'flat',ch:260}};P.rooms.push(r);cur.sel='room:'+r.id;}commit();cur.tab='props';renderPanel();}}draft=[];render();}
 function clean(pts){const c=pts.filter((p,i)=>i===0||dist(p,pts[i-1])>1);if(c.length>2&&dist(c[0],c[c.length-1])<1)c.pop();return c;}
 function finishLine(){if(draft.length>=2){const ln={id:uid(),type:cur.lineType,pts:draft.map(p=>[...p])};if(ln.type==='circuit')ln.label=String.fromCharCode(97+P.lines.filter(l=>l.type==='circuit').length%26);P.lines.push(ln);commit();}draft=[];render();}
 function nextTag(){let n=1;while(P.cabs.some(c=>c.tag==='C'+n))n++;return 'C'+n;}
@@ -1954,7 +1973,7 @@ function endPtr(e){
   case 'framemove':case 'move':case 'wend':case 'vtx':case 'lvtx':case 'dend':case 'legendmove':case 'cadmove':case 'bgmove':snapHit=null;if(d.moved){commit();renderPanel();}render();break;
   case 'wallrect':{const p0=snapPt(d.w);const a=[p0.x,p0.y];const b=orthoFrom(a,snapPt(w,e),e);snapHit=null;addWall(a,[b.x,b.y]);render();break;}
   case 'walldown':{let p=snapPt(w,e);if(draft.length)p=orthoFrom(draft[draft.length-1],p,e);if(!draft.length)draft=[[p.x,p.y]];else if(dist([p.x,p.y],draft[draft.length-1])>=5){addWall(draft[draft.length-1],[p.x,p.y]);draft.push([p.x,p.y]);}render();break;}
-  case 'rectroom':{const a=snapPt(d.w),b=snapPt(w);const x0=Math.min(a.x,b.x),x1=Math.max(a.x,b.x),y0=Math.min(a.y,b.y),y1=Math.max(a.y,b.y);snapHit=null;if(x1-x0>=20&&y1-y0>=20){draft=[[x0,y0],[x1,y0],[x1,y1],[x0,y1]];finishPoly();}else render();break;}
+  case 'rectroom':{const a=snapPt(d.w),b=snapPt(w);const x0=Math.min(a.x,b.x),x1=Math.max(a.x,b.x),y0=Math.min(a.y,b.y),y1=Math.max(a.y,b.y);snapHit=null;const mn=cur.tool==='czone'&&cur.czKind?4:20;if(x1-x0>=mn&&y1-y0>=mn){draft=[[x0,y0],[x1,y0],[x1,y1],[x0,y1]];finishPoly();}else render();break;}
   case 'roomdown':{let p=snapPt(w,e);if(draft.length)p=orthoFrom(draft[draft.length-1],p,e);if(draft.length>=3&&dist([p.x,p.y],draft[0])*view.z<14){finishPoly();break;}const l=draft[draft.length-1];if(!l||dist([p.x,p.y],l)>=1)draft.push([p.x,p.y]);render();break;}
   case 'click':if(dd<10)toolClick(w,e);break;
  }
@@ -2053,7 +2072,7 @@ function openPanel(){$('#panel').classList.add('open');}
 const CABTABS=[['size','尺寸'],['grid','分格'],['mat','材料'],['sheet','圖面']],PLANTABS=[['props','屬性'],['lib','圖庫'],['sheet','圖面'],['proj','案件']];
 function panelHead(){const sh=sheet();
  if(sh.kind==='cab'&&cur.tab!=='proj'){if(!CABTABS.some(t=>t[0]===cur.tab))cur.tab=cur.cell?'grid':'size';const c=cabOfSheet(sh);return{title:'櫃體設定',chip:c?c.tag:sh.code,tabs:CABTABS};}
- const o=cur.tab==='props'?selObj():null;const TN={wall:'牆',open:'門窗',room:'空間',sym:'符號',line:'線',dim:'尺寸線',text:'文字',cab:'櫃體',czone:'天花分區',legend:'圖示說明'};
+ const o=cur.tab==='props'?selObj():null;const TN={wall:'牆',open:'門窗',room:'空間',sym:'符號',line:'線',dim:'尺寸線',text:'文字',cab:'櫃體',czone:(o&&o.kind==='curtain')?'窗簾盒':(o&&o.kind==='ac')?'冷氣包管':'天花分區',legend:'圖示說明'};
  const title=cur.tab==='proj'?'案件總覽':cur.tab==='lib'?'圖庫':cur.tab==='sheet'?'圖面設定':o?(TN[o.t]||'屬性')+'設定':(NAVN[sh.kind]||'屬性');
  return{title,chip:sh.code||'',tabs:sh.kind==='cab'?[]:PLANTABS};}
 function renderPanel(){
@@ -2105,7 +2124,8 @@ function propsHTML(){
   case 'cab':return `<section class="sec"><h3>${esc(x.tag)} ${esc(x.name)}<small>CABINET</small></h3>
    <p class="mut">W${x.W} × D${x.D} × H${x.H}</p>${x.src==='cad'?`<p class="fine" style="margin:0 0 10px">${x.lost?'<b style="color:var(--warn)">新的平面圖找不到這座櫃體的外框，尺寸先保留原本的。</b>':'寬、深跟著 CAD 平面圖，重新匯入 CAD 會自動更新施工圖。'}</p><button class="btn pri full" data-act="opencab" style="margin-bottom:8px">開啟 ${esc(x.tag)} 施工圖</button>${del}</section>`:''}${x.src==='cad'?'':`${SEL('cab.rot',x.rot||0,[[0,'正面朝下'],[90,'正面朝左'],[180,'正面朝上'],[270,'正面朝右']],{label:'擺放方向（平面）'})}
    <button class="btn pri full" data-act="opencab" style="margin-bottom:8px">開啟 ${esc(x.tag)} 施工圖</button><div class="acts" style="margin-bottom:8px"><button class="btn" data-act="dup">複製</button><button class="btn" data-act="rot">旋轉 90°</button></div>${del}</section>`}`;
-  case 'czone':return `<section class="sec"><h3>天花分區<small>ZONE</small></h3>${I('czone.label',x.label||'',{label:'名稱（包樑、降板…）'})}${I('czone.ch',x.ch,{label:'天花高度 CH',type:'number'})}${del}</section>`;
+  case 'czone':if(x.kind==='curtain'||x.kind==='ac'){const bb=czBox(x.pts),cu=x.kind==='curtain';return `<section class="sec"><h3>${cu?'窗簾盒':'冷氣包管'}<small>${cu?'CURTAIN BOX':'AC CHASE'}</small></h3><p class="mut">${Math.round(Math.min(bb.w,bb.h))} × ${Math.round(Math.max(bb.w,bb.h))} cm（拖曳角點調整大小）</p>${I('czone.label',x.label||'',{label:'名稱（留白用「'+(cu?'窗簾盒':'冷氣包管')+'」）'})}${cu?I('czone.drop',x.drop??'',{label:'下降高度（從天花往下，公分）',type:'number'}):I('czone.ch',x.ch??'',{label:'包管下緣高度 H（公分）',type:'number'})}<p class="fine" style="margin:0 0 10px">圖面標示：${esc(czText(x))}</p>${del}</section>`;}
+   return `<section class="sec"><h3>天花分區<small>ZONE</small></h3>${I('czone.label',x.label||'',{label:'名稱（包樑、降板…）'})}${I('czone.ch',x.ch,{label:'天花高度 CH',type:'number'})}${del}</section>`;
  }
  return '';
 }
@@ -2169,7 +2189,7 @@ function libHTML(){
  h+=setsHTML(sh);if(cur.tool==='setpick')return h;
  const vis=Object.entries(SYM).filter(([,v])=>symVisible(v,sh.kind));const cats=[...new Set(vis.map(([,v])=>v.cat))];
  cats.forEach(cat=>{h+=`<section class="sec"><h3>${CAT[cat]}</h3><div class="lib">${vis.filter(([,v])=>v.cat===cat).map(([k,v])=>`<button class="li" data-sym="${k}" aria-pressed="${cur.tool==='sym'&&cur.sym===k}">${symPreviewSVG(k)}<span>${v.n}</span></button>`).join('')}</div></section>`;});
- const lines=SHEETKIND[sh.kind].lines;if(lines.length)h+=`<section class="sec"><h3>線條</h3><div class="acts" style="flex-direction:column">${lines.map(t=>`<button class="btn${cur.tool==='line'&&cur.lineType===t?' pri':''}" data-tool="${t}">${LINE[t].n}</button>`).join('')}${SHEETKIND[sh.kind].czone?'<button class="btn" data-tool="czone">天花分區（包樑、降板）</button>':''}</div></section>`;
+ const lines=SHEETKIND[sh.kind].lines;if(lines.length)h+=`<section class="sec"><h3>線條</h3><div class="acts" style="flex-direction:column">${lines.map(t=>`<button class="btn${cur.tool==='line'&&cur.lineType===t?' pri':''}" data-tool="${t}">${LINE[t].n}</button>`).join('')}${SHEETKIND[sh.kind].czone?'<button class="btn" data-tool="czone">天花分區（包樑、降板）</button><button class="btn" data-tool="curtain">窗簾盒</button><button class="btn" data-tool="ac">冷氣包管</button>':''}</div></section>`;
  h+=`<section class="sec"><p class="fine" style="margin:0">插座、開關、給排水靠近牆時會自動貼齊牆面並轉向；按住 Alt 可以自由擺放。</p></section>`;
  return h;
 }
@@ -2265,7 +2285,7 @@ function onField(el,final){
   case 'dim.all':if(x)x.sheet=v?'all':sh.id;break;
   case 'text.str':if(x)x.str=v;break;case 'text.size':if(x)x.size=+v;break;case 'text.bold':if(x)x.bold=!!v;break;case 'text.all':if(x)x.sheet=v?'all':sh.id;break;
   case 'cab.rot':if(x)x.rot=+v;break;
-  case 'czone.label':if(x)x.label=v;break;case 'czone.ch':if(x&&ok)x.ch=n;break;
+  case 'czone.label':if(x)x.label=v;break;case 'czone.ch':if(x){if(v===''&&x.kind)x.ch=null;else if(ok)x.ch=n;}break;case 'czone.drop':if(x){if(v==='')x.drop=null;else if(ok)x.drop=n;}break;
   case 'bg.opacity':if(P.bg)P.bg.opacity=+v;break;
   case 'bg.print':if(P.bg)P.bg.print=!!v;break;
   case 'cad.unit':if(P.cad&&ok){const c=P.cad,b0=c.core||(CADG?CADG.bb:[0,0,0,0]);const w0=cadW(b0[0],b0[1]);c.unit=n;c.unitAuto=false;const w1=cadW(b0[0],b0[1]);c.ox=r1(c.ox+w0[0]-w1[0]);c.oy=r1(c.oy+w0[1]-w1[1]);cadIndex=null;rp=true;if(final)setTimeout(()=>{relinkCadCabs(false);P.sheets.filter(s=>s.kind!=='cab').forEach(s=>fitPlanFrame(s,true));commit();fitView();});}break;
