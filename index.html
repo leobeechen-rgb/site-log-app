@@ -13331,13 +13331,15 @@ function HbHubPhotos({project,notify,readOnly=false}){
    - 預設公司內部；勾選「發布給業主」才加發布標記。目標圖面若在業主共享資料夾，未發布的新版本會加上公司內部標記
    - 逐筆上傳、逐筆記錄結果；重試只處理失敗的項目，已建立的圖面／版本不會重複建立
    - 上傳完成後才提供 LINE 通知入口，不自動傳送 */
-const HB_UNIFIED_CATEGORIES=["配置圖","施工圖","材料","報價","合約","照片","效果圖","未分類"];
+const HB_UNIFIED_CATEGORIES=["配置圖","施工圖","材料","報價","合約","施工照片","效果圖","未分類"];
+/* 施工照片新相簿預設名稱（依工項，與現有相簿命名一致） */
+const HB_SITE_ALBUM_PRESETS=["現況照片","拆除工程","水電工程","泥作工程","木工工程","油漆工程","冷氣工程","系統櫃","玻璃工程","燈具","窗簾","細清","驗收交屋"];
 const HB_RENDER_ALBUM_NAME="渲染效果圖";
 function HB_unifiedGuessCategory(file,no){
   let kind=HB_fileKind({name:file.name,type:file.type});
   if(kind==="DWG"||kind==="DXF")return"施工圖";
   if(kind==="IMAGE"&&/渲染|效果|render|LINE_ALBUM/i.test(file.name))return"效果圖";
-  if(kind==="IMAGE")return no?"配置圖":"照片";
+  if(kind==="IMAGE")return no?"配置圖":"施工照片";
   if(/報價|估價|quote/i.test(file.name))return"報價";
   if(/合約|契約|contract/i.test(file.name))return"合約";
   if(kind==="PDF")return no?"施工圖":"配置圖";
@@ -13359,10 +13361,16 @@ function HbUnifiedUpload({projects,folders,drawings,versions,notify,uploadFile,o
   let[albums,setAlbums]=(0,u.useState)([]);
   (0,u.useEffect)(()=>{q.from("sitelog_albums").select("id,project_id,name,created_at").order("created_at",{ascending:true}).then(r=>{if(!r.error)setAlbums(r.data||[])})},[]);
   let albumsOf=pid=>albums.filter(a=>a.project_id===pid);
-  let albumDefault=pid=>{let a=albumsOf(pid).find(x=>/渲染|效果/.test(x.name||""));return a?a.id:"__new"};
-  let albumOf=r=>r.album||albumDefault(r.projectId);
-  let isAlbumRow=r=>r.category==="效果圖"&&r.kind==="IMAGE";
-  let badAlbumRow=r=>r.category==="效果圖"&&r.kind!=="IMAGE";
+  let isRenderAlbum=a=>/渲染|效果/.test(a.name||"");
+  /* 預設相簿：效果圖→案件既有渲染相簿或新建「渲染效果圖」；施工照片→案件最近建立的施工相簿，沒有就新建「現況照片」 */
+  let albumDefault=(pid,cat)=>{let al=albumsOf(pid);
+    if(cat==="效果圖"){let a=al.find(isRenderAlbum);return a?a.id:"__new:"+HB_RENDER_ALBUM_NAME}
+    let site=al.filter(a=>!isRenderAlbum(a)&&!/^示範/.test(a.name||""));let a=site[site.length-1];return a?a.id:"__new:"+HB_SITE_ALBUM_PRESETS[0]};
+  let albumOf=r=>r.album||albumDefault(r.projectId,r.category);
+  let albumCat=c=>c==="效果圖"||c==="施工照片";
+  let isAlbumRow=r=>albumCat(r.category)&&r.kind==="IMAGE";
+  let badAlbumRow=r=>albumCat(r.category)&&r.kind!=="IMAGE";
+  let albumLabel=r=>{let v=albumOf(r);if(v.startsWith("__new:"))return"新相簿「"+v.slice(6)+"」";let a=albums.find(x=>x.id===v);return a?"相簿「"+a.name+"」":"相簿"};
   rowsRef.current=rows;
   (0,u.useEffect)(()=>()=>{rowsRef.current.forEach(r=>{if(r.thumb)try{URL.revokeObjectURL(r.thumb)}catch{}})},[]);
   (0,u.useEffect)(()=>{let k=e=>{if(e.key==="Escape")tryClose()};window.addEventListener("keydown",k);return()=>window.removeEventListener("keydown",k)});
@@ -13413,11 +13421,17 @@ function HbUnifiedUpload({projects,folders,drawings,versions,notify,uploadFile,o
   };
   let uploader=(()=>{try{return localStorage.getItem(HB_DRAWING_UPLOADER_KEY)||""}catch{return""}})();
   let ensureAlbum=async r=>{
-    let a=albumOf(r);if(a!=="__new")return a;
-    if(albumCache.current[r.projectId])return albumCache.current[r.projectId];
-    let{data,error}=await q.from("sitelog_albums").insert({project_id:r.projectId,name:HB_RENDER_ALBUM_NAME}).select().single();
-    if(error)throw error;
-    albumCache.current[r.projectId]=data.id;setAlbums(as=>[...as,data]);return data.id;
+    let a=albumOf(r);if(!a.startsWith("__new"))return a;
+    let name=(a.slice(6)||HB_RENDER_ALBUM_NAME).trim(),ck=r.projectId+"|"+name;
+    if(albumCache.current[ck])return albumCache.current[ck];
+    /* 同案件已有同名相簿就沿用，不重複建立 */
+    let ex=albumsOf(r.projectId).find(x=>String(x.name).trim()===name);if(ex){albumCache.current[ck]=ex.id;return ex.id}
+    let p=(async()=>{let{data:f}=await q.from("sitelog_albums").select("id,project_id,name,created_at").eq("project_id",r.projectId).eq("name",name).limit(1);
+      if(f&&f[0])return f[0];
+      let{data,error}=await q.from("sitelog_albums").insert({project_id:r.projectId,name}).select().single();
+      if(error)throw error;return data})();
+    albumCache.current[ck]=p.then(d=>d.id);
+    try{let d=await p;setAlbums(as=>as.some(x=>x.id===d.id)?as:[...as,d]);return d.id}catch(e){delete albumCache.current[ck];throw e}
   };
   let runRow=async r0=>{
     let r={...r0};
@@ -13482,7 +13496,7 @@ function HbUnifiedUpload({projects,folders,drawings,versions,notify,uploadFile,o
     setTried(true);
     if(!pending.length||running)return;
     if(missingCase){notify(`還有 ${missingCase} 個檔案沒有選擇案件`);return}
-    if(badAlbum){notify(`「效果圖」只收圖片，有 ${badAlbum} 個檔案請改其他分類`);return}
+    if(badAlbum){notify(`「施工照片／效果圖」只收圖片，有 ${badAlbum} 個檔案請改其他分類`);return}
     setRunning(true);
     let ok=0,fail=0;
     for(let r of rowsRef.current.filter(x=>x.status!=="done")){if(await runRow(r))ok++;else fail++}
@@ -13498,13 +13512,20 @@ function HbUnifiedUpload({projects,folders,drawings,versions,notify,uploadFile,o
   let projOptions=C(u.default.Fragment,null,C("option",{value:""},"選擇案件"),projects.map(p=>C("option",{key:p.id,value:p.id},p.name)));
   let versionCell=r=>{
     if(!r.projectId)return C("div",{className:"hbu-muted"},"先選案件");
-    if(badAlbumRow(r))return C("div",{className:"hbu-sub hbu-warn"},"效果圖只收圖片，請改分類");
-    if(isAlbumRow(r)){let al=albumsOf(r.projectId),cur=albumOf(r);
+    if(badAlbumRow(r))return C("div",{className:"hbu-sub hbu-warn"},r.category+"只收圖片，請改分類");
+    if(isAlbumRow(r)){let al=albumsOf(r.projectId).filter(a=>!/^示範/.test(a.name||"")),cur=albumOf(r);
+      let presets=r.category==="效果圖"?[HB_RENDER_ALBUM_NAME]:HB_SITE_ALBUM_PRESETS;
+      let customs=[...new Set(rows.filter(x=>x.projectId===r.projectId&&String(x.album||"").startsWith("__new:")).map(x=>x.album.slice(6)))];
+      let newNames=[...new Set([...presets,...customs])].filter(n=>!al.some(a=>String(a.name).trim()===n));
+      /* 改一張的相簿，同案件同分類還沒手動選過的照片一起跟著改 */
+      let pick=v=>{if(v==="__custom"){let n=(window.prompt("新相簿名稱（例如：木工工程、10/07 現場）","")||"").trim();if(!n)return;v="__new:"+n.slice(0,40)}
+        setRows(rs=>rs.map(x=>x.key===r.key||(editable(x)&&!x.album&&x.projectId===r.projectId&&x.category===r.category)?{...x,album:v}:x))};
       return C("div",null,
-        C("select",{className:"hbu-sel",disabled:!editable(r),value:cur,onChange:e=>patch(r.key,{album:e.target.value}),"aria-label":"放入相簿"},
-          al.map(a=>C("option",{key:a.id,value:a.id},"相簿："+a.name)),
-          !al.some(a=>a.name===HB_RENDER_ALBUM_NAME)&&C("option",{value:"__new"},"新相簿："+HB_RENDER_ALBUM_NAME)),
-        C("div",{className:"hbu-sub"},"放進照片相簿，不分版本"))}
+        C("select",{className:"hbu-sel",disabled:!editable(r),value:cur,onChange:e=>pick(e.target.value),"aria-label":"放入相簿"},
+          al.length?C("optgroup",{label:"既有相簿"},al.map(a=>C("option",{key:a.id,value:a.id},a.name))):null,
+          C("optgroup",{label:"自動建立新相簿"},newNames.map(n=>C("option",{key:n,value:"__new:"+n},"＋ "+n))),
+          C("option",{value:"__custom"},"＋ 自訂相簿名稱…")),
+        C("div",{className:"hbu-sub"},cur.startsWith("__new:")?"上傳時自動建立相簿":"放進照片相簿，不分版本"))}
     let lock=!editable(r);
     let m=matchesOf(r),ds=caseDrawings(r.projectId),sug=[...m.byNo,...m.byName],rest=ds.filter(d=>!sug.includes(d)).sort(HB_drawingNoCompare);
     let tgt=r.target!=="new"?drawings.find(d=>d.id===r.target):null;
@@ -13573,7 +13594,7 @@ function HbUnifiedUpload({projects,folders,drawings,versions,notify,uploadFile,o
                     C("input",{className:"hbu-in",value:r.name,disabled:!editable(r),placeholder:"名稱",onChange:e=>patch(r.key,{name:e.target.value}),"aria-label":"名稱"})),
                   r.status==="error"&&C("div",{className:"hbu-errmsg"},"失敗：",r.error))),
               C("div",{className:"hbu-cell","data-label":"所屬案件"},C("select",{className:"hbu-sel"+(tried&&!r.projectId?" bad":""),value:r.projectId,disabled:!editable(r)||!!r.drawingId,onChange:e=>patch(r.key,{projectId:e.target.value,target:"new",album:""})},projOptions)),
-              C("div",{className:"hbu-cell","data-label":"分類"},C("select",{className:"hbu-sel",value:r.category,disabled:!editable(r),onChange:e=>patch(r.key,{category:e.target.value})},HB_UNIFIED_CATEGORIES.map(c=>C("option",{key:c,value:c},c)))),
+              C("div",{className:"hbu-cell","data-label":"分類"},C("select",{className:"hbu-sel",value:r.category,disabled:!editable(r),onChange:e=>patch(r.key,{category:e.target.value,album:""})},HB_UNIFIED_CATEGORIES.map(c=>C("option",{key:c,value:c},c)))),
               C("div",{className:"hbu-cell","data-label":"版本處理"},versionCell(r)),
               C("div",{className:"hbu-cell","data-label":"業主可見"},visCell(r)),
               C("div",{className:"hbu-act"},statusCell(r))))),
