@@ -12181,7 +12181,59 @@ function HbProjectDrawingFiles({data,loading,onOpenHub,onReload,onSignature}){
   );
 }
 
-function HbDrawingHub({onBack,notify,project=null,embedded=false,initialView="drawings",workbench=null,onNewCase=null,projects=null,onOpenProject=null}){
+const HB_LIB_CSS=`
+      /* 2026-10：專案首頁（上方精簡工作台＋左側待發布／上傳＋下方專案） */
+      .hb-lib-grid{display:grid;grid-template-columns:minmax(0,1fr);grid-template-areas:"wb" "side" "main";gap:16px}
+      .hb-lib-wb{grid-area:wb;min-width:0}.hb-lib-side{grid-area:side;min-width:0}.hb-lib-main{grid-area:main;min-width:0}
+      @media(min-width:1100px){
+        .hb-lib-grid{grid-template-columns:250px minmax(0,1fr);grid-template-areas:"side wb" "side main";column-gap:22px;max-width:1500px;margin:0 auto;align-items:start}
+        .hb-lib-side{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto}
+      }
+      .hb-libside{display:flex;flex-direction:column;gap:14px;font-family:'Noto Sans TC',sans-serif;color:#211f1b}
+      .hb-ls-up{display:flex;align-items:center;justify-content:center;gap:8px;height:46px;border:1px solid #2E4A3C;background:#2E4A3C;color:#f5f1e8;font-family:inherit;font-size:14.5px;letter-spacing:.08em;cursor:pointer}
+      .hb-ls-up:hover{background:#243b30}.hb-ls-up:disabled{opacity:.6}
+      .hb-ls-sec{border:1px solid rgba(57,51,47,.14);background:rgba(255,255,255,.55);padding:14px 14px 10px}
+      .hb-ls-sec h3{display:flex;align-items:center;gap:8px;margin:0;font:400 16px 'Noto Serif TC',serif;letter-spacing:.06em}
+      .hb-ls-sec h3 em{font-style:normal;min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:rgba(57,51,47,.1);color:#5f584f;font:500 11px 'Noto Sans TC',sans-serif;display:inline-flex;align-items:center;justify-content:center}
+      .hb-ls-sec h3 em.on{background:#b4573a;color:#fff}
+      .hb-ls-sec h3 span{margin-left:auto;font:400 9.5px Georgia,serif;letter-spacing:.2em;color:#9a9083}
+      .hb-ls-hint{margin:4px 0 6px;font-size:11.5px;color:#8b8277;line-height:1.5}
+      .hb-ls-empty{margin:8px 0 6px;font-size:12.5px;color:#9a9083}
+      .hb-ls-list{list-style:none;margin:4px 0 0;padding:0}
+      .hb-ls-row{display:flex;align-items:center;gap:6px;padding:7px 0;border-top:1px solid rgba(57,51,47,.08)}
+      .hb-ls-row:first-child{border-top:0}
+      .hb-ls-main{flex:1;min-width:0;display:flex;align-items:center;gap:9px;border:0;background:none;padding:0;text-align:left;font-family:inherit;cursor:pointer;color:inherit}
+      .hb-ls-thumb{flex:none;width:34px;height:34px;display:flex;align-items:center;justify-content:center;background:#f3efe7;border:1px solid rgba(57,51,47,.1);overflow:hidden}
+      .hb-ls-thumb img{width:100%;height:100%;object-fit:cover}
+      .hb-ls-txt{min-width:0;display:flex;flex-direction:column;gap:1px}
+      .hb-ls-txt b{font-weight:500;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .hb-ls-txt small{font-size:11px;color:#8b8277;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .hb-ls-main:hover b{color:#2E4A3C;text-decoration:underline;text-underline-offset:3px}
+      .hb-ls-pub{flex:none;height:30px;padding:0 10px;border:1px solid #2E4A3C;background:#fff;color:#2E4A3C;font-family:inherit;font-size:12px;cursor:pointer}
+      .hb-ls-pub:hover{background:#2E4A3C;color:#fff}
+      .hb-ls-more{margin:6px 0 2px;border:0;background:none;padding:0;font-family:inherit;font-size:12px;color:#2E4A3C;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+      .hb-ls-hub{display:flex;align-items:center;justify-content:center;gap:6px;height:40px;border:1px solid rgba(57,51,47,.22);background:transparent;font-family:inherit;font-size:13px;color:#403a33;cursor:pointer}
+      .hb-ls-hub:hover{border-color:#2E4A3C;color:#2E4A3C}
+      @media(max-width:1099px){
+        .hb-libside{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+        .hb-ls-up,.hb-ls-hub{grid-column:1/-1}
+      }
+      @media(max-width:680px){.hb-libside{grid-template-columns:minmax(0,1fr)}}
+      /* 精簡工作台：高度減少（每欄 2 筆、追蹤列不顯示操作鈕與最新進度） */
+      .wbc.is-compact{padding-top:14px!important;padding-bottom:12px!important}
+      .wbc.is-compact .wbc-carnet{font-size:26px!important}
+      .wbc.is-compact .wbc-head{margin-bottom:8px!important;row-gap:8px!important}
+      .wbc.is-compact .wbc-facts,.wbc.is-compact .wbc-last{display:none!important}
+      .wbc.is-compact .wbc-row,.wbc.is-compact .wbc-ag{padding-top:7px!important;padding-bottom:7px!important}
+      .wbc.is-compact .wbc-cols>*{padding-top:8px!important;padding-bottom:6px!important}
+      .wbc.is-compact .wbc-cols h3{margin-bottom:4px!important}
+      @media(max-width:899px){
+        .wbc.is-compact .wbc-cols{display:flex!important;overflow-x:auto;scroll-snap-type:x mandatory;gap:12px;margin:6px -4px 0;padding:0 4px 4px;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain}
+        .wbc.is-compact .wbc-cols>*{flex:0 0 86%;scroll-snap-align:start;border:1px solid rgba(57,51,47,.12)!important;padding:10px 12px 8px!important;background:rgba(255,255,255,.45)}
+        .wbc.is-compact .wbc-list{max-height:none}
+      }
+`;
+function HbDrawingHub({onBack,notify,project=null,embedded=false,initialView="drawings",workbench=null,onNewCase=null,projects=null,onOpenProject=null,sideOnly=false,onOpenHub=null}){
   let[unifiedOpen,setUnifiedOpen]=(0,u.useState)(false);
   /* 進場：主內容淡入一次；案件卡片在資料第一次載入完成時依序浮現，之後搜尋／篩選／同步都不重播 */
   let[introPhase,setIntroPhase]=(0,u.useState)(()=>HB_reduceMotion()?"done":"wait");
@@ -12620,6 +12672,43 @@ function HbDrawingHub({onBack,notify,project=null,embedded=false,initialView="dr
     return out.map(e=>e.type==="group"&&e.items.length<2?{type:"file",key:e.items[0].id,d:e.items[0]}:e)})();
   (0,u.useEffect)(()=>{if(!hubProject&&hubView!=="drawings")setHubView("drawings")},[hubProject&&hubProject.id]);
 
+  if(sideOnly){
+    const C=u.default.createElement;
+    let upAt=d=>{let cv=currentVersionOf(d);return cv&&cv.uploadedAt?new Date(cv.uploadedAt).getTime():0};
+    let pendList=scopedDrawings.filter(pendingOf).sort((a,b)=>upAt(b)-upAt(a));
+    let since=Date.now()-14*864e5;
+    let recentInt=scopedDrawings.filter(d=>!shareOf(d).shared&&upAt(d)>=since).sort((a,b)=>upAt(b)-upAt(a));
+    let row=(d,kind)=>{let c=caseOfDrawing(d),cv=currentVersionOf(d),pv=publishedVersionOf(d);
+      return C("li",{key:d.id,className:"hb-ls-row"},
+        C("button",{type:"button",className:"hb-ls-main",onClick:()=>setVersionModalId(d.id),title:"查看詳情"},
+          C("span",{className:"hb-ls-thumb"},cv&&cv.mime&&cv.mime.startsWith("image/")?C("img",{src:cv.url,alt:"",loading:"lazy"}):C(E,{name:cv&&HB_drawingIsCad(cv)?"file-output":"file-text",size:16,color:"#B4573A"})),
+          C("span",{className:"hb-ls-txt"},C("b",null,[d.drawingNo,d.name].filter(Boolean).join(" ")),
+            C("small",null,[c&&c.name,kind==="pend"&&cv&&pv?"V"+cv.versionNo+"・業主看 V"+pv.versionNo:cv?"V"+cv.versionNo+"・"+String(cv.uploadedAt||"").slice(5,10).replace("-","/"):""].filter(Boolean).join("・")))),
+        cv&&C("button",{type:"button",className:"hb-ls-pub",onClick:()=>publishDrawing(d)},"發布"));};
+    let sec=(title,en,list,kind,empty,hint,max)=>C("section",{className:"hb-ls-sec"},
+      C("h3",null,title,C("em",{className:list.length&&kind==="pend"?"on":""},list.length),C("span",null,en)),
+      hint&&C("p",{className:"hb-ls-hint"},hint),
+      loading?C("p",{className:"hb-ls-empty"},"讀取中…"):list.length===0?C("p",{className:"hb-ls-empty"},empty):
+      C("ul",{className:"hb-ls-list"},list.slice(0,max).map(d=>row(d,kind))),
+      !loading&&list.length>max&&onOpenHub&&C("button",{type:"button",className:"hb-ls-more",onClick:onOpenHub},"還有 "+(list.length-max)+" 筆，開啟資料與圖面"));
+    return C("div",{className:"hb-libside"},
+      C("style",null,HB_LIB_CSS),
+      C("button",{type:"button",className:"hb-ls-up",onClick:()=>setUnifiedOpen(true),disabled:loading},C(E,{name:"plus",size:16}),"上傳檔案"),
+      sec("待發布","À PUBLIER",pendList,"pend","沒有待發布的新版本","業主已在看的圖面，有新版還沒發布",6),
+      sec("近期上傳","RÉCENTS",recentInt,"recent","近兩週沒有僅公司可見的新檔","兩週內上傳、目前只有公司看得到",5),
+      onOpenHub&&C("button",{type:"button",className:"hb-ls-hub",onClick:onOpenHub},"開啟資料與圖面",C(E,{name:"arrow-right",size:14})),
+      u.default.createElement("input",{ref:fileInputRef,type:"file",accept:"image/*,.pdf,application/pdf,.dwg,.dxf",multiple:true,style:{display:"none"},onChange:handleNewDrawingUpload}),
+      u.default.createElement("input",{ref:newVersionInputRef,type:"file",accept:"image/*,.pdf,application/pdf,.dwg,.dxf",style:{display:"none"},onChange:handleNewVersionUpload}),
+    viewingDrawing&&u.default.createElement(HbDrawingVersionModal,{drawing:viewingDrawing,folderPath:folderPathOf(viewingDrawing.folderId).map(f=>f.name).join("／"),versions:versionsFor(viewingDrawing.id),publishedVersionId:shareOf(viewingDrawing).publishedVersionId,isShared:shareOf(viewingDrawing).shared,byFolder:!!shareOf(viewingDrawing).byFolder,ownerPreview,siblings:drawings.filter(x=>x.folderId===viewingDrawing.folderId&&(!ownerPreview||shareOf(x).shared)),categories:categoryOptions,notify,onSwitch:id=>setVersionModalId(id),onClose:()=>setVersionModalId(null),onRestore:vid=>restoreVersion(viewingDrawing.id,vid),onPublish:vid=>publishVersion(viewingDrawing,vid),onUpload:()=>openNewVersionPicker(viewingDrawing.id),onToggleShare:()=>toggleDrawingShare(viewingDrawing),onRotate:rotateDrawingVersion,onSaveInfo:info=>saveDrawingInfo(viewingDrawing,info),onBakeRotation:bakePdfRotation,onLineNotify:()=>openLineNotify([viewingDrawing.id])}),
+    moveDrawingId&&(()=>{let d=drawings.find(x=>x.id===moveDrawingId);if(!d)return null;let root=caseRootOf(d.folderId);if(!root)return null;
+      let rows=[],walk=(f,depth)=>{rows.push({f,depth});folders.filter(x=>x.parentId===f.id).sort((a,b)=>String(a.name).localeCompare(String(b.name),"zh-Hant")).forEach(c=>walk(c,depth+1))};walk(root,0);
+      return u.default.createElement(HbDrawingMoveModal,{drawing:d,rows,sharedOf:id=>!!sharedFolderOf(id),onCancel:()=>setMoveDrawingId(null),onMove:fid=>moveDrawing(d,fid)})})(),
+    uploadQueue&&(()=>{let forced=uploadQueue.forcedDrawingId&&drawings.find(x=>x.id===uploadQueue.forcedDrawingId);let fid=forced?forced.folderId:currentFolderId;return u.default.createElement(HbDrawingUploadDialog,{key:uploadQueue.files.map(f=>f.name).join("|"),files:uploadQueue.files,folderName:(folders.find(f=>f.id===fid)||{}).name,folderDrawings:drawings.filter(x=>x.folderId===fid),categories:categoryOptions,forcedDrawingId:uploadQueue.forcedDrawingId,versionsOf:versionsFor,busy:uploading,onCancel:()=>!uploading&&setUploadQueue(null),onSubmit:submitUploadQueue})})(),
+    lineNotify&&u.default.createElement(HbDrawingLineNotify,{...lineNotify,notify,onClose:()=>setLineNotify(null),onSent:markLineNotified}),
+    unifiedOpen&&projects&&u.default.createElement(HbUnifiedUpload,{projects:(projects||[]).filter(p=>!/^示範案件/.test(p.name||"")),folders,drawings,versions,notify,uploadFile:uploadFileToDrawing,
+      onUploaded:()=>load(),onClose:()=>setUnifiedOpen(false),onNotify:ids=>{setUnifiedOpen(false);setTimeout(()=>openLineNotify(ids),60)}}),
+    );
+  }
   return u.default.createElement("div",{className:"hb-archive hb-dossier hb-plan-system"+(isHome?" is-home":""),style:{minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},
     u.default.createElement("style",null,`
       .hb-plan-system{--plan-green:#315c48;--plan-rust:#b4573a;--plan-ink:#211f1b;--plan-paper:rgba(255,255,255,.62)}
@@ -12701,6 +12790,7 @@ function HbDrawingHub({onBack,notify,project=null,embedded=false,initialView="dr
       @media(max-width:680px){.hb-plan-stats{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important;margin-bottom:12px!important}.hb-plan-stat{padding:10px 12px!important}.hb-plan-stat>div:first-child{font-size:20px!important;line-height:1.1}}
       @media(max-width:900px){.hb-plan-features{grid-template-columns:repeat(2,1fr)}.hb-plan-folder-grid{grid-template-columns:repeat(2,1fr)}.hb-plan-tr{grid-template-columns:74px minmax(200px,1.7fr) 60px 124px 132px}.hb-plan-tr>*:nth-child(3),.hb-plan-tr>*:nth-child(5),.hb-plan-tr>*:nth-child(7){display:none}}
       @media(max-width:680px){.hb-plan-toolbar{display:grid;grid-template-columns:1fr 1fr;gap:8px}.hb-pt{width:100%;min-width:0;padding:0 8px;font-size:14px}.hb-pt-upload{order:1;height:48px}.hb-pt-folder{order:2;height:48px}.hb-pt-up{order:3;height:42px}.hb-pt-preview{order:4;height:42px;margin-left:0}.hb-pt-line{order:5;grid-column:1 / -1;height:46px}.hb-pt-after span{flex:1 1 100%}.hb-pt-after button.go{flex:1}.hb-pt-after button{height:40px}.hb-pt .lg{display:none}.hb-pt .sm{display:inline}.hb-plan-filters{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px!important;overflow:visible!important}.hb-plan-filters>input{grid-column:1 / -1;min-width:0!important;width:100%!important;box-sizing:border-box}.hb-plan-filters.has-cat>input{grid-column:1 / 3}.hb-plan-filters>select{grid-column:3 / 5;min-width:0!important;width:100%!important;padding:9px 6px!important}.hb-plan-filters>button{min-width:0;padding:0 2px!important;height:40px;font-size:12.5px!important}.hb-plan-reghead{flex-direction:column;align-items:stretch!important}.hb-plan-reghead>div:last-child{justify-content:space-between!important}.hb-plan-features{grid-template-columns:1fr 1fr}.hb-plan-feature{padding:10px}.hb-plan-feature small{display:none}.hb-plan-folder-grid{grid-template-columns:1fr}.hb-plan-folder{min-height:116px;padding:16px}.hb-plan-folder-title{margin-top:14px}.hb-plan-table{display:none}.hb-plan-mobile{display:flex;flex-direction:column;gap:10px}.hb-plan-modal{width:100vw;height:100dvh}.hb-plan-modal-head{padding:11px 12px;gap:8px}.hb-plan-modal-head .hb-plan-pill{max-width:108px;overflow:hidden;text-overflow:ellipsis}.hb-plan-modal-body{display:block;overflow:auto}.hb-plan-stage{padding:12px;display:block;overflow:visible}.hb-plan-side{border-left:0;border-top:1px solid rgba(57,51,47,.13);padding:15px}.hb-plan-preview{height:min(58vh,520px);min-height:320px}.hb-plan-rotatebar{grid-template-columns:1fr;gap:7px;padding:8px}.hb-plan-rotatelabel{display:flex;align-items:center;justify-content:space-between}.hb-plan-rotatelabel strong{display:inline;margin:0;font-size:17px}.hb-plan-angle{min-height:42px}.hb-plan-compare{display:grid;grid-template-columns:1fr;height:auto}.hb-plan-compare>div{display:block}.hb-plan-compare .hb-plan-preview{height:44vh;min-height:280px;margin-top:6px}}
+
 
 
       /* 2026-10：專案後台框架（左側導覽＋上方搜尋＋專案卡片） */
@@ -14827,11 +14917,11 @@ function HbHubWorkbench({projects,onOpenProject,onCalendar,onTodayHub}){
   const tk=HB_useToday(projects||[],true),[proj,setProj]=u.useState(''),ref=u.useRef(null);
   return u.default.createElement(HbWorkbench,{tk,projects:projects||[],proj,setProj,wbRef:ref,onOpenProject,onCalendar,onTodayHub});
 }
-function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setProj,wbRef}){
+function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setProj,wbRef,compact=false}){
   const h=u.default.createElement,{all,today,ready,error,sync}=tk;
   const [editing,setEditing]=u.useState(null),[drawer,setDrawer]=u.useState(null),[cfList,setCfList]=u.useState(false),[cfOpen,setCfOpen]=u.useState(null),[full,setFull]=u.useState(''),[toast,setToast]=u.useState('');
   u.useEffect(()=>{if(!toast)return;const t=setTimeout(()=>setToast(''),3200);return()=>clearTimeout(t)},[toast]);
-  const say=m=>setToast(m),LIM=3;
+  const say=m=>setToast(m),LIM=compact?2:3;
   /* 完成待辦動態：saving（勾選＋刪除線）→ 儲存成功 leaving（淡出收合）→ 移除；失敗 error（保留並可重試） */
   const [fx,setFx]=u.useState({}),[undo,setUndo]=u.useState(null);
   u.useEffect(()=>{if(!undo)return;const tm=setTimeout(()=>setUndo(null),6000);return()=>clearTimeout(tm)},[undo]);
@@ -14915,7 +15005,7 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
     h('button',{type:'button',className:'wbc-more',onClick:onMore},moreLabel,HB_wbIcon('arrow',14)));
   const d=new Date(today+'T00:00:00');
   const fullList=full==='open'?openMixed:full==='follow'?follows:full==='closed'?closedFollows:[];
-  return h('section',{className:'hb-wb wbc',ref:wbRef,'aria-label':'工作台'},
+  return h('section',{className:'hb-wb wbc'+(compact?' is-compact':''),ref:wbRef,'aria-label':'工作台'},
     h('header',{className:'wbc-head'},
       h('div',{className:'wbc-titlewrap'},h('h2',{className:'wbc-carnet'},'Le Carnet du Jour'),h('span',{className:'wbc-fr'},'工作台')),
       h('div',{className:'wbc-date'},String(d.getMonth()+1).padStart(2,'0')+'月'+String(d.getDate()).padStart(2,'0')+'日　'+HB_wbWeek(today).replace('週','星期')),
@@ -15379,7 +15469,7 @@ function Gy(){let[l,t]=(0,u.useState)(!0),[e,n]=(0,u.useState)(!1),[a,i]=(0,u.us
         }
         .fade-in { animation: hbFadeIn .2s var(--hb-ease-out) both; }
         @media (prefers-reduced-motion: reduce){ .fade-in { animation-name: hbFadeInSoft; } }
-      `),u.default.createElement("div",{key:o,className:"hb-pagein",style:{height:"100%",overflowY:o==="landing"?"hidden":"auto",WebkitOverflowScrolling:"touch",paddingBottom:o==="landing"?0:92}},l?u.default.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh"}},u.default.createElement(E,{name:"loader",className:"animate-spin",size:28,color:s.ocean})):o==="landing"?u.default.createElement(HbLanding,{onToday:()=>f("today"),onCase:()=>f("home"),onCompany:()=>f("companyHub"),onManageStaff:()=>f("staff"),onQuickQuote:()=>f("estimateHub"),onProposal:()=>HB_openProposalSystem(),onMarketingPhotos:()=>f("marketingPhotos"),onBookings:()=>f("bookings"),onOpenBooking:()=>HB_openBookingSystem(),onDrawings:()=>f("drawings"),onLogout:()=>{HB_staffLogout()}}):o==="today"?u.default.createElement(HbWorkHub,{projects:a,notify:g,initialView:"today",onBack:()=>f("landing"),onOpenProject:id=>{if(a.some(p=>p.id===id)){r(id);hbSetOpenTab("overview");f("detail")}else g("找不到這個案場，請重新整理")}}):o==="companyHub"?u.default.createElement(HbCompanyHub,{onBack:()=>f("landing"),onContracts:()=>f("contracts"),onQuotes:()=>f("estimateHub"),onReceipts:()=>f("receipts"),onVendorReceipts:()=>f("vendorReceipts"),onQuickQuote:()=>f("estimateHub"),onGoHome:()=>f("home"),onVendorQuotes:()=>f("vendorQuotes"),onProposal:()=>HB_openProposalSystem(),onMarketingPhotos:()=>f("marketingPhotos"),onBookings:()=>f("bookings"),onOpenBooking:()=>HB_openBookingSystem(),onDrawings:()=>f("drawings"),onAttendance:()=>f("attendance"),onPriceBook:()=>f("priceBook"),onSurvey:()=>f("survey"),onChangeOrders:()=>f("changeOrders"),onPdfRotate:()=>f("pdfRotate"),onDocs:()=>f("docsHub")}):o==="docsHub"?u.default.createElement(HbDocsHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="changeOrders"?u.default.createElement(HbChangeOrderHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="survey"?u.default.createElement(HbSurveyHub,{onBack:()=>f("companyHub"),notify:g,projects:a,onProjectCreated:pj=>i(v=>[cm(pj),...v])}):o==="priceBook"?u.default.createElement(HbPriceBookHub,{onBack:()=>f("companyHub"),notify:g}):o==="attendance"?u.default.createElement(HbAttendanceHub,{onBack:()=>f("companyHub"),notify:g}):o==="marketingPhotos"?u.default.createElement(HbMarketingPhotoHub,{onBack:()=>f("landing"),notify:g}):o==="bookings"?u.default.createElement(HbWorkHub,{projects:a,notify:g,initialView:"calendar",onBack:()=>f("landing"),onOpenProject:id=>{if(a.some(p=>p.id===id)){r(id);hbSetOpenTab("overview");f("detail")}else g("找不到這個案場，請重新整理")}}):o==="vendorQuotes"?u.default.createElement(HbVendorQuoteHub,{onBack:()=>f("companyHub"),notify:g}):o==="drawings"?u.default.createElement(HbDrawingHub,{onBack:()=>f("landing"),notify:g,projects:a,onOpenProject:(id,tab)=>{if(a.some(p=>p.id===id)){r(id);hbSetOpenTab(tab||"overview");f("detail")}else g("找不到這個案場，請重新整理")},onNewCase:()=>{f("home");h(!0)},workbench:u.default.createElement(HbHubWorkbench,{projects:a,onCalendar:()=>f("today"),onTodayHub:()=>f("today"),onOpenProject:id=>{if(a.some(p=>p.id===id)){r(id);hbSetOpenTab("overview");f("detail")}else g("找不到這個案場，請重新整理")}})}):o==="receipts"?u.default.createElement(HbReceiptsHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="vendorReceipts"?u.default.createElement(HbVendorReceiptsHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="quoteImportPick"?u.default.createElement(Iy,{projects:a,onOpen:hbImportQuote,onNew:()=>h(!0),onRefresh:()=>{D(!0),y()},refreshing:e,storageUsedBytes:z,onManageStaff:()=>f("staff"),pickerMode:!0,progressRanges:hbProg,onBack:()=>f("companyHub")}):o==="estimateHub"?u.default.createElement(HerfulsinsEstimateHub,{project:null,notify:g,onClose:()=>f("companyHub")}):o==="home"?u.default.createElement(Iy,{projects:a,onOpen:T=>{r(T),hbSetOpenTab("photos"),f("detail")},onWbOpen:T=>{r(T),hbSetOpenTab("overview"),f("detail")},onCalendar:()=>f("today"),onTodayHub:()=>f("today"),onNew:()=>h(!0),onRefresh:()=>{D(!0),y()},refreshing:e,storageUsedBytes:z,onManageStaff:()=>f("staff"),progressRanges:hbProg,onBack:()=>f("landing"),onGoCompany:()=>f("companyHub")}):o==="staff"?u.default.createElement(Ky,{onBack:()=>f("landing")}):o==="pdfRotate"?u.default.createElement(HbPdfRotate,{onBack:()=>f("companyHub"),notify:g}):o==="contracts"?u.default.createElement(HerfulsinsContractsHub,{onBack:()=>f("landing"),notify:g}):o==="digitalCard"?u.default.createElement(HbDigitalCard,{onBack:()=>f("landing"),notify:g}):u.default.createElement(lh,{project:j,onBack:()=>f("home"),onUpdateMeta:S,onDelete:M,notify:g,initialTab:"overview"})),d&&u.default.createElement(Py,{onCancel:()=>h(!1),onCreate:b}),m&&u.default.createElement("div",{className:"hb-toast",style:{position:"fixed",bottom:20,left:"50%",background:s.ink,color:s.card,padding:"10px 18px",borderRadius:8,fontSize:13,boxShadow:"0 4px 14px rgba(0,0,0,0.25)",zIndex:60}},m),u.default.createElement(HbBottomNav,{active:o,onNavigate:T=>f(T)}))}
+      `),u.default.createElement("div",{key:o,className:"hb-pagein",style:{height:"100%",overflowY:o==="landing"?"hidden":"auto",WebkitOverflowScrolling:"touch",paddingBottom:o==="landing"?0:92}},l?u.default.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh"}},u.default.createElement(E,{name:"loader",className:"animate-spin",size:28,color:s.ocean})):o==="landing"?u.default.createElement(HbLanding,{onToday:()=>f("today"),onCase:()=>f("home"),onCompany:()=>f("companyHub"),onManageStaff:()=>f("staff"),onQuickQuote:()=>f("estimateHub"),onProposal:()=>HB_openProposalSystem(),onMarketingPhotos:()=>f("marketingPhotos"),onBookings:()=>f("bookings"),onOpenBooking:()=>HB_openBookingSystem(),onDrawings:()=>f("drawings"),onLogout:()=>{HB_staffLogout()}}):o==="today"?u.default.createElement(HbWorkHub,{projects:a,notify:g,initialView:"today",onBack:()=>f("landing"),onOpenProject:id=>{if(a.some(p=>p.id===id)){r(id);hbSetOpenTab("overview");f("detail")}else g("找不到這個案場，請重新整理")}}):o==="companyHub"?u.default.createElement(HbCompanyHub,{onBack:()=>f("landing"),onContracts:()=>f("contracts"),onQuotes:()=>f("estimateHub"),onReceipts:()=>f("receipts"),onVendorReceipts:()=>f("vendorReceipts"),onQuickQuote:()=>f("estimateHub"),onGoHome:()=>f("home"),onVendorQuotes:()=>f("vendorQuotes"),onProposal:()=>HB_openProposalSystem(),onMarketingPhotos:()=>f("marketingPhotos"),onBookings:()=>f("bookings"),onOpenBooking:()=>HB_openBookingSystem(),onDrawings:()=>f("drawings"),onAttendance:()=>f("attendance"),onPriceBook:()=>f("priceBook"),onSurvey:()=>f("survey"),onChangeOrders:()=>f("changeOrders"),onPdfRotate:()=>f("pdfRotate"),onDocs:()=>f("docsHub")}):o==="docsHub"?u.default.createElement(HbDocsHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="changeOrders"?u.default.createElement(HbChangeOrderHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="survey"?u.default.createElement(HbSurveyHub,{onBack:()=>f("companyHub"),notify:g,projects:a,onProjectCreated:pj=>i(v=>[cm(pj),...v])}):o==="priceBook"?u.default.createElement(HbPriceBookHub,{onBack:()=>f("companyHub"),notify:g}):o==="attendance"?u.default.createElement(HbAttendanceHub,{onBack:()=>f("companyHub"),notify:g}):o==="marketingPhotos"?u.default.createElement(HbMarketingPhotoHub,{onBack:()=>f("landing"),notify:g}):o==="bookings"?u.default.createElement(HbWorkHub,{projects:a,notify:g,initialView:"calendar",onBack:()=>f("landing"),onOpenProject:id=>{if(a.some(p=>p.id===id)){r(id);hbSetOpenTab("overview");f("detail")}else g("找不到這個案場，請重新整理")}}):o==="vendorQuotes"?u.default.createElement(HbVendorQuoteHub,{onBack:()=>f("companyHub"),notify:g}):o==="drawings"?u.default.createElement(HbDrawingHub,{onBack:()=>f("landing"),notify:g,projects:a,onOpenProject:(id,tab)=>{if(a.some(p=>p.id===id)){r(id);hbSetOpenTab(tab||"overview");f("detail")}else g("找不到這個案場，請重新整理")},onNewCase:()=>{f("home");h(!0)},workbench:u.default.createElement(HbHubWorkbench,{projects:a,onCalendar:()=>f("today"),onTodayHub:()=>f("today"),onOpenProject:id=>{if(a.some(p=>p.id===id)){r(id);hbSetOpenTab("overview");f("detail")}else g("找不到這個案場，請重新整理")}})}):o==="receipts"?u.default.createElement(HbReceiptsHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="vendorReceipts"?u.default.createElement(HbVendorReceiptsHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="quoteImportPick"?u.default.createElement(Iy,{projects:a,onOpen:hbImportQuote,onNew:()=>h(!0),onRefresh:()=>{D(!0),y()},refreshing:e,storageUsedBytes:z,onManageStaff:()=>f("staff"),pickerMode:!0,progressRanges:hbProg,onBack:()=>f("companyHub")}):o==="estimateHub"?u.default.createElement(HerfulsinsEstimateHub,{project:null,notify:g,onClose:()=>f("companyHub")}):o==="home"?u.default.createElement(Iy,{projects:a,notify:g,onOpenHub:()=>f("drawings"),onOpen:T=>{r(T),hbSetOpenTab("photos"),f("detail")},onWbOpen:T=>{r(T),hbSetOpenTab("overview"),f("detail")},onCalendar:()=>f("today"),onTodayHub:()=>f("today"),onNew:()=>h(!0),onRefresh:()=>{D(!0),y()},refreshing:e,storageUsedBytes:z,onManageStaff:()=>f("staff"),progressRanges:hbProg,onBack:()=>f("landing"),onGoCompany:()=>f("companyHub")}):o==="staff"?u.default.createElement(Ky,{onBack:()=>f("landing")}):o==="pdfRotate"?u.default.createElement(HbPdfRotate,{onBack:()=>f("companyHub"),notify:g}):o==="contracts"?u.default.createElement(HerfulsinsContractsHub,{onBack:()=>f("landing"),notify:g}):o==="digitalCard"?u.default.createElement(HbDigitalCard,{onBack:()=>f("landing"),notify:g}):u.default.createElement(lh,{project:j,onBack:()=>f("home"),onUpdateMeta:S,onDelete:M,notify:g,initialTab:"overview"})),d&&u.default.createElement(Py,{onCancel:()=>h(!1),onCreate:b}),m&&u.default.createElement("div",{className:"hb-toast",style:{position:"fixed",bottom:20,left:"50%",background:s.ink,color:s.card,padding:"10px 18px",borderRadius:8,fontSize:13,boxShadow:"0 4px 14px rgba(0,0,0,0.25)",zIndex:60}},m),u.default.createElement(HbBottomNav,{active:o,onNavigate:T=>f(T)}))}
 
 /* ===================================================================
    設計需求問卷：公司端建立連結 → 業主線上填 → 答案回到案件
@@ -17464,9 +17554,9 @@ function mm({photos,index,onIndexChange,onClose,onAnnotate,onDelete,onDownload})
   ), document.body);
 }
 
-function $y(l){return l==null?null:(l/(1024*1024)).toFixed(1)}function Iy({projects:l,onOpen:t,onNew:e,onRefresh:n,refreshing:a,storageUsedBytes:i,onManageStaff:o,pickerMode:hbPM,onBack:hbBack,onGoCompany:hbGoCo,progressRanges:hbProg={},onWbOpen:hbWbOpen,onCalendar:hbCal,onTodayHub:hbTodayHub}){
+function $y(l){return l==null?null:(l/(1024*1024)).toFixed(1)}function Iy({projects:l,onOpen:t,onNew:e,onRefresh:n,refreshing:a,storageUsedBytes:i,onManageStaff:o,pickerMode:hbPM,onBack:hbBack,onGoCompany:hbGoCo,progressRanges:hbProg={},onWbOpen:hbWbOpen,onCalendar:hbCal,onTodayHub:hbTodayHub,notify:hbNotify,onOpenHub:hbOpenHub}){
   let c=$y(i),r=i!=null?Math.min(100,i/10737418240*100):null,[hbMenuOpen,hbSetMenuOpen]=(0,u.useState)(!1);
-  const hbTk=HB_useToday(l,!1),hbCounts=hbPM?{}:HB_wbProjectCounts(hbTk.all),[hbProj,hbSetProj]=(0,u.useState)(""),hbWbRef=(0,u.useRef)(null);
+  const hbTk=HB_useToday(l,!hbPM),hbCounts=hbPM?{}:HB_wbProjectCounts(hbTk.all),[hbProj,hbSetProj]=(0,u.useState)(""),hbWbRef=(0,u.useRef)(null);
   const hbShowProj=id=>{hbSetProj(id);setTimeout(()=>{const el=hbWbRef.current;if(el)el.scrollIntoView({behavior:"smooth",block:"start"})},30)};
   return u.default.createElement("div",{className:hbPM?undefined:"hb-project-library",style:{background:s.paper,minHeight:"100vh",position:"relative"}},
     u.default.createElement("style",null,`
@@ -17510,8 +17600,11 @@ function $y(l){return l==null?null:(l/(1024*1024)).toFixed(1)}function Iy({proje
       )
     ),
 
-    /* 今日待辦工作台已搬到「專案資料與圖面」首層（HbHubWorkbench），這裡不再重複顯示 */
-    u.default.createElement("div",{style:{padding:"6px 16px 112px",position:"relative",zIndex:1}},
+    /* 專案首頁：上方精簡工作台、左側待發布＋上傳檔案、下方專案卡片 */
+    u.default.createElement("div",{className:hbPM?undefined:"hb-lib-grid",style:{padding:"6px 16px 112px",position:"relative",zIndex:1}},
+      !hbPM&&u.default.createElement("div",{className:"hb-lib-wb"},u.default.createElement(HbWorkbench,{tk:hbTk,projects:l,proj:hbProj,setProj:hbSetProj,wbRef:hbWbRef,compact:true,onOpenProject:hbWbOpen,onCalendar:hbCal,onTodayHub:hbTodayHub})),
+      !hbPM&&u.default.createElement("aside",{className:"hb-lib-side","aria-label":"待發布與上傳"},u.default.createElement(HbDrawingHub,{sideOnly:true,projects:l,notify:hbNotify||(()=>{}),onBack:()=>{},onOpenHub:hbOpenHub})),
+      u.default.createElement("div",{className:hbPM?undefined:"hb-lib-main"},
       !hbPM&&u.default.createElement("div",{className:"wb-projhead"},
         u.default.createElement("h2",null,"\u5C08\u6848\u4E00\u89BD",u.default.createElement("small",null,l.length," \u6848")),u.default.createElement("span",{className:"wbc-projline","aria-hidden":"true"}),
         u.default.createElement("button",{type:"button",onClick:e,className:"wb-btn wb-btn-solid",style:{fontFamily:"inherit"}},u.default.createElement(E,{name:"plus",size:16})," \u65B0\u589E\u6848\u4EF6")),
@@ -17521,7 +17614,7 @@ function $y(l){return l==null?null:(l/(1024*1024)).toFixed(1)}function Iy({proje
       ):u.default.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(178px, 1fr))",gap:"0 16px"}},
         [...l].sort((hbA,hbB)=>(/^示範案件/.test(hbA.name||"")?2:0)+(hbA.status==="\u6D41\u6A19"?1:0)-(/^示範案件/.test(hbB.name||"")?2:0)-(hbB.status==="\u6D41\u6A19"?1:0)).map((d,idx)=>u.default.createElement(Ry,{key:d.id,project:d,motionIndex:idx,enableMotion:!hbPM,range:hbProg[d.id]||hbProg["name:"+d.name],wbCount:hbPM?null:hbCounts[d.id]||{open:0,follow:0},onCount:hbPM?null:()=>hbShowProj(d.id),onClick:()=>t(d.id)}))
       )
-    )
+    ))
   );
 }function Ry({project:l,onClick:t,range:hbR,motionIndex=0,enableMotion=false,wbCount:hbWc=null,onCount:hbOnCount=null}){
 let hbEN={};hbEN[fn[0]]="EARLY DESIGN";hbEN[fn[1]]="IN PROGRESS";hbEN[fn[2]]="COMPLETED";hbEN[fn[3]]="WITHDRAWN";
