@@ -12276,7 +12276,10 @@ function HbDrawingHub({onBack,notify,project=null,embedded=false,initialView="dr
     while(queue.length){let cur=queue.shift();folders.filter(f=>f.parentId===cur).forEach(f=>{ids.add(f.id);queue.push(f.id)})}
     return drawings.some(d=>ids.has(d.folderId)&&shareOf(d).shared);
   };
-  let displayChildFolders=ownerPreview?childFolders.filter(f=>folderContainsShared(f.id)):childFolders;
+  /* 示範案件（App 審核用）不出現在公司圖面管理的案件清單；從示範案件本身打開的圖面管理不受影響 */
+  let HB_isDemoRoot=f=>!!f&&f.parentId==null&&/^示範案件/.test(String(f.name||""));
+  let visibleChildFolders=currentFolderId?childFolders:childFolders.filter(f=>!HB_isDemoRoot(f));
+  let displayChildFolders=ownerPreview?visibleChildFolders.filter(f=>folderContainsShared(f.id)):visibleChildFolders;
 
   let createFolder=async name=>{
     let{data,error}=await q.from("sitelog_drawing_folders").insert({name,parent_id:currentFolderId}).select().single();
@@ -12487,7 +12490,7 @@ function HbDrawingHub({onBack,notify,project=null,embedded=false,initialView="dr
   };
 
   let currentFolder=folders.find(f=>f.id===currentFolderId);
-  let scopedDrawings=lockedRootId?drawings.filter(d=>folderPathOf(d.folderId).some(f=>f.id===lockedRootId)):drawings;
+  let scopedDrawings=lockedRootId?drawings.filter(d=>folderPathOf(d.folderId).some(f=>f.id===lockedRootId)):drawings.filter(d=>!HB_isDemoRoot(folderPathOf(d.folderId)[0]));
   let folderSharedCount=folderDrawings.filter(d=>shareOf(d).shared).length;
   let drawingDate=v=>v&&v.uploadedAt?new Date(v.uploadedAt).toLocaleDateString("zh-TW",{year:"numeric",month:"2-digit",day:"2-digit"}):"—";
   let drawingKind=v=>!v?"尚無檔案":HB_drawingIsCad(v)?HB_drawingCadExt(v.path||v.url).toUpperCase():v.mime==="application/pdf"?"PDF":"IMAGE";
