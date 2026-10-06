@@ -12183,10 +12183,13 @@ function HbProjectDrawingFiles({data,loading,onOpenHub,onReload,onSignature}){
 
 const HB_LIB_CSS=`
       /* 2026-10：專案首頁（上方精簡工作台＋左側待發布／上傳＋下方專案） */
+      /* 專案首頁使用全頁寬度（其他頁面維持 1440 置中） */
+      body.hb-wide #root,body.hb-wide .hb-shell{max-width:none!important;box-shadow:none!important}
+      .hb-lib-grid .wbc,.hb-lib-grid .wb-projhead{max-width:none!important;margin-left:0!important;margin-right:0!important}
       .hb-lib-grid{display:grid;grid-template-columns:minmax(0,1fr);grid-template-areas:"wb" "side" "main";gap:16px}
       .hb-lib-wb{grid-area:wb;min-width:0}.hb-lib-side{grid-area:side;min-width:0}.hb-lib-main{grid-area:main;min-width:0}
       @media(min-width:1100px){
-        .hb-lib-grid{grid-template-columns:250px minmax(0,1fr);grid-template-areas:"side wb" "side main";column-gap:22px;max-width:1500px;margin:0 auto;align-items:start}
+        .hb-lib-grid{grid-template-columns:270px minmax(0,1fr);grid-template-areas:"side wb" "side main";column-gap:24px;align-items:start;padding-left:24px!important;padding-right:24px!important}
         .hb-lib-side{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto}
       }
       .hb-libside{display:flex;flex-direction:column;gap:14px;font-family:'Noto Sans TC',sans-serif;color:#211f1b}
@@ -17557,6 +17560,7 @@ function mm({photos,index,onIndexChange,onClose,onAnnotate,onDelete,onDownload})
 function $y(l){return l==null?null:(l/(1024*1024)).toFixed(1)}function Iy({projects:l,onOpen:t,onNew:e,onRefresh:n,refreshing:a,storageUsedBytes:i,onManageStaff:o,pickerMode:hbPM,onBack:hbBack,onGoCompany:hbGoCo,progressRanges:hbProg={},onWbOpen:hbWbOpen,onCalendar:hbCal,onTodayHub:hbTodayHub,notify:hbNotify,onOpenHub:hbOpenHub}){
   let c=$y(i),r=i!=null?Math.min(100,i/10737418240*100):null,[hbMenuOpen,hbSetMenuOpen]=(0,u.useState)(!1);
   const hbTk=HB_useToday(l,!hbPM),hbCounts=hbPM?{}:HB_wbProjectCounts(hbTk.all),[hbProj,hbSetProj]=(0,u.useState)(""),hbWbRef=(0,u.useRef)(null);
+  (0,u.useEffect)(()=>{if(hbPM)return;document.body.classList.add("hb-wide");return()=>document.body.classList.remove("hb-wide")},[hbPM]);
   const hbShowProj=id=>{hbSetProj(id);setTimeout(()=>{const el=hbWbRef.current;if(el)el.scrollIntoView({behavior:"smooth",block:"start"})},30)};
   return u.default.createElement("div",{className:hbPM?undefined:"hb-project-library",style:{background:s.paper,minHeight:"100vh",position:"relative"}},
     u.default.createElement("style",null,`
