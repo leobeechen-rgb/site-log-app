@@ -12224,9 +12224,10 @@ const HB_LIB_CSS=`
       .hb-ls-row{flex-wrap:wrap}
       .hb-ls-more-btn{flex:none;width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;border:1px solid transparent;background:none;color:#7b7466;cursor:pointer}
       .hb-ls-more-btn:hover,.hb-ls-more-btn.on{border-color:rgba(57,51,47,.2);background:#fff;color:#211f1b}
-      .hb-ls-acts{flex:1 0 100%;display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:4px;margin-top:7px;animation:hbFadeIn .16s ease-out both}
-      .hb-ls-act{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;height:44px;padding:0 2px;border:1px solid rgba(57,51,47,.16);background:#fff;font-family:inherit;font-size:11px;color:#403a33;cursor:pointer}
+      .hb-ls-acts{flex:1 0 100%;display:flex;gap:3px;margin-top:7px;animation:hbFadeIn .16s ease-out both}
+      .hb-ls-act{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;height:44px;padding:0 2px;white-space:nowrap;min-width:0;letter-spacing:0;flex:1 1 0;font-size:10.5px!important;border:1px solid rgba(57,51,47,.16);background:#fff;font-family:inherit;font-size:11px;color:#403a33;cursor:pointer}
       .hb-ls-act:hover{border-color:#2E4A3C;color:#2E4A3C}
+      .hb-ls-act.line{color:#06a14a}.hb-ls-act.line:hover{border-color:#06a14a;color:#06a14a}
       .hb-ls-act.pub{color:#315c48}.hb-ls-act.del{color:#8c493f}.hb-ls-act.del:hover{border-color:#8c493f;color:#8c493f}
       .hb-ls-row.open{background:rgba(46,74,60,.04);margin:0 -8px;padding-left:8px;padding-right:8px}
       .hb-ls-pub{flex:none;height:30px;padding:0 10px;border:1px solid #2E4A3C;background:#fff;color:#2E4A3C;font-family:inherit;font-size:12px;cursor:pointer}
@@ -12959,7 +12960,7 @@ function HbDrawingHub({onBack,notify,project=null,embedded=false,initialView="dr
     let fCount=k=>scopedDrawings.filter(d=>k==="all"?true:k==="shared"?shareOf(d).shared:!shareOf(d).shared).length;
     let row=(d,kind)=>{let c=caseOfDrawing(d),cv=currentVersionOf(d),pv=publishedVersionOf(d);
       let open=kind==="file"&&sideMenu===d.id,pend=pendingOf(d),sh=shareOf(d).shared;
-      let act=(icon,label,fn,cls)=>C("button",{type:"button",className:"hb-ls-act"+(cls?" "+cls:""),onClick:()=>{setSideMenu(null);fn()}},C(E,{name:icon,size:14}),C("span",null,label));
+      let act=(icon,label,fn,cls,extra)=>C("button",{type:"button",className:"hb-ls-act"+(cls?" "+cls:""),title:(extra&&extra.title)||label,"aria-label":(extra&&extra.title)||label,onClick:()=>{setSideMenu(null);fn()}},C(E,{name:icon,size:14}),C("span",null,label));
       return C("li",{key:d.id,className:"hb-ls-row"+(open?" open":"")},
         C("button",{type:"button",className:"hb-ls-main",onClick:()=>setVersionModalId(d.id),title:"查看詳情"},
           C("span",{className:"hb-ls-thumb"},cv&&cv.mime&&cv.mime.startsWith("image/")?C("img",{src:cv.url,alt:"",loading:"lazy"}):C(E,{name:cv&&HB_drawingIsCad(cv)?"file-output":"file-text",size:16,color:"#B4573A"})),
@@ -12972,7 +12973,8 @@ function HbDrawingHub({onBack,notify,project=null,embedded=false,initialView="dr
             act("search","詳情",()=>setVersionModalId(d.id)),
             act("upload","新版",()=>openNewVersionPicker(d.id)),
             (pend||!sh)&&cv?act("send","發布",()=>publishDrawing(d),"pub"):null,
-            sh?act("lock","取消共享",()=>unshareDrawing(d)):null,
+            sh?act("lock","取消",()=>unshareDrawing(d),"",{title:"取消業主共享"}):null,
+            sh?act("message-circle","LINE",()=>openLineNotify([d.id]),"line",{title:"LINE 通知業主"}):null,
             act("folder","移動",()=>setMoveDrawingId(d.id)),
             act("trash","刪除",()=>deleteDrawing(d.id),"del")))
         :cv&&C("button",{type:"button",className:"hb-ls-pub",onClick:()=>publishDrawing(d)},"發布"));};
