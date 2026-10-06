@@ -12171,7 +12171,7 @@ function HbProjectDrawingFiles({data,loading,onOpenHub,onReload,onSignature}){
 
 function HbDrawingHub({onBack,notify,project=null,embedded=false,initialView="drawings",workbench=null,onNewCase=null,projects=null}){
   let[unifiedOpen,setUnifiedOpen]=(0,u.useState)(false);
-  let[homeView,setHomeView]=(0,u.useState)("cases"),[homeFilter,setHomeFilter]=(0,u.useState)("all"),[homeQuery,setHomeQuery]=(0,u.useState)(""),[homeCase,setHomeCase]=(0,u.useState)("");
+  let[homeView,setHomeView]=(0,u.useState)("cases"),[homeFilter,setHomeFilter]=(0,u.useState)("all"),[homeQuery,setHomeQuery]=(0,u.useState)(""),[homeCase,setHomeCase]=(0,u.useState)(""),[homeOpenGroups,setHomeOpenGroups]=(0,u.useState)({});
   let[hubView,setHubView]=(0,u.useState)(initialView==="photos"?"photos":"drawings");
   let[folders,setFolders]=(0,u.useState)([]);
   let[drawings,setDrawings]=(0,u.useState)([]);
@@ -12556,6 +12556,10 @@ function HbDrawingHub({onBack,notify,project=null,embedded=false,initialView="dr
     return !hq||[d.name,d.drawingNo,d.category,c.name].some(x=>String(x||"").toLowerCase().includes(hq));
   }).sort((a,b)=>String((currentVersionOf(b)||{}).uploadedAt||b.createdAt||"").localeCompare(String((currentVersionOf(a)||{}).uploadedAt||a.createdAt||"")));
   let openFiles=f=>{setHomeFilter(f);setHomeView("files")};
+  /* 效果圖／照片等圖片：同一資料夾 2 張以上合併成一組圖片集，不逐張列 */
+  let isImgDrawing=d=>{let cv=currentVersionOf(d);return !!(cv&&cv.mime&&cv.mime.startsWith("image/"))};
+  let homeEntries=(()=>{let out=[],groups={};homeFiles.forEach(d=>{if(isImgDrawing(d)){let k=d.folderId;if(!groups[k]){groups[k]={type:"group",key:"g"+k,folderId:k,items:[]};out.push(groups[k])}groups[k].items.push(d)}else out.push({type:"file",key:d.id,d})});
+    return out.map(e=>e.type==="group"&&e.items.length<2?{type:"file",key:e.items[0].id,d:e.items[0]}:e)})();
   (0,u.useEffect)(()=>{if(!hubProject&&hubView!=="drawings")setHubView("drawings")},[hubProject&&hubProject.id]);
 
   return u.default.createElement("div",{className:"hb-archive hb-dossier hb-plan-system",style:{minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},
@@ -12682,6 +12686,19 @@ function HbDrawingHub({onBack,notify,project=null,embedded=false,initialView="dr
       .hb-docs-fact{display:flex;gap:6px;justify-content:flex-end}
       .hb-docs-fact button{height:34px;padding:0 12px;border:1px solid rgba(57,51,47,.2);background:#fff;font-family:inherit;font-size:13px;cursor:pointer}
       .hb-docs-fact button:first-child:not(:last-child){border-color:#2E4A3C;color:#2E4A3C}
+
+      .hb-docs-grp.open{background:rgba(255,255,255,.35)}
+      .hb-docs-mosaic{width:54px;height:54px;flex:0 0 auto;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:2px;background:#e9e4da;overflow:hidden}
+      .hb-docs-mosaic img{width:100%;height:100%;object-fit:cover;display:block}
+      .hb-docs-mosaic img:only-child{grid-column:1/-1;grid-row:1/-1}
+      .hb-docs-ftxt b em{font:400 11.5px 'Noto Sans TC',sans-serif;color:#8b8277;font-style:normal;letter-spacing:.04em}
+      .hb-docs-gallery{grid-column:1/-1;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;padding:4px 0 8px}
+      .hb-docs-gtile{position:relative;display:block;padding:0;border:1px solid rgba(57,51,47,.12);background:#e9e4da;cursor:pointer;text-align:left;font-family:inherit;color:inherit}
+      .hb-docs-gtile img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover}
+      .hb-docs-gtile small{display:block;padding:5px 7px;font-size:11px;background:rgba(255,255,255,.9);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .hb-docs-gdot{position:absolute;top:6px;right:6px;width:10px;height:10px;border-radius:50%;border:2px solid #fff}
+      .hb-docs-gdot.pub{background:#3f8f5a}.hb-docs-gdot.pend{background:#c58a3a}.hb-docs-gdot.int{background:#9a9286}
+      @media(max-width:680px){.hb-docs-gallery{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}}
       @media(max-width:1180px){.hb-docs-hint{display:none}}
       @media(max-width:900px){.hb-docs-stats{gap:10px}.hb-docs-stat{grid-template-columns:auto minmax(0,1fr);padding:14px}.hb-docs-num{grid-column:1/-1;flex-direction:row;align-items:baseline;justify-content:space-between}.hb-docs-frow{grid-template-columns:minmax(0,1fr) auto auto}.hb-docs-fdate{display:none}.hb-docs-fact{grid-column:1/-1;justify-content:flex-start}}
       @media(max-width:680px){
@@ -12786,9 +12803,36 @@ function HbDrawingHub({onBack,notify,project=null,embedded=false,initialView="dr
       u.default.createElement("input",{ref:newVersionInputRef,type:"file",accept:"image/*,.pdf,application/pdf,.dwg,.dxf",style:{display:"none"},onChange:handleNewVersionUpload}),
       loading&&!(isHome&&drawings.length)?u.default.createElement("div",{style:{textAlign:"center",padding:30}},u.default.createElement(E,{name:"loader",className:"animate-spin",size:22,color:"#B4573A"})):
       isHome&&homeView==="files"?u.default.createElement("div",{className:"hb-docs-body hb-docs-files"},
-        u.default.createElement("div",{className:"hb-docs-fhead"},u.default.createElement("b",null,{all:"全部圖面",shared:"業主可見",pending:"新版待發布"}[homeFilter]),u.default.createElement("span",null,homeFiles.length+" 筆"),homeFilter!=="all"&&u.default.createElement("button",{type:"button",onClick:()=>setHomeFilter("all")},"顯示全部")),
+        u.default.createElement("div",{className:"hb-docs-fhead"},u.default.createElement("b",null,{all:"全部圖面",shared:"業主可見",pending:"新版待發布"}[homeFilter]),u.default.createElement("span",null,homeFiles.length+" 張・"+homeEntries.length+" 筆"),homeFilter!=="all"&&u.default.createElement("button",{type:"button",onClick:()=>setHomeFilter("all")},"顯示全部")),
         homeFiles.length===0?u.default.createElement("p",{className:"hb-docs-empty"},hq||homeCase?"沒有符合條件的檔案":homeFilter==="pending"?"目前沒有待發布新版":"還沒有檔案"):
-        homeFiles.map(d=>{
+        homeEntries.map(en=>{
+          if(en.type==="group"){
+            let items=en.items,fd=folders.find(f=>f.id===en.folderId),c=caseOfDrawing(items[0]),isRoot=fd&&fd.parentId==null;
+            let path=folderPathOf(en.folderId).slice(1).map(f=>f.name).join("／");
+            let sharedN=items.filter(x=>shareOf(x).shared).length,pendN=items.filter(pendingOf).length,open=!!homeOpenGroups[en.key];
+            let cats=Array.from(new Set(items.map(x=>x.category).filter(Boolean)));
+            let latest=items.map(x=>(currentVersionOf(x)||{}).uploadedAt||"").sort().pop();
+            let st=pendN?[pendN+" 張待發布","pend"]:sharedN===items.length?["業主可見"+(shareOf(items[0]).byFolder?"・資料夾":""),"pub"]:sharedN?[sharedN+"/"+items.length+" 業主可見","pend"]:["公司內部","int"];
+            let toggle=()=>setHomeOpenGroups(g=>({...g,[en.key]:!g[en.key]}));
+            return u.default.createElement("div",{key:en.key,className:"hb-docs-frow hb-docs-grp"+(open?" open":"")},
+              u.default.createElement("button",{type:"button",className:"hb-docs-fmain",onClick:toggle,"aria-expanded":open},
+                u.default.createElement("span",{className:"hb-docs-mosaic"},items.slice(0,4).map(x=>u.default.createElement("img",{key:x.id,src:(currentVersionOf(x)||{}).url,alt:"",loading:"lazy"}))),
+                u.default.createElement("span",{className:"hb-docs-ftxt"},
+                  u.default.createElement("b",null,(isRoot?(cats[0]||"圖片"):fd?fd.name:"圖片")+"　",u.default.createElement("em",null,"圖片集・"+items.length+" 張")),
+                  u.default.createElement("small",null,[c&&c.name,path,cats.join("、")].filter(Boolean).join("・")))),
+              u.default.createElement("span",{className:"hb-docs-fver"},items.length+" 張"),
+              u.default.createElement("span",{className:"hb-docs-fdate"},latest?drawingDate({uploadedAt:latest}):"—"),
+              u.default.createElement("span",{className:"hb-docs-pill "+st[1]},st[0]),
+              u.default.createElement("span",{className:"hb-docs-fact"},
+                u.default.createElement("button",{type:"button",onClick:toggle},open?"收合":"展開"),
+                u.default.createElement("button",{type:"button",onClick:()=>{setCurrentFolderId(en.folderId);try{window.scrollTo({top:0})}catch{}}},"資料夾")),
+              open&&u.default.createElement("div",{className:"hb-docs-gallery"},items.map(x=>{let xv=currentVersionOf(x),xm=shareOf(x),xp=pendingOf(x);
+                return u.default.createElement("button",{type:"button",key:x.id,className:"hb-docs-gtile",onClick:()=>setVersionModalId(x.id),title:x.name},
+                  u.default.createElement("img",{src:xv&&xv.url,alt:"",loading:"lazy"}),
+                  u.default.createElement("span",{className:"hb-docs-gdot "+(xp?"pend":xm.shared?"pub":"int")}),
+                  u.default.createElement("small",null,[x.drawingNo,x.name].filter(Boolean).join(" ")+(xv&&xv.versionNo>1?"・V"+xv.versionNo:"")))})));
+          }
+          let d=en.d;
           let c=caseOfDrawing(d),cv=currentVersionOf(d),m=shareOf(d),pv=publishedVersionOf(d),pend=pendingOf(d),path=folderPathOf(d.folderId).slice(1).map(f=>f.name).join("／");
           let st=pend?["新版待發布","pend"]:m.shared?[m.byFolder?"業主可見・資料夾":"業主可見","pub"]:["公司內部","int"];
           return u.default.createElement("div",{key:d.id,className:"hb-docs-frow"},
