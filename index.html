@@ -5799,6 +5799,44 @@ function HerfulsinsAccountManager({accounts:l,onClose:t,onAdd:e,onDelete:n}){
   )
 }
 
+/* ===== 台灣地址選擇器（仿郵局：縣市→鄉鎮市區→路名→段→巷弄號樓）=====
+   路名資料：tw-address.json（中華郵政郵遞區號資料，第三方 MIT 授權整理，見 third_party/），開啟時才載入 */
+function HB_loadTwAddr(){
+  if(!window.__HB_TW_ADDR)window.__HB_TW_ADDR=fetch("./tw-address.json",{cache:"force-cache"}).then(r=>{if(!r.ok)throw new Error("HTTP "+r.status);return r.json()}).catch(e=>{window.__HB_TW_ADDR=null;throw e});
+  return window.__HB_TW_ADDR;
+}
+const HB_SEC_NUM=["","一","二","三","四","五","六","七","八","九","十"];
+function HbAddrPicker({onPick,defaultCounty="嘉義市"}){
+  const h=u.default.createElement;
+  const [data,setData]=u.useState(null),[err,setErr]=u.useState(""),[f,setF]=u.useState({county:defaultCounty,district:"",road:"",sec:"",lane:"",alley:"",no:"",floor:"",sub:""});
+  u.useEffect(()=>{let alive=true;HB_loadTwAddr().then(d=>{if(alive)setData(d)}).catch(e=>{if(alive)setErr("路名資料載入失敗，請直接手動輸入")});return()=>{alive=false}},[]);
+  const set=(k,v)=>setF(p=>{let n={...p,[k]:v};if(k==="county"){n.district="";n.road="";n.sec=""}if(k==="district"){n.road="";n.sec=""}if(k==="road")n.sec="";return n});
+  const dists=data&&data[f.county]?Object.keys(data[f.county]):[];
+  const dz=data&&data[f.county]&&data[f.county][f.district];
+  const roads=dz?dz[1]:[];
+  const roadNames=roads.map(r=>r.split("|")[0]);
+  const hit=roads.find(r=>r.split("|")[0]===f.road.trim());
+  const secs=hit&&hit.includes("|")?hit.split("|")[1].split(","):[];
+  const t=s=>String(s||"").trim();
+  const compose=()=>{if(!f.district||!t(f.road))return"";let s=f.county+f.district+t(f.road)+(f.sec?f.sec+"段":"")+(t(f.lane)?t(f.lane)+"巷":"")+(t(f.alley)?t(f.alley)+"弄":"")+(t(f.no)?t(f.no)+"號":"")+(t(f.floor)?t(f.floor)+"樓":"")+(t(f.sub)?"之"+t(f.sub):"");return s};
+  const full=compose();
+  const lid=u.useRef("hbaddr"+Math.random().toString(36).slice(2,8)).current;
+  const sel={padding:"8px 8px",borderRadius:7,border:"1px solid #d9d2c5",fontSize:13.5,background:"#fff",minWidth:0,width:"100%",boxSizing:"border-box"};
+  const sm=(k,ph,suf,pre)=>h("label",{style:{display:"flex",alignItems:"center",gap:3,minWidth:0}},pre?h("span",{style:{fontSize:12.5,color:"#6E6A60",flex:"none"}},pre):null,h("input",{value:f[k],onChange:e=>set(k,e.target.value),inputMode:"numeric",placeholder:ph,style:{...sel,padding:"8px 6px",textAlign:"center"}}),suf?h("span",{style:{fontSize:12.5,color:"#6E6A60",flex:"none"}},suf):null);
+  if(err)return h("div",{style:{fontSize:12,color:"#a5642f",margin:"0 0 6px"}},err);
+  return h("div",{className:"hb-addrpick",style:{border:"1px solid #e3dccf",borderRadius:8,padding:10,margin:"0 0 6px",background:"rgba(255,255,255,.55)"}},
+    h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,marginBottom:6}},
+      h("select",{value:f.county,onChange:e=>set("county",e.target.value),"aria-label":"縣市",style:sel,disabled:!data},(data?Object.keys(data):[f.county]).map(c=>h("option",{key:c,value:c},c))),
+      h("select",{value:f.district,onChange:e=>set("district",e.target.value),"aria-label":"鄉鎮市區",style:sel,disabled:!data},h("option",{value:""},data?"選擇鄉鎮市區":"載入中…"),dists.map(d=>h("option",{key:d,value:d},d+"（"+data[f.county][d][0]+"）")))),
+    h("div",{style:{display:"grid",gridTemplateColumns:secs.length?"1fr 92px":"1fr",gap:6,marginBottom:6}},
+      h("input",{list:lid,value:f.road,onChange:e=>set("road",e.target.value),placeholder:f.district?"輸入或選擇路名（例：健康三路）":"先選鄉鎮市區",disabled:!f.district,"aria-label":"路名",style:sel}),
+      h("datalist",{id:lid},roadNames.map(r=>h("option",{key:r,value:r}))),
+      secs.length?h("select",{value:f.sec,onChange:e=>set("sec",e.target.value),"aria-label":"段",style:sel},h("option",{value:""},"段"),secs.map(s=>h("option",{key:s,value:s},s+"段"))):null),
+    h("div",{style:{display:"grid",gridTemplateColumns:"repeat(5,minmax(0,1fr))",gap:4,marginBottom:8}},sm("lane","","巷"),sm("alley","","弄"),sm("no","","號"),sm("floor","","樓"),sm("sub","","","之")),
+    h("div",{style:{display:"flex",alignItems:"center",gap:8}},
+      h("div",{style:{flex:1,minWidth:0,fontSize:12.5,color:full?"#211f1b":"#9a9083",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},full?(dz?dz[0]+" ":"")+full:"選好縣市、區、路名後按右邊套用"),
+      h("button",{type:"button",disabled:!full,onClick:()=>onPick&&onPick(full),style:{flex:"none",padding:"7px 14px",borderRadius:7,border:"1px solid #2E4A3C",background:full?"#2E4A3C":"#fff",color:full?"#fff":"#9a9083",fontSize:13,cursor:full?"pointer":"default",fontFamily:"inherit"}},"套用地址")));
+}
 /* ===== 新增／編輯合約表單 ===== */
 function HerfulsinsContractForm({category:l,projects:t,accounts:e,defaultProjectId:n,initialValues:iv,editing:isEditing,onCancel:a,onCreate:i}){
   let isEng=l==="case";
@@ -5814,6 +5852,7 @@ function HerfulsinsContractForm({category:l,projects:t,accounts:e,defaultProject
     paymentStages:[{name:"簽約款",percent:"30",condition:"本合約簽署之時付款"},{name:"二期款",percent:"60",condition:""},{name:"三期款",percent:"10",condition:""}]
   });
   let set=(k,val)=>r(p=>({...p,[k]:val}));
+  let[addrOpen,setAddrOpen]=(0,u.useState)(false),[addrOpenA,setAddrOpenA]=(0,u.useState)(false);
   let toggleAccount=id=>set("accountIds",c.accountIds.includes(id)?c.accountIds.filter(x=>x!==id):[...c.accountIds,id]);
   let billPing=()=>{let dp=HB_num(c.discountPing);return dp>0?dp:HB_num(c.areaPing)};
   let billRate=()=>{let dr=HB_num(c.discountRate);return dr>0&&dr<10?dr/10:1};
@@ -5858,10 +5897,16 @@ function HerfulsinsContractForm({category:l,projects:t,accounts:e,defaultProject
         (t||[]).some(p=>p.address)&&u.default.createElement("select",{value:"","aria-label":"從案件帶入地點",onChange:v=>{let p=(t||[]).find(x=>x.id===v.target.value);if(!p)return;r(q=>({...q,designLocation:p.address||q.designLocation,designName:q.designName||(isEng?q.designName:p.name)}))},style:{width:"100%",padding:"9px 10px",borderRadius:7,border:`1px solid ${s.line}`,fontSize:14,marginBottom:6,background:s.cardAlt,color:s.ink}},
           u.default.createElement("option",{value:""},"從案件選擇地點…"),
           (t||[]).filter(p=>p.address&&!/^示範案件/.test(p.name||"")).map(p=>u.default.createElement("option",{key:p.id,value:p.id},p.name+"｜"+p.address))),
-        u.default.createElement("input",{type:"text",value:c.designLocation,onChange:v=>set("designLocation",v.target.value),placeholder:"可直接輸入，或從上方選擇案件帶入",style:{width:"100%",padding:"9px 10px",borderRadius:7,border:`1px solid ${s.line}`,fontSize:14,boxSizing:"border-box"}})),
+        u.default.createElement("button",{type:"button",onClick:()=>setAddrOpen(v=>!v),style:{display:"block",border:"none",background:"none",padding:"0 0 6px",color:s.oceanDark,fontSize:12.5,cursor:"pointer",textDecoration:"underline",textUnderlineOffset:3,fontFamily:"inherit"}},addrOpen?"收起縣市路名選擇":"依縣市、區、路名填寫地址"),
+        addrOpen&&u.default.createElement(HbAddrPicker,{onPick:addr=>{set("designLocation",addr);setAddrOpen(false)}}),
+        u.default.createElement("input",{type:"text",value:c.designLocation,onChange:v=>set("designLocation",v.target.value),placeholder:"可直接輸入、從案件帶入，或用縣市路名填寫",style:{width:"100%",padding:"9px 10px",borderRadius:7,border:`1px solid ${s.line}`,fontSize:14,boxSizing:"border-box"}})),
       field("甲方姓名/名稱（選填，可留白由業主現場簽名）","partyAName"),
       field("甲方代表人（選填，預設同姓名）","partyARep"),
-      field(isEng?"甲方地址":"甲方地址（選填）","partyAAddress"),
+      u.default.createElement("div",{style:{marginBottom:12}},
+        u.default.createElement("label",{style:{fontSize:12.5,lineHeight:1.5,color:s.inkSoft,display:"block",marginBottom:4,minHeight:19}},isEng?"甲方地址":"甲方地址（選填）"),
+        u.default.createElement("button",{type:"button",onClick:()=>setAddrOpenA(v=>!v),style:{display:"block",border:"none",background:"none",padding:"0 0 6px",color:s.oceanDark,fontSize:12.5,cursor:"pointer",textDecoration:"underline",textUnderlineOffset:3,fontFamily:"inherit"}},addrOpenA?"收起縣市路名選擇":"依縣市、區、路名填寫地址"),
+        addrOpenA&&u.default.createElement(HbAddrPicker,{onPick:addr=>{set("partyAAddress",addr);setAddrOpenA(false)}}),
+        u.default.createElement("input",{type:"text",value:c.partyAAddress,onChange:v=>set("partyAAddress",v.target.value),style:{width:"100%",padding:"9px 10px",borderRadius:7,border:`1px solid ${s.line}`,fontSize:14,boxSizing:"border-box"}})),
       field(isEng?"甲方電話":"甲方電話（選填）","partyAPhone"),
       field("甲方身分證字號（選填）","partyAId"),
       !isEng&&u.default.createElement("div",{style:{display:"flex",gap:10,alignItems:"flex-end"}},
