@@ -12110,6 +12110,24 @@ async function HB_loadProjectDrawings(project,opts){
   let folders=all.filter(f=>f.parentId===root.id);
   return{rootId:root.id,folders,items};
 }
+/* 案件檔案預覽：同一張圖有多個版本時，底部可切換 V1、V2…（資料直接讀 sitelog_drawing_versions） */
+function HbVersionedPreview({item,onClose}){
+  let C=u.default.createElement;
+  let[list,setList]=(0,u.useState)(null),[sel,setSel]=(0,u.useState)(item.versionId);
+  (0,u.useEffect)(()=>{let alive=true;if(!item.drawingId||!(item.versionCount>1)){setList([]);return}
+    q.from("sitelog_drawing_versions").select("id,version_no,mime,url,path,uploaded_at,change_note").eq("drawing_id",item.drawingId).order("version_no",{ascending:false}).then(r=>{if(alive)setList(r.error?[]:(r.data||[]))});
+    return()=>{alive=false}},[item.drawingId]);
+  let cur=(list||[]).find(v=>v.id===sel);
+  let ext=cur?String(cur.path||cur.url||"").split("?")[0].split(".").pop():"";
+  let file=cur?{...item,url:cur.url,mime:cur.mime,name:(item.name||"圖面")+"・V"+cur.version_no+(ext?"."+ext:"")}:item;
+  let top=list&&list.length?list[0].version_no:null;
+  return C(u.default.Fragment,null,
+    C(ih,{file,onClose}),
+    list&&list.length>1&&C("div",{className:"hb-vp-bar",role:"tablist","aria-label":"版本"},
+      list.map(v=>{let can=HB_fileCanPreview(v);return C("button",{key:v.id,type:"button",role:"tab","aria-selected":v.id===sel,disabled:!can,title:can?(v.change_note||""):"此版本為 CAD／附件，請到圖面管理下載",className:"hb-vp-chip"+(v.id===sel?" on":""),onClick:()=>setSel(v.id)},
+        C("b",null,"V"+v.version_no),C("small",null,v.version_no===top?"最新版":(v.uploaded_at?String(v.uploaded_at).slice(5,10).replace("-","/"):"")))})),
+    C("style",null,".hb-vp-bar{position:fixed;left:0;right:0;bottom:0;z-index:66;display:flex;gap:8px;overflow-x:auto;padding:10px 14px calc(10px + env(safe-area-inset-bottom));background:rgba(28,27,24,.86);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}.hb-vp-chip{flex:0 0 auto;min-width:64px;min-height:44px;padding:5px 12px;border:1px solid rgba(255,255,255,.28);background:transparent;color:#fff;font-family:inherit;cursor:pointer;text-align:center}.hb-vp-chip b{display:block;font:500 15px Georgia,serif}.hb-vp-chip small{display:block;font-size:10px;opacity:.75}.hb-vp-chip.on{background:#f3ecdc;color:#211f1b;border-color:#f3ecdc}.hb-vp-chip:disabled{opacity:.4}"));
+}
 function HbProjectDrawingFiles({data,loading,onOpenHub,onReload,onSignature}){
   let C=u.default.createElement;
   let[folderKey,setFolderKey]=(0,u.useState)(null);
@@ -12123,7 +12141,7 @@ function HbProjectDrawingFiles({data,loading,onOpenHub,onReload,onSignature}){
   let others=shown.filter(x=>!imgs.includes(x));
   let pill=x=>C("span",{style:{display:"inline-flex",alignItems:"center",padding:"3px 8px",borderRadius:999,fontSize:10.5,whiteSpace:"nowrap",border:"1px solid "+(x.shared?s.ocean:s.line),color:x.shared?s.oceanDark:s.inkSoft,background:x.shared?s.paper:s.card}},x.shared?(x.sharedByFolder?"業主可見・資料夾共享":x.pendingPublish?"業主可見・有新版未發布":"業主可見"):"僅公司可見");
   let download=(ev,x)=>{if(x.isCad){HB_downloadDrawingCad(ev,{url:x.url,path:x.path,versionNo:x.versionNo},x.name)}else{ev.preventDefault();window.open(x.url,"_blank","noopener")}};
-  let meta=x=>[x.category,x.kind,"V"+x.versionNo,x.folderPath,Tl(x.uploadedAt)].filter(Boolean).join("　·　");
+  let meta=x=>[x.category,x.kind,"V"+x.versionNo+(x.versionCount>1?`（共 ${x.versionCount} 版）`:""),x.folderPath,Tl(x.uploadedAt)].filter(Boolean).join("　·　");
   return C(u.default.Fragment,null,
     C("div",{className:"hb-project-file-actions",style:{display:"flex",gap:8,flexWrap:"wrap"}},
       C(ke,{label:"開啟專案資料與圖面（上傳・改版・發布）",icon:"file-text",busy:!1,onClick:onOpenHub}),
@@ -12147,7 +12165,7 @@ function HbProjectDrawingFiles({data,loading,onOpenHub,onReload,onSignature}){
         pill(x),
         x.canPreview&&C("button",{onClick:()=>setPreview(x),title:"預覽圖面",style:at},C(E,{name:"eye",size:16})),
         C("a",{href:x.url,onClick:ev=>download(ev,x),title:x.isCad?"下載 CAD":"下載",style:{...at,textDecoration:"none"}},C(E,{name:"download",size:16})))))),
-    preview&&HB_portal(C(ih,{file:preview,onClose:()=>setPreview(null)}))
+    preview&&HB_portal(C(HbVersionedPreview,{item:preview,onClose:()=>setPreview(null)}))
   );
 }
 
@@ -13686,6 +13704,7 @@ function HbDrawingVersionModal({drawing,folderPath,versions,publishedVersionId,i
         .hb-dv-compare{grid-template-columns:1fr;flex:none}
         .hb-dv-compare>div{height:38dvh;min-height:220px}
         .hb-dv-vt{flex-basis:74px}.hb-dv-vt .th{height:46px}
+        .hb-dv-stage{order:1}.hb-dv-strip{order:2}.hb-dv-rot{order:3}.hb-dv-compare{order:1}
         .hb-dv-rot{padding:8px}.hb-dv-rot-r{width:100%;display:grid;grid-template-columns:1fr 1fr 1.3fr;gap:6px}.hb-dv-rot-r button{justify-content:center;min-height:44px;padding:0 6px}
         .hb-dv-rot.dirty .hb-dv-rot-r{grid-template-columns:1fr 1fr 1fr 1.3fr}
         .hb-dv-side{border-left:0;border-top:1px solid rgba(57,51,47,.13);margin-top:10px;background:transparent}
