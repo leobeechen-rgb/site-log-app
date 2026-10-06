@@ -12594,6 +12594,19 @@ function HbDrawingHub({onBack,notify,project=null,embedded=false,initialView="dr
     let cv=currentVersionOf(d);if(!cv){notify("請先上傳圖面版本");return}
     publishVersion(d,cv.id);
   };
+  /* 取消業主共享：一般發布→移除發布標記；位於業主共享資料夾→所有版本標為公司內部（只隱藏這一張，資料夾其他圖面不受影響） */
+  let unshareDrawing=async d=>{
+    let m=shareOf(d);if(!m.shared){notify("這張圖面目前沒有給業主看");return}
+    if(!window.confirm(`取消「${[d.drawingNo,d.name].filter(Boolean).join(" ")}」的業主共享？\n業主將看不到這張圖面的任何版本，之後可再按「發布」重新共享。`))return;
+    let vs=versions.filter(v=>v.drawingId===d.id),changed=[];
+    for(let v of vs){let nn=m.byFolder?HB_addDrawingInternalTag(v.note):HB_removeDrawingShareTag(v.note);if((nn||null)===(v.note||null))continue;
+      let{error}=await q.from("sitelog_drawing_versions").update({note:nn}).eq("id",v.id);
+      if(error){notify("取消共享失敗："+error.message);if(changed.length)setVersions(x=>x.map(y=>{let c=changed.find(z=>z.id===y.id);return c?{...y,note:c.note}:y}));return}
+      changed.push({id:v.id,note:nn})}
+    setVersions(x=>x.map(y=>{let c=changed.find(z=>z.id===y.id);return c?{...y,note:c.note}:y}));
+    updateShare(d.id,{shared:false,publishedVersionId:null,publishedAt:null,viewedAt:null});
+    notify("已取消業主共享，改為公司內部");
+  };
   let toggleDrawingShare=async d=>{
     let m=shareOf(d),cv=currentVersionOf(d);
     if(m.byFolder){notify(`此圖面位於業主共享資料夾「${m.folderName}」，要停止共享請關閉該資料夾的共享設定`);return}
@@ -12959,6 +12972,7 @@ function HbDrawingHub({onBack,notify,project=null,embedded=false,initialView="dr
             act("search","詳情",()=>setVersionModalId(d.id)),
             act("upload","新版",()=>openNewVersionPicker(d.id)),
             (pend||!sh)&&cv?act("send","發布",()=>publishDrawing(d),"pub"):null,
+            sh?act("lock","取消共享",()=>unshareDrawing(d)):null,
             act("folder","移動",()=>setMoveDrawingId(d.id)),
             act("trash","刪除",()=>deleteDrawing(d.id),"del")))
         :cv&&C("button",{type:"button",className:"hb-ls-pub",onClick:()=>publishDrawing(d)},"發布"));};
@@ -13158,6 +13172,7 @@ function HbDrawingHub({onBack,notify,project=null,embedded=false,initialView="dr
                       u.default.createElement("button",{className:"hb-plan-iconbtn",title:"開啟圖面詳情",onClick:()=>setVersionModalId(d.id)},u.default.createElement(E,{name:"search",size:15})),
                       !ownerPreview&&u.default.createElement("button",{className:"hb-plan-iconbtn",title:"上傳新版本",onClick:()=>openNewVersionPicker(d.id)},u.default.createElement(E,{name:"upload",size:15})),
                       !ownerPreview&&(isPending||!meta.shared)&&u.default.createElement("button",{className:"hb-plan-iconbtn",title:"發布給業主",onClick:()=>publishDrawing(d),style:{color:"#315c48"}},u.default.createElement(E,{name:"send",size:15})),
+                      !ownerPreview&&meta.shared&&u.default.createElement("button",{className:"hb-plan-iconbtn",title:"取消業主共享",onClick:()=>unshareDrawing(d)},u.default.createElement(E,{name:"lock",size:15})),
                       !ownerPreview&&u.default.createElement("button",{className:"hb-plan-iconbtn",title:"移動到資料夾",onClick:()=>setMoveDrawingId(d.id)},u.default.createElement(E,{name:"folder",size:15})),
                       !ownerPreview&&u.default.createElement("button",{className:"hb-plan-iconbtn",title:"刪除圖面",onClick:()=>deleteDrawing(d.id),style:{color:"#8c493f"}},u.default.createElement(E,{name:"trash",size:15}))
                     )
