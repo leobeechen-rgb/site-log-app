@@ -12596,7 +12596,8 @@ function HbDrawingHub({onBack,notify,project=null,embedded=false,initialView="dr
       @media(min-width:1100px){
         .hb-plan-system{display:grid;grid-template-columns:clamp(150px,11vw,190px) minmax(0,1fr);column-gap:clamp(20px,2.4vw,40px);align-items:start;padding:0 clamp(16px,2.4vw,40px)}
         .hb-plan-system>.hb-dosWrap{position:sticky;top:0;max-width:none;margin:0;padding:34px 0 28px!important;border-right:1px solid rgba(57,51,47,.12);padding-right:clamp(18px,2vw,30px)!important;min-height:calc(100vh - 20px);box-sizing:border-box}
-        .hb-plan-system>.hb-dosWrap .hb-arcBack{margin:0 0 30px!important}
+        .hb-plan-system>.hb-dosWrap .hb-arcBack{margin:0 0 30px!important;display:flex!important;align-items:center;gap:6px;max-width:100%;white-space:nowrap;text-align:left}
+        .hb-plan-system>.hb-dosWrap .hb-arcBack span{min-width:0;overflow:hidden;text-overflow:ellipsis}
         .hb-plan-system>.hb-dosWrap .hb-dosLabel{font-size:11px;letter-spacing:.32em;line-height:1.8}
         .hb-plan-system>.hb-dosWrap{container-type:inline-size}
         .hb-plan-system>.hb-dosWrap .hb-dosTitle{font-size:clamp(44px,3.6vw,64px);font-size:min(64px,22cqw);line-height:1.04;margin-top:14px;padding-right:0!important;overflow-wrap:anywhere}
@@ -12739,9 +12740,9 @@ function HbDrawingHub({onBack,notify,project=null,embedded=false,initialView="dr
       }
     `),
     u.default.createElement("div",{className:"hb-dosWrap"},
-      u.default.createElement("button",{onClick:goUp,className:"hb-arcBack"},u.default.createElement(E,{name:"arrow-left",size:15}),u.default.createElement("span",null,canGoUp?("返回上一層："+(parentFolder?parentFolder.name:"圖面總覽")):(embedded?(showPhotos?"返回案件照片":"返回案件檔案"):"返回公司資料庫"))),
+      u.default.createElement("button",{onClick:goUp,className:"hb-arcBack"},u.default.createElement(E,{name:"arrow-left",size:15}),u.default.createElement("span",{title:canGoUp?("返回 "+(parentFolder?parentFolder.name:"圖面總覽")):undefined},canGoUp?(parentFolder?"返回 "+parentFolder.name:"返回圖面總覽"):(embedded?(showPhotos?"返回案件照片":"返回案件檔案"):"返回公司資料庫"))),
       u.default.createElement("div",{className:"hb-dosLabel"},embedded?"Project Drawing Control":"Gestion des Plans"),u.default.createElement("h1",{className:"hb-dosTitle hb-vtitle"},"資料與圖面"),embedded&&project&&u.default.createElement("div",{className:"hb-plan-casename"},u.default.createElement(E,{name:"folder",size:15}),u.default.createElement("span",null,project.name)),
-      u.default.createElement("p",{className:"hb-dosLede"},showPhotos?(ownerPreview?"業主看得到這個案件的全部照片。":"照片依相簿整理：上傳、備註、標註、刪除都在這裡進行，專案頁同步顯示，業主也看得到。"):ownerPreview?"業主預覽模式僅顯示已正式發布的圖面，內部草稿與待發布版本不會出現。":embedded?"此處只管理目前案件的圖面版本、共享與發布紀錄。":"依資料夾管理施工圖面、保留版本紀錄，並決定哪些正式版本提供業主查看。")
+      null
     ),
     u.default.createElement("div",{className:"hb-plan-main",style:{maxWidth:1320,margin:"0 auto",padding:"6px clamp(14px,4vw,58px) calc(112px + env(safe-area-inset-bottom))"},
       onDragOver:e=>{if(showPhotos||!currentFolderId||ownerPreview||!Array.from(e.dataTransfer.types||[]).includes("Files"))return;e.preventDefault();if(!dragOver)setDragOver(true)},
