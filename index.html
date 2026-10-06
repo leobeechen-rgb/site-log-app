@@ -307,6 +307,39 @@
   .hb-cav-menu button+button{ border-top:1px solid rgba(42,40,34,.08) }
   .hb-cav-menu button:hover,.hb-cav-menu button:focus-visible{ background:rgba(180,87,58,.08) }
   .hb-cav-menu .del{ color:#B3413B }
+  /* 圓形大頭貼製作視窗 */
+  .hb-avm-scrim{ position:fixed; inset:0; z-index:200; background:rgba(43,38,32,.45); display:flex; align-items:center; justify-content:center; padding:16px }
+  .hb-avm{ background:#fbf8f2; color:#2A2822; border-radius:10px; width:100%; max-width:640px; max-height:calc(100% - 8px); overflow:auto; box-shadow:0 18px 50px rgba(42,40,34,.25); font-family:"Noto Sans TC",sans-serif }
+  .hb-avm-head{ display:flex; justify-content:space-between; align-items:flex-start; gap:12px; padding:16px 18px 12px; border-bottom:1px solid rgba(42,40,34,.1) }
+  .hb-avm-head b{ display:block; font:500 16px "Noto Serif TC",serif; letter-spacing:.06em }
+  .hb-avm-head small{ display:block; font-size:12px; color:#7A756A; margin-top:3px }
+  .hb-avm-x{ background:none; border:0; color:#7A756A; cursor:pointer; padding:4px; display:flex }
+  .hb-avm-body{ display:grid; grid-template-columns:220px minmax(0,1fr); gap:20px; padding:18px }
+  .hb-avm-prev{ display:flex; flex-direction:column; align-items:center; gap:8px }
+  .hb-avm-prev img,.hb-avm-prev .ph{ width:100%; max-width:220px; aspect-ratio:1; border-radius:50%; box-shadow:0 8px 22px rgba(42,40,34,.18); display:block; background:#e9e3d8 }
+  .hb-avm-prev small{ font-size:11.5px; color:#7A756A; text-align:center }
+  .hb-avm-ctl{ display:flex; flex-direction:column; gap:12px; min-width:0 }
+  .hb-avm-row{ display:grid; grid-template-columns:1fr 1fr; gap:10px }
+  .hb-avm-f{ display:flex; flex-direction:column; gap:5px; min-width:0 }
+  .hb-avm-f>span{ font-size:12px; color:#7A756A; letter-spacing:.06em }
+  .hb-avm-f input[type=text],.hb-avm-f input:not([type]){ font:inherit; font-size:15px; color:#2A2822; background:#fff; border:1px solid rgba(42,40,34,.18); border-radius:6px; padding:8px 10px; min-width:0 }
+  .hb-avm-f input[type=range]{ accent-color:#B4573A; width:100% }
+  .hb-avm-seg{ display:flex; flex-wrap:wrap; gap:6px }
+  .hb-avm-seg button{ display:inline-flex; align-items:center; gap:6px; border:1px solid rgba(42,40,34,.18); background:#fff; color:#2A2822; border-radius:999px; padding:5px 11px; font-size:13px; cursor:pointer }
+  .hb-avm-seg button i{ width:16px; height:16px; border-radius:50%; display:block; margin-left:-4px }
+  .hb-avm-seg button.on{ border-color:#B4573A; background:rgba(180,87,58,.08); color:#8f3f27 }
+  .hb-avm-checks{ display:flex; gap:16px; flex-wrap:wrap; font-size:13.5px }
+  .hb-avm-checks label{ display:flex; align-items:center; gap:6px; cursor:pointer }
+  .hb-avm-checks input{ accent-color:#B4573A }
+  .hb-avm-msg{ margin:0 18px; font-size:12.5px; color:#8f3f27 }
+  .hb-avm-foot{ display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; padding:14px 18px 16px; border-top:1px solid rgba(42,40,34,.1); margin-top:12px }
+  .hb-avm-link{ background:none; border:0; color:#7A756A; font-size:12.5px; text-decoration:underline; text-underline-offset:3px; cursor:pointer; padding:0 }
+  .hb-avm-btns{ display:flex; gap:8px; flex-wrap:wrap }
+  .hb-avm-btn{ display:inline-flex; align-items:center; gap:6px; border:1px solid #B4573A; color:#8f3f27; background:transparent; border-radius:6px; padding:8px 14px; font-size:13.5px; cursor:pointer }
+  .hb-avm-btn.solid{ background:#B4573A; color:#fff }
+  .hb-avm-btn:disabled{ opacity:.6; cursor:progress }
+  .hb-avm button:focus-visible,.hb-avm input:focus-visible{ outline:2px solid #B4573A; outline-offset:2px }
+  @media (max-width:560px){ .hb-avm-body{ grid-template-columns:minmax(0,1fr) } .hb-avm-prev img,.hb-avm-prev .ph{ max-width:180px } .hb-avm-row{ grid-template-columns:minmax(0,1fr) } }
   .hb-plate-av{ position:absolute; top:18px; left:10px }
   .hb-pcard-head{ display:flex; align-items:center; gap:10px; min-width:0; margin-top:6px }
   .hb-pcard-head .hb-plan-folder-title{ margin-top:0!important; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
@@ -17814,21 +17847,96 @@ async function HB_setProjectAvatar(project,url){
   let pre=R2_SITELOG_CONFIG.publicUrl+"/sitelog-photos/";
   if(old&&old!==url&&old.indexOf(pre)===0){try{await r2DeleteSitelogFile("sitelog-photos",decodeURIComponent(old.slice(pre.length)))}catch{}}
 }
+/* 圓形貼產生器：用案名＋業主稱謂直接畫出圓形頭像（同 LINE 群組照片樣式） */
+var HB_AVM_FONTS=[{k:"Iansui",label:"手寫"},{k:"LXGW WenKai TC",label:"文楷"},{k:"Noto Serif TC",label:"明體"},{k:"Noto Sans TC",label:"黑體"}];
+var HB_AVM_PRESETS=[{k:"line",label:"黑黃",bg:"#111111",ring:"#f2b705",text:"#ffffff"},{k:"cream",label:"米白",bg:"#f4efe6",ring:"#8a7458",text:"#3b3128"},{k:"brick",label:"磚紅",bg:"#B4573A",ring:"#f3e3c7",text:"#fff8ec"},{k:"pine",label:"松綠",bg:"#2E4A3C",ring:"#c9a45c",text:"#f4efe6"},{k:"navy",label:"深藍",bg:"#1e2a44",ring:"#e9edf3",text:"#ffffff"}];
+var HB_AVM_FONT_LINK=false;
+function HB_avmLoadFonts(){if(HB_AVM_FONT_LINK)return;HB_AVM_FONT_LINK=true;try{let l=document.createElement("link");l.rel="stylesheet";l.href="https://fonts.googleapis.com/css2?family=Iansui&family=LXGW+WenKai+TC:wght@700&display=swap";document.head.appendChild(l)}catch{}}
+function HB_avmDraw(o){
+  let S=1024,c=document.createElement("canvas");c.width=c.height=S;let x=c.getContext("2d"),m=S/2;
+  x.fillStyle=o.ring;x.fillRect(0,0,S,S);
+  x.beginPath();x.arc(m,m,S*0.44,0,Math.PI*2);x.fillStyle=o.bg;x.fill();
+  x.fillStyle=o.text;x.textAlign="center";x.textBaseline="middle";
+  let lines=[o.l1,o.l2].map(t=>String(t||"").trim()).filter(Boolean),k=o.scale||1,w=o.font==="Iansui"?400:700;
+  if(lines.length){
+    if(o.vertical){
+      let cols=lines.length,maxLen=Math.max(...lines.map(t=>[...t].length));
+      let fs=Math.min(S*0.6/maxLen,S*0.5/cols)*k;x.font=`${w} ${fs}px "${o.font}","Noto Serif TC",serif`;
+      lines.forEach((t,ci)=>{let ch=[...t],cx=m+((cols-1)/2-ci)*fs*1.15;ch.forEach((z,i)=>x.fillText(z,cx,m+(i-(ch.length-1)/2)*fs*1.05))});
+    }else{
+      let maxLen=Math.max(...lines.map(t=>[...t].length));
+      let fs=Math.min(S*0.62/maxLen,S*(lines.length>1?0.24:0.32))*k;x.font=`${w} ${fs}px "${o.font}","Noto Serif TC",serif`;
+      lines.forEach((t,i)=>{x.save();x.translate(m,m+(i-(lines.length-1)/2)*fs*1.25);try{x.letterSpacing=(fs*0.08)+"px"}catch{}x.fillText(t,0,0);x.restore()});
+    }
+  }
+  if(o.dots)[["#e8433a",0.29,0.71],["#2ec4c0",0.73,0.36],["#f2b705",0.7,0.74]].forEach(([col,px,py])=>{x.beginPath();x.arc(S*px,S*py,S*0.014,0,Math.PI*2);x.fillStyle=col;x.fill()});
+  return c;
+}
+function HB_avmDefaults(project){
+  let saved={};try{saved=JSON.parse(localStorage.getItem("hb-avm-style")||"{}")||{}}catch{}
+  let ci=(project&&project.clientInfo)||{},nm=String(ci.name||"").trim();
+  return{l1:String((project&&project.name)||"").trim().slice(0,6),l2:nm,font:saved.font||"Iansui",preset:saved.preset||"line",dots:saved.dots!==false,vertical:!!saved.vertical,scale:saved.scale||1};
+}
+function HbAvatarMaker({project,onClose,onApply,onUpload}){
+  let C=u.default.createElement;
+  let[o,setO]=(0,u.useState)(()=>HB_avmDefaults(project)),[img,setImg]=(0,u.useState)(""),[busy,setBusy]=(0,u.useState)(!1),[msg,setMsg]=(0,u.useState)("");
+  let pr=HB_AVM_PRESETS.find(p=>p.k===o.preset)||HB_AVM_PRESETS[0];
+  let opts={...o,bg:pr.bg,ring:pr.ring,text:pr.text};
+  let set=(k,v)=>setO(x=>({...x,[k]:v}));
+  (0,u.useEffect)(()=>{HB_avmLoadFonts()},[]);
+  (0,u.useEffect)(()=>{let dead=false;(async()=>{try{await document.fonts.load(`700 80px "${o.font}"`,(o.l1||"")+(o.l2||"")+"大嘉")}catch{}if(!dead)setImg(HB_avmDraw(opts).toDataURL("image/png"))})();
+    try{localStorage.setItem("hb-avm-style",JSON.stringify({font:o.font,preset:o.preset,dots:o.dots,vertical:o.vertical,scale:o.scale}))}catch{}
+    return()=>{dead=true}},[o.l1,o.l2,o.font,o.preset,o.dots,o.vertical,o.scale]);
+  (0,u.useEffect)(()=>{let f=e=>{if(e.key==="Escape")onClose()};window.addEventListener("keydown",f);return()=>window.removeEventListener("keydown",f)},[]);
+  let blob=()=>new Promise(r=>HB_avmDraw(opts).toBlob(r,"image/png"));
+  let fname=()=>((o.l1||"群組")+(o.l2?"-"+o.l2:"")+".png").replace(/[\\/:*?"<>|\s]+/g,"");
+  let save=async()=>{setMsg("");let b=await blob();if(!b)return;let file=null;try{file=new File([b],fname(),{type:"image/png"})}catch{}
+    try{if(file&&navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file]});return}}catch(e){if(e&&e.name==="AbortError")return}
+    try{let url=URL.createObjectURL(b),a=document.createElement("a");a.href=url;a.download=fname();document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),4000);setMsg("已下載圖片，可以拿去換 LINE 群組照片")}catch{setMsg("無法直接下載，請長按上方圖片儲存")}};
+  let apply=async()=>{setBusy(!0);setMsg("");try{let b=await new Promise(r=>HB_avmDraw(opts).toBlob(r,"image/jpeg",0.9));await onApply(b);onClose()}catch(err){setMsg("套用失敗："+((err&&err.message)||err))}finally{setBusy(!1)}};
+  let field=(id,label,el)=>C("label",{className:"hb-avm-f",htmlFor:id},C("span",null,label),el);
+  let seg=(key,list)=>C("div",{className:"hb-avm-seg",role:"radiogroup"},list.map(it=>C("button",{type:"button",key:it.k,role:"radio","aria-checked":o[key]===it.k,className:o[key]===it.k?"on":"",onClick:()=>set(key,it.k),style:key==="font"?{fontFamily:`"${it.k}",serif`}:undefined},
+    key==="preset"?C("i",{style:{background:it.bg,boxShadow:`inset 0 0 0 3px ${it.ring}`}}):null,it.label)));
+  return Zs().createPortal(C("div",{className:"hb-avm-scrim",onClick:e=>{if(e.target===e.currentTarget)onClose()}},
+    C("div",{className:"hb-avm",role:"dialog","aria-modal":true,"aria-label":"製作圓形大頭貼"},
+      C("div",{className:"hb-avm-head"},C("div",null,C("b",null,"製作圓形大頭貼"),C("small",null,project.name)),
+        C("button",{type:"button",className:"hb-avm-x",onClick:onClose,"aria-label":"關閉"},C(E,{name:"x",size:18}))),
+      C("div",{className:"hb-avm-body"},
+        C("div",{className:"hb-avm-prev"},img?C("img",{src:img,alt:"圓形大頭貼預覽"}):C("span",{className:"ph"}),C("small",null,"同一張可以換成 LINE 群組照片")),
+        C("div",{className:"hb-avm-ctl"},
+          C("div",{className:"hb-avm-row"},
+            field("hb-avm-l1","第一行（案名）",C("input",{id:"hb-avm-l1",value:o.l1,maxLength:12,onChange:e=>set("l1",e.target.value),placeholder:"例：大嘉"})),
+            field("hb-avm-l2","第二行（稱謂）",C("input",{id:"hb-avm-l2",value:o.l2,maxLength:12,onChange:e=>set("l2",e.target.value),placeholder:"例：許小姐"}))),
+          C("div",{className:"hb-avm-f"},C("span",null,"字體"),seg("font",HB_AVM_FONTS)),
+          C("div",{className:"hb-avm-f"},C("span",null,"配色"),seg("preset",HB_AVM_PRESETS)),
+          field("hb-avm-scale","字級",C("input",{id:"hb-avm-scale",type:"range",min:0.7,max:1.3,step:0.05,value:o.scale,onChange:e=>set("scale",+e.target.value)})),
+          C("div",{className:"hb-avm-checks"},
+            C("label",{htmlFor:"hb-avm-dots"},C("input",{id:"hb-avm-dots",type:"checkbox",checked:o.dots,onChange:e=>set("dots",e.target.checked)}),"小彩點"),
+            C("label",{htmlFor:"hb-avm-vert"},C("input",{id:"hb-avm-vert",type:"checkbox",checked:o.vertical,onChange:e=>set("vertical",e.target.checked)}),"直式排字")))),
+      msg?C("p",{className:"hb-avm-msg"},msg):null,
+      C("div",{className:"hb-avm-foot"},
+        onUpload?C("button",{type:"button",className:"hb-avm-link",onClick:()=>{onClose();onUpload()}},"改用自己的照片"):C("span",null),
+        C("div",{className:"hb-avm-btns"},
+          C("button",{type:"button",className:"hb-avm-btn",onClick:save},C(E,{name:"download",size:15}),"存成圖片"),
+          C("button",{type:"button",className:"hb-avm-btn solid",onClick:apply,disabled:busy||!img},busy?C(E,{name:"loader",size:15,className:"animate-spin"}):C(E,{name:"check",size:15}),busy?"套用中…":"套用到專案"))))),document.body);
+}
 function HbCaseAvatar({project,editable=false,className="",size=36}){
-  let[,tick]=(0,u.useState)(0),[busy,setBusy]=(0,u.useState)(!1),[menu,setMenu]=(0,u.useState)(!1),inp=(0,u.useRef)(null);
+  let[,tick]=(0,u.useState)(0),[busy,setBusy]=(0,u.useState)(!1),[menu,setMenu]=(0,u.useState)(!1),[maker,setMaker]=(0,u.useState)(!1),inp=(0,u.useRef)(null);
   (0,u.useEffect)(()=>{let f=()=>tick(x=>x+1);window.addEventListener(HB_AVATAR_EVT,f);return()=>window.removeEventListener(HB_AVATAR_EVT,f)},[]);
   let url=HB_avatarOf(project);
   if(!url&&!editable)return null;
   let C=u.default.createElement,stop=e=>{e.stopPropagation()};
   let pick=()=>{setMenu(!1);inp.current&&inp.current.click()};
+  let make=()=>{setMenu(!1);setMaker(!0)};
+  let saveBlob=async b=>{let up=await r2UploadSitelogFile("sitelog-photos",`avatars/${project.id}/${Date.now()}.jpg`,b,"image/jpeg");await HB_setProjectAvatar(project,up)};
   let onFile=async e=>{let f=e.target.files&&e.target.files[0];e.target.value="";if(!f)return;setBusy(!0);
-    try{let b=await HB_avatarSquare(f);let up=await r2UploadSitelogFile("sitelog-photos",`avatars/${project.id}/${Date.now()}.jpg`,b,"image/jpeg");await HB_setProjectAvatar(project,up)}
-    catch(err){alert("大頭貼上傳失敗："+((err&&err.message)||err))}finally{setBusy(!1)}};
+    try{await saveBlob(await HB_avatarSquare(f))}catch(err){alert("大頭貼上傳失敗："+((err&&err.message)||err))}finally{setBusy(!1)}};
+  let applyMade=async b=>{setBusy(!0);try{await saveBlob(b)}finally{setBusy(!1)}};
   let remove=async()=>{setMenu(!1);setBusy(!0);try{await HB_setProjectAvatar(project,null)}catch(err){alert("移除失敗："+((err&&err.message)||err))}finally{setBusy(!1)}};
-  let label=url?(editable?"更換「"+project.name+"」的大頭貼":project.name+" 大頭貼"):"上傳「"+project.name+"」的大頭貼";
+  let label=url?(editable?"更換「"+project.name+"」的大頭貼":project.name+" 大頭貼"):"製作「"+project.name+"」的圓形大頭貼";
   return C("span",{className:"hb-cav-wrap "+className,onClick:stop,onKeyDown:stop,style:{"--hb-cav":size+"px"}},
-    editable?C("button",{type:"button",className:"hb-cav"+(url?"":" empty")+(busy?" busy":""),title:url?"更換／移除大頭貼":"上傳大頭貼（例如 LINE 群組照片）","aria-label":label,"aria-expanded":url?menu:undefined,disabled:busy,
-      onClick:()=>url?setMenu(m=>!m):pick()},
+    editable?C("button",{type:"button",className:"hb-cav"+(url?"":" empty")+(busy?" busy":""),title:url?"重新製作／更換大頭貼":"製作圓形大頭貼","aria-label":label,"aria-expanded":url?menu:undefined,disabled:busy,
+      onClick:()=>url?setMenu(m=>!m):make()},
       url?C("img",{src:url,alt:"",loading:"lazy"}):C(E,{name:busy?"loader":"plus",size:Math.round(size*0.42),className:busy?"animate-spin":""}),
       url&&busy?C("span",{className:"hb-cav-spin"},C(E,{name:"loader",size:14,className:"animate-spin"})):null)
     :C("span",{className:"hb-cav"},C("img",{src:url,alt:label,loading:"lazy"})),
@@ -17836,8 +17944,10 @@ function HbCaseAvatar({project,editable=false,className="",size=36}){
     menu&&C(u.default.Fragment,null,
       C("span",{className:"hb-cav-scrim",onClick:()=>setMenu(!1)}),
       C("span",{className:"hb-cav-menu",role:"menu"},
-        C("button",{type:"button",role:"menuitem",onClick:pick},"更換照片"),
-        C("button",{type:"button",role:"menuitem",className:"del",onClick:remove},"移除"))));
+        C("button",{type:"button",role:"menuitem",onClick:make},"重新製作"),
+        C("button",{type:"button",role:"menuitem",onClick:pick},"改用照片"),
+        C("button",{type:"button",role:"menuitem",className:"del",onClick:remove},"移除"))),
+    maker&&C(HbAvatarMaker,{project,onClose:()=>setMaker(!1),onApply:applyMade,onUpload:pick}));
 }
 function Ry({project:l,onClick:t,range:hbR,motionIndex=0,enableMotion=false,wbCount:hbWc=null,onCount:hbOnCount=null,editable=false}){
 let hbEN={};hbEN[fn[0]]="EARLY DESIGN";hbEN[fn[1]]="IN PROGRESS";hbEN[fn[2]]="COMPLETED";hbEN[fn[3]]="WITHDRAWN";
