@@ -12221,6 +12221,14 @@ const HB_LIB_CSS=`
       .hb-ls-tabs button.on{background:#2E4A3C;border-color:#2E4A3C;color:#fff}
       .hb-ls-scroll{max-height:min(46vh,420px);overflow:auto;margin-right:-6px;padding-right:6px}
       @media(max-width:1099px){.hb-ls-files{grid-column:1/-1}.hb-ls-scroll{max-height:340px}}
+      .hb-ls-row{flex-wrap:wrap}
+      .hb-ls-more-btn{flex:none;width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;border:1px solid transparent;background:none;color:#7b7466;cursor:pointer}
+      .hb-ls-more-btn:hover,.hb-ls-more-btn.on{border-color:rgba(57,51,47,.2);background:#fff;color:#211f1b}
+      .hb-ls-acts{flex:1 0 100%;display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:4px;margin-top:7px;animation:hbFadeIn .16s ease-out both}
+      .hb-ls-act{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;height:44px;padding:0 2px;border:1px solid rgba(57,51,47,.16);background:#fff;font-family:inherit;font-size:11px;color:#403a33;cursor:pointer}
+      .hb-ls-act:hover{border-color:#2E4A3C;color:#2E4A3C}
+      .hb-ls-act.pub{color:#315c48}.hb-ls-act.del{color:#8c493f}.hb-ls-act.del:hover{border-color:#8c493f;color:#8c493f}
+      .hb-ls-row.open{background:rgba(46,74,60,.04);margin:0 -8px;padding-left:8px;padding-right:8px}
       .hb-ls-pub{flex:none;height:30px;padding:0 10px;border:1px solid #2E4A3C;background:#fff;color:#2E4A3C;font-family:inherit;font-size:12px;cursor:pointer}
       .hb-ls-pub:hover{background:#2E4A3C;color:#fff}
       .hb-ls-more{margin:6px 0 2px;border:0;background:none;padding:0;font-family:inherit;font-size:12px;color:#2E4A3C;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
@@ -12493,7 +12501,7 @@ function HbDrawingHub({onBack,notify,project=null,embedded=false,initialView="dr
   let[unifiedOpen,setUnifiedOpen]=(0,u.useState)(false);
   /* 進場：主內容淡入一次；案件卡片在資料第一次載入完成時依序浮現，之後搜尋／篩選／同步都不重播 */
   let[introPhase,setIntroPhase]=(0,u.useState)(()=>HB_reduceMotion()?"done":"wait");
-  let[homeView,setHomeView]=(0,u.useState)("cases"),[homeFilter,setHomeFilter]=(0,u.useState)("all"),[homeQuery,setHomeQuery]=(0,u.useState)(""),[homeCase,setHomeCase]=(0,u.useState)(""),[homeOpenGroups,setHomeOpenGroups]=(0,u.useState)({}),[homePill,setHomePill]=(0,u.useState)("all"),[sideQ,setSideQ]=(0,u.useState)(""),[sideF,setSideF]=(0,u.useState)("all");
+  let[homeView,setHomeView]=(0,u.useState)("cases"),[homeFilter,setHomeFilter]=(0,u.useState)("all"),[homeQuery,setHomeQuery]=(0,u.useState)(""),[homeCase,setHomeCase]=(0,u.useState)(""),[homeOpenGroups,setHomeOpenGroups]=(0,u.useState)({}),[homePill,setHomePill]=(0,u.useState)("all"),[sideQ,setSideQ]=(0,u.useState)(""),[sideF,setSideF]=(0,u.useState)("all"),[sideMenu,setSideMenu]=(0,u.useState)(null);
   let[hubView,setHubView]=(0,u.useState)(initialView==="photos"?"photos":"drawings");
   let[folders,setFolders]=(0,u.useState)([]);
   let[drawings,setDrawings]=(0,u.useState)([]);
@@ -12937,12 +12945,23 @@ function HbDrawingHub({onBack,notify,project=null,embedded=false,initialView="dr
       if(!sq)return true;let c=caseOfDrawing(d);return [d.name,d.drawingNo,d.category,c&&c.name].some(x=>String(x||"").toLowerCase().includes(sq))}).sort((a,b)=>upAt(b)-upAt(a));
     let fCount=k=>scopedDrawings.filter(d=>k==="all"?true:k==="shared"?shareOf(d).shared:!shareOf(d).shared).length;
     let row=(d,kind)=>{let c=caseOfDrawing(d),cv=currentVersionOf(d),pv=publishedVersionOf(d);
-      return C("li",{key:d.id,className:"hb-ls-row"},
+      let open=kind==="file"&&sideMenu===d.id,pend=pendingOf(d),sh=shareOf(d).shared;
+      let act=(icon,label,fn,cls)=>C("button",{type:"button",className:"hb-ls-act"+(cls?" "+cls:""),onClick:()=>{setSideMenu(null);fn()}},C(E,{name:icon,size:14}),C("span",null,label));
+      return C("li",{key:d.id,className:"hb-ls-row"+(open?" open":"")},
         C("button",{type:"button",className:"hb-ls-main",onClick:()=>setVersionModalId(d.id),title:"查看詳情"},
           C("span",{className:"hb-ls-thumb"},cv&&cv.mime&&cv.mime.startsWith("image/")?C("img",{src:cv.url,alt:"",loading:"lazy"}):C(E,{name:cv&&HB_drawingIsCad(cv)?"file-output":"file-text",size:16,color:"#B4573A"})),
           C("span",{className:"hb-ls-txt"},C("b",null,[d.drawingNo,d.name].filter(Boolean).join(" ")),
             C("small",null,[c&&c.name,kind==="pend"&&cv&&pv?"V"+cv.versionNo+"・業主看 V"+pv.versionNo:cv?"V"+cv.versionNo+"・"+String(cv.uploadedAt||"").slice(5,10).replace("-","/"):""].filter(Boolean).join("・")))),
-        kind==="file"?C("span",{className:"hb-ls-dot "+(pendingOf(d)?"pend":shareOf(d).shared?"pub":"int"),title:pendingOf(d)?"新版待發布":shareOf(d).shared?"業主可見":"公司內部"}):cv&&C("button",{type:"button",className:"hb-ls-pub",onClick:()=>publishDrawing(d)},"發布"));};
+        kind==="file"?C(u.default.Fragment,null,
+          C("span",{className:"hb-ls-dot "+(pend?"pend":sh?"pub":"int"),title:pend?"新版待發布":sh?"業主可見":"公司內部"}),
+          C("button",{type:"button",className:"hb-ls-more-btn"+(open?" on":""),"aria-label":"操作："+(d.name||""),"aria-expanded":open,onClick:()=>setSideMenu(open?null:d.id)},C(E,{name:"more-vertical",size:16})),
+          open&&C("div",{className:"hb-ls-acts",role:"group","aria-label":"檔案操作"},
+            act("search","詳情",()=>setVersionModalId(d.id)),
+            act("upload","新版",()=>openNewVersionPicker(d.id)),
+            (pend||!sh)&&cv?act("send","發布",()=>publishDrawing(d),"pub"):null,
+            act("folder","移動",()=>setMoveDrawingId(d.id)),
+            act("trash","刪除",()=>deleteDrawing(d.id),"del")))
+        :cv&&C("button",{type:"button",className:"hb-ls-pub",onClick:()=>publishDrawing(d)},"發布"));};
     let sec=(title,en,list,kind,empty,hint,max)=>C("section",{className:"hb-ls-sec"},
       C("h3",null,title,C("em",{className:list.length&&kind==="pend"?"on":""},list.length),C("span",null,en)),
       hint&&C("p",{className:"hb-ls-hint"},hint),
@@ -12964,6 +12983,7 @@ function HbDrawingHub({onBack,notify,project=null,embedded=false,initialView="dr
       onOpenHub&&C("button",{type:"button",className:"hb-ls-hub",onClick:onOpenHub},"開啟資料與圖面",C(E,{name:"arrow-right",size:14})),
       u.default.createElement("input",{ref:fileInputRef,type:"file",accept:"image/*,.pdf,application/pdf,.dwg,.dxf",multiple:true,style:{display:"none"},onChange:handleNewDrawingUpload}),
       u.default.createElement("input",{ref:newVersionInputRef,type:"file",accept:"image/*,.pdf,application/pdf,.dwg,.dxf",style:{display:"none"},onChange:handleNewVersionUpload}),
+    Zs().createPortal(u.default.createElement(u.default.Fragment,null,
     viewingDrawing&&u.default.createElement(HbDrawingVersionModal,{drawing:viewingDrawing,folderPath:folderPathOf(viewingDrawing.folderId).map(f=>f.name).join("／"),versions:versionsFor(viewingDrawing.id),publishedVersionId:shareOf(viewingDrawing).publishedVersionId,isShared:shareOf(viewingDrawing).shared,byFolder:!!shareOf(viewingDrawing).byFolder,ownerPreview,siblings:drawings.filter(x=>x.folderId===viewingDrawing.folderId&&(!ownerPreview||shareOf(x).shared)),categories:categoryOptions,notify,onSwitch:id=>setVersionModalId(id),onClose:()=>setVersionModalId(null),onRestore:vid=>restoreVersion(viewingDrawing.id,vid),onPublish:vid=>publishVersion(viewingDrawing,vid),onUpload:()=>openNewVersionPicker(viewingDrawing.id),onToggleShare:()=>toggleDrawingShare(viewingDrawing),onRotate:rotateDrawingVersion,onSaveInfo:info=>saveDrawingInfo(viewingDrawing,info),onBakeRotation:bakePdfRotation,onLineNotify:()=>openLineNotify([viewingDrawing.id])}),
     moveDrawingId&&(()=>{let d=drawings.find(x=>x.id===moveDrawingId);if(!d)return null;let root=caseRootOf(d.folderId);if(!root)return null;
       let rows=[],walk=(f,depth)=>{rows.push({f,depth});folders.filter(x=>x.parentId===f.id).sort((a,b)=>String(a.name).localeCompare(String(b.name),"zh-Hant")).forEach(c=>walk(c,depth+1))};walk(root,0);
@@ -12971,7 +12991,8 @@ function HbDrawingHub({onBack,notify,project=null,embedded=false,initialView="dr
     uploadQueue&&(()=>{let forced=uploadQueue.forcedDrawingId&&drawings.find(x=>x.id===uploadQueue.forcedDrawingId);let fid=forced?forced.folderId:currentFolderId;return u.default.createElement(HbDrawingUploadDialog,{key:uploadQueue.files.map(f=>f.name).join("|"),files:uploadQueue.files,folderName:(folders.find(f=>f.id===fid)||{}).name,folderDrawings:drawings.filter(x=>x.folderId===fid),categories:categoryOptions,forcedDrawingId:uploadQueue.forcedDrawingId,versionsOf:versionsFor,busy:uploading,onCancel:()=>!uploading&&setUploadQueue(null),onSubmit:submitUploadQueue})})(),
     lineNotify&&u.default.createElement(HbDrawingLineNotify,{...lineNotify,notify,onClose:()=>setLineNotify(null),onSent:markLineNotified}),
     unifiedOpen&&projects&&u.default.createElement(HbUnifiedUpload,{projects:(projects||[]).filter(p=>!/^示範案件/.test(p.name||"")),folders,drawings,versions,notify,uploadFile:uploadFileToDrawing,
-      onUploaded:()=>load(),onClose:()=>setUnifiedOpen(false),onNotify:ids=>{setUnifiedOpen(false);setTimeout(()=>openLineNotify(ids),60)}}),
+      onUploaded:()=>load(),onClose:()=>setUnifiedOpen(false),onNotify:ids=>{setUnifiedOpen(false);setTimeout(()=>openLineNotify(ids),60)}})
+    ),document.body)
     );
   }
   return u.default.createElement("div",{className:"hb-archive hb-dossier hb-plan-system"+(isHome?" is-home":""),style:{minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},
