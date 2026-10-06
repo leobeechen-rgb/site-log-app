@@ -371,6 +371,13 @@
     .hb-pj-meta>:first-child{flex:0 1 auto;min-width:0;align-items:flex-start!important}
     .hb-pj-meta>:first-child svg{margin-top:3px}
     .hb-pj-meta .hb-pj-end{flex-basis:100%;padding-left:17px;color:#6E6A60}
+    .hb-pj-meta>span[style*="opacity: 0.35"]{display:none}
+  }
+  /* 手機版：編輯專案／重新整理／更多 移到「返回專案列表」同一列，不再壓到標題 */
+  @media (max-width:859px){
+    .hb-project-actions-row>.hb-project-meta-actions{grid-column:2!important;grid-row:1!important;padding:0!important;flex-wrap:nowrap!important;gap:2px!important;justify-content:flex-end}
+    .hb-project-actions-row>.hb-project-meta-actions>button:first-child{padding:4px 12px!important;min-height:34px!important;height:34px}
+    .hb-project-actions-row{padding-bottom:8px!important}
   }
 
   /* ===== 總覽表格 ===== */
