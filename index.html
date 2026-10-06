@@ -12181,11 +12181,11 @@ function HbProjectDrawingFiles({data,loading,onOpenHub,onReload,onSignature}){
   );
 }
 
-function HbDrawingHub({onBack,notify,project=null,embedded=false,initialView="drawings",workbench=null,onNewCase=null,projects=null}){
+function HbDrawingHub({onBack,notify,project=null,embedded=false,initialView="drawings",workbench=null,onNewCase=null,projects=null,onOpenProject=null}){
   let[unifiedOpen,setUnifiedOpen]=(0,u.useState)(false);
   /* 進場：主內容淡入一次；案件卡片在資料第一次載入完成時依序浮現，之後搜尋／篩選／同步都不重播 */
   let[introPhase,setIntroPhase]=(0,u.useState)(()=>HB_reduceMotion()?"done":"wait");
-  let[homeView,setHomeView]=(0,u.useState)("cases"),[homeFilter,setHomeFilter]=(0,u.useState)("all"),[homeQuery,setHomeQuery]=(0,u.useState)(""),[homeCase,setHomeCase]=(0,u.useState)(""),[homeOpenGroups,setHomeOpenGroups]=(0,u.useState)({});
+  let[homeView,setHomeView]=(0,u.useState)("cases"),[homeFilter,setHomeFilter]=(0,u.useState)("all"),[homeQuery,setHomeQuery]=(0,u.useState)(""),[homeCase,setHomeCase]=(0,u.useState)(""),[homeOpenGroups,setHomeOpenGroups]=(0,u.useState)({}),[homePill,setHomePill]=(0,u.useState)("all");
   let[hubView,setHubView]=(0,u.useState)(initialView==="photos"?"photos":"drawings");
   let[folders,setFolders]=(0,u.useState)([]);
   let[drawings,setDrawings]=(0,u.useState)([]);
@@ -12571,13 +12571,56 @@ function HbDrawingHub({onBack,notify,project=null,embedded=false,initialView="dr
     return !hq||[d.name,d.drawingNo,d.category,c.name].some(x=>String(x||"").toLowerCase().includes(hq));
   }).sort((a,b)=>String((currentVersionOf(b)||{}).uploadedAt||b.createdAt||"").localeCompare(String((currentVersionOf(a)||{}).uploadedAt||a.createdAt||"")));
   let openFiles=f=>{setHomeFilter(f);setHomeView("files")};
+  /* 專案後台：以案件（sitelog_projects）為主的卡片，附地址、階段、進度與照片／圖面數 */
+  const HB_STAT_EN={"新案初期設計":"EARLY DESIGN","設計中":"EARLY DESIGN","工程進行中":"CONSTRUCTION","施工中":"CONSTRUCTION","工程已完工":"COMPLETED","已完工":"COMPLETED","流標":"WITHDRAWN"};
+  let projAll=(projects||[]).filter(p=>!/^示範案件/.test(p.name||""));
+  let rootOfProject=p=>folders.find(f=>f.parentId==null&&f.projectId===p.id)||folders.find(f=>f.parentId==null&&!f.projectId&&String(f.name).trim()===String(p.name||"").trim())||null;
+  let projStats=p=>{let r=rootOfProject(p);let ds=r?scopedDrawings.filter(d=>{let c=caseOfDrawing(d);return c&&c.id===r.id}):[];return{root:r,total:ds.length,shared:ds.filter(d=>shareOf(d).shared).length,pending:ds.filter(pendingOf).length}};
+  let pillOf=p=>(p.status==="工程已完工"||p.status==="已完工")?"done":p.status==="流標"?"lost":"active";
+  let projPct=p=>{if(p.status==="工程已完工"||p.status==="已完工")return 100;try{if(p.stageProgress&&typeof p.stageProgress==="object"&&HB_STAGE_DEFS.length){let sd=HB_stageMigrate(p.stageProgress);return Math.round(HB_STAGE_DEFS.filter(x=>sd[x.k]&&sd[x.k].done).length/HB_STAGE_DEFS.length*100)}}catch(e){}return 0};
+  let projMatch=p=>{if(!hq)return true;if([p.name,p.address].some(x=>String(x||"").toLowerCase().includes(hq)))return true;let r=rootOfProject(p);return !!r&&scopedDrawings.some(d=>{let c=caseOfDrawing(d);return c&&c.id===r.id&&[d.name,d.drawingNo,d.category].some(x=>String(x||"").toLowerCase().includes(hq))})};
+  let pillCount=k=>projAll.filter(p=>(k==="all"||pillOf(p)===k)&&projMatch(p)).length;
+  let homeProjects=projAll.filter(p=>(homePill==="all"||pillOf(p)===homePill)&&projMatch(p)).sort((a,b)=>(a.status==="流標")-(b.status==="流標"));
+  let openProjectPage=(p,tab)=>{if(onOpenProject){onOpenProject(p.id,tab);return}let r=rootOfProject(p);if(r)setCurrentFolderId(r.id)};
+  let openCasePhotos=p=>{let r=rootOfProject(p);if(r){setCurrentFolderId(r.id);setHubView("photos");try{window.scrollTo({top:0})}catch{}}else openProjectPage(p,"photos")};
+  let openCaseFiles=p=>{let r=rootOfProject(p);if(r){setCurrentFolderId(r.id);setHubView("drawings");try{window.scrollTo({top:0})}catch{}}else openProjectPage(p,"files")};
+  let scrollSec=id=>setTimeout(()=>{let el=document.getElementById(id);if(el)try{el.scrollIntoView({behavior:HB_reduceMotion()?"auto":"smooth",block:"start"})}catch{}},30);
+  let navGo=k=>{if(k==="wb"){scrollSec("hb-sec-wb");return}if(k==="cases")setHomeView("cases");else if(k==="photos")setHomeView("photos");else if(k==="files")openFiles("all");else if(k==="pending")openFiles("pending");scrollSec("hb-sec-main")};
+  let navOn=homeView==="cases"?"cases":homeView==="photos"?"photos":homeFilter==="pending"?"pending":"files";
+  let renderProjectGrid=mode=>{
+    let C=u.default.createElement;
+    if(!homeProjects.length)return C("div",{className:"hb-docs-body"},C(He,{icon:"folder",text:hq||homePill!=="all"?"沒有符合條件的案件":"尚未建立任何案件"}));
+    return C("div",{className:"hb-plan-folder-grid is-home hb-docs-body hb-pgrid",style:{marginBottom:18}},
+      homeProjects.map((p,i)=>{
+        let st=projStats(p),pct=projPct(p),done=pillOf(p)==="done",yr=String(p.updatedAt||"").slice(0,4)||String(new Date().getFullYear());
+        let md=p.updatedAt?String(p.updatedAt).slice(5,10).replace("-","/"):"—";
+        let go=()=>mode==="photos"?openCasePhotos(p):openProjectPage(p);
+        return C("div",{key:p.id,className:"hb-plan-folder hb-pcard"+(done?" done":"")+(p.status==="流標"?" lost":""),style:{"--hb-i":Math.min(i,11)},role:"button",tabIndex:0,"aria-label":(mode==="photos"?"開啟照片：":"開啟專案：")+p.name,onClick:go,onKeyDown:e=>{if(e.target===e.currentTarget&&(e.key==="Enter"||e.key===" ")){e.preventDefault();go()}}},
+          done&&C("span",{className:"hb-pcard-stamp","aria-hidden":true},C("b",null,"完工"),C("i",null,yr)),
+          C("div",{className:"hb-plan-folder-index"},String(i+1).padStart(2,"0")+" / PROJECT"),
+          C("div",{className:"hb-plan-folder-title"},p.name),
+          C("div",{className:"hb-pcard-addr"},p.address||"　"),
+          C("div",{className:"hb-pcard-stage"},HB_STAT_EN[p.status]||p.status||""),
+          C("div",{className:"hb-pcard-bar"},C("div",{className:"t"},C(HbProgFill,{pct:Math.max(2,pct)})),C("span",null,pct+"%")),
+          C("div",{className:"hb-pcard-stats"},
+            C("button",{type:"button",onClick:e=>{e.stopPropagation();openCasePhotos(p)},title:"開啟照片"},"照片 ",C("b",null,p.photoCount||0)),
+            C("i",null,"・"),
+            C("button",{type:"button",onClick:e=>{e.stopPropagation();openCaseFiles(p)},title:"開啟圖面"},"圖面 ",C("b",null,st.total)),
+            C("i",null,"・"),
+            C("span",null,"業主可見 ",C("b",null,st.shared)),
+            st.pending?C(u.default.Fragment,null,C("i",null,"・"),C("span",{className:"pend"},"待發布 ",C("b",null,st.pending))):null,
+            C("i",null,"・"),
+            C("span",null,"更新 ",md)));
+      }),
+      mode!=="photos"&&!ownerPreview&&onNewCase&&C("button",{type:"button",key:"hb-newcase",className:"hb-plan-folder hb-plan-newcase",style:{"--hb-i":Math.min(homeProjects.length,11)},onClick:onNewCase,"aria-label":"新增案件",title:"新增案件"},C(E,{name:"plus",size:22})));
+  };
   /* 效果圖／照片等圖片：同一資料夾 2 張以上合併成一組圖片集，不逐張列 */
   let isImgDrawing=d=>{let cv=currentVersionOf(d);return !!(cv&&cv.mime&&cv.mime.startsWith("image/"))};
   let homeEntries=(()=>{let out=[],groups={};homeFiles.forEach(d=>{if(isImgDrawing(d)){let k=d.folderId;if(!groups[k]){groups[k]={type:"group",key:"g"+k,folderId:k,items:[]};out.push(groups[k])}groups[k].items.push(d)}else out.push({type:"file",key:d.id,d})});
     return out.map(e=>e.type==="group"&&e.items.length<2?{type:"file",key:e.items[0].id,d:e.items[0]}:e)})();
   (0,u.useEffect)(()=>{if(!hubProject&&hubView!=="drawings")setHubView("drawings")},[hubProject&&hubProject.id]);
 
-  return u.default.createElement("div",{className:"hb-archive hb-dossier hb-plan-system",style:{minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},
+  return u.default.createElement("div",{className:"hb-archive hb-dossier hb-plan-system"+(isHome?" is-home":""),style:{minHeight:"100vh",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},
     u.default.createElement("style",null,`
       .hb-plan-system{--plan-green:#315c48;--plan-rust:#b4573a;--plan-ink:#211f1b;--plan-paper:rgba(255,255,255,.62)}
       .hb-hubview{display:grid;grid-template-columns:1fr 1fr;max-width:420px;margin:0 0 16px;border:1px solid rgba(57,51,47,.16);background:rgba(255,255,255,.45)}
@@ -12659,6 +12702,64 @@ function HbDrawingHub({onBack,notify,project=null,embedded=false,initialView="dr
       @media(max-width:900px){.hb-plan-features{grid-template-columns:repeat(2,1fr)}.hb-plan-folder-grid{grid-template-columns:repeat(2,1fr)}.hb-plan-tr{grid-template-columns:74px minmax(200px,1.7fr) 60px 124px 132px}.hb-plan-tr>*:nth-child(3),.hb-plan-tr>*:nth-child(5),.hb-plan-tr>*:nth-child(7){display:none}}
       @media(max-width:680px){.hb-plan-toolbar{display:grid;grid-template-columns:1fr 1fr;gap:8px}.hb-pt{width:100%;min-width:0;padding:0 8px;font-size:14px}.hb-pt-upload{order:1;height:48px}.hb-pt-folder{order:2;height:48px}.hb-pt-up{order:3;height:42px}.hb-pt-preview{order:4;height:42px;margin-left:0}.hb-pt-line{order:5;grid-column:1 / -1;height:46px}.hb-pt-after span{flex:1 1 100%}.hb-pt-after button.go{flex:1}.hb-pt-after button{height:40px}.hb-pt .lg{display:none}.hb-pt .sm{display:inline}.hb-plan-filters{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px!important;overflow:visible!important}.hb-plan-filters>input{grid-column:1 / -1;min-width:0!important;width:100%!important;box-sizing:border-box}.hb-plan-filters.has-cat>input{grid-column:1 / 3}.hb-plan-filters>select{grid-column:3 / 5;min-width:0!important;width:100%!important;padding:9px 6px!important}.hb-plan-filters>button{min-width:0;padding:0 2px!important;height:40px;font-size:12.5px!important}.hb-plan-reghead{flex-direction:column;align-items:stretch!important}.hb-plan-reghead>div:last-child{justify-content:space-between!important}.hb-plan-features{grid-template-columns:1fr 1fr}.hb-plan-feature{padding:10px}.hb-plan-feature small{display:none}.hb-plan-folder-grid{grid-template-columns:1fr}.hb-plan-folder{min-height:116px;padding:16px}.hb-plan-folder-title{margin-top:14px}.hb-plan-table{display:none}.hb-plan-mobile{display:flex;flex-direction:column;gap:10px}.hb-plan-modal{width:100vw;height:100dvh}.hb-plan-modal-head{padding:11px 12px;gap:8px}.hb-plan-modal-head .hb-plan-pill{max-width:108px;overflow:hidden;text-overflow:ellipsis}.hb-plan-modal-body{display:block;overflow:auto}.hb-plan-stage{padding:12px;display:block;overflow:visible}.hb-plan-side{border-left:0;border-top:1px solid rgba(57,51,47,.13);padding:15px}.hb-plan-preview{height:min(58vh,520px);min-height:320px}.hb-plan-rotatebar{grid-template-columns:1fr;gap:7px;padding:8px}.hb-plan-rotatelabel{display:flex;align-items:center;justify-content:space-between}.hb-plan-rotatelabel strong{display:inline;margin:0;font-size:17px}.hb-plan-angle{min-height:42px}.hb-plan-compare{display:grid;grid-template-columns:1fr;height:auto}.hb-plan-compare>div{display:block}.hb-plan-compare .hb-plan-preview{height:44vh;min-height:280px;margin-top:6px}}
 
+
+      /* 2026-10：專案後台框架（左側導覽＋上方搜尋＋專案卡片） */
+      .hb-side-brand{margin-top:22px;display:flex;flex-direction:column;gap:2px;font-size:10.5px;letter-spacing:.3em;color:#403a33}.hb-side-brand b{font:500 11px Georgia,serif;letter-spacing:.32em}.hb-side-brand span{letter-spacing:.2em;color:#7b7466}
+      .hb-side-nav{display:flex;flex-direction:column;gap:2px;margin:26px 0 0}
+      .hb-side-nav button{display:flex;align-items:center;gap:11px;height:44px;padding:0 12px;border:0;background:none;font-family:inherit;font-size:14.5px;letter-spacing:.06em;color:#403a33;cursor:pointer;text-align:left;transition:background .18s ease,color .18s ease}
+      .hb-side-nav button:hover{background:rgba(46,74,60,.07)}
+      .hb-side-nav button.on{background:#2E4A3C;color:#f5f1e8}
+      .hb-side-nav button span{flex:1}
+      .hb-side-nav button em{font-style:normal;min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:#b4573a;color:#fff;font-size:11px;display:inline-flex;align-items:center;justify-content:center}
+      .hb-side-up{display:flex;align-items:center;justify-content:center;gap:8px;height:44px;margin-top:22px;border:1px solid #2E4A3C;background:#2E4A3C;color:#f5f1e8;font-family:inherit;font-size:14px;letter-spacing:.06em;cursor:pointer}
+      .hb-side-up:hover{background:#243b30}
+      .hb-hubbar{display:flex;align-items:center;gap:12px;margin:0 0 14px}
+      .hb-hubbar .hb-topsearch{flex:1 1 auto;max-width:none}
+      .hb-hubbar .hb-docs-sync{margin-left:6px}
+      .hb-sec{scroll-margin-top:12px}.hb-plan-wbwrap{scroll-margin-top:12px}
+      .hb-docs.hb-sec{padding:20px 22px 16px}
+      .hb-docs.hb-sec .hb-docs-head{margin-bottom:4px}
+      .hb-pills{display:flex;gap:6px;flex-wrap:wrap;margin-right:auto;margin-left:18px}
+      .hb-pills button{height:34px;padding:0 14px;border:1px solid rgba(57,51,47,.18);border-radius:17px;background:rgba(255,255,255,.6);font-family:inherit;font-size:13px;color:#403a33;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:background .18s,color .18s,border-color .18s}
+      .hb-pills button em{font-style:normal;font-size:11px;color:#8b8277}
+      .hb-pills button.on{background:#2E4A3C;border-color:#2E4A3C;color:#fff}.hb-pills button.on em{color:rgba(255,255,255,.75)}
+      .hb-newcase-btn{height:40px}
+      .hb-pcard{position:relative;min-height:0!important;padding:18px 20px 16px!important;display:flex;flex-direction:column;gap:4px;background:rgba(255,255,255,.62)}
+      .hb-pcard .hb-plan-folder-title{margin-top:6px!important;font-size:21px}
+      .hb-pcard-addr{font-size:12px;color:#7b7466;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .hb-pcard-stage{margin-top:10px;font:500 10.5px Georgia,serif;letter-spacing:.2em;color:#403a33}
+      .hb-pcard-bar{display:flex;align-items:center;gap:10px}
+      .hb-pcard-bar .t{flex:1;height:3px;background:rgba(42,40,34,.12);overflow:hidden}
+      .hb-pcard-bar .t i{height:100%;background:#2E4A3C}
+      .hb-pcard-bar span{font:400 12px Georgia,serif;color:#403a33;min-width:34px;text-align:right}
+      .hb-pcard-stats{margin-top:8px;display:flex;flex-wrap:wrap;align-items:center;gap:2px 4px;font-size:11.5px;color:#7b7466}
+      .hb-pcard-stats b{font-weight:500;color:#211f1b}.hb-pcard-stats i{font-style:normal;color:#c3b9aa}
+      .hb-pcard-stats button{border:0;background:none;padding:0;font:inherit;color:inherit;cursor:pointer;border-bottom:1px solid transparent}
+      .hb-pcard-stats button:hover{border-bottom-color:currentColor;color:#2E4A3C}
+      .hb-pcard-stats .pend{color:#a5642f}.hb-pcard-stats .pend b{color:#a5642f}
+      .hb-pcard.lost{opacity:.62}
+      .hb-pcard-stamp{position:absolute;top:14px;right:16px;transform:rotate(-8deg);border:1.5px solid #211f1b;border-radius:6px;padding:2px 8px;display:flex;flex-direction:column;align-items:center;line-height:1.1;background:#fbf8f2}
+      .hb-pcard-stamp b{font:600 13px 'Noto Serif TC',serif;letter-spacing:.1em}.hb-pcard-stamp i{font:normal 9px Georgia,serif;letter-spacing:.1em}
+      @media(min-width:1100px){
+        .hb-plan-system.is-home{grid-template-columns:clamp(190px,14vw,230px) minmax(0,1fr)}
+        .hb-plan-system>.hb-dosWrap.hb-dosWrap-home{display:flex;flex-direction:column}
+        .hb-dosWrap-home .hb-side-up{margin-top:30px}
+        .hb-dosWrap-home .hb-side-nav{margin-top:30px}
+      }
+      @media(max-width:1099px){
+        .hb-side-brand{display:none}
+        .hb-side-nav{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;margin-top:12px}
+        .hb-side-nav button{flex-direction:column;justify-content:center;gap:3px;height:56px;padding:0 2px;font-size:12px;border:1px solid rgba(57,51,47,.12);background:rgba(255,255,255,.5);position:relative}
+        .hb-side-nav button em{position:absolute;top:4px;right:6px;min-width:16px;height:16px;font-size:10px;padding:0 4px}
+        .hb-side-nav button span{flex:none}
+        .hb-side-up{margin-top:10px;width:100%}
+      }
+      @media(max-width:680px){
+        .hb-hubbar{flex-wrap:wrap;gap:8px}.hb-hubbar .hb-topsearch{flex:1 1 100%}.hb-hubbar .hb-docs-refresh{margin-left:auto}
+        .hb-pills{margin:4px 0 0;width:100%}.hb-pills button{flex:1 1 0;justify-content:center;padding:0 6px;font-size:12.5px}
+        .hb-newcase-btn{width:100%}
+        .hb-pcard{padding:14px 16px!important}.hb-pcard .hb-plan-folder-title{font-size:19px}
+      }
       /* 2026-10 動態：只用 opacity / transform，播放完即停止 */
       @keyframes hbFadeIn{from{opacity:0}to{opacity:1}}
       @keyframes hbRise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
@@ -12763,9 +12864,17 @@ function HbDrawingHub({onBack,notify,project=null,embedded=false,initialView="dr
         .hb-plan-folder-grid.is-home .hb-plan-folder-title{font-size:19px}
       }
     `),
-    u.default.createElement("div",{className:"hb-dosWrap"},
-      u.default.createElement("button",{onClick:goUp,className:"hb-arcBack"},u.default.createElement(E,{name:"arrow-left",size:15}),u.default.createElement("span",{title:canGoUp?("返回 "+(parentFolder?parentFolder.name:"圖面總覽")):undefined},canGoUp?(parentFolder?"返回 "+parentFolder.name:"返回圖面總覽"):(embedded?(showPhotos?"返回案件照片":"返回案件檔案"):"返回公司資料庫"))),
-      u.default.createElement("div",{className:"hb-dosLabel"},embedded?"Project Drawing Control":"Gestion des Plans"),u.default.createElement("h1",{className:"hb-dosTitle hb-vtitle"},"資料與圖面"),embedded&&project&&u.default.createElement("div",{className:"hb-plan-casename"},u.default.createElement(E,{name:"folder",size:15}),u.default.createElement("span",null,project.name)),
+    u.default.createElement("div",{className:"hb-dosWrap"+(isHome?" hb-dosWrap-home":"")},
+      u.default.createElement("button",{onClick:goUp,className:"hb-arcBack"},u.default.createElement(E,{name:"arrow-left",size:15}),u.default.createElement("span",{title:canGoUp?("返回 "+(parentFolder?parentFolder.name:"圖面總覽")):undefined},canGoUp?(parentFolder?"返回 "+parentFolder.name:"返回圖面總覽"):(embedded?(showPhotos?"返回案件照片":"返回案件檔案"):"返回首頁"))),
+      isHome?u.default.createElement(u.default.Fragment,null,
+        u.default.createElement("div",{className:"hb-dosLabel"},"Gestion des Projets"),
+        u.default.createElement("h1",{className:"hb-dosTitle hb-vtitle"},"專案後台"),
+        u.default.createElement("div",{className:"hb-side-brand"},u.default.createElement("b",null,"HERFULSINS"),u.default.createElement("span",null,"赫柏空間設計")),
+        u.default.createElement("nav",{className:"hb-side-nav","aria-label":"專案後台導覽"},
+          [["wb","calendar","工作台"],["cases","folder","專案"],["files","file-text","檔案"],["photos","image","照片"],["pending","send","待發布",planPending]].map(it=>u.default.createElement("button",{key:it[0],type:"button",className:navOn===it[0]?"on":"","aria-current":navOn===it[0]?"page":undefined,onClick:()=>navGo(it[0])},
+            u.default.createElement(E,{name:it[1],size:17}),u.default.createElement("span",null,it[2]),it[3]?u.default.createElement("em",null,it[3]):null))),
+        !ownerPreview&&projects&&u.default.createElement("button",{type:"button",className:"hb-side-up",onClick:()=>setUnifiedOpen(true)},u.default.createElement(E,{name:"plus",size:16}),"上傳專案資料")
+      ):u.default.createElement(u.default.Fragment,null,u.default.createElement("div",{className:"hb-dosLabel"},embedded?"Project Drawing Control":"Gestion des Plans"),u.default.createElement("h1",{className:"hb-dosTitle hb-vtitle"},"資料與圖面"),embedded&&project&&u.default.createElement("div",{className:"hb-plan-casename"},u.default.createElement(E,{name:"folder",size:15}),u.default.createElement("span",null,project.name))),
       null
     ),
     u.default.createElement("div",{className:"hb-plan-main"+(introPhase!=="done"?" hb-intro":"")+(introPhase==="play"?" hb-intro-cards":""),style:{maxWidth:1320,margin:"0 auto",padding:"6px clamp(14px,4vw,58px) calc(112px + env(safe-area-inset-bottom))"},
@@ -12776,33 +12885,28 @@ function HbDrawingHub({onBack,notify,project=null,embedded=false,initialView="dr
         [["drawings","file-text","圖面檔案"],["photos","image","照片"]].map(it=>u.default.createElement("button",{key:it[0],type:"button",role:"tab","aria-selected":hubView===it[0],className:hubView===it[0]?"on":"",onClick:()=>{setHubView(it[0]);try{window.scrollTo({top:0})}catch{}}},u.default.createElement(E,{name:it[1],size:15}),it[2]))
       ),
       showPhotos?u.default.createElement(HbHubPhotos,{key:hubProject.id,project:hubProject,notify,readOnly:ownerPreview}):u.default.createElement(u.default.Fragment,null,
-      isHome&&!ownerPreview&&workbench&&u.default.createElement("div",{className:"hb-plan-wbwrap"},workbench),
+      isHome&&u.default.createElement("div",{className:"hb-hubbar"},
+        u.default.createElement("label",{className:"hb-docs-search hb-topsearch"},u.default.createElement(E,{name:"search",size:17}),u.default.createElement("input",{value:homeQuery,onChange:e=>setHomeQuery(e.target.value),placeholder:"搜尋案件、圖號、圖名…","aria-label":"搜尋案件、圖號、圖名"})),
+        u.default.createElement("span",{className:"hb-docs-sync"+(loading?" busy":"")},u.default.createElement("i",null),loading?"同步中…":"已同步"),
+        u.default.createElement("button",{type:"button",className:"hb-docs-ghost hb-docs-refresh",disabled:loading,onClick:async()=>{await load();notify("資料已重新同步")}},u.default.createElement(E,{name:"refresh",size:16,className:loading?"animate-spin":""}),"重新整理")),
+      isHome&&!ownerPreview&&workbench&&u.default.createElement("div",{className:"hb-plan-wbwrap",id:"hb-sec-wb"},workbench),
       !isHome&&u.default.createElement("div",{className:"hb-plan-features"},
         [["copy","版本控制","每次改版完整保留",()=>jumpPlan("all"),!ownerPreview&&statusFilter==="all",planTotal,"張圖面"],["users","業主共享","只顯示正式發布版",()=>jumpPlan("owner"),ownerPreview,planShared,"張已共享"],["send","發布追蹤","新版待發布給業主",()=>jumpPlan("pending"),!ownerPreview&&statusFilter==="pending",planPending,"張待發布"],["refresh","雲端同步","手機與電腦共用",async()=>{await load();notify("圖面資料已重新同步")},false,null,""]].map((it,i)=>u.default.createElement("button",{type:"button",className:"hb-plan-feature"+(it[4]?" on":""),key:i,onClick:it[3]},
           u.default.createElement(E,{name:it[0],size:18,color:i===1?"#315C48":"#B4573A"}),u.default.createElement("div",{className:"hb-pf-txt"},u.default.createElement("b",null,it[1]),u.default.createElement("small",null,it[2])),
           it[5]!=null&&u.default.createElement("div",{className:"hb-pf-num"},u.default.createElement("strong",{style:{color:i===1?"#315C48":"#17150F"}},it[5]),u.default.createElement("small",null,it[6]))
         ))
       ),
-      isHome&&u.default.createElement("section",{className:"hb-docs","aria-label":"專案資料總覽"},
-        u.default.createElement("div",{className:"hb-docs-head"},
-          u.default.createElement("h2",null,"專案資料總覽",u.default.createElement("span",null,"DOCUMENTS")),
+      isHome&&u.default.createElement("section",{className:"hb-docs hb-sec",id:"hb-sec-main","aria-label":homeView==="files"?"檔案":homeView==="photos"?"照片":"專案總覽"},
+        homeView==="files"?u.default.createElement("div",{className:"hb-docs-head"},
+          u.default.createElement("h2",null,homeFilter==="pending"?"待發布":"檔案",u.default.createElement("span",null,homeFilter==="pending"?"À PUBLIER":"FICHIERS")),
+          u.default.createElement("div",{className:"hb-pills",role:"tablist"},[["all","全部",planTotal],["shared","業主可見",planShared],["pending","待發布",planPending]].map(it=>u.default.createElement("button",{key:it[0],type:"button",role:"tab","aria-selected":homeFilter===it[0],className:homeFilter===it[0]?"on":"",onClick:()=>setHomeFilter(it[0])},it[1],u.default.createElement("em",null,it[2])))),
           u.default.createElement("div",{className:"hb-docs-acts"},
-            !ownerPreview&&projects&&u.default.createElement("button",{type:"button",className:"hb-docs-up",onClick:()=>setUnifiedOpen(true)},u.default.createElement(E,{name:"plus",size:17}),"上傳專案資料"),
-            u.default.createElement("button",{type:"button",className:"hb-docs-ghost"+(ownerPreview?" on":""),onClick:()=>{setOwnerPreview(v=>!v);setStatusFilter("all")}},u.default.createElement(E,{name:ownerPreview?"arrow-left":"eye",size:17}),ownerPreview?"返回公司管理":"預覽業主畫面"))),
-        u.default.createElement("div",{className:"hb-docs-stats"},
-          [["all","file-text","全部圖面","查看所有案件圖面",planTotal],["shared","users","業主可見","查看已發布給業主的版本",planShared],["pending","clock","新版待發布","已共享圖面的新版尚未發布",planPending]].map(it=>{
-            let on=homeView==="files"&&homeFilter===it[0];
-            return u.default.createElement("button",{type:"button",key:it[0],className:"hb-docs-stat"+(on?" on":""),onClick:()=>openFiles(it[0]),"aria-pressed":on},
-              u.default.createElement("span",{className:"hb-docs-ic"},u.default.createElement(E,{name:it[1],size:26})),
-              u.default.createElement("span",{className:"hb-docs-st"},u.default.createElement("b",null,it[2]),u.default.createElement("small",null,it[3])),
-              u.default.createElement("span",{className:"hb-docs-num"},u.default.createElement("strong",null,it[4]),u.default.createElement("em",null,it[0]==="pending"&&!it[4]?"目前沒有待發布新版":u.default.createElement(u.default.Fragment,null,"查看清單 ",u.default.createElement(E,{name:"arrow-right",size:13})))))})),
-        u.default.createElement("div",{className:"hb-docs-tools"},
-          u.default.createElement("label",{className:"hb-docs-search"},u.default.createElement(E,{name:"search",size:17}),u.default.createElement("input",{value:homeQuery,onChange:e=>setHomeQuery(e.target.value),placeholder:"搜尋案件、圖名或圖號","aria-label":"搜尋案件、圖名或圖號"})),
-          u.default.createElement("select",{className:"hb-docs-sel",value:homeCase,onChange:e=>setHomeCase(e.target.value),"aria-label":"案件篩選"},u.default.createElement("option",{value:""},"全部案件"),homeCases.map(f=>u.default.createElement("option",{key:f.id,value:f.id},f.name))),
-          u.default.createElement("div",{className:"hb-docs-seg",role:"tablist"},[["cases","案件"],["files","檔案"]].map(it=>u.default.createElement("button",{type:"button",key:it[0],role:"tab","aria-selected":homeView===it[0],className:homeView===it[0]?"on":"",onClick:()=>{setHomeView(it[0]);if(it[0]==="files"&&homeView!=="files")setHomeFilter("all")}},it[1]))),
-          u.default.createElement("span",{className:"hb-docs-hint"},"統計卡可直接切換檔案清單。"),
-          u.default.createElement("span",{className:"hb-docs-sync"+(loading?" busy":"")},u.default.createElement("i",null),loading?"同步中…":"已同步"),
-          u.default.createElement("button",{type:"button",className:"hb-docs-ghost hb-docs-refresh",disabled:loading,onClick:async()=>{await load();notify("資料已重新同步")}},u.default.createElement(E,{name:"refresh",size:16,className:loading?"animate-spin":""}),"重新整理"))),
+            u.default.createElement("select",{className:"hb-docs-sel",value:homeCase,onChange:e=>setHomeCase(e.target.value),"aria-label":"案件篩選"},u.default.createElement("option",{value:""},"全部案件"),homeCases.map(f=>u.default.createElement("option",{key:f.id,value:f.id},f.name))),
+            u.default.createElement("button",{type:"button",className:"hb-docs-ghost"+(ownerPreview?" on":""),onClick:()=>{setOwnerPreview(v=>!v);setStatusFilter("all")}},u.default.createElement(E,{name:ownerPreview?"arrow-left":"eye",size:16}),ownerPreview?"返回公司管理":"預覽業主畫面")))
+        :u.default.createElement("div",{className:"hb-docs-head"},
+          u.default.createElement("h2",null,homeView==="photos"?"照片":"專案總覽",u.default.createElement("span",null,homeView==="photos"?"PHOTOS":"PROJECTS")),
+          u.default.createElement("div",{className:"hb-pills",role:"tablist","aria-label":"案件狀態"},[["all","全部"],["active","進行中"],["done","已完工"],["lost","流標"]].map(it=>u.default.createElement("button",{key:it[0],type:"button",role:"tab","aria-selected":homePill===it[0],className:homePill===it[0]?"on":"",onClick:()=>setHomePill(it[0])},it[1],u.default.createElement("em",null,pillCount(it[0]))))),
+          homeView==="photos"?u.default.createElement("span",{className:"hb-docs-hint"},"選擇案件開啟相簿"):!ownerPreview&&onNewCase&&u.default.createElement("button",{type:"button",className:"hb-docs-ghost hb-newcase-btn",onClick:onNewCase},u.default.createElement(E,{name:"plus",size:16}),"新增案件"))),
       !isHome&&u.default.createElement("div",{style:{display:"flex",flexWrap:"wrap",alignItems:"center",gap:4,fontSize:12.5,color:s.inkSoft,marginBottom:14}},
         u.default.createElement("span",{onClick:()=>setCurrentFolderId(lockedRootId||null),style:{cursor:"pointer",color:currentFolderId&&currentFolderId!==lockedRootId?s.inkSoft:"#17150F"}},embedded&&project?project.name:"圖面總覽"),
         breadcrumb.filter(f=>!embedded||f.id!==lockedRootId).map(f=>u.default.createElement(u.default.Fragment,{key:f.id},
@@ -12873,6 +12977,7 @@ function HbDrawingHub({onBack,notify,project=null,embedded=false,initialView="dr
               !ownerPreview&&(pend||!m.shared)&&cv&&u.default.createElement("button",{type:"button",onClick:()=>publishDrawing(d)},"發布"),
               u.default.createElement("button",{type:"button",onClick:()=>setVersionModalId(d.id)},"詳情")));
         })):
+      isHome?renderProjectGrid(homeView):
       u.default.createElement(u.default.Fragment,null,
         (isHome?gridFolders.length===0:displayChildFolders.length===0&&visibleDrawings.length===0)?
           u.default.createElement(He,{icon:"folder",text:currentFolderId?(ownerPreview?"此路徑沒有已共享圖面":"這個資料夾還沒有內容"):(hq||homeCase?"沒有符合條件的案件":ownerPreview?"尚未發布任何業主共享圖面":"尚未建立任何案件")}):
@@ -15274,7 +15379,7 @@ function Gy(){let[l,t]=(0,u.useState)(!0),[e,n]=(0,u.useState)(!1),[a,i]=(0,u.us
         }
         .fade-in { animation: hbFadeIn .2s var(--hb-ease-out) both; }
         @media (prefers-reduced-motion: reduce){ .fade-in { animation-name: hbFadeInSoft; } }
-      `),u.default.createElement("div",{key:o,className:"hb-pagein",style:{height:"100%",overflowY:o==="landing"?"hidden":"auto",WebkitOverflowScrolling:"touch",paddingBottom:o==="landing"?0:92}},l?u.default.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh"}},u.default.createElement(E,{name:"loader",className:"animate-spin",size:28,color:s.ocean})):o==="landing"?u.default.createElement(HbLanding,{onToday:()=>f("today"),onCase:()=>f("home"),onCompany:()=>f("companyHub"),onManageStaff:()=>f("staff"),onQuickQuote:()=>f("estimateHub"),onProposal:()=>HB_openProposalSystem(),onMarketingPhotos:()=>f("marketingPhotos"),onBookings:()=>f("bookings"),onOpenBooking:()=>HB_openBookingSystem(),onDrawings:()=>f("drawings"),onLogout:()=>{HB_staffLogout()}}):o==="today"?u.default.createElement(HbWorkHub,{projects:a,notify:g,initialView:"today",onBack:()=>f("landing"),onOpenProject:id=>{if(a.some(p=>p.id===id)){r(id);hbSetOpenTab("overview");f("detail")}else g("找不到這個案場，請重新整理")}}):o==="companyHub"?u.default.createElement(HbCompanyHub,{onBack:()=>f("landing"),onContracts:()=>f("contracts"),onQuotes:()=>f("estimateHub"),onReceipts:()=>f("receipts"),onVendorReceipts:()=>f("vendorReceipts"),onQuickQuote:()=>f("estimateHub"),onGoHome:()=>f("home"),onVendorQuotes:()=>f("vendorQuotes"),onProposal:()=>HB_openProposalSystem(),onMarketingPhotos:()=>f("marketingPhotos"),onBookings:()=>f("bookings"),onOpenBooking:()=>HB_openBookingSystem(),onDrawings:()=>f("drawings"),onAttendance:()=>f("attendance"),onPriceBook:()=>f("priceBook"),onSurvey:()=>f("survey"),onChangeOrders:()=>f("changeOrders"),onPdfRotate:()=>f("pdfRotate"),onDocs:()=>f("docsHub")}):o==="docsHub"?u.default.createElement(HbDocsHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="changeOrders"?u.default.createElement(HbChangeOrderHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="survey"?u.default.createElement(HbSurveyHub,{onBack:()=>f("companyHub"),notify:g,projects:a,onProjectCreated:pj=>i(v=>[cm(pj),...v])}):o==="priceBook"?u.default.createElement(HbPriceBookHub,{onBack:()=>f("companyHub"),notify:g}):o==="attendance"?u.default.createElement(HbAttendanceHub,{onBack:()=>f("companyHub"),notify:g}):o==="marketingPhotos"?u.default.createElement(HbMarketingPhotoHub,{onBack:()=>f("landing"),notify:g}):o==="bookings"?u.default.createElement(HbWorkHub,{projects:a,notify:g,initialView:"calendar",onBack:()=>f("landing"),onOpenProject:id=>{if(a.some(p=>p.id===id)){r(id);hbSetOpenTab("overview");f("detail")}else g("找不到這個案場，請重新整理")}}):o==="vendorQuotes"?u.default.createElement(HbVendorQuoteHub,{onBack:()=>f("companyHub"),notify:g}):o==="drawings"?u.default.createElement(HbDrawingHub,{onBack:()=>f("companyHub"),notify:g,projects:a,onNewCase:()=>{f("home");h(!0)},workbench:u.default.createElement(HbHubWorkbench,{projects:a,onCalendar:()=>f("today"),onTodayHub:()=>f("today"),onOpenProject:id=>{if(a.some(p=>p.id===id)){r(id);hbSetOpenTab("overview");f("detail")}else g("找不到這個案場，請重新整理")}})}):o==="receipts"?u.default.createElement(HbReceiptsHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="vendorReceipts"?u.default.createElement(HbVendorReceiptsHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="quoteImportPick"?u.default.createElement(Iy,{projects:a,onOpen:hbImportQuote,onNew:()=>h(!0),onRefresh:()=>{D(!0),y()},refreshing:e,storageUsedBytes:z,onManageStaff:()=>f("staff"),pickerMode:!0,progressRanges:hbProg,onBack:()=>f("companyHub")}):o==="estimateHub"?u.default.createElement(HerfulsinsEstimateHub,{project:null,notify:g,onClose:()=>f("companyHub")}):o==="home"?u.default.createElement(Iy,{projects:a,onOpen:T=>{r(T),hbSetOpenTab("photos"),f("detail")},onWbOpen:T=>{r(T),hbSetOpenTab("overview"),f("detail")},onCalendar:()=>f("today"),onTodayHub:()=>f("today"),onNew:()=>h(!0),onRefresh:()=>{D(!0),y()},refreshing:e,storageUsedBytes:z,onManageStaff:()=>f("staff"),progressRanges:hbProg,onBack:()=>f("landing"),onGoCompany:()=>f("companyHub")}):o==="staff"?u.default.createElement(Ky,{onBack:()=>f("landing")}):o==="pdfRotate"?u.default.createElement(HbPdfRotate,{onBack:()=>f("companyHub"),notify:g}):o==="contracts"?u.default.createElement(HerfulsinsContractsHub,{onBack:()=>f("landing"),notify:g}):o==="digitalCard"?u.default.createElement(HbDigitalCard,{onBack:()=>f("landing"),notify:g}):u.default.createElement(lh,{project:j,onBack:()=>f("home"),onUpdateMeta:S,onDelete:M,notify:g,initialTab:"overview"})),d&&u.default.createElement(Py,{onCancel:()=>h(!1),onCreate:b}),m&&u.default.createElement("div",{className:"hb-toast",style:{position:"fixed",bottom:20,left:"50%",background:s.ink,color:s.card,padding:"10px 18px",borderRadius:8,fontSize:13,boxShadow:"0 4px 14px rgba(0,0,0,0.25)",zIndex:60}},m),u.default.createElement(HbBottomNav,{active:o,onNavigate:T=>f(T)}))}
+      `),u.default.createElement("div",{key:o,className:"hb-pagein",style:{height:"100%",overflowY:o==="landing"?"hidden":"auto",WebkitOverflowScrolling:"touch",paddingBottom:o==="landing"?0:92}},l?u.default.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh"}},u.default.createElement(E,{name:"loader",className:"animate-spin",size:28,color:s.ocean})):o==="landing"?u.default.createElement(HbLanding,{onToday:()=>f("today"),onCase:()=>f("home"),onCompany:()=>f("companyHub"),onManageStaff:()=>f("staff"),onQuickQuote:()=>f("estimateHub"),onProposal:()=>HB_openProposalSystem(),onMarketingPhotos:()=>f("marketingPhotos"),onBookings:()=>f("bookings"),onOpenBooking:()=>HB_openBookingSystem(),onDrawings:()=>f("drawings"),onLogout:()=>{HB_staffLogout()}}):o==="today"?u.default.createElement(HbWorkHub,{projects:a,notify:g,initialView:"today",onBack:()=>f("landing"),onOpenProject:id=>{if(a.some(p=>p.id===id)){r(id);hbSetOpenTab("overview");f("detail")}else g("找不到這個案場，請重新整理")}}):o==="companyHub"?u.default.createElement(HbCompanyHub,{onBack:()=>f("landing"),onContracts:()=>f("contracts"),onQuotes:()=>f("estimateHub"),onReceipts:()=>f("receipts"),onVendorReceipts:()=>f("vendorReceipts"),onQuickQuote:()=>f("estimateHub"),onGoHome:()=>f("home"),onVendorQuotes:()=>f("vendorQuotes"),onProposal:()=>HB_openProposalSystem(),onMarketingPhotos:()=>f("marketingPhotos"),onBookings:()=>f("bookings"),onOpenBooking:()=>HB_openBookingSystem(),onDrawings:()=>f("drawings"),onAttendance:()=>f("attendance"),onPriceBook:()=>f("priceBook"),onSurvey:()=>f("survey"),onChangeOrders:()=>f("changeOrders"),onPdfRotate:()=>f("pdfRotate"),onDocs:()=>f("docsHub")}):o==="docsHub"?u.default.createElement(HbDocsHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="changeOrders"?u.default.createElement(HbChangeOrderHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="survey"?u.default.createElement(HbSurveyHub,{onBack:()=>f("companyHub"),notify:g,projects:a,onProjectCreated:pj=>i(v=>[cm(pj),...v])}):o==="priceBook"?u.default.createElement(HbPriceBookHub,{onBack:()=>f("companyHub"),notify:g}):o==="attendance"?u.default.createElement(HbAttendanceHub,{onBack:()=>f("companyHub"),notify:g}):o==="marketingPhotos"?u.default.createElement(HbMarketingPhotoHub,{onBack:()=>f("landing"),notify:g}):o==="bookings"?u.default.createElement(HbWorkHub,{projects:a,notify:g,initialView:"calendar",onBack:()=>f("landing"),onOpenProject:id=>{if(a.some(p=>p.id===id)){r(id);hbSetOpenTab("overview");f("detail")}else g("找不到這個案場，請重新整理")}}):o==="vendorQuotes"?u.default.createElement(HbVendorQuoteHub,{onBack:()=>f("companyHub"),notify:g}):o==="drawings"?u.default.createElement(HbDrawingHub,{onBack:()=>f("landing"),notify:g,projects:a,onOpenProject:(id,tab)=>{if(a.some(p=>p.id===id)){r(id);hbSetOpenTab(tab||"overview");f("detail")}else g("找不到這個案場，請重新整理")},onNewCase:()=>{f("home");h(!0)},workbench:u.default.createElement(HbHubWorkbench,{projects:a,onCalendar:()=>f("today"),onTodayHub:()=>f("today"),onOpenProject:id=>{if(a.some(p=>p.id===id)){r(id);hbSetOpenTab("overview");f("detail")}else g("找不到這個案場，請重新整理")}})}):o==="receipts"?u.default.createElement(HbReceiptsHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="vendorReceipts"?u.default.createElement(HbVendorReceiptsHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="quoteImportPick"?u.default.createElement(Iy,{projects:a,onOpen:hbImportQuote,onNew:()=>h(!0),onRefresh:()=>{D(!0),y()},refreshing:e,storageUsedBytes:z,onManageStaff:()=>f("staff"),pickerMode:!0,progressRanges:hbProg,onBack:()=>f("companyHub")}):o==="estimateHub"?u.default.createElement(HerfulsinsEstimateHub,{project:null,notify:g,onClose:()=>f("companyHub")}):o==="home"?u.default.createElement(Iy,{projects:a,onOpen:T=>{r(T),hbSetOpenTab("photos"),f("detail")},onWbOpen:T=>{r(T),hbSetOpenTab("overview"),f("detail")},onCalendar:()=>f("today"),onTodayHub:()=>f("today"),onNew:()=>h(!0),onRefresh:()=>{D(!0),y()},refreshing:e,storageUsedBytes:z,onManageStaff:()=>f("staff"),progressRanges:hbProg,onBack:()=>f("landing"),onGoCompany:()=>f("companyHub")}):o==="staff"?u.default.createElement(Ky,{onBack:()=>f("landing")}):o==="pdfRotate"?u.default.createElement(HbPdfRotate,{onBack:()=>f("companyHub"),notify:g}):o==="contracts"?u.default.createElement(HerfulsinsContractsHub,{onBack:()=>f("landing"),notify:g}):o==="digitalCard"?u.default.createElement(HbDigitalCard,{onBack:()=>f("landing"),notify:g}):u.default.createElement(lh,{project:j,onBack:()=>f("home"),onUpdateMeta:S,onDelete:M,notify:g,initialTab:"overview"})),d&&u.default.createElement(Py,{onCancel:()=>h(!1),onCreate:b}),m&&u.default.createElement("div",{className:"hb-toast",style:{position:"fixed",bottom:20,left:"50%",background:s.ink,color:s.card,padding:"10px 18px",borderRadius:8,fontSize:13,boxShadow:"0 4px 14px rgba(0,0,0,0.25)",zIndex:60}},m),u.default.createElement(HbBottomNav,{active:o,onNavigate:T=>f(T)}))}
 
 /* ===================================================================
    設計需求問卷：公司端建立連結 → 業主線上填 → 答案回到案件
