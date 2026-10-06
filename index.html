@@ -12212,6 +12212,15 @@ const HB_LIB_CSS=`
       .hb-ls-txt b{font-weight:500;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
       .hb-ls-txt small{font-size:11px;color:#8b8277;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
       .hb-ls-main:hover b{color:#2E4A3C;text-decoration:underline;text-underline-offset:3px}
+      .hb-ls-dot{flex:none;width:8px;height:8px;border-radius:50%;margin-right:4px;background:#b9b0a3}.hb-ls-dot.pub{background:#3f8f5a}.hb-ls-dot.pend{background:#c58a3a}
+      .hb-ls-search{display:flex;align-items:center;gap:7px;height:34px;margin:10px 0 8px;padding:0 10px;border:1px solid rgba(57,51,47,.18);background:#fff;color:#8b8277}
+      .hb-ls-search input{flex:1;min-width:0;border:0;outline:0;background:none;font:inherit;font-size:12.5px;color:#211f1b}
+      .hb-ls-tabs{display:flex;gap:4px;margin-bottom:4px}
+      .hb-ls-tabs button{flex:1;height:28px;padding:0 4px;border:1px solid rgba(57,51,47,.15);border-radius:14px;background:transparent;font-family:inherit;font-size:11.5px;color:#5f584f;cursor:pointer;white-space:nowrap}
+      .hb-ls-tabs button i{font-style:normal;margin-left:3px;font-size:10px;opacity:.7}
+      .hb-ls-tabs button.on{background:#2E4A3C;border-color:#2E4A3C;color:#fff}
+      .hb-ls-scroll{max-height:min(46vh,420px);overflow:auto;margin-right:-6px;padding-right:6px}
+      @media(max-width:1099px){.hb-ls-files{grid-column:1/-1}.hb-ls-scroll{max-height:340px}}
       .hb-ls-pub{flex:none;height:30px;padding:0 10px;border:1px solid #2E4A3C;background:#fff;color:#2E4A3C;font-family:inherit;font-size:12px;cursor:pointer}
       .hb-ls-pub:hover{background:#2E4A3C;color:#fff}
       .hb-ls-more{margin:6px 0 2px;border:0;background:none;padding:0;font-family:inherit;font-size:12px;color:#2E4A3C;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
@@ -12240,7 +12249,7 @@ function HbDrawingHub({onBack,notify,project=null,embedded=false,initialView="dr
   let[unifiedOpen,setUnifiedOpen]=(0,u.useState)(false);
   /* 進場：主內容淡入一次；案件卡片在資料第一次載入完成時依序浮現，之後搜尋／篩選／同步都不重播 */
   let[introPhase,setIntroPhase]=(0,u.useState)(()=>HB_reduceMotion()?"done":"wait");
-  let[homeView,setHomeView]=(0,u.useState)("cases"),[homeFilter,setHomeFilter]=(0,u.useState)("all"),[homeQuery,setHomeQuery]=(0,u.useState)(""),[homeCase,setHomeCase]=(0,u.useState)(""),[homeOpenGroups,setHomeOpenGroups]=(0,u.useState)({}),[homePill,setHomePill]=(0,u.useState)("all");
+  let[homeView,setHomeView]=(0,u.useState)("cases"),[homeFilter,setHomeFilter]=(0,u.useState)("all"),[homeQuery,setHomeQuery]=(0,u.useState)(""),[homeCase,setHomeCase]=(0,u.useState)(""),[homeOpenGroups,setHomeOpenGroups]=(0,u.useState)({}),[homePill,setHomePill]=(0,u.useState)("all"),[sideQ,setSideQ]=(0,u.useState)(""),[sideF,setSideF]=(0,u.useState)("all");
   let[hubView,setHubView]=(0,u.useState)(initialView==="photos"?"photos":"drawings");
   let[folders,setFolders]=(0,u.useState)([]);
   let[drawings,setDrawings]=(0,u.useState)([]);
@@ -12679,15 +12688,17 @@ function HbDrawingHub({onBack,notify,project=null,embedded=false,initialView="dr
     const C=u.default.createElement;
     let upAt=d=>{let cv=currentVersionOf(d);return cv&&cv.uploadedAt?new Date(cv.uploadedAt).getTime():0};
     let pendList=scopedDrawings.filter(pendingOf).sort((a,b)=>upAt(b)-upAt(a));
-    let since=Date.now()-14*864e5;
-    let recentInt=scopedDrawings.filter(d=>!shareOf(d).shared&&upAt(d)>=since).sort((a,b)=>upAt(b)-upAt(a));
+    let sq=sideQ.trim().toLowerCase();
+    let sideFiles=scopedDrawings.filter(d=>{let m=shareOf(d);if(sideF==="shared"&&!m.shared)return false;if(sideF==="int"&&m.shared)return false;
+      if(!sq)return true;let c=caseOfDrawing(d);return [d.name,d.drawingNo,d.category,c&&c.name].some(x=>String(x||"").toLowerCase().includes(sq))}).sort((a,b)=>upAt(b)-upAt(a));
+    let fCount=k=>scopedDrawings.filter(d=>k==="all"?true:k==="shared"?shareOf(d).shared:!shareOf(d).shared).length;
     let row=(d,kind)=>{let c=caseOfDrawing(d),cv=currentVersionOf(d),pv=publishedVersionOf(d);
       return C("li",{key:d.id,className:"hb-ls-row"},
         C("button",{type:"button",className:"hb-ls-main",onClick:()=>setVersionModalId(d.id),title:"查看詳情"},
           C("span",{className:"hb-ls-thumb"},cv&&cv.mime&&cv.mime.startsWith("image/")?C("img",{src:cv.url,alt:"",loading:"lazy"}):C(E,{name:cv&&HB_drawingIsCad(cv)?"file-output":"file-text",size:16,color:"#B4573A"})),
           C("span",{className:"hb-ls-txt"},C("b",null,[d.drawingNo,d.name].filter(Boolean).join(" ")),
             C("small",null,[c&&c.name,kind==="pend"&&cv&&pv?"V"+cv.versionNo+"・業主看 V"+pv.versionNo:cv?"V"+cv.versionNo+"・"+String(cv.uploadedAt||"").slice(5,10).replace("-","/"):""].filter(Boolean).join("・")))),
-        cv&&C("button",{type:"button",className:"hb-ls-pub",onClick:()=>publishDrawing(d)},"發布"));};
+        kind==="file"?C("span",{className:"hb-ls-dot "+(pendingOf(d)?"pend":shareOf(d).shared?"pub":"int"),title:pendingOf(d)?"新版待發布":shareOf(d).shared?"業主可見":"公司內部"}):cv&&C("button",{type:"button",className:"hb-ls-pub",onClick:()=>publishDrawing(d)},"發布"));};
     let sec=(title,en,list,kind,empty,hint,max)=>C("section",{className:"hb-ls-sec"},
       C("h3",null,title,C("em",{className:list.length&&kind==="pend"?"on":""},list.length),C("span",null,en)),
       hint&&C("p",{className:"hb-ls-hint"},hint),
@@ -12698,7 +12709,13 @@ function HbDrawingHub({onBack,notify,project=null,embedded=false,initialView="dr
       C("style",null,HB_LIB_CSS),
       C("button",{type:"button",className:"hb-ls-up",onClick:()=>setUnifiedOpen(true),disabled:loading},C(E,{name:"plus",size:16}),"上傳檔案"),
       sec("待發布","À PUBLIER",pendList,"pend","沒有待發布的新版本","業主已在看的圖面，有新版還沒發布",6),
-      sec("近期上傳","RÉCENTS",recentInt,"recent","近兩週沒有僅公司可見的新檔","兩週內上傳、目前只有公司看得到",5),
+      C("section",{className:"hb-ls-sec hb-ls-files"},
+        C("h3",null,"檔案",C("em",null,scopedDrawings.length),C("span",null,"FICHIERS")),
+        C("label",{className:"hb-ls-search"},C(E,{name:"search",size:14}),C("input",{value:sideQ,onChange:e=>setSideQ(e.target.value),placeholder:"搜尋圖名、案件…","aria-label":"搜尋檔案"})),
+        C("div",{className:"hb-ls-tabs",role:"tablist"},[["all","全部"],["shared","業主可見"],["int","公司內部"]].map(x=>C("button",{key:x[0],type:"button",role:"tab","aria-selected":sideF===x[0],className:sideF===x[0]?"on":"",onClick:()=>setSideF(x[0])},x[1],C("i",null,fCount(x[0]))))),
+        loading?C("p",{className:"hb-ls-empty"},"讀取中…"):sideFiles.length===0?C("p",{className:"hb-ls-empty"},sq?"找不到符合的檔案":"沒有檔案"):
+        C("ul",{className:"hb-ls-list hb-ls-scroll"},sideFiles.slice(0,80).map(d=>row(d,"file"))),
+        !loading&&sideFiles.length>80&&onOpenHub&&C("button",{type:"button",className:"hb-ls-more",onClick:onOpenHub},"還有 "+(sideFiles.length-80)+" 筆，開啟資料與圖面")),
       onOpenHub&&C("button",{type:"button",className:"hb-ls-hub",onClick:onOpenHub},"開啟資料與圖面",C(E,{name:"arrow-right",size:14})),
       u.default.createElement("input",{ref:fileInputRef,type:"file",accept:"image/*,.pdf,application/pdf,.dwg,.dxf",multiple:true,style:{display:"none"},onChange:handleNewDrawingUpload}),
       u.default.createElement("input",{ref:newVersionInputRef,type:"file",accept:"image/*,.pdf,application/pdf,.dwg,.dxf",style:{display:"none"},onChange:handleNewVersionUpload}),
@@ -12895,7 +12912,7 @@ function HbDrawingHub({onBack,notify,project=null,embedded=false,initialView="dr
       .hb-docs-fhead b{font:500 17px 'Noto Serif TC',serif;color:#211f1b}
       .hb-docs-fhead button{margin-left:auto;border:0;background:none;color:#2E4A3C;text-decoration:underline;cursor:pointer;font-family:inherit;font-size:13px}
       .hb-docs-empty{padding:30px 0;text-align:center;color:#8b8277;font-size:13.5px}
-      .hb-docs-frow{display:grid;grid-template-columns:minmax(0,1fr) 92px 104px 132px auto;align-items:center;gap:14px;padding:10px 0;border-top:1px solid rgba(57,51,47,.09)}
+      .hb-docs-frow{display:grid;grid-template-columns:minmax(0,1fr) 92px 104px 132px 132px;align-items:center;gap:14px;padding:10px 0;border-top:1px solid rgba(57,51,47,.09)}
       .hb-docs-fmain{display:flex;align-items:center;gap:12px;min-width:0;border:0;background:none;padding:0;text-align:left;font-family:inherit;color:inherit;cursor:pointer}
       .hb-docs-ftxt{min-width:0}.hb-docs-ftxt b{display:block;font:400 15px 'Noto Serif TC',serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.hb-docs-ftxt small{display:block;font-size:11.5px;color:#8b8277;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
       .hb-docs-fver{font:400 15px Georgia,serif}.hb-docs-fver small{display:block;font:11px 'Noto Sans TC',sans-serif;color:#a5642f}
