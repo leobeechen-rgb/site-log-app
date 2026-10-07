@@ -5334,10 +5334,10 @@ async function HB_generateEngContractDocx(v){
   let accs=v.accounts||[];
   let stages=(v.paymentStages||[]).slice(0,4);
   let map={
-    PARTY_A_NAME:v.partyAName,ENG_NAME:v.engName,ENG_LOCATION:v.engLocation,
+    PARTY_A_NAME:v.partyAName||"　　　　　　",ENG_NAME:v.engName,ENG_LOCATION:v.engLocation,
     TOTAL_PRICE:HB_money(HB_num(v.totalPrice)),TOTAL_PRICE_WORDS:HB_toChineseMoney(v.totalPrice),
-    DURATION_DAYS:v.durationDays||"　　",
-    START_DATE:v.startYear?("中華民國 "+v.startYear+" 年 "+v.startMonth+" 月 "+v.startDay+" 日"):"中華民國　　年　　月　　日",
+    DURATION_DAYS:v.durationDays||"　　　",
+    START_DATE:v.startYear?("中華民國 "+v.startYear+" 年 "+v.startMonth+" 月 "+v.startDay+" 日"):"　　　　　　　　　　",
     PARTY_A_ID:v.partyAId,PARTY_A_ADDRESS:v.partyAAddress,PARTY_A_PHONE:v.partyAPhone,
     CONTRACT_YEAR:v.contractYear,CONTRACT_MONTH:v.contractMonth,CONTRACT_DAY:v.contractDay,
     ACCOUNT_LINE_1:HB_accountLine(accs[0]),ACCOUNT_LINE_2:HB_accountLine(accs[1]),ACCOUNT_LINE_3:HB_accountLine(accs[2])
@@ -5681,7 +5681,7 @@ ${HB_DOC_CSS}
 <div class="toolbar"><button class="back" onclick="window.close()" title="返回">\u2190</button><div class="btns"><button class="lineshare" onclick="shareToLine()">分享PDF到LINE</button><button class="print" onclick="window.print()">列印 / 存 PDF</button></div></div>
 <div class="brand">HERFULSINS INTERIOR DESIGN｜赫柏空間設計</div>
 <h1>赫柏空間工程承攬合約書</h1>
-<p><strong>立合約書人：</strong>業主名稱：${e(v.partyAName)}（以下簡稱甲方）　承攬人：赫柏空間設計 陳奕蒨（以下簡稱乙方）</p>
+<p><strong>立合約書人：</strong>業主名稱：<span class="blank">${e(v.partyAName)||"　　　　　　"}</span>（以下簡稱甲方）　承攬人：赫柏空間設計 陳奕蒨（以下簡稱乙方）</p>
 <p>茲就乙方承攬甲方之室內工程事宜，雙方同意訂定遵守條款如下，以資共同遵守：</p>
 
 <h2>一、工程名稱與地點</h2>
@@ -5698,7 +5698,7 @@ ${HB_DOC_CSS}
 <p>\u25CF 追加工程一經完成應即付清該項工程款，不併入原工程總價內計算之。</p>
 
 <h2>四、工程期限</h2>
-<p>本工程開工日訂於 <span class="blank">${v.startYear?("中華民國 "+e(v.startYear)+" 年 "+e(v.startMonth)+" 月 "+e(v.startDay)+" 日"):"中華民國　　年　　月　　日"}</span>，預計 <span class="blank">${e(v.durationDays)||"　　"}</span> 個工作天(不含週日、例假日及雨天)完成。水電配管線相關位置，施工中需與甲方現場討論及確認。</p>
+<p>本工程開工日訂於 <span class="blank">${v.startYear?("中華民國 "+e(v.startYear)+" 年 "+e(v.startMonth)+" 月 "+e(v.startDay)+" 日"):"　　　　　　　　　　"}</span>，預計 <span class="blank">${e(v.durationDays)||"　　　"}</span> 個工作天(不含週日、例假日及雨天)完成。水電配管線相關位置，施工中需與甲方現場討論及確認。</p>
 <p>\u25CF 如遇變更設計、增加項目或甲方因其他應配合工程以致影響進度時，完工日期應由雙方另行協商訂定之。</p>
 <p>\u25CF 倘遇不可抗拒之因素，或其他不可歸責於乙方之事故，致工程進行受影響時，應經雙方會同至現場勘驗屬實後，按照不能工作之實際日數核算延長工作期限。</p>
 
