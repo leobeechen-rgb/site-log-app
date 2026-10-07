@@ -86,7 +86,7 @@ async function staffRoute(req: Request, s: Staff, route: string, url: URL) {
     const [{ files }, rounds, replies, events] = await Promise.all([
       latestFiles(r.id),
       db('hb_confirm_rounds?request_id=eq.' + r.id + '&select=*&order=round_no.desc'),
-      db('hb_confirm_replies?request_id=eq.' + r.id + '&select=id,round_id,results,message,created_at&order=created_at.desc'),
+      db('hb_confirm_replies?request_id=eq.' + r.id + '&select=id,round_id,results,message,created_at,signer_name,signature&order=created_at.desc'),
       db('hb_confirm_events?request_id=eq.' + r.id + '&select=*&order=created_at.desc&limit=200')]);
     const paths = [...files.map((f: any) => f.path), ...(replies as any[]).flatMap((x: any) => (x.results || []).flatMap((y: any) => y.photos || []))];
     const urls = await signMany(paths);
@@ -193,7 +193,7 @@ async function publicRoute(req: Request, route: string, url: URL) {
     const [proj, rounds, replies] = await Promise.all([
       r.project_id ? db('sitelog_projects?id=eq.' + r.project_id + '&select=name') : Promise.resolve([]),
       db('hb_confirm_rounds?request_id=eq.' + r.id + '&select=id,round_no,snapshot,due_date,sent_at&order=round_no.desc'),
-      db('hb_confirm_replies?request_id=eq.' + r.id + '&select=id,round_id,results,message,created_at&order=created_at.desc')]);
+      db('hb_confirm_replies?request_id=eq.' + r.id + '&select=id,round_id,results,message,created_at,signer_name,signature&order=created_at.desc')]);
     const cur = (rounds as any[])[0];
     const paths = [...(cur?.snapshot?.items || []).flatMap((x: any) => (x.files || []).map((f: any) => f.path)), ...(replies as any[]).flatMap((x: any) => (x.results || []).flatMap((y: any) => y.photos || []))];
     const urls = await signMany(paths);
@@ -201,7 +201,7 @@ async function publicRoute(req: Request, route: string, url: URL) {
     const roundNo = new Map((rounds as any[]).map((x: any) => [x.id, x.round_no]));
     return { project: proj?.[0]?.name || '', title: r.title, status: r.status, closed: r.status === 'closed',
       round: cur ? { id: cur.id, round_no: cur.round_no, sent_at: cur.sent_at, due_date: cur.due_date, intro: cur.snapshot?.intro || r.intro, items: (cur.snapshot?.items || []).map(strip) } : null,
-      replies: (replies as any[]).map((x: any) => ({ round_no: roundNo.get(x.round_id), current: x.round_id === cur?.id, created_at: x.created_at, message: x.message,
+      replies: (replies as any[]).map((x: any) => ({ round_no: roundNo.get(x.round_id), current: x.round_id === cur?.id, created_at: x.created_at, message: x.message, signer_name: x.signer_name || '', signature: x.signature || '',
         results: (x.results || []).map((y: any) => ({ item_id: y.item_id, title: y.title, result: y.result, comment: y.comment, files: y.files, photo_urls: (y.photos || []).map((p: string) => urls[p]).filter(Boolean) })) })) };
   }
   if (req.method !== 'POST') fail(404, 'Not found');
@@ -229,8 +229,16 @@ async function publicRoute(req: Request, route: string, url: URL) {
       const photos = (Array.isArray(x.photos) ? x.photos : []).slice(0, 6).map(String).filter((p: string) => p.startsWith(r.id + '/replies/') && !p.includes('..'));
       results.push({ item_id: it.id, title: it.title, result: x.result, comment, photos, files: (it.files || []).map((f: any) => ({ group_key: f.group_key, version: f.version, name: f.name })) });
     }
+    // 全部確認時需業主簽名（PNG data URL，限制大小）
+    const allOk = results.every(x => x.result === 'ok');
+    let signature = '', signer_name = '';
+    if (allOk) {
+      signer_name = clean(b.signer_name, 40); signature = String(b.signature || '');
+      if (!signer_name) fail(400, '請填寫簽名人姓名');
+      if (!/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(signature) || signature.length > 200000) fail(400, '請在簽名框內簽名');
+    }
     let reply;
-    try { reply = (await db('hb_confirm_replies', { method: 'POST', body: JSON.stringify({ request_id: r.id, round_id: cur.id, nonce, results, message: clean(b.message, 1000), ua: clean(req.headers.get('user-agent'), 200) }) }))[0] }
+    try { reply = (await db('hb_confirm_replies', { method: 'POST', body: JSON.stringify({ request_id: r.id, round_id: cur.id, nonce, results, message: clean(b.message, 1000), ua: clean(req.headers.get('user-agent'), 200), signer_name: signer_name || null, signature: signature || null }) }))[0] }
     catch (e) { if (e instanceof HttpError && e.status === 409) { const again = await db('hb_confirm_replies?nonce=eq.' + enc(nonce) + '&select=created_at'); if (again?.[0]) return { ok: true, duplicate: true, created_at: again[0].created_at }; fail(409, '這個版本已經回覆過了') } throw e }
     const st = { ...(r.item_state || {}) };
     for (const x of results) st[x.item_id] = { result: x.result, round_no: cur.round_no, reply_at: reply.created_at, comment: x.comment };
@@ -238,7 +246,7 @@ async function publicRoute(req: Request, route: string, url: URL) {
     const status = items.some((x: any) => st[x.id]?.result === 'change') ? 'changes' : items.every((x: any) => st[x.id]?.result === 'ok') ? 'confirmed' : 'waiting';
     await db('hb_confirm_requests?id=eq.' + r.id, { method: 'PATCH', body: JSON.stringify({ item_state: st, status, replied_at: reply.created_at, updated_at: reply.created_at }), headers: { Prefer: 'return=minimal' } });
     const ok = results.filter(x => x.result === 'ok').length, ch = results.length - ok;
-    await event(r.id, 'reply', '業主回覆：' + ok + ' 項確認' + (ch ? '、' + ch + ' 項需要修改' : ''), '業主', { round_no: cur.round_no, reply_id: reply.id });
+    await event(r.id, 'reply', '業主回覆：' + ok + ' 項確認' + (ch ? '、' + ch + ' 項需要修改' : '') + (signer_name ? '（' + signer_name + ' 已簽名）' : ''), '業主', { round_no: cur.round_no, reply_id: reply.id, signed: !!signer_name });
     return { ok: true, created_at: reply.created_at, status };
   }
   fail(404, 'Not found');
@@ -249,7 +257,7 @@ Deno.serve(async (req: Request) => {
     if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors(req) });
     const url = new URL(req.url), parts = url.pathname.split('/').filter(Boolean), i = parts.indexOf('hb-confirm-api');
     const [scope, route] = parts.slice(i + 1);
-    if (scope === 'health') return json(req, { ok: true, version: '2026-10-05.1' });
+    if (scope === 'health') return json(req, { ok: true, version: '2026-10-07.1' });
     if (scope === 'public') return json(req, await publicRoute(req, route || '', url));
     if (scope === 'staff') { const s = await staff(req); if (!s) return json(req, { error: '請重新登入' }, 401); return json(req, await staffRoute(req, s, route || '', url)) }
     return json(req, { error: 'Not found' }, 404);

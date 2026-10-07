@@ -71,6 +71,7 @@ textarea.err{border-color:var(--wine);background:#fff8f7}
 .photos img{width:100%;height:100%;object-fit:cover;border-radius:5px;border:1px solid var(--line)}
 .photos button{position:absolute;top:-8px;right:-8px;width:28px;height:28px;border-radius:50%;border:0;background:rgba(38,36,30,.85);color:#fff;font-size:15px;line-height:1}
 .sum{background:#f1ebdf;border-radius:6px;padding:12px 14px;text-align:center;font-size:14.5px;letter-spacing:.06em;margin:6px 0 14px}
+.sign{margin:18px 0 14px;padding:16px;border:1px solid var(--line);border-radius:8px;background:var(--card)}.sign h3{margin:0 0 4px;font-size:17px;font-weight:500}.sign p{margin:0 0 10px;font-size:13.5px;color:var(--soft)}.sign input{width:100%;height:46px;border:1px solid var(--line);border-radius:6px;padding:0 12px;font:inherit;font-size:16px;background:#fff;margin-bottom:10px}.sign .pad{position:relative;border:1px dashed #b9ad98;border-radius:6px;background:#fff;touch-action:none}.sign canvas{display:block;width:100%;height:170px}.sign .pad span{position:absolute;left:12px;bottom:10px;font-size:12px;color:#b9ad98;pointer-events:none}.sign .clr{border:0;background:none;color:var(--green);text-decoration:underline;padding:6px 0;font-size:14px}.sigimg{display:block;max-width:240px;max-height:100px;margin:8px 0 2px;background:#fff;border:1px solid var(--line);border-radius:4px}
 .err-box{background:#fbf1ee;border:1px solid #e3c2bb;color:var(--wine);border-radius:6px;padding:10px 12px;font-size:14px;margin:0 0 12px}
 .hint{text-align:center;font-size:13px;color:var(--soft);margin:10px 0 0}
 .done-ic{width:64px;height:64px;border-radius:50%;background:var(--green);display:grid;place-items:center;margin:8px auto 14px}
@@ -106,7 +107,7 @@ textarea.err{border-color:var(--wine);background:#fff8f7}
 const API='https://rqndozhhvuimqjqtmeli.supabase.co/functions/v1/hb-confirm-api/public/';
 const TOKEN=new URLSearchParams(location.search).get('t')||'';
 const $app=document.getElementById('app'),$bar=document.getElementById('bar'),$barIn=document.getElementById('barIn');
-let V=null,step='view',answers={},sending=false,errMsg='',lastSubmit=null;
+let V=null,step='view',answers={},sending=false,errMsg='',lastSubmit=null,sig={name:'',has:false,img:''};
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const dot=d=>d?String(d).slice(0,10).replace(/-/g,'.'):'';
 const md=d=>d?String(d).slice(5,10).replace('-','/'):'';
@@ -150,7 +151,8 @@ function renderView(){const R=V.round,rep=curReply();
   drawThumbs();
 }
 function counts(){let ok=0,ch=0;need().forEach(x=>{const a=answers[x.id];if(a.result==='ok')ok++;else if(a.result==='change')ch++});return {ok,ch,left:need().length-ok-ch}}
-function canSubmit(){const c=counts();return c.left===0&&need().every(x=>answers[x.id].result!=='change'||answers[x.id].comment.trim())}
+function needSign(){const c=counts();return c.left===0&&c.ch===0&&need().length>0}
+function canSubmit(){const c=counts();return c.left===0&&need().every(x=>answers[x.id].result!=='change'||answers[x.id].comment.trim())&&(!needSign()||(sig.has&&sig.name.trim()))}
 function renderAnswer(){const R=V.round;$bar.hidden=true;
   let h='<div class="top"><button data-act="view">‹ 返回</button><b class="serif">業主回覆</b></div>'+(V.project?'<span class="chip">'+esc(V.project)+'</span>':'')+
     '<h2 class="serif" style="margin-top:10px">'+esc(V.title)+'</h2><p class="intro" style="margin-bottom:10px">本次版本：'+(verLine()||'（無附件）')+'。</p>';
@@ -163,10 +165,23 @@ function renderAnswer(){const R=V.round;$bar.hidden=true;
         '<button class="photo-add" data-photo="'+esc(x.id)+'">＋ 附上參考照片</button><div class="photos">'+a.photos.map((p,i)=>'<div><img src="'+p.url+'" alt="參考照片"><button aria-label="移除照片" data-rmph="'+esc(x.id)+'|'+i+'">×</button></div>').join('')+'</div></div>':'')+'</div>'});
   const c=counts();
   h+='<div class="sum" id="sum">本次回覆：'+c.ok+' 項確認・'+c.ch+' 項需修改'+(c.left?'・尚有 '+c.left+' 項未選':'')+'。</div>'+
+    (needSign()?'<div class="sign"><h3 class="serif">簽名確認</h3><p>全部項目皆已確認，請簽名完成本次確認。</p><input id="sigName" maxlength="40" placeholder="簽名人姓名" value="'+esc(sig.name)+'" autocomplete="name"><div class="pad"><canvas id="sigPad"></canvas><span>請在框內簽名</span></div><button class="clr" data-act="sigclear">清除重簽</button></div>':'')+
     (errMsg?'<div class="err-box" role="alert">'+esc(errMsg)+'</div>':'')+
     '<button class="btn" data-act="submit" '+(sending||!canSubmit()?'disabled':'')+'>'+(sending?'送出中…':errMsg?'重新送出':'送出回覆')+'</button><p class="hint">送出後將通知赫柏空間設計。</p>';
   $app.innerHTML=h;
+  if(needSign())setupPad();
 }
+let sigCanvas=null;
+function setupPad(){const c=document.getElementById('sigPad');if(!c)return;sigCanvas=c;sig.has=false;
+  const dpr=Math.max(1,window.devicePixelRatio||1),r=c.getBoundingClientRect();c.width=Math.round(r.width*dpr);c.height=Math.round(r.height*dpr);
+  const g=c.getContext('2d');g.scale(dpr,dpr);g.lineWidth=2.4;g.lineCap='round';g.lineJoin='round';g.strokeStyle='#1d1d1b';
+  let draw=false,lx=0,ly=0;const pos=e=>{const b=c.getBoundingClientRect();return [e.clientX-b.left,e.clientY-b.top]};
+  c.onpointerdown=e=>{e.preventDefault();c.setPointerCapture(e.pointerId);draw=true;[lx,ly]=pos(e);g.beginPath();g.arc(lx,ly,1.2,0,7);g.fillStyle='#1d1d1b';g.fill()};
+  c.onpointermove=e=>{if(!draw)return;const [x,y]=pos(e);g.beginPath();g.moveTo(lx,ly);g.lineTo(x,y);g.stroke();lx=x;ly=y;if(!sig.has){sig.has=true;const s=c.parentNode.querySelector('span');if(s)s.style.display='none';updateSum()}};
+  c.onpointerup=c.onpointercancel=()=>{if(draw&&sig.has)sig.img=c.toDataURL('image/png');draw=false};
+  if(sig.img){const im=new Image();im.onload=()=>{g.save();g.setTransform(1,0,0,1,0,0);g.drawImage(im,0,0,c.width,c.height);g.restore();sig.has=true;const s=c.parentNode.querySelector('span');if(s)s.style.display='none';updateSum()};im.src=sig.img}
+  const nm=document.getElementById('sigName');if(nm)nm.oninput=()=>{sig.name=nm.value;updateSum()};}
+function sigData(){const c=sigCanvas;if(!c)return '';const w=600,h=Math.round(c.height*w/c.width),o=document.createElement('canvas');o.width=w;o.height=h;const g=o.getContext('2d');g.drawImage(c,0,0,w,h);return o.toDataURL('image/png')}
 function updateSum(){const c=counts(),s=document.getElementById('sum');if(s)s.textContent='本次回覆：'+c.ok+' 項確認・'+c.ch+' 項需修改'+(c.left?'・尚有 '+c.left+' 項未選':'')+'。';
   const b=document.querySelector('[data-act="submit"]');if(b)b.disabled=sending||!canSubmit()}
 function renderDone(){const rep=curReply(),R=V.round;$bar.hidden=true;if(!rep){step='view';return render()}
@@ -176,13 +191,13 @@ function renderDone(){const rep=curReply(),R=V.round;$bar.hidden=true;if(!rep){s
   R.items.forEach(x=>{const r=byId[x.id],ok=r?r.result==='ok':!!x.carried;
     h+='<div class="res-row"><span class="t serif">'+esc(x.title)+'</span>'+(x.files[0]?'<span class="ver">v'+x.files.map(f=>f.version).join('/')+'</span>':'')+'<span class="st '+(ok?'ok':'ch')+'">'+(ok?(r?'✓ 已確認':'✓ 先前已確認'):'待修改')+'</span></div>'+
       (r&&r.comment?'<div class="cmt">'+esc(r.comment)+'</div>':'')+(r&&r.photo_urls&&r.photo_urls.length?'<div class="photos">'+r.photo_urls.map(p=>'<div><img src="'+esc(p)+'" alt="參考照片"></div>').join('')+'</div>':'')});
-  h+='</div>'+(anyCh?'<div class="info"><b>i</b>設計師更新後，會再請您確認新版。</div>':'')+'<p style="font-size:13.5px;color:#4f4a40">本次回覆與版本已留存。</p>'+
+  h+='</div>'+(rep.signature?'<div style="margin:12px 0"><small style="color:#7b7466">簽名：'+esc(rep.signer_name)+'</small><img class="sigimg" src="'+esc(rep.signature)+'" alt="簽名"></div>':'')+(anyCh?'<div class="info"><b>i</b>設計師更新後，會再請您確認新版。</div>':'')+'<p style="font-size:13.5px;color:#4f4a40">本次回覆與版本已留存。</p>'+
     '<button class="btn line" data-act="history">查看回覆紀錄</button><button class="link" data-act="view">返回確認內容</button>';
   $app.innerHTML=h}
 function renderHistory(){$bar.hidden=true;
   let h='<div class="top"><button data-act="back">‹ 返回</button><b class="serif">回覆紀錄</b></div><h2 class="serif">'+esc(V.title)+'</h2>';
   if(!V.replies.length)h+='<div class="state">尚未回覆</div>';
-  V.replies.forEach(r=>{h+='<div class="hist"><h3 class="serif">第 '+(r.round_no||'')+' 次確認・'+esc(dt(r.created_at))+'</h3>'+r.results.map(x=>'<div class="res-row"><span class="t">'+esc(x.title)+'</span>'+((x.files||[]).length?'<span class="ver">v'+x.files.map(f=>f.version).join('/')+'</span>':'')+'<span class="st '+(x.result==='ok'?'ok':'ch')+'">'+(x.result==='ok'?'✓ 確認':'需修改')+'</span></div>'+(x.comment?'<div class="cmt">'+esc(x.comment)+'</div>':'')).join('')+'</div>'});
+  V.replies.forEach(r=>{h+='<div class="hist"><h3 class="serif">第 '+(r.round_no||'')+' 次確認・'+esc(dt(r.created_at))+'</h3>'+r.results.map(x=>'<div class="res-row"><span class="t">'+esc(x.title)+'</span>'+((x.files||[]).length?'<span class="ver">v'+x.files.map(f=>f.version).join('/')+'</span>':'')+'<span class="st '+(x.result==='ok'?'ok':'ch')+'">'+(x.result==='ok'?'✓ 確認':'需修改')+'</span></div>'+(x.comment?'<div class="cmt">'+esc(x.comment)+'</div>':'')).join('')+(r.signature?'<div style="margin-top:8px"><small style="color:#7b7466">簽名：'+esc(r.signer_name)+'</small><img class="sigimg" src="'+esc(r.signature)+'" alt="簽名"></div>':'')+'</div>'});
   $app.innerHTML=h}
 let prevStep='view';
 document.addEventListener('click',async e=>{const t=e.target.closest('[data-act],[data-res],[data-view],[data-photo],[data-rmph]');if(!t)return;
@@ -192,7 +207,8 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-act]
     else if(a==='done'){step='done';render()}
     else if(a==='history'){prevStep=step;step='history';render()}
     else if(a==='back'){step=prevStep||'view';render()}
-    else if(a==='submit')submit();return}
+    else if(a==='submit')submit();
+    else if(a==='sigclear'){if(sigCanvas){sigCanvas.getContext('2d').clearRect(0,0,sigCanvas.width,sigCanvas.height);sig.has=false;sig.img='';const s=sigCanvas.parentNode.querySelector('span');if(s)s.style.display='';updateSum()}}return}
   if(t.dataset.res){const [id,res]=t.dataset.res.split('|');answers[id].result=res;saveDraft();const y=t.getBoundingClientRect().top;renderAnswer();
     const el=document.getElementById('q-'+id);if(el){window.scrollBy(0,el.getBoundingClientRect().top-y+70-(el.querySelector('.choices').getBoundingClientRect().top-el.getBoundingClientRect().top))}
     if(res==='change'){const ta=document.getElementById('c-'+id);if(ta&&!ta.value)ta.focus({preventScroll:false})}return}
@@ -217,7 +233,8 @@ async function submit(){if(sending)return;
           let r;try{r=await fetch(s.upload_url,{method:'PUT',headers:{'Content-Type':p.blob.type||'image/jpeg','x-upsert':'false'},body:p.blob})}catch{throw Error('照片上傳失敗，請確認網路後再試一次')}
           if(!r.ok)throw Error('照片上傳失敗，請再試一次');p.path=s.path}photos.push(p.path)}
       results.push({item_id:x.id,result:a.result,comment:a.result==='change'?a.comment.trim():'',photos})}
-    await api('submit',{round_id:V.round.id,nonce:lastSubmit.nonce,results});
+    const extra=needSign()?{signer_name:sig.name.trim(),signature:sigData()}:{};
+    await api('submit',{round_id:V.round.id,nonce:lastSubmit.nonce,results,...extra});
     clearDraft();lastSubmit=null;sending=false;await load('done');
   }catch(e){sending=false;errMsg=e.message||'送出失敗，請再試一次';
     if(e.status===409&&/更新內容|回覆過/.test(errMsg)){renderAnswer();return}

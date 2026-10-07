@@ -12633,7 +12633,7 @@ function HbDrawingHub({onBack,notify,project=null,embedded=false,initialView="dr
   let[unifiedOpen,setUnifiedOpen]=(0,u.useState)(false);
   /* 進場：主內容淡入一次；案件卡片在資料第一次載入完成時依序浮現，之後搜尋／篩選／同步都不重播 */
   let[introPhase,setIntroPhase]=(0,u.useState)(()=>HB_reduceMotion()?"done":"wait");
-  let[homeView,setHomeView]=(0,u.useState)("cases"),[homeFilter,setHomeFilter]=(0,u.useState)("all"),[homeQuery,setHomeQuery]=(0,u.useState)(""),[homeCase,setHomeCase]=(0,u.useState)(""),[homeOpenGroups,setHomeOpenGroups]=(0,u.useState)({}),[homePill,setHomePill]=(0,u.useState)("all"),[sideQ,setSideQ]=(0,u.useState)(""),[sideF,setSideF]=(0,u.useState)("all"),[sideMenu,setSideMenu]=(0,u.useState)(null);
+  let[homeView,setHomeView]=(0,u.useState)("cases"),[homeFilter,setHomeFilter]=(0,u.useState)("all"),[homeQuery,setHomeQuery]=(0,u.useState)(""),[homeCase,setHomeCase]=(0,u.useState)(""),[homeOpenGroups,setHomeOpenGroups]=(0,u.useState)({}),[homePill,setHomePill]=(0,u.useState)("all"),[sideQ,setSideQ]=(0,u.useState)(""),[sideF,setSideF]=(0,u.useState)("all"),[sideMenu,setSideMenu]=(0,u.useState)(null),[cfPreset,setCfPreset]=(0,u.useState)(null);
   let[hubView,setHubView]=(0,u.useState)(initialView==="photos"?"photos":"drawings");
   let[folders,setFolders]=(0,u.useState)([]);
   let[drawings,setDrawings]=(0,u.useState)([]);
@@ -12727,6 +12727,12 @@ function HbDrawingHub({onBack,notify,project=null,embedded=false,initialView="dr
     publishVersion(d,cv.id);
   };
   /* 取消業主共享：一般發布→移除發布標記；位於業主共享資料夾→所有版本標為公司內部（只隱藏這一張，資料夾其他圖面不受影響） */
+  /* 請業主簽名：用「業主確認」建立一筆確認單並附上目前版本，業主看完全部確認後在連結上簽名 */
+  let requestSign=d=>{let cv=currentVersionOf(d);if(!cv||!cv.url){notify("請先上傳圖面");return}
+    let mime=cv.mime||"";if(!/^(application\/pdf|image\/)/.test(mime)){notify("簽名確認只支援 PDF 與圖片");return}
+    let root=caseRootOf(d.folderId),pid=root&&root.projectId||(project&&project.id)||"";
+    let title=[d.drawingNo,d.name].filter(Boolean).join(" ");let ext=mime==="application/pdf"?".pdf":"."+(mime.split("/")[1]||"jpg");
+    setCfPreset({key:Date.now(),project_id:pid,title:title+" 簽名確認",intro:"請查看圖面（V"+cv.versionNo+"），確認無誤後於下方簽名。",items:[{title:title+"（V"+cv.versionNo+"）",file:{url:cv.url,name:title+"_V"+cv.versionNo+ext,mime}}]})};
   let unshareDrawing=async d=>{
     let m=shareOf(d);if(!m.shared){notify("這張圖面目前沒有給業主看");return}
     if(!window.confirm(`取消「${[d.drawingNo,d.name].filter(Boolean).join(" ")}」的業主共享？\n業主將看不到這張圖面的任何版本，之後可再按「發布」重新共享。`))return;
@@ -13106,6 +13112,7 @@ function HbDrawingHub({onBack,notify,project=null,embedded=false,initialView="dr
             (pend||!sh)&&cv?act("send","發布",()=>publishDrawing(d),"pub"):null,
             sh?act("lock","取消",()=>unshareDrawing(d),"",{title:"取消業主共享"}):null,
             sh?act("message-circle","LINE",()=>openLineNotify([d.id]),"line",{title:"LINE 通知業主"}):null,
+            act("pencil","簽名",()=>requestSign(d),"",{title:"請業主簽名"}),
             act("folder","移動",()=>setMoveDrawingId(d.id)),
             act("trash","刪除",()=>deleteDrawing(d.id),"del")))
         :cv&&C("button",{type:"button",className:"hb-ls-pub",onClick:()=>publishDrawing(d)},"發布"));};
@@ -13136,6 +13143,7 @@ function HbDrawingHub({onBack,notify,project=null,embedded=false,initialView="dr
       let rows=[],walk=(f,depth)=>{rows.push({f,depth});folders.filter(x=>x.parentId===f.id).sort((a,b)=>String(a.name).localeCompare(String(b.name),"zh-Hant")).forEach(c=>walk(c,depth+1))};walk(root,0);
       return u.default.createElement(HbDrawingMoveModal,{drawing:d,rows,sharedOf:id=>!!sharedFolderOf(id),onCancel:()=>setMoveDrawingId(null),onMove:fid=>moveDrawing(d,fid)})})(),
     uploadQueue&&(()=>{let forced=uploadQueue.forcedDrawingId&&drawings.find(x=>x.id===uploadQueue.forcedDrawingId);let fid=forced?forced.folderId:currentFolderId;return u.default.createElement(HbDrawingUploadDialog,{key:uploadQueue.files.map(f=>f.name).join("|"),files:uploadQueue.files,folderName:(folders.find(f=>f.id===fid)||{}).name,folderDrawings:drawings.filter(x=>x.folderId===fid),categories:categoryOptions,forcedDrawingId:uploadQueue.forcedDrawingId,versionsOf:versionsFor,busy:uploading,onCancel:()=>!uploading&&setUploadQueue(null),onSubmit:submitUploadQueue})})(),
+    cfPreset&&u.default.createElement(HbConfirmDrawer,{key:cfPreset.key,id:null,preset:cfPreset,projects:(projects||(project?[project]:[])),pv:"",say:notify,onOpenProject:()=>{},onChanged:()=>{},onClose:()=>setCfPreset(null)}),
     lineNotify&&u.default.createElement(HbDrawingLineNotify,{...lineNotify,notify,onClose:()=>setLineNotify(null),onSent:markLineNotified}),
     unifiedOpen&&projects&&u.default.createElement(HbUnifiedUpload,{projects:(projects||[]).filter(p=>!/^示範案件/.test(p.name||"")),folders,drawings,versions,notify,uploadFile:uploadFileToDrawing,
       onUploaded:()=>load(),onClose:()=>setUnifiedOpen(false),onNotify:ids=>{setUnifiedOpen(false);setTimeout(()=>openLineNotify(ids),60)}})
@@ -13306,6 +13314,7 @@ function HbDrawingHub({onBack,notify,project=null,embedded=false,initialView="dr
                       !ownerPreview&&u.default.createElement("button",{className:"hb-plan-iconbtn",title:"上傳新版本",onClick:()=>openNewVersionPicker(d.id)},u.default.createElement(E,{name:"upload",size:15})),
                       !ownerPreview&&(isPending||!meta.shared)&&u.default.createElement("button",{className:"hb-plan-iconbtn",title:"發布給業主",onClick:()=>publishDrawing(d),style:{color:"#315c48"}},u.default.createElement(E,{name:"send",size:15})),
                       !ownerPreview&&meta.shared&&u.default.createElement("button",{className:"hb-plan-iconbtn",title:"取消業主共享",onClick:()=>unshareDrawing(d)},u.default.createElement(E,{name:"lock",size:15})),
+                      !ownerPreview&&u.default.createElement("button",{className:"hb-plan-iconbtn",title:"請業主簽名",onClick:()=>requestSign(d)},u.default.createElement(E,{name:"pencil",size:15})),
                       !ownerPreview&&u.default.createElement("button",{className:"hb-plan-iconbtn",title:"移動到資料夾",onClick:()=>setMoveDrawingId(d.id)},u.default.createElement(E,{name:"folder",size:15})),
                       !ownerPreview&&u.default.createElement("button",{className:"hb-plan-iconbtn",title:"刪除圖面",onClick:()=>deleteDrawing(d.id),style:{color:"#8c493f"}},u.default.createElement(E,{name:"trash",size:15}))
                     )
@@ -13336,6 +13345,7 @@ function HbDrawingHub({onBack,notify,project=null,embedded=false,initialView="dr
       let rows=[],walk=(f,depth)=>{rows.push({f,depth});folders.filter(x=>x.parentId===f.id).sort((a,b)=>String(a.name).localeCompare(String(b.name),"zh-Hant")).forEach(c=>walk(c,depth+1))};walk(root,0);
       return u.default.createElement(HbDrawingMoveModal,{drawing:d,rows,sharedOf:id=>!!sharedFolderOf(id),onCancel:()=>setMoveDrawingId(null),onMove:fid=>moveDrawing(d,fid)})})(),
     uploadQueue&&(()=>{let forced=uploadQueue.forcedDrawingId&&drawings.find(x=>x.id===uploadQueue.forcedDrawingId);let fid=forced?forced.folderId:currentFolderId;return u.default.createElement(HbDrawingUploadDialog,{key:uploadQueue.files.map(f=>f.name).join("|"),files:uploadQueue.files,folderName:(folders.find(f=>f.id===fid)||{}).name,folderDrawings:drawings.filter(x=>x.folderId===fid),categories:categoryOptions,forcedDrawingId:uploadQueue.forcedDrawingId,versionsOf:versionsFor,busy:uploading,onCancel:()=>!uploading&&setUploadQueue(null),onSubmit:submitUploadQueue})})(),
+    cfPreset&&u.default.createElement(HbConfirmDrawer,{key:cfPreset.key,id:null,preset:cfPreset,projects:(projects||(project?[project]:[])),pv:"",say:notify,onOpenProject:()=>{},onChanged:()=>{},onClose:()=>setCfPreset(null)}),
     lineNotify&&u.default.createElement(HbDrawingLineNotify,{...lineNotify,notify,onClose:()=>setLineNotify(null),onSent:markLineNotified}),
     unifiedOpen&&projects&&u.default.createElement(HbUnifiedUpload,{projects:(projects||[]).filter(p=>!/^示範案件/.test(p.name||"")),folders,drawings,versions,notify,uploadFile:uploadFileToDrawing,
       onUploaded:()=>load(),onClose:()=>setUnifiedOpen(false),onNotify:ids=>{setUnifiedOpen(false);setTimeout(()=>openLineNotify(ids),60)}}),
@@ -15375,10 +15385,10 @@ function HbCfViewer({file,onClose}){const h=u.default.createElement,ref=u.useRef
     h('div',{className:'cf-vhead'},h('span',null,file.name+' ・ v'+file.version),h('a',{href:file.url,target:'_blank',rel:'noopener'},'新視窗開啟'),h('button',{type:'button',onClick:onClose,'aria-label':'關閉'},'×')),
     h('div',{className:'cf-vbody'},!file.url?h('p',null,'連結已過期，請重新整理'):isImg?h('img',{src:file.url,alt:file.name}):h('iframe',{src:file.url,title:file.name})));
 }
-function HbConfirmDrawer({id,projects,pv,onClose,onChanged,onOpenProject,say}){
+function HbConfirmDrawer({id,projects,pv,onClose,onChanged,onOpenProject,say,preset}){
   const h=u.default.createElement,ref=u.useRef(null),fileRef=u.useRef(null);
   const [data,setData]=u.useState(null),[err,setErr]=u.useState(''),[busy,setBusy]=u.useState(''),[fail,setFail]=u.useState(null);
-  const [edit,setEdit]=u.useState(!id),[form,setForm]=u.useState({title:'',intro:'確認後才能安排下單。',project_id:pv&&pv!=='__co'?pv:'',due_date:HB_wbAddDays(HB_todoDate(),3),items:[{id:crypto.randomUUID().slice(0,8),title:''}]});
+  const [edit,setEdit]=u.useState(!id),[form,setForm]=u.useState(()=>preset&&!id?{title:preset.title||'',intro:preset.intro||'請查看圖面，確認無誤後簽名。',project_id:preset.project_id||'',due_date:HB_wbAddDays(HB_todoDate(),3),items:(preset.items||[]).map(x=>({id:crypto.randomUUID().slice(0,8),title:x.title}))}:{title:'',intro:'確認後才能安排下單。',project_id:pv&&pv!=='__co'?pv:'',due_date:HB_wbAddDays(HB_todoDate(),3),items:[{id:crypto.randomUUID().slice(0,8),title:''}]});
   const [linkBox,setLinkBox]=u.useState(''),[note,setNote]=u.useState(''),[hist,setHist]=u.useState({}),[viewer,setViewer]=u.useState(null),[upItem,setUpItem]=u.useState(''),[upGroup,setUpGroup]=u.useState(''),[upMsg,setUpMsg]=u.useState('');
   const curId=u.useRef(id);
   const req=data&&data.request;
@@ -15408,6 +15418,16 @@ function HbConfirmDrawer({id,projects,pv,onClose,onChanged,onOpenProject,say}){
       const put=await fetch(s.upload_url,{method:'PUT',headers:{'Content-Type':file.type,'x-upsert':'false'},body:file});if(!put.ok)throw Error('檔案上傳失敗（'+put.status+'）');
       await HB_confirmApi('upload-done',{request_id:curId.current,item_id:upItem,group_key:s.group_key,version:s.version,name:file.name,mime:file.type,size:file.size,path:s.path});
       await load();setUpMsg('')},(upGroup?'已上傳新版':'已加入附件'));setUpMsg('')};
+  /* 從圖面發起：自動建立確認單並附上圖面檔案（業主看完後簽名） */
+  const presetRan=u.useRef(false);
+  u.useEffect(()=>{if(!preset||id||presetRan.current)return;presetRan.current=true;
+    run('upload',async()=>{const d=await saveForm();if(!d)throw Error('建立失敗');const its=(d.request&&d.request.items)||[];
+      for(let i=0;i<(preset.items||[]).length;i++){const p=preset.items[i],it=its[i];if(!it||!p.file||!p.file.url)continue;
+        setUpMsg('附上圖面… '+p.file.name);let blob;try{blob=await HB_fetchAsset(p.file.url)}catch(e){throw Error('確認單已建立，但自動附上圖面失敗，請按「＋ 加入附件」選擇圖面檔案')}const mime=p.file.mime||blob.type||'application/pdf';
+        const s=await HB_confirmApi('upload-url',{request_id:curId.current,item_id:it.id,name:p.file.name,mime,size:blob.size});
+        const put=await fetch(s.upload_url,{method:'PUT',headers:{'Content-Type':mime,'x-upsert':'false'},body:blob});if(!put.ok)throw Error('檔案上傳失敗（'+put.status+'）');
+        await HB_confirmApi('upload-done',{request_id:curId.current,item_id:it.id,group_key:s.group_key,version:s.version,name:p.file.name,mime,size:blob.size,path:s.path})}
+      await load();setUpMsg('')},'已建立簽名確認，確認內容後按「送出並複製連結」').then(()=>setUpMsg(''))},[]);
   const files=(data&&data.files)||[],groups={};files.forEach(f=>{(groups[f.group_key]=groups[f.group_key]||[]).push(f)});
   Object.values(groups).forEach(g=>g.sort((a,b)=>b.version-a.version));
   const round=data&&data.rounds&&data.rounds[0],replies=(data&&data.replies)||[],repById=new Map(replies.map(x=>[x.id,x]));
@@ -15469,7 +15489,8 @@ function HbConfirmDrawer({id,projects,pv,onClose,onChanged,onOpenProject,say}){
                 ev.kind!=='reply'&&ev.kind!=='create'&&h('p',null,ev.kind==='sent'?ev.text.replace(/^第 (\d+) 次送出確認：/,'第 $1 次・'):ev.text),
                 rep&&h('ul',{className:'cf-rep'},rep.results.map(x=>h('li',{key:x.item_id,className:x.result},h('span',null,x.result==='ok'?'✓ 確認':'✎ 需修改'),' ',x.title,x.files&&x.files.length?' （'+x.files.map(f=>'v'+f.version).join('、')+'）':'',
                   x.comment&&h('p',null,x.comment),x.photo_urls&&x.photo_urls.length?h('div',{className:'cf-photos'},x.photo_urls.map((p,i)=>h('a',{key:i,href:p,target:'_blank',rel:'noopener'},h('img',{src:p,alt:'業主參考照片'})))):null))),
-                rep&&rep.message&&h('p',null,'留言：'+rep.message)))}))),
+                rep&&rep.message&&h('p',null,'留言：'+rep.message),
+                rep&&rep.signature&&h('div',{className:'cf-sig'},h('small',null,'業主簽名：'+(rep.signer_name||'')),h('img',{src:rep.signature,alt:'業主簽名',style:{display:'block',maxWidth:220,maxHeight:90,background:'#fff',border:'1px solid #e2d8c6',borderRadius:4,marginTop:4}}))))}))),
         !edit&&req&&!closed&&h('section',{className:'wbd-sec wbd-form'},h('h4',null,'補充說明'),h('textarea',{rows:2,maxLength:1000,value:note,placeholder:'輸入補充說明或記錄業主電話回覆…',onChange:e=>setNote(e.target.value)})),
         linkBox&&h('div',{className:'cf-linkbox'},h('input',{readOnly:true,value:linkBox,onFocus:e=>e.target.select()}),h('button',{type:'button',onClick:async()=>{const ok=await HB_cfCopy(linkBox);say(ok?'已複製確認連結':'請長按連結手動複製');if(ok)setLinkBox('')}},'複製')),
         req&&h('div',{className:'cf-linkrow'},
