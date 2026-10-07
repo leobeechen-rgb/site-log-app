@@ -12390,6 +12390,136 @@ const HB_LIB_CSS=`
         .wbc.is-compact .wbc-cols>*{flex:0 0 86%;scroll-snap-align:start;border:1px solid rgba(57,51,47,.12)!important;padding:10px 12px 8px!important;background:rgba(255,255,255,.45)}
         .wbc.is-compact .wbc-list{max-height:none}
       }
+
+      /* ===== 精簡工作台 wbk：週曆＋四欄（目標：1920×1080 預設約 360px） ===== */
+      .wbc.wbk{padding:8px 4px 4px!important;max-width:none;container:wbk/inline-size}
+      .wbk-head{display:flex;align-items:center;gap:10px 14px;flex-wrap:wrap;min-height:44px;padding-bottom:6px;border-bottom:1px solid var(--wb-line)}
+      .wbk .wbc-titlewrap{gap:12px}
+      .wbk .wbc-titlewrap h2.wbc-carnet{font-size:28px;line-height:1.1}
+      .wbk .wbc-date{display:inline-flex;align-items:center;gap:10px;padding:0 14px}
+      .wbk-today{border:0;background:none;padding:0;color:var(--wb-green);font:inherit;font-size:12.5px;text-decoration:underline;text-underline-offset:3px;cursor:pointer;min-height:0!important}
+      .wbk .wbc-filter select{min-height:34px;padding-top:5px;padding-bottom:5px}
+      .hb-wb .wbk .wbc-cfbtn,.hb-wb.wbk .wbc-cfbtn{padding:6px 12px 6px 14px}
+      .hb-wb.wbk .wbc-add{padding:7px 16px}
+      .hb-wb.wbk .wbc-hublink{font-size:13px;padding-right:12px}
+      .wbk-toggle{display:inline-flex;align-items:center;gap:8px;border:0;background:none;padding:0;font:inherit;font-size:13.5px;letter-spacing:.06em;color:#4f4a40;cursor:pointer;min-height:0!important}
+      .wbk-toggle i{position:relative;width:34px;height:19px;border-radius:999px;background:#d8cfbf;transition:background .18s}
+      .wbk-toggle i:after{content:'';position:absolute;left:2px;top:2px;width:15px;height:15px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.18);transition:transform .18s}
+      .wbk-toggle.on i{background:var(--wb-green)}.wbk-toggle.on i:after{transform:translateX(15px)}
+      .wbk-week{display:flex;align-items:center;gap:4px;height:46px;border-bottom:1px solid var(--wb-line)}
+      .hb-wb .wbk-wk{flex:none;width:32px;height:32px;min-height:0!important;border:0;background:none;border-radius:50%;display:grid;place-items:center;color:#5a5448;cursor:pointer;padding:0}
+      .hb-wb .wbk-wk:hover{background:rgba(46,74,60,.08)}
+      .hb-wb .wbk-day{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:8px;height:38px;min-height:0!important;border:0;background:none;padding:0;cursor:pointer;color:var(--wb-ink);font:inherit;position:relative}
+      .wbk-day span{font-size:13px;color:var(--wb-soft)}
+      .wbk-day b{display:grid;place-items:center;width:32px;height:32px;border-radius:50%;font-family:'Cormorant Garamond',Georgia,serif;font-size:21px;font-weight:500;line-height:1;border:1px solid transparent}
+      .wbk-day i{position:absolute;left:50%;bottom:0;width:5px;height:5px;margin-left:12px;border-radius:50%}
+      .wbk-day i.has{background:#b4573a}
+      .wbk-day:hover b{border-color:#cdbf9f}
+      .wbk-day.on b{border:1.5px solid var(--wb-green);color:var(--wb-green);background:rgba(46,74,60,.06)}
+      .wbk-day.today b{background:var(--wb-green);border-color:var(--wb-green);color:#f5f1e8}
+      .wbk-day.today.on b{box-shadow:0 0 0 3px rgba(46,74,60,.18)}
+      .wbk-day.on span{color:var(--wb-green);font-weight:500}
+      .wbk-cols{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));align-items:stretch}
+      .wbk-col{min-width:0;display:flex;flex-direction:column;padding:10px 18px 0}
+      .wbk-col:first-child{padding-left:6px}.wbk-col:last-child{padding-right:6px}
+      .wbk-col+.wbk-col{border-left:1px solid var(--wb-line)}
+      .wbk .wbc-colhead{margin-bottom:4px;gap:10px;min-height:28px}
+      .wbk .wbc-colhead h3{font-size:18px;margin:0!important}
+      .wbk .wbc-num{min-width:24px;height:24px;font-size:12.5px}
+      .wbk-colbody{flex:1;min-height:150px}
+      .wbk .wbc-list{flex:none}
+      .wbk .wbc-row{padding:6px 0!important;gap:10px}
+      .wbk .wbc-facts,.wbk .wbc-last{display:none!important}
+      .wbk .wbc-empty{padding:14px 0}
+      .hb-wb.wbk .wbc-more{padding:6px 0 8px;font-size:13.5px;margin-top:auto;height:36px;box-sizing:border-box}
+      .wbk-tl{list-style:none;margin:0;padding:0 0 0 2px}
+      .wbk-ev{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:10px;align-items:center;padding:4px 0;position:relative}
+      .wbk-ev:before{content:'';position:absolute;left:51px;top:0;bottom:0;width:1px;background:var(--wb-line)}
+      .wbk-time{font-size:13px;color:#4f4a40;text-align:right}
+      .hb-wb .wbk-evbody{min-width:0;border:0;background:none;padding:2px 0 2px 12px;text-align:left;cursor:pointer;font:inherit;color:inherit;min-height:0!important;position:relative;display:flex;align-items:baseline;gap:8px}
+      .wbk-evbody:before{content:'';position:absolute;left:-4px;top:50%;width:7px;height:7px;margin-top:-3.5px;border-radius:50%;background:var(--wb-green)}
+      .wbk-evbody strong{font-weight:500;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:0 1 auto;min-width:0}
+      .wbk-evbody small{font-size:12px;color:var(--wb-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1 1 0;min-width:0}
+      .wbk-evbody:hover strong{color:var(--wb-green)}
+      .wbk-now{display:grid;grid-template-columns:44px 1fr;gap:10px;align-items:center;height:16px}
+      .wbk-now span{font-size:11.5px;color:#b4573a;text-align:right;font-family:'JetBrains Mono',ui-monospace,monospace}
+      .wbk-now i{position:relative;height:1.5px;background:#b4573a}
+      .wbk-now i:before{content:'';position:absolute;left:-4px;top:-3px;width:7px;height:7px;border-radius:50%;background:#b4573a}
+      .wbk-gap{margin:3px 0 3px 54px}
+      .hb-wb .wbk-gaphead{display:flex;align-items:center;gap:7px;width:100%;min-height:30px!important;border:1px dashed #d8c7a3;background:#fbf4dd;border-radius:4px;padding:4px 10px;font:inherit;font-size:13px;color:#6b5a32;cursor:pointer;text-align:left;white-space:nowrap;overflow:hidden}
+      .wbk-gt{min-width:0;overflow:hidden;text-overflow:ellipsis}.wbk-gaphead svg{flex:none}
+      .wbk-gaphead i{flex:none;margin-left:auto;font-style:normal;font-size:12px;color:var(--wb-green);text-decoration:underline;text-underline-offset:3px}
+      .wbk-gap.open .wbk-gaphead{border-style:solid}
+      .wbk-chips{display:flex;flex-wrap:wrap;gap:6px;padding:7px 0 2px;max-height:64px;overflow:auto}
+      .hb-wb .wbk-chip{border:1px solid #e3d3a9;background:#fff8e2;border-radius:999px;padding:3px 11px;font:inherit;font-size:12.5px;color:#4f4a40;cursor:grab;min-height:0!important;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .wbk-chip:hover{border-color:var(--wb-green);color:var(--wb-green)}
+      .wbk-none{font-size:12.5px;color:var(--wb-soft)}
+      .wbk-quick{display:flex;gap:6px;margin:2px 0 4px}
+      .wbk-quick input{flex:1;min-width:0;height:32px;border:1px solid var(--wb-line);background:rgba(255,255,255,.7);border-radius:4px;padding:0 10px;font:inherit;font-size:13.5px;color:var(--wb-ink)}
+      .wbk-quick input:focus{outline:none;border-color:var(--wb-green)}
+      .hb-wb .wbk-quick button,.wbk-side .wbk-quick button{flex:none;width:32px;height:32px;min-height:0!important;border:1px solid var(--wb-green);background:var(--wb-green);color:#f5f1e8;border-radius:4px;display:grid;place-items:center;padding:0;cursor:pointer}
+      .wbk-slist{list-style:none;margin:0;padding:0}
+      .wbk-srow{display:grid;grid-template-columns:24px minmax(0,1fr) auto;gap:8px;align-items:center;padding:4px 0}
+      .wbk-srow+.wbk-srow{border-top:1px dashed #ece3d3}
+      .wbk-stext{min-width:0;border:0;background:none;padding:0;text-align:left;font:inherit;font-size:14px;color:inherit;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-height:0!important}
+      .wbk-stext:hover{color:var(--wb-green)}
+      .wbk-mini{border:1px solid var(--wb-green);background:transparent;color:var(--wb-green);border-radius:999px;padding:2px 10px;font:inherit;font-size:12px;white-space:nowrap;cursor:pointer;min-height:0!important}
+      .wbk-mini:hover{background:var(--wb-green);color:#f5f1e8}
+      .wbk-shophead{display:flex;align-items:center;gap:8px;margin-top:6px;padding-top:6px;border-top:1px solid var(--wb-line)}
+      .hb-wb .wbk-shopbtn{display:inline-flex;align-items:center;gap:10px;border:0;background:none;padding:0;cursor:pointer;color:inherit;font:inherit;min-height:0!important}
+      .wbk-shopbtn h3{font-family:'Noto Serif TC',serif;font-size:16px;font-weight:500;letter-spacing:.12em;margin:0}
+      .hb-wb .wbk-plus{margin-left:auto;width:28px;height:28px;min-height:0!important;border:1px solid var(--wb-line);background:#fff;border-radius:50%;display:grid;place-items:center;color:var(--wb-green);padding:0;cursor:pointer}
+      .wbk-c4 .wbc-more{margin-top:auto}
+      dialog.wbd.wbk-side{width:min(480px,100vw)}
+      .wbk-side .wbc-check{width:24px;height:24px;border-radius:50%;border:1.5px solid #8f887a;background:#fff;display:grid;place-items:center;color:transparent;padding:0}
+      .wbk-tabs{display:flex;gap:4px;padding:0 20px;border-bottom:1px solid #e2d8c6}
+      .wbk-tabs button{border:0;background:none;padding:10px 12px;font:inherit;font-size:14px;color:#7b7466;cursor:pointer;box-shadow:inset 0 -2px transparent}
+      .wbk-tabs button.on{color:#2E4A3C;box-shadow:inset 0 -2px #2E4A3C}
+      .wbk-sidebody{padding:0!important;max-width:none!important;margin:0!important}
+      .wbk-sidebody .wbc-list{max-height:none}
+      .wbk-sidebody .wbk-gap{margin-left:54px}
+      @container wbk (max-width:1160px){
+        .wbk .wbc-chev{display:none}
+        .wbk .wbc-row,.wbk .wbc-row.wbc-frow{grid-template-columns:24px minmax(0,1fr) auto;gap:8px}
+        .wbk .wbc-badge{padding:3px 7px;font-size:11.5px}
+        .wbk-col{padding-left:12px;padding-right:12px}
+        .wbk-evbody small{display:none}
+        .wbk-gap{margin-left:30px}
+      }
+      @container wbk (max-width:860px){
+        .wbk-cols{grid-template-columns:repeat(2,minmax(0,1fr))}
+        .wbk-col:nth-child(3){border-left:0;padding-left:6px}
+        .wbk-col:nth-child(2){padding-right:6px}
+        .wbk-col:nth-child(n+3){border-top:1px solid var(--wb-line);margin-top:4px}
+        .wbk-colbody{min-height:0}
+      }
+      @media(max-width:899px){
+        .wbc.is-compact.wbk .wbk-cols{display:grid!important}
+        .wbk .wbc-date{margin-left:auto}
+      }
+      @media(max-width:680px){
+        .wbk-head{gap:8px}
+        .wbk .wbc-titlewrap h2.wbc-carnet{font-size:24px}
+        .wbk .wbc-date{padding:0;border-right:0}
+        .wbk .wbc-filter{order:5;flex:1 1 100%}
+        .wbk .wbc-grow{display:none}
+        .hb-wb.wbk .wbc-hublink{border-right:0}
+        .wbk-day{gap:0;flex-direction:column;height:44px}
+        .hb-wb .wbk-day{flex-direction:column;gap:0}
+        .wbk-day span{font-size:11.5px}
+        .wbk-day b{width:28px;height:28px;font-size:18px;flex:none}
+        .wbk-day i{margin-left:-2.5px;bottom:-3px}
+        .wbk-week{height:56px}
+        .wbk .wbc-titlewrap{order:0}.wbk .wbc-date{order:1}
+        .wbk .wbc-filter{order:2}.hb-wb.wbk .wbc-cfbtn{order:3}.wbk-toggle{order:4}.hb-wb.wbk .wbc-hublink{order:5}.hb-wb.wbk .wbc-add{order:6;margin-left:auto}
+        .wbk-day b{flex:none}
+      }
+      @container wbk (max-width:600px){
+        .wbk-cols{grid-template-columns:minmax(0,1fr)}
+        .wbk-col,.wbk-col:first-child,.wbk-col:last-child,.wbk-col:nth-child(3),.wbk-col:nth-child(2){padding:10px 2px 0;border-left:0;margin-top:0}
+        .wbk-col+.wbk-col{border-top:1px solid var(--wb-line)}
+        .wbk-colbody{min-height:0}
+      }
 `;
 const HB_HUB_CSS=`
       .hb-plan-system{--plan-green:#315c48;--plan-rust:#b4573a;--plan-ink:#211f1b;--plan-paper:rgba(255,255,255,.62)}
@@ -15234,6 +15364,112 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
     h('button',{type:'button',className:'wbc-more',onClick:onMore},moreLabel,HB_wbIcon('arrow',14)));
   const d=new Date(today+'T00:00:00');
   const fullList=full==='open'?openMixed:full==='follow'?follows:full==='closed'?closedFollows:[];
+  const [cDay,setCDay]=u.useState(''),[cGapOpen,setCGapOpen]=u.useState(null),[cShop,setCShop]=u.useState(false),[cSide,setCSide]=u.useState('');
+  const [cGaps,setCGaps]=u.useState(()=>{try{return localStorage.getItem('hb_tl_gaps')!=='0'}catch{return true}});
+  u.useEffect(()=>{try{localStorage.setItem('hb_tl_gaps',cGaps?'1':'0')}catch{}},[cGaps]);
+  const nowOf=()=>{const n=new Date();return n.getHours()*60+n.getMinutes()},[nowMin,setNowMin]=u.useState(nowOf);
+  u.useEffect(()=>{if(!compact)return;const t=setInterval(()=>setNowMin(nowOf()),60000);return()=>clearInterval(t)},[compact]);
+  /* ===== 精簡工作台（專案首頁）：週曆＋今日時間軸＋未完成＋待追蹤＋稍後辦／購物清單 ===== */
+  if(compact){
+    const pad=n=>String(n).padStart(2,'0'),ymd=x=>x.getFullYear()+'-'+pad(x.getMonth()+1)+'-'+pad(x.getDate());
+    const toMin=s=>{const m=/^(\d{1,2}):(\d{2})/.exec(s||'');return m?(+m[1])*60+(+m[2]):null},fmt=m=>pad(Math.floor(m/60))+':'+pad(m%60);
+    const md=s=>s?(+s.slice(5,7))+'/'+(+s.slice(8,10)):'';
+    const isShop=t=>t.category==='採購'&&!t.time;
+    const day=cDay||today,isToday=day===today;
+    const onDay=t=>HB_wbOnDate(t,day);
+    /* 第一欄：當天有時間的行程（不含追蹤、購物） */
+    const timed=list.filter(t=>!t.deleted&&!t.done&&!HB_wbIsFollow(t)&&!isShop(t)&&onDay(t)&&toMin(t.time)!=null).sort((a,b)=>toMin(a.time)-toMin(b.time));
+    /* 第二欄：當天到期（今天另含逾期），不含未排日期與購物 */
+    const dayOpen=openTasks.filter(t=>!isShop(t)&&t.due&&(onDay(t)||(isToday&&overdue(t)))&&(fx[t.id]||toMin(t.time)==null||!onDay(t)));
+    const openList=isToday?[...cfTodo.map(x=>({_cf:x})),...dayOpen]:dayOpen;
+    const openCount=openList.filter(t=>t._cf||(fx[t.id]!=='leaving'&&fx[t.id]!=='saving')).length;
+    /* 第三欄：今天顯示全部未結案追蹤；其他日期只顯示當天要追蹤的 */
+    const fList=isToday?follows:follows.filter(t=>t.due===day);
+    /* 第四欄 */
+    const later=list.filter(t=>!t.deleted&&!t.done&&!t.due&&!isShop(t)&&!HB_wbIsFollow(t));
+    const shop=list.filter(t=>!t.deleted&&isShop(t)&&!t.done);
+    /* 時間軸列 */
+    const DAY0=8*60,DAY1=19*60,rows=[];let cur=DAY0;
+    const nowUp=isToday?Math.ceil(nowMin/15)*15:0,gapAt=(x,y)=>{const a=Math.max(x,nowUp);if(cGaps&&y-a>=45)rows.push({gap:[a,y]})};
+    timed.forEach(t=>{const s=toMin(t.time),e0=toMin(t.end),e=Math.max(s+15,e0!=null&&e0>s?e0:s+60);gapAt(cur,s);rows.push({t,s,e});cur=Math.max(cur,e)});
+    gapAt(cur,DAY1);
+    if(isToday&&nowMin>=6*60&&nowMin<=23*60&&rows.length){let i=rows.findIndex(r=>(r.t?r.s:r.gap[0])>nowMin);if(i<0)i=rows.length;rows.splice(i,0,{now:true})}
+    const cands=[...later,...dayOpen.filter(t=>!t._cf&&toMin(t.time)==null)].filter((t,i,a)=>a.findIndex(x=>x.id===t.id)===i);
+    const firstGap=rows.find(r=>r.gap&&(!isToday||r.gap[1]>nowMin));
+    const schedule=(t,a)=>{if(a==null){setEditing({...t,due:day});return}if(tk.update(t,{due:day,time:fmt(a)}))say('已排到 '+(isToday?'今天':md(day))+' '+fmt(a))};
+    const dur=m=>(m>=60?Math.floor(m/60)+' 小時':'')+(m%60?' '+(m%60)+' 分':'');
+    const gapRow=r=>{const[a,b]=r.gap,open=cGapOpen===a;
+      return h('li',{key:'g'+a,className:'wbk-gap'+(open?' open':''),onDragOver:e=>{e.preventDefault()},onDrop:e=>{e.preventDefault();const id=e.dataTransfer.getData('text/hb-task');const t=all.find(x=>x.id===id);if(t)schedule(t,a)}},
+        h('button',{type:'button',className:'wbk-gaphead','aria-expanded':open,onClick:()=>setCGapOpen(open?null:a)},HB_wbIcon('clock',13),h('span',{className:'wbk-gt'},'空檔 '+fmt(a)+'–'+fmt(b)+'・'+dur(b-a).trim()),h('i',null,open?'收合':'安排')),
+        open&&h('div',{className:'wbk-chips'},cands.length?cands.slice(0,8).map(t=>h('button',{key:t.id,type:'button',draggable:true,className:'wbk-chip',title:'排到 '+fmt(a)+'（也可拖曳）',
+          onDragStart:e=>{e.dataTransfer.setData('text/hb-task',t.id);e.dataTransfer.effectAllowed='move'},onClick:()=>schedule(t,a)},'⠿ ',t.title)):h('span',{className:'wbk-none'},'沒有待排的事')))};
+    const tlRow=r=>{if(r.now)return h('li',{key:'now',className:'wbk-now'},h('span',null,fmt(nowMin)),h('i'));if(r.gap)return gapRow(r);const t=r.t;
+      return h('li',{key:t.id,className:'wbk-ev'},h('span',{className:'wbk-time wb-mono'},t.time),h('button',{type:'button',className:'wbk-evbody',onClick:()=>t.source==='auto'&&t.projectId&&projects.some(p=>p.id===t.projectId)?onOpenProject(t.projectId):setEditing({...t})},h('strong',null,t.title),h('small',null,t.projectName||'')),
+        t.source!=='auto'&&h('button',{type:'button',className:'wbc-check','aria-label':'完成：'+t.title,onClick:()=>complete(t)},HB_wbIcon('check',12)))};
+    const evN=rows.filter(r=>r.t).length;
+    const evAll=rows.filter(r=>r.t),evFrom=isToday?Math.max(0,Math.min(evAll.findIndex(r=>r.e>nowMin)<0?evAll.length-2:evAll.findIndex(r=>r.e>nowMin),evAll.length-(firstGap?2:3))):0;
+    const evPick=new Set(evAll.slice(evFrom,evFrom+(firstGap?2:3)));
+    const tlShow=rows.filter(r=>r.now||evPick.has(r)||r===firstGap);
+    const allTl=rows;
+    /* 週曆 */
+    const d0=new Date(day+'T00:00:00'),ws=new Date(d0.getFullYear(),d0.getMonth(),d0.getDate()-d0.getDay());
+    const week=Array.from({length:7},(_,i)=>new Date(ws.getFullYear(),ws.getMonth(),ws.getDate()+i));
+    const has=s=>list.some(t=>!t.deleted&&!t.done&&!isShop(t)&&HB_wbOnDate(t,s));
+    const shift=n=>setCDay(HB_wbAddDays(day,n*7));
+    const quick=(kind,e)=>{e.preventDefault();const el=e.currentTarget.elements.q,v=el.value.trim();if(!v)return;
+      if(tk.add({id:crypto.randomUUID(),title:v,projectId:pv&&pv!=='__co'?pv:'',assignee:'',due:'',time:'',category:kind==='shop'?'採購':'一般',note:'',urgent:false,source:'manual'})){el.value='';say(kind==='shop'?'已加入購物清單':'已加入稍後辦')}};
+    const sideRow=(t,kind)=>h('li',{key:t.id,className:'wbk-srow'},
+      h('button',{type:'button',className:'wbc-check','aria-label':'完成：'+t.title,onClick:()=>complete(t)},HB_wbIcon('check',12)),
+      h('button',{type:'button',className:'wbk-stext',onClick:()=>setEditing({...t})},t.title),
+      kind==='later'&&h('button',{type:'button',className:'wbk-mini',onClick:()=>{if(tk.update(t,{due:day}))say('已排到 '+(isToday?'今天':md(day)))}},isToday?'排到今天':'排到 '+md(day)));
+    const more=(n,fn)=>h('button',{type:'button',className:'wbc-more',onClick:fn},'查看全部'+(n?' '+n:''),HB_wbIcon('arrow',13));
+    const colK=(title,count,extra,body,foot,cls)=>h('article',{className:'wbk-col '+(cls||'')},h('div',{className:'wbc-colhead'},h('h3',null,title),h('span',{className:'wbc-num'},count),extra),h('div',{className:'wbk-colbody'},body),foot);
+    const sideTitle={tl:(isToday?'今日':md(day)+' ')+'時間軸',open:'未完成',follow:'待追蹤',closed:'已結案追蹤',later:'稍後辦',shop:'購物清單'}[cSide]||'';
+    const sideBody=cSide==='tl'?h('ul',{className:'wbk-tl'},allTl.length?allTl.map(tlRow):h('li',{className:'wbc-empty'},'這天沒有排定時間的行程'))
+      :cSide==='open'?h('ul',{className:'wbc-list'},openList.length?openList.map(mixRow):h('li',{className:'wbc-empty'},'沒有事項'))
+      :cSide==='follow'?h('ul',{className:'wbc-list'},fList.length?fList.map(followRow):h('li',{className:'wbc-empty'},'沒有事項'))
+      :cSide==='closed'?h('ul',{className:'wbc-list'},closedFollows.map(closedRow))
+      :cSide==='later'?h('ul',{className:'wbk-slist'},later.map(t=>sideRow(t,'later')))
+      :cSide==='shop'?h('ul',{className:'wbk-slist'},shop.map(t=>sideRow(t,'shop'))):null;
+    return h('section',{className:'hb-wb wbc is-compact wbk',ref:wbRef,'aria-label':'工作台'},
+      h('header',{className:'wbk-head'},
+        h('div',{className:'wbc-titlewrap'},h('h2',{className:'wbc-carnet'},'Le Carnet du Jour'),h('span',{className:'wbc-fr'},'工作台')),
+        h('div',{className:'wbc-date'},(d0.getMonth()+1)+'月'+pad(d0.getDate())+'日　'+HB_wbWeek(day).replace('週','星期'),!isToday&&h('button',{type:'button',className:'wbk-today',onClick:()=>setCDay(today)},'回到今天')),
+        h('label',{className:'wbc-filter'},h('span',{className:'wbc-sr'},'專案篩選'),h('select',{value:pv,onChange:e=>setProj&&setProj(e.target.value)},h('option',{value:''},'全部專案'),h('option',{value:'__co'},'公司事務'),projects.map(p=>h('option',{key:p.id,value:p.id},p.name))),HB_wbIcon('caret',15)),
+        h('button',{type:'button',className:'wbc-cfbtn'+(cfChangeN?' has-ch':''),onClick:()=>setCfList(true)},'待業主確認',h('b',null,cfActive)),
+        h('span',{className:'wbc-grow'}),
+        h('button',{type:'button',className:'wbk-toggle'+(cGaps?' on':''),'aria-pressed':cGaps,onClick:()=>setCGaps(!cGaps)},h('span',null,'空檔時間'),h('i')),
+        h('button',{type:'button',className:'wbc-hublink',onClick:onTodayHub,title:'開啟完整的今日待辦'},'今日待辦',HB_wbIcon('out',12)),
+        h('button',{type:'button',className:'wbc-add',onClick:()=>newTask({due:day})},HB_wbIcon('plus',15),'新增事項')),
+      error&&h('div',{className:'wb-error',role:'alert'},error,h('button',{type:'button',onClick:tk.reload},'重新整理')),
+      h('div',{className:'wbk-week'},h('button',{type:'button',className:'wbk-wk',onClick:()=>shift(-1),'aria-label':'上一週'},HB_wbIcon('left',16)),
+        week.map((x,i)=>{const s=ymd(x);return h('button',{key:s,type:'button',className:'wbk-day'+(s===day?' on':'')+(s===today?' today':''),'aria-pressed':s===day,'aria-label':(x.getMonth()+1)+'月'+x.getDate()+'日',onClick:()=>{setCDay(s);setCGapOpen(null)}},
+          h('span',null,'日一二三四五六'[i]),h('b',null,x.getDate()),h('i',{className:has(s)?'has':''}))}),
+        h('button',{type:'button',className:'wbk-wk',onClick:()=>shift(1),'aria-label':'下一週'},HB_wbIcon('right',16))),
+      h('div',{className:'wbk-cols'},
+        colK(isToday?'今日時間軸':md(day)+' 時間軸',evN,null,tlShow.length?h('ul',{className:'wbk-tl'},tlShow.map(tlRow)):h('p',{className:'wbc-empty'},cGaps?'這天沒有排定時間的行程':'這天沒有排定時間的行程'),more(0,()=>setCSide('tl')),'wbk-c1'),
+        colK('未完成',openCount,isToday&&lateOpen?h('span',{className:'wbc-alert'},'逾期 '+lateOpen):null,openList.length?h('ul',{className:'wbc-list'},openList.slice(0,2).map(mixRow)):h('p',{className:'wbc-empty'},isToday?'今天沒有未完成事項':'這天沒有到期事項'),more(openList.length>2?openList.length:0,()=>setCSide('open'))),
+        colK('待追蹤',fList.length,h(u.default.Fragment,null,isToday&&dueFollow?h('span',{className:'wbc-alert'},'待處理 '+dueFollow):null,closedFollows.length?h('button',{type:'button',className:'wbc-closedlink push',onClick:()=>setCSide('closed')},'已結案 '+closedFollows.length):null),
+          fList.length?h('ul',{className:'wbc-list'},fList.slice(0,2).map(followRow)):h('p',{className:'wbc-empty'},'沒有要追蹤的事'),more(fList.length>2?fList.length:0,()=>setCSide('follow'))),
+        h('article',{className:'wbk-col wbk-c4'},
+          h('div',{className:'wbc-colhead'},h('h3',null,'稍後辦'),h('span',{className:'wbc-num'},later.length)),
+          h('form',{className:'wbk-quick',onSubmit:e=>quick('later',e)},h('input',{name:'q',maxLength:200,placeholder:'想到要做的事，先記下來','aria-label':'新增稍後辦'}),h('button',{type:'submit','aria-label':'新增稍後辦'},HB_wbIcon('plus',15))),
+          later.length?h('ul',{className:'wbk-slist'},later.slice(0,1).map(t=>sideRow(t,'later'))):null,
+          h('div',{className:'wbk-shophead'},h('button',{type:'button',className:'wbk-shopbtn','aria-expanded':cShop||shop.length>0,onClick:()=>setCShop(!cShop)},h('h3',null,'購物清單'),h('span',{className:'wbc-num'},shop.length)),
+            !(cShop||shop.length)&&h('button',{type:'button',className:'wbk-plus','aria-label':'新增購物項目',onClick:()=>setCShop(true)},HB_wbIcon('plus',14))),
+          (cShop||shop.length>0)&&h('form',{className:'wbk-quick',onSubmit:e=>quick('shop',e)},h('input',{name:'q',maxLength:200,placeholder:'要買的東西','aria-label':'新增購物項目',autoFocus:cShop&&!shop.length}),h('button',{type:'submit','aria-label':'新增購物項目'},HB_wbIcon('plus',15))),
+          more(later.length+shop.length>1?later.length+shop.length:0,()=>setCSide(later.length||!shop.length?'later':'shop')))),
+      undo?h('div',{className:'wb-toast wb-undo',role:'status'},h('span',null,'已完成「'+undo.title+'」'),h('button',{type:'button',onClick:undoDone},'復原')):toast&&h('div',{className:'wb-toast',role:'status'},toast),
+      cSide&&h(HbWbSide,{title:sideTitle,sub:pv?(pv==='__co'?'公司事務':(projects.find(p=>p.id===pv)||{}).name||''):'全部專案',onClose:()=>setCSide(''),
+        tabs:(cSide==='later'||cSide==='shop')?[['later','稍後辦 '+later.length],['shop','購物清單 '+shop.length]]:null,tab:cSide,onTab:setCSide},
+        h('div',{className:'wbc wbk-sidebody'},(cSide==='later'||cSide==='shop')&&h('form',{className:'wbk-quick',onSubmit:e=>quick(cSide,e)},h('input',{name:'q',maxLength:200,placeholder:cSide==='shop'?'要買的東西':'想到要做的事，先記下來'}),h('button',{type:'submit','aria-label':'新增'},HB_wbIcon('plus',15))),sideBody)),
+      editing&&h(HbWbEditor,{key:editing.id,initial:editing,projects,today,onClose:()=>setEditing(null),
+        onSave:v=>{const {isNew,...task}=v;if(isNew?tk.add(task):tk.replace(task)){setEditing(null);say(isNew?'已新增':'已儲存')}},
+        onDelete:v=>{if(confirm('確定刪除「'+v.title+'」？')&&tk.update(v,{deleted:true})){setEditing(null);say('已刪除')}}}),
+      cfList&&h(HbConfirmList,{cf,projects,pv,onClose:()=>setCfList(false),onOpen:id=>setCfOpen({id}),onNew:()=>setCfOpen({id:null,n:Date.now()})}),
+      cfOpen&&h(HbConfirmDrawer,{key:(cfOpen.id||'new')+(cfOpen.n||''),id:cfOpen.id,projects,pv,say,onOpenProject,onChanged:cf.reload,onClose:()=>{setCfOpen(null);cf.reload()}}),
+      drawerTask&&h(HbWbDrawer,{key:drawer.id+':'+drawer.n,task:drawerTask,focus:drawer.focus,today,projects,tk,say,onOpenProject,onClose:()=>setDrawer(null)}));
+  }
   return h('section',{className:'hb-wb wbc'+(compact?' is-compact':''),ref:wbRef,'aria-label':'工作台'},
     h('header',{className:'wbc-head'},
       h('div',{className:'wbc-titlewrap'},h('h2',{className:'wbc-carnet'},'Le Carnet du Jour'),h('span',{className:'wbc-fr'},'工作台')),
@@ -15269,6 +15505,19 @@ const HB_WB_METHODS=['電話','LINE','Email','其他'];
 function HB_wbLogTime(x){const d=(x&&(x.at||x.date))||'';if(!d)return '';const ymd=d.slice(0,10);const md=ymd.slice(5).replace('-','/');
   if(x.at&&/T\d{2}:\d{2}/.test(x.at))return md+' '+x.at.slice(11,16);return md}
 function HB_wbNowISO(){let hm='';try{hm=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Taipei',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date()).replace(/^24/,'00')}catch{const d=new Date();hm=String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')}return HB_todoDate()+'T'+hm}
+function HbWbSide({title,sub,onClose:onCloseRaw,tabs,tab,onTab,children}){
+  const h=u.default.createElement,ref=u.useRef(null);
+  const onClose=()=>{const el=ref.current;if(!el||HB_reduceMotion()){onCloseRaw();return}if(el.dataset.closing)return;el.dataset.closing='1';el.classList.remove('on');setTimeout(onCloseRaw,280)};
+  u.useEffect(()=>{const el=ref.current;try{el.showModal()}catch{el.setAttribute('open','')}const t=setTimeout(()=>el.classList.add('on'),30);return()=>{clearTimeout(t);try{el.close()}catch{}}},[]);
+  return h('dialog',{ref,className:'wbd wbk-side',onCancel:e=>{e.preventDefault();onClose()},onClick:e=>{if(e.target===ref.current)onClose()},'aria-label':title},
+    h('div',{className:'wbd-panel'},
+      h('header',{className:'wbd-head'},
+        h('button',{type:'button',className:'wbd-back',onClick:onClose,'aria-label':'返回'},HB_wbIcon('left',20),'返回'),
+        h('div',null,h('p',{className:'wbd-eyebrow'},sub||'LE CARNET DU JOUR'),h('h2',null,title)),
+        h('button',{type:'button',className:'wbd-x',onClick:onClose,'aria-label':'關閉'},'×')),
+      tabs&&h('div',{className:'wbk-tabs',role:'tablist'},tabs.map(([k,l])=>h('button',{key:k,type:'button',role:'tab','aria-selected':tab===k,className:tab===k?'on':'',onClick:()=>onTab(k)},l))),
+      h('div',{className:'wbd-body'},children)));
+}
 function HbWbDrawer({task,today,projects,tk,focus,onClose:onCloseRaw,onOpenProject,say}){
   const h=u.default.createElement,ref=u.useRef(null),bodyRef=u.useRef(null),formRef=u.useRef(null),noteRef=u.useRef(null),dateRef=u.useRef(null);
   const [method,setMethod]=u.useState('電話'),[note,setNote]=u.useState(''),[base]=u.useState(()=>!task.done&&task.due&&task.due>=today?task.due:task.done?(task.due||''):HB_wbAddDays(today,3)),[next,setNext]=u.useState(base);
