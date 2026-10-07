@@ -12402,6 +12402,19 @@ const HB_LIB_CSS=`
       .hb-wb .wbk .wbc-cfbtn,.hb-wb.wbk .wbc-cfbtn{padding:6px 12px 6px 14px}
       .hb-wb.wbk .wbc-add{padding:7px 16px}
       .hb-wb.wbk .wbc-hublink{font-size:13px;padding-right:12px}
+      .wbk-pick{position:relative;display:inline-grid;place-items:center;width:34px;height:34px;border-radius:50%;color:#4f4a40;cursor:pointer;overflow:hidden}
+      .wbk-pick:hover{background:rgba(46,74,60,.08);color:var(--wb-green)}
+      .wbk-pick input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;border:0;padding:0}
+      .wbk-ical .tl-panel{padding:0}.wbk-ical .tl-panelhead{display:none}
+      .wbk-ical .tl-panelnote{font-size:14px;line-height:1.7;color:#4f4a40;margin:0 0 16px}
+      .wbk-ical .tl-calbtn{display:flex;align-items:center;justify-content:center;width:100%;height:46px;border-radius:6px;background:#2E4A3C;color:#fff!important;font-size:15px;text-decoration:none;border:0;margin-bottom:10px;font-family:inherit;cursor:pointer}
+      .wbk-ical .tl-calbtn.out{background:#fff;color:#2E4A3C!important;border:1px solid #2E4A3C}
+      .wbk-ical .tl-calmsg{color:#2E4A3C;font-size:13px}
+      .wbk-ical .tl-calhelp{margin:14px 0;font-size:13.5px;color:#4f4a40}.wbk-ical .tl-calhelp summary{cursor:pointer;color:#2E4A3C}
+      .wbk-ical .tl-calhelp ol{padding-left:20px;line-height:1.8}
+      .wbk-ical .tl-calwarn{font-size:12.5px;color:#8a2c34;line-height:1.6;background:#fbf1ee;padding:10px 12px;border-radius:4px}
+      .wbk-ical .tl-link{border:0;background:none;color:#2E4A3C;text-decoration:underline;font-family:inherit;font-size:13.5px;padding:0;cursor:pointer}
+      .wbk-ical .tl-empty{color:#7b7466}
       .wbk-toggle{display:inline-flex;align-items:center;gap:8px;border:0;background:none;padding:0;font:inherit;font-size:13.5px;letter-spacing:.06em;color:#4f4a40;cursor:pointer;min-height:0!important}
       .wbk-toggle i{position:relative;width:34px;height:19px;border-radius:999px;background:#d8cfbf;transition:background .18s}
       .wbk-toggle i:after{content:'';position:absolute;left:2px;top:2px;width:15px;height:15px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.18);transition:transform .18s}
@@ -14580,21 +14593,9 @@ function HbDrawingVersionModal({drawing,folderPath,versions,publishedVersionId,i
   ));
 }
 
-/* 今日待辦與預約管理合併成同一頁，上方切換「今日」與「月曆」 */
-function HbWorkHub({projects=[],onBack,onOpenProject,notify,initialView='today'}){
-  const h=u.default.createElement;
-  const [view,setView]=u.useState(initialView==='calendar'?'calendar':'today');
-  const tab=(key,label,sub)=>h('button',{type:'button',key,onClick:()=>setView(key),
-    style:{flex:1,padding:'10px 8px',border:0,borderRadius:8,cursor:'pointer',fontFamily:'inherit',
-      background:view===key?'#2A2824':'transparent',color:view===key?'#F3EEE5':'#6B665D',transition:'background .18s ease'}},
-    h('div',{style:{fontSize:15,letterSpacing:'.08em'}},label),
-    h('div',{style:{fontSize:10.5,letterSpacing:'.18em',opacity:.75,marginTop:2}},sub));
-  /* 2026-10：上方「今日／月曆」切換列取消，只留今日待辦（月曆／預約管理頁不再顯示） */
-  return h(HbTodayHub,{projects,onBack,onOpenProject});
-}
 function HbBottomNav({active,onNavigate}){
   let items=[
-    {key:"today",icon:"check",label:"今日待辦"},
+    {key:"today",icon:"check",label:"今日待辦",action:()=>onNavigate("home")},
     {key:"digitalCard",icon:"id-card",label:"\u96FB\u5B50\u540D\u7247"},
     {key:"companyHub",icon:"folder",label:"\u516C\u53F8\u8CC7\u6599\u5EAB"},
     {key:"landing",icon:"home",label:"\u9996\u9801"},
@@ -14839,40 +14840,6 @@ function HbDigitalCard({onBack,notify}){
     u.default.createElement("iframe",{srcDoc:cardHtml,title:"\u96FB\u5B50\u540D\u7247",style:{flex:1,minHeight:0,border:"none",width:"100%",background:"#EDE3D0"}})
   );
 }
-/* HERFULSINS — 今日待辦 時間軸檢視（週列＋時間軸＋空檔時間＋稍後辦／購物清單） */
-var HB_TL_ICON={
- helmet:'<path d="M3.5 16.5h17"/><path d="M5.5 16.5V14a6.5 6.5 0 0113 0v2.5"/><path d="M10 7.8V11M14 7.8V11"/>',
- alert:'<path d="M12 4.5l8.5 15h-17z"/><path d="M12 10v4.2M12 17.2h.01"/>',
- users:'<circle cx="9" cy="9" r="3"/><circle cx="16.5" cy="10" r="2.4"/><path d="M3.5 19c.6-3 2.8-4.5 5.5-4.5s4.9 1.5 5.5 4.5M14.8 14.9c2.4-.2 4.5 1 5.2 4.1"/>',
- coin:'<circle cx="12" cy="12" r="8"/><path d="M14.4 9.6c-.5-.9-1.4-1.4-2.4-1.4-1.4 0-2.4.8-2.4 1.9s1 1.6 2.4 1.9 2.4.8 2.4 2-1 1.9-2.4 1.9c-1 0-1.9-.5-2.4-1.4M12 6.6v10.8"/>',
- plusminus:'<path d="M8 4.5v7M4.5 8h7M13 17h6.5"/><path d="M17.5 5.5l-11 13" opacity=".55"/>',
- box:'<path d="M4 8l8-4 8 4v8l-8 4-8-4z"/><path d="M4 8l8 4 8-4M12 12v8"/>',
- bag:'<path d="M6 8.5h12l-1 11.5H7z"/><path d="M9 8.5V7a3 3 0 016 0v1.5"/>',
- doc:'<path d="M7 3.5h7l4 4v13H7z"/><path d="M14 3.5v4h4M10 12h5M10 15.5h5"/>',
- shield:'<path d="M12 3.5l7 3v5.5c0 4.3-2.9 7.3-7 8.6-4.1-1.3-7-4.3-7-8.6V6.5z"/><path d="M9 12l2 2 4-4"/>',
- pen:'<path d="M4.5 19.5l3.8-.9L19 7.9 16.1 5 5.4 15.7z"/><path d="M14.3 6.8l2.9 2.9"/>',
- sun:'<circle cx="12" cy="13" r="3.4"/><path d="M12 5.2v2M6 8.2l1.4 1.4M18 8.2l-1.4 1.4M4 17.5h16M3.5 13h2M18.5 13h2"/>',
- check:'<rect x="5" y="5" width="14" height="14" rx="3.5"/><path d="M9 12l2 2 4-4"/>'
-};
-var HB_TL_CAT={
- '行程':{c:'#C47A5A',i:'helmet'},'缺失':{c:'#A9605C',i:'alert'},'預約':{c:'#5E7F97',i:'users'},'會議':{c:'#4E6A86',i:'users'},
- '收款':{c:'#C9A04E',i:'coin'},'追加減':{c:'#B28B5F',i:'plusminus'},'材料':{c:'#7FA38E',i:'box'},'採購':{c:'#6F9A86',i:'bag'},
- '許可':{c:'#8E7BA9',i:'doc'},'保固':{c:'#6D8F85',i:'shield'},'設計':{c:'#9A86B4',i:'pen'},'私人':{c:'#D39A6A',i:'sun'},'一般':{c:'#8C9C94',i:'check'}
-};
-function HB_tlCat(t){return HB_TL_CAT[t&&t.category]||HB_TL_CAT['一般']}
-function HB_tlSvg(h,key,size){return h('svg',{viewBox:'0 0 24 24',width:size||24,height:size||24,'aria-hidden':true,dangerouslySetInnerHTML:{__html:HB_TL_ICON[key]||key}})}
-var HB_TL_UI={
- cal:'<rect x="4" y="5.5" width="16" height="14.5" rx="2"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/>',
- search:'<circle cx="11" cy="11" r="6.2"/><path d="M20 20l-4.4-4.4"/>',
- gear:'<circle cx="12" cy="12" r="3"/><path d="M12 2.8v2.4M12 18.8v2.4M4.2 7.5l2.1 1.2M17.7 15.3l2.1 1.2M4.2 16.5l2.1-1.2M17.7 8.7l2.1-1.2"/><circle cx="12" cy="12" r="7"/>',
- filter:'<path d="M4 5.5h16l-6.2 7.3v5.4l-3.6 1.8v-7.2z"/>',
- plus:'<path d="M12 5v14M5 12h14"/>',
- clock:'<circle cx="12" cy="12" r="8"/><path d="M12 7.5V12l3 2"/>',
- flag:'<path d="M6 21V4.5M6 5h11l-2.2 3.8L17 12.5H6"/>',
- left:'<path d="M14.5 6l-6 6 6 6"/>',right:'<path d="M9.5 6l6 6-6 6"/>',
- tick:'<path d="M6.5 12.5l3.6 3.6 7.4-8"/>',x:'<path d="M6 6l12 12M18 6L6 18"/>',
- back:'<path d="M14.5 6l-6 6 6 6"/>'
-};
 function HbTodayCalLink(){
  const h=u.default.createElement,[url,setUrl]=u.useState(HB_SCHEDULE_ICS_URL),[msg,setMsg]=u.useState(''),[busy,setBusy]=u.useState(!HB_SCHEDULE_ICS_URL);
  u.useEffect(()=>{let alive=true;HB_loadIcsUrl().then(v=>{if(alive){setUrl(v);setBusy(false)}});return()=>{alive=false}},[]);
@@ -14891,290 +14858,6 @@ function HbTodayCalLink(){
    h('p',{className:'tl-calwarn'},'這個連結含有客戶聯絡資料，請不要分享給別人。如果不小心外流，按下面重新產生，舊連結就會失效。'),
    h('button',{type:'button',className:'tl-link',style:{marginLeft:0},onClick:reset},'重新產生連結')));
 }
-function HbTodayTimeline(P){
- const h=u.default.createElement;
- const {all,today,onBack,onOpenProject,complete,update,setEditing,addTask,bulkDelete,syncText,loading,reload,error,onList}=P;
- const pad=n=>String(n).padStart(2,'0');
- const ymd=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
- const parse=s=>{const a=String(s||today).split('-').map(Number);return new Date(a[0],a[1]-1,a[2])};
- const toMin=t=>{const m=/^(\d{1,2}):(\d{2})/.exec(t||'');return m?(+m[1])*60+(+m[2]):null};
- const fmt=m=>pad(Math.floor(m/60))+':'+pad(m%60);
- const md=s=>{const d=parse(s);return (d.getMonth()+1)+'/'+d.getDate()};
- const ui=(k,s)=>HB_tlSvg(h,HB_TL_UI[k],s||22);
- const [day,setDay]=u.useState(today);
- const [gaps,setGaps]=u.useState(()=>{try{return localStorage.getItem('hb_tl_gaps')!=='0'}catch{return true}});
- const [chip,setChip]=u.useState('');
- const [showDone,setShowDone]=u.useState(()=>{try{return localStorage.getItem('hb_tl_done')!=='0'}catch{return true}});
- const [query,setQuery]=u.useState(null);
- const [sheet,setSheet]=u.useState(null);
- const [menu,setMenu]=u.useState(false);
- const [nowMin,setNowMin]=u.useState(()=>{const d=new Date();return d.getHours()*60+d.getMinutes()});
- const dateRef=u.useRef(null),touch=u.useRef(null),lastToday=u.useRef(today);
- u.useEffect(()=>{const t=setInterval(()=>{const d=new Date();setNowMin(d.getHours()*60+d.getMinutes())},60000);return()=>clearInterval(t)},[]);
- u.useEffect(()=>{if(lastToday.current!==today){if(day===lastToday.current)setDay(today);lastToday.current=today}},[today]);
- u.useEffect(()=>{try{localStorage.setItem('hb_tl_gaps',gaps?'1':'0');localStorage.setItem('hb_tl_done',showDone?'1':'0')}catch{}},[gaps,showDone]);
- u.useEffect(()=>{if(!sheet&&!menu)return;const k=e=>{if(e.key==='Escape'){setSheet(null);setMenu(false)}};document.addEventListener('keydown',k);return()=>document.removeEventListener('keydown',k)},[sheet,menu]);
-
- const isShop=t=>t.category==='採購'&&!t.time;
- const endOf=t=>t.dueEnd&&t.dueEnd>t.due?t.dueEnd:t.due;
- const onDay=(t,d)=>!!t.due&&d>=t.due&&d<=endOf(t);
- const inDay=t=>!t.deleted&&(onDay(t,day)||(day===today&&!t.done&&!!t.due&&endOf(t)<today));
- const match=t=>(!chip||t.projectName===chip)&&(!query||(t.title+' '+(t.note||'')+' '+(t.projectName||'')).toLowerCase().includes(query.trim().toLowerCase()));
- const dayAll=all.filter(t=>inDay(t)&&!isShop(t));
- const items=dayAll.filter(t=>match(t)&&(showDone||!t.done));
- const timed=items.filter(t=>toMin(t.time)!=null).sort((a,b)=>toMin(a.time)-toMin(b.time)||a.title.localeCompare(b.title));
- const untimed=items.filter(t=>toMin(t.time)==null).sort((a,b)=>Number(!!a.done)-Number(!!b.done)||Number(!!b.urgent)-Number(!!a.urgent)||(a.due||'').localeCompare(b.due||'')||a.title.localeCompare(b.title));
- const later=all.filter(t=>!t.deleted&&!t.due&&!isShop(t)&&!t.done&&match(t));
- const shop=all.filter(t=>!t.deleted&&isShop(t)).sort((a,b)=>Number(!!a.done)-Number(!!b.done));
- const chips=[...new Set(dayAll.map(t=>t.projectName).filter(Boolean))];
-
- /* 時間軸列：行程、空檔、現在時間 */
- const DAY0=8*60,DAY1=19*60,MINGAP=45,rows=[];let cur=DAY0;
- timed.forEach(t=>{const s=toMin(t.time),e0=toMin(t.end),e=Math.max(s+15,e0!=null&&e0>s?e0:s+60);if(gaps&&s-cur>=MINGAP)rows.push({gap:[cur,s]});rows.push({t,s,e});cur=Math.max(cur,e)});
- if(gaps&&DAY1-cur>=MINGAP&&(timed.length||untimed.length||later.length))rows.push({gap:[cur,DAY1]});
- if(day===today&&nowMin>=6*60&&nowMin<=23*60){let i=rows.findIndex(r=>(r.t?r.s:r.gap[0])>nowMin);if(i<0)i=rows.length;if(rows.length)rows.splice(i,0,{now:true})}
- const cands=[...untimed.filter(t=>!t.done),...later].filter((t,i,a)=>a.findIndex(x=>x.id===t.id)===i);
- const gapRows=rows.filter(r=>r.gap),focusGap=(day===today?gapRows.find(r=>r.gap[1]>nowMin):null)||(day<today?null:gapRows[0]);
- const [openGap,setOpenGap]=u.useState(null);
-
- /* 週列 */
- const d0=parse(day),ws=new Date(d0.getFullYear(),d0.getMonth(),d0.getDate()-d0.getDay());
- const week=Array.from({length:7},(_,i)=>new Date(ws.getFullYear(),ws.getMonth(),ws.getDate()+i));
- const shiftWeek=n=>{const d=parse(day);setDay(ymd(new Date(d.getFullYear(),d.getMonth(),d.getDate()+n*7)))};
- const busy=s=>all.some(t=>!t.deleted&&!t.done&&!isShop(t)&&onDay(t,s));
-
- const newTask=o=>({id:(crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random().toString(36).slice(2)),title:'',projectId:'',assignee:'',due:day,time:'',end:'',category:'一般',note:'',urgent:false,source:'manual',isNew:true,...o});
- const fabTime=day===today?fmt(Math.min(22*60,Math.ceil((nowMin+5)/30)*30)):'';
- const durEl=m=>h('div',{className:'tl-gapdur'},m>=60&&[h('b',{key:'h'},Math.floor(m/60)),h('span',{key:'hs'},'小時')],m%60?[h('b',{key:'m'},m%60),h('span',{key:'ms'},'分鐘')]:null);
- const flagOf=t=>{if(t.done)return null;if(t.due&&endOf(t)<today){const n=Math.round((parse(today)-parse(endOf(t)))/864e5);return h('span',{className:'tl-flag'},ui('flag',13),'已逾期 '+n+' 天')}
-  if(t.dueEnd&&t.dueEnd>day)return h('span',{className:'tl-flag soft'},ui('flag',13),'進行到 '+md(t.dueEnd));if(t.urgent)return h('span',{className:'tl-flag'},ui('flag',13),'急件');return null};
- const meta=t=>{const bits=[];if(t.projectName&&t.projectName!=='公司事務')bits.push(h('span',{key:'p',className:'tl-proj'},t.projectName));if(t.assignee)bits.push(h('span',{key:'a'},t.assignee));if(t.source==='auto')bits.push(h('span',{key:'s',className:'tl-src'},t.category==='預約'?'預約':t.category==='缺失'?'缺失':'行程表'));const f=flagOf(t);if(f)bits.push(h(u.default.Fragment,{key:'f'},f));return bits.length?h('div',{className:'tl-meta'},bits):null};
- const check=(t,sm)=>h('button',{type:'button',className:'tl-check'+(sm?' sm':'')+(t.done?' on':''),'aria-label':(t.done?'恢復：':'完成：')+t.title,'aria-pressed':!!t.done,onClick:e=>{e.stopPropagation();complete(t)}},t.done&&ui('tick',sm?14:16));
- const card=(t,timeLabel)=>h('div',{className:'tl-card',role:'button',tabIndex:0,onClick:()=>setEditing({...t}),onKeyDown:e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();setEditing({...t})}}},
-  h('div',{className:'tl-cbody'},timeLabel&&h('div',{className:'tl-ctime'},timeLabel,(t.time?t.remind!==-1:(t.remind!=null&&t.remind>=0))&&!t.done&&h('span',{title:'會推播提醒',style:{marginLeft:6,fontSize:11,opacity:.75}},'🔔')),h('div',{className:'tl-ctitle'},t.title||'（未命名）'),meta(t)),check(t));
- const schedule=(t,a)=>update(t,{due:day,time:fmt(a)},'已排到 '+(day===today?'今天':md(day))+' '+fmt(a));
-
- const timeline=rows.map((r,i)=>{
-  const first=i===0,last=i===rows.length-1,edge=(first?' first':'')+(last?' last':'');
-  if(r.now)return h('div',{key:'now',className:'tl-now'},h('span',null,fmt(nowMin)),h('i'));
-  if(r.gap){const[a,b]=r.gap;return h('div',{key:'g'+a,className:'tl-row gap'+edge},h('div',{className:'tl-time'}),h('div',{className:'tl-rail dash'}),
-   h('div',{className:'tl-gap'},h('div',{className:'tl-gaphead'},ui('clock',15),'空檔時間 '+fmt(a)+'～'+fmt(b)),durEl(b-a),
-    !cands.length?h('p',{className:'tl-gapnote'},'沒有待排的事，好好休息一下。'):
-    (r===focusGap||openGap===a)?h('div',{className:'tl-gchips'},cands.slice(0,openGap===a?20:5).map(t=>h('button',{key:t.id,type:'button',className:'tl-gchip',title:'排到 '+fmt(a),onClick:()=>schedule(t,a)},t.title)),
-      cands.length>5&&openGap!==a&&h('button',{type:'button',className:'tl-gchip more',onClick:()=>setOpenGap(a)},'＋'+(cands.length-5))):
-    h('button',{type:'button',className:'tl-gaplink',onClick:()=>setOpenGap(a)},'安排待辦到這段時間')))}
-  const t=r.t,c=HB_tlCat(t),tall=Math.min(104,Math.max(52,Math.round((r.e-r.s)/60*52)));
-  return h('div',{key:t.id,className:'tl-row'+edge+(t.done?' done':''),style:{'--c':c.c}},h('div',{className:'tl-time'},fmt(r.s)),
-   h('div',{className:'tl-rail'},h('span',{className:'tl-dot',style:{height:tall}},HB_tlSvg(h,HB_TL_ICON[c.i],24))),
-   card(t,fmt(r.s)+(t.end&&toMin(t.end)>r.s?' – '+t.end:'')));
- });
-
- const panel=kind=>{const list=kind==='later'?later:shop,open=list.filter(t=>!t.done).length;
-  return h('section',{className:'tl-panel',key:kind},h('div',{className:'tl-panelhead'},h('h3',null,kind==='later'?'稍後辦':'購物清單'),h('span',{className:'tl-badge'},open),
-    kind==='shop'&&list.some(t=>t.done)&&h('button',{type:'button',className:'tl-link',onClick:()=>bulkDelete(list.filter(t=>t.done))},'清除已買')),
-   h('p',{className:'tl-panelnote'},kind==='later'?'還沒決定日期的事。在空檔時間點一下就能排進去。':'材料、五金或生活用品，買好就打勾。'),
-   h('form',{className:'tl-quick',onSubmit:e=>{e.preventDefault();const el=e.currentTarget.elements.q,v=el.value.trim();if(!v)return;addTask(newTask({title:v,due:'',category:kind==='shop'?'採購':'一般'}));el.value=''}},
-    h('input',{name:'q',placeholder:kind==='later'?'想到要做的事，先記下來':'要買的東西',maxLength:200,'aria-label':kind==='later'?'新增稍後辦':'新增購物項目'}),h('button',{type:'submit','aria-label':'新增'},ui('plus',18))),
-   list.length?h('ul',{className:'tl-plist'},list.map(t=>h('li',{key:t.id,className:t.done?'done':''},check(t,true),
-     h('button',{type:'button',className:'tl-ptext',onClick:()=>setEditing({...t})},h('span',null,t.title),t.projectName&&t.projectName!=='公司事務'&&h('small',null,t.projectName)),
-     kind==='later'&&h('button',{type:'button',className:'tl-mini',onClick:()=>update(t,{due:day},'已排到 '+(day===today?'今天':md(day)))},day===today?'排到今天':'排到 '+md(day))))):
-    h('p',{className:'tl-empty'},kind==='later'?'目前沒有待排的事':'購物清單是空的'));};
-
- const monthTitle=d0.getFullYear()+'年'+(d0.getMonth()+1)+'月';
- const empty=!timeline.length&&!untimed.length;
- return h('main',{className:'hb-tl'},h('style',null,HB_TL_CSS),
-  h('div',{className:'tl-top'},h('button',{type:'button',className:'tl-back',onClick:onBack},ui('back',16),'首頁'),h('span',{className:'tl-sync'},loading?'讀取提醒中…':syncText)),
-  h('div',{className:'tl-wrap'},
-   h('div',{className:'tl-mainc'},
-    h('header',{className:'tl-head'},h('h1',null,monthTitle),
-     h('button',{type:'button',className:'tl-add',onClick:()=>setEditing(newTask({time:fabTime}))},ui('plus',17),'新增'),
-     h('button',{type:'button',className:'tl-toggle'+(gaps?' on':''),'aria-pressed':gaps,onClick:()=>setGaps(!gaps)},h('span',null,'空檔時間'),h('i')),
-     h('button',{type:'button',className:'tl-ib',title:'選擇日期','aria-label':'選擇日期',onClick:()=>{const el=dateRef.current;if(!el)return;try{el.showPicker()}catch{el.focus();el.click()}}},ui('cal')),
-     h('input',{ref:dateRef,type:'date',className:'tl-hidden',value:day,tabIndex:-1,'aria-hidden':true,onChange:e=>e.target.value&&setDay(e.target.value)}),
-     h('button',{type:'button',className:'tl-ib'+(query!==null?' on':''),title:'搜尋','aria-label':'搜尋',onClick:()=>setQuery(query===null?'':null)},ui('search')),
-     h('div',{className:'tl-menuwrap'},h('button',{type:'button',className:'tl-ib',title:'設定','aria-label':'設定','aria-expanded':menu,onClick:()=>setMenu(!menu)},ui('gear')),
-      menu&&h('div',{className:'tl-pop',role:'menu'},
-       h('button',{type:'button',role:'menuitem',onClick:()=>{setMenu(false);setDay(today)}},'回到今天'),
-       h('button',{type:'button',role:'menuitem',onClick:()=>{setMenu(false);setShowDone(!showDone)}},showDone?'隱藏已完成':'顯示已完成'),
-       h('button',{type:'button',role:'menuitem',onClick:()=>{setMenu(false);reload()},disabled:loading},'重新整理'),
-       h('button',{type:'button',role:'menuitem',onClick:()=>{setMenu(false);setSheet('cal')}},'連結 iPhone 行事曆'),
-       h('button',{type:'button',role:'menuitem',onClick:()=>{setMenu(false);onList()}},'切換成清單檢視')))),
-    query!==null&&h('div',{className:'tl-search'},ui('search',18),h('input',{autoFocus:true,value:query,placeholder:'搜尋標題、內容或案場',onChange:e=>setQuery(e.target.value)}),h('button',{type:'button','aria-label':'關閉搜尋',onClick:()=>setQuery(null)},ui('x',16))),
-    h('div',{className:'tl-week',onTouchStart:e=>{touch.current=e.touches[0].clientX},onTouchEnd:e=>{const x=touch.current;touch.current=null;if(x==null)return;const dx=e.changedTouches[0].clientX-x;if(Math.abs(dx)>50)shiftWeek(dx<0?1:-1)}},
-     h('button',{type:'button',className:'tl-wk',onClick:()=>shiftWeek(-1),'aria-label':'上一週'},ui('left',18)),
-     week.map((d,i)=>{const s=ymd(d),on=s===day,isT=s===today;return h('button',{key:s,type:'button',className:'tl-day'+(on?' on':'')+(isT?' today':''),'aria-pressed':on,'aria-label':(d.getMonth()+1)+'月'+d.getDate()+'日',onClick:()=>setDay(s)},
-      h('span',{className:'tl-wd'},'日一二三四五六'[i]),h('span',{className:'tl-dn'},d.getDate()),h('span',{className:'tl-dd'+(busy(s)?' has':'')}))}),
-     h('button',{type:'button',className:'tl-wk',onClick:()=>shiftWeek(1),'aria-label':'下一週'},ui('right',18))),
-    h('div',{className:'tl-chips'},h('div',{className:'tl-chipscroll'},h('button',{type:'button',className:'tl-chip'+(!chip?' on':''),onClick:()=>setChip('')},'全部'),
-      chips.map(c=>h('button',{key:c,type:'button',className:'tl-chip'+(chip===c?' on':''),onClick:()=>setChip(chip===c?'':c)},c))),
-     h('button',{type:'button',className:'tl-ib sm'+(showDone?'':' on'),title:showDone?'隱藏已完成':'顯示已完成','aria-label':showDone?'隱藏已完成':'顯示已完成',onClick:()=>setShowDone(!showDone)},ui('filter',18))),
-    error&&h('div',{className:'tl-error',role:'alert'},error),
-    untimed.length>0&&h('section',{className:'tl-anytime'},h('div',{className:'tl-sechead'},h('h2',null,day===today?'今天要做':md(day)+' 要做'),h('span',null,'未排時間 · '+untimed.length)),
-     h('div',{className:'tl-alist'},untimed.map(t=>h('div',{key:t.id,className:'tl-arow'+(t.done?' done':''),style:{'--c':HB_tlCat(t).c}},h('span',{className:'tl-adot'},HB_tlSvg(h,HB_TL_ICON[HB_tlCat(t).i],15)),card(t,null))))),
-    timeline.length>0&&h('section',{className:'tl-list','aria-label':'時間軸'},timeline),
-    empty&&h('div',{className:'tl-emptyday'},h('p',null,query||chip?'沒有符合條件的安排':(day===today?'今天還沒有安排':md(day)+' 還沒有安排')),
-     h('button',{type:'button',onClick:()=>setEditing(newTask({time:fabTime}))},'＋ 新增行程'))),
-   h('aside',{className:'tl-side'},panel('later'),panel('shop'))),
-  h('div',{className:'tl-bottom'},h('button',{type:'button',onClick:()=>setSheet('later')},'稍後辦',h('span',{className:'tl-badge'},later.length)),h('i'),h('button',{type:'button',onClick:()=>setSheet('shop')},'購物清單',h('span',{className:'tl-badge'},shop.filter(t=>!t.done).length))),
-  h('button',{type:'button',className:'tl-fab','aria-label':'新增行程',onClick:()=>setEditing(newTask({time:fabTime}))},ui('plus',28)),
-  sheet&&h('div',{className:'tl-sheet',onClick:e=>{if(e.target===e.currentTarget)setSheet(null)}},h('div',{className:'tl-sheetpanel',role:'dialog','aria-modal':true,'aria-label':sheet==='later'?'稍後辦':sheet==='cal'?'連結 iPhone 行事曆':'購物清單'},
-   h('div',{className:'tl-grab'}),h('button',{type:'button',className:'tl-sheetx','aria-label':'關閉',onClick:()=>setSheet(null)},ui('x',18)),sheet==='cal'?h(HbTodayCalLink,null):panel(sheet))),
-  menu&&h('div',{className:'tl-scrim',onClick:()=>setMenu(false)}));
-}
-var HB_TL_CSS=`
-.hb-tl{--tl-bg:#F6F3EE;--tl-card:#fff;--tl-ink:#2B2A27;--tl-mute:#8A857B;--tl-line:#E6E0D5;--tl-acc:#3E7D72;--tl-acc2:#DCEAE6;--tl-warn:#C0653F;--tl-soft:#EFEBE3;
- max-width:1180px;margin:0 auto;padding:0 16px;color:var(--tl-ink);font-family:'Noto Sans TC','PingFang TC',sans-serif;font-size:14px;min-height:100%}
-.hb-tl *{box-sizing:border-box}:where(.hb-tl) button{font:inherit;color:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
-.hb-tl svg{fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}
-.tl-top{display:flex;align-items:center;justify-content:space-between;padding:12px 0 2px;min-height:44px}
-.tl-back{display:inline-flex;align-items:center;gap:4px;border:0;background:none;padding:8px 6px 8px 0;color:var(--tl-mute);font-size:13px}
-.tl-sync{font-size:11.5px;color:var(--tl-mute)}
-.tl-wrap{display:block}
-.tl-head{display:flex;align-items:center;gap:4px;padding:6px 0 10px;position:relative}
-.tl-head h1{margin:0 auto 0 0;font-size:24px;font-weight:700;letter-spacing:.02em;white-space:nowrap}
-.tl-toggle{white-space:nowrap;flex:none;display:inline-flex;align-items:center;gap:8px;height:32px;padding:0 4px 0 12px;border:0;border-radius:999px;background:#D5D0C6;color:#fff;font-size:12.5px;font-weight:600;margin-right:4px;transition:background .2s}
-.tl-toggle i{width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.18);transition:transform .2s;transform:translateX(0)}
-.tl-toggle:not(.on){padding:0 12px 0 4px;flex-direction:row-reverse}
-.tl-toggle.on{background:var(--tl-acc)}
-.tl-add{display:none;align-items:center;gap:4px;height:34px;padding:0 14px;margin-right:8px;border:0;border-radius:999px;background:var(--tl-acc);color:#fff;font-size:13px;font-weight:600}
-.tl-add svg{stroke:#fff;stroke-width:2}
-.tl-ib{width:40px;height:40px;border:0;background:none;border-radius:50%;display:grid;place-items:center;padding:0}
-.tl-ib:hover{background:var(--tl-soft)}.tl-ib.on{color:var(--tl-acc);background:var(--tl-acc2)}
-.tl-ib.sm{width:34px;height:34px;flex:none}
-.tl-hidden{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;right:90px;top:40px}
-.tl-menuwrap{position:relative}
-.tl-pop{position:absolute;right:0;top:44px;z-index:40;min-width:176px;background:#fff;border-radius:12px;padding:6px;box-shadow:0 10px 30px rgba(40,30,20,.16),0 1px 3px rgba(40,30,20,.08)}
-.tl-pop button{display:block;width:100%;text-align:left;border:0;background:none;padding:11px 12px;border-radius:8px;font-size:14px}
-.tl-pop button:hover{background:var(--tl-soft)}
-.tl-scrim{position:fixed;inset:0;z-index:30}
-.tl-search{display:flex;align-items:center;gap:8px;height:42px;padding:0 6px 0 12px;background:#fff;border-radius:12px;margin:0 0 10px;color:var(--tl-mute);box-shadow:0 1px 2px rgba(40,30,20,.06)}
-.tl-search input{flex:1;min-width:0;border:0;outline:0;background:none;font:inherit;color:var(--tl-ink);font-size:15px}
-.tl-search button{border:0;background:none;width:32px;height:32px;display:grid;place-items:center;color:var(--tl-mute)}
-.tl-week{display:grid;grid-template-columns:28px repeat(7,minmax(0,1fr)) 28px;align-items:center;touch-action:pan-y}
-.tl-wk{border:0;background:none;height:44px;display:grid;place-items:center;color:var(--tl-mute);padding:0}
-.tl-day{border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:4px;padding:4px 0}
-.tl-wd{font-size:12px;color:var(--tl-mute)}
-.tl-dn{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font-size:17px;font-weight:600;transition:background .15s,color .15s}
-.tl-day.today .tl-dn{color:var(--tl-acc)}
-.tl-day.on .tl-dn{background:var(--tl-acc);color:#fff}
-.tl-day:not(.on):hover .tl-dn{background:var(--tl-soft)}
-.tl-dd{width:5px;height:5px;border-radius:50%;background:transparent}.tl-dd.has{background:#C9C3B7}.tl-day.on .tl-dd.has{background:var(--tl-acc)}
-.tl-chips{display:flex;align-items:center;gap:6px;margin:10px 0 0;border-bottom:1px solid var(--tl-line)}
-.tl-chipscroll{display:flex;gap:6px;overflow-x:auto;flex:1;min-width:0;scrollbar-width:none;padding-bottom:0}
-.tl-chipscroll::-webkit-scrollbar{display:none}
-.tl-chip{flex:none;height:34px;padding:0 18px;border:0;border-radius:12px 12px 0 0;background:transparent;color:var(--tl-mute);font-size:13.5px;font-weight:500;white-space:nowrap}
-.tl-chip.on{background:var(--tl-acc);color:#fff;font-weight:600}
-.tl-chip:not(.on):hover{background:var(--tl-soft);color:var(--tl-ink)}
-.tl-error{margin:12px 0 0;padding:10px 12px;border-radius:10px;background:#F7E5DD;color:#8A3B24;font-size:13px}
-.tl-sechead{display:flex;align-items:baseline;justify-content:space-between;margin:16px 2px 8px}
-.tl-sechead h2{margin:0;font-size:15px;font-weight:700}.tl-sechead span{font-size:12px;color:var(--tl-mute)}
-.tl-alist{display:grid;gap:8px}
-.tl-arow{display:grid;grid-template-columns:30px minmax(0,1fr);align-items:center;gap:8px}
-.tl-adot{width:30px;height:30px;border-radius:50%;background:var(--c);display:grid;place-items:center;color:#fff}
-.tl-adot svg{stroke:#fff}
-.tl-arow .tl-card{margin:0}
-.tl-arow.done .tl-card,.tl-row.done .tl-card{opacity:.55}.tl-arow.done .tl-ctitle,.tl-row.done .tl-ctitle{text-decoration:line-through}
-.tl-list{padding:14px 0 8px}
-.tl-row{display:grid;grid-template-columns:42px 56px minmax(0,1fr);column-gap:6px;align-items:stretch}
-.tl-time{font:500 12px/1 ui-monospace,'IBM Plex Mono',Menlo,monospace;color:var(--tl-mute);text-align:right;padding-top:27px}
-.tl-rail{position:relative;display:flex;justify-content:center}
-.tl-rail::before{content:'';position:absolute;top:0;bottom:0;left:50%;width:4px;margin-left:-2px;background:var(--c,#CFC9BE);opacity:.5}
-.tl-row.first .tl-rail::before{top:30px}.tl-row.last .tl-rail::before{bottom:calc(100% - 30px)}
-.tl-rail.dash::before{width:3px;margin-left:-1.5px;background:repeating-linear-gradient(to bottom,#B9B3A7 0 6px,transparent 6px 12px);opacity:.9}
-.tl-dot{position:relative;z-index:1;margin:6px 0;width:52px;min-height:52px;border-radius:26px;background:var(--c);display:grid;place-items:center;color:#fff;box-shadow:0 3px 8px rgba(40,30,20,.12)}
-.tl-dot svg{stroke:#fff;stroke-width:1.8}
-.tl-row.done .tl-dot{filter:saturate(.35);opacity:.6}
-.tl-card{margin:6px 0;background:var(--tl-card);border-radius:16px;padding:12px 12px 12px 16px;display:flex;align-items:center;gap:10px;min-height:64px;cursor:pointer;
- box-shadow:0 1px 2px rgba(40,30,20,.05),0 4px 16px rgba(40,30,20,.05);transition:transform .12s,box-shadow .12s;min-width:0}
-.tl-card:hover{box-shadow:0 1px 2px rgba(40,30,20,.06),0 8px 22px rgba(40,30,20,.09)}
-.tl-card:active{transform:scale(.99)}
-.tl-card:focus-visible,.hb-tl button:focus-visible{outline:2px solid var(--tl-acc);outline-offset:2px}
-.tl-cbody{flex:1;min-width:0}
-.tl-ctime{font-size:11.5px;color:var(--tl-mute);margin-bottom:2px;font-family:ui-monospace,'IBM Plex Mono',Menlo,monospace}
-.tl-ctitle{font-size:15.5px;font-weight:600;line-height:1.4;overflow-wrap:anywhere}
-.tl-meta{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;margin-top:6px;font-size:12px;color:var(--tl-mute)}
-.tl-proj{background:var(--tl-soft);color:#5E594F;border-radius:6px;padding:2px 8px}
-.tl-src{border:1px solid var(--tl-line);border-radius:6px;padding:1px 6px;font-size:11px}
-.tl-flag{display:inline-flex;align-items:center;gap:3px;color:var(--tl-warn);font-weight:600}.tl-flag.soft{color:var(--tl-acc)}
-.tl-check{flex:none;width:28px;height:28px;border-radius:50%;border:1.8px solid #BFB9AE;background:#fff;display:grid;place-items:center;padding:0;color:#fff;transition:background .15s,border-color .15s}
-.tl-check.sm{width:24px;height:24px}
-.tl-check:hover{border-color:var(--tl-acc)}
-.tl-check.on{background:var(--tl-acc);border-color:var(--tl-acc)}.tl-check svg{stroke:#fff;stroke-width:2.4}
-.tl-gap{margin:6px 0;border-radius:16px;background:var(--tl-soft);padding:12px 14px}
-.tl-gaphead{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--tl-mute)}
-.tl-gapdur{margin:6px 0 2px;display:flex;align-items:baseline;gap:2px}
-.tl-gapdur b{font-size:22px;font-weight:600;line-height:1}.tl-gapdur span{font-size:13px;margin-right:6px}
-.tl-gchips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
-.tl-gchip{height:32px;max-width:100%;padding:0 12px;border:0;border-radius:9px;background:#fff;font-size:12.5px;color:#4E4A43;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;box-shadow:0 1px 2px rgba(40,30,20,.05)}
-.tl-gchip:hover{background:var(--tl-acc);color:#fff}
-.tl-gchip.more{background:none;box-shadow:none;color:var(--tl-acc);font-weight:600}
-.tl-gaplink{margin-top:6px;border:0;background:none;padding:4px 0;color:var(--tl-acc);font-size:12.5px;font-weight:600}
-.tl-gapnote{margin:6px 0 0;font-size:12.5px;color:var(--tl-mute)}
-.tl-now{display:grid;grid-template-columns:42px minmax(0,1fr);column-gap:6px;align-items:center;margin:2px 0}
-.tl-now span{font:600 11px ui-monospace,Menlo,monospace;color:var(--tl-warn);text-align:right}
-.tl-now i{height:2px;background:var(--tl-warn);position:relative;border-radius:2px}
-.tl-now i::before{content:'';position:absolute;left:24px;top:-4px;width:10px;height:10px;border-radius:50%;background:var(--tl-warn)}
-.tl-emptyday{text-align:center;padding:48px 16px;color:var(--tl-mute)}
-.tl-emptyday p{margin:0 0 14px;font-size:15px}
-.tl-emptyday button{height:40px;padding:0 18px;border:1px solid var(--tl-acc);border-radius:999px;background:none;color:var(--tl-acc);font-weight:600}
-.tl-side{display:none}
-.tl-panel{background:#fff;border-radius:18px;padding:16px;box-shadow:0 1px 2px rgba(40,30,20,.05),0 4px 16px rgba(40,30,20,.05)}
-.tl-panel+.tl-panel{margin-top:16px}
-.tl-panelhead{display:flex;align-items:center;gap:8px}
-.tl-panelhead h3{margin:0;font-size:16px;font-weight:700}
-.tl-badge{min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:var(--tl-acc);color:#fff;font-size:11.5px;font-weight:700;display:inline-grid;place-items:center;margin-left:6px}
-.tl-link{margin-left:auto;border:0;background:none;color:var(--tl-acc);font-size:12.5px;padding:6px 0}
-.tl-panelnote{margin:4px 0 12px;font-size:12px;color:var(--tl-mute)}
-.tl-quick{display:flex;gap:6px;margin-bottom:6px}
-.tl-quick input{flex:1;min-width:0;height:40px;border:1px solid var(--tl-line);border-radius:10px;padding:0 12px;font:inherit;font-size:14px;background:var(--tl-bg);color:var(--tl-ink);outline:0}
-.tl-quick input:focus{border-color:var(--tl-acc);background:#fff}
-.tl-quick button{width:40px;height:40px;border:0;border-radius:10px;background:var(--tl-acc);color:#fff;display:grid;place-items:center}
-.tl-plist{list-style:none;margin:0;padding:0}
-.tl-plist li{display:grid;grid-template-columns:24px minmax(0,1fr) auto;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--tl-line)}
-.tl-plist li:last-child{border-bottom:0}
-.tl-ptext{border:0;background:none;text-align:left;padding:0;min-width:0}
-.tl-ptext span{display:block;font-size:14.5px;line-height:1.4;overflow-wrap:anywhere}.tl-ptext small{display:block;font-size:11.5px;color:var(--tl-mute);margin-top:1px}
-.tl-plist li.done .tl-ptext span{text-decoration:line-through;color:var(--tl-mute)}
-.tl-mini{height:30px;padding:0 10px;border:1px solid var(--tl-line);border-radius:8px;background:#fff;font-size:12px;color:var(--tl-acc);white-space:nowrap}
-.tl-mini:hover{border-color:var(--tl-acc)}
-.tl-calbtn{display:flex;align-items:center;justify-content:center;width:100%;height:46px;border-radius:12px;background:var(--tl-acc);color:#fff!important;font-weight:600;font-size:15px;text-decoration:none;border:0;margin:6px 0 0}
-.tl-calbtn.out{background:#fff;color:var(--tl-acc)!important;border:1px solid var(--tl-acc)}
-.tl-calmsg{margin:8px 0 0;font-size:13px;color:var(--tl-acc);text-align:center}
-.tl-calhelp{margin:14px 0 0;font-size:13px}.tl-calhelp summary{cursor:pointer;color:var(--tl-acc);font-weight:600}
-.tl-calhelp ol{margin:8px 0 0;padding-left:20px;line-height:1.8;color:#5E594F}
-.tl-calwarn{margin:14px 0 4px;padding:10px 12px;border-radius:10px;background:#F7EBDF;color:#8A4B24;font-size:12.5px;line-height:1.6}
-.tl-empty{margin:14px 0 4px;font-size:13px;color:var(--tl-mute);text-align:center}
-.tl-bottom{position:sticky;bottom:0;z-index:20;margin:24px -16px 0;display:grid;grid-template-columns:1fr 1px 1fr;align-items:center;min-height:62px;padding-bottom:env(safe-area-inset-bottom);
- background:rgba(255,255,255,.96);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border-top:1px solid var(--tl-line);border-radius:18px 18px 0 0;box-shadow:0 -6px 20px rgba(40,30,20,.05)}
-.tl-bottom button{height:62px;border:0;background:none;font-size:15px;font-weight:600;display:flex;align-items:center;justify-content:center}
-.tl-bottom i{height:28px;background:var(--tl-line)}
-.tl-fab{position:fixed;right:18px;bottom:calc(80px + env(safe-area-inset-bottom));z-index:25;width:60px;height:60px;border:0;border-radius:50%;background:var(--tl-acc);color:#fff;display:grid;place-items:center;box-shadow:0 10px 24px rgba(62,125,114,.38)}
-.tl-fab svg{stroke:#fff;stroke-width:2}
-.tl-fab:active{transform:scale(.96)}
-.tl-sheet{position:fixed;inset:0;z-index:1000;background:rgba(30,26,20,.4);display:flex;align-items:flex-end;justify-content:center;animation:tlFade .18s}
-.tl-sheetpanel{position:relative;width:100%;max-width:560px;max-height:82vh;overflow:auto;background:var(--tl-bg);border-radius:20px 20px 0 0;padding:10px 12px calc(16px + env(safe-area-inset-bottom));animation:tlUp .22s cubic-bezier(.2,.8,.2,1)}
-.tl-sheetpanel .tl-panel{box-shadow:none}
-.tl-grab{width:40px;height:4px;border-radius:2px;background:#CFC9BE;margin:0 auto 10px}
-.tl-sheetx{position:absolute;right:18px;top:24px;z-index:1;width:34px;height:34px;border:0;border-radius:50%;background:var(--tl-soft);display:grid;place-items:center}
-@keyframes tlFade{from{opacity:0}}@keyframes tlUp{from{transform:translateY(24px);opacity:.6}}
-@media (min-width:1000px){
- .hb-tl{padding:0 28px 40px}
- .tl-wrap{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:32px;align-items:start}
- .tl-side{display:block;position:sticky;top:16px}
- .tl-bottom{display:none}
- .tl-fab{display:none}
- .tl-add{display:inline-flex}
- .tl-head h1{font-size:26px}
-}
-@media (max-width:380px){.tl-row{grid-template-columns:36px 50px minmax(0,1fr)}.tl-dot{width:46px;min-height:46px}.tl-toggle span{display:none}.tl-toggle{padding:0 4px}}
-@media (prefers-reduced-motion:reduce){.hb-tl *,.tl-sheet,.tl-sheetpanel{animation:none!important;transition:none!important}}
-/* App／手機全站規則把 button 設成至少 44px 高，會把圓形按鈕拉成橢圓；這裡改回正圓，點擊範圍用外圈補足 */
-.hb-tl button,.hb-tl [role=button],.hb-tl summary{min-height:0}
-.hb-tl .tl-check,.hb-tl .tl-ib,.hb-tl .tl-sheetx,.hb-tl .tl-fab,.hb-tl .tl-quick button{aspect-ratio:1/1;flex-shrink:0;padding:0}
-.hb-tl .tl-check{position:relative}.hb-tl .tl-check::after{content:'';position:absolute;inset:-9px;border-radius:50%}
-.hb-tl .tl-dn{aspect-ratio:1/1;flex:none}
-`;
-
 /* =====================================================================
    HERFULSINS — Le Carnet du Jour／專案工作台（2026-10）
    放在「案件資料庫」頁上方。資料與「今日待辦」共用同一份雲端紀錄
@@ -15424,13 +15107,14 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
       kind==='later'&&h('button',{type:'button',className:'wbk-mini',onClick:()=>{if(tk.update(t,{due:day}))say('已排到 '+(isToday?'今天':md(day)))}},isToday?'排到今天':'排到 '+md(day)));
     const more=(n,fn)=>h('button',{type:'button',className:'wbc-more',onClick:fn},'查看全部'+(n?' '+n:''),HB_wbIcon('arrow',13));
     const colK=(title,count,extra,body,foot,cls)=>h('article',{className:'wbk-col '+(cls||'')},h('div',{className:'wbc-colhead'},h('h3',null,title),h('span',{className:'wbc-num'},count),extra),h('div',{className:'wbk-colbody'},body),foot);
-    const sideTitle={tl:(isToday?'今日':md(day)+' ')+'時間軸',open:'未完成',follow:'待追蹤',closed:'已結案追蹤',later:'稍後辦',shop:'購物清單'}[cSide]||'';
+    const sideTitle={ical:'連結 iPhone 行事曆',tl:(isToday?'今日':md(day)+' ')+'時間軸',open:'未完成',follow:'待追蹤',closed:'已結案追蹤',later:'稍後辦',shop:'購物清單'}[cSide]||'';
     const sideBody=cSide==='tl'?h('ul',{className:'wbk-tl'},allTl.length?allTl.map(tlRow):h('li',{className:'wbc-empty'},'這天沒有排定時間的行程'))
       :cSide==='open'?h('ul',{className:'wbc-list'},openList.length?openList.map(mixRow):h('li',{className:'wbc-empty'},'沒有事項'))
       :cSide==='follow'?h('ul',{className:'wbc-list'},fList.length?fList.map(followRow):h('li',{className:'wbc-empty'},'沒有事項'))
       :cSide==='closed'?h('ul',{className:'wbc-list'},closedFollows.map(closedRow))
       :cSide==='later'?h('ul',{className:'wbk-slist'},later.map(t=>sideRow(t,'later')))
-      :cSide==='shop'?h('ul',{className:'wbk-slist'},shop.map(t=>sideRow(t,'shop'))):null;
+      :cSide==='shop'?h('ul',{className:'wbk-slist'},shop.map(t=>sideRow(t,'shop')))
+      :cSide==='ical'?h('div',{className:'wbk-ical'},h(HbTodayCalLink,null)):null;
     return h('section',{className:'hb-wb wbc is-compact wbk',ref:wbRef,'aria-label':'工作台'},
       h('header',{className:'wbk-head'},
         h('div',{className:'wbc-titlewrap'},h('h2',{className:'wbc-carnet'},'Le Carnet du Jour'),h('span',{className:'wbc-fr'},'工作台')),
@@ -15439,7 +15123,8 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
         h('button',{type:'button',className:'wbc-cfbtn'+(cfChangeN?' has-ch':''),onClick:()=>setCfList(true)},'待業主確認',h('b',null,cfActive)),
         h('span',{className:'wbc-grow'}),
         h('button',{type:'button',className:'wbk-toggle'+(cGaps?' on':''),'aria-pressed':cGaps,onClick:()=>setCGaps(!cGaps)},h('span',null,'空檔時間'),h('i')),
-        h('button',{type:'button',className:'wbc-hublink',onClick:onTodayHub,title:'開啟完整的今日待辦'},'今日待辦',HB_wbIcon('out',12)),
+        h('label',{className:'wbk-pick',title:'跳到指定日期'},HB_wbIcon('calendar',17),h('span',{className:'wbc-sr'},'選擇日期'),h('input',{type:'date',value:day,'aria-label':'選擇日期',onChange:e=>{if(e.target.value){setCDay(e.target.value);setCGapOpen(null)}},onClick:e=>{try{e.currentTarget.showPicker&&e.currentTarget.showPicker()}catch{}}})),
+        h('button',{type:'button',className:'wbc-hublink',onClick:()=>setCSide('ical'),title:'讓 iPhone 行事曆訂閱行程'},'iPhone 行事曆'),
         h('button',{type:'button',className:'wbc-add',onClick:()=>newTask({due:day})},HB_wbIcon('plus',15),'新增事項')),
       error&&h('div',{className:'wb-error',role:'alert'},error,h('button',{type:'button',onClick:tk.reload},'重新整理')),
       h('div',{className:'wbk-week'},h('button',{type:'button',className:'wbk-wk',onClick:()=>shift(-1),'aria-label':'上一週'},HB_wbIcon('left',16)),
@@ -15481,7 +15166,7 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
       h('button',{type:'button',className:'wbc-cfbtn'+(cfChangeN?' has-ch':''),onClick:()=>setCfList(true)},'待業主確認',h('b',null,cfActive)),
       h('span',{className:'wbc-grow'}),
       h('span',{className:'wb-sync wbc-sync'+(ready?'':' wb-sync-off'),title:error||''},sync),
-      h('button',{type:'button',className:'wbc-hublink',onClick:onTodayHub},'開啟今日待辦',HB_wbIcon('out',13)),
+
       h('button',{type:'button',className:'wbc-add',onClick:()=>newTask({})},HB_wbIcon('plus',15),'新增事項')),
     error&&h('div',{className:'wb-error',role:'alert'},error,h('button',{type:'button',onClick:tk.reload},'重新整理')),
     h('div',{className:'wbc-cols'},
@@ -15825,122 +15510,7 @@ async function HB_staffCloudLogin(username,password){const response=await fetch(
 function HB_todoDate(){return new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Taipei'}).format(new Date())}
 function HB_todoKey(){let who='company';try{who=localStorage.getItem('sitelog_admin_username')||who}catch{}return 'hb_today_v1:'+who}
 function HB_todoRead(){const raw=localStorage.getItem(HB_todoKey());if(!raw)return {manual:[],overrides:{}};const v=JSON.parse(raw);if(!v||!Array.isArray(v.manual)||!v.overrides||typeof v.overrides!=='object')throw Error('待辦資料格式不正確');return v}
-function HbTodayHub({projects=[],onBack,onOpenProject}){
- const h=u.default.createElement;
- const [data,setData]=u.useState({manual:[],overrides:{}}),[ready,setReady]=u.useState(false),[auto,setAuto]=u.useState([]),[loading,setLoading]=u.useState(true),[error,setError]=u.useState(''),[message,setMessage]=u.useState(''),[syncText,setSyncText]=u.useState('正在連接雲端…'),[view,setView]=u.useState('today'),[project,setProject]=u.useState(''),[person,setPerson]=u.useState(''),[search,setSearch]=u.useState(''),[editing,setEditing]=u.useState(null),[today,setToday]=u.useState(HB_todoDate);
- const revision=u.useRef(0),saveQueue=u.useRef(Promise.resolve()),syncBusy=u.useRef(false),mounted=u.useRef(true);
- u.useEffect(()=>{let cached={manual:[],overrides:{}};try{cached=HB_todoRead();setData(cached)}catch(e){setError('無法讀取本機快取；原有雲端內容不會被覆寫。')}
- const valid=v=>v&&Array.isArray(v.manual)&&v.overrides&&typeof v.overrides==='object';
- const pull=async(initial=false)=>{if(syncBusy.current||(!initial&&document.hidden))return;syncBusy.current=true;try{const cloud=await HB_workspaceRequest('/today');let next=valid(cloud.payload)?cloud.payload:{manual:[],overrides:{}};revision.current=Number(cloud.revision)||0;if(initial&&(cached.manual.length||Object.keys(cached.overrides).length)){const manualMap=new Map(next.manual.map(t=>[t.id,t]));cached.manual.forEach(t=>{if(t&&t.id&&!manualMap.has(t.id))manualMap.set(t.id,t)});const merged={manual:[...manualMap.values()],overrides:{...cached.overrides,...next.overrides}};if(JSON.stringify(merged)!==JSON.stringify(next)){const migrated=await HB_workspaceRequest('/today',{method:'PUT',body:JSON.stringify({revision:revision.current,payload:merged})});next=migrated.payload;revision.current=migrated.revision;setMessage('此裝置原有待辦已合併至雲端')}}if(mounted.current){setData(next);localStorage.setItem(HB_todoKey(),JSON.stringify(next));setReady(true);setSyncText('已跨裝置同步');setError('')}}catch(e){if(mounted.current){setReady(false);setSyncText('尚未同步');setError(e.message||'無法連接雲端待辦')}}finally{syncBusy.current=false}};
- pull(true);const periodic=setInterval(()=>pull(false),30000),focus=()=>pull(false);window.addEventListener('focus',focus);document.addEventListener('visibilitychange',focus);const tick=setInterval(()=>setToday(HB_todoDate()),30000);return()=>{mounted.current=false;clearInterval(periodic);clearInterval(tick);window.removeEventListener('focus',focus);document.removeEventListener('visibilitychange',focus)}},[]);
- u.useEffect(()=>{if(!message)return;const t=setTimeout(()=>setMessage(''),4000);return()=>clearTimeout(t)},[message]);
- const load=async()=>{setLoading(true);const rows=[],errors=[];
- const fetchPages=async(table,select)=>{let out=[];for(let offset=0;;offset+=500){const {data:r,error:e}=await q.from(table).select(select).order('id',{ascending:true}).range(offset,offset+499);if(e)throw e;out.push(...(r||[]));if(!r||r.length<500)break}return out};
- const results=await Promise.allSettled([fetchPages('sitelog_schedule_events','id,title,project_id,project_name,start_date,end_date,assignee,note,status,time,all_day'),fetchPages('sitelog_defects','id,project_id,description,location,completed'),fetchPages('sitelog_bookings','id,date,time,service_type,name,status')]);
- if(results[0].status==='fulfilled')results[0].value.filter(r=>r.status!=='cancelled'&&r.status!=='completed'&&r.start_date).forEach(r=>rows.push({id:'schedule:'+r.id,title:r.title||'工程行程',projectId:r.project_id||'',projectName:r.project_name||'',assignee:r.assignee||'',due:r.start_date.slice(0,10),dueEnd:(r.end_date||'').slice(0,10),time:!r.all_day&&/^\d{1,2}:\d{2}/.test(r.time||'')?String(r.time).slice(0,5):'',note:r.note||'',category:'行程',source:'auto',sourceId:r.id}));else errors.push('工程行程');
- if(results[1].status==='fulfilled')results[1].value.filter(r=>!r.completed).forEach(r=>rows.push({id:'defect:'+r.id,title:r.description||'缺失改善',projectId:r.project_id||'',assignee:'',due:'',note:r.location?'位置：'+r.location:'',category:'缺失',source:'auto',sourceId:r.id}));else errors.push('缺失紀錄');
- /* 客戶預約：今天起未來 7 天內、尚未取消或完成的，帶進待辦；只顯示姓名，不顯示電話與地址 */
- if(results[2]&&results[2].status==='fulfilled'){
-   const pad=n=>String(n).padStart(2,'0'),d0=new Date(),ymd=x=>x.getFullYear()+'-'+pad(x.getMonth()+1)+'-'+pad(x.getDate());
-   const today=ymd(d0),limit=ymd(new Date(d0.getFullYear(),d0.getMonth(),d0.getDate()+7));
-   results[2].value.filter(r=>r.date&&['pending','confirmed'].includes(r.status)&&String(r.date).slice(0,10)>=today&&String(r.date).slice(0,10)<=limit)
-     .forEach(r=>rows.push({id:'booking:'+r.id,time:/^\d{1,2}:\d{2}/.test(r.time||'')?String(r.time).slice(0,5):'',title:'客戶預約・'+(r.name||'')+(r.service_type?'（'+r.service_type+'）':''),projectId:'',projectName:'',assignee:'',due:String(r.date).slice(0,10),note:(r.time?r.time+' ':'')+(r.status==='pending'?'待確認':'已確認'),category:'預約',source:'auto',sourceId:r.id}));
- } else if(results[2]) errors.push('客戶預約');
- setAuto(rows);setLoading(false);if(errors.length)setError(errors.join('、')+'暫時無法讀取，請按「重新整理」重試。手動待辦仍可使用。');
- };
- u.useEffect(()=>{load()},[]);
- const save=next=>{if(!ready){setError('雲端資料尚未就緒，無法儲存。請確認登入與網路連線。');return false}try{localStorage.setItem(HB_todoKey(),JSON.stringify(next));setData(next);setSyncText('正在同步…');saveQueue.current=saveQueue.current.then(async()=>{try{const result=await HB_workspaceRequest('/today',{method:'PUT',body:JSON.stringify({revision:revision.current,payload:next})});revision.current=result.revision;if(mounted.current)setSyncText('已跨裝置同步')}catch(e){if(mounted.current){setReady(false);setSyncText('同步失敗');setError((e.message||'同步失敗')+' 請重新開啟今日待辦取得最新資料。')}}});return true}catch{setError('本機快取失敗，本次變更尚未保存。');return false}};
- const names=new Map(projects.map(p=>[p.id,p.name]));
- /* 示範案件（App 審核用）只在審核帳號顯示；公司帳號的今日待辦自動略過 */
- const demoIds=new Set(projects.filter(p=>/^示範案件/.test(p.name||'')).map(p=>p.id)),hideDemo=projects.some(p=>!demoIds.has(p.id));
- const combined=[...data.manual,...auto.map(t=>({...t,...data.overrides[t.id]}))];
- Object.entries(data.overrides).forEach(([id,v])=>{if(v.done&&!combined.some(t=>t.id===id))combined.push({...v,id})});
- const all=combined.filter(t=>!t.deleted&&!(hideDemo&&t.source==='auto'&&demoIds.has(t.projectId))).map(t=>({...t,projectName:names.get(t.projectId)||t.projectName||'公司事務'}));
- const overdue=t=>!t.done&&t.due&&t.due<today;
- const dueToday=t=>!t.done&&(!t.due||t.due<=today);
- const metrics=[['today','今日待處理',all.filter(dueToday).length],['overdue','已逾期',all.filter(overdue).length],['upcoming','後續待辦',all.filter(t=>!t.done&&t.due>today).length],['done','今日完成',all.filter(t=>t.done&&t.completedAt===today).length]];
- const matches=t=>(view==='all'||view==='today'&&dueToday(t)||view==='overdue'&&overdue(t)||view==='upcoming'&&!t.done&&t.due>today||view==='done'&&t.done)&&(!project||t.projectId===project)&&(!person||(t.assignee||'未指派')===person)&&(!search||(t.title+' '+t.note+' '+t.projectName+' '+t.assignee).toLowerCase().includes(search.toLowerCase()));
- const visible=all.filter(matches).sort((a,b)=>Number(!!a.done)-Number(!!b.done)||Number(!!overdue(b))-Number(!!overdue(a))||Number(!!b.urgent)-Number(!!a.urgent)||(a.due||'9999').localeCompare(b.due||'9999')||a.title.localeCompare(b.title));
- const update=(task,patch,msg)=>{const next=task.source==='auto'?{...data,overrides:{...data.overrides,[task.id]:{...task,...patch}}}:{...data,manual:data.manual.map(t=>t.id===task.id?{...t,...patch}:t)};if(save(next))setMessage(msg)};
- const complete=t=>update(t,{done:!t.done,completedAt:t.done?null:today},t.done?'已恢復待處理':'已完成（再點一次可恢復）');
- const remove=t=>{if(!confirm('確定'+(t.source==='auto'?'隱藏這則提醒':'刪除這項工作')+'？'))return;update(t,{deleted:true},'已移除待辦')};
- const create=()=>setEditing({id:crypto.randomUUID(),title:'',projectId:'',assignee:'',due:today,category:'一般',note:'',urgent:false,source:'manual',isNew:true});
- const exportCsv=()=>{const cell=v=>'"'+String(v??'').replace(/^[=+@\-\t\r]/,"'$&").replace(/"/g,'""')+'"';const lines=[['工作','案場','負責人','到期日','類別','狀態','來源','備註'],...visible.map(t=>[t.title,t.projectName,t.assignee||'未指派',t.due,t.category,t.done?'已完成':overdue(t)?'已逾期':'待處理',t.source==='auto'?'自動提醒':'手動新增',t.note])];const url=URL.createObjectURL(new Blob(['\ufeff'+lines.map(r=>r.map(cell).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8;'}));const a=document.createElement('a');a.href=url;a.download='赫柏今日待辦_'+today+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};
- const ranked=all.filter(dueToday).sort((a,b)=>Number(!!overdue(b))-Number(!!overdue(a))||Number(!!b.urgent)-Number(!!a.urgent)||(a.due||'9999').localeCompare(b.due||'9999')||a.title.localeCompare(b.title));
- const priorities=ranked.slice(0,3),nextTasks=all.filter(t=>!t.done&&t.due>today).sort((a,b)=>a.due.localeCompare(b.due)||a.title.localeCompare(b.title)).slice(0,3);
- const completedToday=metrics[3][2],dayTotal=completedToday+metrics[0][2],dayPercent=dayTotal?Math.round(completedToday/dayTotal*100):0;
- const [summaryOpen,setSummaryOpen]=u.useState(()=>window.matchMedia('(min-width:900px)').matches);
- u.useEffect(()=>{const media=window.matchMedia('(min-width:900px)'),resize=()=>setSummaryOpen(media.matches);media.addEventListener('change',resize);return()=>media.removeEventListener('change',resize)},[]);
- const taskMenu=t=>h('details',{className:'td-more'},h('summary',{'aria-label':'更多操作：'+t.title},'⋯'),h('div',{className:'td-actionmenu'},t.projectId&&h('button',{type:'button',onClick:()=>onOpenProject(t.projectId)},'開啟案場'),h('button',{type:'button',onClick:()=>setEditing({...t})},'編輯工作'),h('button',{type:'button',className:'td-delete',onClick:()=>remove(t)},t.source==='auto'?'隱藏提醒':'刪除工作')));
- const [layout,setLayout]=u.useState(()=>{try{return localStorage.getItem('hb_today_layout')||'timeline'}catch{return 'timeline'}});
- const pickLayout=v=>{setLayout(v);try{localStorage.setItem('hb_today_layout',v)}catch{}};
- const addTask=t=>{const {isNew,...task}=t;if(save({...data,manual:[...data.manual,task]}))setMessage('已新增')};
- const bulkDelete=list=>{let next=data;list.forEach(task=>{next=task.source==='auto'?{...next,overrides:{...next.overrides,[task.id]:{...task,deleted:true}}}:{...next,manual:next.manual.filter(t=>t.id!==task.id)}});if(save(next))setMessage('已清除 '+list.length+' 項')};
- const saveEdit=v=>{const {isNew,...task}=v;if(isNew){if(save({...data,manual:[...data.manual,task]})){setEditing(null);setMessage('已新增')}}else{const next=task.source==='auto'?{...data,overrides:{...data.overrides,[task.id]:task}}:{...data,manual:data.manual.map(t=>t.id===task.id?task:t)};if(save(next)){setEditing(null);setMessage('已儲存變更')}}};
- if(layout==='timeline')return h(u.default.Fragment,null,h('style',null,HB_TODAY_CSS),
-  h(HbTodayTimeline,{all,today,projects,onBack,onOpenProject,complete,update,setEditing,addTask,bulkDelete,syncText,loading,error,
-   reload:()=>{setError('');load();window.dispatchEvent(new Event('focus'))},onList:()=>pickLayout('list')}),
-  message&&h('div',{className:'td-toast',role:'status'},message),
-  editing&&h(HbTodayForm,{key:editing.id,initial:editing,projects,onClose:()=>setEditing(null),onSave:saveEdit,onRemove:t=>{setEditing(null);remove(t)}}));
- return h('main',{className:'hb-today td-arch-edition','data-today-layout':'arch-b'},h('style',null,HB_TODAY_CSS),
- h('div',{className:'td-top'},h('button',{className:'td-back',onClick:onBack},'← 返回首頁'),h('span',{className:'td-brand'},h('button',{className:'td-back',style:{marginRight:14},onClick:()=>pickLayout('timeline')},'時間軸檢視'),'HERFULSINS / WORKSPACE')),
- h('div',{className:'td-notebook'},h(HbTodayArch),
- h('header',{className:'td-header'},h('div',{className:'td-heading'},h('p',{className:'td-eyebrow'},'HERFULSINS'),h('p',{className:'td-studio'},'赫柏空間設計'),h('p',{className:'td-date'},new Intl.DateTimeFormat('zh-TW',{timeZone:'Asia/Taipei',dateStyle:'full'}).format(new Date())),h('h1',null,'Le Carnet du Jour'),h('p',{className:'td-title-cn'},'今日待辦')),h('button',{className:'td-primary',onClick:create,disabled:!ready},'＋ 新增待辦')),
- h('section',{className:'td-priorities','aria-labelledby':'td-priority-title'},h('div',{className:'td-sectionhead'},h('h2',{id:'td-priority-title'},'今日重點'),h('span',null,'LES PRIORITÉS')),
- priorities.length?h('div',{className:'td-focusgrid'},priorities.map((t,i)=>h('button',{key:t.id,className:'td-focuscard',onClick:()=>setEditing({...t}),'aria-label':'編輯重點：'+t.title},h('span',{className:'td-focusno'},String(i+1).padStart(2,'0')),h('span',{className:'td-focusbody'},h('strong',null,t.title),h('span',null,t.projectName),h('small',{className:overdue(t)||t.urgent?'td-focusurgent':''},overdue(t)?'已逾期':t.urgent?'優先處理':t.due?'今天到期':'尚未排日期'))))):h('div',{className:'td-focusempty'},h('span',null,loading?'正在整理今日工作…':'今天的待辦已清空。'),h('span',null,loading?'':nextTasks.length?'接下來的安排已列在今日摘要。':'留一點空白，給下一個好想法。'))),
- error&&h('div',{className:'td-error',role:'alert'},error),
- h('div',{className:'td-workspace'},
- h('section',{className:'td-board','aria-labelledby':'td-work-title'},h('div',{className:'td-sectionhead'},h('h2',{id:'td-work-title'},'工作清單'),h('span',null,visible.length+' 項工作')),
- h('div',{className:'td-toolbar'},h('div',{className:'td-tabs',role:'group','aria-label':'待辦範圍'},[['today','今天'],['all','全部'],['done','已完成']].map(([k,v])=>h('button',{key:k,onClick:()=>setView(k),'aria-pressed':view===k,className:view===k?'active':''},v))),h('button',{className:'td-export',onClick:exportCsv},'匯出 CSV')),
- h('div',{className:'td-filters'},h('label',{className:'td-searchlabel'},h('span',null,'搜尋工作'),h('input',{type:'search',value:search,placeholder:'搜尋標題、內容或案場',onChange:e=>setSearch(e.target.value)})),h('label',null,h('span',null,'案場'),h('select',{value:project,onChange:e=>setProject(e.target.value)},h('option',{value:''},'全部案場'),projects.map(p=>h('option',{key:p.id,value:p.id},p.name)))),h('label',null,h('span',null,'負責人'),h('select',{value:person,onChange:e=>setPerson(e.target.value)},h('option',{value:''},'全部人員'),[...new Set(all.map(t=>t.assignee||'未指派'))].sort().map(n=>h('option',{key:n,value:n},n))))),
- h('p',{className:'td-listcaption'},view==='today'?'今天，先把重要的做好。':view==='overdue'?'需要優先處理的逾期工作':view==='upcoming'?'接下來的安排':view==='done'?'已完成的工作':'全部工作'),
- h('div',{className:'td-list'},visible.map((t,i)=>h('article',{key:t.id,className:'td-row '+(t.done?'td-done ':'')+(overdue(t)?'td-overdue':''),style:{animationDelay:Math.min(i*35,210)+'ms'}},h('button',{className:'td-check','aria-label':(t.done?'恢復：':'完成：')+t.title,'aria-pressed':!!t.done,onClick:()=>complete(t)},t.done?'✓':''),h('div',{className:'td-task'},h('h3',null,t.title),h('div',{className:'td-meta'},h('span',null,t.projectName),h('span',null,t.assignee||'未指派')),t.note&&h('p',null,t.note),h('div',{className:'td-badges'},h('span',{className:'td-category'},t.category),t.urgent&&h('span',{className:'td-urgent'},'急件'),t.source==='auto'&&h('span',null,'自動提醒'))),h('div',{className:'td-deadline'},h('strong',null,t.due?t.due.slice(5).replace('-',' / '):'未排日期'),h('span',null,t.done?'已完成':overdue(t)?'已逾期':t.due===today?'今天到期':'待處理')),taskMenu(t)))),
- !visible.length&&h('div',{className:'td-empty'},h('div',null,'✓'),h('h3',null,search||project||person?'沒有符合條件的工作':view==='today'?'今天的待辦已清空':view==='done'?'還沒有完成紀錄':'目前沒有待辦'),h('p',null,search||project||person?'試著調整搜尋或篩選條件。':'按「新增待辦」記下下一件要做的事。'),h('button',{className:'td-primary',onClick:search||project||person?()=>{setSearch('');setProject('');setPerson('')}:create},search||project||person?'清除篩選':'＋ 新增待辦'))),
- h('aside',{className:'td-sidebar'},h('details',{className:'td-summary',open:summaryOpen,onToggle:e=>setSummaryOpen(e.currentTarget.open)},h('summary',null,h('span',null,'今日摘要'),h('small',null,completedToday+' / '+dayTotal),h('span',{className:'td-summarychevron','aria-hidden':true},'⌄')),
- h('div',{className:'td-summarybody'},h('div',{className:'td-progresslabel'},h('span',null,'已完成 ',h('strong',null,completedToday+' / '+dayTotal)),h('span',null,dayPercent+'%')),h('div',{className:'td-progress',role:'progressbar','aria-label':'今日完成進度','aria-valuenow':dayPercent,'aria-valuemin':0,'aria-valuemax':100},h('i',{style:{width:dayPercent+'%'}})),
- h('div',{className:'td-metrics'},metrics.map(([key,label,count])=>h('button',{key,className:'td-metric '+(view===key?'selected ':'')+(key==='overdue'?'td-red':''),'aria-pressed':view===key,onClick:()=>setView(key)},h('span',null,label),h('strong',null,String(count).padStart(2,'0'))))),
- h('section',{className:'td-next'},h('h3',null,'接下來'),nextTasks.length?h('ul',null,nextTasks.map(t=>h('li',{key:t.id},h('button',{onClick:()=>setEditing({...t})},h('time',{dateTime:t.due},t.due.replace(/-/g,' / ')),h('strong',null,t.title),h('span',null,t.projectName))))):h('p',null,'尚未安排後續待辦。')),
- h('p',{className:'td-summarynote'},'今日包含逾期及未排日期的工作。點選數字可篩選清單。'))))),
- h('div',{className:'td-storage'},h('span',null,'手動待辦與完成紀錄儲存於赫柏雲端。 ',h('strong',{className:'td-syncstate'},syncText)),h('button',{onClick:()=>{setError('');load();window.dispatchEvent(new Event('focus'))},disabled:loading},loading?'讀取提醒中…':'↻ 重新整理')),
- h('details',{className:'td-help'},h('summary',null,'待辦整理說明'),h('p',null,'今日包含今天到期、逾期及尚未排日期的工作；逾期優先，再依急件與日期排序。自動提醒來自既有行程、未完成缺失，以及未來 7 天內的客戶預約（只顯示姓名與時段）；勾選代表完成這則提醒，不會修改案場原始紀錄。隱藏的提醒不再重複顯示；完成後可在「已完成」恢復。'),h('p',null,'手動待辦、編輯內容與完成狀態會同步到赫柏雲端；其他裝置登入同一員工系統後即可看到。負責人欄位僅供記錄，不會發送通知。'))),
- message&&h('div',{className:'td-toast',role:'status'},message),editing&&h(HbTodayForm,{key:editing.id,initial:editing,projects,onClose:()=>setEditing(null),onSave:v=>{const {isNew,...task}=v;if(isNew){if(save({...data,manual:[...data.manual,task]})){setEditing(null);setMessage('已新增工作')}}else{const next=task.source==='auto'?{...data,overrides:{...data.overrides,[task.id]:task}}:{...data,manual:data.manual.map(t=>t.id===task.id?task:t)};if(save(next)){setEditing(null);setMessage('已儲存變更')}}}}));
-}
-function HbTodayArch(){
- const h=u.default.createElement,ref=u.useRef(null),[size,setSize]=u.useState({w:1000,h:1000});
- u.useEffect(()=>{const parent=ref.current.parentElement;const measure=()=>{const r=parent.getBoundingClientRect();setSize(old=>Math.abs(old.w-r.width)<.5&&Math.abs(old.h-r.height)<.5?old:{w:r.width,h:r.height})};measure();const observer=new ResizeObserver(measure);observer.observe(parent);return()=>observer.disconnect()},[]);
- const w=Math.max(size.w,200),height=Math.max(size.h,200),rise=w<600?70:86;
- return h('svg',{ref,className:'td-arch-frame',viewBox:'0 0 '+w+' '+height,preserveAspectRatio:'none','aria-hidden':true,focusable:false},h('path',{d:'M1 '+rise+' Q'+w/2+' '+(2-rise)+' '+(w-1)+' '+rise+' V'+(height-1)+' H1 Z'}),h('path',{d:'M7 '+(rise+4)+' Q'+w/2+' '+(18-rise)+' '+(w-7)+' '+(rise+4)+' V'+(height-7)+' H7 Z'}));
-}
-function HbTodayForm({initial,projects,onClose,onSave,onRemove}){
- const h=u.default.createElement,[v,setV]=u.useState(initial),ref=u.useRef(null);u.useEffect(()=>{const el=ref.current;el.showModal();return()=>el.close()},[]);const field=(key,label,type='text')=>h('label',null,h('span',null,label),h('input',{type,value:v[key]||'',required:key==='title',maxLength:key==='title'?200:120,onChange:e=>setV({...v,[key]:e.target.value})}));
- return h('dialog',{ref,className:'td-modal',onCancel:onClose,onClick:e=>{if(e.target===ref.current){const r=ref.current.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)onClose()}}},h('form',{onSubmit:e=>{e.preventDefault();if(!v.title.trim())return;onSave({...v,title:v.title.trim(),assignee:v.assignee.trim()})}},h('div',{className:'td-modalhead'},h('div',null,h('p',{className:'td-modal-fr'},v.isNew?'UNE NOUVELLE TÂCHE':'LES DÉTAILS'),h('h2',null,v.isNew?'新增待辦':'編輯待辦')),h('button',{type:'button',onClick:onClose,'aria-label':'關閉'},'×')),field('title','工作名稱 *'),h('div',{className:'td-formgrid'},h('label',null,h('span',null,'案場'),h('select',{value:v.projectId||'',onChange:e=>setV({...v,projectId:e.target.value})},h('option',{value:''},'公司事務'),projects.map(p=>h('option',{key:p.id,value:p.id},p.name)))),field('assignee','負責人'),field('due','日期（空白＝稍後辦）','date'),field('time','開始時間','time'),field('end','結束時間','time'),h('label',null,h('span',null,'提醒通知'),h('select',{value:v.remind===undefined||v.remind===null?'':String(v.remind),onChange:e=>{const x=e.target.value;setV({...v,remind:x===''?undefined:Number(x)})}},h('option',{value:''},v.source==='auto'?'預設（提前 30 分鐘）':(v.time?'預設（提前 15 分鐘）':'預設（當天早上 9 點）')),h('option',{value:'0'},'準時提醒'),h('option',{value:'5'},'提前 5 分鐘'),h('option',{value:'10'},'提前 10 分鐘'),h('option',{value:'15'},'提前 15 分鐘'),h('option',{value:'30'},'提前 30 分鐘'),h('option',{value:'60'},'提前 1 小時'),h('option',{value:'120'},'提前 2 小時'),h('option',{value:'1440'},'前一天'),h('option',{value:'-1'},'不提醒'))),h('label',null,h('span',null,'工作類別'),h('select',{value:v.category,onChange:e=>setV({...v,category:e.target.value})},['一般','行程','會議','預約','設計','缺失','收款','追加減','材料','採購','許可','保固','私人'].map(c=>h('option',{key:c,value:c},c))))),h('label',null,h('span',null,'工作內容'),h('textarea',{rows:4,maxLength:3000,value:v.note||'',onChange:e=>setV({...v,note:e.target.value})})),h('label',{className:'td-checkbox'},h('input',{type:'checkbox',checked:!!v.urgent,onChange:e=>setV({...v,urgent:e.target.checked})}),'標示為急件'),h('footer',null,!v.isNew&&onRemove&&h('button',{type:'button',onClick:()=>onRemove(v),style:{marginRight:'auto',color:'#9b3b2e'}},v.source==='auto'?'隱藏提醒':'刪除'),h('button',{type:'button',onClick:onClose},'取消'),h('button',{type:'submit',className:'td-primary'},'儲存工作'))));
-}
-var HB_TODAY_CSS=`
-.hb-today{--td-ink:#332e27;--td-muted:#827665;--td-gold:#ad9364;--td-line:#d6cbb7;--td-wine:#762d35;max-width:1320px;margin:0 auto;padding:0 30px 48px;color:var(--td-ink);font-family:'Noto Sans TC',sans-serif;font-size:14px;background:transparent}
-.hb-today *,.td-modal *{box-sizing:border-box}.hb-today button,.td-modal button{font:inherit;cursor:pointer}.hb-today button:disabled{opacity:.5;cursor:wait}.hb-today .td-top{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:22px 4px 16px;border:0;background:none;margin:0;min-height:62px}.hb-today .td-back{border:0;background:none;color:var(--td-muted);padding:8px 0;font-size:13px}.hb-today .td-brand{font:11px Georgia,serif;letter-spacing:.2em;color:var(--td-muted)}
-.td-notebook{position:relative;padding:42px 36px 30px;margin:8px 0 0;background:rgba(255,253,247,.38)}.td-notebook>*:not(.td-arch-frame){position:relative;z-index:1}.td-arch-frame{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible;z-index:0}.td-arch-frame path{fill:none;stroke:var(--td-gold);stroke-width:.8;vector-effect:non-scaling-stroke}
-.td-header{position:relative;text-align:center;padding:0 0 27px;border-bottom:1px solid var(--td-line);margin:0}.td-eyebrow{font:17px Georgia,serif;letter-spacing:.33em;margin:0 0 7px;padding-left:.33em;color:var(--td-ink)}.td-studio{font-family:'Noto Serif TC',serif;font-size:11px;letter-spacing:.32em;margin:0 0 23px}.td-date{font-family:'Noto Serif TC',serif;font-size:13px;letter-spacing:.12em;color:var(--td-muted);margin:0 0 17px}.td-header h1{font-family:'Cormorant Garamond',Georgia,serif;font-size:clamp(38px,4.4vw,64px);font-weight:400;line-height:1.12;letter-spacing:-.015em;margin:0 0 12px;color:var(--td-ink)}.td-title-cn{font-family:'Noto Serif TC',serif;font-size:20px;letter-spacing:.28em;padding-left:.28em;line-height:1.7;margin:0}.td-primary{border:1px solid var(--td-wine,#762d35);background:var(--td-wine,#762d35);color:#fffaf2;padding:12px 19px;min-height:44px;border-radius:2px;letter-spacing:.04em}.td-primary:hover{background:#63232c}.td-header>.td-primary{position:absolute;right:0;bottom:29px;font-size:13px}
-.td-sectionhead{display:flex;justify-content:space-between;align-items:center;gap:12px}.td-sectionhead h2,.td-summary>summary>span:first-child{font-family:'Noto Serif TC',serif;font-size:20px;font-weight:500;letter-spacing:.13em;margin:0;line-height:1.6}.td-sectionhead h2:before,.td-summary>summary>span:first-child:before{content:'';display:inline-block;vertical-align:-2px;width:3px;height:18px;background:#57432c;margin-right:12px}.td-sectionhead>span{font-family:Georgia,'Noto Serif TC',serif;font-size:11px;letter-spacing:.14em;color:var(--td-muted)}.td-priorities{padding:23px 0 24px;border-bottom:1px solid var(--td-line)}.td-focusgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin-top:18px;gap:0}.td-focuscard{display:flex;align-items:flex-start;gap:16px;text-align:left;padding:9px 20px 8px 0;border:0;border-right:1px solid var(--td-line);background:none;color:inherit;min-width:0}.td-focuscard:not(:first-child){padding-left:23px}.td-focuscard:last-child{border-right:0;padding-right:0}.td-focuscard:hover .td-focusbody strong{color:var(--td-wine)}.td-focusno{font:italic 42px/1 Georgia,serif;color:#a28a61;flex-shrink:0}.td-focusbody{display:flex;flex-direction:column;gap:7px;min-width:0}.td-focusbody strong{font-family:'Noto Serif TC',serif;font-size:16px;font-weight:500;line-height:1.6;overflow-wrap:anywhere}.td-focusbody>span{font-size:12px;color:var(--td-muted)}.td-focusbody small{font-size:11px;color:var(--td-muted)}.td-focusbody .td-focusurgent{color:var(--td-wine)}.td-focusempty{display:flex;justify-content:space-between;gap:15px;padding:22px 0 5px;color:var(--td-muted);font-size:13px;line-height:1.8}
-.td-workspace{display:grid;grid-template-columns:minmax(0,1fr) 268px;gap:28px;padding:26px 0 20px}.td-board{min-width:0}.td-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:17px 0 15px}.td-tabs{display:flex;gap:7px}.td-tabs button{background:none;border:1px solid transparent;border-radius:20px;padding:7px 14px;color:var(--td-muted);min-height:36px;font-size:12px}.td-tabs .active{background:var(--td-wine);border-color:var(--td-wine);color:#fffaf4}.td-export{padding:8px 10px;background:none;border:1px solid var(--td-line);border-radius:2px;color:var(--td-ink);font-size:11px;min-height:36px;white-space:nowrap}.td-filters{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:10px;margin-bottom:15px}.td-filters label{display:flex;flex-direction:column;gap:6px;min-width:0;font-size:11px;color:var(--td-muted)}.td-filters input,.td-filters select{width:100%;min-width:0;border:1px solid var(--td-line);border-radius:2px;background:rgba(255,255,255,.35);padding:9px 8px;min-height:39px;color:var(--td-ink);font:inherit;font-size:12px}.td-listcaption{font-family:'Noto Serif TC',serif;font-size:12px;color:var(--td-muted);margin:6px 0 13px;line-height:1.6}.td-list{border-top:1px solid var(--td-line)}.td-row{display:grid;grid-template-columns:24px minmax(0,1fr) 77px 28px;gap:13px;align-items:center;padding:20px 0;border-bottom:1px solid var(--td-line);animation:td-row-in .32s ease backwards;transition:background-color .2s}.td-row:hover{background-color:rgba(255,255,255,.28)}.td-check{height:23px;width:23px;flex-shrink:0;padding:0;border:1px solid #9d855d;border-radius:50%;background:none;color:#fffaf2;position:relative}.td-check:before{content:'';position:absolute;inset:-7px}.td-done .td-check{background:#9d8d72}.td-done h3{text-decoration:line-through;color:#9b9285}.td-task{min-width:0}.td-task h3{font-family:'Noto Serif TC',serif;font-size:15px;font-weight:500;line-height:1.65;margin:0 0 5px;overflow-wrap:anywhere}.td-task p{font-size:12px;line-height:1.75;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--td-muted);margin:7px 0}.td-meta{display:flex;flex-wrap:wrap;gap:5px 12px;font-size:11px;color:var(--td-muted)}.td-badges{display:flex;flex-wrap:wrap;gap:7px;align-items:center;color:#928774;font-size:10px;margin-top:9px}.td-category{padding:2px 6px;background:#eee8dc;border-radius:2px}.td-urgent{color:var(--td-wine);padding:2px 6px;background:#f1e1dd;border-radius:2px}.td-deadline{display:flex;flex-direction:column;gap:7px;align-items:flex-end;font-size:11px;color:var(--td-muted)}.td-deadline strong{font-family:Georgia,'Noto Serif TC',serif;font-size:13px;font-weight:400;white-space:nowrap}.td-overdue .td-deadline{color:var(--td-wine)}.td-more{position:relative;align-self:center}.td-more>summary{list-style:none;cursor:pointer;text-align:center;font-size:21px;line-height:1;min-height:36px;display:flex;align-items:center;justify-content:center;color:#776347}.td-more>summary::-webkit-details-marker{display:none}.td-actionmenu{position:absolute;right:0;top:100%;z-index:9;min-width:125px;padding:5px;background:#fffdf8;border:1px solid var(--td-line);box-shadow:0 8px 22px #392b1718}.td-actionmenu button{display:block;width:100%;background:none;border:0;color:var(--td-ink);padding:12px;text-align:left;white-space:nowrap;font-size:12px}.td-actionmenu button:hover{background:#f2ece1}.td-actionmenu .td-delete{color:var(--td-wine)}
-.td-sidebar{border-left:1px solid var(--td-line);padding-left:25px;min-width:0}.td-summary>summary{display:flex;align-items:center;gap:10px;list-style:none;cursor:pointer;min-height:38px}.td-summary>summary::-webkit-details-marker{display:none}.td-summary>summary>small{display:none;font:13px Georgia,serif;color:var(--td-muted);margin-left:auto}.td-summarychevron{font-size:16px;color:var(--td-muted);margin-left:auto;transition:transform .2s}.td-summary[open] .td-summarychevron{transform:rotate(180deg)}.td-summarybody{padding-top:22px}.td-progresslabel{display:flex;justify-content:space-between;align-items:center;font-size:12px;line-height:1.5;color:var(--td-muted)}.td-progresslabel strong{font:17px Georgia,serif;color:var(--td-ink);margin-left:5px}.td-progress{height:7px;background:#e5dfd3;border-radius:4px;overflow:hidden;margin-top:13px}.td-progress i{display:block;height:100%;background:var(--td-wine);border-radius:4px;transition:width .3s ease}.td-metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:21px 0;border-bottom:1px solid var(--td-line)}.td-metric{padding:11px 9px;display:flex;flex-direction:column;gap:8px;align-items:flex-start;background:none;color:var(--td-muted);border:1px solid transparent;border-radius:2px}.td-metric>span{font-size:11px}.td-metric strong{font:27px Georgia,serif;color:#8f7853}.td-metric.selected{background:#efe8db;border-color:#d7c9ae}.td-metric.selected strong,.td-metric.td-red strong{color:var(--td-wine)}.td-next{padding-top:20px}.td-next h3{font-family:'Noto Serif TC',serif;font-size:17px;font-weight:500;letter-spacing:.12em;margin:0 0 15px}.td-next ul{padding:0;margin:0;list-style:none}.td-next li+li{border-top:1px solid #e4dccd;margin-top:12px;padding-top:12px}.td-next button{display:flex;flex-direction:column;gap:7px;align-items:flex-start;text-align:left;border:0;background:none;padding:0;width:100%;color:var(--td-ink)}.td-next time{font:11px Georgia,serif;color:var(--td-muted)}.td-next strong{font-family:'Noto Serif TC',serif;font-size:13px;font-weight:500;line-height:1.65;overflow-wrap:anywhere}.td-next span,.td-next p{font-size:11px;color:var(--td-muted);line-height:1.7}.td-summarynote{font-size:10px;color:#968a76;line-height:1.9;margin:22px 0 0;padding-top:15px;border-top:1px solid var(--td-line)}
-.td-syncstate{color:var(--td-wine);font-weight:500}
-.td-storage{display:flex;justify-content:space-between;align-items:center;gap:18px;padding:17px 0 12px;border-top:1px solid var(--td-line);font-size:11px;color:var(--td-muted);line-height:1.8}.td-storage button{padding:8px 0;background:none;border:0;color:var(--td-muted);font-size:11px;white-space:nowrap}.td-help{font-size:11px;line-height:1.9;color:var(--td-muted);padding:3px 0}.td-help>summary{cursor:pointer;display:list-item}.td-help p{max-width:820px}.td-empty{text-align:center;padding:40px 12px 45px;border-top:1px solid var(--td-line)}.td-empty>div{font:32px Georgia,serif;color:#9a855f}.td-empty h3{font-family:'Noto Serif TC',serif;font-size:18px;font-weight:400}.td-empty p{font-size:12px;line-height:1.8;color:var(--td-muted);margin-bottom:22px}.td-error{background:#f4e6df;border-left:2px solid var(--td-wine);padding:13px 15px;margin-top:15px;color:var(--td-wine);font-size:12px;line-height:1.7}.td-toast{position:fixed;bottom:104px;left:50%;transform:translateX(-50%);z-index:300;background:#443c30;color:#fffaf3;padding:14px 22px;border-radius:3px;font-size:13px;max-width:90vw;box-shadow:0 8px 22px #0002}
-.td-modal{width:min(560px,calc(100vw - 28px));max-height:90dvh;overflow:auto;border:1px solid #b49c70;background:#fffdf6;border-radius:3px;padding:28px;color:#332e27;font-family:'Noto Sans TC',sans-serif}.td-modal::backdrop{background:#28231d88;backdrop-filter:blur(3px)}.td-modalhead{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:23px}.td-modal-fr{font:12px Georgia,serif;color:#9a8158;letter-spacing:.15em;margin:0 0 8px}.td-modalhead h2{font-family:'Noto Serif TC',serif;font-size:24px;letter-spacing:.1em;font-weight:400;margin:0}.td-modalhead button{border:0;background:none;font-size:28px;padding:4px 9px;color:#786a58}.td-modal form>label{margin-bottom:17px}.td-modal label{display:flex;flex-direction:column;gap:8px;font-size:13px;color:#756a5b}.td-modal input:not([type=checkbox]),.td-modal select,.td-modal textarea{width:100%;min-width:0;border:1px solid #d2c6b1;background:#fffef9;padding:11px 12px;min-height:44px;font:inherit;color:#332e27;border-radius:2px}.td-formgrid{display:grid;grid-template-columns:1fr 1fr;gap:17px;margin-bottom:17px}.td-modal .td-checkbox{display:flex;flex-direction:row;align-items:center;gap:9px}.td-checkbox input{width:18px;height:18px;accent-color:#762d35}.td-modal footer{display:flex;justify-content:flex-end;gap:11px;margin-top:23px}.td-modal footer button{padding:11px 19px;border:1px solid #d2c6b1;border-radius:2px;background:none;color:#6e6150}.td-modal footer .td-primary{background:#762d35;border-color:#762d35;color:#fffaf2}.hb-today :focus-visible,.td-modal :focus-visible{outline:2px solid #a58a58;outline-offset:3px}@keyframes td-row-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-@media(max-width:1100px){.hb-today{padding:0 22px 40px}.td-notebook{padding:42px 28px 26px}.td-workspace{grid-template-columns:minmax(0,1fr) 228px;gap:22px}.td-sidebar{padding-left:20px}.td-header>.td-primary{position:static;margin-top:18px}.td-header{padding-bottom:22px}.td-filters{grid-template-columns:1fr 1fr}.td-searchlabel{grid-column:1/-1}.td-focuscard{gap:12px}.td-focuscard:not(:first-child){padding-left:16px}.td-focusbody strong{font-size:14px}.td-focusno{font-size:36px}}
-@media(max-width:899px){.hb-today{padding:0 14px 35px}.td-notebook{padding:35px 22px 24px}.td-header h1{font-size:43px}.td-header>.td-primary{position:static;margin-top:16px}.td-workspace{display:flex;flex-direction:column;gap:23px}.td-sidebar{padding:16px 0 0;border-left:0;border-top:1px solid var(--td-line)}.td-summary>summary>small{display:block}.td-summarychevron{margin-left:3px}.td-summarybody{display:grid;grid-template-columns:1fr 1fr;column-gap:24px}.td-progresslabel,.td-progress{grid-column:1/-1}.td-metrics{border-bottom:0}.td-summarynote{grid-column:1/-1;margin-top:5px}.td-filters{grid-template-columns:1.4fr 1fr 1fr}.td-searchlabel{grid-column:auto}.td-storage{font-size:10px}.td-sectionhead h2,.td-summary>summary>span:first-child{font-size:18px}}
-@media(max-width:560px){.hb-today{padding:0 10px 28px}.hb-today .td-top{padding:10px 5px;min-height:52px}.hb-today .td-brand{font-size:9px;letter-spacing:.11em}.hb-today .td-back{font-size:12px}.td-notebook{margin-top:2px;padding:32px 19px 22px}.td-eyebrow{font-size:13px;letter-spacing:.26em}.td-studio{font-size:10px;margin-bottom:18px}.td-date{font-size:11px;letter-spacing:.03em;margin-bottom:16px}.td-header h1{font-size:36px;max-width:300px;margin:0 auto 12px;line-height:1.1}.td-title-cn{font-size:17px}.td-header>.td-primary{font-size:12px;padding:10px 16px;min-height:42px}.td-header{padding-bottom:20px}.td-priorities{padding:20px 0}.td-sectionhead>span{font-size:9px;letter-spacing:.1em}.td-focusgrid{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:0;margin-top:15px;padding-bottom:7px;scrollbar-width:thin;scrollbar-color:#c4b18c transparent}.td-focuscard{flex:0 0 92%;scroll-snap-align:start;padding:6px 17px 5px 0;min-width:0;gap:14px}.td-focuscard:not(:first-child){padding-left:17px}.td-focuscard:last-child{border-right:0}.td-focusno{font-size:38px}.td-focusbody strong{font-size:15px}.td-focusbody>span{font-size:11px}.td-focusempty{flex-direction:column;gap:6px;padding-top:15px}.td-workspace{padding-top:22px;gap:18px}.td-toolbar{gap:8px;padding:15px 0}.td-tabs{gap:1px}.td-tabs button{padding:7px 11px;font-size:11px}.td-export{font-size:10px;padding:7px 8px}.td-filters{grid-template-columns:1fr 1fr;gap:9px}.td-searchlabel{grid-column:1/-1}.td-filters input,.td-filters select{font-size:12px;min-height:40px}.td-row{grid-template-columns:22px minmax(0,1fr) 25px;gap:10px;padding:17px 0}.td-check{width:21px;height:21px;align-self:start;margin-top:3px}.td-task h3{font-size:14px}.td-task p{font-size:11px}.td-deadline{grid-column:2;grid-row:2;flex-direction:row;justify-content:flex-start;gap:10px;align-items:center}.td-more{grid-column:3;grid-row:1;align-self:start}.td-task{grid-column:2;grid-row:1}.td-summarybody{display:block}.td-metrics{padding-bottom:15px;border-bottom:1px solid var(--td-line)}.td-summarynote{margin-top:20px}.td-storage{align-items:flex-start;gap:12px}.td-storage>span{max-width:75%}.td-storage button{padding-top:0}.td-help{font-size:10px}.td-modal{padding:22px}.td-formgrid{grid-template-columns:1fr}.td-empty{padding:30px 0}.td-empty h3{font-size:17px}}
-@media(prefers-reduced-motion:reduce){.hb-today *,.td-modal *{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
-
-/* 新增／編輯待辦視窗：手機與 App 不可左右滑動（iOS 的日期、時間欄位有固定最小寬度，會把表單撐寬） */
-.td-modal{box-sizing:border-box;overflow-x:hidden;overscroll-behavior:contain;max-width:calc(100vw - 20px);margin-left:auto;margin-right:auto}
-.td-modal form,.td-modal label,.td-modal .td-formgrid>*{min-width:0;max-width:100%}
-.td-formgrid{grid-template-columns:repeat(2,minmax(0,1fr))}
-.td-modal input[type=date],.td-modal input[type=time]{-webkit-appearance:none;appearance:none;display:block;width:100%;min-width:0;max-width:100%;text-align:left;line-height:1.3}
-.td-modal input[type=date]::-webkit-date-and-time-value,.td-modal input[type=time]::-webkit-date-and-time-value{text-align:left;margin:0}
-.td-modal footer{flex-wrap:wrap}
-@media (max-width:620px){.td-modal{width:calc(100vw - 20px);padding:20px 16px}.td-formgrid{grid-template-columns:minmax(0,1fr)}.td-modalhead h2{font-size:21px}}
-`;
-function Gy(){let[l,t]=(0,u.useState)(!0),[e,n]=(0,u.useState)(!1),[a,i]=(0,u.useState)([]),[o,f]=(0,u.useState)(()=>{try{let v=sessionStorage.getItem("hb_last_view");return v&&v!=="quoteImportPick"&&v!=="drawings"?v:"landing"}catch{return"landing"}}),[c,r]=(0,u.useState)(()=>{try{return sessionStorage.getItem("hb_last_project")||null}catch{return null}}),[d,h]=(0,u.useState)(!1),[m,p]=(0,u.useState)(null),[z,C]=(0,u.useState)(null),[hbOpenTab,hbSetOpenTab]=(0,u.useState)(()=>{try{return sessionStorage.getItem("hb_last_tab")||"overview"}catch{return"overview"}}),[hbQuoteImport,hbSetQuoteImport]=(0,u.useState)(null),[hbProg,hbSetProg]=(0,u.useState)({}),D=async T=>{T?n(!0):t(!0);try{let{data:k,error:H}=await q.from("sitelog_projects").select("*, sitelog_photos(count), sitelog_quotes(count)").order("created_at",{ascending:!1});if(H){g("讀取案件失敗："+H.message);T||i([])}else i((k||[]).map(cm))}catch(k){g("讀取案件失敗："+(k.message||k))}finally{T?n(!1):t(!1)}},hbLoadProg=async()=>{try{let{data:ev}=await q.from("sitelog_schedule_events").select("project_id,project_name,start_date,end_date").eq("type","site").neq("status","cancelled");if(!ev)return;let by={};for(let x of ev){let st=x.start_date;if(!st)continue;let en=x.end_date||st;for(let k2 of [x.project_id,x.project_name?"name:"+x.project_name:null]){if(!k2)continue;let cur=by[k2];if(!cur){by[k2]={s:st,e:en}}else{if(st<cur.s)cur.s=st;if(en>cur.e)cur.e=en}}}hbSetProg(by)}catch{}},y=async()=>{let[T,k,H,B]=await Promise.all([q.from("sitelog_photos").select("size"),q.from("sitelog_quotes").select("size"),q.from("sitelog_files").select("size"),q.from("sitelog_materials").select("photo_size")]);if(T.error||k.error||H.error||B.error)return;let nl=(ql,je)=>(ql||[]).reduce((Ml,te)=>Ml+(Number(te[je])||0),0),hl=nl(T.data,"size")+nl(k.data,"size")+nl(H.data,"size")+nl(B.data,"photo_size");C(hl)};(0,u.useEffect)(()=>{D(!1),y(),hbLoadProg()},[]);(0,u.useEffect)(()=>{try{o&&o!=="quoteImportPick"&&sessionStorage.setItem("hb_last_view",o);c?sessionStorage.setItem("hb_last_project",c):sessionStorage.removeItem("hb_last_project");sessionStorage.setItem("hb_last_tab",hbOpenTab)}catch{}},[o,c,hbOpenTab]);(0,u.useEffect)(()=>{let hbMsg=T=>{T?.data&&T.data.type==="hb-quote-import"&&(hbSetQuoteImport(T.data),f("quoteImportPick"))};return window.addEventListener("message",hbMsg),()=>window.removeEventListener("message",hbMsg)},[]);let g=(0,u.useCallback)(T=>{p(T),setTimeout(()=>p(null),2600)},[]),hbImportQuote=async T=>{if(!hbQuoteImport)return;try{let{blob:k,filename:H,meta:B}=hbQuoteImport,mt=k.type||"text/html",sl=`${T.id}/${Be()}.${mt==="application/json"?"json":"html"}`,X=await r2UploadSitelogFile("sitelog-quotes",sl,k,mt);let{error:dl}=await q.from("sitelog_quotes").insert({project_id:T.id,name:H,mime:mt,size:k.size,url:X,path:sl,folder_id:null});if(dl)throw dl;i(ql=>ql.map(je=>je.id===T.id?{...je,quoteCount:(je.quoteCount||0)+1}:je)),hbSetQuoteImport(null),r(T),hbSetOpenTab("quotes"),f("detail"),g(`\u5DF2\u5C07\u5831\u50F9\u55AE\u300C${B?.qClient||H}\u300D\u5B58\u5165\u6848\u4EF6`)}catch(k){g("\u5B58\u6A94\u5931\u6557\uFF1A"+(k.message||k))}},b=async(T,k,H,B)=>{let{data:nl,error:hl}=await q.from("sitelog_projects").insert({name:T,address:k,lat:H??null,lng:B??null,status:fn[0]}).select().single();if(hl){g("\u5EFA\u7ACB\u5931\u6557\uFF1A"+hl.message);return}i(ql=>[cm(nl),...ql]),h(!1),g("\u6848\u4EF6\u5DF2\u5EFA\u7ACB")},S=async(T,k)=>{i(hl=>hl.map(ql=>ql.id===T?{...ql,...k,updatedAt:new Date().toISOString()}:ql));let H={name:"name",address:"address",lat:"lat",lng:"lng",status:"status",ownerPassword:"owner_password",expectedEnd:"expected_end",clientInfo:"client_info",avatarUrl:"avatar_url"},B={};for(let hl of Object.keys(H))hl in k&&(B[H[hl]]=k[hl]);if(Object.keys(B).length===0)return;B.updated_at=new Date().toISOString();let{error:nl}=await q.from("sitelog_projects").update(B).eq("id",T);nl&&g("\u66F4\u65B0\u5931\u6557\uFF1A"+nl.message)},M=async T=>{let{error:k}=await q.from("sitelog_projects").delete().eq("id",T);if(k){g("\u522A\u9664\u5931\u6557\uFF1A"+k.message);return!1}i(H=>H.filter(B=>B.id!==T)),f("home"),g("\u6848\u4EF6\u5DF2\u522A\u9664");return!0},j=a.find(T=>T.id===c);return u.default.createElement("div",{className:"hb-shell",style:{background:s.paper,height:"100vh",overflow:"hidden",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},u.default.createElement("div",{className:"hb-global-menu-slot"}),u.default.createElement("style",null,`
+function Gy(){let[l,t]=(0,u.useState)(!0),[e,n]=(0,u.useState)(!1),[a,i]=(0,u.useState)([]),[o,f]=(0,u.useState)(()=>{try{let v=sessionStorage.getItem("hb_last_view");return v&&v!=="quoteImportPick"&&v!=="drawings"&&v!=="today"&&v!=="bookings"?v:"landing"}catch{return"landing"}}),[c,r]=(0,u.useState)(()=>{try{return sessionStorage.getItem("hb_last_project")||null}catch{return null}}),[d,h]=(0,u.useState)(!1),[m,p]=(0,u.useState)(null),[z,C]=(0,u.useState)(null),[hbOpenTab,hbSetOpenTab]=(0,u.useState)(()=>{try{return sessionStorage.getItem("hb_last_tab")||"overview"}catch{return"overview"}}),[hbQuoteImport,hbSetQuoteImport]=(0,u.useState)(null),[hbProg,hbSetProg]=(0,u.useState)({}),D=async T=>{T?n(!0):t(!0);try{let{data:k,error:H}=await q.from("sitelog_projects").select("*, sitelog_photos(count), sitelog_quotes(count)").order("created_at",{ascending:!1});if(H){g("讀取案件失敗："+H.message);T||i([])}else i((k||[]).map(cm))}catch(k){g("讀取案件失敗："+(k.message||k))}finally{T?n(!1):t(!1)}},hbLoadProg=async()=>{try{let{data:ev}=await q.from("sitelog_schedule_events").select("project_id,project_name,start_date,end_date").eq("type","site").neq("status","cancelled");if(!ev)return;let by={};for(let x of ev){let st=x.start_date;if(!st)continue;let en=x.end_date||st;for(let k2 of [x.project_id,x.project_name?"name:"+x.project_name:null]){if(!k2)continue;let cur=by[k2];if(!cur){by[k2]={s:st,e:en}}else{if(st<cur.s)cur.s=st;if(en>cur.e)cur.e=en}}}hbSetProg(by)}catch{}},y=async()=>{let[T,k,H,B]=await Promise.all([q.from("sitelog_photos").select("size"),q.from("sitelog_quotes").select("size"),q.from("sitelog_files").select("size"),q.from("sitelog_materials").select("photo_size")]);if(T.error||k.error||H.error||B.error)return;let nl=(ql,je)=>(ql||[]).reduce((Ml,te)=>Ml+(Number(te[je])||0),0),hl=nl(T.data,"size")+nl(k.data,"size")+nl(H.data,"size")+nl(B.data,"photo_size");C(hl)};(0,u.useEffect)(()=>{D(!1),y(),hbLoadProg()},[]);(0,u.useEffect)(()=>{try{o&&o!=="quoteImportPick"&&sessionStorage.setItem("hb_last_view",o);c?sessionStorage.setItem("hb_last_project",c):sessionStorage.removeItem("hb_last_project");sessionStorage.setItem("hb_last_tab",hbOpenTab)}catch{}},[o,c,hbOpenTab]);(0,u.useEffect)(()=>{let hbMsg=T=>{T?.data&&T.data.type==="hb-quote-import"&&(hbSetQuoteImport(T.data),f("quoteImportPick"))};return window.addEventListener("message",hbMsg),()=>window.removeEventListener("message",hbMsg)},[]);let g=(0,u.useCallback)(T=>{p(T),setTimeout(()=>p(null),2600)},[]),hbImportQuote=async T=>{if(!hbQuoteImport)return;try{let{blob:k,filename:H,meta:B}=hbQuoteImport,mt=k.type||"text/html",sl=`${T.id}/${Be()}.${mt==="application/json"?"json":"html"}`,X=await r2UploadSitelogFile("sitelog-quotes",sl,k,mt);let{error:dl}=await q.from("sitelog_quotes").insert({project_id:T.id,name:H,mime:mt,size:k.size,url:X,path:sl,folder_id:null});if(dl)throw dl;i(ql=>ql.map(je=>je.id===T.id?{...je,quoteCount:(je.quoteCount||0)+1}:je)),hbSetQuoteImport(null),r(T),hbSetOpenTab("quotes"),f("detail"),g(`\u5DF2\u5C07\u5831\u50F9\u55AE\u300C${B?.qClient||H}\u300D\u5B58\u5165\u6848\u4EF6`)}catch(k){g("\u5B58\u6A94\u5931\u6557\uFF1A"+(k.message||k))}},b=async(T,k,H,B)=>{let{data:nl,error:hl}=await q.from("sitelog_projects").insert({name:T,address:k,lat:H??null,lng:B??null,status:fn[0]}).select().single();if(hl){g("\u5EFA\u7ACB\u5931\u6557\uFF1A"+hl.message);return}i(ql=>[cm(nl),...ql]),h(!1),g("\u6848\u4EF6\u5DF2\u5EFA\u7ACB")},S=async(T,k)=>{i(hl=>hl.map(ql=>ql.id===T?{...ql,...k,updatedAt:new Date().toISOString()}:ql));let H={name:"name",address:"address",lat:"lat",lng:"lng",status:"status",ownerPassword:"owner_password",expectedEnd:"expected_end",clientInfo:"client_info",avatarUrl:"avatar_url"},B={};for(let hl of Object.keys(H))hl in k&&(B[H[hl]]=k[hl]);if(Object.keys(B).length===0)return;B.updated_at=new Date().toISOString();let{error:nl}=await q.from("sitelog_projects").update(B).eq("id",T);nl&&g("\u66F4\u65B0\u5931\u6557\uFF1A"+nl.message)},M=async T=>{let{error:k}=await q.from("sitelog_projects").delete().eq("id",T);if(k){g("\u522A\u9664\u5931\u6557\uFF1A"+k.message);return!1}i(H=>H.filter(B=>B.id!==T)),f("home"),g("\u6848\u4EF6\u5DF2\u522A\u9664");return!0},j=a.find(T=>T.id===c);return u.default.createElement("div",{className:"hb-shell",style:{background:s.paper,height:"100vh",overflow:"hidden",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},u.default.createElement("div",{className:"hb-global-menu-slot"}),u.default.createElement("style",null,`
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap');
         @media (min-width: 860px) {
           html, body { background: #DCE4E1; }
@@ -15959,7 +15529,7 @@ function Gy(){let[l,t]=(0,u.useState)(!0),[e,n]=(0,u.useState)(!1),[a,i]=(0,u.us
         }
         .fade-in { animation: hbFadeIn .2s var(--hb-ease-out) both; }
         @media (prefers-reduced-motion: reduce){ .fade-in { animation-name: hbFadeInSoft; } }
-      `),u.default.createElement("div",{key:o,className:"hb-pagein",style:{height:"100%",overflowY:o==="landing"?"hidden":"auto",WebkitOverflowScrolling:"touch",paddingBottom:o==="landing"?0:92}},l?u.default.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh"}},u.default.createElement(E,{name:"loader",className:"animate-spin",size:28,color:s.ocean})):o==="landing"?u.default.createElement(HbLanding,{onToday:()=>f("today"),onCase:()=>f("home"),onCompany:()=>f("companyHub"),onManageStaff:()=>f("staff"),onQuickQuote:()=>f("estimateHub"),onProposal:()=>HB_openProposalSystem(),onMarketingPhotos:()=>f("marketingPhotos"),onBookings:()=>f("bookings"),onOpenBooking:()=>HB_openBookingSystem(),onDrawings:()=>f("drawings"),onDocs:()=>{window.__hbDocsFrom="landing";f("docsHub")},onLogout:()=>{HB_staffLogout()}}):o==="today"?u.default.createElement(HbWorkHub,{projects:a,notify:g,initialView:"today",onBack:()=>f("landing"),onOpenProject:id=>{if(a.some(p=>p.id===id)){r(id);hbSetOpenTab("overview");f("detail")}else g("找不到這個案場，請重新整理")}}):o==="companyHub"?u.default.createElement(HbCompanyHub,{onBack:()=>f("landing"),onContracts:()=>f("contracts"),onQuotes:()=>f("estimateHub"),onReceipts:()=>f("receipts"),onVendorReceipts:()=>f("vendorReceipts"),onQuickQuote:()=>f("estimateHub"),onGoHome:()=>f("home"),onVendorQuotes:()=>f("vendorQuotes"),onProposal:()=>HB_openProposalSystem(),onMarketingPhotos:()=>f("marketingPhotos"),onBookings:()=>f("bookings"),onOpenBooking:()=>HB_openBookingSystem(),onDrawings:()=>f("drawings"),onAttendance:()=>f("attendance"),onPriceBook:()=>f("priceBook"),onSurvey:()=>f("survey"),onChangeOrders:()=>f("changeOrders"),onPdfRotate:()=>f("pdfRotate"),onDocs:()=>{window.__hbDocsFrom="companyHub";f("docsHub")}}):o==="docsHub"?u.default.createElement(HbDocsHub,{onBack:()=>f(window.__hbDocsFrom||"landing"),notify:g,projects:a}):o==="changeOrders"?u.default.createElement(HbChangeOrderHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="survey"?u.default.createElement(HbSurveyHub,{onBack:()=>f("companyHub"),notify:g,projects:a,onProjectCreated:pj=>i(v=>[cm(pj),...v])}):o==="priceBook"?u.default.createElement(HbPriceBookHub,{onBack:()=>f("companyHub"),notify:g}):o==="attendance"?u.default.createElement(HbAttendanceHub,{onBack:()=>f("companyHub"),notify:g}):o==="marketingPhotos"?u.default.createElement(HbMarketingPhotoHub,{onBack:()=>f("landing"),notify:g}):o==="bookings"?u.default.createElement(HbWorkHub,{projects:a,notify:g,initialView:"calendar",onBack:()=>f("landing"),onOpenProject:id=>{if(a.some(p=>p.id===id)){r(id);hbSetOpenTab("overview");f("detail")}else g("找不到這個案場，請重新整理")}}):o==="vendorQuotes"?u.default.createElement(HbVendorQuoteHub,{onBack:()=>f("companyHub"),notify:g}):o==="drawings"?u.default.createElement(HbDrawingHub,{onBack:()=>f("landing"),notify:g,projects:a,onOpenProject:(id,tab)=>{if(a.some(p=>p.id===id)){r(id);hbSetOpenTab(tab||"overview");f("detail")}else g("找不到這個案場，請重新整理")},onNewCase:()=>{f("home");h(!0)},workbench:u.default.createElement(HbHubWorkbench,{projects:a,onCalendar:()=>f("today"),onTodayHub:()=>f("today"),onOpenProject:id=>{if(a.some(p=>p.id===id)){r(id);hbSetOpenTab("overview");f("detail")}else g("找不到這個案場，請重新整理")}})}):o==="receipts"?u.default.createElement(HbReceiptsHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="vendorReceipts"?u.default.createElement(HbVendorReceiptsHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="quoteImportPick"?u.default.createElement(Iy,{projects:a,onOpen:hbImportQuote,onNew:()=>h(!0),onRefresh:()=>{D(!0),y()},refreshing:e,storageUsedBytes:z,onManageStaff:()=>f("staff"),pickerMode:!0,progressRanges:hbProg,onBack:()=>f("companyHub")}):o==="estimateHub"?u.default.createElement(HerfulsinsEstimateHub,{project:null,notify:g,onClose:()=>f("companyHub")}):o==="home"?u.default.createElement(Iy,{projects:a,notify:g,onOpen:T=>{r(T),hbSetOpenTab("photos"),f("detail")},onWbOpen:T=>{r(T),hbSetOpenTab("overview"),f("detail")},onCalendar:()=>f("today"),onTodayHub:()=>f("today"),onNew:()=>h(!0),onRefresh:()=>{D(!0),y()},refreshing:e,storageUsedBytes:z,onManageStaff:()=>f("staff"),progressRanges:hbProg,onBack:()=>f("landing"),onGoCompany:()=>f("companyHub")}):o==="staff"?u.default.createElement(Ky,{onBack:()=>f("landing")}):o==="pdfRotate"?u.default.createElement(HbPdfRotate,{onBack:()=>f("companyHub"),notify:g}):o==="contracts"?u.default.createElement(HerfulsinsContractsHub,{onBack:()=>f("landing"),notify:g}):o==="digitalCard"?u.default.createElement(HbDigitalCard,{onBack:()=>f("landing"),notify:g}):u.default.createElement(lh,{project:j,onBack:()=>f("home"),onUpdateMeta:S,onDelete:M,notify:g,initialTab:"overview"})),d&&u.default.createElement(Py,{onCancel:()=>h(!1),onCreate:b}),m&&u.default.createElement("div",{className:"hb-toast",style:{position:"fixed",bottom:20,left:"50%",background:s.ink,color:s.card,padding:"10px 18px",borderRadius:8,fontSize:13,boxShadow:"0 4px 14px rgba(0,0,0,0.25)",zIndex:60}},m),u.default.createElement(HbBottomNav,{active:o,onNavigate:T=>f(T)}))}
+      `),u.default.createElement("div",{key:o,className:"hb-pagein",style:{height:"100%",overflowY:o==="landing"?"hidden":"auto",WebkitOverflowScrolling:"touch",paddingBottom:o==="landing"?0:92}},l?u.default.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh"}},u.default.createElement(E,{name:"loader",className:"animate-spin",size:28,color:s.ocean})):o==="landing"?u.default.createElement(HbLanding,{onToday:()=>f("home"),onCase:()=>f("home"),onCompany:()=>f("companyHub"),onManageStaff:()=>f("staff"),onQuickQuote:()=>f("estimateHub"),onProposal:()=>HB_openProposalSystem(),onMarketingPhotos:()=>f("marketingPhotos"),onBookings:()=>f("home"),onOpenBooking:()=>HB_openBookingSystem(),onDrawings:()=>f("drawings"),onDocs:()=>{window.__hbDocsFrom="landing";f("docsHub")},onLogout:()=>{HB_staffLogout()}}):o==="companyHub"?u.default.createElement(HbCompanyHub,{onBack:()=>f("landing"),onContracts:()=>f("contracts"),onQuotes:()=>f("estimateHub"),onReceipts:()=>f("receipts"),onVendorReceipts:()=>f("vendorReceipts"),onQuickQuote:()=>f("estimateHub"),onGoHome:()=>f("home"),onVendorQuotes:()=>f("vendorQuotes"),onProposal:()=>HB_openProposalSystem(),onMarketingPhotos:()=>f("marketingPhotos"),onBookings:()=>f("home"),onOpenBooking:()=>HB_openBookingSystem(),onDrawings:()=>f("drawings"),onAttendance:()=>f("attendance"),onPriceBook:()=>f("priceBook"),onSurvey:()=>f("survey"),onChangeOrders:()=>f("changeOrders"),onPdfRotate:()=>f("pdfRotate"),onDocs:()=>{window.__hbDocsFrom="companyHub";f("docsHub")}}):o==="docsHub"?u.default.createElement(HbDocsHub,{onBack:()=>f(window.__hbDocsFrom||"landing"),notify:g,projects:a}):o==="changeOrders"?u.default.createElement(HbChangeOrderHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="survey"?u.default.createElement(HbSurveyHub,{onBack:()=>f("companyHub"),notify:g,projects:a,onProjectCreated:pj=>i(v=>[cm(pj),...v])}):o==="priceBook"?u.default.createElement(HbPriceBookHub,{onBack:()=>f("companyHub"),notify:g}):o==="attendance"?u.default.createElement(HbAttendanceHub,{onBack:()=>f("companyHub"),notify:g}):o==="marketingPhotos"?u.default.createElement(HbMarketingPhotoHub,{onBack:()=>f("landing"),notify:g}):o==="vendorQuotes"?u.default.createElement(HbVendorQuoteHub,{onBack:()=>f("companyHub"),notify:g}):o==="drawings"?u.default.createElement(HbDrawingHub,{onBack:()=>f("landing"),notify:g,projects:a,onOpenProject:(id,tab)=>{if(a.some(p=>p.id===id)){r(id);hbSetOpenTab(tab||"overview");f("detail")}else g("找不到這個案場，請重新整理")},onNewCase:()=>{f("home");h(!0)},workbench:u.default.createElement(HbHubWorkbench,{projects:a,onCalendar:()=>f("home"),onTodayHub:()=>f("home"),onOpenProject:id=>{if(a.some(p=>p.id===id)){r(id);hbSetOpenTab("overview");f("detail")}else g("找不到這個案場，請重新整理")}})}):o==="receipts"?u.default.createElement(HbReceiptsHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="vendorReceipts"?u.default.createElement(HbVendorReceiptsHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="quoteImportPick"?u.default.createElement(Iy,{projects:a,onOpen:hbImportQuote,onNew:()=>h(!0),onRefresh:()=>{D(!0),y()},refreshing:e,storageUsedBytes:z,onManageStaff:()=>f("staff"),pickerMode:!0,progressRanges:hbProg,onBack:()=>f("companyHub")}):o==="estimateHub"?u.default.createElement(HerfulsinsEstimateHub,{project:null,notify:g,onClose:()=>f("companyHub")}):o==="home"?u.default.createElement(Iy,{projects:a,notify:g,onOpen:T=>{r(T),hbSetOpenTab("photos"),f("detail")},onWbOpen:T=>{r(T),hbSetOpenTab("overview"),f("detail")},onCalendar:()=>f("home"),onTodayHub:()=>f("home"),onNew:()=>h(!0),onRefresh:()=>{D(!0),y()},refreshing:e,storageUsedBytes:z,onManageStaff:()=>f("staff"),progressRanges:hbProg,onBack:()=>f("landing"),onGoCompany:()=>f("companyHub")}):o==="staff"?u.default.createElement(Ky,{onBack:()=>f("landing")}):o==="pdfRotate"?u.default.createElement(HbPdfRotate,{onBack:()=>f("companyHub"),notify:g}):o==="contracts"?u.default.createElement(HerfulsinsContractsHub,{onBack:()=>f("landing"),notify:g}):o==="digitalCard"?u.default.createElement(HbDigitalCard,{onBack:()=>f("landing"),notify:g}):u.default.createElement(lh,{project:j,onBack:()=>f("home"),onUpdateMeta:S,onDelete:M,notify:g,initialTab:"overview"})),d&&u.default.createElement(Py,{onCancel:()=>h(!1),onCreate:b}),m&&u.default.createElement("div",{className:"hb-toast",style:{position:"fixed",bottom:20,left:"50%",background:s.ink,color:s.card,padding:"10px 18px",borderRadius:8,fontSize:13,boxShadow:"0 4px 14px rgba(0,0,0,0.25)",zIndex:60}},m),u.default.createElement(HbBottomNav,{active:o,onNavigate:T=>f(T)}))}
 
 /* ===================================================================
    設計需求問卷：公司端建立連結 → 業主線上填 → 答案回到案件
