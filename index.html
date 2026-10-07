@@ -2956,6 +2956,8 @@ p{margin:7px 0;line-height:2.05}
 /* 填寫欄位 */
 .blank,.fillin,.funderline{display:inline-block;min-width:120px;border-bottom:1px solid var(--ink);
   padding:0 6px;line-height:1.9}
+/* 空白填寫欄：放一個看不見的字，底線才會對齊文字底部（空的 inline-block 會讓底線浮在字的中間） */
+.fillin:empty::before{content:"\00a0"}
 .field{margin-bottom:12px}
 .field.wide{grid-column:1/-1}
 .fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px 20px}
