@@ -12728,7 +12728,24 @@ const HB_LIB_CSS=`
       .wbk-pph{padding:14px 12px 16px;border-top:1px solid #E7DCCD}.wbk-pph .wbc-colhead{margin-bottom:12px}.wbk-pphall{margin-left:auto}
       .wbk-pphgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:8px}
       .wbk-pphitem{display:block;padding:0;border:0;background:#EFE8DE;border-radius:4px;overflow:hidden;aspect-ratio:1/1;cursor:pointer;max-width:100%}
-      .wbk-pphitem img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .25s ease}
+      .wbk-pphitem{position:relative}.wbk-pphitem img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .25s ease}
+      .hb-wb .wbk-ptab.on{box-shadow:inset 0 -2px #B4573A}.wbk-ptab.on .wbk-ptfr,.wbk-ptab.on .wbk-ptzh{color:#B4573A}
+      .wbk-pphitem.doc{background:#FBF6F0;border:1px solid #E7DCCD}
+      .wbk-docf{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;height:100%;padding:10px;text-align:center}
+      .wbk-docf b{font:600 13px/1 'Noto Sans TC',sans-serif;letter-spacing:.08em;color:#B4573A;border:1px solid #D9B8A6;border-radius:3px;padding:5px 7px}
+      .wbk-docf small{font-size:11.5px;line-height:1.4;color:#3C362F;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;word-break:break-all}
+      .wbk-pphcap{position:absolute;left:0;right:0;bottom:0;padding:14px 6px 5px;font-size:11px;color:#fff;background:linear-gradient(transparent,rgba(23,21,15,.65));white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left}
+      .wbk-lb{position:fixed;inset:0;z-index:90;background:rgba(23,21,15,.86);display:flex;flex-direction:column}
+      .wbk-lbbar{display:flex;align-items:center;gap:10px;padding:calc(10px + env(safe-area-inset-top,0px)) 16px 10px;color:#F4EEE6}
+      .wbk-lbname{flex:1;min-width:0;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.wbk-lbn{font-size:12.5px;color:#C9BFB2;font-variant-numeric:tabular-nums}
+      .wbk-lbbtn{color:#F4EEE6;background:none;border:1px solid rgba(244,238,230,.35);border-radius:6px;padding:6px 11px;font-size:13px;text-decoration:none;cursor:pointer}
+      .wbk-lbstage{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:0 56px 20px}
+      .wbk-lbstage img{max-width:100%;max-height:100%;object-fit:contain;border-radius:2px}
+      .wbk-lbstage iframe{width:min(1100px,100%);height:100%;border:0;background:#fff;border-radius:2px}
+      .wbk-lbdoc{background:#FBF6F0;border-radius:8px;padding:28px 32px;text-align:center;color:#3C362F;max-width:360px}.wbk-lbdoc b{color:#B4573A;font-size:15px;letter-spacing:.1em}.wbk-lbdoc .wbk-lbbtn{color:#B4573A;border-color:#D9B8A6;display:inline-block;margin-top:6px}
+      .wbk-lbnav{position:absolute;top:50%;transform:translateY(-50%);width:44px;height:64px;border:0;background:rgba(244,238,230,.12);color:#F4EEE6;font-size:30px;line-height:1;cursor:pointer;border-radius:6px}
+      .wbk-lbnav.prev{left:8px}.wbk-lbnav.next{right:8px}.wbk-lbnav:hover{background:rgba(244,238,230,.24)}
+      @media (max-width:640px){.wbk-lbstage{padding:0 8px 12px}.wbk-lbnav{width:36px;height:52px;font-size:24px}}
       .wbk-pphitem:hover img{transform:scale(1.04)}.wbk-pphitem:focus-visible{outline:2px solid #B4573A;outline-offset:2px}
       @media (max-width:640px){.wbk-pphgrid{grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}}
       @media (prefers-reduced-motion:reduce){.wbk-pphitem img{transition:none}}
@@ -15464,7 +15481,26 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
   const setF=(id,v)=>setFx(m=>{const n={...m};if(v)n[id]=v;else delete n[id];return n});
   const pv=proj||'';
   /* 篩選單一案件時，工作台下方改放這個案件的照片縮圖（不顯示行程） */
-  const [pvPh,setPvPh]=u.useState(null);
+  const [pvPh,setPvPh]=u.useState(null),[pvTab,setPvTab]=u.useState('photos'),[pvFiles,setPvFiles]=u.useState(null),[pvLb,setPvLb]=u.useState(null);
+  u.useEffect(()=>{setPvTab('photos');setPvFiles(null);setPvLb(null)},[pv]);
+  /* 檔案：從「專案資料與圖面」該案根資料夾往下抓圖面與目前版本 */
+  u.useEffect(()=>{if(!compact||!pv||pv==='__co'||pvTab!=='files'||pvFiles)return;let live=true;
+    (async()=>{try{
+      const {data:fs}=await q.from("sitelog_drawing_folders").select("id,parent_id,project_id");
+      const all=fs||[],root=all.filter(f=>!f.parent_id&&f.project_id===pv).map(f=>f.id);
+      const ids=new Set(root);let grow=true;while(grow){grow=false;all.forEach(f=>{if(f.parent_id&&ids.has(f.parent_id)&&!ids.has(f.id)){ids.add(f.id);grow=true}})}
+      if(!ids.size){if(live)setPvFiles([]);return}
+      const {data:ds}=await q.from("sitelog_drawings").select("*").in("folder_id",[...ids]);
+      const dl=ds||[];if(!dl.length){if(live)setPvFiles([]);return}
+      const {data:vs}=await q.from("sitelog_drawing_versions").select("*").in("drawing_id",dl.map(d=>d.id)).order("version_no",{ascending:true});
+      const by={};(vs||[]).forEach(v=>{(by[v.drawing_id]=by[v.drawing_id]||[]).push(v)});
+      const out=dl.map(d=>{const list=by[d.id]||[],cv=list.find(v=>v.id===d.current_version_id)||list[list.length-1];
+        return cv?{id:d.id,name:[d.drawing_no,d.name].filter(Boolean).join(' ')||'未命名',url:cv.url,mime:cv.mime||'',ver:cv.version_no,at:cv.uploaded_at||cv.created_at||d.created_at||''}:null}).filter(Boolean)
+        .sort((a,b)=>String(b.at).localeCompare(String(a.at)));
+      if(live)setPvFiles(out)}catch(e){if(live)setPvFiles([])}})();
+    return()=>{live=false}},[pv,pvTab,compact,pvFiles]);
+  u.useEffect(()=>{if(!pvLb)return;const f=e=>{if(e.key==='Escape')setPvLb(null);else if(e.key==='ArrowRight')setPvLb(l=>l&&{...l,i:(l.i+1)%l.list.length});else if(e.key==='ArrowLeft')setPvLb(l=>l&&{...l,i:(l.i-1+l.list.length)%l.list.length})};
+    window.addEventListener('keydown',f);return()=>window.removeEventListener('keydown',f)},[pvLb]);
   u.useEffect(()=>{if(!compact||!pv||pv==='__co'){setPvPh(null);return}let live=true;setPvPh(null);
     q.from("sitelog_photos").select("id,url,note,uploaded_at").eq("project_id",pv).order("uploaded_at",{ascending:false}).limit(24)
       .then(({data})=>{if(live)setPvPh(data||[])},()=>{if(live)setPvPh([])});
@@ -15623,13 +15659,36 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
     const pvName=pv?(pv==='__co'?'公司事務':(projects.find(p=>p.id===pv)||{}).name||''):'';
     const pvReal=!!pv&&pv!=='__co'&&projects.some(p=>p.id===pv);
     const openPvTab=k=>window.HB_nav?window.HB_nav({project:pv,tab:k}):onOpenProject(pv);
-    const pvPhotos=h('section',{className:'wbk-pph','aria-label':pvName+' 照片'},
-      h('div',{className:'wbc-colhead'},h('h3',null,'照片'),h('span',{className:'wbc-num'},pvPh?pvPh.length+(pvPh.length>=24?'+':''):'…'),
-        h('button',{type:'button',className:'wbc-more wbk-pphall',onClick:()=>openPvTab('photos')},'查看全部',HB_wbIcon('arrow',13))),
-      pvPh===null?h('p',{className:'wbc-empty'},'載入照片中…')
-      :pvPh.length===0?h('p',{className:'wbc-empty'},'這個案件還沒有照片')
-      :h('div',{className:'wbk-pphgrid'},pvPh.map(ph=>h('button',{key:ph.id,type:'button',className:'wbk-pphitem',onClick:()=>openPvTab('photos'),title:ph.note||'開啟照片','aria-label':ph.note||'開啟照片'},
-          h('img',{src:ph.url,alt:ph.note||'',loading:'lazy',decoding:'async'})))));
+    const INLINE={photos:1,files:1};
+    const isImg=f=>/^image\//.test(f.mime||'')||/\.(jpe?g|png|webp|gif)(\?|$)/i.test(f.url||'');
+    const isPdf=f=>/pdf/.test(f.mime||'')||/\.pdf(\?|$)/i.test(f.url||'');
+    const extOf=f=>{const m=/\.([a-z0-9]{2,5})(\?|$)/i.exec(f.url||'');return (m?m[1]:(f.mime||'').split('/').pop()||'檔案').toUpperCase().slice(0,4)};
+    const phItems=(pvPh||[]).map(ph=>({id:ph.id,name:ph.note||'',url:ph.url,mime:'image/jpeg'}));
+    const fileItems=pvFiles||[];
+    const tile=(f,list,k)=>h('button',{key:f.id,type:'button',className:'wbk-pphitem'+(isImg(f)?'':' doc'),title:f.name||'預覽','aria-label':'預覽：'+(f.name||'照片'),onClick:()=>setPvLb({list,i:k})},
+      isImg(f)?h('img',{src:f.url,alt:f.name||'',loading:'lazy',decoding:'async'})
+        :h('span',{className:'wbk-docf'},h('b',null,extOf(f)),h('small',null,f.name)),
+      k!=null&&list===fileItems&&isImg(f)&&f.name?h('span',{className:'wbk-pphcap'},f.name):null);
+    const curList=pvTab==='files'?fileItems:phItems,curLoad=pvTab==='files'?pvFiles===null:pvPh===null;
+    const pvPhotos=h('section',{className:'wbk-pph','aria-label':pvName+(pvTab==='files'?' 檔案':' 照片')},
+      h('div',{className:'wbc-colhead'},h('h3',null,pvTab==='files'?'檔案':'照片'),h('span',{className:'wbc-num'},curLoad?'…':curList.length+(pvTab==='photos'&&curList.length>=24?'+':'')),
+        h('button',{type:'button',className:'wbc-more wbk-pphall',onClick:()=>openPvTab(pvTab),title:'到案件頁管理'},'開啟完整頁面',HB_wbIcon('arrow',13))),
+      curLoad?h('p',{className:'wbc-empty'},pvTab==='files'?'載入檔案中…':'載入照片中…')
+      :curList.length===0?h('p',{className:'wbc-empty'},pvTab==='files'?'這個案件還沒有檔案':'這個案件還沒有照片')
+      :h('div',{className:'wbk-pphgrid'},curList.map((f,k)=>tile(f,curList,k))));
+    const lbCur=pvLb&&pvLb.list[pvLb.i];
+    const pvLightbox=lbCur&&h('div',{className:'wbk-lb',role:'dialog','aria-modal':'true','aria-label':'預覽',onClick:()=>setPvLb(null)},
+      h('div',{className:'wbk-lbbar',onClick:e=>e.stopPropagation()},
+        h('span',{className:'wbk-lbname'},(lbCur.name||'')+(lbCur.ver?'　V'+lbCur.ver:'')),
+        h('span',{className:'wbk-lbn'},(pvLb.i+1)+' / '+pvLb.list.length),
+        h('a',{href:lbCur.url,target:'_blank',rel:'noopener',className:'wbk-lbbtn'},'新分頁開啟'),
+        h('button',{type:'button',className:'wbk-lbbtn','aria-label':'關閉',onClick:()=>setPvLb(null)},'✕')),
+      h('div',{className:'wbk-lbstage',onClick:e=>e.stopPropagation()},
+        isImg(lbCur)?h('img',{src:lbCur.url,alt:lbCur.name||''})
+        :isPdf(lbCur)?h('iframe',{src:lbCur.url,title:lbCur.name||'PDF'})
+        :h('div',{className:'wbk-lbdoc'},h('b',null,extOf(lbCur)),h('p',null,lbCur.name),h('p',null,'這種檔案無法直接預覽'),h('a',{href:lbCur.url,target:'_blank',rel:'noopener',className:'wbk-lbbtn'},'下載檔案'))),
+      pvLb.list.length>1&&h('button',{type:'button',className:'wbk-lbnav prev','aria-label':'上一個',onClick:e=>{e.stopPropagation();setPvLb(l=>({...l,i:(l.i-1+l.list.length)%l.list.length}))}},'‹'),
+      pvLb.list.length>1&&h('button',{type:'button',className:'wbk-lbnav next','aria-label':'下一個',onClick:e=>{e.stopPropagation();setPvLb(l=>({...l,i:(l.i+1)%l.list.length}))}},'›'));
     const sideTitle={kLate:'逾期事項（全公司）',kWeek:'本週工地排程（'+md(tws)+'–'+md(twe)+'）',ical:'連結 iPhone 行事曆',tl:(isToday?'今日':md(day)+' ')+'時間軸',open:'未完成',follow:'待追蹤',closed:'已結案追蹤',later:'稍後辦',shop:'購物清單'}[cSide]||'';
     const sideBody=cSide==='tl'?h('ul',{className:'wbk-tl'},allTl.length?allTl.map(tlRow):h('li',{className:'wbc-empty'},'這天沒有排定時間的行程'))
       :cSide==='open'?h('ul',{className:'wbc-list'},openList.length?openList.map(mixRow):h('li',{className:'wbc-empty'},'沒有事項'))
@@ -15662,7 +15721,8 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
       pv&&h('p',{className:'wbk-showing'},'目前顯示：',h('b',null,pvName)),
       pv&&pv!=='__co'&&projects.some(p=>p.id===pv)&&h('nav',{className:'wbk-ptabs','aria-label':pvName+' 案件分頁'},
         [['overview','VUE D’ENSEMBLE','總覽'],['progress','AVANCEMENT','進度'],['photos','PHOTOGRAPHIES','照片'],['appliances','ÉQUIPEMENTS','設備'],['materials','MATÉRIAUX','材料'],['files','DOCUMENTS','檔案'],['defects','POINTS À CORRIGER','缺失'],['meetings','RÉUNIONS','會議']]
-          .map(([k,fr,zh])=>h('button',{key:k,type:'button',className:'wbk-ptab',onClick:()=>window.HB_nav?window.HB_nav({project:pv,tab:k}):onOpenProject(pv),title:'開啟「'+pvName+'」的'+zh},h('span',{className:'wbk-ptfr'},fr),h('span',{className:'wbk-ptzh'},zh)))),
+          .map(([k,fr,zh])=>h('button',{key:k,type:'button',className:'wbk-ptab'+(INLINE[k]&&pvTab===k?' on':''),'aria-pressed':INLINE[k]?pvTab===k:undefined,onClick:()=>INLINE[k]?setPvTab(k):openPvTab(k),title:INLINE[k]?'在這裡預覽'+zh:'開啟「'+pvName+'」的'+zh},h('span',{className:'wbk-ptfr'},fr),h('span',{className:'wbk-ptzh'},zh)))),
+      pvLightbox,
       pvReal?pvPhotos:h(u.default.Fragment,null,
       h('div',{className:'wbk-week'},h('button',{type:'button',className:'wbk-wk',onClick:()=>shift(-1),'aria-label':'上一週'},HB_wbIcon('left',16)),
         week.map((x,i)=>{const s=ymd(x);return h('button',{key:s,type:'button',className:'wbk-day'+(s===day?' on':'')+(s===today?' today':''),'aria-pressed':s===day,'aria-label':(x.getMonth()+1)+'月'+x.getDate()+'日',onClick:()=>{setCDay(s);setCGapOpen(null)}},
