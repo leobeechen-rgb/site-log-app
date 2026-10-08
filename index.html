@@ -15508,8 +15508,8 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
   const setF=(id,v)=>setFx(m=>{const n={...m};if(v)n[id]=v;else delete n[id];return n});
   const pv=proj||'';
   /* 篩選單一案件時，工作台下方改放這個案件的照片縮圖（不顯示行程） */
-  const [pvPh,setPvPh]=u.useState(null),[pvTab,setPvTab]=u.useState('overview'),[pvData,setPvData]=u.useState({}),[pvFiles,setPvFiles]=u.useState(null),[pvLb,setPvLb]=u.useState(null);
-  u.useEffect(()=>{setPvTab('overview');setPvFiles(null);setPvLb(null);setPvData({})},[pv]);
+  const [pvPh,setPvPh]=u.useState(null),[pvTab,setPvTab]=u.useState('progress'),[pvData,setPvData]=u.useState({}),[pvFiles,setPvFiles]=u.useState(null),[pvLb,setPvLb]=u.useState(null);
+  u.useEffect(()=>{setPvTab('progress');setPvFiles(null);setPvLb(null);setPvData({})},[pv]);
   /* 篩選案件時，上方面板的下緣不超過左邊「檔案」欄的下緣，內容在面板裡捲動（電腦版左右並排時才限制） */
   u.useEffect(()=>{if(!compact||!pv||pv==='__co')return;
     const fit=()=>{const box=document.querySelector('.wbk .wbk-pph'),side=document.querySelector('.hb-lib-side');if(!box)return;
@@ -15822,7 +15822,7 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
         kpi('待業主確認',kCf,()=>setCfList('all'),false,'查看全公司待業主確認')),
       pv&&h('p',{className:'wbk-showing'},'目前顯示：',h('b',null,pvName)),
       pv&&pv!=='__co'&&projects.some(p=>p.id===pv)&&h('nav',{className:'wbk-ptabs','aria-label':pvName+' 案件分頁'},
-        [['overview','VUE D’ENSEMBLE','總覽'],['progress','AVANCEMENT','進度'],['photos','PHOTOGRAPHIES','照片'],['appliances','ÉQUIPEMENTS','設備'],['materials','MATÉRIAUX','材料'],['files','DOCUMENTS','檔案'],['defects','POINTS À CORRIGER','缺失'],['meetings','RÉUNIONS','會議']]
+        [['progress','AVANCEMENT','進度'],['photos','PHOTOGRAPHIES','照片'],['appliances','ÉQUIPEMENTS','設備']]
           .map(([k,fr,zh])=>h('button',{key:k,type:'button',className:'wbk-ptab'+(INLINE[k]&&pvTab===k?' on':''),'aria-pressed':INLINE[k]?pvTab===k:undefined,onClick:()=>INLINE[k]?setPvTab(k):openPvTab(k),title:INLINE[k]?'在這裡預覽'+zh:'開啟「'+pvName+'」的'+zh},h('span',{className:'wbk-ptfr'},fr),h('span',{className:'wbk-ptzh'},zh)))),
       pvLightbox&&HB_portal(pvLightbox),
       pvReal?pvPhotos:h(u.default.Fragment,null,
