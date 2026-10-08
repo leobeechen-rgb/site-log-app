@@ -15099,7 +15099,7 @@ window.HB_NOTIF=HB_NOTIF;
 `;document.head.appendChild(st)})();
 
 /* 從手機推播／連結帶進來的通知：?hbn=<id>，登入後才處理 */
-(function(){try{const u=new URL(location.href),id=u.searchParams.get('hbn');if(id&&/^[0-9a-f-]{36}$/.test(id)){sessionStorage.setItem('hb_pending_nid',id);u.searchParams.delete('hbn');history.replaceState(null,'',u.pathname+(u.search||'')+u.hash)}}catch{}})();
+(function(){try{const u=new URL(location.href);if(!u.searchParams.has('hbn'))return;const id=u.searchParams.get('hbn');if(id&&/^[0-9a-f-]{36}$/.test(id))sessionStorage.setItem('hb_pending_nid',id);u.searchParams.delete('hbn');history.replaceState(null,'',u.pathname+(u.search||'')+u.hash)}catch{}})();
 /* iOS App 點推播時可直接呼叫（payload 內含 nid） */
 window.__hbNativePushOpen=function(p){try{if(typeof p==='string')p=JSON.parse(p)}catch{p={}}const id=p&&p.nid;if(id&&/^[0-9a-f-]{36}$/.test(id)){try{sessionStorage.setItem('hb_pending_nid',id)}catch{}if(window.HB_navPending)window.HB_navPending()}};
 function HB_notifAgo(ts){const d=(Date.now()-new Date(ts).getTime())/1000;if(d<60)return'剛剛';if(d<3600)return Math.floor(d/60)+' 分鐘前';if(d<86400)return Math.floor(d/3600)+' 小時前';if(d<86400*7)return Math.floor(d/86400)+' 天前';const t=new Date(ts);return(t.getMonth()+1)+'/'+t.getDate()}
