@@ -8972,7 +8972,7 @@ function HbReceiptsHub({onBack,notify,projects}){
           u.default.createElement("span",null,"返回公司資料庫")),
         u.default.createElement("div",{className:"hb-dosLabel"},"Reçus de Chantier"),
         u.default.createElement("h1",{className:"hb-dosTitle"},"工程收據"),
-        u.default.createElement("p",{className:"hb-dosLede"},"依期別產生工程收據，A4 直向每頁列印 3 筆款項。可選擇列印時是否蓋上發票章。")),
+        u.default.createElement("p",{className:"hb-dosLede"},"依期別產生工程收據與設計費收據，A4 直向每頁列印 3 筆款項。可選擇列印時是否蓋上發票章。")),
 
       u.default.createElement("div",{className:"hb-dosSolo"},
         u.default.createElement("div",{className:"hb-dosBar"},
@@ -9010,7 +9010,7 @@ function HbReceiptsHub({onBack,notify,projects}){
             return u.default.createElement("li",{key:b.id,className:"hb-dosItem"},
               u.default.createElement("span",{className:"hb-dosNo"},String(bi+1).padStart(2,"0")),
               u.default.createElement("div",{className:"hb-dosBody"},
-                u.default.createElement("div",{className:"hb-dosName"},b.client_name),
+                u.default.createElement("div",{className:"hb-dosName"},b.client_name,periods.some(pp=>/設計費/.test(pp.name||""))&&u.default.createElement("span",{style:{marginLeft:10,fontSize:12,fontWeight:400,color:"#B4573A",border:"1px solid #D9B8A6",borderRadius:999,padding:"1px 8px",verticalAlign:"middle"}},"設計費")),
                 u.default.createElement("div",{className:"hb-dosMeta"},
                   (b.site_address||"—")+"　·　"+periods.length+" 筆款項"),
                 u.default.createElement("label",{className:"hb-dosCheck"},
@@ -9057,6 +9057,22 @@ function HbReceiptForm({onCancel,onCreate,projects,initial,report,suggest}){
   let updatePeriod=(i,key,val)=>setPeriods(ps=>ps.map((p,idx)=>idx===i?{...p,[key]:val}:p));
   let addPeriod=()=>{if(periods.length>=6)return;setPeriods(ps=>[...ps,{name:"",amount:""}])};
   let removePeriod=i=>setPeriods(ps=>ps.filter((_,idx)=>idx!==i));
+  /* 設計費試算：方案每坪單價 × 坪數，最低收費 50,000；依設計合約 30/30/30/10 分期，可另加 5% 營業稅 */
+  let DF_PLANS=[["A","A 基礎・平面規劃",2500],["B","B 標準・完整設計",4000],["C","C 全案・設計監造",4800]];
+  let[dfOpen,setDfOpen]=(0,u.useState)(false);
+  let[dfPlan,setDfPlan]=(0,u.useState)("B");
+  let[dfPing,setDfPing]=(0,u.useState)("");
+  let[dfTax,setDfTax]=(0,u.useState)(false);
+  let dfRate=(DF_PLANS.find(x=>x[0]===dfPlan)||DF_PLANS[1])[2];
+  let dfRaw=Math.round(dfRate*(parseFloat(dfPing)||0));
+  let dfTotal=dfRaw>0?Math.max(dfRaw,50000):0;
+  let dfStages=(()=>{let defs=[["第一期款",30],["第二期款",30],["第三期款",30],["第四期款",10]],used=0;
+    return defs.map(([n,pc],i)=>{let base=i<defs.length-1?Math.round(dfTotal*pc/100):dfTotal-used;used+=base;return{name:"設計費"+n,pc,amount:dfTax?Math.round(base*1.05):base}})})();
+  let dfApplyOne=st=>setPeriods(ps=>{let row={name:st.name,amount:String(st.amount)};
+    let blank=ps.findIndex(x=>!x.amount&&(!x.name.trim()||x.name==="壹期款"));
+    if(blank>=0)return ps.map((x,i)=>i===blank?row:x);
+    if(ps.length>=6)return ps;return[...ps,row]});
+  let dfApplyAll=()=>setPeriods(dfStages.map(st=>({name:st.name,amount:String(st.amount)})));
   let onAddrPick=val=>{
     setAddrPick(val);
     if(val===OTHER){setSiteAddress("");return}
@@ -9093,6 +9109,26 @@ function HbReceiptForm({onCancel,onCreate,projects,initial,report,suggest}){
           u.default.createElement("input",{type:"radio",checked:paymentMethod===val,onChange:()=>setPaymentMethod(val)}),label
         ))
       ),
+      u.default.createElement("div",{style:{border:"1px solid #E3D3C2",background:dfOpen?"#FBF6F0":"transparent",borderRadius:8,padding:dfOpen?"10px 12px 12px":"0",marginBottom:14}},
+        u.default.createElement("button",{type:"button",onClick:()=>setDfOpen(o=>!o),"aria-expanded":dfOpen?"true":"false",
+          style:{width:"100%",display:"flex",justifyContent:"space-between",alignItems:"center",background:"none",border:0,padding:dfOpen?"0 0 8px":"9px 12px",cursor:"pointer",fontSize:13.5,color:"#B4573A"}},
+          u.default.createElement("span",null,"設計費試算（自動帶入期別）"),u.default.createElement("span",null,dfOpen?"收合":"展開")),
+        dfOpen&&u.default.createElement("div",null,
+          u.default.createElement("div",{style:{display:"flex",gap:8}},
+            u.default.createElement("select",{value:dfPlan,onChange:e=>setDfPlan(e.target.value),"aria-label":"設計費方案",style:{...el,flex:1,minWidth:0}},
+              DF_PLANS.map(([k,n,r])=>u.default.createElement("option",{key:k,value:k},n+"｜"+HB_money(r)+"/坪"))),
+            u.default.createElement("input",{type:"number",inputMode:"decimal",min:0,step:0.1,value:dfPing,onChange:e=>setDfPing(e.target.value),placeholder:"坪數","aria-label":"坪數",style:{...el,width:84}})),
+          u.default.createElement("label",{style:{display:"flex",alignItems:"center",gap:6,fontSize:13,margin:"0 0 8px",cursor:"pointer"}},
+            u.default.createElement("input",{type:"checkbox",checked:dfTax,onChange:e=>setDfTax(e.target.checked)}),"各期另加 5% 營業稅"),
+          dfTotal>0?u.default.createElement("div",null,
+            u.default.createElement("div",{style:{fontSize:12.5,color:"#3C362F",marginBottom:8,lineHeight:1.6}},
+              "設計費總額 NT$"+HB_money(dfTotal)+"（未稅）"+(dfRaw<50000?"　坪數試算 NT$"+HB_money(dfRaw)+"，未達最低收費":"")),
+            u.default.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:6,marginBottom:8}},
+              dfStages.map((st,i)=>u.default.createElement("button",{key:i,type:"button",onClick:()=>dfApplyOne(st),
+                style:{border:"1px solid #D9B8A6",background:"#fff",color:"#17150F",borderRadius:999,padding:"6px 11px",fontSize:12.5,cursor:"pointer"}},
+                st.name.replace("設計費","")+" "+st.pc+"%　NT$"+HB_money(st.amount)))),
+            u.default.createElement("button",{type:"button",onClick:dfApplyAll,style:{...ll,width:"100%",fontSize:13,padding:"7px 0"}},"四期全部帶入（取代下方期別）"))
+          :u.default.createElement("div",{style:{fontSize:12.5,color:s.inkSoft}},"填入坪數後，點選期別即可帶入下方款項。"))),
       u.default.createElement("label",{style:{fontSize:12.5,color:s.inkSoft}},"期別費用（最多 6 筆，一張 A4 可直向列印 3 筆款項）"),
       periods.map((p,i)=>u.default.createElement("div",{key:i,style:{display:"flex",gap:8,marginBottom:8,alignItems:"center"}},
         u.default.createElement("input",{value:p.name,onChange:e=>updatePeriod(i,"name",e.target.value),placeholder:"期別，例：壹期款",style:{...el,marginBottom:0,flex:1}}),
