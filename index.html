@@ -12725,6 +12725,13 @@ const HB_LIB_CSS=`
       .wbk-day.today.on b{box-shadow:0 0 0 3px rgba(46,74,60,.18)}
       .wbk-day.on span{color:var(--wb-green);font-weight:500}
       .wbk-cols{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));align-items:stretch}
+      .wbk-pph{padding:14px 12px 16px;border-top:1px solid #E7DCCD}.wbk-pph .wbc-colhead{margin-bottom:12px}.wbk-pphall{margin-left:auto}
+      .wbk-pphgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:8px}
+      .wbk-pphitem{display:block;padding:0;border:0;background:#EFE8DE;border-radius:4px;overflow:hidden;aspect-ratio:1/1;cursor:pointer;max-width:100%}
+      .wbk-pphitem img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .25s ease}
+      .wbk-pphitem:hover img{transform:scale(1.04)}.wbk-pphitem:focus-visible{outline:2px solid #B4573A;outline-offset:2px}
+      @media (max-width:640px){.wbk-pphgrid{grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}}
+      @media (prefers-reduced-motion:reduce){.wbk-pphitem img{transition:none}}
       .wbk-col{min-width:0;display:flex;flex-direction:column;padding:10px 18px 0}
       .wbk-col:first-child{padding-left:6px}.wbk-col:last-child{padding-right:6px}
       .wbk-col+.wbk-col{border-left:1px solid var(--wb-line)}
@@ -15456,6 +15463,12 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
   u.useEffect(()=>{if(!undo)return;const tm=setTimeout(()=>setUndo(null),6000);return()=>clearTimeout(tm)},[undo]);
   const setF=(id,v)=>setFx(m=>{const n={...m};if(v)n[id]=v;else delete n[id];return n});
   const pv=proj||'';
+  /* 篩選單一案件時，工作台下方改放這個案件的照片縮圖（不顯示行程） */
+  const [pvPh,setPvPh]=u.useState(null);
+  u.useEffect(()=>{if(!compact||!pv||pv==='__co'){setPvPh(null);return}let live=true;setPvPh(null);
+    q.from("sitelog_photos").select("id,url,note,uploaded_at").eq("project_id",pv).order("uploaded_at",{ascending:false}).limit(24)
+      .then(({data})=>{if(live)setPvPh(data||[])},()=>{if(live)setPvPh([])});
+    return()=>{live=false}},[pv,compact]);
   const projOk=pv&&pv!=='__co'&&!projects.some(p=>p.id===pv);
   u.useEffect(()=>{if(projOk&&setProj)setProj('')},[projOk]);
   const inProj=t=>!pv?true:pv==='__co'?!t.projectId||!projects.some(p=>p.id===t.projectId):t.projectId===pv;
@@ -15608,6 +15621,15 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
       h('button',{type:'button',className:'wbc-body',onClick:()=>t.projectId&&projects.some(p=>p.id===t.projectId)?onOpenProject(t.projectId):setEditing({...t})},h('strong',null,t.title),h('small',{className:'wbc-proj'},t.projectName||'')),chev);
     const kSide=cSide==='kLate'||cSide==='kWeek';
     const pvName=pv?(pv==='__co'?'公司事務':(projects.find(p=>p.id===pv)||{}).name||''):'';
+    const pvReal=!!pv&&pv!=='__co'&&projects.some(p=>p.id===pv);
+    const openPvTab=k=>window.HB_nav?window.HB_nav({project:pv,tab:k}):onOpenProject(pv);
+    const pvPhotos=h('section',{className:'wbk-pph','aria-label':pvName+' 照片'},
+      h('div',{className:'wbc-colhead'},h('h3',null,'照片'),h('span',{className:'wbc-num'},pvPh?pvPh.length+(pvPh.length>=24?'+':''):'…'),
+        h('button',{type:'button',className:'wbc-more wbk-pphall',onClick:()=>openPvTab('photos')},'查看全部',HB_wbIcon('arrow',13))),
+      pvPh===null?h('p',{className:'wbc-empty'},'載入照片中…')
+      :pvPh.length===0?h('p',{className:'wbc-empty'},'這個案件還沒有照片')
+      :h('div',{className:'wbk-pphgrid'},pvPh.map(ph=>h('button',{key:ph.id,type:'button',className:'wbk-pphitem',onClick:()=>openPvTab('photos'),title:ph.note||'開啟照片','aria-label':ph.note||'開啟照片'},
+          h('img',{src:ph.url,alt:ph.note||'',loading:'lazy',decoding:'async'})))));
     const sideTitle={kLate:'逾期事項（全公司）',kWeek:'本週工地排程（'+md(tws)+'–'+md(twe)+'）',ical:'連結 iPhone 行事曆',tl:(isToday?'今日':md(day)+' ')+'時間軸',open:'未完成',follow:'待追蹤',closed:'已結案追蹤',later:'稍後辦',shop:'購物清單'}[cSide]||'';
     const sideBody=cSide==='tl'?h('ul',{className:'wbk-tl'},allTl.length?allTl.map(tlRow):h('li',{className:'wbc-empty'},'這天沒有排定時間的行程'))
       :cSide==='open'?h('ul',{className:'wbc-list'},openList.length?openList.map(mixRow):h('li',{className:'wbc-empty'},'沒有事項'))
@@ -15627,8 +15649,8 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
         h(HbNotifBell),
         h('button',{type:'button',className:'wbc-cfbtn'+(cfChangeN?' has-ch':''),onClick:()=>setCfList(true)},'待業主確認',h('b',null,cfActive)),
         h('span',{className:'wbc-grow'}),
-        h('button',{type:'button',className:'wbk-toggle'+(cGaps?' on':''),'aria-pressed':cGaps,onClick:()=>setCGaps(!cGaps)},h('span',null,'空檔時間'),h('i')),
-        h('label',{className:'wbk-pick',title:'跳到指定日期'},HB_wbIcon('calendar',17),h('span',{className:'wbc-sr'},'選擇日期'),h('input',{type:'date',value:day,'aria-label':'選擇日期',onChange:e=>{if(e.target.value){setCDay(e.target.value);setCGapOpen(null)}},onClick:e=>{try{e.currentTarget.showPicker&&e.currentTarget.showPicker()}catch{}}})),
+        !pvReal&&h('button',{type:'button',className:'wbk-toggle'+(cGaps?' on':''),'aria-pressed':cGaps,onClick:()=>setCGaps(!cGaps)},h('span',null,'空檔時間'),h('i')),
+        !pvReal&&h('label',{className:'wbk-pick',title:'跳到指定日期'},HB_wbIcon('calendar',17),h('span',{className:'wbc-sr'},'選擇日期'),h('input',{type:'date',value:day,'aria-label':'選擇日期',onChange:e=>{if(e.target.value){setCDay(e.target.value);setCGapOpen(null)}},onClick:e=>{try{e.currentTarget.showPicker&&e.currentTarget.showPicker()}catch{}}})),
         h('button',{type:'button',className:'wbc-hublink',onClick:()=>setCSide('ical'),title:'讓 iPhone 行事曆訂閱行程'},'iPhone 行事曆'),
         h('button',{type:'button',className:'wbc-add',onClick:()=>newTask({due:day})},HB_wbIcon('plus',15),'新增事項')),
       error&&h('div',{className:'wb-error',role:'alert'},error,h('button',{type:'button',onClick:tk.reload},'重新整理')),
@@ -15641,6 +15663,7 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
       pv&&pv!=='__co'&&projects.some(p=>p.id===pv)&&h('nav',{className:'wbk-ptabs','aria-label':pvName+' 案件分頁'},
         [['overview','VUE D’ENSEMBLE','總覽'],['progress','AVANCEMENT','進度'],['photos','PHOTOGRAPHIES','照片'],['appliances','ÉQUIPEMENTS','設備'],['materials','MATÉRIAUX','材料'],['files','DOCUMENTS','檔案'],['defects','POINTS À CORRIGER','缺失'],['meetings','RÉUNIONS','會議']]
           .map(([k,fr,zh])=>h('button',{key:k,type:'button',className:'wbk-ptab',onClick:()=>window.HB_nav?window.HB_nav({project:pv,tab:k}):onOpenProject(pv),title:'開啟「'+pvName+'」的'+zh},h('span',{className:'wbk-ptfr'},fr),h('span',{className:'wbk-ptzh'},zh)))),
+      pvReal?pvPhotos:h(u.default.Fragment,null,
       h('div',{className:'wbk-week'},h('button',{type:'button',className:'wbk-wk',onClick:()=>shift(-1),'aria-label':'上一週'},HB_wbIcon('left',16)),
         week.map((x,i)=>{const s=ymd(x);return h('button',{key:s,type:'button',className:'wbk-day'+(s===day?' on':'')+(s===today?' today':''),'aria-pressed':s===day,'aria-label':(x.getMonth()+1)+'月'+x.getDate()+'日',onClick:()=>{setCDay(s);setCGapOpen(null)}},
           h('span',null,'日一二三四五六'[i]),h('b',null,x.getDate()),h('i',{className:has(s)?'has':''}))}),
@@ -15657,7 +15680,7 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
           h('div',{className:'wbk-shophead'},h('button',{type:'button',className:'wbk-shopbtn','aria-expanded':cShop||shop.length>0,onClick:()=>setCShop(!cShop)},h('h3',null,'購物清單'),h('span',{className:'wbc-num'},shop.length)),
             !(cShop||shop.length)&&h('button',{type:'button',className:'wbk-plus','aria-label':'新增購物項目',onClick:()=>setCShop(true)},HB_wbIcon('plus',14))),
           (cShop||shop.length>0)&&h('form',{className:'wbk-quick',onSubmit:e=>quick('shop',e)},h('input',{name:'q',maxLength:200,placeholder:'要買的東西','aria-label':'新增購物項目',autoFocus:cShop&&!shop.length}),h('button',{type:'submit','aria-label':'新增購物項目'},HB_wbIcon('plus',15))),
-          more(later.length+shop.length>1?later.length+shop.length:0,()=>setCSide(later.length||!shop.length?'later':'shop')))),
+          more(later.length+shop.length>1?later.length+shop.length:0,()=>setCSide(later.length||!shop.length?'later':'shop'))))),
       undo?h('div',{className:'wb-toast wb-undo',role:'status'},h('span',null,'已完成「'+undo.title+'」'),h('button',{type:'button',onClick:undoDone},'復原')):toast&&h('div',{className:'wb-toast',role:'status'},toast),
       cSide&&h(HbWbSide,{title:sideTitle,sub:kSide?'全公司・不受案件篩選影響':pv?pvName:'全部專案',onClose:()=>setCSide(''),
         tabs:(cSide==='later'||cSide==='shop')?[['later','稍後辦 '+later.length],['shop','購物清單 '+shop.length]]:null,tab:cSide,onTab:setCSide},
