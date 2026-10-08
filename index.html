@@ -12568,6 +12568,56 @@ const HB_LIB_CSS=`
       .wbk-clear span{font-size:12px}
       .wbk-kd{flex:none;min-width:58px;font-size:12px;color:var(--wb-soft);padding-top:2px}
       @media(max-width:899px){.wbk-kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.wbk-kpin{font-size:40px}.hb-wb .wbk-kpi{min-height:64px!important;padding:8px 34px 10px 14px}}
+
+      /* ===== 通知中心 ===== */
+      .hbn{position:relative;display:inline-flex}
+      .hb-wb .hbn-bell,.hbn-bell{position:relative;display:inline-grid;place-items:center;width:38px;height:36px;min-height:0!important;padding:0;border:1px solid #cdb98f;border-radius:4px;background:transparent;color:#2E4A3C;cursor:pointer}
+      .hbn-bell:hover{background:rgba(46,74,60,.06)}
+      .hbn-badge{position:absolute;top:-7px;right:-8px;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:#B4573A;color:#fff;font:600 11px/18px 'Noto Sans TC',sans-serif;text-align:center;box-shadow:0 0 0 2px #F4F0E8}
+      .hbn-panel{position:absolute;top:calc(100% + 10px);right:-10px;z-index:80;width:400px;max-width:calc(100vw - 24px);background:#FBF8F2;border:1px solid #cdb98f;border-radius:4px;box-shadow:0 18px 40px -22px rgba(38,36,31,.55);text-align:left;color:#26241F}
+      .hbn-head{display:flex;align-items:center;gap:10px;padding:16px 18px 10px}
+      .hbn-head h3{margin:0;flex:1;font:500 19px 'Noto Serif TC',serif;letter-spacing:.1em;color:#26241F}
+      .hb-wb .hbn-link,.hbn-link{border:0;background:none;padding:2px 0;min-height:0!important;font:inherit;font-size:13px;color:#2E4A3C;text-decoration:underline;text-underline-offset:4px;text-decoration-color:#B89B6A;cursor:pointer}
+      .hbn-link:disabled{opacity:.4;cursor:default}
+      .hb-wb .hbn-gear,.hbn-gear{width:30px;height:30px;min-height:0!important;border:0;border-radius:50%;background:none;color:#6E695E;display:grid;place-items:center;cursor:pointer;padding:0}
+      .hbn-gear:hover,.hbn-gear.on{background:rgba(46,74,60,.08);color:#2E4A3C}
+      .hbn-tabs{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid #e2d8c6;margin:0 18px}
+      .hb-wb .hbn-tabs button,.hbn-tabs button{display:flex;align-items:center;justify-content:center;gap:8px;min-height:40px!important;border:0;background:none;font:inherit;font-size:15px;letter-spacing:.06em;color:#6E695E;cursor:pointer;box-shadow:inset 0 -2px transparent;padding:0}
+      .hbn-tabs button.on{color:#26241F;box-shadow:inset 0 -2px #2E4A3C}
+      .hbn-tabs b{min-width:20px;height:20px;border-radius:999px;background:#B4573A;color:#fff;font-size:11.5px;line-height:20px;font-weight:600;padding:0 6px}
+      .hbn-list{list-style:none;margin:0;padding:0 18px;max-height:min(430px,60vh);overflow:auto}
+      .hbn-list.all{max-height:min(560px,70vh)}
+      .hbn-item+.hbn-item{border-top:1px solid #e9e1d2}
+      .hb-wb .hbn-row,.hbn-row{position:relative;display:grid;grid-template-columns:1fr;gap:4px;width:100%;min-height:0!important;padding:14px 0 13px 20px;border:0;background:none;font:inherit;text-align:left;color:inherit;cursor:pointer}
+      .hbn-row:hover strong{color:#2E4A3C}
+      .hbn-dot{position:absolute;left:2px;top:20px;width:8px;height:8px;border-radius:50%;background:transparent}
+      .hbn-item.unread .hbn-dot{background:#B4573A}
+      .hbn-top{display:flex;justify-content:space-between;gap:10px;font-size:12.5px;color:#7b7466;letter-spacing:.04em}
+      .hbn-top time{flex:none;font-size:12px}
+      .hbn-row strong{font:500 15.5px 'Noto Serif TC',serif;letter-spacing:.06em;color:#26241F}
+      .hbn-row strong em{font-style:normal;font-size:12px;color:#7b7466;font-family:'Noto Sans TC',sans-serif}
+      .hbn-item:not(.unread) strong{color:#4f4a40;font-weight:400}
+      .hbn-sum{font-size:12.5px;color:#7b7466;line-height:1.5;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:96px}
+      .hbn-act{position:absolute;right:0;bottom:12px;display:inline-flex;align-items:center;gap:6px;font-size:13px;color:#2E4A3C;text-decoration:underline;text-underline-offset:4px;text-decoration-color:#B89B6A}
+      .hbn-empty{padding:26px 0;text-align:center;color:#7b7466;font-size:13px}
+      .hb-wb .hbn-all,.hbn-all{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;min-height:46px!important;border:0;border-top:1px solid #e2d8c6;background:none;font:inherit;font-size:13.5px;color:#26241F;cursor:pointer;text-decoration:underline;text-underline-offset:4px;text-decoration-color:#B89B6A}
+      .hbn-cfg{padding:0 18px 16px}
+      .hbn-note{margin:0 0 8px;font-size:12px;color:#7b7466}
+      .hbn-cfgsec{margin:12px 0 4px;font-size:12px;letter-spacing:.14em;color:#8A6E32}
+      .hbn-pref{position:relative;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid #eee6d8;font-size:14px;cursor:pointer}
+      .hbn-pref input{position:absolute;opacity:0;pointer-events:none}
+      .hbn-pref i{flex:none;position:relative;width:34px;height:19px;border-radius:999px;background:#d8cfbf;transition:background .18s}
+      .hbn-pref i:after{content:'';position:absolute;left:2px;top:2px;width:15px;height:15px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.18);transition:transform .18s}
+      .hbn-pref input:checked+i{background:#2E4A3C}.hbn-pref input:checked+i:after{transform:translateX(15px)}
+      .hbn-pref input:focus-visible+i{outline:2px solid #2E4A3C;outline-offset:2px}
+      .hb-wb .hbn-done,.hbn-done{margin-top:14px;width:100%;min-height:40px!important;border:0;border-radius:4px;background:#2E4A3C;color:#fff;font:inherit;font-size:14px;letter-spacing:.08em;cursor:pointer}
+      .hbn-portal{position:fixed;inset:0;z-index:950}.hbn-scrim{position:absolute;inset:0;background:rgba(23,21,15,.35)}
+      @media(max-width:680px){
+        .hbn-panel{position:fixed;z-index:951;left:12px;right:12px;top:auto;bottom:calc(12px + env(safe-area-inset-bottom));width:auto;max-width:none;max-height:80vh;display:flex;flex-direction:column}
+        .hbn-list{max-height:none;flex:1;min-height:0}
+        .hbn-sum{padding-right:0}
+        .hbn-act{position:static;margin-top:4px}
+      }
       @media(max-width:680px){.wbk-kpis{gap:8px;padding:10px 0 8px}.wbk-kpin{font-size:34px}.wbk-kpil{font-size:13px;letter-spacing:.08em}.hb-wb .wbk-kpi{gap:10px;min-height:56px!important}.wbk .wbk-clear{order:2}}
 `;
 const HB_HUB_CSS=`
@@ -14980,6 +15030,119 @@ function HB_wbOnDate(t,d){if(!t.due)return false;if(t.due===d)return true;return
 function HB_wbOpenTask(t){return !t.done&&!HB_wbIsFollow(t)&&!HB_wbIsAgenda(t)}
 function HB_wbOpenFollow(t){return !t.done&&HB_wbIsFollow(t)}
 function HB_wbProjectCounts(all){const m={};all.forEach(t=>{if(!t.projectId)return;const c=m[t.projectId]||(m[t.projectId]={open:0,follow:0});if(HB_wbOpenTask(t))c.open++;else if(HB_wbOpenFollow(t))c.follow++});return m}
+/* ===== 業主更新通知：站內通知中心（資料在 Supabase，已讀依帳號同步） ===== */
+const HB_NOTIF_KIND={client_info:{label:'客戶資料',act:'查看更新'},upload:{label:'參考照片／檔案',act:'查看檔案'},comment:{label:'留言',act:'查看回覆'},confirm:{label:'確認結果',act:'查看回覆'},booking:{label:'客戶預約',act:'查看預約'},lead:{label:'新客戶資料',act:'查看資料'}};
+const HB_NOTIF=(function(){
+  let list=[],prefs={},ready=false,started=false,timer=null,seen=null,subs=new Set(),busy=false,lastErr='';
+  const emit=()=>subs.forEach(f=>{try{f()}catch(e){}});
+  const isStaff=async()=>{try{const {data}=await q.auth.getSession();return !!(data&&data.session)}catch{return false}};
+  async function load(force){
+    if(busy||(!force&&document.hidden))return;busy=true;
+    try{
+      const {data,error}=await q.rpc('hb_notif_list',{p_limit:80});
+      if(error)throw error;
+      const next=(data||[]).map(x=>({...x,target:x.target||{}}));
+      if(seen){const fresh=next.filter(x=>x.unread&&(!seen.has(x.id)||seen.get(x.id)!==x.updated_at));if(fresh.length)toast(fresh[0],fresh.length)}
+      seen=new Map(next.map(x=>[x.id,x.updated_at]));
+      list=next;ready=true;lastErr='';emit();
+    }catch(e){lastErr=e&&e.message||'讀取失敗';emit()}
+    finally{busy=false}
+  }
+  async function loadPrefs(){try{const {data}=await q.rpc('hb_notif_prefs');prefs=data||{};emit()}catch{}}
+  async function start(){
+    if(started)return;if(!(await isStaff()))return;started=true;
+    load(true);loadPrefs();
+    timer=setInterval(()=>load(false),30000);
+    const f=()=>load(false);window.addEventListener('focus',f);document.addEventListener('visibilitychange',f);
+  }
+  function unread(cat){return list.filter(x=>x.unread&&(!cat||x.category===cat)).length}
+  async function read(id){const x=list.find(y=>y.id===id);if(x&&x.unread){x.unread=false;list=[...list];emit()}try{await q.rpc('hb_notif_read',{p_id:id})}catch{}}
+  async function readAll(cat){list=list.map(x=>!cat||x.category===cat?{...x,unread:false}:x);emit();try{await q.rpc('hb_notif_read_all',cat?{p_category:cat}:{})}catch{}load(true)}
+  async function setPref(k,v){prefs={...prefs,[k]:v};emit();try{const {data,error}=await q.rpc('hb_notif_prefs_set',{p:{[k]:v}});if(error)throw error;prefs=data||prefs;emit();load(true)}catch(e){alert('設定沒有儲存成功，請再試一次')}}
+  /* 點通知：先確認還有權限，再標已讀並開到對應位置 */
+  async function open(n){
+    let t=n&&n.target||{},pid=n&&n.project_id;
+    if(n&&n.id){try{const {data,error}=await q.rpc('hb_notif_get',{p_id:n.id});if(error||!data||!data.length){alert('這則通知已無法開啟（可能沒有這個案件的權限，或資料已刪除）。');return false}t=data[0].target||t;pid=data[0].project_id}catch{}
+      read(n.id)}
+    if(window.HB_nav)return window.HB_nav({...t,project:pid});
+    return false;
+  }
+  /* 右下角短暫提醒（任何後台頁面都會出現；可關閉，6 秒後自動收起） */
+  function toast(n,cnt){
+    try{
+      let el=document.getElementById('hb-ntoast');if(el)el.remove();
+      el=document.createElement('div');el.id='hb-ntoast';el.setAttribute('role','status');
+      const title=n.category==='owner'?'業主更新':'系統通知';
+      el.innerHTML='<button type="button" class="hb-nt-body"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 1.8H4.5z"/><path d="M10 20.5a2.2 2.2 0 0 0 4 0"/></svg><span><b></b><small></small></span></button><button type="button" class="hb-nt-x" aria-label="關閉提醒">×</button>';
+      el.querySelector('b').textContent=n.title+(cnt>1?'（另有 '+(cnt-1)+' 則）':'');
+      el.querySelector('small').textContent=(n.project_name||title)+'・點此前往查看';
+      el.querySelector('.hb-nt-body').onclick=()=>{el.remove();open(n)};
+      el.querySelector('.hb-nt-x').onclick=()=>el.remove();
+      document.body.appendChild(el);
+      setTimeout(()=>{if(el.isConnected){el.classList.add('out');setTimeout(()=>el.remove(),300)}},6500);
+    }catch{}
+  }
+  return {start,load,read,readAll,open,setPref,unread,subscribe:f=>{subs.add(f);return()=>subs.delete(f)},get list(){return list},get prefs(){return prefs},get ready(){return ready},get error(){return lastErr}};
+})();
+window.HB_NOTIF=HB_NOTIF;
+(function(){if(document.getElementById('hb-ntoast-css'))return;const st=document.createElement('style');st.id='hb-ntoast-css';st.textContent=`
+#hb-ntoast{position:fixed;right:18px;bottom:calc(18px + env(safe-area-inset-bottom));z-index:900;display:flex;align-items:stretch;max-width:min(360px,calc(100vw - 36px));background:#FBF8F2;border:1px solid #cdb98f;border-radius:4px;box-shadow:0 16px 34px -20px rgba(38,36,31,.6);font-family:'Noto Sans TC','PingFang TC',sans-serif;animation:hbNtIn .25s ease;transition:opacity .3s,transform .3s}
+#hb-ntoast.out{opacity:0;transform:translateY(8px)}
+#hb-ntoast .hb-nt-body{display:flex;align-items:center;gap:14px;flex:1;min-width:0;padding:14px 8px 14px 18px;border:0;background:none;text-align:left;cursor:pointer;color:#2E4A3C;font:inherit}
+#hb-ntoast .hb-nt-body span{display:flex;flex-direction:column;min-width:0}
+#hb-ntoast b{font:500 15px 'Noto Serif TC',serif;letter-spacing:.06em;color:#26241F}
+#hb-ntoast small{font-size:12.5px;color:#7b7466;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#hb-ntoast .hb-nt-x{border:0;background:none;padding:0 14px;font-size:20px;color:#7b7466;cursor:pointer}
+@keyframes hbNtIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@media(max-width:680px){#hb-ntoast{right:12px;left:12px;max-width:none;bottom:calc(84px + env(safe-area-inset-bottom))}}
+@media (prefers-reduced-motion:reduce){#hb-ntoast{animation:none;transition:none}}
+`;document.head.appendChild(st)})();
+
+/* 從手機推播／連結帶進來的通知：?hbn=<id>，登入後才處理 */
+(function(){try{const u=new URL(location.href),id=u.searchParams.get('hbn');if(id&&/^[0-9a-f-]{36}$/.test(id)){sessionStorage.setItem('hb_pending_nid',id);u.searchParams.delete('hbn');history.replaceState(null,'',u.pathname+(u.search||'')+u.hash)}}catch{}})();
+/* iOS App 點推播時可直接呼叫（payload 內含 nid） */
+window.__hbNativePushOpen=function(p){try{if(typeof p==='string')p=JSON.parse(p)}catch{p={}}const id=p&&p.nid;if(id&&/^[0-9a-f-]{36}$/.test(id)){try{sessionStorage.setItem('hb_pending_nid',id)}catch{}if(window.HB_navPending)window.HB_navPending()}};
+function HB_notifAgo(ts){const d=(Date.now()-new Date(ts).getTime())/1000;if(d<60)return'剛剛';if(d<3600)return Math.floor(d/60)+' 分鐘前';if(d<86400)return Math.floor(d/3600)+' 小時前';if(d<86400*7)return Math.floor(d/86400)+' 天前';const t=new Date(ts);return(t.getMonth()+1)+'/'+t.getDate()}
+function HB_useNotif(){const [,setN]=u.useState(0);u.useEffect(()=>{HB_NOTIF.start();return HB_NOTIF.subscribe(()=>setN(x=>x+1))},[]);return HB_NOTIF}
+function HbNotifBell(){
+  const h=u.default.createElement,N=HB_useNotif();
+  const [open,setOpen]=u.useState(false),[tab,setTab]=u.useState('owner'),[all,setAll]=u.useState(false),[cfg,setCfg]=u.useState(false);
+  const ref=u.useRef(null),pref_=u.useRef(null),mob=typeof window!=='undefined'&&window.matchMedia&&window.matchMedia('(max-width:680px)').matches;
+  u.useEffect(()=>{if(!open)return;N.load(true);const k=e=>{if(e.key==='Escape')setOpen(false)};const c=e=>{if(ref.current&&!ref.current.contains(e.target)&&!(pref_.current&&pref_.current.contains(e.target)))setOpen(false)};
+    document.addEventListener('keydown',k);document.addEventListener('mousedown',c);document.addEventListener('touchstart',c,{passive:true});
+    return()=>{document.removeEventListener('keydown',k);document.removeEventListener('mousedown',c);document.removeEventListener('touchstart',c)}},[open]);
+  const total=N.unread(),items=N.list.filter(x=>x.category===tab),shown=all?items:items.slice(0,5);
+  const go=async n=>{setOpen(false);await N.open(n)};
+  const pref=(k,label)=>h('label',{key:k,className:'hbn-pref'},h('span',null,label),h('input',{type:'checkbox',checked:N.prefs[k]!==false,onChange:e=>N.setPref(k,e.target.checked)}),h('i',{'aria-hidden':'true'}));
+  return h('div',{className:'hbn',ref},
+    h('button',{type:'button',className:'hbn-bell'+(total?' has':''),'aria-label':'通知中心'+(total?'，'+total+' 則未讀':''),'aria-expanded':open,onClick:()=>{setOpen(!open);setCfg(false)}},
+      h('svg',{viewBox:'0 0 24 24',width:20,height:20,fill:'none',stroke:'currentColor',strokeWidth:1.4,strokeLinecap:'round',strokeLinejoin:'round','aria-hidden':'true'},h('path',{d:'M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 1.8H4.5z'}),h('path',{d:'M10 20.5a2.2 2.2 0 0 0 4 0'})),
+      total?h('b',{className:'hbn-badge'},total>99?'99+':total):null),
+    open&&(mob?(x=>HB_portal(h('div',{className:'hbn-portal'},h('div',{className:'hbn-scrim',onClick:()=>setOpen(false)}),x))):(x=>x))(h('div',{className:'hbn-panel',ref:pref_,role:'dialog','aria-label':'通知中心'},
+      h('div',{className:'hbn-head'},h('h3',null,'通知中心'),
+        h('button',{type:'button',className:'hbn-link',onClick:()=>N.readAll(null),disabled:!total},'全部標為已讀'),
+        h('button',{type:'button',className:'hbn-gear'+(cfg?' on':''),'aria-label':'通知設定','aria-pressed':cfg,onClick:()=>setCfg(!cfg)},h('svg',{viewBox:'0 0 24 24',width:17,height:17,fill:'none',stroke:'currentColor',strokeWidth:1.5,'aria-hidden':'true'},h('circle',{cx:12,cy:12,r:3}),h('path',{d:'M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z'})))),
+      cfg?h('div',{className:'hbn-cfg'},
+        h('p',{className:'hbn-note'},'只影響你自己的帳號，電腦與手機同步。'),
+        h('div',{className:'hbn-cfgsec'},'業主更新'),pref('client_info','客戶資料／裝修需求更新'),pref('upload','上傳參考照片或檔案'),pref('comment','留言、回報缺失'),pref('confirm','圖面確認、簽署結果'),
+        h('div',{className:'hbn-cfgsec'},'系統通知'),pref('booking','客戶預約'),pref('lead','新的客戶資料表'),
+        h('div',{className:'hbn-cfgsec'},'手機'),pref('push','App 推播（關掉後仍會留在通知中心）'),
+        h('button',{type:'button',className:'hbn-done',onClick:()=>setCfg(false)},'完成'))
+      :h(u.default.Fragment,null,
+        h('div',{className:'hbn-tabs',role:'tablist'},[['owner','業主更新'],['system','系統通知']].map(([k,l])=>h('button',{key:k,type:'button',role:'tab','aria-selected':tab===k,className:tab===k?'on':'',onClick:()=>{setTab(k);setAll(false)}},l,N.unread(k)?h('b',null,N.unread(k)):null))),
+        h('ul',{className:'hbn-list'+(all?' all':'')},
+          !N.ready&&!N.error?h('li',{className:'hbn-empty'},'讀取中…')
+          :N.error&&!N.list.length?h('li',{className:'hbn-empty'},'通知暫時讀不到，稍後會自動重試。')
+          :shown.length===0?h('li',{className:'hbn-empty'},tab==='owner'?'目前沒有業主更新':'目前沒有系統通知')
+          :shown.map(n=>h('li',{key:n.id,className:'hbn-item'+(n.unread?' unread':'')},
+            h('button',{type:'button',className:'hbn-row',onClick:()=>go(n)},
+              h('i',{className:'hbn-dot','aria-hidden':'true'}),
+              h('span',{className:'hbn-top'},h('span',{className:'hbn-proj'},n.project_name||(n.category==='system'?'赫柏空間設計':'')),h('time',null,HB_notifAgo(n.updated_at))),
+              h('strong',null,n.title,n.n>1?h('em',null,' ×'+n.n):null),
+              h('span',{className:'hbn-sum'},n.summary||''),
+              h('span',{className:'hbn-act'},(HB_NOTIF_KIND[n.kind]||{}).act||'查看',HB_wbIcon('arrow',14)))))),
+        items.length>5&&h('button',{type:'button',className:'hbn-all',onClick:()=>setAll(!all)},all?'收合':'查看全部通知（'+items.length+'）',HB_wbIcon('arrow',14))))));
+}
 function HB_wbIcon(name,size){const s=size||16,p={width:s,height:s,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:1.6,strokeLinecap:'round',strokeLinejoin:'round','aria-hidden':'true'},C=u.default.createElement;
   const d={calendar:[['rect',{x:3.5,y:5,width:17,height:15,rx:1.5}],['path',{d:'M3.5 9.5h17M8 3v4M16 3v4M7.5 13h2M11 13h2M14.5 13h2M7.5 16.5h2M11 16.5h2'}]],
     clock:[['circle',{cx:12,cy:12,r:8.5}],['path',{d:'M12 7.5V12l3 2'}]],
@@ -15001,6 +15164,9 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
   const h=u.default.createElement,{all,today,ready,error,sync}=tk;
   const [editing,setEditing]=u.useState(null),[drawer,setDrawer]=u.useState(null),[cfList,setCfList]=u.useState(false),[cfOpen,setCfOpen]=u.useState(null),[full,setFull]=u.useState(''),[toast,setToast]=u.useState('');
   u.useEffect(()=>{if(!toast)return;const t=setTimeout(()=>setToast(''),3200);return()=>clearTimeout(t)},[toast]);
+  u.useEffect(()=>{const f=e=>{const id=e.detail&&e.detail.id;if(id)setCfOpen({id,n:Date.now()})};window.addEventListener('hb-open-confirm',f);
+    try{const id=sessionStorage.getItem('hb_open_cf');if(id){sessionStorage.removeItem('hb_open_cf');setCfOpen({id,n:Date.now()})}}catch{}
+    return()=>window.removeEventListener('hb-open-confirm',f)},[]);
   const say=m=>setToast(m),LIM=compact?2:3;
   /* 完成待辦動態：saving（勾選＋刪除線）→ 儲存成功 leaving（淡出收合）→ 移除；失敗 error（保留並可重試） */
   const [fx,setFx]=u.useState({}),[undo,setUndo]=u.useState(null);
@@ -15175,6 +15341,7 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
         h('div',{className:'wbc-date'},(d0.getMonth()+1)+'月'+pad(d0.getDate())+'日　'+HB_wbWeek(day).replace('週','星期'),!isToday&&h('button',{type:'button',className:'wbk-today',onClick:()=>setCDay(today)},'回到今天')),
         h('label',{className:'wbc-filter'},h('span',{className:'wbc-sr'},'專案篩選'),h('select',{value:pv,onChange:e=>setProj&&setProj(e.target.value)},h('option',{value:''},'全部專案'),h('option',{value:'__co'},'公司事務'),projects.map(p=>h('option',{key:p.id,value:p.id},p.name))),HB_wbIcon('caret',15)),
         pv&&h('button',{type:'button',className:'wbk-clear',onClick:()=>setProj&&setProj(''),title:'解除案件篩選'},h('span',{'aria-hidden':'true'},'✕'),'顯示全部案件'),
+        h(HbNotifBell),
         h('button',{type:'button',className:'wbc-cfbtn'+(cfChangeN?' has-ch':''),onClick:()=>setCfList(true)},'待業主確認',h('b',null,cfActive)),
         h('span',{className:'wbc-grow'}),
         h('button',{type:'button',className:'wbk-toggle'+(cGaps?' on':''),'aria-pressed':cGaps,onClick:()=>setCGaps(!cGaps)},h('span',null,'空檔時間'),h('i')),
@@ -15571,7 +15738,23 @@ async function HB_staffCloudLogin(username,password){const response=await fetch(
 function HB_todoDate(){return new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Taipei'}).format(new Date())}
 function HB_todoKey(){let who='company';try{who=localStorage.getItem('sitelog_admin_username')||who}catch{}return 'hb_today_v1:'+who}
 function HB_todoRead(){const raw=localStorage.getItem(HB_todoKey());if(!raw)return {manual:[],overrides:{}};const v=JSON.parse(raw);if(!v||!Array.isArray(v.manual)||!v.overrides||typeof v.overrides!=='object')throw Error('待辦資料格式不正確');return v}
-function Gy(){let[l,t]=(0,u.useState)(!0),[e,n]=(0,u.useState)(!1),[a,i]=(0,u.useState)([]),[o,f]=(0,u.useState)(()=>{try{let v=sessionStorage.getItem("hb_last_view");return v&&v!=="quoteImportPick"&&v!=="drawings"&&v!=="today"&&v!=="bookings"?v:"landing"}catch{return"landing"}}),[c,r]=(0,u.useState)(()=>{try{return sessionStorage.getItem("hb_last_project")||null}catch{return null}}),[d,h]=(0,u.useState)(!1),[m,p]=(0,u.useState)(null),[z,C]=(0,u.useState)(null),[hbOpenTab,hbSetOpenTab]=(0,u.useState)(()=>{try{return sessionStorage.getItem("hb_last_tab")||"overview"}catch{return"overview"}}),[hbQuoteImport,hbSetQuoteImport]=(0,u.useState)(null),[hbProg,hbSetProg]=(0,u.useState)({}),D=async T=>{T?n(!0):t(!0);try{let{data:k,error:H}=await q.from("sitelog_projects").select("*, sitelog_photos(count), sitelog_quotes(count)").order("created_at",{ascending:!1});if(H){g("讀取案件失敗："+H.message);T||i([])}else i((k||[]).map(cm))}catch(k){g("讀取案件失敗："+(k.message||k))}finally{T?n(!1):t(!1)}},hbLoadProg=async()=>{try{let{data:ev}=await q.from("sitelog_schedule_events").select("project_id,project_name,start_date,end_date").eq("type","site").neq("status","cancelled");if(!ev)return;let by={};for(let x of ev){let st=x.start_date;if(!st)continue;let en=x.end_date||st;for(let k2 of [x.project_id,x.project_name?"name:"+x.project_name:null]){if(!k2)continue;let cur=by[k2];if(!cur){by[k2]={s:st,e:en}}else{if(st<cur.s)cur.s=st;if(en>cur.e)cur.e=en}}}hbSetProg(by)}catch{}},y=async()=>{let[T,k,H,B]=await Promise.all([q.from("sitelog_photos").select("size"),q.from("sitelog_quotes").select("size"),q.from("sitelog_files").select("size"),q.from("sitelog_materials").select("photo_size")]);if(T.error||k.error||H.error||B.error)return;let nl=(ql,je)=>(ql||[]).reduce((Ml,te)=>Ml+(Number(te[je])||0),0),hl=nl(T.data,"size")+nl(k.data,"size")+nl(H.data,"size")+nl(B.data,"photo_size");C(hl)};(0,u.useEffect)(()=>{D(!1),y(),hbLoadProg()},[]);(0,u.useEffect)(()=>{try{o&&o!=="quoteImportPick"&&sessionStorage.setItem("hb_last_view",o);c?sessionStorage.setItem("hb_last_project",c):sessionStorage.removeItem("hb_last_project");sessionStorage.setItem("hb_last_tab",hbOpenTab)}catch{}},[o,c,hbOpenTab]);(0,u.useEffect)(()=>{let hbMsg=T=>{T?.data&&T.data.type==="hb-quote-import"&&(hbSetQuoteImport(T.data),f("quoteImportPick"))};return window.addEventListener("message",hbMsg),()=>window.removeEventListener("message",hbMsg)},[]);let g=(0,u.useCallback)(T=>{p(T),setTimeout(()=>p(null),2600)},[]),hbImportQuote=async T=>{if(!hbQuoteImport)return;try{let{blob:k,filename:H,meta:B}=hbQuoteImport,mt=k.type||"text/html",sl=`${T.id}/${Be()}.${mt==="application/json"?"json":"html"}`,X=await r2UploadSitelogFile("sitelog-quotes",sl,k,mt);let{error:dl}=await q.from("sitelog_quotes").insert({project_id:T.id,name:H,mime:mt,size:k.size,url:X,path:sl,folder_id:null});if(dl)throw dl;i(ql=>ql.map(je=>je.id===T.id?{...je,quoteCount:(je.quoteCount||0)+1}:je)),hbSetQuoteImport(null),r(T),hbSetOpenTab("quotes"),f("detail"),g(`\u5DF2\u5C07\u5831\u50F9\u55AE\u300C${B?.qClient||H}\u300D\u5B58\u5165\u6848\u4EF6`)}catch(k){g("\u5B58\u6A94\u5931\u6557\uFF1A"+(k.message||k))}},b=async(T,k,H,B)=>{let{data:nl,error:hl}=await q.from("sitelog_projects").insert({name:T,address:k,lat:H??null,lng:B??null,status:fn[0]}).select().single();if(hl){g("\u5EFA\u7ACB\u5931\u6557\uFF1A"+hl.message);return}i(ql=>[cm(nl),...ql]),h(!1),g("\u6848\u4EF6\u5DF2\u5EFA\u7ACB")},S=async(T,k)=>{i(hl=>hl.map(ql=>ql.id===T?{...ql,...k,updatedAt:new Date().toISOString()}:ql));let H={name:"name",address:"address",lat:"lat",lng:"lng",status:"status",ownerPassword:"owner_password",expectedEnd:"expected_end",clientInfo:"client_info",avatarUrl:"avatar_url"},B={};for(let hl of Object.keys(H))hl in k&&(B[H[hl]]=k[hl]);if(Object.keys(B).length===0)return;B.updated_at=new Date().toISOString();let{error:nl}=await q.from("sitelog_projects").update(B).eq("id",T);nl&&g("\u66F4\u65B0\u5931\u6557\uFF1A"+nl.message)},M=async T=>{let{error:k}=await q.from("sitelog_projects").delete().eq("id",T);if(k){g("\u522A\u9664\u5931\u6557\uFF1A"+k.message);return!1}i(H=>H.filter(B=>B.id!==T)),f("home"),g("\u6848\u4EF6\u5DF2\u522A\u9664");return!0},j=a.find(T=>T.id===c);return u.default.createElement("div",{className:"hb-shell",style:{background:s.paper,height:"100vh",overflow:"hidden",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},u.default.createElement("div",{className:"hb-global-menu-slot"}),u.default.createElement("style",null,`
+function Gy(){let[l,t]=(0,u.useState)(!0),[e,n]=(0,u.useState)(!1),[a,i]=(0,u.useState)([]),[o,f]=(0,u.useState)(()=>{try{let v=sessionStorage.getItem("hb_last_view");return v&&v!=="quoteImportPick"&&v!=="drawings"&&v!=="today"&&v!=="bookings"?v:"landing"}catch{return"landing"}}),[c,r]=(0,u.useState)(()=>{try{return sessionStorage.getItem("hb_last_project")||null}catch{return null}}),[d,h]=(0,u.useState)(!1),[m,p]=(0,u.useState)(null),[z,C]=(0,u.useState)(null),[hbOpenTab,hbSetOpenTab]=(0,u.useState)(()=>{try{return sessionStorage.getItem("hb_last_tab")||"overview"}catch{return"overview"}}),[hbNavN,hbSetNavN]=(0,u.useState)(0),[hbQuoteImport,hbSetQuoteImport]=(0,u.useState)(null),[hbProg,hbSetProg]=(0,u.useState)({}),D=async T=>{T?n(!0):t(!0);try{let{data:k,error:H}=await q.from("sitelog_projects").select("*, sitelog_photos(count), sitelog_quotes(count)").order("created_at",{ascending:!1});if(H){g("讀取案件失敗："+H.message);T||i([])}else i((k||[]).map(cm))}catch(k){g("讀取案件失敗："+(k.message||k))}finally{T?n(!1):t(!1)}},hbLoadProg=async()=>{try{let{data:ev}=await q.from("sitelog_schedule_events").select("project_id,project_name,start_date,end_date").eq("type","site").neq("status","cancelled");if(!ev)return;let by={};for(let x of ev){let st=x.start_date;if(!st)continue;let en=x.end_date||st;for(let k2 of [x.project_id,x.project_name?"name:"+x.project_name:null]){if(!k2)continue;let cur=by[k2];if(!cur){by[k2]={s:st,e:en}}else{if(st<cur.s)cur.s=st;if(en>cur.e)cur.e=en}}}hbSetProg(by)}catch{}},y=async()=>{let[T,k,H,B]=await Promise.all([q.from("sitelog_photos").select("size"),q.from("sitelog_quotes").select("size"),q.from("sitelog_files").select("size"),q.from("sitelog_materials").select("photo_size")]);if(T.error||k.error||H.error||B.error)return;let nl=(ql,je)=>(ql||[]).reduce((Ml,te)=>Ml+(Number(te[je])||0),0),hl=nl(T.data,"size")+nl(k.data,"size")+nl(H.data,"size")+nl(B.data,"photo_size");C(hl)};(0,u.useEffect)(()=>{D(!1),y(),hbLoadProg()},[]);(0,u.useEffect)(()=>{try{o&&o!=="quoteImportPick"&&sessionStorage.setItem("hb_last_view",o);c?sessionStorage.setItem("hb_last_project",c):sessionStorage.removeItem("hb_last_project");sessionStorage.setItem("hb_last_tab",hbOpenTab)}catch{}},[o,c,hbOpenTab]);
+/* 通知中心導覽：開到指定案件分頁或功能頁（會檢查案件是否在可存取清單內） */
+(0,u.useEffect)(()=>{HB_NOTIF.start();
+  const TABS=["overview","progress","photos","appliances","materials","files","quotes","defects","meetings"];
+  window.HB_nav=t=>{t=t||{};
+    if(t.cf){if(o==="home")window.dispatchEvent(new CustomEvent("hb-open-confirm",{detail:{id:t.cf}}));else{try{sessionStorage.setItem("hb_open_cf",t.cf)}catch{}f("home")}return!0}
+    if(t.tab&&t.project){if(!a.some(x=>x.id===t.project)){g("找不到這個案件，或你沒有這個案件的權限");return!1}
+      r(t.project);hbSetOpenTab(TABS.includes(t.tab)?t.tab:"overview");hbSetNavN(x=>x+1);f("detail");return!0}
+    if(t.view){f(t.view);return!0}
+    if(t.project&&a.some(x=>x.id===t.project)){r(t.project);hbSetOpenTab("overview");hbSetNavN(x=>x+1);f("detail");return!0}
+    f("home");return!0};
+  window.HB_navPending=async()=>{let id="";try{id=sessionStorage.getItem("hb_pending_nid")||""}catch{}if(!id||l)return;
+    try{sessionStorage.removeItem("hb_pending_nid")}catch{}
+    try{let{data,error}=await q.rpc("hb_notif_get",{p_id:id});if(error||!data||!data.length){g("這則通知已無法開啟");return}
+      HB_NOTIF.read(id);window.HB_nav({...(data[0].target||{}),project:data[0].project_id})}catch{}};
+  window.HB_navPending();
+},[o,a,l]);(0,u.useEffect)(()=>{let hbMsg=T=>{T?.data&&T.data.type==="hb-quote-import"&&(hbSetQuoteImport(T.data),f("quoteImportPick"))};return window.addEventListener("message",hbMsg),()=>window.removeEventListener("message",hbMsg)},[]);let g=(0,u.useCallback)(T=>{p(T),setTimeout(()=>p(null),2600)},[]),hbImportQuote=async T=>{if(!hbQuoteImport)return;try{let{blob:k,filename:H,meta:B}=hbQuoteImport,mt=k.type||"text/html",sl=`${T.id}/${Be()}.${mt==="application/json"?"json":"html"}`,X=await r2UploadSitelogFile("sitelog-quotes",sl,k,mt);let{error:dl}=await q.from("sitelog_quotes").insert({project_id:T.id,name:H,mime:mt,size:k.size,url:X,path:sl,folder_id:null});if(dl)throw dl;i(ql=>ql.map(je=>je.id===T.id?{...je,quoteCount:(je.quoteCount||0)+1}:je)),hbSetQuoteImport(null),r(T),hbSetOpenTab("quotes"),f("detail"),g(`\u5DF2\u5C07\u5831\u50F9\u55AE\u300C${B?.qClient||H}\u300D\u5B58\u5165\u6848\u4EF6`)}catch(k){g("\u5B58\u6A94\u5931\u6557\uFF1A"+(k.message||k))}},b=async(T,k,H,B)=>{let{data:nl,error:hl}=await q.from("sitelog_projects").insert({name:T,address:k,lat:H??null,lng:B??null,status:fn[0]}).select().single();if(hl){g("\u5EFA\u7ACB\u5931\u6557\uFF1A"+hl.message);return}i(ql=>[cm(nl),...ql]),h(!1),g("\u6848\u4EF6\u5DF2\u5EFA\u7ACB")},S=async(T,k)=>{i(hl=>hl.map(ql=>ql.id===T?{...ql,...k,updatedAt:new Date().toISOString()}:ql));let H={name:"name",address:"address",lat:"lat",lng:"lng",status:"status",ownerPassword:"owner_password",expectedEnd:"expected_end",clientInfo:"client_info",avatarUrl:"avatar_url"},B={};for(let hl of Object.keys(H))hl in k&&(B[H[hl]]=k[hl]);if(Object.keys(B).length===0)return;B.updated_at=new Date().toISOString();let{error:nl}=await q.from("sitelog_projects").update(B).eq("id",T);nl&&g("\u66F4\u65B0\u5931\u6557\uFF1A"+nl.message)},M=async T=>{let{error:k}=await q.from("sitelog_projects").delete().eq("id",T);if(k){g("\u522A\u9664\u5931\u6557\uFF1A"+k.message);return!1}i(H=>H.filter(B=>B.id!==T)),f("home"),g("\u6848\u4EF6\u5DF2\u522A\u9664");return!0},j=a.find(T=>T.id===c);return u.default.createElement("div",{className:"hb-shell",style:{background:s.paper,height:"100vh",overflow:"hidden",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},u.default.createElement("div",{className:"hb-global-menu-slot"}),u.default.createElement("style",null,`
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap');
         @media (min-width: 860px) {
           html, body { background: #DCE4E1; }
@@ -15590,7 +15773,7 @@ function Gy(){let[l,t]=(0,u.useState)(!0),[e,n]=(0,u.useState)(!1),[a,i]=(0,u.us
         }
         .fade-in { animation: hbFadeIn .2s var(--hb-ease-out) both; }
         @media (prefers-reduced-motion: reduce){ .fade-in { animation-name: hbFadeInSoft; } }
-      `),u.default.createElement("div",{key:o,className:"hb-pagein",style:{height:"100%",overflowY:o==="landing"?"hidden":"auto",WebkitOverflowScrolling:"touch",paddingBottom:o==="landing"?0:92}},l?u.default.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh"}},u.default.createElement(E,{name:"loader",className:"animate-spin",size:28,color:s.ocean})):o==="landing"?u.default.createElement(HbLanding,{onToday:()=>f("home"),onCase:()=>f("home"),onCompany:()=>f("companyHub"),onManageStaff:()=>f("staff"),onQuickQuote:()=>f("estimateHub"),onProposal:()=>HB_openProposalSystem(),onMarketingPhotos:()=>f("marketingPhotos"),onBookings:()=>f("home"),onOpenBooking:()=>HB_openBookingSystem(),onDrawings:()=>f("drawings"),onDocs:()=>{window.__hbDocsFrom="landing";f("docsHub")},onLogout:()=>{HB_staffLogout()}}):o==="companyHub"?u.default.createElement(HbCompanyHub,{onBack:()=>f("landing"),onContracts:()=>f("contracts"),onQuotes:()=>f("estimateHub"),onReceipts:()=>f("receipts"),onVendorReceipts:()=>f("vendorReceipts"),onQuickQuote:()=>f("estimateHub"),onGoHome:()=>f("home"),onVendorQuotes:()=>f("vendorQuotes"),onProposal:()=>HB_openProposalSystem(),onMarketingPhotos:()=>f("marketingPhotos"),onBookings:()=>f("home"),onOpenBooking:()=>HB_openBookingSystem(),onDrawings:()=>f("drawings"),onAttendance:()=>f("attendance"),onPriceBook:()=>f("priceBook"),onSurvey:()=>f("survey"),onChangeOrders:()=>f("changeOrders"),onPdfRotate:()=>f("pdfRotate"),onDocs:()=>{window.__hbDocsFrom="companyHub";f("docsHub")}}):o==="docsHub"?u.default.createElement(HbDocsHub,{onBack:()=>f(window.__hbDocsFrom||"landing"),notify:g,projects:a}):o==="changeOrders"?u.default.createElement(HbChangeOrderHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="survey"?u.default.createElement(HbSurveyHub,{onBack:()=>f("companyHub"),notify:g,projects:a,onProjectCreated:pj=>i(v=>[cm(pj),...v])}):o==="priceBook"?u.default.createElement(HbPriceBookHub,{onBack:()=>f("companyHub"),notify:g}):o==="attendance"?u.default.createElement(HbAttendanceHub,{onBack:()=>f("companyHub"),notify:g}):o==="marketingPhotos"?u.default.createElement(HbMarketingPhotoHub,{onBack:()=>f("landing"),notify:g}):o==="vendorQuotes"?u.default.createElement(HbVendorQuoteHub,{onBack:()=>f("companyHub"),notify:g}):o==="drawings"?u.default.createElement(HbDrawingHub,{onBack:()=>f("landing"),notify:g,projects:a,onOpenProject:(id,tab)=>{if(a.some(p=>p.id===id)){r(id);hbSetOpenTab(tab||"overview");f("detail")}else g("找不到這個案場，請重新整理")},onNewCase:()=>{f("home");h(!0)},workbench:u.default.createElement(HbHubWorkbench,{projects:a,onCalendar:()=>f("home"),onTodayHub:()=>f("home"),onOpenProject:id=>{if(a.some(p=>p.id===id)){r(id);hbSetOpenTab("overview");f("detail")}else g("找不到這個案場，請重新整理")}})}):o==="receipts"?u.default.createElement(HbReceiptsHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="vendorReceipts"?u.default.createElement(HbVendorReceiptsHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="quoteImportPick"?u.default.createElement(Iy,{projects:a,onOpen:hbImportQuote,onNew:()=>h(!0),onRefresh:()=>{D(!0),y()},refreshing:e,storageUsedBytes:z,onManageStaff:()=>f("staff"),pickerMode:!0,progressRanges:hbProg,onBack:()=>f("companyHub")}):o==="estimateHub"?u.default.createElement(HerfulsinsEstimateHub,{project:null,notify:g,onClose:()=>f("companyHub")}):o==="home"?u.default.createElement(Iy,{projects:a,notify:g,onOpen:T=>{r(T),hbSetOpenTab("photos"),f("detail")},onWbOpen:T=>{r(T),hbSetOpenTab("overview"),f("detail")},onCalendar:()=>f("home"),onTodayHub:()=>f("home"),onNew:()=>h(!0),onRefresh:()=>{D(!0),y()},refreshing:e,storageUsedBytes:z,onManageStaff:()=>f("staff"),progressRanges:hbProg,onBack:()=>f("landing"),onGoCompany:()=>f("companyHub")}):o==="staff"?u.default.createElement(Ky,{onBack:()=>f("landing")}):o==="pdfRotate"?u.default.createElement(HbPdfRotate,{onBack:()=>f("companyHub"),notify:g}):o==="contracts"?u.default.createElement(HerfulsinsContractsHub,{onBack:()=>f("landing"),notify:g}):o==="digitalCard"?u.default.createElement(HbDigitalCard,{onBack:()=>f("landing"),notify:g}):u.default.createElement(lh,{project:j,onBack:()=>f("home"),onUpdateMeta:S,onDelete:M,notify:g,initialTab:"overview"})),d&&u.default.createElement(Py,{onCancel:()=>h(!1),onCreate:b}),m&&u.default.createElement("div",{className:"hb-toast",style:{position:"fixed",bottom:20,left:"50%",background:s.ink,color:s.card,padding:"10px 18px",borderRadius:8,fontSize:13,boxShadow:"0 4px 14px rgba(0,0,0,0.25)",zIndex:60}},m),u.default.createElement(HbBottomNav,{active:o,onNavigate:T=>f(T)}))}
+      `),u.default.createElement("div",{key:o,className:"hb-pagein",style:{height:"100%",overflowY:o==="landing"?"hidden":"auto",WebkitOverflowScrolling:"touch",paddingBottom:o==="landing"?0:92}},l?u.default.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh"}},u.default.createElement(E,{name:"loader",className:"animate-spin",size:28,color:s.ocean})):o==="landing"?u.default.createElement(HbLanding,{onToday:()=>f("home"),onCase:()=>f("home"),onCompany:()=>f("companyHub"),onManageStaff:()=>f("staff"),onQuickQuote:()=>f("estimateHub"),onProposal:()=>HB_openProposalSystem(),onMarketingPhotos:()=>f("marketingPhotos"),onBookings:()=>f("home"),onOpenBooking:()=>HB_openBookingSystem(),onDrawings:()=>f("drawings"),onDocs:()=>{window.__hbDocsFrom="landing";f("docsHub")},onLogout:()=>{HB_staffLogout()}}):o==="companyHub"?u.default.createElement(HbCompanyHub,{onBack:()=>f("landing"),onContracts:()=>f("contracts"),onQuotes:()=>f("estimateHub"),onReceipts:()=>f("receipts"),onVendorReceipts:()=>f("vendorReceipts"),onQuickQuote:()=>f("estimateHub"),onGoHome:()=>f("home"),onVendorQuotes:()=>f("vendorQuotes"),onProposal:()=>HB_openProposalSystem(),onMarketingPhotos:()=>f("marketingPhotos"),onBookings:()=>f("home"),onOpenBooking:()=>HB_openBookingSystem(),onDrawings:()=>f("drawings"),onAttendance:()=>f("attendance"),onPriceBook:()=>f("priceBook"),onSurvey:()=>f("survey"),onChangeOrders:()=>f("changeOrders"),onPdfRotate:()=>f("pdfRotate"),onDocs:()=>{window.__hbDocsFrom="companyHub";f("docsHub")}}):o==="docsHub"?u.default.createElement(HbDocsHub,{onBack:()=>f(window.__hbDocsFrom||"landing"),notify:g,projects:a}):o==="changeOrders"?u.default.createElement(HbChangeOrderHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="survey"?u.default.createElement(HbSurveyHub,{onBack:()=>f("companyHub"),notify:g,projects:a,onProjectCreated:pj=>i(v=>[cm(pj),...v])}):o==="priceBook"?u.default.createElement(HbPriceBookHub,{onBack:()=>f("companyHub"),notify:g}):o==="attendance"?u.default.createElement(HbAttendanceHub,{onBack:()=>f("companyHub"),notify:g}):o==="marketingPhotos"?u.default.createElement(HbMarketingPhotoHub,{onBack:()=>f("landing"),notify:g}):o==="vendorQuotes"?u.default.createElement(HbVendorQuoteHub,{onBack:()=>f("companyHub"),notify:g}):o==="drawings"?u.default.createElement(HbDrawingHub,{onBack:()=>f("landing"),notify:g,projects:a,onOpenProject:(id,tab)=>{if(a.some(p=>p.id===id)){r(id);hbSetOpenTab(tab||"overview");f("detail")}else g("找不到這個案場，請重新整理")},onNewCase:()=>{f("home");h(!0)},workbench:u.default.createElement(HbHubWorkbench,{projects:a,onCalendar:()=>f("home"),onTodayHub:()=>f("home"),onOpenProject:id=>{if(a.some(p=>p.id===id)){r(id);hbSetOpenTab("overview");f("detail")}else g("找不到這個案場，請重新整理")}})}):o==="receipts"?u.default.createElement(HbReceiptsHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="vendorReceipts"?u.default.createElement(HbVendorReceiptsHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="quoteImportPick"?u.default.createElement(Iy,{projects:a,onOpen:hbImportQuote,onNew:()=>h(!0),onRefresh:()=>{D(!0),y()},refreshing:e,storageUsedBytes:z,onManageStaff:()=>f("staff"),pickerMode:!0,progressRanges:hbProg,onBack:()=>f("companyHub")}):o==="estimateHub"?u.default.createElement(HerfulsinsEstimateHub,{project:null,notify:g,onClose:()=>f("companyHub")}):o==="home"?u.default.createElement(Iy,{projects:a,notify:g,onOpen:T=>{r(T),hbSetOpenTab("photos"),f("detail")},onWbOpen:T=>{r(T),hbSetOpenTab("overview"),f("detail")},onCalendar:()=>f("home"),onTodayHub:()=>f("home"),onNew:()=>h(!0),onRefresh:()=>{D(!0),y()},refreshing:e,storageUsedBytes:z,onManageStaff:()=>f("staff"),progressRanges:hbProg,onBack:()=>f("landing"),onGoCompany:()=>f("companyHub")}):o==="staff"?u.default.createElement(Ky,{onBack:()=>f("landing")}):o==="pdfRotate"?u.default.createElement(HbPdfRotate,{onBack:()=>f("companyHub"),notify:g}):o==="contracts"?u.default.createElement(HerfulsinsContractsHub,{onBack:()=>f("landing"),notify:g}):o==="digitalCard"?u.default.createElement(HbDigitalCard,{onBack:()=>f("landing"),notify:g}):u.default.createElement(lh,{key:(j&&j.id)+":"+hbNavN,project:j,onBack:()=>f("home"),onUpdateMeta:S,onDelete:M,notify:g,initialTab:hbNavN?hbOpenTab:"overview"})),d&&u.default.createElement(Py,{onCancel:()=>h(!1),onCreate:b}),m&&u.default.createElement("div",{className:"hb-toast",style:{position:"fixed",bottom:20,left:"50%",background:s.ink,color:s.card,padding:"10px 18px",borderRadius:8,fontSize:13,boxShadow:"0 4px 14px rgba(0,0,0,0.25)",zIndex:60}},m),u.default.createElement(HbBottomNav,{active:o,onNavigate:T=>f(T)}))}
 
 /* ===================================================================
    設計需求問卷：公司端建立連結 → 業主線上填 → 答案回到案件
