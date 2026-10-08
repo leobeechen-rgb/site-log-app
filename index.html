@@ -17498,7 +17498,7 @@ function HbProjectMetaModal({project:pj,onCancel:onC,onSave:onS}){
         :lg.list.length===0?C("p",{style:{fontSize:12.5,color:s.inkSoft,margin:"0 0 12px",lineHeight:1.6}},"目前沒有可選的群組。請先把官方帳號加進案件群組，並在群組裡隨便說一句話，再回來這裡選。")
         :C("select",{value:lg.pick,onChange:function(ev){var v=ev.target.value;setLg(function(o){return Object.assign({},o,{pick:v})})},style:el},
           C("option",{value:""},"— 不連結 —"),
-          lg.list.map(function(x){return C("option",{key:x.line_user_id,value:x.line_user_id},(x.line_name||"未命名群組（"+String(x.updated_at||"").slice(5,10).replace("-","/")+"）")+(x.project_id===pj.id?"　✓ 目前連結":""))}))),
+          lg.list.map(function(x){return C("option",{key:x.line_user_id,value:x.line_user_id},(x.line_name||("LINE 群組（名稱下次有人在群組說話後會顯示）"))+(x.project_id===pj.id?"　✓ 目前連結":""))}))),
       C("div",{style:{display:"flex",gap:10}},
         C("button",{onClick:onC,style:Object.assign({},ll,{flex:1})},"\u53D6\u6D88"),
         C("button",{onClick:async function(){try{await lgSave()}catch(e){}onS({status:st,expectedEnd:ed||null,clientInfo:ciClean()})},style:Object.assign({},Dl,{flex:1})},"\u5132\u5B58"))
