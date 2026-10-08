@@ -5,7 +5,7 @@
 //   HB_OA_ACCESS_TOKEN    同一個 Channel → Messaging API → Channel access token（選填：用來顯示客人的 LINE 名稱）
 // LINE Developers 的 Webhook URL 設為 https://rqndozhhvuimqjqtmeli.supabase.co/functions/v1/hb-line-oa 並開啟 Use webhook。
 import { isPaymentText, parseAmount } from './detect.mjs';
-const VERSION = '2026-10-09.1';
+const VERSION = '2026-10-09.2';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!, SERVICE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const SECRET = (Deno.env.get('HB_OA_CHANNEL_SECRET') || '').trim(), TOKEN = (Deno.env.get('HB_OA_ACCESS_TOKEN') || '').trim();
 const enc = new TextEncoder();
@@ -38,7 +38,7 @@ async function handle(e: any) {
   if (e.deliveryContext?.isRedelivery && Math.abs(Date.now() - Number(e.timestamp || 0)) > 6 * 3600e3) return;
   const uid = e.source.userId, mt = e.message?.type;
   let kind = '', text = '';
-  if (mt === 'text') { text = String(e.message.text || ''); if (!isPaymentText(text)) return; kind = 'text'; }
+  if (mt === 'text') { text = String(e.message.text || ''); if (!isPaymentText(text)) { log('not_payment'); return; } kind = 'text'; }
   else if (mt === 'image') kind = 'image';     // 只會併入一小時內的匯款回報（轉帳截圖）
   else return;
   await report({ p_event: String(e.webhookEventId), p_uid: uid, p_name: kind === 'text' ? await profileName(uid) : null,
@@ -57,6 +57,8 @@ Deno.serve(async (req: Request) => {
   // deno-lint-ignore no-explicit-any
   let body: any; try { body = JSON.parse(new TextDecoder().decode(raw)); } catch { return new Response('Invalid JSON', { status: 400 }); }
   const events = Array.isArray(body?.events) ? body.events.slice(0, 100) : [];
+  // deno-lint-ignore no-explicit-any
+  if (events.length) log('received', { n: events.length, types: events.map((e: any) => e?.type + ':' + (e?.message?.type || e?.source?.type || '')).join(',').slice(0, 120) });
   // deno-lint-ignore no-explicit-any
   const work = (async () => { for (const e of events.sort((a: any, b: any) => (a.timestamp || 0) - (b.timestamp || 0))) { try { await handle(e); } catch (err) { log('event_failed', { code: String((err as Error)?.message || err).slice(0, 60) }); } } })();
   try { EdgeRuntime.waitUntil(work); } catch { await work; }
