@@ -18838,41 +18838,38 @@ function HbStageProgress({projectId:pid,readOnly:ro,notify:nf}){
         )
       ):null
     ),
+    /* 橫向箭頭：每個階段一格，點一下勾選／取消（2026-10-09 改版，取代原本往下長的清單） */
+    u.default.createElement("style",null,`.hb-chevs{display:flex;overflow-x:auto;padding:2px 0 4px;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
+.hb-chev{position:relative;flex:1 0 104px;min-width:104px;height:54px;margin-left:-11px;border:0;padding:0 18px 0 24px;font-family:inherit;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+clip-path:polygon(0 0,calc(100% - 14px) 0,100% 50%,calc(100% - 14px) 100%,0 100%,14px 50%);background:#EFE8DE;color:#8A8178;cursor:pointer;transition:filter .15s}
+.hb-chev:first-child{margin-left:0;padding-left:14px;clip-path:polygon(0 0,calc(100% - 14px) 0,100% 50%,calc(100% - 14px) 100%,0 100%)}
+.hb-chev:hover:not(:disabled){filter:brightness(.96)}.hb-chev:disabled{cursor:default}
+.hb-chev b{font-size:13px;font-weight:500;line-height:1.2;white-space:nowrap}.hb-chev small{font-size:10.5px;line-height:1.2;white-space:nowrap;font-variant-numeric:tabular-nums}
+.hb-chev.done{background:${s.ocean};color:#fff}.hb-chev.now{background:#F3DCCF;color:#8E3F27}.hb-chev.skip{background:repeating-linear-gradient(135deg,#F6F2EC 0 6px,#EFE8DE 6px 12px);color:#B5ACA2}.hb-chev.skip b{text-decoration:line-through}
+.hb-chevskip{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.hb-chevskip button{background:none;border:1px dashed ${s.line};border-radius:99px;padding:3px 10px;font-size:11.5px;color:${s.inkSoft};cursor:pointer;font-family:inherit}.hb-chevskip button.on{border-style:solid;color:${s.oceanDark}}`),
     HB_STAGE_GROUPS.map(function(gp){
       let liveIn=gp.items.filter(x=>!(data[x.k]&&data[x.k].skip));
       let doneIn=liveIn.filter(x=>data[x.k]&&data[x.k].done).length;
       let skipIn=gp.items.length-liveIn.length;
       let shown=(ro||!tplOpen)?liveIn:gp.items;
-      let isOpen=!!gOpen[gp.g],active=gp.items.some(x=>x.k===currentK);
+      let active=gp.items.some(x=>x.k===currentK);
       if(shown.length===0)return null;
-      return u.default.createElement("div",{key:gp.g,style:{background:s.card,border:`1px solid ${s.line}`,borderRadius:10,marginBottom:10,overflow:"hidden"}},
-        u.default.createElement("button",{onClick:()=>setGOpen(v=>({...v,[gp.g]:!v[gp.g]})),style:{width:"100%",display:"flex",alignItems:"center",gap:8,background:"none",border:"none",padding:"12px 16px",cursor:"pointer",fontFamily:"inherit",textAlign:"left"}},
-          u.default.createElement(E,{name:isOpen?"chevron-up":"chevron-down",size:15,color:s.inkSoft}),
-          u.default.createElement("span",{style:{fontSize:13.5,fontWeight:500,color:active?s.oceanDark:s.ink}},gp.name),
-          u.default.createElement("span",{className:"mono",style:{marginLeft:"auto",fontSize:11.5,color:active?s.ocean:s.inkSoft}},doneIn+" / "+liveIn.length+((skipIn&&!ro)?"\u3000\u7565\u904E "+skipIn:""))
-        ),
-        isOpen?u.default.createElement("div",{style:{padding:"0 16px 12px"}},
-          shown.map(function(sg,idx){
-            let rec=data[sg.k]||{},isDone=!!rec.done,isSkip=!!rec.skip,isNow=sg.k===currentK,last=idx===shown.length-1;
-            return u.default.createElement("div",{key:sg.k,style:{display:"flex",gap:11,alignItems:"flex-start",opacity:isSkip?.45:1}},
-              u.default.createElement("div",{className:"hb-stage-track",style:{display:"flex",flexDirection:"column",alignItems:"center",alignSelf:"stretch",width:26,flexShrink:0}},
-                u.default.createElement("button",{className:"hb-stage-toggle",onClick:()=>toggle(sg.k),"aria-label":sg.title,"aria-pressed":isDone,"data-current":isNow,"data-skipped":isSkip,disabled:!!ro||isSkip||busy===sg.k,style:{width:24,height:24,borderRadius:"50%",flexShrink:0,border:isDone?`1px solid ${s.ocean}`:isSkip?`1px dashed ${s.line}`:isNow?`2px solid ${s.ocean}`:`1px solid ${s.line}`,background:isDone?s.ocean:"transparent",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",cursor:(ro||isSkip)?"default":"pointer",padding:0,marginTop:10}},
-                  busy===sg.k?u.default.createElement(E,{name:"loader",size:12,className:"animate-spin"}):isDone?u.default.createElement(E,{name:"check",size:13}):null),
-                last?null:u.default.createElement("div",{style:{flex:1,width:1,background:isDone?s.ocean:s.line,opacity:isDone?.6:1,marginTop:2,minHeight:14}})
-              ),
-              u.default.createElement("div",{style:{flex:1,padding:"9px 0 8px",borderBottom:last?"none":`1px solid ${s.line}`}},
-                u.default.createElement("div",{style:{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}},
-                  u.default.createElement("span",{onClick:()=>{if(!ro&&!isSkip)toggle(sg.k)},style:{fontSize:13.5,fontWeight:500,color:isDone?s.ink:isNow?s.oceanDark:s.inkSoft,textDecoration:isSkip?"line-through":"none",cursor:(ro||isSkip)?"default":"pointer"}},sg.title),
-                  isNow?u.default.createElement("span",{style:{fontSize:10.5,color:s.ocean,border:`1px solid ${s.ocean}`,borderRadius:99,padding:"1px 8px",fontWeight:400}},"\u9032\u884C\u4E2D"):null,
-                  isSkip?u.default.createElement("span",{style:{fontSize:10.5,color:s.inkSoft,border:`1px dashed ${s.line}`,borderRadius:99,padding:"1px 8px",fontWeight:400}},"\u4E0D\u9069\u7528"):null,
-                  (!ro&&tplOpen)?u.default.createElement("button",{onClick:()=>toggleSkip(sg.k),disabled:busy===sg.k,style:{marginLeft:"auto",background:"none",border:"none",color:s.inkSoft,fontSize:11,cursor:"pointer",fontFamily:"inherit",textDecoration:"underline",padding:0}},isSkip?"\u6539\u70BA\u8981\u505A":"\u6A19\u70BA\u4E0D\u9069\u7528"):null
-                ),
-                isSkip?null:u.default.createElement("div",{style:{fontSize:12,color:s.inkSoft,marginTop:3,fontWeight:300,lineHeight:1.6}},sg.desc),
-                isDone?u.default.createElement("div",{className:"mono",style:{fontSize:11,color:s.tree,marginTop:4}},"\u2713 \u5B8C\u6210\u65BC "+HB_stageFmt(rec.at)):null
-              )
-            );
-          })
-        ):null
+      return u.default.createElement("div",{key:gp.g,style:{background:s.card,border:`1px solid ${s.line}`,borderRadius:10,marginBottom:10,padding:"10px 14px 12px"}},
+        u.default.createElement("div",{style:{display:"flex",alignItems:"baseline",gap:8,marginBottom:8}},
+          u.default.createElement("span",{style:{fontSize:13,fontWeight:500,color:active?s.oceanDark:s.ink}},gp.name),
+          u.default.createElement("span",{className:"mono",style:{marginLeft:"auto",fontSize:11.5,color:active?s.ocean:s.inkSoft}},doneIn+" / "+liveIn.length+((skipIn&&!ro)?"\u3000\u7565\u904E "+skipIn:""))),
+        u.default.createElement("div",{className:"hb-chevs",role:"list"},
+          shown.map(function(sg){
+            let rec=data[sg.k]||{},isDone=!!rec.done,isSkip=!!rec.skip,isNow=sg.k===currentK;
+            return u.default.createElement("button",{key:sg.k,type:"button",role:"listitem",className:"hb-chev"+(isDone?" done":isSkip?" skip":isNow?" now":""),
+              title:sg.title+"："+(sg.desc||"")+(ro?"":isSkip?"（不適用）":isDone?"（點一下取消）":"（點一下標為完成）"),
+              "aria-pressed":isDone,disabled:!!ro||isSkip||busy===sg.k,onClick:()=>toggle(sg.k)},
+              u.default.createElement("b",null,sg.title),
+              u.default.createElement("small",null,busy===sg.k?"儲存中…":isSkip?"不適用":isDone?"✓ "+HB_stageFmt(rec.at):isNow?"進行中":"待進行"))
+          })),
+        (!ro&&tplOpen)?u.default.createElement("div",{className:"hb-chevskip"},
+          gp.items.map(sg=>{let isSkip=!!(data[sg.k]&&data[sg.k].skip);
+            return u.default.createElement("button",{key:sg.k,type:"button",className:isSkip?"":"on",disabled:busy===sg.k,onClick:()=>toggleSkip(sg.k),title:isSkip?"改為要做":"標為不適用"},(isSkip?"✕ ":"✓ ")+sg.title)})):null
       );
     }),
     ro?u.default.createElement("p",{style:{fontSize:11.5,color:s.inkSoft,textAlign:"center",marginTop:18,fontWeight:300,lineHeight:1.8}},"\u9032\u5EA6\u7531\u8D6B\u67CF\u7A7A\u9593\u8A2D\u8A08\u4F9D\u5BE6\u969B\u4F5C\u696D\u66F4\u65B0\uFF0C\u5982\u6709\u7591\u554F\u6B61\u8FCE\u8207\u6211\u5011\u806F\u7E6B\u3002"):
