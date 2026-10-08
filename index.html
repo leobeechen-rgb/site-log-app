@@ -12731,6 +12731,8 @@ const HB_LIB_CSS=`
       .wbk-pphitem{position:relative}.wbk-pphitem img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .25s ease}
       .hb-wb .wbk-ptab.on{box-shadow:inset 0 -2px #B4573A}.wbk-ptab.on .wbk-ptfr,.wbk-ptab.on .wbk-ptzh{color:#B4573A}
       .wbk-pphitem.doc{background:#FBF6F0;border:1px solid #E7DCCD}
+      /* 管理分頁開著時取消容器查詢：否則案件頁的彈出視窗（新增設備、缺失…）會被困在工作台框內、跑到下面 */
+      .wbk:has(.wbk-manage){container-type:normal!important;contain:none!important}
       .wbk-manage{margin:0 -4px}.wbk-manage .hb-embed>.hb-band{display:none!important}.wbk-manage .hb-embed .hb-body{padding:4px 4px 8px!important}.wbk-manage .hb-embed{min-height:0!important}.wbk-manage .hb-embed .hb-project-nav-row{display:none!important}.wbk-manage .hb-embed .hb-body{background:transparent!important}
       .wbk-ov{display:grid;gap:18px}.wbk-ovdl{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px 24px;margin:0}
       .wbk-ovdl>div{min-width:0;border-bottom:1px solid #EFE6DA;padding-bottom:8px}.wbk-ovdl dt{font-size:11.5px;letter-spacing:.08em;color:#8A8178;margin-bottom:3px}.wbk-ovdl dd{margin:0;font-size:14px;color:#17150F;overflow-wrap:anywhere}
