@@ -12731,6 +12731,28 @@ const HB_LIB_CSS=`
       .wbk-pphitem{position:relative}.wbk-pphitem img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .25s ease}
       .hb-wb .wbk-ptab.on{box-shadow:inset 0 -2px #B4573A}.wbk-ptab.on .wbk-ptfr,.wbk-ptab.on .wbk-ptzh{color:#B4573A}
       .wbk-pphitem.doc{background:#FBF6F0;border:1px solid #E7DCCD}
+      .wbk-ov{display:grid;gap:18px}.wbk-ovdl{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px 24px;margin:0}
+      .wbk-ovdl>div{min-width:0;border-bottom:1px solid #EFE6DA;padding-bottom:8px}.wbk-ovdl dt{font-size:11.5px;letter-spacing:.08em;color:#8A8178;margin-bottom:3px}.wbk-ovdl dd{margin:0;font-size:14px;color:#17150F;overflow-wrap:anywhere}
+      .wbk-ovbar{display:inline-block;width:90px;height:4px;background:#EFE6DA;vertical-align:middle;border-radius:2px;overflow:hidden}.wbk-ovbar i{display:block;height:100%;background:#B4573A}
+      .wbk-ovlab{font-size:12px;letter-spacing:.08em;color:#8A8178;margin-bottom:8px}
+      .wbk-prog{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px 28px}
+      .wbk-pg h4{margin:0 0 6px;font-size:12px;letter-spacing:.1em;color:#8A8178;font-weight:500}.wbk-pg ol{list-style:none;margin:0;padding:0}
+      .wbk-pg li{display:flex;align-items:center;gap:8px;padding:5px 0;font-size:13.5px;color:#8A8178;border-bottom:1px dashed #EFE6DA}
+      .wbk-pgdot{flex:none;width:16px;height:16px;border-radius:50%;border:1px solid #D9CFC3;display:grid;place-items:center;font-size:10px;color:#fff}
+      .wbk-pg li.done{color:#3C362F}.wbk-pg li.done .wbk-pgdot{background:#B4573A;border-color:#B4573A}.wbk-pg li.cur{color:#17150F;font-weight:500}.wbk-pg li.cur .wbk-pgdot{border:2px solid #B4573A}
+      .wbk-pgt{flex:1;min-width:0}.wbk-pgt em{font-style:normal;font-size:11px;color:#B4573A;margin-left:6px}.wbk-pgd{font-size:11.5px;color:#8A8178;font-variant-numeric:tabular-nums}
+      .wbk-rlist{list-style:none;margin:0;padding:0;display:grid;gap:0}
+      .wbk-r{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #EFE6DA}.wbk-r.is-done{opacity:.6}
+      .wbk-rthumb{flex:none;width:52px;height:52px;border-radius:4px;overflow:hidden;padding:0;border:0;background:#EFE8DE;cursor:pointer}.wbk-rthumb img{width:100%;height:100%;object-fit:cover;display:block}.wbk-rthumb.none{cursor:default}
+      .wbk-rt{flex:1;min-width:0}.wbk-rt b{display:block;font-weight:500;font-size:14px;color:#17150F;overflow-wrap:anywhere}.wbk-rt small{display:block;font-size:12.5px;color:#8A8178;margin-top:2px;overflow-wrap:anywhere}
+      .wbk-rt p{margin:4px 0 0;font-size:13px;line-height:1.6;color:#3C362F;white-space:pre-wrap}
+      .wbk-rtag{font-style:normal;font-size:11px;color:#B4573A;border:1px solid #D9B8A6;border-radius:999px;padding:0 7px;margin-left:8px;vertical-align:middle}
+      .wbk-racts{display:flex;gap:10px;font-size:12.5px}.wbk-racts a{color:#B4573A}
+      .wbk-rdate{flex:none;font-size:12px;color:#8A8178;font-variant-numeric:tabular-nums}
+      .wbk-rstat{flex:none;font-size:12px;border-radius:999px;padding:2px 9px}.wbk-rstat.open{color:#B4573A;background:#FBF0EA}.wbk-rstat.ok{color:#4F6B55;background:#EEF3EE}
+      .wbk-rmeet{align-items:flex-start}.wbk-mdate{flex:none;width:84px;font-size:13px;color:#B4573A;font-variant-numeric:tabular-nums;padding-top:1px}
+      .wbk-mdec{margin:6px 0 0;padding-left:18px;font-size:12.5px;color:#3C362F;line-height:1.6}
+      @media (max-width:640px){.wbk-ovdl{grid-template-columns:repeat(2,minmax(0,1fr))}.wbk-mdate{width:70px}.wbk-r{flex-wrap:wrap}.wbk-rt{flex-basis:calc(100% - 64px)}}
       .wbk-docf{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;height:100%;padding:10px;text-align:center}
       .wbk-docf b{font:600 13px/1 'Noto Sans TC',sans-serif;letter-spacing:.08em;color:#B4573A;border:1px solid #D9B8A6;border-radius:3px;padding:5px 7px}
       .wbk-docf small{font-size:11.5px;line-height:1.4;color:#3C362F;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;word-break:break-all}
@@ -15481,8 +15503,14 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
   const setF=(id,v)=>setFx(m=>{const n={...m};if(v)n[id]=v;else delete n[id];return n});
   const pv=proj||'';
   /* 篩選單一案件時，工作台下方改放這個案件的照片縮圖（不顯示行程） */
-  const [pvPh,setPvPh]=u.useState(null),[pvTab,setPvTab]=u.useState('photos'),[pvFiles,setPvFiles]=u.useState(null),[pvLb,setPvLb]=u.useState(null);
-  u.useEffect(()=>{setPvTab('photos');setPvFiles(null);setPvLb(null)},[pv]);
+  const [pvPh,setPvPh]=u.useState(null),[pvTab,setPvTab]=u.useState('overview'),[pvData,setPvData]=u.useState({}),[pvFiles,setPvFiles]=u.useState(null),[pvLb,setPvLb]=u.useState(null);
+  u.useEffect(()=>{setPvTab('overview');setPvFiles(null);setPvLb(null);setPvData({})},[pv]);
+  /* 設備／材料／缺失／會議：切到該分頁才抓，抓過就留著 */
+  u.useEffect(()=>{const T={appliances:["sitelog_appliances","created_at"],materials:["sitelog_materials","delivered_at"],defects:["sitelog_defects","created_at"],meetings:["sitelog_meetings","met_at"]}[pvTab];
+    if(!compact||!pv||pv==='__co'||!T||pvData[pvTab])return;let live=true,tab=pvTab;
+    q.from(T[0]).select("*").eq("project_id",pv).order(T[1],{ascending:false}).limit(60)
+      .then(({data})=>{if(live)setPvData(m=>({...m,[tab]:data||[]}))},()=>{if(live)setPvData(m=>({...m,[tab]:[]}))});
+    return()=>{live=false}},[pv,pvTab,compact,pvData]);
   /* 檔案：從「專案資料與圖面」該案根資料夾往下抓圖面與目前版本 */
   u.useEffect(()=>{if(!compact||!pv||pv==='__co'||pvTab!=='files'||pvFiles)return;let live=true;
     (async()=>{try{
@@ -15659,7 +15687,7 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
     const pvName=pv?(pv==='__co'?'公司事務':(projects.find(p=>p.id===pv)||{}).name||''):'';
     const pvReal=!!pv&&pv!=='__co'&&projects.some(p=>p.id===pv);
     const openPvTab=k=>window.HB_nav?window.HB_nav({project:pv,tab:k}):onOpenProject(pv);
-    const INLINE={photos:1,files:1};
+    const INLINE={overview:1,progress:1,photos:1,appliances:1,materials:1,files:1,defects:1,meetings:1};
     const isImg=f=>/^image\//.test(f.mime||'')||/\.(jpe?g|png|webp|gif)(\?|$)/i.test(f.url||'');
     const isPdf=f=>/pdf/.test(f.mime||'')||/\.pdf(\?|$)/i.test(f.url||'');
     const extOf=f=>{const m=/\.([a-z0-9]{2,5})(\?|$)/i.exec(f.url||'');return (m?m[1]:(f.mime||'').split('/').pop()||'檔案').toUpperCase().slice(0,4)};
@@ -15669,13 +15697,67 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
       isImg(f)?h('img',{src:f.url,alt:f.name||'',loading:'lazy',decoding:'async'})
         :h('span',{className:'wbk-docf'},h('b',null,extOf(f)),h('small',null,f.name)),
       k!=null&&list===fileItems&&isImg(f)&&f.name?h('span',{className:'wbk-pphcap'},f.name):null);
-    const curList=pvTab==='files'?fileItems:phItems,curLoad=pvTab==='files'?pvFiles===null:pvPh===null;
-    const pvPhotos=h('section',{className:'wbk-pph','aria-label':pvName+(pvTab==='files'?' 檔案':' 照片')},
-      h('div',{className:'wbc-colhead'},h('h3',null,pvTab==='files'?'檔案':'照片'),h('span',{className:'wbc-num'},curLoad?'…':curList.length+(pvTab==='photos'&&curList.length>=24?'+':'')),
-        h('button',{type:'button',className:'wbc-more wbk-pphall',onClick:()=>openPvTab(pvTab),title:'到案件頁管理'},'開啟完整頁面',HB_wbIcon('arrow',13))),
-      curLoad?h('p',{className:'wbc-empty'},pvTab==='files'?'載入檔案中…':'載入照片中…')
-      :curList.length===0?h('p',{className:'wbc-empty'},pvTab==='files'?'這個案件還沒有檔案':'這個案件還沒有照片')
-      :h('div',{className:'wbk-pphgrid'},curList.map((f,k)=>tile(f,curList,k))));
+    const pvP=projects.find(p=>p.id===pv)||{};
+    const TABZH={overview:'總覽',progress:'進度',photos:'照片',appliances:'設備',materials:'材料',files:'檔案',defects:'缺失',meetings:'會議'};
+    const dshort=x=>x?String(x).slice(0,10).replace(/-/g,'/'):'';
+    const lbOne=(url,name)=>setPvLb({list:[{id:url,url,name:name||'',mime:'image/jpeg'}],i:0});
+    const thumbBtn=(url,name)=>url?h('button',{type:'button',className:'wbk-rthumb','aria-label':'預覽：'+(name||'照片'),onClick:()=>lbOne(url,name)},h('img',{src:url,alt:'',loading:'lazy',decoding:'async'})):h('span',{className:'wbk-rthumb none','aria-hidden':'true'});
+    const empty=t=>h('p',{className:'wbc-empty'},t);
+    const loading=t=>h('p',{className:'wbc-empty'},'載入'+t+'中…');
+    let sd={},LD=[];try{sd=HB_stageMigrate(pvP.stageProgress||{});LD=HB_stageLive(sd)}catch(e){}
+    const doneN=LD.filter(x=>sd[x.k]&&sd[x.k].done).length,pct=(pvP.status==='工程已完工'||pvP.status==='已完工')?100:(LD.length?Math.round(doneN/LD.length*100):0);
+    const curStage=LD.find(x=>!(sd[x.k]&&sd[x.k].done)),lastDone=[...LD].reverse().find(x=>sd[x.k]&&sd[x.k].done);
+    const grid=list=>h('div',{className:'wbk-pphgrid'},list.map((f,k)=>tile(f,list,k)));
+    const rlist=(list,fn)=>h('ul',{className:'wbk-rlist'},list.map(fn));
+    let count=null,body=null;
+    if(pvTab==='overview'){
+      body=h('div',{className:'wbk-ov'},
+        h('dl',{className:'wbk-ovdl'},
+          h('div',null,h('dt',null,'狀態'),h('dd',null,pvP.status||'—')),
+          h('div',null,h('dt',null,'進度'),h('dd',null,h('span',{className:'wbk-ovbar'},h('i',{style:{width:pct+'%'}})),' '+pct+'%')),
+          h('div',null,h('dt',null,'目前階段'),h('dd',null,curStage?curStage.title:(LD.length?'全部完成':'—'))),
+          h('div',null,h('dt',null,'上一個完成'),h('dd',null,lastDone?lastDone.title+(sd[lastDone.k].at||sd[lastDone.k].completedAt?'　'+dshort(sd[lastDone.k].at||sd[lastDone.k].completedAt):''):'—')),
+          h('div',null,h('dt',null,'地址'),h('dd',null,pvP.address||'—')),
+          h('div',null,h('dt',null,'照片'),h('dd',null,(pvP.photoCount!=null?pvP.photoCount:(pvPh||[]).length)+' 張'))),
+        pvPh&&pvPh.length?h('div',{className:'wbk-ovph'},h('div',{className:'wbk-ovlab'},'最近照片'),grid(phItems.slice(0,8))):null);
+    }else if(pvTab==='progress'){
+      count=LD.length?doneN+'/'+LD.length:'0';
+      const groups=[];LD.forEach(x=>{let g=groups.find(y=>y.g===x.g);if(!g)groups.push(g={g:x.g,items:[]});g.items.push(x)});
+      body=LD.length?h('div',{className:'wbk-prog'},groups.map(g=>h('section',{key:g.g,className:'wbk-pg'},h('h4',null,g.g),
+        h('ol',null,g.items.map(x=>{const e=sd[x.k]||{},done=!!e.done,cur=curStage&&curStage.k===x.k;
+          return h('li',{key:x.k,className:done?'done':cur?'cur':''},h('span',{className:'wbk-pgdot','aria-hidden':'true'},done?'✓':''),
+            h('span',{className:'wbk-pgt'},x.title,cur?h('em',null,'進行中'):null),h('span',{className:'wbk-pgd'},done?dshort(e.at||e.completedAt):''))}))))):empty('還沒有設定工程階段');
+    }else if(pvTab==='photos'){
+      count=pvPh===null?'…':phItems.length+(phItems.length>=24?'+':'');
+      body=pvPh===null?loading('照片'):phItems.length?grid(phItems):empty('這個案件還沒有照片');
+    }else if(pvTab==='files'){
+      count=pvFiles===null?'…':fileItems.length;
+      body=pvFiles===null?loading('檔案'):fileItems.length?grid(fileItems):empty('這個案件還沒有檔案');
+    }else{
+      const d=pvData[pvTab];count=d?d.length:'…';
+      if(!d)body=loading(TABZH[pvTab]);
+      else if(!d.length)body=empty('這個案件還沒有'+TABZH[pvTab]+'紀錄');
+      else if(pvTab==='appliances')body=rlist(d,a=>h('li',{key:a.id,className:'wbk-r'},thumbBtn(a.photo_url,a.name),
+        h('div',{className:'wbk-rt'},h('b',null,a.name||'未命名設備'),
+          h('small',null,[[a.width_cm,a.height_cm,a.depth_cm].some(v=>v)?'寬'+(a.width_cm||'—')+' × 高'+(a.height_cm||'—')+' × 深'+(a.depth_cm||'—')+' cm':'',a.note].filter(Boolean).join('　'))),
+        h('span',{className:'wbk-racts'},a.link?h('a',{href:a.link,target:'_blank',rel:'noopener'},'連結'):null,a.file_url?h('a',{href:a.file_url,target:'_blank',rel:'noopener'},a.file_name||'檔案'):null)));
+      else if(pvTab==='materials')body=rlist(d,m=>h('li',{key:m.id,className:'wbk-r'},thumbBtn(m.photo_url,m.item_name),
+        h('div',{className:'wbk-rt'},h('b',null,m.item_name||'未命名材料',m.visible_to_owner?h('i',{className:'wbk-rtag'},'業主可見'):null),
+          h('small',null,[m.quantity?m.quantity+(m.unit||''):'',m.note].filter(Boolean).join('　'))),
+        h('span',{className:'wbk-rdate'},m.delivered_at?dshort(m.delivered_at)+' 到貨':'')));
+      else if(pvTab==='defects'){const open=d.filter(x=>!x.completed).length;count=open+'/'+d.length;
+        body=rlist([...d].sort((a,b)=>(a.completed?1:0)-(b.completed?1:0)),x=>h('li',{key:x.id,className:'wbk-r'+(x.completed?' is-done':'')},thumbBtn(x.photo_url,x.description),
+          h('div',{className:'wbk-rt'},h('b',null,x.description||'（無說明）'),h('small',null,[x.location,x.created_by==='owner'?'業主回報':''].filter(Boolean).join('　'))),
+          h('span',{className:'wbk-rstat '+(x.completed?'ok':'open')},x.completed?'已改善':'待改善'),h('span',{className:'wbk-rdate'},dshort(x.completed?x.completed_at:x.created_at))))}
+      else if(pvTab==='meetings')body=rlist(d,m=>{const dec=(m.decisions||[]).filter(Boolean);
+        return h('li',{key:m.id,className:'wbk-r wbk-rmeet'},h('span',{className:'wbk-mdate'},dshort(m.met_at)),
+          h('div',{className:'wbk-rt'},h('b',null,m.kind||'會議'),m.summary?h('p',null,m.summary):null,
+            dec.length?h('ul',{className:'wbk-mdec'},dec.slice(0,4).map((t,k)=>h('li',{key:k},String(t)))):null))});
+    }
+    const pvPhotos=h('section',{className:'wbk-pph','aria-label':pvName+' '+TABZH[pvTab]},
+      h('div',{className:'wbc-colhead'},h('h3',null,TABZH[pvTab]),count!=null?h('span',{className:'wbc-num'},count):null,
+        h('button',{type:'button',className:'wbc-more wbk-pphall',onClick:()=>openPvTab(pvTab),title:'到案件頁編輯'},'開啟完整頁面',HB_wbIcon('arrow',13))),
+      body);
     const lbCur=pvLb&&pvLb.list[pvLb.i];
     const pvLightbox=lbCur&&h('div',{className:'wbk-lb',role:'dialog','aria-modal':'true','aria-label':'預覽',onClick:()=>setPvLb(null)},
       h('div',{className:'wbk-lbbar',onClick:e=>e.stopPropagation()},
