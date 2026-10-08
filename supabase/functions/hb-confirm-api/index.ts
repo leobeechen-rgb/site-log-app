@@ -177,6 +177,18 @@ async function staffRoute(req: Request, s: Staff, route: string, url: URL) {
     const out = await db('hb_confirm_requests?id=eq.' + r.id, { method: 'PATCH', body: JSON.stringify({ status, updated_at: new Date().toISOString() }) });
     await event(r.id, closing ? 'close' : 'reopen', closing ? '已結案' : '重新開啟', s.username); return { request: summarize(out[0]) };
   }
+  if (route === 'delete') {
+    // 只能刪除從未送出的草稿（業主沒看過、沒有任何回覆）
+    const r = await loadReq(s, b.id);
+    if (r.status !== 'draft' || r.current_round) fail(409, '已送出的確認不能刪除，可以改用「結案」');
+    const files = await db('hb_confirm_files?request_id=eq.' + r.id + '&select=path') as any[];
+    const paths = (files || []).map((f: any) => f.path).filter(Boolean);
+    if (paths.length) {
+      await fetch(BASE + '/storage/v1/object/' + BUCKET, { method: 'DELETE', headers: { apikey: KEY, Authorization: 'Bearer ' + KEY, 'Content-Type': 'application/json' }, body: JSON.stringify({ prefixes: paths }) }).catch(() => null);
+    }
+    await db('hb_confirm_requests?id=eq.' + r.id + '&status=eq.draft', { method: 'DELETE', headers: { Prefer: 'return=minimal' } });
+    return { ok: true };
+  }
   fail(404, 'Not found');
 }
 
@@ -257,7 +269,7 @@ Deno.serve(async (req: Request) => {
     if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors(req) });
     const url = new URL(req.url), parts = url.pathname.split('/').filter(Boolean), i = parts.indexOf('hb-confirm-api');
     const [scope, route] = parts.slice(i + 1);
-    if (scope === 'health') return json(req, { ok: true, version: '2026-10-07.1' });
+    if (scope === 'health') return json(req, { ok: true, version: '2026-10-08.1' });
     if (scope === 'public') return json(req, await publicRoute(req, route || '', url));
     if (scope === 'staff') { const s = await staff(req); if (!s) return json(req, { error: '請重新登入' }, 401); return json(req, await staffRoute(req, s, route || '', url)) }
     return json(req, { error: 'Not found' }, 404);

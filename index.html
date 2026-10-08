@@ -15579,6 +15579,7 @@ function HbConfirmDrawer({id,projects,pv,onClose,onChanged,onOpenProject,say,pre
   const send=()=>run('send',async()=>{if(edit){const ok=await saveForm();if(!ok)throw Error('請先完成必填欄位')}
     const d=await HB_confirmApi('send',{id:curId.current,due_date:form.due_date||undefined});await load();if(d.request.link_token)await copyLink(d.request.link_token);return d},null);
   const linkAct=(action)=>run('link',async()=>{if(action==='revoke'&&!confirm('撤銷後，目前的確認連結會立即失效。確定撤銷？'))return;const d=await HB_confirmApi('link',{id:curId.current,action});await load();if(d.link_token)await copyLink(d.link_token);else say('已撤銷確認連結')},null);
+  const delDraft=()=>{if(!confirm('確定刪除這份草稿？草稿內容與附件會一起刪除，無法復原。'))return;run('delete',async()=>{await HB_confirmApi('delete',{id:curId.current});onChanged&&onChanged();onClose()},'已刪除草稿')};
   const closeReq=(closed)=>run('close',async()=>{if(closed&&!confirm('確定將這筆確認結案？'))return;await HB_confirmApi('close',{id:curId.current,closed});await load()},closed?'已結案':'已重新開啟');
   const pickFile=(itemId,group)=>{if(!curId.current||edit){say('請先儲存項目，再加入附件');return}setUpItem(itemId);setUpGroup(group||'');setTimeout(()=>fileRef.current&&fileRef.current.click(),0)};
   const upload=async file=>{if(!file)return;if(!/^(application\/pdf|image\/)/.test(file.type)){say('只支援 PDF 與圖片');return}
@@ -15667,7 +15668,7 @@ function HbConfirmDrawer({id,projects,pv,onClose,onChanged,onOpenProject,say,pre
           req.link_token?h(u.default.Fragment,null,h('span',null,'確認連結：有效'),h('button',{type:'button',onClick:()=>linkAct('revoke'),disabled:!!busy},'撤銷連結'),h('button',{type:'button',onClick:()=>{if(confirm('重新產生後，舊連結會失效。確定？'))linkAct('create')},disabled:!!busy},'重新產生')):
             h(u.default.Fragment,null,h('span',null,req.current_round?'確認連結：已撤銷':'送出後產生確認連結'),req.current_round>0&&h('button',{type:'button',onClick:()=>linkAct('create'),disabled:!!busy},'產生新連結')),
           h('span',{style:{flex:1}}),
-          closed?h('button',{type:'button',onClick:()=>closeReq(false),disabled:!!busy},'重新開啟'):req.current_round>0&&h('button',{type:'button',onClick:()=>closeReq(true),disabled:!!busy},'結案')))),
+          closed?h('button',{type:'button',onClick:()=>closeReq(false),disabled:!!busy},'重新開啟'):req.current_round>0?h('button',{type:'button',onClick:()=>closeReq(true),disabled:!!busy},'結案'):req.status==='draft'&&h('button',{type:'button',className:'cfd-del',onClick:delDraft,disabled:!!busy,style:{color:'#B3413B'}},'刪除草稿')))),
       h('footer',{className:'wbd-foot'},
         fail&&h('div',{className:'wbd-fail',role:'alert'},fail.msg+(fail.retry?'，輸入內容已保留。':''),fail.retry&&h('button',{type:'button',onClick:fail.retry,disabled:!!busy},'重試')),
         h('div',{className:'wbd-btns'},
