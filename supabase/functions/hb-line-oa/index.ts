@@ -6,7 +6,7 @@
 //   HB_OA_ACCESS_TOKEN    同一個 Channel → Messaging API → Channel access token（存照片、群組回覆、顯示群組名稱需要）
 // LINE Developers 的 Webhook URL 設為 https://rqndozhhvuimqjqtmeli.supabase.co/functions/v1/hb-line-oa 並開啟 Use webhook。
 import { isPaymentText, parseAmount, isDefectText, bindQuery } from './detect.mjs';
-const VERSION = '2026-10-09.5';
+const VERSION = '2026-10-09.6';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!, SERVICE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const SECRET = (Deno.env.get('HB_OA_CHANNEL_SECRET') || '').trim(), TOKEN = (Deno.env.get('HB_OA_ACCESS_TOKEN') || '').trim();
 const enc = new TextEncoder();
@@ -81,6 +81,11 @@ async function handle(e: any) {
   const key = src.type === 'group' ? src.groupId : src.type === 'room' ? src.roomId : src.userId;
   if (e?.type !== 'message' || !/^[UCR][0-9a-f]{32}$/.test(key || '') || !e.webhookEventId) { log('skip', { t: e?.type, s: src.type, k: /^[UCR][0-9a-f]{32}$/.test(key || ''), id: !!e?.webhookEventId }); return; }
   if (e.deliveryContext?.isRedelivery && Math.abs(Date.now() - Number(e.timestamp || 0)) > 6 * 3600e3) return;
+  // 記下這個群組（含名稱），讓設計師在工地紀錄本「編輯專案」裡選擇連結
+  if (src.type !== 'user') {
+    try { if (await rpc('hb_line_seen', { p_key: key, p_name: null })) { const n = await chatName(src); if (n) await rpc('hb_line_seen', { p_key: key, p_name: n }); } }
+    catch (err) { log('seen_failed', { code: String((err as Error)?.message).slice(0, 60) }); }
+  }
   const mt = e.message?.type;
   const sender = /^U[0-9a-f]{32}$/.test(src.userId || '') ? src.userId : null;
   if (mt === 'image') {

@@ -17448,6 +17448,20 @@ function HbProjectMetaModal({project:pj,onCancel:onC,onSave:onS}){
   let ciIn=Object.assign({},el,{marginBottom:10});
   let ciField=function(k,lab,ph,type){return C("div",{key:k},C("label",{style:ciLbl},lab),C("input",{type:type||"text",value:ci[k],placeholder:ph||"",onChange:ciSet(k),style:ciIn,autoComplete:"off"}))};
   let ciClean=function(){var o={};Object.keys(ci).forEach(function(k){var v=String(ci[k]||"").trim();if(v)o[k]=v});return o};
+  /* 官方 LINE 案件群組：在這裡安靜地連結，不用在群組裡打字 */
+  let[lg,setLg]=(0,u.useState)({list:[],cur:"",pick:"",ok:false});
+  (0,u.useEffect)(function(){
+    q.from("hb_line_contacts").select("line_user_id,line_name,project_id,updated_at").order("updated_at",{ascending:false}).then(function(r){
+      var list=(r.data||[]).filter(function(x){return /^[CR]/.test(x.line_user_id)&&(!x.project_id||x.project_id===pj.id)});
+      var cur=(list.find(function(x){return x.project_id===pj.id})||{}).line_user_id||"";
+      setLg({list:list,cur:cur,pick:cur,ok:true})})
+  },[]);
+  let lgSave=async function(){
+    if(!lg.ok||lg.pick===lg.cur)return;
+    var now=new Date().toISOString();
+    if(lg.cur)await q.from("hb_line_contacts").update({project_id:null,updated_at:now}).eq("line_user_id",lg.cur);
+    if(lg.pick)await q.from("hb_line_contacts").update({project_id:pj.id,updated_at:now}).eq("line_user_id",lg.pick);
+  };
   return C("div",{style:{position:"fixed",inset:0,background:"rgba(43,38,32,0.45)",display:"flex",alignItems:"center",justifyContent:"center",padding:20,zIndex:62}},
     C("div",{className:"fade-in",style:{background:s.card,borderRadius:10,padding:22,width:"100%",maxWidth:420,maxHeight:"calc(100dvh - 40px)",overflowY:"auto",boxSizing:"border-box"}},
       C("h3",{style:{margin:"0 0 16px",fontSize:17,fontWeight:400,color:s.oceanDark}},"\u7DE8\u8F2F\u5C08\u6848"),
@@ -17477,9 +17491,17 @@ function HbProjectMetaModal({project:pj,onCancel:onC,onSave:onS}){
         ciField("address","通訊地址","與工地地址不同時填寫"),
         C("label",{style:ciLbl},"備註"),
         C("textarea",{value:ci.note,onChange:ciSet("note"),rows:3,placeholder:"喜好、預算、方便聯絡時段…",style:Object.assign({},el,{resize:"vertical",minHeight:64,fontFamily:"inherit",lineHeight:1.6})})),
+      C("div",{style:{borderTop:"1px solid "+s.line,margin:"4px 0 14px",paddingTop:14}},
+        C("div",{style:{fontSize:13.5,color:s.oceanDark,marginBottom:2}},"LINE 群組"),
+        C("p",{style:{fontSize:11.5,color:s.inkSoft,margin:"0 0 10px",lineHeight:1.6}},"選這個案件的 LINE 群組後，業主在群組傳的照片、回報的問題、匯款訊息會自動整理到這個案件。只在這裡設定，群組裡不會出現任何訊息。"),
+        !lg.ok?C("p",{style:{fontSize:12.5,color:s.inkSoft,margin:"0 0 12px"}},"讀取中…")
+        :lg.list.length===0?C("p",{style:{fontSize:12.5,color:s.inkSoft,margin:"0 0 12px",lineHeight:1.6}},"目前沒有可選的群組。請先把官方帳號加進案件群組，並在群組裡隨便說一句話，再回來這裡選。")
+        :C("select",{value:lg.pick,onChange:function(ev){var v=ev.target.value;setLg(function(o){return Object.assign({},o,{pick:v})})},style:el},
+          C("option",{value:""},"— 不連結 —"),
+          lg.list.map(function(x){return C("option",{key:x.line_user_id,value:x.line_user_id},(x.line_name||"未命名群組（"+String(x.updated_at||"").slice(5,10).replace("-","/")+"）")+(x.project_id===pj.id?"　✓ 目前連結":""))}))),
       C("div",{style:{display:"flex",gap:10}},
         C("button",{onClick:onC,style:Object.assign({},ll,{flex:1})},"\u53D6\u6D88"),
-        C("button",{onClick:function(){onS({status:st,expectedEnd:ed||null,clientInfo:ciClean()})},style:Object.assign({},Dl,{flex:1})},"\u5132\u5B58"))
+        C("button",{onClick:async function(){try{await lgSave()}catch(e){}onS({status:st,expectedEnd:ed||null,clientInfo:ciClean()})},style:Object.assign({},Dl,{flex:1})},"\u5132\u5B58"))
     ));
 }
 var HB_NAV=[

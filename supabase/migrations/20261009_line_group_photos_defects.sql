@@ -97,3 +97,20 @@ revoke execute on function public.hb_line_chat_info(text,text), public.hb_line_b
   public.hb_line_photo_add(text,text,text,text,text,bigint), public.hb_line_defect_add(text,text,text,text) from public, anon, authenticated;
 grant execute on function public.hb_line_chat_info(text,text), public.hb_line_bind(text,text,text,text),
   public.hb_line_photo_add(text,text,text,text,text,bigint), public.hb_line_defect_add(text,text,text,text) to service_role;
+
+-- 記下有加官方帳號、有人說過話的群組（含群組名稱），讓設計師在「編輯專案」裡安靜地選擇連結，
+-- 不必在群組裡打「綁定」讓業主看到。回傳 true 表示還沒有群組名稱，edge function 會去 LINE 查名稱後再呼叫一次。
+create or replace function public.hb_line_seen(p_key text, p_name text)
+returns boolean language plpgsql security definer set search_path to '' as $$
+declare v_name text;
+begin
+  if p_key !~ '^[CR][0-9a-f]{32}$' then return false; end if;
+  insert into public.hb_line_contacts(line_user_id, line_name, updated_at)
+  values (p_key, nullif(left(btrim(coalesce(p_name,'')),60),''), now())
+  on conflict (line_user_id) do update
+    set line_name = coalesce(nullif(left(btrim(coalesce(excluded.line_name,'')),60),''), public.hb_line_contacts.line_name)
+  returning line_name into v_name;
+  return v_name is null;
+end $$;
+revoke execute on function public.hb_line_seen(text,text) from public, anon, authenticated;
+grant execute on function public.hb_line_seen(text,text) to service_role;
