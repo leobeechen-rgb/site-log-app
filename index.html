@@ -12734,6 +12734,7 @@ const HB_LIB_CSS=`
       /* 管理分頁開著時取消容器查詢：否則案件頁的彈出視窗（新增設備、缺失…）會被困在工作台框內、跑到下面 */
       .wbk:has(.wbk-manage){container-type:normal!important;contain:none!important}
       .hb-shell:has(.wbk-manage),.hb-project-library:has(.wbk-manage){backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+      .wbk .wbk-pph{overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
       .wbk-manage{margin:0 -4px}.wbk-manage .hb-embed>.hb-band{display:none!important}.wbk-manage .hb-embed .hb-body{padding:4px 4px 8px!important}.wbk-manage .hb-embed{min-height:0!important}.wbk-manage .hb-embed .hb-project-nav-row{display:none!important}.wbk-manage .hb-embed .hb-body{background:transparent!important}
       .wbk-ov{display:grid;gap:18px}.wbk-ovdl{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px 24px;margin:0}
       .wbk-ovdl>div{min-width:0;border-bottom:1px solid #EFE6DA;padding-bottom:8px}.wbk-ovdl dt{font-size:11.5px;letter-spacing:.08em;color:#8A8178;margin-bottom:3px}.wbk-ovdl dd{margin:0;font-size:14px;color:#17150F;overflow-wrap:anywhere}
@@ -15509,6 +15510,15 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
   /* 篩選單一案件時，工作台下方改放這個案件的照片縮圖（不顯示行程） */
   const [pvPh,setPvPh]=u.useState(null),[pvTab,setPvTab]=u.useState('overview'),[pvData,setPvData]=u.useState({}),[pvFiles,setPvFiles]=u.useState(null),[pvLb,setPvLb]=u.useState(null);
   u.useEffect(()=>{setPvTab('overview');setPvFiles(null);setPvLb(null);setPvData({})},[pv]);
+  /* 篩選案件時，上方面板的下緣不超過左邊「檔案」欄的下緣，內容在面板裡捲動（電腦版左右並排時才限制） */
+  u.useEffect(()=>{if(!compact||!pv||pv==='__co')return;
+    const fit=()=>{const box=document.querySelector('.wbk .wbk-pph'),side=document.querySelector('.hb-lib-side');if(!box)return;
+      if(!side){box.style.maxHeight='';return}const sr=side.getBoundingClientRect(),br=box.getBoundingClientRect();
+      if(sr.right>br.left+4||window.innerWidth<900){box.style.maxHeight='';return}
+      box.style.maxHeight=Math.max(320,Math.round(sr.bottom-br.top))+'px'};
+    fit();const t1=setTimeout(fit,300),iv=setInterval(fit,1500);const ro=window.ResizeObserver?new ResizeObserver(fit):null;
+    const side=document.querySelector('.hb-lib-side');if(ro&&side)ro.observe(side);window.addEventListener('resize',fit);
+    return()=>{clearTimeout(t1);clearInterval(iv);ro&&ro.disconnect();window.removeEventListener('resize',fit);const b=document.querySelector('.wbk .wbk-pph');if(b)b.style.maxHeight=''}},[pv,pvTab,compact]);
   /* 設備／材料／缺失／會議：切到該分頁才抓，抓過就留著 */
   u.useEffect(()=>{const T={appliances:["sitelog_appliances","created_at"],materials:["sitelog_materials","delivered_at"],defects:["sitelog_defects","created_at"],meetings:["sitelog_meetings","met_at"]}[pvTab];
     if(!compact||!pv||pv==='__co'||!T||pvData[pvTab])return;let live=true,tab=pvTab;
