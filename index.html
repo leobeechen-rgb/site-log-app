@@ -12569,6 +12569,14 @@ const HB_LIB_CSS=`
       .wbk-kd{flex:none;min-width:58px;font-size:12px;color:var(--wb-soft);padding-top:2px}
       @media(max-width:899px){.wbk-kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.wbk-kpin{font-size:40px}.hb-wb .wbk-kpi{min-height:64px!important;padding:8px 34px 10px 14px}}
 
+      .wbk-ptabs{display:flex;align-items:stretch;gap:4px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--wb-line);margin-top:6px;-webkit-overflow-scrolling:touch}
+      .wbk-ptabs::-webkit-scrollbar{display:none}
+      .hb-wb .wbk-ptab{flex:1 0 auto;display:flex;flex-direction:column;align-items:center;gap:4px;min-height:0!important;padding:8px 14px 9px;border:0;background:none;cursor:pointer;font:inherit;box-shadow:inset 0 -2px transparent;transition:box-shadow .15s,color .15s}
+      .wbk-ptfr{font-family:'Cormorant Garamond',Georgia,serif;font-size:12px;letter-spacing:.18em;color:#5a5448;white-space:nowrap}
+      .wbk-ptzh{font-size:12px;letter-spacing:.2em;color:#8a8273}
+      .hb-wb .wbk-ptab:hover{box-shadow:inset 0 -2px #B4573A}.wbk-ptab:hover .wbk-ptfr,.wbk-ptab:hover .wbk-ptzh{color:#B4573A}
+      .hb-wb .wbk-ptab:focus-visible{outline:2px solid #2E4A3C;outline-offset:-2px}
+      @media(max-width:680px){.hb-wb .wbk-ptab{padding:7px 10px 8px}.wbk-ptfr{font-size:10.5px;letter-spacing:.12em}}
       /* ===== 通知中心 ===== */
       .hbn{position:relative;display:inline-flex}
       .hb-wb .hbn-bell,.hbn-bell{position:relative;display:inline-grid;place-items:center;width:38px;height:36px;min-height:0!important;padding:0;border:1px solid #cdb98f;border-radius:4px;background:transparent;color:#2E4A3C;cursor:pointer}
@@ -15355,6 +15363,9 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
         kpi('本週工地排程',kWeekList.length,()=>setCSide('kWeek'),false,'查看本週工地排程'),
         kpi('待業主確認',kCf,()=>setCfList('all'),false,'查看全公司待業主確認')),
       pv&&h('p',{className:'wbk-showing'},'目前顯示：',h('b',null,pvName)),
+      pv&&pv!=='__co'&&projects.some(p=>p.id===pv)&&h('nav',{className:'wbk-ptabs','aria-label':pvName+' 案件分頁'},
+        [['overview','VUE D’ENSEMBLE','總覽'],['progress','AVANCEMENT','進度'],['photos','PHOTOGRAPHIES','照片'],['appliances','ÉQUIPEMENTS','設備'],['materials','MATÉRIAUX','材料'],['files','DOCUMENTS','檔案'],['defects','POINTS À CORRIGER','缺失'],['meetings','RÉUNIONS','會議']]
+          .map(([k,fr,zh])=>h('button',{key:k,type:'button',className:'wbk-ptab',onClick:()=>window.HB_nav?window.HB_nav({project:pv,tab:k}):onOpenProject(pv),title:'開啟「'+pvName+'」的'+zh},h('span',{className:'wbk-ptfr'},fr),h('span',{className:'wbk-ptzh'},zh)))),
       h('div',{className:'wbk-week'},h('button',{type:'button',className:'wbk-wk',onClick:()=>shift(-1),'aria-label':'上一週'},HB_wbIcon('left',16)),
         week.map((x,i)=>{const s=ymd(x);return h('button',{key:s,type:'button',className:'wbk-day'+(s===day?' on':'')+(s===today?' today':''),'aria-pressed':s===day,'aria-label':(x.getMonth()+1)+'月'+x.getDate()+'日',onClick:()=>{setCDay(s);setCGapOpen(null)}},
           h('span',null,'日一二三四五六'[i]),h('b',null,x.getDate()),h('i',{className:has(s)?'has':''}))}),
