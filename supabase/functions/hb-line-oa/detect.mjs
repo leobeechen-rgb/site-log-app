@@ -31,3 +31,18 @@ export function parseAmount(text) {
   const s = cands.find(c => c.strong) || cands[0];
   return s ? s.v : null;
 }
+
+// 客人回報施工問題（漏水、裂縫、壞掉…）。問句、閒聊、感謝不算。
+const DEFECT = /(漏水|滲水|積水|壁癌|發霉|裂|破掉|破了|破損|壞了|壞掉|故障|掉漆|脫落|剝落|起泡|不亮|跳電|沒電|關不起來|關不上|關不緊|打不開|卡住|異音|有聲音|歪|傾斜|刮傷|刮痕|凹痕|凹陷|堵塞|不通|排不掉|鬆動|搖晃|鬆掉|縫隙|色差|髒污|沒有做|沒做好|不平|翹起|變形)/;
+const NOT_DEFECT = /(謝謝|辛苦|好的|收到|OK|ok|沒問題|已修好|修好了|處理好了|沒事了)$/;
+export function isDefectText(text) {
+  const t = String(text || '').replace(/\s+/g, '');
+  if (t.length < 4 || t.length > 500 || !DEFECT.test(t)) return false;
+  if (NOT_DEFECT.test(t) && t.length < 12) return false;
+  return true;
+}
+// 「綁定 案件名稱」
+export function bindQuery(text) {
+  const m = String(text || '').trim().match(/^(?:綁定|绑定)(?:案件)?[\s:：]*(.+)$/);
+  return m ? m[1].trim() : null;
+}
