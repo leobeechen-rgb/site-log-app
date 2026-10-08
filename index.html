@@ -8844,6 +8844,27 @@ function HB_openVendorPrint(v){
 }
 
 /* ---------- 工程收據 UI ---------- */
+/* 依合約帶出期款建議：設計合約固定 30/30/30/10；工程合約依合約「付款辦法」。已開過收據的期別標為已開。 */
+function HB_receiptSuggest(proj,contracts,receipts,amount){
+  let out=[],main=null;
+  if(proj){
+    let nm=(proj.name||"").trim(),ad=(proj.address||"").replace(/\s/g,"");
+    let mine=(contracts||[]).filter(c=>c.project_id===proj.id||(nm&&(c.design_name||"").trim()===nm)||(ad&&(c.design_location||"").replace(/\s/g,"")===ad));
+    mine.forEach(c=>{
+      let tot=HB_num(c.total_price)||0;
+      if(!main)main=c;
+      if(c.category==="case")(c.payment_stages||[]).forEach((st,i)=>{let pc=HB_num(st.percent)||0;if(!st.name&&!pc)return;out.push({name:"工程"+(st.name||("第"+(i+1)+"期款")),amount:tot&&pc?Math.round(tot*pc/100):null})});
+      else [["第一期款",30],["第二期款",30],["第三期款",30],["第四期款",10]].forEach(([n,pc])=>out.push({name:"設計費"+n,amount:tot?Math.round(tot*pc/100):null}));
+    });
+    let paid=new Set();
+    (receipts||[]).filter(b=>b.project_id===proj.id||(ad&&(b.site_address||"").replace(/\s/g,"")===ad)).forEach(b=>(b.periods||[]).forEach(pp=>paid.add((pp.name||"").trim())));
+    out.forEach(o=>{o.paid=paid.has(o.name)});
+  }
+  let amt=HB_num(amount)||0,pick=null;
+  if(amt)pick=out.find(o=>!o.paid&&o.amount===amt)||out.find(o=>!o.paid&&o.amount&&Math.round(o.amount*1.05)===amt)||null;
+  if(!pick)pick=out.find(o=>!o.paid)||null;
+  return{list:out,pick,contract:main};
+}
 function HbReceiptsHub({onBack,notify,projects}){
   let[batches,setBatches]=(0,u.useState)([]);
   let[hbMenu,hbSetMenu]=(0,u.useState)(null);
@@ -8859,10 +8880,66 @@ function HbReceiptsHub({onBack,notify,projects}){
     setLoading(false);
   };
   (0,u.useEffect)(()=>{load()},[]);
+  /* ---- 官方 LINE 匯款回報 ---- */
+  let[reports,setReports]=(0,u.useState)([]);
+  let[rpPick,setRpPick]=(0,u.useState)({});
+  let[fromRp,setFromRp]=(0,u.useState)(null);
+  let loadReports=async()=>{let{data,error}=await q.from("hb_payment_reports").select("*").eq("status","pending").order("created_at",{ascending:!1}).limit(30);if(!error)setReports(data||[])};
+  let pickOf=rp=>rpPick[rp.id]!==undefined?rpPick[rp.id]:(rp.project_id||"");
+  let startFromReport=async(rp,pid)=>{
+    let proj=(projects||[]).find(p=>p.id===pid)||null;
+    let[{data:cs},{data:bs}]=await Promise.all([
+      q.from("sitelog_contracts").select("id,category,project_id,design_name,design_location,party_a_name,total_price,payment_stages"),
+      q.from("sitelog_receipts").select("project_id,site_address,periods")]);
+    let sg=HB_receiptSuggest(proj,cs||[],bs||[],rp.amount);
+    let ci=proj&&proj.clientInfo||{};
+    let initial={
+      clientName:(ci.name||"").trim()||(sg.contract&&sg.contract.party_a_name)||(proj?proj.name:"")||rp.line_name||"",
+      siteAddress:(proj&&proj.address)||(sg.contract&&sg.contract.design_location)||"",
+      paymentMethod:"remit",dateStr:new Date(Date.now()+8*3600e3).toISOString().slice(0,10),
+      periods:[{name:sg.pick?sg.pick.name:"",amount:rp.amount!=null?rp.amount:(sg.pick&&sg.pick.amount!=null?sg.pick.amount:"")}]
+    };
+    setFromRp({rp,pid:pid||null,initial,suggest:sg.list});
+  };
+  let openPr=async id=>{
+    if(!id)return;try{sessionStorage.removeItem("hb_open_pr")}catch{}
+    let{data:rp}=await q.from("hb_payment_reports").select("*").eq("id",id).maybeSingle();
+    if(!rp){notify("找不到這筆匯款回報");return}
+    if(rp.status!=="pending"){notify(rp.status==="done"?"這筆匯款已經開過收據":"這筆匯款回報已忽略");return}
+    if(rp.project_id)startFromReport(rp,rp.project_id);
+    else{notify("請先選擇這筆匯款是哪個案件");setTimeout(()=>{let el=document.getElementById("hb-payrp-"+rp.id);el&&el.scrollIntoView({block:"center",behavior:"smooth"});el&&el.querySelector("select")?.focus()},300)}
+  };
+  (0,u.useEffect)(()=>{
+    loadReports().then(()=>{let id="";try{id=sessionStorage.getItem("hb_open_pr")||""}catch{}openPr(id)});
+    let on=e=>{loadReports();openPr(e.detail&&e.detail.id)};
+    let foc=()=>loadReports();
+    window.addEventListener("hb-open-pr",on);window.addEventListener("focus",foc);
+    return()=>{window.removeEventListener("hb-open-pr",on);window.removeEventListener("focus",foc)}
+  },[]);
+  let dismissReport=async rp=>{
+    if(!window.confirm("忽略這筆「"+(rp.line_name||"LINE 好友")+"」的匯款回報？（不會通知客人）"))return;
+    let{error}=await q.from("hb_payment_reports").update({status:"dismissed",updated_at:new Date().toISOString()}).eq("id",rp.id);
+    if(error){notify("操作失敗："+error.message);return}
+    setReports(rs=>rs.filter(r=>r.id!==rp.id))
+  };
+  let createFromReport=async v=>{
+    let{rp,pid}=fromRp;pid=v.projectId||pid||null;
+    let{data,error}=await q.from("sitelog_receipts").insert({
+      client_name:v.clientName,site_address:v.siteAddress,payment_method:v.paymentMethod,
+      receipt_date:v.dateStr||null,periods:v.periods,project_id:pid,report_id:rp.id
+    }).select("id").single();
+    if(error){notify("新增失敗："+error.message);return}
+    let now=new Date().toISOString();
+    await q.from("hb_payment_reports").update({status:"done",receipt_id:data.id,project_id:pid,updated_at:now}).eq("id",rp.id);
+    if(pid)await q.from("hb_line_contacts").upsert({line_user_id:rp.line_user_id,project_id:pid,line_name:rp.line_name,updated_at:now});
+    setFromRp(null);setReports(rs=>rs.filter(r=>r.id!==rp.id));load();
+    let ok=HB_openReceiptPrint({...v,showStamp:true});
+    notify(ok?"已建立收據，PDF 已開啟，可存檔傳給客人":"收據已建立，請按清單上的「PDF」列印");
+  };
   let createBatch=async v=>{
     let{error}=await q.from("sitelog_receipts").insert({
       client_name:v.clientName,site_address:v.siteAddress,payment_method:v.paymentMethod,
-      receipt_date:v.dateStr||null,periods:v.periods
+      receipt_date:v.dateStr||null,periods:v.periods,project_id:v.projectId||null
     });
     if(error){notify("新增失敗："+error.message);return}
     setCreating(!1);notify("已新增工程收據");load()
@@ -8900,6 +8977,27 @@ function HbReceiptsHub({onBack,notify,projects}){
         u.default.createElement("div",{className:"hb-dosBar"},
           u.default.createElement("div",{className:"hb-dosCount"}, batches.length>0? batches.length+" 筆收據":"尚無資料"),
           u.default.createElement("button",{onClick:()=>setCreating(!0),className:"hb-dosNew"},"新增工程收據")),
+        reports.length>0&&u.default.createElement("section",{className:"hb-payrp","aria-label":"官方 LINE 匯款回報"},
+          u.default.createElement("style",null,`.hb-payrp{margin:0 0 22px;border:1px solid #E3D3C2;background:#FBF6F0;border-radius:10px;padding:14px 16px}
+.hb-payrp-h{display:flex;align-items:baseline;gap:10px;margin-bottom:8px}.hb-payrp-h span{font:italic 12px/1 'Cormorant Garamond',serif;color:#B4573A;letter-spacing:.06em}.hb-payrp-h strong{font-size:14.5px;font-weight:600;color:#17150F}
+.hb-payrp-i{padding:12px 0;border-top:1px dashed #E3D3C2}.hb-payrp-i:first-of-type{border-top:0}
+.hb-payrp-top{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}.hb-payrp-top b{font-size:14px}.hb-payrp-top time{font-size:12px;color:#8A8178}.hb-payrp-top em{font-style:normal;margin-left:auto;font-weight:600;color:#B4573A}
+.hb-payrp-i p{margin:6px 0 10px;font-size:13.5px;line-height:1.6;white-space:pre-wrap;color:#3C362F}
+.hb-payrp-act{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.hb-payrp-act select{flex:1;min-width:150px;height:40px;border:1px solid #D9CFC3;border-radius:7px;padding:0 10px;font-size:14px;background:#fff}
+.hb-payrp-act .hb-dosNew{height:40px;min-height:40px;display:inline-flex;align-items:center;justify-content:center;padding:0 20px;font-size:14px;line-height:1}.hb-payrp-act .hb-payrp-x{height:40px;border:0;background:none;color:#8A8178;font-size:13.5px;cursor:pointer;padding:0 8px}`),
+          u.default.createElement("div",{className:"hb-payrp-h"},u.default.createElement("span",null,"Virements signalés"),u.default.createElement("strong",null,"官方 LINE 匯款回報 · "+reports.length+" 筆待確認")),
+          reports.map(rp=>u.default.createElement("div",{key:rp.id,id:"hb-payrp-"+rp.id,className:"hb-payrp-i"},
+            u.default.createElement("div",{className:"hb-payrp-top"},
+              u.default.createElement("b",null,rp.line_name||"LINE 好友"),
+              u.default.createElement("time",null,HB_notifAgo(rp.updated_at)),
+              rp.amount!=null?u.default.createElement("em",null,"NT$ "+HB_money(HB_num(rp.amount))):null),
+            u.default.createElement("p",null,rp.message||""),
+            u.default.createElement("div",{className:"hb-payrp-act"},
+              u.default.createElement("select",{value:pickOf(rp),"aria-label":"這筆匯款的案件",onChange:e=>{let val=e.target.value;setRpPick(m=>({...m,[rp.id]:val}))}},
+                u.default.createElement("option",{value:""},"— 這是哪個案件？—"),
+                (projects||[]).map(p=>u.default.createElement("option",{key:p.id,value:p.id},p.name))),
+              u.default.createElement("button",{type:"button",className:"hb-dosNew",onClick:()=>startFromReport(rp,pickOf(rp))},"開收據"),
+              u.default.createElement("button",{type:"button",className:"hb-payrp-x",onClick:()=>dismissReport(rp)},"忽略"))))),
 
         loading?u.default.createElement("div",{style:{textAlign:"center",padding:40}},
             u.default.createElement(E,{name:"loader",className:"animate-spin",size:22,color:"#B4573A"})):
@@ -8940,11 +9038,12 @@ function HbReceiptsHub({onBack,notify,projects}){
       )),
 
     creating&&u.default.createElement(HbReceiptForm,{onCancel:()=>setCreating(!1),onCreate:createBatch,projects:projects||[]}),
+    fromRp&&u.default.createElement(HbReceiptForm,{key:"rp"+fromRp.rp.id,initial:fromRp.initial,report:fromRp.rp,suggest:fromRp.suggest,onCancel:()=>setFromRp(null),onCreate:createFromReport,projects:projects||[]}),
     editing&&u.default.createElement(HbReceiptForm,{key:editing.id,initial:toVals(editing),onCancel:()=>setEditing(null),onCreate:updateBatch,projects:projects||[]})
   )
 }
 
-function HbReceiptForm({onCancel,onCreate,projects,initial}){
+function HbReceiptForm({onCancel,onCreate,projects,initial,report,suggest}){
   let projList=projects||[];
   let OTHER="__other__";
   let ini=initial||null;
@@ -8966,7 +9065,17 @@ function HbReceiptForm({onCancel,onCreate,projects,initial}){
   let valid=clientName.trim()&&siteAddress.trim()&&periods.some(p=>p.name.trim()&&p.amount);
   return u.default.createElement("div",{style:{position:"fixed",inset:0,background:"rgba(43,38,32,0.45)",display:"flex",alignItems:"center",justifyContent:"center",padding:20,zIndex:55}},
     u.default.createElement("div",{className:"fade-in",style:{background:s.card,borderRadius:10,padding:22,width:"100%",maxWidth:400,maxHeight:"85vh",overflowY:"auto"}},
-      u.default.createElement("h3",{style:{margin:"0 0 14px",fontSize:17,fontWeight:400,color:s.oceanDark}},ini?"編輯工程收據":"新增工程收據"),
+      u.default.createElement("h3",{style:{margin:"0 0 14px",fontSize:17,fontWeight:400,color:s.oceanDark}},report?"匯款收據（確認後建立）":ini?"編輯工程收據":"新增工程收據"),
+      report&&u.default.createElement("div",{style:{background:"#FBF6F0",borderLeft:"3px solid #B4573A",borderRadius:6,padding:"10px 12px",margin:"0 0 14px",fontSize:12.5,lineHeight:1.65,color:"#3C362F"}},
+        u.default.createElement("div",{style:{fontWeight:600,marginBottom:2}},"LINE「"+(report.line_name||"LINE 好友")+"」・"+HB_notifAgo(report.updated_at)),
+        u.default.createElement("div",{style:{whiteSpace:"pre-wrap"}},report.message||""),
+        u.default.createElement("div",{style:{marginTop:6,color:"#B4573A"}},"請先到網銀確認款項已入帳、金額正確，再按建立。")),
+      suggest&&suggest.length>0&&u.default.createElement("div",{style:{marginBottom:12}},
+        u.default.createElement("div",{style:{fontSize:12.5,color:s.inkSoft,marginBottom:6}},"合約期款（點一下帶入）"),
+        u.default.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:6}},
+          suggest.map((sg,i)=>u.default.createElement("button",{key:i,type:"button",onClick:()=>setPeriods(ps=>[{name:sg.name,amount:sg.amount==null?"":String(sg.amount)},...ps.slice(1)]),
+            style:{border:"1px solid "+(sg.paid?"#E4DED6":"#D9B8A6"),background:sg.paid?"#F4F1EC":"#fff",color:sg.paid?"#9A9288":"#17150F",borderRadius:999,padding:"6px 11px",fontSize:12.5,cursor:"pointer"}},
+            sg.name+(sg.amount!=null?"　NT$"+HB_money(sg.amount):"")+(sg.paid?"（已開）":""))))),
       u.default.createElement("label",{style:{fontSize:12.5,color:s.inkSoft}},"茲收到（客戶名稱）"),
       u.default.createElement("input",{value:clientName,onChange:e=>setClientName(e.target.value),placeholder:"例：陽光四季-陳怡君",style:el}),
       u.default.createElement("label",{style:{fontSize:12.5,color:s.inkSoft}},"工程地址"),
@@ -8992,7 +9101,7 @@ function HbReceiptForm({onCancel,onCreate,projects,initial}){
       periods.length<6&&u.default.createElement("button",{type:"button",onClick:addPeriod,style:{...ll,width:"100%",fontSize:13,padding:"8px 0",marginBottom:14}},"＋ 新增期別"),
       u.default.createElement("div",{style:{display:"flex",gap:10,marginTop:6}},
         u.default.createElement("button",{onClick:onCancel,style:{...ll,flex:1}},"取消"),
-        u.default.createElement("button",{disabled:!valid,onClick:()=>onCreate({clientName:clientName.trim(),siteAddress:siteAddress.trim(),paymentMethod,dateStr,periods:periods.filter(p=>p.name.trim()&&p.amount)}),style:{...Dl,flex:1,opacity:valid?1:.5}},ini?"儲存變更":"建立")
+        u.default.createElement("button",{disabled:!valid,onClick:()=>onCreate({clientName:clientName.trim(),siteAddress:siteAddress.trim(),paymentMethod,dateStr,periods:periods.filter(p=>p.name.trim()&&p.amount),projectId:addrPick!==OTHER?addrPick:null}),style:{...Dl,flex:1,opacity:valid?1:.5}},report?"已入帳，建立收據":ini?"儲存變更":"建立")
       )
     )
   )
@@ -15039,7 +15148,7 @@ function HB_wbOpenTask(t){return !t.done&&!HB_wbIsFollow(t)&&!HB_wbIsAgenda(t)}
 function HB_wbOpenFollow(t){return !t.done&&HB_wbIsFollow(t)}
 function HB_wbProjectCounts(all){const m={};all.forEach(t=>{if(!t.projectId)return;const c=m[t.projectId]||(m[t.projectId]={open:0,follow:0});if(HB_wbOpenTask(t))c.open++;else if(HB_wbOpenFollow(t))c.follow++});return m}
 /* ===== 業主更新通知：站內通知中心（資料在 Supabase，已讀依帳號同步） ===== */
-const HB_NOTIF_KIND={client_info:{label:'客戶資料',act:'查看更新'},upload:{label:'參考照片／檔案',act:'查看檔案'},comment:{label:'留言',act:'查看回覆'},confirm:{label:'確認結果',act:'查看回覆'},booking:{label:'客戶預約',act:'查看預約'},lead:{label:'新客戶資料',act:'查看資料'}};
+const HB_NOTIF_KIND={client_info:{label:'客戶資料',act:'查看更新'},upload:{label:'參考照片／檔案',act:'查看檔案'},comment:{label:'留言',act:'查看回覆'},confirm:{label:'確認結果',act:'查看回覆'},booking:{label:'客戶預約',act:'查看預約'},lead:{label:'新客戶資料',act:'查看資料'},payment:{label:'匯款回報',act:'開收據'}};
 const HB_NOTIF=(function(){
   let list=[],prefs={},ready=false,started=false,timer=null,seen=null,subs=new Set(),busy=false,lastErr='';
   const emit=()=>subs.forEach(f=>{try{f()}catch(e){}});
@@ -15132,7 +15241,7 @@ function HbNotifBell(){
         h('button',{type:'button',className:'hbn-gear'+(cfg?' on':''),'aria-label':'通知設定','aria-pressed':cfg,onClick:()=>setCfg(!cfg)},h('svg',{viewBox:'0 0 24 24',width:17,height:17,fill:'none',stroke:'currentColor',strokeWidth:1.5,'aria-hidden':'true'},h('circle',{cx:12,cy:12,r:3}),h('path',{d:'M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z'})))),
       cfg?h('div',{className:'hbn-cfg'},
         h('p',{className:'hbn-note'},'只影響你自己的帳號，電腦與手機同步。'),
-        h('div',{className:'hbn-cfgsec'},'業主更新'),pref('client_info','客戶資料／裝修需求更新'),pref('upload','上傳參考照片或檔案'),pref('comment','留言、回報缺失'),pref('confirm','圖面確認、簽署結果'),
+        h('div',{className:'hbn-cfgsec'},'業主更新'),pref('client_info','客戶資料／裝修需求更新'),pref('upload','上傳參考照片或檔案'),pref('comment','留言、回報缺失'),pref('confirm','圖面確認、簽署結果'),pref('payment','官方 LINE 客人回報已匯款'),
         h('div',{className:'hbn-cfgsec'},'系統通知'),pref('booking','客戶預約'),pref('lead','新的客戶資料表'),
         h('div',{className:'hbn-cfgsec'},'手機'),pref('push','App 推播（關掉後仍會留在通知中心）'),
         h('button',{type:'button',className:'hbn-done',onClick:()=>setCfg(false)},'完成'))
@@ -15755,6 +15864,7 @@ function Gy(){let[l,t]=(0,u.useState)(!0),[e,n]=(0,u.useState)(!1),[a,i]=(0,u.us
 (0,u.useEffect)(()=>{HB_NOTIF.start();
   const TABS=["overview","progress","photos","appliances","materials","files","quotes","defects","meetings"];
   window.HB_nav=t=>{t=t||{};
+    if(t.pr){try{sessionStorage.setItem("hb_open_pr",t.pr)}catch{}if(o==="receipts")window.dispatchEvent(new CustomEvent("hb-open-pr",{detail:{id:t.pr}}));else f("receipts");return!0}
     if(t.cf){if(o==="home")window.dispatchEvent(new CustomEvent("hb-open-confirm",{detail:{id:t.cf}}));else{try{sessionStorage.setItem("hb_open_cf",t.cf)}catch{}f("home")}return!0}
     if(t.tab&&t.project){if(!a.some(x=>x.id===t.project)){g("找不到這個案件，或你沒有這個案件的權限");return!1}
       r(t.project);hbSetOpenTab(TABS.includes(t.tab)?t.tab:"overview");hbSetNavN(x=>x+1);f("detail");return!0}
