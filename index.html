@@ -282,6 +282,14 @@
   .hb-plate .bar .t i{ display:block; height:100%; background:var(--hb-pine) }
   .hb-plate .bar .lab{ font-size:10px; letter-spacing:.14em; color:#7A756A; margin-top:6px }
   .hb-plate .meta{ font-size:10.5px; letter-spacing:.14em; color:#A39C90; margin:11px 0 0 }
+  .hb-plate.is-selectable{ transition:opacity .18s, background .18s, box-shadow .18s }
+  .hb-plate.is-sel{ background:#edf0e8; outline:1.5px solid #2E4A3C; outline-offset:-1.5px; border-bottom-color:transparent; opacity:1 }
+  .hb-plate.is-dim{ opacity:.72 }
+  .hb-plate.is-dim:hover,.hb-plate.is-dim:focus-visible{ opacity:1 }
+  .hb-plate-sel{ position:absolute; top:8px; left:50%; transform:translateX(-50%); white-space:nowrap; z-index:3; background:#2E4A3C; color:#f4efe6; font-size:11px; letter-spacing:.12em; padding:3px 9px; border-radius:2px }
+  .hb-plate-enter{ margin:12px 0 0; border:0; background:none; padding:4px 6px; font:inherit; font-size:12px; letter-spacing:.12em; color:#2E4A3C; cursor:pointer; text-decoration:underline; text-underline-offset:4px; text-decoration-color:rgba(46,74,60,.35) }
+  .hb-plate-enter:hover,.hb-plate-enter:focus-visible{ text-decoration-color:#2E4A3C }
+  .hb-plate:focus-visible{ outline:2px solid #2E4A3C; outline-offset:-2px }
   .hb-plate .pstamp{
     position:absolute; top:20px; right:10px; display:flex; flex-direction:column;
     align-items:center; border:2px solid var(--hb-pine); border-radius:6px;
@@ -12542,6 +12550,25 @@ const HB_LIB_CSS=`
         .wbk-col+.wbk-col{border-top:1px solid var(--wb-line)}
         .wbk-colbody{min-height:0}
       }
+
+      /* ===== A｜全公司數字總覽 ===== */
+      .wbk-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;padding:10px 0 8px;border-bottom:1px solid var(--wb-line)}
+      .hb-wb .wbk-kpi{position:relative;display:flex;align-items:flex-end;gap:14px;min-height:66px!important;padding:8px 40px 10px 18px;border:1px solid #cdb98f;border-radius:2px;background:rgba(255,253,248,.55);color:var(--wb-ink);font:inherit;text-align:left;cursor:pointer;transition:background .15s,border-color .15s}
+      .hb-wb .wbk-kpi:hover{background:#fffdf8;border-color:#B89B6A}
+      .hb-wb .wbk-kpi:focus-visible{outline:2px solid var(--wb-green);outline-offset:2px}
+      .wbk-kpin{font-family:'Cormorant Garamond','Noto Serif TC',Georgia,serif;font-weight:500;font-size:46px;line-height:.86;color:#2E4A3C;font-variant-numeric:lining-nums}
+      .wbk-kpi.is-late .wbk-kpin,.wbk-kpi.is-late .wbk-kpil{color:#B4573A}
+      .wbk-kpil{font-family:'Noto Serif TC',serif;font-size:15px;letter-spacing:.14em;color:#3a3630;padding-bottom:4px}
+      .wbk-kpia{position:absolute;right:14px;bottom:12px;color:#5a5448;display:flex}
+      .wbk-kpi:hover .wbk-kpia{color:var(--wb-green);transform:translateX(2px)}
+      .wbk-showing{margin:4px 0 -4px;text-align:right;font-size:12px;color:var(--wb-soft);letter-spacing:.06em}
+      .wbk-showing b{font-weight:500;color:#B4573A}
+      .hb-wb .wbk-clear{display:inline-flex;align-items:center;gap:8px;min-height:34px!important;padding:5px 16px;border:1px solid var(--wb-line);border-radius:999px;background:transparent;font:inherit;font-size:13px;letter-spacing:.06em;color:#3a3630;cursor:pointer}
+      .hb-wb .wbk-clear:hover{border-color:var(--wb-green);color:var(--wb-green)}
+      .wbk-clear span{font-size:12px}
+      .wbk-kd{flex:none;min-width:58px;font-size:12px;color:var(--wb-soft);padding-top:2px}
+      @media(max-width:899px){.wbk-kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.wbk-kpin{font-size:40px}.hb-wb .wbk-kpi{min-height:64px!important;padding:8px 34px 10px 14px}}
+      @media(max-width:680px){.wbk-kpis{gap:8px;padding:10px 0 8px}.wbk-kpin{font-size:34px}.wbk-kpil{font-size:13px;letter-spacing:.08em}.hb-wb .wbk-kpi{gap:10px;min-height:56px!important}.wbk .wbk-clear{order:2}}
 `;
 const HB_HUB_CSS=`
       .hb-plan-system{--plan-green:#315c48;--plan-rust:#b4573a;--plan-ink:#211f1b;--plan-paper:rgba(255,255,255,.62)}
@@ -15118,19 +15145,36 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
       kind==='later'&&h('button',{type:'button',className:'wbk-mini',onClick:()=>{if(tk.update(t,{due:day}))say('已排到 '+(isToday?'今天':md(day)))}},isToday?'排到今天':'排到 '+md(day)));
     const more=(n,fn)=>h('button',{type:'button',className:'wbc-more',onClick:fn},'查看全部'+(n?' '+n:''),HB_wbIcon('arrow',13));
     const colK=(title,count,extra,body,foot,cls)=>h('article',{className:'wbk-col '+(cls||'')},h('div',{className:'wbc-colhead'},h('h3',null,title),h('span',{className:'wbc-num'},count),extra),h('div',{className:'wbk-colbody'},body),foot);
-    const sideTitle={ical:'連結 iPhone 行事曆',tl:(isToday?'今日':md(day)+' ')+'時間軸',open:'未完成',follow:'待追蹤',closed:'已結案追蹤',later:'稍後辦',shop:'購物清單'}[cSide]||'';
+    /* ===== A｜全公司數字總覽：永遠用全部資料（不受案件篩選影響） ===== */
+    const demo=p=>/^示範案件/.test(p.name||''),realP=projects.some(p=>!demo(p))?projects.filter(p=>!demo(p)):projects;
+    const kActive=realP.filter(p=>p.status!==fn[2]&&p.status!==fn[3]).length;
+    const kLateList=all.filter(t=>!t.deleted&&!t.done&&t.due&&t.due<today&&(HB_wbOpenTask(t)||HB_wbOpenFollow(t))).sort((a,b)=>a.due.localeCompare(b.due));
+    const tw0=new Date(today+'T00:00:00'),tws=ymd(new Date(tw0.getFullYear(),tw0.getMonth(),tw0.getDate()-tw0.getDay())),twe=HB_wbAddDays(tws,6);
+    const kWeekList=all.filter(t=>!t.deleted&&!t.done&&String(t.id).indexOf('schedule:')===0&&t.due&&t.due<=twe&&(t.dueEnd||t.due)>=tws).sort((a,b)=>a.due.localeCompare(b.due)||(a.time||'99').localeCompare(b.time||'99'));
+    const kCf=cf.list.filter(r=>r.status==='waiting'||r.status==='changes').length;
+    const toProjects=()=>{const el=document.querySelector('.wb-projhead');if(el)el.scrollIntoView({behavior:HB_reduceMotion()?'auto':'smooth',block:'start'})};
+    const kpi=(label,n,on,late,hint)=>h('button',{type:'button',className:'wbk-kpi'+(late&&n?' is-late':''),onClick:on,title:hint,'aria-label':label+' '+n+'，'+hint},
+      h('b',{className:'wbk-kpin'},n),h('span',{className:'wbk-kpil'},label),h('i',{className:'wbk-kpia','aria-hidden':'true'},HB_wbIcon('arrow',16)));
+    const weekRow=t=>h('li',{key:t.id,className:'wbc-row'},h('span',{className:'wbk-kd wb-mono'},md(t.due)+(t.dueEnd&&t.dueEnd!==t.due?'–'+md(t.dueEnd):'')+(t.time?' '+t.time:'')),
+      h('button',{type:'button',className:'wbc-body',onClick:()=>t.projectId&&projects.some(p=>p.id===t.projectId)?onOpenProject(t.projectId):setEditing({...t})},h('strong',null,t.title),h('small',{className:'wbc-proj'},t.projectName||'')),chev);
+    const kSide=cSide==='kLate'||cSide==='kWeek';
+    const pvName=pv?(pv==='__co'?'公司事務':(projects.find(p=>p.id===pv)||{}).name||''):'';
+    const sideTitle={kLate:'逾期事項（全公司）',kWeek:'本週工地排程（'+md(tws)+'–'+md(twe)+'）',ical:'連結 iPhone 行事曆',tl:(isToday?'今日':md(day)+' ')+'時間軸',open:'未完成',follow:'待追蹤',closed:'已結案追蹤',later:'稍後辦',shop:'購物清單'}[cSide]||'';
     const sideBody=cSide==='tl'?h('ul',{className:'wbk-tl'},allTl.length?allTl.map(tlRow):h('li',{className:'wbc-empty'},'這天沒有排定時間的行程'))
       :cSide==='open'?h('ul',{className:'wbc-list'},openList.length?openList.map(mixRow):h('li',{className:'wbc-empty'},'沒有事項'))
       :cSide==='follow'?h('ul',{className:'wbc-list'},fList.length?fList.map(followRow):h('li',{className:'wbc-empty'},'沒有事項'))
       :cSide==='closed'?h('ul',{className:'wbc-list'},closedFollows.map(closedRow))
       :cSide==='later'?h('ul',{className:'wbk-slist'},later.map(t=>sideRow(t,'later')))
       :cSide==='shop'?h('ul',{className:'wbk-slist'},shop.map(t=>sideRow(t,'shop')))
-      :cSide==='ical'?h('div',{className:'wbk-ical'},h(HbTodayCalLink,null)):null;
+      :cSide==='ical'?h('div',{className:'wbk-ical'},h(HbTodayCalLink,null))
+      :cSide==='kLate'?h('ul',{className:'wbc-list'},kLateList.length?kLateList.map(t=>HB_wbIsFollow(t)?followRow(t):openRow(t)):h('li',{className:'wbc-empty'},'沒有逾期事項'))
+      :cSide==='kWeek'?h('ul',{className:'wbc-list'},kWeekList.length?kWeekList.map(weekRow):h('li',{className:'wbc-empty'},'本週沒有工地排程')):null;
     return h('section',{className:'hb-wb wbc is-compact wbk',ref:wbRef,'aria-label':'工作台'},
       h('header',{className:'wbk-head'},
         h('div',{className:'wbc-titlewrap'},h('h2',{className:'wbc-carnet'},'Le Carnet du Jour'),h('span',{className:'wbc-fr'},'工作台')),
         h('div',{className:'wbc-date'},(d0.getMonth()+1)+'月'+pad(d0.getDate())+'日　'+HB_wbWeek(day).replace('週','星期'),!isToday&&h('button',{type:'button',className:'wbk-today',onClick:()=>setCDay(today)},'回到今天')),
         h('label',{className:'wbc-filter'},h('span',{className:'wbc-sr'},'專案篩選'),h('select',{value:pv,onChange:e=>setProj&&setProj(e.target.value)},h('option',{value:''},'全部專案'),h('option',{value:'__co'},'公司事務'),projects.map(p=>h('option',{key:p.id,value:p.id},p.name))),HB_wbIcon('caret',15)),
+        pv&&h('button',{type:'button',className:'wbk-clear',onClick:()=>setProj&&setProj(''),title:'解除案件篩選'},h('span',{'aria-hidden':'true'},'✕'),'顯示全部案件'),
         h('button',{type:'button',className:'wbc-cfbtn'+(cfChangeN?' has-ch':''),onClick:()=>setCfList(true)},'待業主確認',h('b',null,cfActive)),
         h('span',{className:'wbc-grow'}),
         h('button',{type:'button',className:'wbk-toggle'+(cGaps?' on':''),'aria-pressed':cGaps,onClick:()=>setCGaps(!cGaps)},h('span',null,'空檔時間'),h('i')),
@@ -15138,6 +15182,12 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
         h('button',{type:'button',className:'wbc-hublink',onClick:()=>setCSide('ical'),title:'讓 iPhone 行事曆訂閱行程'},'iPhone 行事曆'),
         h('button',{type:'button',className:'wbc-add',onClick:()=>newTask({due:day})},HB_wbIcon('plus',15),'新增事項')),
       error&&h('div',{className:'wb-error',role:'alert'},error,h('button',{type:'button',onClick:tk.reload},'重新整理')),
+      h('div',{className:'wbk-kpis',role:'group','aria-label':'全公司數字總覽'},
+        kpi('進行中案件',kActive,toProjects,false,'查看專案一覽'),
+        kpi('逾期事項',kLateList.length,()=>setCSide('kLate'),true,'查看全公司逾期事項'),
+        kpi('本週工地排程',kWeekList.length,()=>setCSide('kWeek'),false,'查看本週工地排程'),
+        kpi('待業主確認',kCf,()=>setCfList('all'),false,'查看全公司待業主確認')),
+      pv&&h('p',{className:'wbk-showing'},'目前顯示：',h('b',null,pvName)),
       h('div',{className:'wbk-week'},h('button',{type:'button',className:'wbk-wk',onClick:()=>shift(-1),'aria-label':'上一週'},HB_wbIcon('left',16)),
         week.map((x,i)=>{const s=ymd(x);return h('button',{key:s,type:'button',className:'wbk-day'+(s===day?' on':'')+(s===today?' today':''),'aria-pressed':s===day,'aria-label':(x.getMonth()+1)+'月'+x.getDate()+'日',onClick:()=>{setCDay(s);setCGapOpen(null)}},
           h('span',null,'日一二三四五六'[i]),h('b',null,x.getDate()),h('i',{className:has(s)?'has':''}))}),
@@ -15156,13 +15206,13 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
           (cShop||shop.length>0)&&h('form',{className:'wbk-quick',onSubmit:e=>quick('shop',e)},h('input',{name:'q',maxLength:200,placeholder:'要買的東西','aria-label':'新增購物項目',autoFocus:cShop&&!shop.length}),h('button',{type:'submit','aria-label':'新增購物項目'},HB_wbIcon('plus',15))),
           more(later.length+shop.length>1?later.length+shop.length:0,()=>setCSide(later.length||!shop.length?'later':'shop')))),
       undo?h('div',{className:'wb-toast wb-undo',role:'status'},h('span',null,'已完成「'+undo.title+'」'),h('button',{type:'button',onClick:undoDone},'復原')):toast&&h('div',{className:'wb-toast',role:'status'},toast),
-      cSide&&h(HbWbSide,{title:sideTitle,sub:pv?(pv==='__co'?'公司事務':(projects.find(p=>p.id===pv)||{}).name||''):'全部專案',onClose:()=>setCSide(''),
+      cSide&&h(HbWbSide,{title:sideTitle,sub:kSide?'全公司・不受案件篩選影響':pv?pvName:'全部專案',onClose:()=>setCSide(''),
         tabs:(cSide==='later'||cSide==='shop')?[['later','稍後辦 '+later.length],['shop','購物清單 '+shop.length]]:null,tab:cSide,onTab:setCSide},
         h('div',{className:'wbc wbk-sidebody'},(cSide==='later'||cSide==='shop')&&h('form',{className:'wbk-quick',onSubmit:e=>quick(cSide,e)},h('input',{name:'q',maxLength:200,placeholder:cSide==='shop'?'要買的東西':'想到要做的事，先記下來'}),h('button',{type:'submit','aria-label':'新增'},HB_wbIcon('plus',15))),sideBody)),
       editing&&h(HbWbEditor,{key:editing.id,initial:editing,projects,today,onClose:()=>setEditing(null),
         onSave:v=>{const {isNew,...task}=v;if(isNew?tk.add(task):tk.replace(task)){setEditing(null);say(isNew?'已新增':'已儲存')}},
         onDelete:v=>{if(confirm('確定刪除「'+v.title+'」？')&&tk.update(v,{deleted:true})){setEditing(null);say('已刪除')}}}),
-      cfList&&h(HbConfirmList,{cf,projects,pv,onClose:()=>setCfList(false),onOpen:id=>setCfOpen({id}),onNew:()=>setCfOpen({id:null,n:Date.now()})}),
+      cfList&&h(HbConfirmList,{cf,projects,pv:cfList==='all'?'':pv,onClose:()=>setCfList(false),onOpen:id=>setCfOpen({id}),onNew:()=>setCfOpen({id:null,n:Date.now()})}),
       cfOpen&&h(HbConfirmDrawer,{key:(cfOpen.id||'new')+(cfOpen.n||''),id:cfOpen.id,projects,pv,say,onOpenProject,onChanged:cf.reload,onClose:()=>{setCfOpen(null);cf.reload()}}),
       drawerTask&&h(HbWbDrawer,{key:drawer.id+':'+drawer.n,task:drawerTask,focus:drawer.focus,today,projects,tk,say,onOpenProject,onClose:()=>setDrawer(null)}));
   }
@@ -17650,6 +17700,8 @@ function $y(l){return l==null?null:(l/(1024*1024)).toFixed(1)}function Iy({proje
   const hbTk=HB_useToday(l,!hbPM),hbCounts=hbPM?{}:HB_wbProjectCounts(hbTk.all),[hbProj,hbSetProj]=(0,u.useState)(""),hbWbRef=(0,u.useRef)(null);
   (0,u.useEffect)(()=>{if(hbPM)return;document.body.classList.add("hb-wide");return()=>document.body.classList.remove("hb-wide")},[hbPM]);
   const hbShowProj=id=>{hbSetProj(id);setTimeout(()=>{const el=hbWbRef.current;if(el)el.scrollIntoView({behavior:"smooth",block:"start"})},30)};
+  /* 點案件卡＝篩選工作台（再點一次取消）；工作台不在畫面上半部時才捲上去 */
+  const hbPickCard=id=>{const on=hbProj!==id;hbSetProj(on?id:"");if(!on)return;setTimeout(()=>{const el=hbWbRef.current;if(!el)return;const r=el.getBoundingClientRect();if(r.top<0||r.top>window.innerHeight*0.45)el.scrollIntoView({behavior:HB_reduceMotion()?"auto":"smooth",block:"start"})},30)};
   return u.default.createElement("div",{className:hbPM?undefined:"hb-project-library",style:{background:s.paper,minHeight:"100vh",position:"relative"}},
     u.default.createElement("style",null,`
       @keyframes iyBreatheA { 0%,100%{transform:scale(1);opacity:.7} 50%{transform:scale(1.3);opacity:1} }
@@ -17704,7 +17756,7 @@ function $y(l){return l==null?null:(l/(1024*1024)).toFixed(1)}function Iy({proje
         u.default.createElement(E,{name:"clipboard-list",size:36,style:{margin:"0 auto 10px",opacity:.5}}),
         u.default.createElement("p",{style:{fontSize:14}},hbPM?"\u76EE\u524D\u9084\u6C92\u6709\u4EFB\u4F55\u6848\u4EF6":"\u9084\u6C92\u6709\u6848\u4EF6\uFF0C\u9EDE\u64CA\u4E0A\u65B9\u6309\u9215\u958B\u59CB\u5EFA\u7ACB\u7B2C\u4E00\u7B46\u7D00\u9304")
       ):u.default.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(178px, 1fr))",gap:"0 16px"}},
-        [...l].sort((hbA,hbB)=>(/^示範案件/.test(hbA.name||"")?2:0)+(hbA.status==="\u6D41\u6A19"?1:0)-(/^示範案件/.test(hbB.name||"")?2:0)-(hbB.status==="\u6D41\u6A19"?1:0)).map((d,idx)=>u.default.createElement(Ry,{key:d.id,project:d,motionIndex:idx,enableMotion:!hbPM,range:hbProg[d.id]||hbProg["name:"+d.name],wbCount:hbPM?null:hbCounts[d.id]||{open:0,follow:0},onCount:hbPM?null:()=>hbShowProj(d.id),editable:!hbPM,onClick:()=>t(d.id)}))
+        [...l].sort((hbA,hbB)=>(/^示範案件/.test(hbA.name||"")?2:0)+(hbA.status==="\u6D41\u6A19"?1:0)-(/^示範案件/.test(hbB.name||"")?2:0)-(hbB.status==="\u6D41\u6A19"?1:0)).map((d,idx)=>u.default.createElement(Ry,{key:d.id,project:d,motionIndex:idx,enableMotion:!hbPM,range:hbProg[d.id]||hbProg["name:"+d.name],wbCount:hbPM?null:hbCounts[d.id]||{open:0,follow:0},onCount:hbPM?null:()=>hbShowProj(d.id),editable:!hbPM,onClick:()=>t(d.id),onSelect:hbPM?null:()=>hbPickCard(d.id),selected:!hbPM&&hbProj===d.id,dimmed:!hbPM&&!!hbProj&&hbProj!==d.id}))
       )
     ))
   );
@@ -17828,7 +17880,8 @@ function HbCaseAvatar({project,editable=false,className="",size=36}){
         C("button",{type:"button",role:"menuitem",className:"del",onClick:remove},"移除"))),
     maker&&C(HbAvatarMaker,{project,onClose:()=>setMaker(!1),onApply:applyMade,onUpload:pick}));
 }
-function Ry({project:l,onClick:t,range:hbR,motionIndex=0,enableMotion=false,wbCount:hbWc=null,onCount:hbOnCount=null,editable=false}){
+function Ry({project:l,onClick:hbOpen,range:hbR,motionIndex=0,enableMotion=false,wbCount:hbWc=null,onCount:hbOnCount=null,editable=false,onSelect:hbSel=null,selected:hbIsSel=false,dimmed:hbDim=false}){
+let t=hbSel||hbOpen;
 let hbEN={};hbEN[fn[0]]="EARLY DESIGN";hbEN[fn[1]]="IN PROGRESS";hbEN[fn[2]]="COMPLETED";hbEN[fn[3]]="WITHDRAWN";
 let hbDone=l.status===fn[2];
 let hbYr=String(l.updatedAt||"").slice(0,4)||String(new Date().getFullYear());
@@ -17839,10 +17892,11 @@ if(l.status===fn[2])hbStagePct=100;
 
 if(hbR&&hbR.s&&l.status===fn[1]){let DAY=864e5,tz=x=>{let d=new Date(x+"T00:00:00");return isNaN(d)?null:d.getTime()},a1=tz(hbR.s),b1=tz(hbR.e),now=new Date();now.setHours(0,0,0,0);let c1=now.getTime();if(a1!=null&&b1!=null){let span=Math.max(DAY,b1-a1+DAY);hbPct=Math.max(0,Math.min(100,Math.round((c1-a1+DAY)/span*100)));let left=Math.round((b1-c1)/DAY);hbTxt=left>=0?("\u5269\u9918 "+left+" \u5929"):("\u903E\u671F "+Math.abs(left)+" \u5929")}}
 let C=u.default.createElement;
-return C("div",{onClick:t,role:"button",tabIndex:0,"aria-label":"開啟專案："+l.name,
+return C("div",{onClick:t,role:"button",tabIndex:0,"aria-label":hbSel?"篩選工作台：只看「"+l.name+"」的事項":"開啟專案："+l.name,"aria-pressed":hbSel?!!hbIsSel:undefined,
   onKeyDown:ev=>{if(ev.target===ev.currentTarget&&(ev.key==="Enter"||ev.key===" ")){ev.preventDefault();t()}},
-  className:"hb-plate"+(hbDone?" done":"")+(enableMotion?" hb-library-card":""),
+  className:"hb-plate"+(hbDone?" done":"")+(enableMotion?" hb-library-card":"")+(hbSel?" is-selectable":"")+(hbIsSel?" is-sel":"")+(hbDim?" is-dim":""),
   style:enableMotion?{"--hb-library-delay":(160+Math.min(motionIndex,5)*95)+"ms"}:undefined},
+  hbIsSel?C("span",{className:"hb-plate-sel"},"篩選中"):null,
   hbDone?C("span",{className:"pstamp"},C("b",null,"\u5B8C\u5DE5"),C("i",{className:"mono"},hbYr)):null,
   C(HbCaseAvatar,{project:l,editable,className:"hb-plate-av"}),
   C("div",{dangerouslySetInnerHTML:{__html:(window.HB_ART_FOR?window.HB_ART_FOR(l.id||l.name):"")}}),
@@ -17857,7 +17911,8 @@ return C("div",{onClick:t,role:"button",tabIndex:0,"aria-label":"開啟專案：
     C("div",{className:"lab mono"},hbStagePct,"%",hbTxt?" \xB7 "+hbTxt:"")
   ):null,
   C("div",{className:"meta mono"},(l.photoCount||0)," \u5E40 \xB7 ",(l.quoteCount||0)," \u4EFD \xB7 ",Tl(l.updatedAt)),
-  hbWc&&(hbWc.open||hbWc.follow)?C("div",{className:"wb-pcount"},hbWc.open?C("button",{type:"button",onClick:ev=>{ev.stopPropagation();hbOnCount&&hbOnCount()},"aria-label":"查看「"+l.name+"」的未完成事項"},"未完成 ",C("b",null,hbWc.open)," ›"):null,hbWc.follow?C("button",{type:"button",onClick:ev=>{ev.stopPropagation();hbOnCount&&hbOnCount()},"aria-label":"查看「"+l.name+"」的待追蹤事項"},"待追蹤 ",C("b",null,hbWc.follow)," ›"):null):null
+  hbWc&&(hbWc.open||hbWc.follow)?C("div",{className:"wb-pcount"},hbWc.open?C("button",{type:"button",onClick:ev=>{ev.stopPropagation();hbOnCount&&hbOnCount()},"aria-label":"查看「"+l.name+"」的未完成事項"},"未完成 ",C("b",null,hbWc.open)," ›"):null,hbWc.follow?C("button",{type:"button",onClick:ev=>{ev.stopPropagation();hbOnCount&&hbOnCount()},"aria-label":"查看「"+l.name+"」的待追蹤事項"},"待追蹤 ",C("b",null,hbWc.follow)," ›"):null):null,
+  hbSel?C("button",{type:"button",className:"hb-plate-enter",onClick:ev=>{ev.stopPropagation();hbOpen()},onKeyDown:ev=>ev.stopPropagation(),"aria-label":"進入案件："+l.name},"進入案件 →"):null
 )}
 function Py({onCancel:l,onCreate:t}){let[e,n]=(0,u.useState)(""),[a,i]=(0,u.useState)(""),[o,f]=(0,u.useState)(null),[c,r]=(0,u.useState)(!1),[d,h]=(0,u.useState)(""),m=()=>{if(!navigator.geolocation){h("\u9019\u500B\u88DD\u7F6E\u4E0D\u652F\u63F4\u5B9A\u4F4D");return}r(!0),h(""),navigator.geolocation.getCurrentPosition(p=>{f({lat:p.coords.latitude,lng:p.coords.longitude}),r(!1)},()=>{h("\u7121\u6CD5\u53D6\u5F97\u76EE\u524D\u4F4D\u7F6E\uFF0C\u8ACB\u78BA\u8A8D\u5DF2\u5141\u8A31\u5B9A\u4F4D\u6B0A\u9650"),r(!1)},{enableHighAccuracy:!0,timeout:1e4})};return u.default.createElement("div",{style:{position:"fixed",inset:0,background:"rgba(43,38,32,0.45)",display:"flex",alignItems:"center",justifyContent:"center",padding:20,zIndex:50}},u.default.createElement("div",{className:"fade-in",style:{background:s.card,borderRadius:10,padding:22,width:"100%",maxWidth:360}},u.default.createElement("h3",{style:{margin:"0 0 14px",fontSize:17,fontWeight:400,color:s.oceanDark}},"\u65B0\u589E\u6848\u4EF6"),u.default.createElement("label",{style:{fontSize:12.5,color:s.inkSoft}},"\u6848\u4EF6\u540D\u7A31"),u.default.createElement("input",{value:e,onChange:p=>n(p.target.value),placeholder:"\u4F8B\uFF1A\u9673\u5B85\u5BA4\u5167\u88DD\u4FEE",style:el}),u.default.createElement("label",{style:{fontSize:12.5,color:s.inkSoft}},"\u5730\u5740\uFF08\u9078\u586B\uFF09"),u.default.createElement("input",{value:a,onChange:p=>i(p.target.value),placeholder:"\u65BD\u5DE5\u5730\u9EDE",style:el}),u.default.createElement("button",{type:"button",onClick:m,disabled:c,style:{...ll,width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:6,marginBottom:6,padding:"9px 0",fontSize:13}},c?u.default.createElement(E,{name:"loader",size:14,className:"animate-spin"}):u.default.createElement(E,{name:"map-pin",size:14}),o?"\u91CD\u65B0\u5B9A\u4F4D\u76EE\u524D\u4F4D\u7F6E":"\u6A19\u8A18\u76EE\u524D\u4F4D\u7F6E"),o&&u.default.createElement("p",{className:"mono",style:{fontSize:11,color:s.shoal,margin:"0 0 10px"}},"\u5DF2\u5B9A\u4F4D ",o.lat.toFixed(5),", ",o.lng.toFixed(5)),d&&u.default.createElement("p",{style:{fontSize:11.5,color:s.danger,margin:"0 0 10px"}},d),u.default.createElement("div",{style:{display:"flex",gap:10,marginTop:12}},u.default.createElement("button",{onClick:l,style:{...ll,flex:1}},"\u53D6\u6D88"),u.default.createElement("button",{disabled:!e.trim(),onClick:()=>t(e.trim(),a.trim(),o?.lat,o?.lng),style:{...Dl,flex:1,opacity:e.trim()?1:.5}},"\u5EFA\u7ACB"))))}var el={width:"100%",boxSizing:"border-box",border:`1px solid ${s.line}`,borderRadius:8,padding:"9px 11px",fontSize:14,marginBottom:12,marginTop:4,background:"#fff",color:s.ink,fontFamily:"inherit"},Dl={background:s.lemon,color:s.oceanDark,border:"none",borderRadius:8,padding:"11px 0",fontWeight:400,fontSize:14,cursor:"pointer"},lo={background:s.danger,color:"#fff",border:"none",borderRadius:8,padding:"11px 0",fontWeight:400,fontSize:14,cursor:"pointer"},ll={background:"transparent",color:s.oceanDark,border:`1px solid ${s.ocean}`,borderRadius:8,padding:"11px 0",fontWeight:400,fontSize:14,cursor:"pointer"},ri={width:"100%",background:"none",border:"none",cursor:"pointer",display:"flex",alignItems:"center",gap:10,padding:"12px 14px",fontSize:13.5,fontWeight:400,color:s.ink,textAlign:"left"};function HbSignatureModal({project,files,folders,onClose,notify,onSaved,onStore}){
   let [step,setStep]=u.default.useState("pick");
