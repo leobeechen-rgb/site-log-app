@@ -1,11 +1,11 @@
 // hb-line-oa：LINE 官方帳號 webhook（只聽、不回覆客人）
-// 客人在官方 LINE 說「已匯款／轉帳／查收」→ 建立匯款回報 → 工作台通知中心＋手機推播 → 點開就是填好的收據草稿。
+// 客人在官方 LINE（一對一或有加官方帳號的案件群組）說「已匯款／轉帳／查收」→ 建立匯款回報 → 工作台通知中心＋手機推播 → 點開就是填好的收據草稿。
 // 需要在 Supabase → Edge Functions → Secrets 設定（請自己貼，不要貼在對話裡）：
 //   HB_OA_CHANNEL_SECRET  LINE Developers → 官方帳號的 Messaging API Channel → Basic settings → Channel secret（必填）
 //   HB_OA_ACCESS_TOKEN    同一個 Channel → Messaging API → Channel access token（選填：用來顯示客人的 LINE 名稱）
 // LINE Developers 的 Webhook URL 設為 https://rqndozhhvuimqjqtmeli.supabase.co/functions/v1/hb-line-oa 並開啟 Use webhook。
 import { isPaymentText, parseAmount } from './detect.mjs';
-const VERSION = '2026-10-09.3';
+const VERSION = '2026-10-09.4';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!, SERVICE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const SECRET = (Deno.env.get('HB_OA_CHANNEL_SECRET') || '').trim(), TOKEN = (Deno.env.get('HB_OA_ACCESS_TOKEN') || '').trim();
 const enc = new TextEncoder();
@@ -16,13 +16,20 @@ async function verify(raw: Uint8Array, sig: string | null) {
   const key = await crypto.subtle.importKey('raw', enc.encode(SECRET), { name: 'HMAC', hash: 'SHA-256' }, false, ['verify']);
   return crypto.subtle.verify('HMAC', key, Uint8Array.from(atob(sig), c => c.charCodeAt(0)), raw);
 }
-async function profileName(uid: string) {
+async function lineGet(path: string) {
   if (!TOKEN) return null;
   try {
-    const r = await fetch('https://api.line.me/v2/bot/profile/' + uid, { headers: { Authorization: 'Bearer ' + TOKEN }, signal: AbortSignal.timeout(4000) });
-    if (!r.ok) return null;
-    return String((await r.json()).displayName || '').slice(0, 60) || null;
+    const r = await fetch('https://api.line.me/v2/bot/' + path, { headers: { Authorization: 'Bearer ' + TOKEN }, signal: AbortSignal.timeout(4000) });
+    return r.ok ? await r.json() : null;
   } catch { return null; }
+}
+// 群組用群組名稱（例如「大嘉A棟5F-5」），個人用 LINE 名稱
+// deno-lint-ignore no-explicit-any
+async function chatName(src: any) {
+  let n = '';
+  if (src.type === 'group') n = (await lineGet('group/' + src.groupId + '/summary'))?.groupName || '';
+  else if (src.type === 'user') n = (await lineGet('profile/' + src.userId))?.displayName || '';
+  return String(n).slice(0, 60) || null;
 }
 async function report(args: Record<string, unknown>) {
   const r = await fetch(SUPABASE_URL + '/rest/v1/rpc/hb_payment_report_add', {
@@ -30,19 +37,23 @@ async function report(args: Record<string, unknown>) {
     body: JSON.stringify(args), signal: AbortSignal.timeout(6000),
   });
   if (!r.ok) throw new Error('db_' + r.status);
+  return await r.json();
 }
 // deno-lint-ignore no-explicit-any
 async function handle(e: any) {
-  if (e?.type !== 'message' || e.source?.type !== 'user' || !/^U[0-9a-f]{32}$/.test(e.source.userId || '') || !e.webhookEventId) { log('skip', { t: e?.type, s: e?.source?.type, u: /^U[0-9a-f]{32}$/.test(e?.source?.userId || ''), id: !!e?.webhookEventId }); return; }
+  const src = e?.source || {};
+  const key = src.type === 'group' ? src.groupId : src.type === 'room' ? src.roomId : src.userId;
+  if (e?.type !== 'message' || !/^[UCR][0-9a-f]{32}$/.test(key || '') || !e.webhookEventId) { log('skip', { t: e?.type, s: src.type, k: /^[UCR][0-9a-f]{32}$/.test(key || ''), id: !!e?.webhookEventId }); return; }
   if (e.deliveryContext?.isRedelivery && Math.abs(Date.now() - Number(e.timestamp || 0)) > 6 * 3600e3) return;
-  const uid = e.source.userId, mt = e.message?.type;
+  const mt = e.message?.type;
   let kind = '', text = '';
-  if (mt === 'text') { text = String(e.message.text || ''); if (!isPaymentText(text)) { log('not_payment'); return; } kind = 'text'; }
+  if (mt === 'text') { text = String(e.message.text || ''); if (!isPaymentText(text)) { log('not_payment', { s: src.type }); return; } kind = 'text'; }
   else if (mt === 'image') kind = 'image';     // 只會併入一小時內的匯款回報（轉帳截圖）
   else return;
-  await report({ p_event: String(e.webhookEventId), p_uid: uid, p_name: kind === 'text' ? await profileName(uid) : null,
-    p_text: text, p_kind: kind, p_amount: kind === 'text' ? parseAmount(text) : null });
-  log('reported', { kind });
+  const sender = /^U[0-9a-f]{32}$/.test(src.userId || '') ? src.userId : null;
+  const r = await report({ p_event: String(e.webhookEventId), p_uid: key, p_name: kind === 'text' ? await chatName(src) : null,
+    p_text: text, p_kind: kind, p_amount: kind === 'text' ? parseAmount(text) : null, p_sender: sender });
+  log(r ? 'reported' : 'ignored', { kind, s: src.type });
 }
 
 Deno.serve(async (req: Request) => {

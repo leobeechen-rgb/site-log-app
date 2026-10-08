@@ -8845,6 +8845,7 @@ function HB_openVendorPrint(v){
 
 /* ---------- 工程收據 UI ---------- */
 /* 依合約帶出期款建議：設計合約固定 30/30/30/10；工程合約依合約「付款辦法」。已開過收據的期別標為已開。 */
+function HB_rpWho(rp){return rp.line_name||(/^U/.test(rp.line_user_id||"")?"LINE 好友":"LINE 群組")}
 function HB_receiptSuggest(proj,contracts,receipts,amount){
   let out=[],main=null;
   if(proj){
@@ -8917,7 +8918,7 @@ function HbReceiptsHub({onBack,notify,projects}){
     return()=>{window.removeEventListener("hb-open-pr",on);window.removeEventListener("focus",foc)}
   },[]);
   let dismissReport=async rp=>{
-    if(!window.confirm("忽略這筆「"+(rp.line_name||"LINE 好友")+"」的匯款回報？（不會通知客人）"))return;
+    if(!window.confirm("忽略這筆「"+(HB_rpWho(rp))+"」的匯款回報？（不會通知客人）"))return;
     let{error}=await q.from("hb_payment_reports").update({status:"dismissed",updated_at:new Date().toISOString()}).eq("id",rp.id);
     if(error){notify("操作失敗："+error.message);return}
     setReports(rs=>rs.filter(r=>r.id!==rp.id))
@@ -8988,7 +8989,7 @@ function HbReceiptsHub({onBack,notify,projects}){
           u.default.createElement("div",{className:"hb-payrp-h"},u.default.createElement("span",null,"Virements signalés"),u.default.createElement("strong",null,"官方 LINE 匯款回報 · "+reports.length+" 筆待確認")),
           reports.map(rp=>u.default.createElement("div",{key:rp.id,id:"hb-payrp-"+rp.id,className:"hb-payrp-i"},
             u.default.createElement("div",{className:"hb-payrp-top"},
-              u.default.createElement("b",null,rp.line_name||"LINE 好友"),
+              u.default.createElement("b",null,HB_rpWho(rp)),
               u.default.createElement("time",null,HB_notifAgo(rp.updated_at)),
               rp.amount!=null?u.default.createElement("em",null,"NT$ "+HB_money(HB_num(rp.amount))):null),
             u.default.createElement("p",null,rp.message||""),
@@ -9067,7 +9068,7 @@ function HbReceiptForm({onCancel,onCreate,projects,initial,report,suggest}){
     u.default.createElement("div",{className:"fade-in",style:{background:s.card,borderRadius:10,padding:22,width:"100%",maxWidth:400,maxHeight:"85vh",overflowY:"auto"}},
       u.default.createElement("h3",{style:{margin:"0 0 14px",fontSize:17,fontWeight:400,color:s.oceanDark}},report?"匯款收據（確認後建立）":ini?"編輯工程收據":"新增工程收據"),
       report&&u.default.createElement("div",{style:{background:"#FBF6F0",borderLeft:"3px solid #B4573A",borderRadius:6,padding:"10px 12px",margin:"0 0 14px",fontSize:12.5,lineHeight:1.65,color:"#3C362F"}},
-        u.default.createElement("div",{style:{fontWeight:600,marginBottom:2}},"LINE「"+(report.line_name||"LINE 好友")+"」・"+HB_notifAgo(report.updated_at)),
+        u.default.createElement("div",{style:{fontWeight:600,marginBottom:2}},"LINE「"+(HB_rpWho(report))+"」・"+HB_notifAgo(report.updated_at)),
         u.default.createElement("div",{style:{whiteSpace:"pre-wrap"}},report.message||""),
         u.default.createElement("div",{style:{marginTop:6,color:"#B4573A"}},"請先到網銀確認款項已入帳、金額正確，再按建立。")),
       suggest&&suggest.length>0&&u.default.createElement("div",{style:{marginBottom:12}},

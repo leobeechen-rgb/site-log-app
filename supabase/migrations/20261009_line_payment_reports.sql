@@ -103,3 +103,61 @@ begin
 end $$;
 revoke execute on function public.hb_payment_report_add(text,text,text,text,text,numeric) from public, anon, authenticated;
 grant execute on function public.hb_payment_report_add(text,text,text,text,text,numeric) to service_role;
+
+-- 2026-10-09 補充：客人多半在「案件 LINE 群組」裡說已匯款（群組有加官方帳號）。
+-- 對話對象改用 群組／聊天室／個人 ID（C… / R… / U…），群組綁定一次案件後自動帶入；
+-- 發話者若是自己（員工 LINE 登入綁定過的帳號）就不算，避免「已收到匯款，謝謝」被誤判。
+create or replace function public.hb_payment_report_add(
+  p_event text, p_uid text, p_name text, p_text text, p_kind text, p_amount numeric, p_sender text)
+returns uuid language plpgsql security definer set search_path to '' as $$
+declare v_id uuid; v_proj uuid; v_nproj uuid; v_pname text; v_who text; v_n int;
+begin
+  if p_uid !~ '^[UCR][0-9a-f]{32}$' or length(coalesce(p_event,'')) not between 1 and 160 then raise exception 'invalid input'; end if;
+  -- 自己傳的不算；但開頭打「測試」可以拿來試功能
+  if p_sender is not null and btrim(coalesce(p_text,'')) not like '測試%' and exists (select 1 from public.hb_staff_line_links where line_user_id = p_sender) then return null; end if;
+  insert into public.hb_line_oa_events(event_id) values (p_event) on conflict do nothing;
+  get diagnostics v_n = row_count;
+  if v_n = 0 then return null; end if;
+  p_text := left(btrim(coalesce(p_text,'')), 500);
+  p_name := nullif(left(btrim(coalesce(p_name,'')), 60), '');
+  if p_amount is not null and (p_amount <= 0 or p_amount > 100000000) then p_amount := null; end if;
+
+  select id into v_id from public.hb_payment_reports
+   where line_user_id = p_uid and status = 'pending' and updated_at > now() - interval '60 minutes'
+   order by updated_at desc limit 1;
+  if v_id is not null then
+    update public.hb_payment_reports
+       set message = left(case when p_kind = 'image' then coalesce(message,'') || E'\n〔傳了一張圖片〕'
+                               else coalesce(nullif(message,'') || E'\n','') || p_text end, 2000),
+           has_image = has_image or p_kind = 'image',
+           amount = coalesce(p_amount, amount),
+           line_name = coalesce(p_name, line_name),
+           updated_at = now()
+     where id = v_id;
+    return v_id;
+  end if;
+  if p_kind = 'image' then return null; end if;
+
+  select project_id into v_proj from public.hb_line_contacts where line_user_id = p_uid;
+  if v_proj is null and p_uid like 'U%' then
+    select min(project_id::text)::uuid into v_proj from public.hb_owner_line_links
+     where line_user_id = p_uid having count(distinct project_id) = 1;
+  end if;
+
+  insert into public.hb_payment_reports(line_user_id, line_name, message, amount, project_id)
+  values (p_uid, p_name, p_text, p_amount, v_proj) returning id into v_id;
+
+  v_pname := (select name from public.sitelog_projects where id = v_proj);
+  v_nproj := case when v_proj is not null and exists (select 1 from public.hb_admins r where r.role = 'reviewer' and r.scope_project = v_proj)
+                  then null else v_proj end;
+  v_who := coalesce(p_name, case when p_uid like 'U%' then 'LINE 好友' else 'LINE 群組' end);
+  perform public.hb_notify('owner', 'payment', v_nproj, v_who,
+    '回報已匯款' || case when p_amount is not null then ' NT$' || to_char(p_amount, 'FM999,999,999') else '' end,
+    'LINE「' || v_who || '」：' || left(p_text, 90),
+    jsonb_build_object('pr', v_id), 'pay:' || v_id, null,
+    coalesce(v_pname, v_who) || ' 回報已匯款',
+    left(p_text, 110) || '｜點開確認並開收據');
+  return v_id;
+end $$;
+revoke execute on function public.hb_payment_report_add(text,text,text,text,text,numeric,text) from public, anon, authenticated;
+grant execute on function public.hb_payment_report_add(text,text,text,text,text,numeric,text) to service_role;
