@@ -5,11 +5,10 @@
 //   HB_OA_ACCESS_TOKEN    同一個 Channel → Messaging API → Channel access token（選填：用來顯示客人的 LINE 名稱）
 // LINE Developers 的 Webhook URL 設為 https://rqndozhhvuimqjqtmeli.supabase.co/functions/v1/hb-line-oa 並開啟 Use webhook。
 import { isPaymentText, parseAmount } from './detect.mjs';
-const VERSION = '2026-10-09.2';
+const VERSION = '2026-10-09.3';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!, SERVICE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const SECRET = (Deno.env.get('HB_OA_CHANNEL_SECRET') || '').trim(), TOKEN = (Deno.env.get('HB_OA_ACCESS_TOKEN') || '').trim();
 const enc = new TextEncoder();
-declare const EdgeRuntime: { waitUntil(p: Promise<unknown>): void };
 const log = (stage: string, extra: Record<string, unknown> = {}) => console.log(JSON.stringify({ service: 'hb-line-oa', stage, ...extra }));
 
 async function verify(raw: Uint8Array, sig: string | null) {
@@ -34,7 +33,7 @@ async function report(args: Record<string, unknown>) {
 }
 // deno-lint-ignore no-explicit-any
 async function handle(e: any) {
-  if (e?.type !== 'message' || e.source?.type !== 'user' || !/^U[0-9a-f]{32}$/.test(e.source.userId || '') || !e.webhookEventId) return;
+  if (e?.type !== 'message' || e.source?.type !== 'user' || !/^U[0-9a-f]{32}$/.test(e.source.userId || '') || !e.webhookEventId) { log('skip', { t: e?.type, s: e?.source?.type, u: /^U[0-9a-f]{32}$/.test(e?.source?.userId || ''), id: !!e?.webhookEventId }); return; }
   if (e.deliveryContext?.isRedelivery && Math.abs(Date.now() - Number(e.timestamp || 0)) > 6 * 3600e3) return;
   const uid = e.source.userId, mt = e.message?.type;
   let kind = '', text = '';
@@ -61,6 +60,6 @@ Deno.serve(async (req: Request) => {
   if (events.length) log('received', { n: events.length, types: events.map((e: any) => e?.type + ':' + (e?.message?.type || e?.source?.type || '')).join(',').slice(0, 120) });
   // deno-lint-ignore no-explicit-any
   const work = (async () => { for (const e of events.sort((a: any, b: any) => (a.timestamp || 0) - (b.timestamp || 0))) { try { await handle(e); } catch (err) { log('event_failed', { code: String((err as Error)?.message || err).slice(0, 60) }); } } })();
-  try { EdgeRuntime.waitUntil(work); } catch { await work; }
+  await work;   // 幾則訊息處理很快，直接等完再回 LINE，紀錄也比較完整
   return new Response('OK');   // LINE 的「Verify」按鈕送空事件，也回 200
 });
