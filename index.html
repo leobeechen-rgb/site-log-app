@@ -14910,9 +14910,11 @@ function HB_useToday(projects,enabled=true){
     finally{busy.current=false}};
   const loadAuto=async()=>{setLoading(true);try{const {rows,errors}=await HB_wbLoadAuto();if(alive.current){setAuto(rows);if(errors.length)setError(errors.join('、')+'暫時無法讀取，其餘資料仍可使用。')}}catch(e){}finally{if(alive.current)setLoading(false)}};
   u.useEffect(()=>{if(!enabled)return;alive.current=true;pull(true);loadAuto();
-    const iv=setInterval(()=>pull(false),30000),focus=()=>pull(false),tick=setInterval(()=>setToday(HB_todoDate()),30000);
+    /* 業主新增的缺失、新預約、排程變動：每 60 秒與切回畫面時重新讀取（不顯示讀取中，避免畫面閃動） */
+    let lastAuto=Date.now();const autoQuiet=async()=>{if(document.hidden||Date.now()-lastAuto<20000)return;lastAuto=Date.now();try{const {rows}=await HB_wbLoadAuto();if(alive.current)setAuto(rows)}catch(e){}};
+    const iv=setInterval(()=>pull(false),30000),iv2=setInterval(autoQuiet,60000),focus=()=>{pull(false);autoQuiet()},tick=setInterval(()=>setToday(HB_todoDate()),30000);
     window.addEventListener('focus',focus);document.addEventListener('visibilitychange',focus);
-    return()=>{alive.current=false;clearInterval(iv);clearInterval(tick);window.removeEventListener('focus',focus);document.removeEventListener('visibilitychange',focus)}},[]);
+    return()=>{alive.current=false;clearInterval(iv);clearInterval(iv2);clearInterval(tick);window.removeEventListener('focus',focus);document.removeEventListener('visibilitychange',focus)}},[]);
   /* 修改：先更新畫面，再排隊寫入雲端；若另一部裝置剛更新（409），取回最新版重新套用這次修改再寫一次 */
   const mutate=fn=>{
     if(!ready){setError('雲端資料尚未就緒，暫時不能修改。請確認登入與網路連線。');return false}
