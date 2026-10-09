@@ -4208,6 +4208,11 @@ html.hb-fab-away #hbPushBtn,html.hb-fab-away #mnOpen{transform:translateX(calc(1
 .hb-today .td-done .td-check{background:#762D35!important;border-color:#762D35!important;box-shadow:0 0 0 3px rgba(118,45,53,.08)!important}
 @media(max-width:560px){.hb-today .td-check{align-self:start!important;margin-top:1px!important}}
 </style>
+<!-- 2026-10-09 公司端字型統一為黑體（業主頁 ?owner 不受影響）；英文標題、案件頭像、SVG 圖示維持原字型 -->
+<script>try{if(!new URLSearchParams(location.search).has('owner'))document.documentElement.classList.add('hb-sans')}catch(e){}</script>
+<style>
+html.hb-sans body *:not(svg):not(svg *):not(.wbc-carnet):not(.hb-motion-title):not(.hb-avm *):not(.hb-avm-prev):not(code):not(pre):not(kbd){font-family:"Noto Sans TC","Noto Sans CJK TC","PingFang TC","Microsoft JhengHei",sans-serif!important}
+</style>
 </head>
 <body>
 <div id="root"></div>
