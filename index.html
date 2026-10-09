@@ -19357,17 +19357,17 @@ function HbStageProgress({projectId:pid,readOnly:ro,notify:nf}){
   if(st==="error")return u.default.createElement("div",{style:{background:s.card,border:`1px solid ${s.line}`,borderRadius:10,padding:"18px 16px",textAlign:"center"}},
     u.default.createElement("p",{style:{color:s.inkSoft,fontSize:13,margin:0}},ro?"進度暫時無法顯示，請稍後再試。":"讀取失敗："+errMsg));
   return u.default.createElement("div",null,
-    u.default.createElement("div",{style:{background:s.card,border:`1px solid ${s.line}`,borderRadius:10,padding:"14px 16px",marginBottom:12}},
-      u.default.createElement("div",{style:{display:"flex",alignItems:"baseline",justifyContent:"space-between",marginBottom:8}},
-        u.default.createElement("div",{style:{fontSize:13.5,fontWeight:500,color:s.ink,letterSpacing:"0.02em"}},"\u5DE5\u7A0B\u968E\u6BB5"),
-        u.default.createElement("div",{className:"mono",style:{fontSize:12,color:s.ocean}},doneCount+" / "+liveDefs.length)
+    u.default.createElement("div",{style:{background:s.card,border:`1px solid ${s.line}`,borderRadius:8,padding:"8px 12px",marginBottom:6}},
+      /* 一行：標題｜細進度條｜目前進行中｜完成數｜設定 */
+      u.default.createElement("div",{style:{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}},
+        u.default.createElement("div",{style:{fontSize:13,fontWeight:500,color:s.ink,letterSpacing:"0.02em",whiteSpace:"nowrap"}},"\u5DE5\u7A0B\u968E\u6BB5"),
+        u.default.createElement("div",{style:{flex:"1 1 120px",minWidth:80,height:3,borderRadius:99,background:s.line,overflow:"hidden"}},
+          u.default.createElement("div",{style:{width:pct+"%",height:"100%",background:s.ocean,borderRadius:99,transition:"width .35s ease"}})),
+        u.default.createElement("div",{style:{fontSize:11.5,color:s.inkSoft,fontWeight:300,whiteSpace:"nowrap"}},
+          currentDef?"\u76EE\u524D\uFF1A"+currentDef.title:"\u5168\u90E8\u5B8C\u6210"),
+        u.default.createElement("div",{className:"mono",style:{fontSize:11.5,color:s.ocean,whiteSpace:"nowrap"}},doneCount+" / "+liveDefs.length),
+        ro?null:u.default.createElement("button",{onClick:()=>setTplOpen(v=>!v),style:{background:"none",border:`1px solid ${s.line}`,borderRadius:6,padding:"2px 9px",fontSize:11,color:s.inkSoft,cursor:"pointer",fontFamily:"inherit",whiteSpace:"nowrap",minHeight:0}},tplOpen?"\u6536\u8D77\u8A2D\u5B9A":"\u8A2D\u5B9A\u5DE5\u7A0B")
       ),
-      u.default.createElement("div",{style:{height:3,borderRadius:99,background:s.line,overflow:"hidden"}},
-        u.default.createElement("div",{style:{width:pct+"%",height:"100%",background:s.ocean,borderRadius:99,transition:"width .35s ease"}})
-      ),
-      u.default.createElement("div",{style:{fontSize:11.5,color:s.inkSoft,marginTop:7,fontWeight:300}},
-        currentDef?"\u76EE\u524D\u9032\u884C\u4E2D\uFF1A"+currentDef.title:"\u5168\u90E8\u968E\u6BB5\u7686\u5DF2\u5B8C\u6210"),
-      ro?null:u.default.createElement("button",{onClick:()=>setTplOpen(v=>!v),style:{marginTop:11,background:"none",border:`1px solid ${s.line}`,borderRadius:8,padding:"5px 12px",fontSize:11.5,color:s.inkSoft,cursor:"pointer",fontFamily:"inherit"}},tplOpen?"\u6536\u8D77\u8A2D\u5B9A":"\u8A2D\u5B9A\u9019\u500B\u6848\u5B50\u505A\u54EA\u4E9B\u5DE5\u7A0B"),
       (!ro&&tplOpen)?u.default.createElement("div",{style:{marginTop:11,paddingTop:11,borderTop:`1px solid ${s.line}`}},
         u.default.createElement("div",{style:{fontSize:11.5,color:s.inkSoft,marginBottom:8,fontWeight:300,lineHeight:1.7}},"\u5148\u5957\u7BC4\u672C\uFF0C\u518D\u5230\u4E0B\u9762\u9010\u9805\u5FAE\u8ABF\u3002\u6A19\u6210\u300C\u4E0D\u9069\u7528\u300D\u7684\u5DE5\u9805\u4E0D\u5217\u5165\u9032\u5EA6\u5206\u6BCD\uFF0C\u4E5F\u4E0D\u6703\u986F\u793A\u7D66\u696D\u4E3B\u3002"),
         u.default.createElement("div",{style:{display:"flex",gap:6,flexWrap:"wrap"}},
@@ -19377,10 +19377,10 @@ function HbStageProgress({projectId:pid,readOnly:ro,notify:nf}){
     ),
     /* 橫向箭頭：每個階段一格，點一下勾選／取消（2026-10-09 改版，取代原本往下長的清單） */
     u.default.createElement("style",null,`.hb-chevs{display:flex;overflow-x:auto;padding:2px 0 4px;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
-.hb-chev{position:relative;flex:1 0 72px;min-width:72px;margin-left:6px;border:0;border-top:3px solid #E6DED3;border-radius:0;padding:7px 2px 0;font-family:inherit;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:1px;background:none;color:#A39C90;cursor:pointer;transition:border-color .15s,color .15s}
+.hb-chev{position:relative;flex:1 0 72px;min-width:72px;margin-left:6px;border:0;border-top:3px solid #E6DED3;border-radius:0;padding:4px 2px 0;min-height:0;font-family:inherit;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:1px;background:none;color:#A39C90;cursor:pointer;transition:border-color .15s,color .15s}
 .hb-chev:first-child{margin-left:0}
 .hb-chev:hover:not(:disabled){color:${s.ink}}.hb-chev:disabled{cursor:default}
-.hb-chev b{font-size:12.5px;font-weight:400;line-height:1.3;white-space:nowrap}.hb-chev small{font-size:10px;line-height:1.3;white-space:nowrap;font-variant-numeric:tabular-nums;opacity:.85}
+.hb-chev b{font-size:12px;font-weight:400;line-height:1.25;white-space:nowrap}.hb-chev small{font-size:9.5px;line-height:1.2;white-space:nowrap;font-variant-numeric:tabular-nums;opacity:.85}
 .hb-chev.done{border-top-color:${s.ocean};color:${s.ink}}.hb-chev.done small{color:${s.inkSoft}}
 .hb-chev.now{border-top-color:${s.ocean};border-top-style:dashed;color:${s.ocean}}.hb-chev.now b{font-weight:500}
 .hb-chev.skip{border-top-style:dotted;color:#C9C1B6}.hb-chev.skip b{text-decoration:line-through}
@@ -19392,9 +19392,9 @@ function HbStageProgress({projectId:pid,readOnly:ro,notify:nf}){
       let shown=(ro||!tplOpen)?liveIn:gp.items;
       let active=gp.items.some(x=>x.k===currentK);
       if(shown.length===0)return null;
-      return u.default.createElement("div",{key:gp.g,style:{background:s.card,border:`1px solid ${s.line}`,borderRadius:10,marginBottom:10,padding:"10px 14px 12px"}},
-        u.default.createElement("div",{style:{display:"flex",alignItems:"baseline",gap:8,marginBottom:8}},
-          u.default.createElement("span",{style:{fontSize:13,fontWeight:500,color:active?s.oceanDark:s.ink}},gp.name),
+      return u.default.createElement("div",{key:gp.g,style:{background:s.card,border:`1px solid ${s.line}`,borderRadius:8,marginBottom:6,padding:"6px 12px 7px"}},
+        u.default.createElement("div",{style:{display:"flex",alignItems:"baseline",gap:8,marginBottom:4}},
+          u.default.createElement("span",{style:{fontSize:12,fontWeight:500,color:active?s.oceanDark:s.ink}},gp.name),
           u.default.createElement("span",{className:"mono",style:{marginLeft:"auto",fontSize:11.5,color:active?s.ocean:s.inkSoft}},doneIn+" / "+liveIn.length+((skipIn&&!ro)?"\u3000\u7565\u904E "+skipIn:""))),
         u.default.createElement("div",{className:"hb-chevs",role:"list"},
           shown.map(function(sg){
