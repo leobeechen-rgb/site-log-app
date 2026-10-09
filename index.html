@@ -12768,6 +12768,8 @@ const HB_LIB_CSS=`
       .wbk-pt-plus{display:flex;align-items:center;justify-content:center;width:40px;height:40px;font-size:20px;color:#8A8178}
       .hb-wb .wbk-pts .wbk-pt-more,.hb-wb .wbk-pts .wbk-pt-new{border-style:dashed!important;background:transparent!important}
       .hb-wb .wbk-pts .wbk-pt-more.on{border-style:solid!important;background:#edf0e8!important}
+      .hb-wb .wbk-pts .wbk-pt-sm{width:84px}
+      .hb-wb .wbk-agpv{border:0;background:none;padding:0;min-height:0!important;font:inherit;color:#2E4A3C;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
       .wbk-pt-more select{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%}
       .hb-lib-grid>.hb-lib-main{display:none}
       @media (max-width:680px){.wbk-pts{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}.wbk-pts::-webkit-scrollbar{display:none}.hb-wb .wbk-pts .wbk-pt{flex:0 0 96px;width:96px}}
@@ -13028,7 +13030,7 @@ const HB_LIB_CSS=`
       }
 
       /* ===== A｜全公司數字總覽 ===== */
-      .wbk-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;padding:10px 0 8px;border-bottom:1px solid var(--wb-line)}
+      .wbk-kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;padding:10px 0 8px;border-bottom:1px solid var(--wb-line)}
       .hb-wb .wbk-kpi{position:relative;display:flex;align-items:flex-end;gap:14px;min-height:66px!important;padding:8px 40px 10px 18px;border:1px solid #cdb98f;border-radius:2px;background:rgba(255,253,248,.55);color:var(--wb-ink);font:inherit;text-align:left;cursor:pointer;transition:background .15s,border-color .15s}
       .hb-wb .wbk-kpi:hover{background:#fffdf8;border-color:#B89B6A}
       .hb-wb .wbk-kpi:focus-visible{outline:2px solid var(--wb-green);outline-offset:2px}
@@ -13846,7 +13848,7 @@ function HbDrawingHub({onBack,notify,project=null,embedded=false,initialView="dr
     return C("div",{className:"hb-libside"},
       C("style",null,HB_HUB_CSS),
       C("style",null,HB_LIB_CSS),
-      C("button",{type:"button",className:"hb-ls-up",onClick:()=>setUnifiedOpen(true),disabled:loading},C(E,{name:"plus",size:16}),"上傳檔案"),
+      /* 上傳一律先進「待歸檔」，在上方確認案件與位置後再歸檔 */C("label",{className:"hb-ls-up",title:"選檔案後先放進上方「待歸檔」，確認案件再歸檔"},C(E,{name:"plus",size:16}),"上傳檔案",C("input",{type:"file",multiple:!0,hidden:!0,accept:"image/*,.heic,.heif,.pdf,.dwg,.dxf",onChange:ev=>{let fs=Array.from(ev.target.files||[]);ev.target.value="";if(!fs.length)return;if(window.HB_inboxAdd)window.HB_inboxAdd(fs);else setUnifiedOpen(true)}})),
       sec("待發布","À PUBLIER",pendList,"pend","沒有待發布的新版本","業主已在看的圖面，有新版還沒發布",30),
       C("section",{className:"hb-ls-sec hb-ls-files"},
         C("h3",null,"檔案",C("em",null,scopedDrawings.length),C("span",null,"FICHIERS")),
@@ -15704,6 +15706,11 @@ function HB_inboxKind(f){const n=f.name||'',t=(f.type||'').toLowerCase();
   if(HB_drawingCadExt(n))return'cad';if(/\.pdf$/i.test(n)||t==='application/pdf')return'pdf';
   if(t.startsWith('image/')||/\.(jpe?g|png|heic|heif|webp)$/i.test(n))return'image';return'bad'}
 let HB_inboxSeq=0;
+/* 待歸檔保存在這台電腦的瀏覽器（IndexedDB）：重新整理、關掉分頁再打開都還在；歸檔或移除後才刪 */
+const HB_ibDB={p:null,open(){if(this.p)return this.p;this.p=new Promise((res,rej)=>{try{const r=indexedDB.open('hb-inbox',1);r.onupgradeneeded=()=>{r.result.createObjectStore('items',{keyPath:'id'})};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}catch(e){rej(e)}});this.p.catch(()=>{this.p=null});return this.p},
+  async all(){const db=await this.open();return new Promise((res,rej)=>{const t=db.transaction('items','readonly').objectStore('items').getAll();t.onsuccess=()=>res(t.result||[]);t.onerror=()=>rej(t.error)})},
+  async sync(list){const db=await this.open();return new Promise((res,rej)=>{const tx=db.transaction('items','readwrite'),st=tx.objectStore('items');const keep=new Set(list.map(x=>x.id));
+    const g=st.getAllKeys();g.onsuccess=()=>{for(const k of g.result||[])if(!keep.has(k))st.delete(k);for(const x of list){const{thumb,...rest}=x;st.put({...rest,status:x.status==='uploading'?'idle':x.status})}};tx.oncomplete=()=>res(true);tx.onerror=()=>rej(tx.error)})}};
 async function HB_inboxMake(files,projects,lockPid){
   const live=projects.filter(p=>!/示範/.test(p.name||''));
   const out=[];
@@ -15975,7 +15982,13 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
     setTimeout(()=>{const el=workRef.current;if(el){const r=el.getBoundingClientRect();if(r.top<0||r.top>window.innerHeight*0.6)el.scrollIntoView({behavior:'smooth',block:'start'})}},40)};
   u.useEffect(()=>{if(!compact)return;window.HB_inboxAdd=inboxAdd;return()=>{if(window.HB_inboxAdd===inboxAdd)delete window.HB_inboxAdd}});
   u.useEffect(()=>{if(pv)setArea('case')},[pv]);
-  u.useEffect(()=>{if(!inbox.length)return;const f=e=>{e.preventDefault();e.returnValue='還有檔案在待歸檔，離開後會清空'};window.addEventListener('beforeunload',f);return()=>window.removeEventListener('beforeunload',f)},[inbox.length]);
+  const ibSaved=u.useRef(false),ibLoaded=u.useRef(false);
+  /* 開啟時把上次沒歸檔完的檔案載回來 */
+  u.useEffect(()=>{if(!compact)return;let live=true;HB_ibDB.all().then(rows=>{if(!live)return;ibLoaded.current=true;if(!rows.length)return;
+    const back=rows.filter(r=>r&&r.file).map(r=>({...r,status:r.status==='done'?'done':'idle',thumb:r.kind==='image'&&/jpe?g|png|webp/i.test((r.file&&r.file.type)||'')?URL.createObjectURL(r.file):null}));
+    setInbox(l=>{const ids=new Set(l.map(x=>x.id));return[...back.filter(x=>!ids.has(x.id)),...l]})}).catch(()=>{ibLoaded.current=true});return()=>{live=false}},[compact]);
+  u.useEffect(()=>{if(!compact||!ibLoaded.current)return;const t=setTimeout(()=>{HB_ibDB.sync(inbox).then(()=>{ibSaved.current=true},()=>{ibSaved.current=false})},300);return()=>clearTimeout(t)},[inbox,compact]);
+  u.useEffect(()=>{if(!inbox.length)return;const f=e=>{if(ibSaved.current)return;e.preventDefault();e.returnValue='還有檔案在待歸檔，離開後會清空'};window.addEventListener('beforeunload',f);return()=>window.removeEventListener('beforeunload',f)},[inbox.length]);
   /* 切換案件前檢查：照片還沒上傳、表單還開著 → 問要不要捨棄 */
   u.useEffect(()=>{if(!compact)return;
     window.HB_caseCanLeave=()=>{const body=document.querySelector('.wbk-casebody');let dirty=Object.values(caseDirty.current).some(Boolean);
@@ -16256,7 +16269,7 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
       :pvTab==='photos'?h(HbCasePhotos,{key:'ph'+pv,project:pvP,notify:caseSay,onDirty:v=>{caseDirty.current.photos=v}})
       :pvTab==='receipts'?h('div',{className:'wbk-manage'},h(HbReceiptsHub,{key:'rc'+pv,embedProject:pvP,onBack:()=>{},notify:caseSay,projects}))
       :body;
-    const CASE_TABS=[['progress','進度'],['photos','照片'],['appliances','設備'],['materials','材料'],['quotes','報價單'],['defects','缺失'],['receipts','收據']];
+    const CASE_TABS=[['progress','進度'],['photos','照片'],['appliances','設備'],['materials','材料'],['quotes','報價單'],['defects','缺失'],['meetings','會議'],['receipts','收據']];
     const casePanel=h('section',{className:'wbk-case'+(pvReal?'':' is-empty'),'aria-label':'目前操作案件'},
       pvReal?h(u.default.Fragment,null,
         h('div',{className:'wbk-casehead'},
@@ -16267,7 +16280,7 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
         !caseFold&&h('nav',{className:'wbk-casetabs',role:'tablist','aria-label':pvName+' 功能'},CASE_TABS.map(([k,zh])=>h('button',{key:k,type:'button',role:'tab','aria-selected':pvTab===k,className:pvTab===k?'on':'',onClick:()=>setPvTab(k)},zh,
           k==='photos'&&pvP.photoCount?h('b',null,pvP.photoCount):null))),
         !caseFold&&h('div',{className:'wbk-casebody wbk-pph',role:'tabpanel'},caseBody))
-      :h('div',{className:'wbk-caseempty'},h('b',null,'請從上方選擇案件'),h('span',null,'點選上方「專案一覽」的案件卡，就能直接在這裡管理進度、照片、設備、材料、檔案、缺失與收據。')));
+      :h('div',{className:'wbk-caseempty'},h('b',null,'請從上方選擇案件'),h('span',null,'點選上方「專案一覽」的案件卡，就能直接在這裡管理進度、照片、設備、材料、報價單、缺失、會議與收據。')));
     const agOn=agOpen===null?!pvReal:agOpen;
     const lbCur=pvLb&&pvLb.list[pvLb.i];
     const pvLightbox=lbCur&&h('div',{className:'wbk-lb',role:'dialog','aria-modal':'true','aria-label':'預覽',onClick:()=>setPvLb(null)},
@@ -16296,8 +16309,6 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
       h('header',{className:'wbk-head'},
         h('div',{className:'wbc-titlewrap'},h('h2',{className:'wbc-carnet'},'Le Carnet du Jour'),h('span',{className:'wbc-fr'},'工作台')),
         h('div',{className:'wbc-date'},(d0.getMonth()+1)+'月'+pad(d0.getDate())+'日　'+HB_wbWeek(day).replace('週','星期'),!isToday&&h('button',{type:'button',className:'wbk-today',onClick:()=>setCDay(today)},'回到今天')),
-        h('label',{className:'wbc-filter'},h('span',{className:'wbc-sr'},'專案篩選'),h('select',{value:pv,onChange:e=>{const v=e.target.value;if(v!==pv&&window.HB_caseCanLeave&&!window.HB_caseCanLeave()){e.target.value=pv;return}setProj&&setProj(v)}},h('option',{value:''},'全部專案'),h('option',{value:'__co'},'公司事務'),projects.map(p=>h('option',{key:p.id,value:p.id},p.name))),HB_wbIcon('caret',15)),
-        pv&&h('button',{type:'button',className:'wbk-clear',onClick:()=>{if(window.HB_caseCanLeave&&!window.HB_caseCanLeave())return;setProj&&setProj('')},title:'取消選取案件'},h('span',{'aria-hidden':'true'},'✕'),'取消選取'),
         h(HbNotifBell),
         h('button',{type:'button',className:'wbc-cfbtn'+(cfChangeN?' has-ch':''),onClick:()=>setCfList(true)},'待業主確認',h('b',null,cfActive)),
         h('span',{className:'wbc-grow'}),
@@ -16307,16 +16318,15 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
         h('button',{type:'button',className:'wbc-add',onClick:()=>newTask({due:day})},HB_wbIcon('plus',15),'新增事項')),
       error&&h('div',{className:'wb-error',role:'alert'},error,h('button',{type:'button',onClick:tk.reload},'重新整理')),
       h('div',{className:'wbk-kpis',role:'group','aria-label':'全公司數字總覽'},
-        kpi('進行中案件',kActive,toProjects,false,'查看專案一覽'),
         kpi('逾期事項',kLateList.length,()=>setCSide('kLate'),true,'查看全公司逾期事項'),
         kpi('本週工地排程',kWeekList.length,()=>setCSide('kWeek'),false,'查看本週工地排程'),
-        kpi('待業主確認',kCf,()=>setCfList('all'),false,'查看全公司待業主確認')),
+),
       pvLightbox&&HB_portal(pvLightbox),
       h('div',{className:'wbk-agbar'+(agOn?' on':'')},
         h('span',{className:'wbk-agt'},HB_wbIcon('calendar',15),isToday?'今日待辦':md(day)+' 待辦'),
         h('span',{className:'wbk-agn'},'未完成 ',h('b',null,openCount)),
         h('span',{className:'wbk-agn'},'待追蹤 ',h('b',null,fList.length)),
-        pv&&h('span',{className:'wbk-agn wbk-agpv'},'・只看「'+pvName+'」'),
+        pv&&h('button',{type:'button',className:'wbk-agn wbk-agpv',title:'改看全部案件',onClick:()=>{if(window.HB_caseCanLeave&&!window.HB_caseCanLeave())return;setProj&&setProj('')}},'只看「'+pvName+'」 ✕'),
         h('span',{className:'wbc-grow'}),
         h('button',{type:'button',className:'wbk-agtog','aria-expanded':agOn,onClick:()=>setAgOpen(!agOn)},agOn?'收合':'展開',HB_wbIcon('caret',14))),
       agOn&&h(u.default.Fragment,null,
@@ -16351,7 +16361,10 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
             h('span',{className:'wbk-pt-name'},p.name),
             v!=null?h('span',{className:'wbk-pt-bar','aria-label':'進度 '+v+'%'},h('i',{style:{width:Math.max(3,v)+'%'}})):null,
             h('span',{className:'wbk-pt-sub'},dropOn===p.id?'放開上傳':(v!=null?v+'%':'')))};
+          const sel=id=>{if(id===pv)return;if(window.HB_caseCanLeave&&!window.HB_caseCanLeave())return;setProj&&setProj(id)};
           return h('nav',{className:'wbk-pts','aria-label':'專案一覽'},
+            h('button',{type:'button',className:'wbk-pt wbk-pt-sm'+(!pv?' on':''),'aria-pressed':!pv,onClick:()=>sel(''),title:'今日待辦看全部案件'},h('span',{className:'wbk-pt-plus'},'◎'),h('span',{className:'wbk-pt-name'},'全部')),
+            h('button',{type:'button',className:'wbk-pt wbk-pt-sm'+(pv==='__co'?' on':''),'aria-pressed':pv==='__co',onClick:()=>sel('__co'),title:'只看公司事務（不屬於任何案件的事項）'},h('span',{className:'wbk-pt-plus'},'▤'),h('span',{className:'wbk-pt-name'},'公司事務')),
             act.map(tile),
             rest.length?h('label',{className:'wbk-pt wbk-pt-more'+(rest.some(p=>p.id===pv)?' on':'')},h('span',{className:'wbk-pt-plus'},'⋯'),h('span',{className:'wbk-pt-name'},rest.some(p=>p.id===pv)?(rest.find(p=>p.id===pv)||{}).name:'更多'),h('span',{className:'wbk-pt-sub'},'完工・示範 '+rest.length),
               h('select',{value:rest.some(p=>p.id===pv)?pv:'','aria-label':'其他案件',onChange:e=>{if(e.target.value)pick(e.target.value)}},h('option',{value:''},'選擇案件…'),rest.map(p=>h('option',{key:p.id,value:p.id},p.name+(p.status===fn[2]?'（完工）':''))))):null,
