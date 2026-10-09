@@ -16256,7 +16256,7 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
       :pvTab==='photos'?h(HbCasePhotos,{key:'ph'+pv,project:pvP,notify:caseSay,onDirty:v=>{caseDirty.current.photos=v}})
       :pvTab==='receipts'?h('div',{className:'wbk-manage'},h(HbReceiptsHub,{key:'rc'+pv,embedProject:pvP,onBack:()=>{},notify:caseSay,projects}))
       :body;
-    const CASE_TABS=[['progress','進度'],['photos','照片'],['appliances','設備'],['materials','材料'],['files','檔案'],['quotes','報價單'],['defects','缺失'],['receipts','收據']];
+    const CASE_TABS=[['progress','進度'],['photos','照片'],['appliances','設備'],['materials','材料'],['quotes','報價單'],['defects','缺失'],['receipts','收據']];
     const casePanel=h('section',{className:'wbk-case'+(pvReal?'':' is-empty'),'aria-label':'目前操作案件'},
       pvReal?h(u.default.Fragment,null,
         h('div',{className:'wbk-casehead'},
