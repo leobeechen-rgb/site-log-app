@@ -12939,6 +12939,10 @@ const HB_LIB_CSS=`
       .wbk-casetabs button b{font-weight:400;font-size:12px;color:#8A8178;margin-left:6px}
       .wbk-casebody{min-height:180px;padding-bottom:12px}
       .hb-rc-embed .hb-dosHead{display:none!important}.hb-rc-embed .hb-dosWrap{padding:0!important;max-width:none!important;margin:0!important}.hb-rc-embed{background:transparent!important}.hb-rc-embed .hb-dosCount{font-size:17px!important}.hb-rc-embed .hb-dosNo{font-size:26px!important}.hb-rc-embed .hb-dosItem{padding-top:12px!important;padding-bottom:12px!important}.hb-rc-embed .hb-dosName{font-size:16px!important}.hb-rc-embed .hb-dosBar{padding-top:0!important;padding-bottom:10px!important;margin-top:0!important}
+      /* 案件面板裡跳出的表單（新增材料、缺失、設備…）一律蓋在最上層，不被頁首或「待歸檔／案件操作」壓住；iPhone 日期欄不超出畫面 */
+      .wbk-manage div[style*="position: fixed"]{z-index:9000!important}
+      html:has(.wbk-manage div[style*="position: fixed"]) .hb-global-menu-slot,html:has(.wbk-manage div[style*="position: fixed"]) .wbk-workswitch,html:has(.wbk-manage div[style*="position: fixed"]) .hb-railBtn{visibility:hidden!important}
+      .wbk-manage div[style*="position: fixed"] input[type=date]{display:block;width:100%;max-width:100%;min-width:0;box-sizing:border-box;-webkit-appearance:none;appearance:none;text-align:left}
       /* 案件面板內嵌收據：上方不留白、付款進度放最上面、按鈕改成跟工作台一致的小膠囊 */
       .hb-rc-embed .hb-dosSolo{padding:0 0 8px!important;display:flex;flex-direction:column}
       .hb-rc-embed .hb-payplan{order:-1;margin:0 0 16px!important}
