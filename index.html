@@ -12747,16 +12747,25 @@ const HB_LIB_CSS=`
       .hb-shell:has(.wbk-manage),.hb-project-library:has(.wbk-manage){backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
       .wbk .wbk-pph{overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
       /* ===== 上方工作區切換：待歸檔／案件操作 ===== */
-      .wbk-chips{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 12px}
-      .wbk-chipslab{font-size:12.5px;color:#8A8178;letter-spacing:.08em;margin-right:2px}
-      .wbk-chip{border:1px solid #D9CFC3;background:rgba(255,253,248,.8);border-radius:999px;font:inherit;font-size:13px;color:#3C362F;padding:6px 14px;cursor:pointer;white-space:nowrap;transition:background .15s,border-color .15s}
-      .wbk-chip:hover{border-color:#2E4A3C}
-      .hb-wb .wbk-chips .wbk-chip{background:rgba(255,253,248,.8)!important;border:1px solid #D9CFC3!important;color:#3C362F!important}
-      .hb-wb .wbk-chips .wbk-chip.on{background:#2E4A3C!important;border-color:#2E4A3C!important;color:#f4efe6!important}
-      .wbk-chipmore{position:relative;display:inline-flex;align-items:center;border:1px dashed #CFC3B3;border-radius:999px;font-size:13px;color:#7b7466;padding:6px 14px;cursor:pointer}
-      .wbk-chipmore.on{border-style:solid;background:#2E4A3C;border-color:#2E4A3C;color:#f4efe6}
-      .wbk-chipmore select{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%}
-      @media (max-width:680px){.wbk-chips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}.wbk-chips::-webkit-scrollbar{display:none}}
+      .wbk-pts{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px}
+      .hb-wb .wbk-pts .wbk-pt{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;width:112px;min-height:0!important;padding:8px 6px 7px!important;border:1px solid #E2D8CB!important;border-radius:4px!important;background:rgba(255,253,248,.75)!important;color:#2A2822!important;font:inherit;cursor:pointer;text-align:center;transition:border-color .15s,background .15s,transform .15s}
+      .hb-wb .wbk-pts .wbk-pt:hover{border-color:#2E4A3C!important;transform:translateY(-1px)}
+      .hb-wb .wbk-pts .wbk-pt.on{background:#edf0e8!important;border-color:#2E4A3C!important;box-shadow:inset 0 0 0 1px #2E4A3C}
+      .hb-wb .wbk-pts .wbk-pt.drop{background:#edf0e8!important;border:1.5px dashed #2E4A3C!important}
+      .wbk-pt-art{display:block;width:40px;height:40px}
+      .wbk-pt-art .hb-art{max-width:40px}
+      .wbk-pt-art .hb-art path,.wbk-pt-art .hb-art circle{stroke-width:3}
+      .wbk-pt-name{display:block;max-width:100%;margin-top:4px;font-family:"Noto Serif TC",serif;font-size:12.5px;letter-spacing:.06em;line-height:1.35;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+      .wbk-pt.on .wbk-pt-name{color:#2E4A3C;font-weight:500}
+      .wbk-pt-bar{display:block;width:70%;height:2px;margin-top:5px;background:rgba(42,40,34,.14)}
+      .wbk-pt-bar i{display:block;height:100%;background:#2E4A3C}
+      .wbk-pt-sub{display:block;min-height:13px;margin-top:3px;font-size:10px;letter-spacing:.08em;color:#8A8178;line-height:1.3}
+      .wbk-pt-plus{display:flex;align-items:center;justify-content:center;width:40px;height:40px;font-size:20px;color:#8A8178}
+      .hb-wb .wbk-pts .wbk-pt-more,.hb-wb .wbk-pts .wbk-pt-new{border-style:dashed!important;background:transparent!important}
+      .hb-wb .wbk-pts .wbk-pt-more.on{border-style:solid!important;background:#edf0e8!important}
+      .wbk-pt-more select{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%}
+      .hb-lib-grid>.hb-lib-main{display:none}
+      @media (max-width:680px){.wbk-pts{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}.wbk-pts::-webkit-scrollbar{display:none}.hb-wb .wbk-pts .wbk-pt{flex:0 0 96px;width:96px}}
       .wbk-work{margin-top:16px;scroll-margin-top:12px}
       .wbk-workswitch{display:flex;gap:4px;margin-bottom:-1px;position:relative;z-index:1}
       .wbk-workswitch button{border:1px solid transparent;border-bottom:0;background:none;font:inherit;font-size:14px;color:#7b7466;padding:9px 16px;cursor:pointer;border-radius:4px 4px 0 0;display:inline-flex;align-items:center;gap:7px}
@@ -15937,7 +15946,8 @@ function HbCasePhotos({project,notify,onDirty}){
       lbList.length>1&&h('button',{type:'button',className:'wbk-lbnav prev','aria-label':'上一張',onClick:e=>{e.stopPropagation();setLb((lb-1+lbList.length)%lbList.length)}},'‹'),
       lbList.length>1&&h('button',{type:'button',className:'wbk-lbnav next','aria-label':'下一張',onClick:e=>{e.stopPropagation();setLb((lb+1)%lbList.length)}},'›'))));
 }
-function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setProj,wbRef,compact=false}){
+function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setProj,wbRef,compact=false,onNew}){
+  const [dropOn,setDropOn]=u.useState(null);
   const h=u.default.createElement,{all,today,ready,error,sync}=tk;
   const [editing,setEditing]=u.useState(null),[drawer,setDrawer]=u.useState(null),[cfList,setCfList]=u.useState(false),[cfOpen,setCfOpen]=u.useState(null),[full,setFull]=u.useState(''),[toast,setToast]=u.useState('');
   u.useEffect(()=>{if(!toast)return;const t=setTimeout(()=>setToast(''),3200);return()=>clearTimeout(t)},[toast]);
@@ -16246,13 +16256,13 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
       pvReal?h(u.default.Fragment,null,
         h('div',{className:'wbk-casehead'},
           h('h3',null,pvName),h('span',{className:'wbk-casepill'},'目前操作案件'),
-          h('span',{className:'wbk-casehint'},'在下方選擇案件，即可在此操作'),
+          h('span',{className:'wbk-casehint'},'在上方選擇案件，即可在此操作'),
           h('span',{className:'wbc-grow'}),
           h('button',{type:'button',className:'wbk-casefold'+(caseFold?' is-fold':''),'aria-expanded':!caseFold,onClick:()=>setCaseFold(!caseFold)},caseFold?'展開':'收合',HB_wbIcon('caret',14))),
         !caseFold&&h('nav',{className:'wbk-casetabs',role:'tablist','aria-label':pvName+' 功能'},CASE_TABS.map(([k,zh])=>h('button',{key:k,type:'button',role:'tab','aria-selected':pvTab===k,className:pvTab===k?'on':'',onClick:()=>setPvTab(k)},zh,
           k==='photos'&&pvP.photoCount?h('b',null,pvP.photoCount):null))),
         !caseFold&&h('div',{className:'wbk-casebody wbk-pph',role:'tabpanel'},caseBody))
-      :h('div',{className:'wbk-caseempty'},h('b',null,'請從下方選擇案件'),h('span',null,'點選下方「專案一覽」的案件卡，就能直接在這裡管理進度、照片、設備、材料、檔案、缺失與收據。')));
+      :h('div',{className:'wbk-caseempty'},h('b',null,'請從上方選擇案件'),h('span',null,'點選上方「專案一覽」的案件卡，就能直接在這裡管理進度、照片、設備、材料、檔案、缺失與收據。')));
     const agOn=agOpen===null?!pvReal:agOpen;
     const lbCur=pvLb&&pvLb.list[pvLb.i];
     const pvLightbox=lbCur&&h('div',{className:'wbk-lb',role:'dialog','aria-modal':'true','aria-label':'預覽',onClick:()=>setPvLb(null)},
@@ -16323,14 +16333,24 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
           (cShop||shop.length>0)&&h('form',{className:'wbk-quick',onSubmit:e=>quick('shop',e)},h('input',{name:'q',maxLength:200,placeholder:'要買的東西','aria-label':'新增購物項目',autoFocus:cShop&&!shop.length}),h('button',{type:'submit','aria-label':'新增購物項目'},HB_wbIcon('plus',15))),
           more(later.length+shop.length>1?later.length+shop.length:0,()=>setCSide(later.length||!shop.length?'later':'shop'))))),
       h('div',{className:'wbk-work',ref:workRef},
-        /* 案件快速切換：不用往下捲到專案一覽 */
+        /* 專案一覽（精簡版）：放在上方，點一下就在下面操作；可把檔案拖到卡上上傳 */
         (()=>{const pick=id=>{if(id===pv){setArea('case');return}if(window.HB_caseCanLeave&&!window.HB_caseCanLeave())return;setProj&&setProj(id);setArea('case')};
           const act=projects.filter(p=>p.status!==fn[2]&&p.status!==fn[3]&&!/示範/.test(p.name||'')),rest=projects.filter(p=>!act.includes(p));
-          return h('nav',{className:'wbk-chips','aria-label':'選擇案件'},
-            h('span',{className:'wbk-chipslab'},'案件'),
-            act.map(p=>h('button',{key:p.id,type:'button',className:'wbk-chip'+(p.id===pv?' on':''),'aria-pressed':p.id===pv,onClick:()=>pick(p.id),title:p.address||p.name},p.name)),
-            rest.length?h('label',{className:'wbk-chipmore'+(rest.some(p=>p.id===pv)?' on':'')},h('span',null,rest.some(p=>p.id===pv)?(rest.find(p=>p.id===pv)||{}).name:'更多（完工・示範）'),
-              h('select',{value:rest.some(p=>p.id===pv)?pv:'','aria-label':'其他案件',onChange:e=>{if(e.target.value)pick(e.target.value)}},h('option',{value:''},'更多案件…'),rest.map(p=>h('option',{key:p.id,value:p.id},p.name+(p.status===fn[2]?'（完工）':''))))):null)})(),
+          const pct=p=>{try{if(p.status===fn[2])return 100;if(p.stageProgress&&typeof p.stageProgress==='object'&&HB_STAGE_DEFS.length){const sd=HB_stageMigrate(p.stageProgress),ld=HB_stageLive(sd);return Math.round(ld.filter(x=>sd[x.k]&&sd[x.k].done).length/ld.length*100)}}catch(e){}return null};
+          const isF=e=>Array.from((e.dataTransfer&&e.dataTransfer.types)||[]).includes('Files');
+          const tile=p=>{const v=pct(p);return h('button',{key:p.id,type:'button',className:'wbk-pt'+(p.id===pv?' on':'')+(dropOn===p.id?' drop':''),'aria-pressed':p.id===pv,title:(p.address?p.address+'｜':'')+'可把檔案拖到這裡上傳',onClick:()=>pick(p.id),
+              onDragOver:e=>{if(!isF(e))return;e.preventDefault();e.dataTransfer.dropEffect='copy';if(dropOn!==p.id)setDropOn(p.id)},
+              onDragLeave:e=>{if(!e.currentTarget.contains(e.relatedTarget))setDropOn(d=>d===p.id?null:d)},
+              onDrop:e=>{if(!isF(e))return;e.preventDefault();e.stopPropagation();setDropOn(null);const fs=Array.from(e.dataTransfer.files||[]);if(fs.length&&window.HB_inboxAdd)window.HB_inboxAdd(fs,p.id)}},
+            h('span',{className:'wbk-pt-art',dangerouslySetInnerHTML:{__html:window.HB_ART_FOR?window.HB_ART_FOR(p.id||p.name):''}}),
+            h('span',{className:'wbk-pt-name'},p.name),
+            v!=null?h('span',{className:'wbk-pt-bar','aria-label':'進度 '+v+'%'},h('i',{style:{width:Math.max(3,v)+'%'}})):null,
+            h('span',{className:'wbk-pt-sub'},dropOn===p.id?'放開上傳':(v!=null?v+'%':'')))};
+          return h('nav',{className:'wbk-pts','aria-label':'專案一覽'},
+            act.map(tile),
+            rest.length?h('label',{className:'wbk-pt wbk-pt-more'+(rest.some(p=>p.id===pv)?' on':'')},h('span',{className:'wbk-pt-plus'},'⋯'),h('span',{className:'wbk-pt-name'},rest.some(p=>p.id===pv)?(rest.find(p=>p.id===pv)||{}).name:'更多'),h('span',{className:'wbk-pt-sub'},'完工・示範 '+rest.length),
+              h('select',{value:rest.some(p=>p.id===pv)?pv:'','aria-label':'其他案件',onChange:e=>{if(e.target.value)pick(e.target.value)}},h('option',{value:''},'選擇案件…'),rest.map(p=>h('option',{key:p.id,value:p.id},p.name+(p.status===fn[2]?'（完工）':''))))):null,
+            onNew?h('button',{type:'button',className:'wbk-pt wbk-pt-new',onClick:onNew},h('span',{className:'wbk-pt-plus'},'＋'),h('span',{className:'wbk-pt-name'},'新增案件')):null)})(),
         h('div',{className:'wbk-workswitch',role:'tablist','aria-label':'上方工作區'},
           h('button',{type:'button',role:'tab','aria-selected':area==='inbox',className:area==='inbox'?'on':'',onClick:()=>setArea('inbox')},'待歸檔',h('b',{className:inbox.length?'has':''},inbox.length)),
           h('button',{type:'button',role:'tab','aria-selected':area!=='inbox',className:area!=='inbox'?'on':'',onClick:()=>setArea('case')},'案件操作',pvReal?h('small',null,pvName):null)),
@@ -18928,7 +18948,7 @@ function $y(l){return l==null?null:(l/(1024*1024)).toFixed(1)}function Iy({proje
 
     /* 專案首頁：上方精簡工作台、左側待發布＋上傳檔案、下方專案卡片 */
     u.default.createElement("div",{className:hbPM?undefined:"hb-lib-grid",style:{padding:"6px 16px 112px",position:"relative",zIndex:1}},
-      !hbPM&&u.default.createElement("div",{className:"hb-lib-wb"},u.default.createElement(HbWorkbench,{tk:hbTk,projects:l,proj:hbProj,setProj:hbSetProj,wbRef:hbWbRef,compact:true,onOpenProject:hbWbOpen,onCalendar:hbCal,onTodayHub:hbTodayHub})),
+      !hbPM&&u.default.createElement("div",{className:"hb-lib-wb"},u.default.createElement(HbWorkbench,{tk:hbTk,projects:l,proj:hbProj,setProj:hbSetProj,wbRef:hbWbRef,compact:true,onNew:e,onOpenProject:hbWbOpen,onCalendar:hbCal,onTodayHub:hbTodayHub})),
       !hbPM&&u.default.createElement("aside",{className:"hb-lib-side","aria-label":"待發布與上傳"},u.default.createElement(HbDrawingHub,{sideOnly:true,projects:l,notify:hbNotify||(()=>{}),onBack:()=>{},onOpenHub:hbOpenHub})),
       u.default.createElement("div",{className:hbPM?undefined:"hb-lib-main"},
       !hbPM&&u.default.createElement("div",{className:"wb-projhead"},
