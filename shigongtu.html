@@ -613,10 +613,14 @@ function placeSymLabels(b,labs,allSyms,k){
   if(g.length>1){const kinds=[...new Set(g.map(l=>SYM_SHORT[l.s.type]||l.def.n))];tx=['H'+rep.h,notes.join('、')].filter(Boolean).join(' ')+`（${kinds.join('＋')}）`;}
   else tx=[rep.h!=null?'H'+rep.h:'',rep.note].filter(Boolean).join(' ');
   if(!tx)return;
-  const dir=[rep.p[0]-rep.s.x,rep.p[1]-rep.s.y];const horiz=Math.abs(dir[0])>=Math.abs(dir[1]);const st=hh*1.2;const cands=[[0,0]];
-  for(let i=1;i<=10;i++){if(horiz)cands.push([0,i*st],[0,-i*st]);else{const sg=Math.sign(dir[1])||1;cands.push([0,sg*i*st],[i*st*2,0]);}}
-  let best=null;for(const[dx,dy]of cands){const p=[rep.p[0]+dx,rep.p[1]+dy];const bx=boxOf(p,tx,rep.anc,rep.bl);if(!obs.some(o=>hit(bx,o))){best={p,bx};break;}}
-  if(!best){const p=rep.p;best={p,bx:boxOf(p,tx,rep.anc,rep.bl)};}
+  /* 字一定貼在符號旁邊：先試原本位置，再沿牆稍微錯開，最後繞符號一圈找空位；都擠就挑重疊最少的，不再越推越遠 */
+  const sx=rep.s.x,sy=rep.s.y,dir=[rep.p[0]-sx,rep.p[1]-sy],horiz=Math.abs(dir[0])>=Math.abs(dir[1]),st=hh*1.15,gp=rep.R*1.08+pad+.25*k,dg=gp*.78;
+  const cands=[[rep.p,rep.anc,rep.bl]];
+  if(rep.def.wall)for(const i of[1,-1,2,-2]){const d=horiz?[0,i*st]:[i*st*1.6,0];cands.push([[rep.p[0]+d[0],rep.p[1]+d[1]],rep.anc,rep.bl]);}
+  cands.push([[sx+gp,sy],'start','mid'],[[sx+dg,sy+dg],'start','top'],[[sx+dg,sy-dg],'start','alpha'],[[sx,sy+gp],'middle','top'],[[sx,sy-gp],'middle','alpha'],[[sx-gp,sy],'end','mid'],[[sx-dg,sy+dg],'end','top'],[[sx-dg,sy-dg],'end','alpha']);
+  let best=null,bestN=1e9;
+  for(const[p,anc,bl]of cands){const bx=boxOf(p,tx,anc,bl);const nh=obs.reduce((m,o)=>m+(hit(bx,o)?1:0),0);if(nh<bestN){bestN=nh;best={p,bx,anc,bl};if(!nh)break;}}
+  rep={...rep,anc:best.anc,bl:best.bl};
   obs.push(best.bx);b.t(best.p,tx,2.3,{L:rep.L,col:'g',anc:rep.anc,bl:rep.bl});
  });
 }
