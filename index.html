@@ -16180,7 +16180,7 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
         :h('span',{className:'wbk-docf'},h('b',null,extOf(f)),h('small',null,f.name)),
       k!=null&&list===fileItems&&isImg(f)&&f.name?h('span',{className:'wbk-pphcap'},f.name):null);
     const pvP=projects.find(p=>p.id===pv)||{};
-    const TABZH={overview:'總覽',progress:'進度',photos:'照片',appliances:'設備',materials:'材料',files:'檔案',defects:'缺失',meetings:'會議'};
+    const TABZH={overview:'總覽',progress:'進度',photos:'照片',appliances:'設備',materials:'材料',files:'檔案',quotes:'報價單',defects:'缺失',meetings:'會議'};
     const dshort=x=>x?String(x).slice(0,10).replace(/-/g,'/'):'';
     const lbOne=(url,name)=>setPvLb({list:[{id:url,url,name:name||'',mime:'image/jpeg'}],i:0});
     const thumbBtn=(url,name)=>url?h('button',{type:'button',className:'wbk-rthumb','aria-label':'預覽：'+(name||'照片'),onClick:()=>lbOne(url,name)},h('img',{src:url,alt:'',loading:'lazy',decoding:'async'})):h('span',{className:'wbk-rthumb none','aria-hidden':'true'});
@@ -16251,7 +16251,7 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
       :pvTab==='photos'?h(HbCasePhotos,{key:'ph'+pv,project:pvP,notify:caseSay,onDirty:v=>{caseDirty.current.photos=v}})
       :pvTab==='receipts'?h('div',{className:'wbk-manage'},h(HbReceiptsHub,{key:'rc'+pv,embedProject:pvP,onBack:()=>{},notify:caseSay,projects}))
       :body;
-    const CASE_TABS=[['progress','進度'],['photos','照片'],['appliances','設備'],['materials','材料'],['files','檔案'],['defects','缺失'],['receipts','收據']];
+    const CASE_TABS=[['progress','進度'],['photos','照片'],['appliances','設備'],['materials','材料'],['files','檔案'],['quotes','報價單'],['defects','缺失'],['receipts','收據']];
     const casePanel=h('section',{className:'wbk-case'+(pvReal?'':' is-empty'),'aria-label':'目前操作案件'},
       pvReal?h(u.default.Fragment,null,
         h('div',{className:'wbk-casehead'},
