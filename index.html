@@ -15961,7 +15961,6 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
           h('h3',null,pvName),h('span',{className:'wbk-casepill'},'目前操作案件'),
           h('span',{className:'wbk-casehint'},'在下方選擇案件，即可在此操作'),
           h('span',{className:'wbc-grow'}),
-          h('button',{type:'button',className:'wbk-caselink',onClick:()=>openPvTab(pvTab==='receipts'||pvTab==='photos'?pvTab==='photos'?'photos':'overview':pvTab),title:'開啟「'+pvName+'」完整案件頁'},'完整頁面',HB_wbIcon('arrow',13)),
           h('button',{type:'button',className:'wbk-casefold'+(caseFold?' is-fold':''),'aria-expanded':!caseFold,onClick:()=>setCaseFold(!caseFold)},caseFold?'展開':'收合',HB_wbIcon('caret',14))),
         !caseFold&&h('nav',{className:'wbk-casetabs',role:'tablist','aria-label':pvName+' 功能'},CASE_TABS.map(([k,zh])=>h('button',{key:k,type:'button',role:'tab','aria-selected':pvTab===k,className:pvTab===k?'on':'',onClick:()=>setPvTab(k)},zh,
           k==='photos'&&pvP.photoCount?h('b',null,pvP.photoCount):null))),
