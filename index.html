@@ -9014,7 +9014,19 @@ function HbReceiptsHub({onBack,notify,projects,embedProject=null}){
   (0,u.useEffect)(()=>{load()},[]);
   /* ---- 付款進度（只在工作台案件面板顯示）：依合約期款，對照已開收據 ---- */
   let[epContracts,setEpContracts]=(0,u.useState)(null);
-  (0,u.useEffect)(()=>{if(!EP)return;q.from("sitelog_contracts").select("id,category,project_id,design_name,design_location,party_a_name,total_price,payment_stages").then(({data})=>setEpContracts(data||[]),()=>setEpContracts([]))},[EP&&EP.id]);
+  let loadEpC=()=>q.from("sitelog_contracts").select("id,category,project_id,design_name,design_location,party_a_name,total_price,payment_stages").then(({data})=>setEpContracts(data||[]),()=>setEpContracts([]));
+  (0,u.useEffect)(()=>{if(!EP)return;loadEpC()},[EP&&EP.id]);
+  /* 付款進度「填寫金額」：直接改合約總價與各期 %（工程合約）；設計合約固定 30/30/30/10，只填總價 */
+  let[ppEdit,setPpEdit]=(0,u.useState)(null),[ppBusy,setPpBusy]=(0,u.useState)(false);
+  let epMine=()=>{let nm=(EP.name||"").trim(),ad=epAd;return(epContracts||[]).filter(c=>c.category!=="budget").filter(c=>c.project_id===EP.id||(nm&&(c.design_name||"").trim()===nm)||(ad&&(c.design_location||"").replace(/\s/g,"")===ad))};
+  let ppStart=()=>setPpEdit(epMine().map(c=>({id:c.id,category:c.category,total:c.total_price!=null?String(c.total_price):"",stages:c.category==="case"?(c.payment_stages||[]).map(x=>({...x,percent:x.percent!=null?String(x.percent):""})):null})));
+  let ppSave=async()=>{
+    for(let c of ppEdit){if(c.stages){let sum=c.stages.reduce((a,x)=>a+(parseFloat(x.percent)||0),0);if(c.stages.length&&Math.abs(sum-100)>0.01&&!window.confirm("工程合約各期加起來是 "+sum+"%，不是 100%。仍要儲存嗎？"))return}}
+    setPpBusy(true);
+    try{for(let c of ppEdit){let patch={total_price:String(c.total||"").replace(/[^\d.]/g,"")||null};if(c.stages)patch.payment_stages=c.stages.map(x=>({...x,percent:x.percent===""?null:parseFloat(x.percent)}));
+      let{error}=await q.from("sitelog_contracts").update(patch).eq("id",c.id);if(error)throw error}
+      await loadEpC();setPpEdit(null);notify("已更新合約金額")}
+    catch(e){notify("儲存失敗："+(e.message||e))}finally{setPpBusy(false)}};
   let payNew=st=>{
     if(/設計費/.test(st.name||"")){
       let hit=null,hitIdx=-1;
@@ -9176,8 +9188,30 @@ function HbReceiptsHub({onBack,notify,projects,embedProject=null}){
 .hb-pp-st{font-size:11.5px;padding:2px 9px;border-radius:99px;background:#F5EDE2;color:#8A5A1E}.hb-pp-row.paid .hb-pp-st{background:#E2EBDD;color:#2E4A3C}
 .hb-pp-row button{border:1px solid #CFC3B3;background:#fff;border-radius:999px;padding:4px 11px;font:inherit;font-size:12px;color:#2E4A3C;cursor:pointer;min-height:0!important}
 .hb-pp-row button.solid{background:#2E4A3C;border-color:#2E4A3C;color:#f4efe6}
-.hb-pp-empty{font-size:12.5px;color:#7A756A;line-height:1.7;margin:0}`),
-            C("div",{className:"hb-pp-h"},C("b",null,"付款進度"),L.length?C("span",null,"已收 "+paidN+" / "+L.length+" 期"+(tot?"・"+fmt(got)+" / "+fmt(tot):"")):null),
+.hb-pp-empty{font-size:12.5px;color:#7A756A;line-height:1.7;margin:0}
+.hb-pp-h .hb-pp-edit{margin-left:auto;border:1px solid #2E4A3C;background:#fff;color:#2E4A3C;border-radius:999px;padding:4px 12px;font:inherit;font-size:12.5px;cursor:pointer;min-height:0!important}
+.hb-pp-form{border:1px dashed #CFC3B3;border-radius:8px;padding:12px;margin:0 0 12px;background:#fff;display:flex;flex-direction:column;gap:14px}
+.hb-pp-tot{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.hb-pp-tot span{font-size:13px;color:#17150F;min-width:96px}
+.hb-pp-form input{height:36px;border:1px solid #CFC3B3;border-radius:6px;padding:0 10px;font:inherit;font-size:14px;background:#fff;color:#17150F}
+.hb-pp-tot input{width:160px}.hb-pp-form small{font-size:12px;color:#7A756A}
+.hb-pp-sts{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}.hb-pp-sts li{display:flex;align-items:center;gap:8px}
+.hb-pp-sn{min-width:96px;font-size:13px;color:#3C362F}.hb-pp-sts input{width:70px;text-align:right}
+.hb-pp-note{margin:6px 0 0;font-size:12px;color:#7A756A}.hb-pp-note.warn{color:#B3413B}
+.hb-pp-fbtn{display:flex;justify-content:flex-end;gap:8px}.hb-pp-fbtn button{border:1px solid #CFC3B3;background:#fff;border-radius:999px;padding:6px 16px;font:inherit;font-size:13px;cursor:pointer;min-height:0!important}
+.hb-pp-fbtn button.solid{background:#2E4A3C;border-color:#2E4A3C;color:#f4efe6}`),
+            C("div",{className:"hb-pp-h"},C("b",null,"付款進度"),L.length?C("span",null,"已收 "+paidN+" / "+L.length+" 期"+(tot?"・"+fmt(got)+" / "+fmt(tot):"")):null,
+              L.length&&!ppEdit?C("button",{type:"button",className:"hb-pp-edit",onClick:ppStart},L.some(x=>x.amount==null)?"填寫總價與 %":"修改金額"):null),
+            ppEdit?C("div",{className:"hb-pp-form"},
+              ppEdit.map((c,ci)=>{let tv=parseFloat(String(c.total).replace(/[^\d.]/g,""))||0,set=fn=>setPpEdit(es=>es.map((x,j)=>j===ci?fn(x):x));
+                let sum=c.stages?c.stages.reduce((a,x)=>a+(parseFloat(x.percent)||0),0):100;
+                return C("div",{key:c.id,className:"hb-pp-fc"},
+                  C("label",{className:"hb-pp-tot"},C("span",null,c.category==="case"?"工程合約總價":"設計合約總價"),C("input",{inputMode:"numeric",value:c.total,placeholder:"例：1000000",onChange:e=>{let v=e.target.value;set(x=>({...x,total:v}))}}),C("small",null,tv?"NT$ "+tv.toLocaleString():"")),
+                  c.stages?C("ul",{className:"hb-pp-sts"},c.stages.map((st,si)=>{let pc=parseFloat(st.percent)||0;return C("li",{key:si},
+                    C("span",{className:"hb-pp-sn"},st.name||("第"+(si+1)+"期")),
+                    C("input",{inputMode:"decimal",value:st.percent,"aria-label":(st.name||"")+" 百分比",onChange:e=>{let v=e.target.value;set(x=>({...x,stages:x.stages.map((y,k)=>k===si?{...y,percent:v}:y)}))}}),C("span",null,"%"),
+                    C("small",null,tv&&pc?"NT$ "+Math.round(tv*pc/100).toLocaleString():""))})):C("p",{className:"hb-pp-note"},"設計費固定分四期：30%、30%、30%、10%"),
+                  c.stages?C("p",{className:"hb-pp-note"+(Math.abs(sum-100)>0.01?" warn":"")},"合計 "+sum+"%"+(Math.abs(sum-100)>0.01?"（應為 100%）":"")):null)}),
+              C("div",{className:"hb-pp-fbtn"},C("button",{type:"button",onClick:()=>setPpEdit(null),disabled:ppBusy},"取消"),C("button",{type:"button",className:"solid",onClick:ppSave,disabled:ppBusy},ppBusy?"儲存中…":"儲存"))):null,
             L.length?C(u.default.Fragment,null,
               C("div",{className:"hb-pp-bar"},C("i",{style:{width:Math.round(paidN/L.length*100)+"%"}})),
               C("ul",{className:"hb-pp-list"},L.map((x,i)=>C("li",{key:i,className:"hb-pp-row"+(x.paid?" paid":x===next?" next":"")},
