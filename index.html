@@ -261,41 +261,44 @@
 
   .hb-plate{
     position:relative; display:flex; flex-direction:column; align-items:center;
-    text-align:center; padding:32px 12px 24px; cursor:pointer;
+    text-align:center; padding:18px 10px 12px; cursor:pointer;
     border-bottom:1px solid rgba(42,40,34,.14); background:none;
   }
   .hb-plate .cap{
     font-family:"Noto Serif TC",serif; font-size:13px; letter-spacing:.3em;
-    padding-left:.3em; margin:18px 0 0; color:#2A2822; line-height:1.5;
+    padding-left:.3em; margin:10px 0 0; color:#2A2822; line-height:1.5;
     max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
   }
   .hb-plate .addr{
-    font-size:11px; color:#7A756A; margin:7px 0 0; max-width:100%;
+    font-size:11px; color:#7A756A; margin:4px 0 0; max-width:100%;
     overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
   }
   .hb-plate .addr a{ color:inherit; text-decoration:underline; text-underline-offset:2px }
   .hb-plate .yr{ font-size:11.5px; letter-spacing:.26em; color:#7A756A; margin:8px 0 0 }
-  .hb-plate .st{ font-size:9.5px; letter-spacing:.24em; color:#7A756A; margin:9px 0 0 }
+  .hb-plate .st{ font-size:9.5px; letter-spacing:.2em; color:#7A756A; margin:6px 0 0 }
+  .hb-plate .st .yr{ font-size:inherit; letter-spacing:.1em; margin:0; color:inherit }
   .hb-plate.done .st{ color:var(--hb-pine) }
-  .hb-plate .bar{ width:78%; margin:13px 0 0 }
+  .hb-plate .bar{ width:78%; margin:8px 0 0 }
   .hb-plate .bar .t{ height:2px; background:rgba(42,40,34,.14) }
   .hb-plate .bar .t i{ display:block; height:100%; background:var(--hb-pine) }
-  .hb-plate .bar .lab{ font-size:10px; letter-spacing:.14em; color:#7A756A; margin-top:6px }
-  .hb-plate .meta{ font-size:10.5px; letter-spacing:.14em; color:#A39C90; margin:11px 0 0 }
+  .hb-plate .bar .lab{ font-size:10px; letter-spacing:.14em; color:#7A756A; margin-top:4px }
+  .hb-plate .meta{ font-size:10.5px; letter-spacing:.14em; color:#A39C90; margin:5px 0 0 }
   .hb-plate.is-selectable{ transition:opacity .18s, background .18s, box-shadow .18s }
   .hb-plate.is-sel{ background:#edf0e8; outline:1.5px solid #2E4A3C; outline-offset:-1.5px; border-bottom-color:transparent; opacity:1 }
   .hb-plate.is-dim{ opacity:.72 }
   .hb-plate.is-dim:hover,.hb-plate.is-dim:focus-visible{ opacity:1 }
   .hb-plate-drop{ position:absolute; inset:0; z-index:6; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; background:rgba(237,240,232,.92); outline:2px dashed #2E4A3C; outline-offset:-6px; color:#2E4A3C; pointer-events:none; text-align:center; padding:12px }
   .hb-plate-drop span{ font-size:13px; letter-spacing:.08em } .hb-plate-drop b{ font-size:17px; font-weight:500; letter-spacing:.06em } .hb-plate-drop small{ font-size:12px; color:#5E574D }
-  .hb-plate-up{ position:absolute; right:10px; bottom:10px; z-index:4; font-size:12px; letter-spacing:.06em; color:#2E4A3C; background:rgba(255,253,248,.9); border:1px solid #CFC3B3; border-radius:999px; padding:4px 11px; cursor:pointer; opacity:.85 }
+  .hb-plate-acts{ display:flex; align-items:center; justify-content:center; gap:6px; flex-wrap:wrap; margin:8px 0 0 }
+  .hb-plate-up{ position:relative; z-index:4; font-size:12px; letter-spacing:.04em; color:#2E4A3C; background:rgba(255,253,248,.9); border:1px solid #CFC3B3; border-radius:999px; padding:3px 9px; cursor:pointer; opacity:.85 }
   .hb-plate-up:hover{ opacity:1; border-color:#2E4A3C }
-  .hb-plate-sel{ position:absolute; top:10px; right:10px; white-space:nowrap; z-index:3; background:#2E4A3C; color:#f4efe6; font-size:11px; letter-spacing:.12em; padding:3px 9px; border-radius:2px }
-  .hb-plate-enter{ margin:12px 0 0; border:0; background:none; padding:4px 6px; font:inherit; font-size:12px; letter-spacing:.12em; color:#2E4A3C; cursor:pointer; text-decoration:underline; text-underline-offset:4px; text-decoration-color:rgba(46,74,60,.35) }
+  .hb-plate-sel{ position:absolute; top:8px; right:8px; white-space:nowrap; z-index:3; background:#2E4A3C; color:#f4efe6; font-size:11px; letter-spacing:.12em; padding:3px 9px; border-radius:2px }
+  .hb-plate-enter{ margin:0; border:0; background:none; padding:4px 4px; font:inherit; font-size:12px; letter-spacing:.08em; color:#2E4A3C; cursor:pointer; text-decoration:underline; text-underline-offset:4px; text-decoration-color:rgba(46,74,60,.35) }
   .hb-plate-enter:hover,.hb-plate-enter:focus-visible{ text-decoration-color:#2E4A3C }
+  .hb-plate:not(.hb-empty) .hb-art{ max-width:78px }
   .hb-plate:focus-visible{ outline:2px solid #2E4A3C; outline-offset:-2px }
   .hb-plate .pstamp{
-    position:absolute; top:20px; right:10px; display:flex; flex-direction:column;
+    position:absolute; top:12px; right:10px; display:flex; flex-direction:column;
     align-items:center; border:2px solid var(--hb-pine); border-radius:6px;
     color:var(--hb-pine); padding:2px 8px 1px; transform:rotate(-8deg);
   }
@@ -352,7 +355,7 @@
   .hb-avm-btn:disabled{ opacity:.6; cursor:progress }
   .hb-avm button:focus-visible,.hb-avm input:focus-visible{ outline:2px solid #B4573A; outline-offset:2px }
   @media (max-width:560px){ .hb-avm-body{ grid-template-columns:minmax(0,1fr) } .hb-avm-prev img,.hb-avm-prev .ph{ max-width:180px } .hb-avm-row{ grid-template-columns:minmax(0,1fr) } }
-  .hb-plate-av{ position:absolute; top:18px; left:10px }
+  .hb-plate-av{ position:absolute; top:10px; left:10px }
   .hb-pcard-head{ display:flex; align-items:center; gap:10px; min-width:0; margin-top:6px }
   .hb-pcard-head .hb-plan-folder-title{ margin-top:0!important; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
 
@@ -18934,7 +18937,7 @@ function $y(l){return l==null?null:(l/(1024*1024)).toFixed(1)}function Iy({proje
       l.length===0?u.default.createElement("div",{style:{textAlign:"center",color:s.inkSoft,marginTop:60}},
         u.default.createElement(E,{name:"clipboard-list",size:36,style:{margin:"0 auto 10px",opacity:.5}}),
         u.default.createElement("p",{style:{fontSize:14}},hbPM?"\u76EE\u524D\u9084\u6C92\u6709\u4EFB\u4F55\u6848\u4EF6":"\u9084\u6C92\u6709\u6848\u4EF6\uFF0C\u9EDE\u64CA\u4E0A\u65B9\u6309\u9215\u958B\u59CB\u5EFA\u7ACB\u7B2C\u4E00\u7B46\u7D00\u9304")
-      ):u.default.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(178px, 1fr))",gap:"0 16px"}},
+      ):u.default.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(150px, 1fr))",gap:"0 14px"}},
         [...l].sort((hbA,hbB)=>(/^示範案件/.test(hbA.name||"")?2:0)+(hbA.status==="\u6D41\u6A19"?1:0)-(/^示範案件/.test(hbB.name||"")?2:0)-(hbB.status==="\u6D41\u6A19"?1:0)).map((d,idx)=>u.default.createElement(Ry,{key:d.id,project:d,motionIndex:idx,enableMotion:!hbPM,range:hbProg[d.id]||hbProg["name:"+d.name],wbCount:hbPM?null:hbCounts[d.id]||{open:0,follow:0},onCount:hbPM?null:()=>hbShowProj(d.id),editable:!hbPM,onClick:()=>t(d.id),onSelect:hbPM?null:()=>hbPickCard(d.id),onDropFiles:hbPM?null:fs=>{if(window.HB_inboxAdd)window.HB_inboxAdd(fs,d.id)},selected:!hbPM&&hbProj===d.id,dimmed:!hbPM&&!!hbProj&&hbProj!==d.id}))
       )
     ))
@@ -19083,7 +19086,6 @@ return C("div",{onClick:t,role:"button",tabIndex:0,"aria-label":hbSel?"在上方
   onDrop:hbDropF?ev=>{if(!hbIsFiles(ev))return;ev.preventDefault();ev.stopPropagation();hbDzN.current=0;hbSetDz(null);let fs=Array.from(ev.dataTransfer.files||[]);if(fs.length)hbDropF(fs)}:undefined},
   hbIsSel?C("span",{className:"hb-plate-sel"},"操作中"):null,
   hbDz?C("div",{className:"hb-plate-drop","aria-hidden":"true"},C("span",null,"放開以上傳到"),C("b",null,l.name),hbDz.n?C("small",null,hbDz.n+" 個檔案"):null):null,
-  hbDropF?C("label",{className:"hb-plate-up",title:"上傳檔案到「"+l.name+"」",onClick:ev=>ev.stopPropagation(),onKeyDown:ev=>ev.stopPropagation()},"⇪ 上傳",C("input",{type:"file",multiple:!0,hidden:!0,accept:"image/*,.heic,.heif,.pdf,.dwg,.dxf",onChange:ev=>{let fs=Array.from(ev.target.files||[]);ev.target.value="";if(fs.length)hbDropF(fs)}})):null,
   hbDone?C("span",{className:"pstamp"},C("b",null,"\u5B8C\u5DE5"),C("i",{className:"mono"},hbYr)):null,
   C(HbCaseAvatar,{project:l,editable,className:"hb-plate-av"}),
   C("div",{dangerouslySetInnerHTML:{__html:(window.HB_ART_FOR?window.HB_ART_FOR(l.id||l.name):"")}}),
@@ -19091,15 +19093,14 @@ return C("div",{onClick:t,role:"button",tabIndex:0,"aria-label":hbSel?"在上方
   l.address?C("div",{className:"addr"},
     l.lat!=null?C("a",{href:`https://www.google.com/maps?q=${l.lat},${l.lng}`,target:"_blank",rel:"noopener noreferrer",onClick:n=>n.stopPropagation()},l.address):l.address
   ):null,
-  C("div",{className:"yr mono"},"( ",hbYr," )"),
-  C("div",{className:"st mono"},hbEN[l.status]||l.status),
+  C("div",{className:"st mono"},hbEN[l.status]||l.status,C("span",{className:"yr"}," · ",hbYr)),
   (hbStagePct!=null&&l.status!==fn[3]&&(hbStagePct>0||l.status===fn[1]))?C("div",{className:"bar"},
     C("div",{className:"t"},C(HbProgFill,{pct:Math.max(2,hbStagePct)})),
     C("div",{className:"lab mono"},hbStagePct,"%",hbTxt?" \xB7 "+hbTxt:"")
   ):null,
-  C("div",{className:"meta mono"},(l.photoCount||0)," \u5E40 \xB7 ",(l.quoteCount||0)," \u4EFD \xB7 ",Tl(l.updatedAt)),
+  C("div",{className:"meta mono"},(l.photoCount||0)," \u5E40 \xB7 ",(l.quoteCount||0)," \u4EFD \xB7 ",String(Tl(l.updatedAt)||"").replace(/^\d{4}\./,"")),
   hbWc&&(hbWc.open||hbWc.follow)?C("div",{className:"wb-pcount"},hbWc.open?C("button",{type:"button",onClick:ev=>{ev.stopPropagation();hbOnCount&&hbOnCount()},"aria-label":"查看「"+l.name+"」的未完成事項"},"未完成 ",C("b",null,hbWc.open)," ›"):null,hbWc.follow?C("button",{type:"button",onClick:ev=>{ev.stopPropagation();hbOnCount&&hbOnCount()},"aria-label":"查看「"+l.name+"」的待追蹤事項"},"待追蹤 ",C("b",null,hbWc.follow)," ›"):null):null,
-  hbSel?C("button",{type:"button",className:"hb-plate-enter",onClick:ev=>{ev.stopPropagation();hbOpen()},onKeyDown:ev=>ev.stopPropagation(),"aria-label":"進入案件："+l.name},"進入案件 →"):null
+  (hbSel||hbDropF)?C("div",{className:"hb-plate-acts"},hbSel?C("button",{type:"button",className:"hb-plate-enter",onClick:ev=>{ev.stopPropagation();hbOpen()},onKeyDown:ev=>ev.stopPropagation(),"aria-label":"進入案件："+l.name},"進入案件"):null,hbDropF?C("label",{className:"hb-plate-up",title:"上傳檔案到「"+l.name+"」",onClick:ev=>ev.stopPropagation(),onKeyDown:ev=>ev.stopPropagation()},"⇪ 上傳",C("input",{type:"file",multiple:!0,hidden:!0,accept:"image/*,.heic,.heif,.pdf,.dwg,.dxf",onChange:ev=>{let fs=Array.from(ev.target.files||[]);ev.target.value="";if(fs.length)hbDropF(fs)}})):null):null
 )}
 function Py({onCancel:l,onCreate:t}){let[e,n]=(0,u.useState)(""),[a,i]=(0,u.useState)(""),[o,f]=(0,u.useState)(null),[c,r]=(0,u.useState)(!1),[d,h]=(0,u.useState)(""),m=()=>{if(!navigator.geolocation){h("\u9019\u500B\u88DD\u7F6E\u4E0D\u652F\u63F4\u5B9A\u4F4D");return}r(!0),h(""),navigator.geolocation.getCurrentPosition(p=>{f({lat:p.coords.latitude,lng:p.coords.longitude}),r(!1)},()=>{h("\u7121\u6CD5\u53D6\u5F97\u76EE\u524D\u4F4D\u7F6E\uFF0C\u8ACB\u78BA\u8A8D\u5DF2\u5141\u8A31\u5B9A\u4F4D\u6B0A\u9650"),r(!1)},{enableHighAccuracy:!0,timeout:1e4})};return u.default.createElement("div",{style:{position:"fixed",inset:0,background:"rgba(43,38,32,0.45)",display:"flex",alignItems:"center",justifyContent:"center",padding:20,zIndex:50}},u.default.createElement("div",{className:"fade-in",style:{background:s.card,borderRadius:10,padding:22,width:"100%",maxWidth:360}},u.default.createElement("h3",{style:{margin:"0 0 14px",fontSize:17,fontWeight:400,color:s.oceanDark}},"\u65B0\u589E\u6848\u4EF6"),u.default.createElement("label",{style:{fontSize:12.5,color:s.inkSoft}},"\u6848\u4EF6\u540D\u7A31"),u.default.createElement("input",{value:e,onChange:p=>n(p.target.value),placeholder:"\u4F8B\uFF1A\u9673\u5B85\u5BA4\u5167\u88DD\u4FEE",style:el}),u.default.createElement("label",{style:{fontSize:12.5,color:s.inkSoft}},"\u5730\u5740\uFF08\u9078\u586B\uFF09"),u.default.createElement("input",{value:a,onChange:p=>i(p.target.value),placeholder:"\u65BD\u5DE5\u5730\u9EDE",style:el}),u.default.createElement("button",{type:"button",onClick:m,disabled:c,style:{...ll,width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:6,marginBottom:6,padding:"9px 0",fontSize:13}},c?u.default.createElement(E,{name:"loader",size:14,className:"animate-spin"}):u.default.createElement(E,{name:"map-pin",size:14}),o?"\u91CD\u65B0\u5B9A\u4F4D\u76EE\u524D\u4F4D\u7F6E":"\u6A19\u8A18\u76EE\u524D\u4F4D\u7F6E"),o&&u.default.createElement("p",{className:"mono",style:{fontSize:11,color:s.shoal,margin:"0 0 10px"}},"\u5DF2\u5B9A\u4F4D ",o.lat.toFixed(5),", ",o.lng.toFixed(5)),d&&u.default.createElement("p",{style:{fontSize:11.5,color:s.danger,margin:"0 0 10px"}},d),u.default.createElement("div",{style:{display:"flex",gap:10,marginTop:12}},u.default.createElement("button",{onClick:l,style:{...ll,flex:1}},"\u53D6\u6D88"),u.default.createElement("button",{disabled:!e.trim(),onClick:()=>t(e.trim(),a.trim(),o?.lat,o?.lng),style:{...Dl,flex:1,opacity:e.trim()?1:.5}},"\u5EFA\u7ACB"))))}var el={width:"100%",boxSizing:"border-box",border:`1px solid ${s.line}`,borderRadius:8,padding:"9px 11px",fontSize:14,marginBottom:12,marginTop:4,background:"#fff",color:s.ink,fontFamily:"inherit"},Dl={background:s.lemon,color:s.oceanDark,border:"none",borderRadius:8,padding:"11px 0",fontWeight:400,fontSize:14,cursor:"pointer"},lo={background:s.danger,color:"#fff",border:"none",borderRadius:8,padding:"11px 0",fontWeight:400,fontSize:14,cursor:"pointer"},ll={background:"transparent",color:s.oceanDark,border:`1px solid ${s.ocean}`,borderRadius:8,padding:"11px 0",fontWeight:400,fontSize:14,cursor:"pointer"},ri={width:"100%",background:"none",border:"none",cursor:"pointer",display:"flex",alignItems:"center",gap:10,padding:"12px 14px",fontSize:13.5,fontWeight:400,color:s.ink,textAlign:"left"};function HbSignatureModal({project,files,folders,onClose,notify,onSaved,onStore}){
   let [step,setStep]=u.default.useState("pick");
