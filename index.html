@@ -12744,6 +12744,16 @@ const HB_LIB_CSS=`
       .hb-shell:has(.wbk-manage),.hb-project-library:has(.wbk-manage){backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
       .wbk .wbk-pph{overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
       /* ===== 上方工作區切換：待歸檔／案件操作 ===== */
+      .wbk-chips{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 12px}
+      .wbk-chipslab{font-size:12.5px;color:#8A8178;letter-spacing:.08em;margin-right:2px}
+      .wbk-chip{border:1px solid #D9CFC3;background:rgba(255,253,248,.8);border-radius:999px;font:inherit;font-size:13px;color:#3C362F;padding:6px 14px;cursor:pointer;white-space:nowrap;transition:background .15s,border-color .15s}
+      .wbk-chip:hover{border-color:#2E4A3C}
+      .hb-wb .wbk-chips .wbk-chip{background:rgba(255,253,248,.8)!important;border:1px solid #D9CFC3!important;color:#3C362F!important}
+      .hb-wb .wbk-chips .wbk-chip.on{background:#2E4A3C!important;border-color:#2E4A3C!important;color:#f4efe6!important}
+      .wbk-chipmore{position:relative;display:inline-flex;align-items:center;border:1px dashed #CFC3B3;border-radius:999px;font-size:13px;color:#7b7466;padding:6px 14px;cursor:pointer}
+      .wbk-chipmore.on{border-style:solid;background:#2E4A3C;border-color:#2E4A3C;color:#f4efe6}
+      .wbk-chipmore select{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%}
+      @media (max-width:680px){.wbk-chips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}.wbk-chips::-webkit-scrollbar{display:none}}
       .wbk-work{margin-top:16px;scroll-margin-top:12px}
       .wbk-workswitch{display:flex;gap:4px;margin-bottom:-1px;position:relative;z-index:1}
       .wbk-workswitch button{border:1px solid transparent;border-bottom:0;background:none;font:inherit;font-size:14px;color:#7b7466;padding:9px 16px;cursor:pointer;border-radius:4px 4px 0 0;display:inline-flex;align-items:center;gap:7px}
@@ -16310,6 +16320,14 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
           (cShop||shop.length>0)&&h('form',{className:'wbk-quick',onSubmit:e=>quick('shop',e)},h('input',{name:'q',maxLength:200,placeholder:'要買的東西','aria-label':'新增購物項目',autoFocus:cShop&&!shop.length}),h('button',{type:'submit','aria-label':'新增購物項目'},HB_wbIcon('plus',15))),
           more(later.length+shop.length>1?later.length+shop.length:0,()=>setCSide(later.length||!shop.length?'later':'shop'))))),
       h('div',{className:'wbk-work',ref:workRef},
+        /* 案件快速切換：不用往下捲到專案一覽 */
+        (()=>{const pick=id=>{if(id===pv){setArea('case');return}if(window.HB_caseCanLeave&&!window.HB_caseCanLeave())return;setProj&&setProj(id);setArea('case')};
+          const act=projects.filter(p=>p.status!==fn[2]&&p.status!==fn[3]&&!/示範/.test(p.name||'')),rest=projects.filter(p=>!act.includes(p));
+          return h('nav',{className:'wbk-chips','aria-label':'選擇案件'},
+            h('span',{className:'wbk-chipslab'},'案件'),
+            act.map(p=>h('button',{key:p.id,type:'button',className:'wbk-chip'+(p.id===pv?' on':''),'aria-pressed':p.id===pv,onClick:()=>pick(p.id),title:p.address||p.name},p.name)),
+            rest.length?h('label',{className:'wbk-chipmore'+(rest.some(p=>p.id===pv)?' on':'')},h('span',null,rest.some(p=>p.id===pv)?(rest.find(p=>p.id===pv)||{}).name:'更多（完工・示範）'),
+              h('select',{value:rest.some(p=>p.id===pv)?pv:'','aria-label':'其他案件',onChange:e=>{if(e.target.value)pick(e.target.value)}},h('option',{value:''},'更多案件…'),rest.map(p=>h('option',{key:p.id,value:p.id},p.name+(p.status===fn[2]?'（完工）':''))))):null)})(),
         h('div',{className:'wbk-workswitch',role:'tablist','aria-label':'上方工作區'},
           h('button',{type:'button',role:'tab','aria-selected':area==='inbox',className:area==='inbox'?'on':'',onClick:()=>setArea('inbox')},'待歸檔',h('b',{className:inbox.length?'has':''},inbox.length)),
           h('button',{type:'button',role:'tab','aria-selected':area!=='inbox',className:area!=='inbox'?'on':'',onClick:()=>setArea('case')},'案件操作',pvReal?h('small',null,pvName):null)),
