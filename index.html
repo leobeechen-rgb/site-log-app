@@ -16905,7 +16905,7 @@ function Gy(){let[l,t]=(0,u.useState)(!0),[e,n]=(0,u.useState)(!1),[a,i]=(0,u.us
     try{let{data,error}=await q.rpc("hb_notif_get",{p_id:id});if(error||!data||!data.length){g("這則通知已無法開啟");return}
       HB_NOTIF.read(id);window.HB_nav({...(data[0].target||{}),project:data[0].project_id})}catch{}};
   window.HB_navPending();
-},[o,a,l]);(0,u.useEffect)(()=>{let hbMsg=T=>{T?.data&&T.data.type==="hb-quote-import"&&(hbSetQuoteImport(T.data),f("quoteImportPick"))};return window.addEventListener("message",hbMsg),()=>window.removeEventListener("message",hbMsg)},[]);let g=(0,u.useCallback)(T=>{p(T),setTimeout(()=>p(null),2600)},[]),hbImportQuote=async T=>{if(!hbQuoteImport)return;try{let{blob:k,filename:H,meta:B}=hbQuoteImport,mt=k.type||"text/html",sl=`${T.id}/${Be()}.${mt==="application/json"?"json":"html"}`,X=await r2UploadSitelogFile("sitelog-quotes",sl,k,mt);let{error:dl}=await q.from("sitelog_quotes").insert({project_id:T.id,name:H,mime:mt,size:k.size,url:X,path:sl,folder_id:null});if(dl)throw dl;i(ql=>ql.map(je=>je.id===T.id?{...je,quoteCount:(je.quoteCount||0)+1}:je)),hbSetQuoteImport(null),r(T),hbSetOpenTab("quotes"),f("detail"),g(`\u5DF2\u5C07\u5831\u50F9\u55AE\u300C${B?.qClient||H}\u300D\u5B58\u5165\u6848\u4EF6`)}catch(k){g("\u5B58\u6A94\u5931\u6557\uFF1A"+(k.message||k))}},b=async(T,k,H,B)=>{let{data:nl,error:hl}=await q.from("sitelog_projects").insert({name:T,address:k,lat:H??null,lng:B??null,status:fn[0]}).select().single();if(hl){g("\u5EFA\u7ACB\u5931\u6557\uFF1A"+hl.message);return}i(ql=>[cm(nl),...ql]),h(!1),g("\u6848\u4EF6\u5DF2\u5EFA\u7ACB")},S=async(T,k)=>{i(hl=>hl.map(ql=>ql.id===T?{...ql,...k,updatedAt:new Date().toISOString()}:ql));let H={name:"name",address:"address",lat:"lat",lng:"lng",status:"status",ownerPassword:"owner_password",expectedEnd:"expected_end",clientInfo:"client_info",aliases:"aliases",avatarUrl:"avatar_url"},B={};for(let hl of Object.keys(H))hl in k&&(B[H[hl]]=k[hl]);if(Object.keys(B).length===0)return;B.updated_at=new Date().toISOString();let{error:nl}=await q.from("sitelog_projects").update(B).eq("id",T);nl&&g("\u66F4\u65B0\u5931\u6557\uFF1A"+nl.message)},M=async T=>{let{error:k}=await q.from("sitelog_projects").delete().eq("id",T);if(k){g("\u522A\u9664\u5931\u6557\uFF1A"+k.message);return!1}i(H=>H.filter(B=>B.id!==T)),f("home"),g("\u6848\u4EF6\u5DF2\u522A\u9664");return!0},j=a.find(T=>T.id===c);return u.default.createElement("div",{className:"hb-shell",style:{background:s.paper,height:"100vh",overflow:"hidden",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},u.default.createElement("div",{className:"hb-global-menu-slot"}),u.default.createElement("style",null,`
+},[o,a,l]);/* hb-tabbar：公開目前頁面，給底部分頁列判斷選中狀態 */(0,u.useEffect)(()=>{try{window.__hbView=o;document.documentElement.setAttribute("data-hb-view",o);window.dispatchEvent(new CustomEvent("hb:view",{detail:o}))}catch{}},[o]);(0,u.useEffect)(()=>{let hbMsg=T=>{T?.data&&T.data.type==="hb-quote-import"&&(hbSetQuoteImport(T.data),f("quoteImportPick"))};return window.addEventListener("message",hbMsg),()=>window.removeEventListener("message",hbMsg)},[]);let g=(0,u.useCallback)(T=>{p(T),setTimeout(()=>p(null),2600)},[]),hbImportQuote=async T=>{if(!hbQuoteImport)return;try{let{blob:k,filename:H,meta:B}=hbQuoteImport,mt=k.type||"text/html",sl=`${T.id}/${Be()}.${mt==="application/json"?"json":"html"}`,X=await r2UploadSitelogFile("sitelog-quotes",sl,k,mt);let{error:dl}=await q.from("sitelog_quotes").insert({project_id:T.id,name:H,mime:mt,size:k.size,url:X,path:sl,folder_id:null});if(dl)throw dl;i(ql=>ql.map(je=>je.id===T.id?{...je,quoteCount:(je.quoteCount||0)+1}:je)),hbSetQuoteImport(null),r(T),hbSetOpenTab("quotes"),f("detail"),g(`\u5DF2\u5C07\u5831\u50F9\u55AE\u300C${B?.qClient||H}\u300D\u5B58\u5165\u6848\u4EF6`)}catch(k){g("\u5B58\u6A94\u5931\u6557\uFF1A"+(k.message||k))}},b=async(T,k,H,B)=>{let{data:nl,error:hl}=await q.from("sitelog_projects").insert({name:T,address:k,lat:H??null,lng:B??null,status:fn[0]}).select().single();if(hl){g("\u5EFA\u7ACB\u5931\u6557\uFF1A"+hl.message);return}i(ql=>[cm(nl),...ql]),h(!1),g("\u6848\u4EF6\u5DF2\u5EFA\u7ACB")},S=async(T,k)=>{i(hl=>hl.map(ql=>ql.id===T?{...ql,...k,updatedAt:new Date().toISOString()}:ql));let H={name:"name",address:"address",lat:"lat",lng:"lng",status:"status",ownerPassword:"owner_password",expectedEnd:"expected_end",clientInfo:"client_info",aliases:"aliases",avatarUrl:"avatar_url"},B={};for(let hl of Object.keys(H))hl in k&&(B[H[hl]]=k[hl]);if(Object.keys(B).length===0)return;B.updated_at=new Date().toISOString();let{error:nl}=await q.from("sitelog_projects").update(B).eq("id",T);nl&&g("\u66F4\u65B0\u5931\u6557\uFF1A"+nl.message)},M=async T=>{let{error:k}=await q.from("sitelog_projects").delete().eq("id",T);if(k){g("\u522A\u9664\u5931\u6557\uFF1A"+k.message);return!1}i(H=>H.filter(B=>B.id!==T)),f("home"),g("\u6848\u4EF6\u5DF2\u522A\u9664");return!0},j=a.find(T=>T.id===c);return u.default.createElement("div",{className:"hb-shell",style:{background:s.paper,height:"100vh",overflow:"hidden",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},u.default.createElement("div",{className:"hb-global-menu-slot"}),u.default.createElement("style",null,`
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap');
         @media (min-width: 860px) {
           html, body { background: #DCE4E1; }
@@ -22414,6 +22414,7 @@ react-dom/cjs/react-dom-client.production.js:
         if (current && current.key === m.key) m.el.setAttribute('aria-current', 'page');
         else m.el.removeAttribute('aria-current');
       });
+      try { window.dispatchEvent(new Event('hb:tool')); } catch (e) {}   // 通知底部分頁列（hb-tabbar）
     }
 
     function attach() {
@@ -22438,6 +22439,8 @@ react-dom/cjs/react-dom-client.production.js:
       }, 200);
     }
 
+    window.__hbOpenToolKey = function () { return current ? current.key : null; };
+    window.__hbCloseTool = function () { if (sheet.hasAttribute('data-open')) shut(); };
     window.__hbOpenTool = function (key) {
       for (var i = 0; i < TOOLS.length; i++) if (TOOLS[i].key === key) { open(TOOLS[i]); return true; }
       return false;
@@ -22457,6 +22460,523 @@ react-dom/cjs/react-dom-client.production.js:
       };
     };
   }
+})();
+</script>
+
+<!--
+  =====================================================================
+  hb-tabbar v1 — 手機版底部「雙層工具列」（2026-10-10）
+  上層：當頁操作（＋新增／搜尋／篩選），內容依所在頁面現有的功能決定，
+        頁面沒有的操作不顯示；三個都沒有就整層收起。
+  下層：主要分頁（首頁／公司／專案／分享／資訊卡），點擊沿用原本的導覽：
+        首頁／公司／專案／分享 代按隱藏中的 .hb-dock 按鈕，資訊卡開 hb-tools 的作品資訊卡。
+  只在：公司登入 ＋ 手機寬度（< 860px）顯示；業主端、桌機版不受影響。
+  手機原本頁首的漢堡選單鍵（hb-rail 的 .hb-railBtn）在這組工具列出現時收起。
+  排錯：console 輸入 __hbTabbarStatus()
+  =====================================================================
+-->
+<script>
+(function () {
+  if (window.__HB_TABBAR__) return;
+  window.__HB_TABBAR__ = true;
+
+  var GREEN = '#0E3B2E', CREAM = '#F3EDE2', RED = '#A33A2A';
+
+  /* ---- 分頁：dock 是隱藏中的原生導覽（label 要和 HbBottomNav 的文字一致） ---- */
+  var TABS = [
+    { key: 'home',    label: '首頁',   dock: '首頁',
+      svg: '<path d="M4 10.6 12 4l8 6.6"/><path d="M6 9.2V20h4.2v-5.6h3.6V20H18V9.2"/>' },
+    { key: 'company', label: '公司',   dock: '公司資料庫',
+      svg: '<path d="M5 20.5V4.5h9v16"/><path d="M14 9.5h5v11"/><path d="M3.5 20.5h17"/><path d="M8 8h3M8 11.5h3M8 15h3"/>' },
+    { key: 'project', label: '專案',   dock: '專案資料庫',
+      svg: '<path d="M3.5 7A1.5 1.5 0 0 1 5 5.5h4.2l2 2.2H19A1.5 1.5 0 0 1 20.5 9.2v8.8A1.5 1.5 0 0 1 19 19.5H5A1.5 1.5 0 0 1 3.5 18z"/>' },
+    { key: 'share',   label: '分享',   dock: '分享到LINE', action: true,
+      svg: '<circle cx="17.5" cy="5.8" r="2.4"/><circle cx="6.5" cy="12" r="2.4"/><circle cx="17.5" cy="18.2" r="2.4"/><path d="m8.6 10.8 6.8-3.8M8.6 13.2l6.8 3.8"/>' },
+    { key: 'card',    label: '資訊卡', tool: 'plate',
+      svg: '<rect x="3.5" y="5" width="17" height="14" rx="1.6"/><circle cx="9" cy="11" r="2"/><path d="M5.8 16.2c.6-1.6 1.8-2.4 3.2-2.4s2.6.8 3.2 2.4"/><path d="M14 10h4M14 13.2h3"/>' }
+  ];
+
+  /* 各頁面（App 的 view）屬於哪個分頁 */
+  var VIEW_TAB = {
+    landing: 'home', staff: 'home', marketingPhotos: 'home', digitalCard: 'home', docsHub: 'home',
+    companyHub: 'company', contracts: 'company', changeOrders: 'company', survey: 'company',
+    priceBook: 'company', attendance: 'company', vendorQuotes: 'company', receipts: 'company',
+    vendorReceipts: 'company', quoteImportPick: 'company', estimateHub: 'company', pdfRotate: 'company',
+    home: 'project', detail: 'project', drawings: 'project'
+  };
+
+  var ACT_ICON = {
+    add:    '<path d="M12 5v14M5 12h14"/>',
+    search: '<circle cx="10.8" cy="10.8" r="6.3"/><path d="m15.5 15.5 4.6 4.6"/>',
+    filter: '<path d="M4 7h16M4 12h16M4 17h16"/><circle cx="9" cy="7" r="1.9" fill="' + CREAM + '"/><circle cx="15" cy="12" r="1.9" fill="' + CREAM + '"/><circle cx="8" cy="17" r="1.9" fill="' + CREAM + '"/>'
+  };
+  var ACT_LABEL = { add: '新增', search: '搜尋', filter: '篩選' };
+
+  if (document.body) boot();
+  else document.addEventListener('DOMContentLoaded', boot);
+
+  function boot() {
+
+  /* ---- 樣式 ---- */
+  var css = document.createElement('style');
+  css.id = 'hb-tabbar-css';
+  css.textContent = [
+    /* 高度變數：下層 64px、上層 48px，另加 iPhone Home 條安全區 */
+    'html[data-hbtb]{--hbtb-h:calc(64px + env(safe-area-inset-bottom,0px));}',
+    'html[data-hbtb][data-hbtb-act]{--hbtb-h:calc(112px + env(safe-area-inset-bottom,0px));}',
+    'html[data-hbtb][data-hbtb-kb]{--hbtb-h:0px;}',
+
+    /* 外殼縮短成「螢幕高度 − 工具列」：所有捲動內容都停在工具列上方，最後一筆不會被蓋住 */
+    'html[data-hbtb] .hb-shell{height:calc(100vh - var(--hbtb-h))!important;height:calc(100dvh - var(--hbtb-h))!important;}',
+
+    /* 手機原本的漢堡選單鍵與導覽面板收起，改用底部分頁 */
+    'html[data-hbtb] .hb-railBtn,html[data-hbtb] .hb-railSheet{display:none!important;}',
+    /* 首頁頁首列只剩選單鍵，選單鍵收起後整列一起收 */
+    'html[data-hbtb][data-hb-view="landing"] .hb-global-menu-slot{display:none!important;}',
+
+    /* 提示訊息往上抬，不壓在工具列上 */
+    'html[data-hbtb] .hb-toast,html[data-hbtb] .wb-toast,html[data-hbtb] #hb-ntoast,html[data-hbtb] #hbFlash{',
+    '  bottom:calc(var(--hbtb-h) + 14px)!important;}',
+    /* 作品資訊卡全螢幕面板：底部讓出分頁列 */
+    'html[data-hbtb] .hb-tool-sheet{bottom:var(--hbtb-h)!important;}',
+
+    /* ===== 工具列本體 ===== */
+    '.hbtb{position:fixed;left:0;right:0;bottom:0;z-index:40;display:none;',
+    '  font-family:"Noto Serif TC","Songti TC","Source Han Serif TC",PMingLiU,serif;',
+    '  -webkit-user-select:none;user-select:none;}',
+    'html[data-hbtb]:not([data-hbtb-kb]) .hbtb{display:block;}',
+    '.hbtb button{font:inherit;margin:0;border:0;background:none;cursor:pointer;',
+    '  -webkit-tap-highlight-color:transparent;touch-action:manipulation;}',
+    '.hbtb svg{fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto;}',
+
+    /* 上層：當頁操作 */
+    '.hbtb-act{display:none;height:48px;background:' + CREAM + ';border-top:1px solid rgba(14,59,46,.28);}',
+    'html[data-hbtb-act] .hbtb-act{display:flex;}',
+    '.hbtb-act button{position:relative;flex:1 1 0;min-width:0;height:100%;display:flex;align-items:center;',
+    '  justify-content:center;gap:8px;padding:0 6px;color:' + GREEN + ';font-size:14.5px;font-weight:600;',
+    '  letter-spacing:.16em;white-space:nowrap;transition:background-color .15s ease;}',
+    '.hbtb-act button[hidden]{display:none;}',
+    '.hbtb-act button svg{width:22px;height:22px;}',
+    /* 格與格之間的短直線 */
+    '.hbtb-act button:not([hidden]) ~ button:not([hidden])::before{content:"";position:absolute;left:0;top:13px;bottom:13px;',
+    '  width:1px;background:rgba(14,59,46,.32);}',
+    '.hbtb-act button:active{background:rgba(14,59,46,.07);}',
+    '.hbtb-act button:focus-visible{outline:2px solid ' + GREEN + ';outline-offset:-4px;}',
+
+    /* 下層：主要分頁 */
+    '.hbtb-nav{display:flex;gap:4px;background:' + GREEN + ';',
+    '  padding:6px max(6px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(6px,env(safe-area-inset-left,0px));}',
+    '.hbtb-nav button{flex:1 1 0;min-width:0;height:52px;display:flex;flex-direction:column;align-items:center;',
+    '  justify-content:center;gap:4px;padding:0;border-radius:10px;color:' + CREAM + ';',
+    '  transition:background-color .15s ease,color .15s ease;}',
+    '.hbtb-nav button svg{width:23px;height:23px;}',
+    '.hbtb-nav button span{font-size:13px;line-height:1;letter-spacing:.06em;font-weight:600;white-space:nowrap;}',
+    '.hbtb-nav button[aria-current="page"]{background:' + CREAM + ';color:' + RED + ';}',
+    '.hbtb-nav button:not([aria-current]):active{background:rgba(243,237,226,.12);}',
+    '.hbtb-nav button:focus-visible{outline:2px solid ' + CREAM + ';outline-offset:-3px;}',
+    '@media (max-width:340px){.hbtb-nav button span{font-size:12px;letter-spacing:.02em;}',
+    '  .hbtb-act button{letter-spacing:.08em;gap:6px;}}',
+
+    /* ===== 選擇面板（新增有多個項目、篩選） ===== */
+    '.hbtb-sheet{position:fixed;inset:0;z-index:1000;background:rgba(14,26,21,.42);display:flex;',
+    '  align-items:flex-end;justify-content:center;font-family:"Noto Serif TC","Songti TC",PMingLiU,serif;}',
+    '.hbtb-sheet[hidden]{display:none!important;}',
+    '.hbtb-panel{width:100%;max-width:560px;max-height:78vh;overflow-y:auto;-webkit-overflow-scrolling:touch;',
+    '  overscroll-behavior:contain;background:' + CREAM + ';color:' + GREEN + ';border-radius:14px 14px 0 0;',
+    '  padding:8px 16px calc(14px + env(safe-area-inset-bottom,0px));box-sizing:border-box;}',
+    '.hbtb-grab{display:block;width:40px;height:4px;border-radius:2px;background:rgba(14,59,46,.22);margin:2px auto 10px;}',
+    '.hbtb-title{font-size:16px;font-weight:600;letter-spacing:.14em;padding:2px 4px 8px;}',
+    '.hbtb-sec{font-size:12px;letter-spacing:.12em;color:rgba(14,59,46,.65);padding:12px 4px 4px;}',
+    '.hbtb-opt{display:flex;align-items:center;gap:10px;width:100%;min-height:50px;padding:12px 10px;',
+    '  box-sizing:border-box;background:none;border:0;border-bottom:1px solid rgba(14,59,46,.14);',
+    '  font:inherit;font-size:15.5px;letter-spacing:.04em;color:' + GREEN + ';text-align:left;cursor:pointer;',
+    '  -webkit-tap-highlight-color:transparent;touch-action:manipulation;}',
+    '.hbtb-opt:active{background:rgba(14,59,46,.06);}',
+    '.hbtb-opt svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;}',
+    '.hbtb-opt[aria-checked="true"]{color:' + RED + ';font-weight:600;}',
+    '.hbtb-opt .hbtb-tick{margin-left:auto;line-height:0;}',
+    '.hbtb-cancel{display:block;width:100%;min-height:48px;margin-top:12px;border:1px solid ' + GREEN + ';',
+    '  border-radius:8px;background:none;color:' + GREEN + ';font:inherit;font-size:15px;letter-spacing:.16em;cursor:pointer;}',
+    '@media (prefers-reduced-motion:reduce){.hbtb *{transition:none!important;}}'
+  ].join('\n');
+  (document.head || document.documentElement).appendChild(css);
+
+  /* ---- DOM ---- */
+  function icon(svg, size) {
+    return '<svg viewBox="0 0 24 24" width="' + size + '" height="' + size + '" aria-hidden="true">' + svg + '</svg>';
+  }
+
+  var bar = document.createElement('div');
+  bar.className = 'hbtb';
+
+  var actRow = document.createElement('div');
+  actRow.className = 'hbtb-act';
+  actRow.setAttribute('role', 'toolbar');
+  actRow.setAttribute('aria-label', '本頁操作');
+  var actBtns = {};
+  ['add', 'search', 'filter'].forEach(function (k) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.hidden = true;
+    b.setAttribute('data-act', k);
+    b.innerHTML = icon(ACT_ICON[k], 22) + '<span>' + ACT_LABEL[k] + '</span>';
+    b.addEventListener('click', function () { runAction(k); });
+    actRow.appendChild(b);
+    actBtns[k] = b;
+  });
+
+  var nav = document.createElement('nav');
+  nav.className = 'hbtb-nav';
+  nav.setAttribute('aria-label', '主要分頁');
+  var navBtns = TABS.map(function (t) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.setAttribute('data-tab', t.key);
+    b.innerHTML = icon(t.svg, 23) + '<span>' + t.label + '</span>';
+    b.addEventListener('click', function () { goTab(t); });
+    nav.appendChild(b);
+    return { tab: t, el: b };
+  });
+
+  bar.appendChild(actRow);
+  bar.appendChild(nav);
+  document.body.appendChild(bar);
+
+  /* 選擇面板 */
+  var sheet = document.createElement('div');
+  sheet.className = 'hbtb-sheet';
+  sheet.hidden = true;
+  sheet.innerHTML = '<div class="hbtb-panel" role="dialog" aria-modal="true"><span class="hbtb-grab"></span>' +
+    '<div class="hbtb-title"></div><div class="hbtb-body"></div>' +
+    '<button type="button" class="hbtb-cancel">取消</button></div>';
+  document.body.appendChild(sheet);
+  var sheetTitle = sheet.querySelector('.hbtb-title');
+  var sheetBody = sheet.querySelector('.hbtb-body');
+  var sheetPanel = sheet.querySelector('.hbtb-panel');
+  var sheetReturn = null;
+  function openSheet(title) {
+    sheetTitle.textContent = title;
+    sheetPanel.setAttribute('aria-label', title);
+    sheet.hidden = false;
+    sheetReturn = document.activeElement;
+    var first = sheetBody.querySelector('button');
+    if (first) try { first.focus({ preventScroll: true }); } catch (e) {}
+  }
+  function closeSheet() {
+    if (sheet.hidden) return;
+    sheet.hidden = true;
+    sheetBody.innerHTML = '';
+    if (sheetReturn && sheetReturn.focus && document.contains(sheetReturn)) try { sheetReturn.focus({ preventScroll: true }); } catch (e) {}
+    sheetReturn = null;
+  }
+  sheet.addEventListener('click', function (e) { if (e.target === sheet) closeSheet(); });
+  sheet.querySelector('.hbtb-cancel').addEventListener('click', closeSheet);
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeSheet(); });
+
+  function optButton(text, checked, onPick, svg) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'hbtb-opt';
+    if (checked != null) {
+      b.setAttribute('role', 'menuitemradio');
+      b.setAttribute('aria-checked', checked ? 'true' : 'false');
+    }
+    b.innerHTML = (svg ? icon(svg, 20) : '') + '<span></span>' +
+      (checked ? '<span class="hbtb-tick">' + icon('<path d="m5 12.5 4.5 4.5L19 7"/>', 18) + '</span>' : '');
+    b.querySelector('span:not(.hbtb-tick)').textContent = text;
+    b.addEventListener('click', function () { closeSheet(); onPick(); });
+    return b;
+  }
+
+  /* ===== 找出目前頁面現有的「新增／搜尋／篩選」 ===== */
+  function isVisible(el) {
+    if (!el || !el.getClientRects().length) return false;
+    var cs = getComputedStyle(el);
+    return cs.visibility !== 'hidden' && cs.display !== 'none';
+  }
+  function pageRoot() {
+    return document.querySelector('.hb-shell') || document.getElementById('root') || document.body;
+  }
+  function excluded(el) {
+    return !!(el.closest && el.closest('.hbtb, .hbtb-sheet, .hb-rail, .hb-railSheet, .hb-dock, [role="dialog"], [aria-modal="true"]'));
+  }
+  function cleanLabel(b) {
+    var t = (b.getAttribute('aria-label') || '').trim();
+    if (!t) {
+      var lines = (b.innerText || b.textContent || '').split(/\n+/).map(function (s) { return s.replace(/\s+/g, ' ').trim(); }).filter(Boolean);
+      var hit = lines.filter(function (s) { return ADD_RE.test(s); });
+      t = (hit.length ? hit[hit.length - 1] : lines.join(' ')) || '';
+    }
+    return t.replace(/^[+＋]\s*/, '').slice(0, 18);
+  }
+  var ADD_RE = /^\s*[+＋]?\s*(新增|上傳|建立)/;
+
+  function findAdds(root) {
+    var out = [], seen = {};
+    var list = root.querySelectorAll('button, a[href], [role="button"]');
+    for (var i = 0; i < list.length; i++) {
+      var b = list[i];
+      if (b.disabled || excluded(b) || !isVisible(b)) continue;
+      if (b.form || b.closest('form')) continue;                         // 表單裡的送出鍵（例如快速記下的＋）不算
+      var shown = (b.innerText || '').trim();                            // 只算畫面上有寫字的按鈕，純圖示的小＋不算
+      if (!shown) continue;
+      var lines = shown.split(/\n+/);
+      if (!ADD_RE.test(lines[0]) && !ADD_RE.test(lines[lines.length - 1])) continue;
+      var label = cleanLabel(b);
+      if (!label || seen[label]) continue;
+      seen[label] = 1;
+      out.push({ label: label, el: b });
+      if (out.length >= 6) break;
+    }
+    return out;
+  }
+  function findSearch(root) {
+    var list = root.querySelectorAll('input');
+    for (var i = 0; i < list.length; i++) {
+      var inp = list[i];
+      if (inp.disabled || excluded(inp) || !isVisible(inp)) continue;
+      var hint = (inp.placeholder || '') + ' ' + (inp.getAttribute('aria-label') || '');
+      if (inp.type === 'search' || /搜尋|搜索|查詢|search/i.test(hint)) return inp;
+    }
+    return null;
+  }
+  function findFilters(root) {
+    var out = [];
+    var sels = root.querySelectorAll('select');
+    for (var i = 0; i < sels.length; i++) {
+      var s = sels[i];
+      if (s.disabled || excluded(s) || !isVisible(s) || !s.options.length) continue;
+      var lab = s.closest('label');
+      var name = ((s.getAttribute('aria-label') || '') + ' ' + (lab ? lab.textContent : '')).replace(/\s+/g, ' ');
+      var first = (s.options[0].text || '').trim();
+      // 只收「篩選用」的下拉：有篩選／工地／專案字樣，或第一個選項是「全部…」
+      if (!/篩選|工地|專案|案件|分類|類別|狀態/.test(name.slice(0, 12)) && !/^(全部|所有)/.test(first)) continue;
+      var title = (s.getAttribute('aria-label') || (lab && lab.querySelector('span') ? lab.querySelector('span').textContent : '') || '').trim() ||
+        (/^(全部|所有)/.test(first) ? first.replace(/^(全部|所有)/, '') : '') || '篩選';
+      out.push({ type: 'select', title: title.slice(0, 12), el: s });
+    }
+    var tls = root.querySelectorAll('[role="tablist"][aria-label]');
+    for (var j = 0; j < tls.length; j++) {
+      var tl = tls[j];
+      if (excluded(tl) || !isVisible(tl)) continue;
+      if (!/狀態|篩選|分類|類別/.test(tl.getAttribute('aria-label') || '')) continue;
+      out.push({ type: 'tabs', title: tl.getAttribute('aria-label'), el: tl });
+    }
+    return out;
+  }
+
+  var cache = { adds: [], search: null, filters: [] };
+  function scanActions() {
+    if (toolOpen()) {                       // 開著作品資訊卡時，底下頁面的操作不顯示
+      cache = { adds: [], search: null, filters: [] };
+      actBtns.add.hidden = actBtns.search.hidden = actBtns.filter.hidden = true;
+      setFlag('data-hbtb-act', false);
+      return;
+    }
+    var root = pageRoot();
+    cache.adds = findAdds(root);
+    cache.search = findSearch(root);
+    cache.filters = findFilters(root);
+    actBtns.add.hidden = !cache.adds.length;
+    actBtns.search.hidden = !cache.search;
+    actBtns.filter.hidden = !cache.filters.length;
+    var any = cache.adds.length || cache.search || cache.filters.length;
+    setFlag('data-hbtb-act', !!any);
+  }
+
+  /* ===== 操作 ===== */
+  function bringIntoView(el) {
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    try { el.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' }); } catch (e) { el.scrollIntoView(); }
+  }
+  function setNativeValue(el, value) {
+    var proto = el.tagName === 'SELECT' ? HTMLSelectElement.prototype : HTMLInputElement.prototype;
+    var desc = Object.getOwnPropertyDescriptor(proto, 'value');
+    if (desc && desc.set) desc.set.call(el, value); else el.value = value;
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+
+  function runAction(k) {
+    scanActions();
+    if (k === 'add') {
+      if (!cache.adds.length) return;
+      if (cache.adds.length === 1) { cache.adds[0].el.click(); return; }
+      sheetBody.innerHTML = '';
+      cache.adds.forEach(function (a) {
+        sheetBody.appendChild(optButton(a.label, null, function () { if (document.contains(a.el)) a.el.click(); }, ACT_ICON.add));
+      });
+      openSheet('新增');
+      return;
+    }
+    if (k === 'search') {
+      var inp = cache.search;
+      if (!inp) return;
+      bringIntoView(inp);
+      try { inp.focus({ preventScroll: true }); } catch (e) { inp.focus(); }
+      return;
+    }
+    if (k === 'filter') {
+      if (!cache.filters.length) return;
+      sheetBody.innerHTML = '';
+      cache.filters.forEach(function (f) {
+        if (cache.filters.length > 1 || f.title !== '篩選') {
+          var h = document.createElement('div');
+          h.className = 'hbtb-sec';
+          h.textContent = f.title;
+          sheetBody.appendChild(h);
+        }
+        if (f.type === 'select') {
+          var s = f.el;
+          for (var i = 0; i < s.options.length; i++) {
+            (function (o) {
+              if (o.disabled) return;
+              sheetBody.appendChild(optButton(o.text, s.value === o.value, function () {
+                if (document.contains(s) && s.value !== o.value) setNativeValue(s, o.value);
+              }));
+            })(s.options[i]);
+          }
+        } else {
+          var tabs = f.el.querySelectorAll('[role="tab"], button');
+          for (var j = 0; j < tabs.length; j++) {
+            (function (t) {
+              var on = t.getAttribute('aria-selected') === 'true' || /(^|\s)on(\s|$)/.test(t.className || '');
+              var txt = (t.innerText || t.textContent || '').replace(/\s+/g, ' ').trim();
+              if (!txt) return;
+              sheetBody.appendChild(optButton(txt, on, function () { if (document.contains(t)) t.click(); }));
+            })(tabs[j]);
+          }
+        }
+      });
+      openSheet('篩選');
+    }
+  }
+
+  /* ===== 分頁 ===== */
+  function dockButton(label) {
+    var dock = document.querySelector('.hb-dock');
+    if (!dock) return null;
+    var btns = dock.querySelectorAll('button');
+    for (var i = 0; i < btns.length; i++) if ((btns[i].textContent || '').indexOf(label) !== -1) return btns[i];
+    return null;
+  }
+  function dockActive(label) {
+    var b = dockButton(label), c = b && b.querySelector('div');
+    var bg = c && c.style ? c.style.background : '';
+    return !!bg && bg !== 'transparent';
+  }
+  function toolOpen() {
+    return typeof window.__hbOpenToolKey === 'function' ? window.__hbOpenToolKey() : null;
+  }
+  function goTab(t) {
+    closeSheet();
+    if (t.tool) {
+      if (toolOpen() !== t.tool && window.__hbOpenTool) window.__hbOpenTool(t.tool);
+      sync();
+      return;
+    }
+    if (toolOpen() && window.__hbCloseTool) window.__hbCloseTool();
+    var b = dockButton(t.dock);
+    if (b) b.click();
+    else if (window.HB_TABBAR_DEBUG) console.warn('[hb-tabbar] 找不到 dock 按鈕：' + t.dock);
+    if (!t.action) {
+      // 已在同一個分頁時，再點一次＝回到頂端
+      var sc = document.querySelector('.hb-pagein') || document.querySelector('.hb-scroll');
+      if (sc && currentTab() === t.key && sc.scrollTop > 0 && sc.scrollTo) sc.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    setTimeout(sync, 60);
+  }
+  function currentTab() {
+    if (toolOpen() === 'plate') return 'card';
+    var v = window.__hbView;
+    if (v && VIEW_TAB[v]) return VIEW_TAB[v];
+    for (var i = 0; i < TABS.length; i++) if (TABS[i].dock && !TABS[i].action && dockActive(TABS[i].dock)) return TABS[i].key;
+    return null;
+  }
+  function syncActive() {
+    var cur = currentTab();
+    navBtns.forEach(function (n) {
+      if (n.tab.key === cur) n.el.setAttribute('aria-current', 'page');
+      else n.el.removeAttribute('aria-current');
+    });
+  }
+
+  /* ===== 顯示條件 ===== */
+  var mq = window.matchMedia('(max-width: 859px)');
+  function isStaff() { try { return localStorage.getItem('sitelog_admin_unlocked') === 'true'; } catch (e) { return false; } }
+  function onLogin() { return !!document.querySelector('.hb-sso-form, .hb-sso-title, .hb-login-logo'); }
+  function appReady() { var r = document.getElementById('root'); return !!(r && r.firstElementChild && document.querySelector('.hb-shell')); }
+  function setFlag(name, on) {
+    var de = document.documentElement;
+    if (on) { if (!de.hasAttribute(name)) de.setAttribute(name, ''); }
+    else if (de.hasAttribute(name)) de.removeAttribute(name);
+  }
+
+  /* 鍵盤：輸入框取得焦點時把工具列收起，避免浮在鍵盤上方擋住輸入內容 */
+  var typing = false;
+  function isField(el) {
+    if (!el || el === document.body) return false;
+    if (el.isContentEditable) return true;
+    if (el.tagName === 'TEXTAREA') return true;
+    if (el.tagName === 'INPUT') return !/^(button|submit|reset|checkbox|radio|range|color|file|image|hidden)$/i.test(el.type || '');
+    return false;
+  }
+  document.addEventListener('focusin', function (e) { if (isField(e.target) && !excluded(e.target)) { typing = true; schedule(); } });
+  document.addEventListener('focusout', function () { setTimeout(function () { typing = isField(document.activeElement); schedule(); }, 80); });
+
+  function update() {
+    var de = document.documentElement;
+    if (window.__hbView) de.setAttribute('data-hb-view', window.__hbView);
+    var show = mq.matches && appReady() && !onLogin() && isStaff();
+    setFlag('data-hbtb', show);
+    if (!show) { setFlag('data-hbtb-act', false); setFlag('data-hbtb-kb', false); closeSheet(); return; }
+    setFlag('data-hbtb-kb', typing);
+    syncActive();
+    scanActions();
+  }
+  var sync = update;
+
+  var queued = false, lastScan = 0;
+  function schedule() {
+    if (queued) return;
+    queued = true;
+    var raf = window.requestAnimationFrame || function (f) { return setTimeout(f, 16); };
+    raf(function () {
+      var wait = Math.max(0, 180 - (Date.now() - lastScan));
+      setTimeout(function () { queued = false; lastScan = Date.now(); update(); }, wait);
+    });
+  }
+  window.addEventListener('hb:view', schedule);
+  window.addEventListener('hb:tool', schedule);
+  window.addEventListener('resize', schedule);
+  if (mq.addEventListener) mq.addEventListener('change', schedule); else if (mq.addListener) mq.addListener(schedule);
+  if (window.MutationObserver) {
+    new MutationObserver(function (list) {
+      for (var i = 0; i < list.length; i++) {
+        var t = list[i].target;
+        if (t && t.closest && t.closest('.hbtb, .hbtb-sheet')) continue;
+        schedule();
+        return;
+      }
+    }).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'style', 'hidden', 'aria-selected'] });
+  }
+  setInterval(update, 1200);
+  update();
+
+  window.__hbTabbarStatus = function () {
+    return {
+      顯示中: document.documentElement.hasAttribute('data-hbtb'),
+      上層: document.documentElement.hasAttribute('data-hbtb-act'),
+      鍵盤收起: typing,
+      目前頁面: window.__hbView || null,
+      目前分頁: currentTab(),
+      新增: cache.adds.map(function (a) { return a.label; }),
+      搜尋: cache.search ? (cache.search.placeholder || '有') : null,
+      篩選: cache.filters.map(function (f) { return f.title; })
+    };
+  };
+
+  } // boot
 })();
 </script>
 
