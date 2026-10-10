@@ -22539,7 +22539,7 @@ react-dom/cjs/react-dom-client.production.js:
   };
   /* 麵包屑第二段（分頁本身的首頁不重複顯示） */
   var VIEW_NAME = {
-    staff: '帳號管理', marketingPhotos: '作品照片', digitalCard: '數位名片', docsHub: '文件',
+    staff: '帳號管理', marketingPhotos: '作品照片', digitalCard: '數位名片', docsHub: '估價與單據',
     contracts: '公司合約', changeOrders: '追加減帳單', survey: '設計需求問卷', priceBook: '常用工項單價庫',
     attendance: '師傅出勤紀錄', vendorQuotes: '廠商報價單', receipts: '工程收據', vendorReceipts: '廠商領據',
     quoteImportPick: '匯入報價單', estimateHub: '工程報價單', pdfRotate: '圖面轉正',
@@ -22978,6 +22978,12 @@ react-dom/cjs/react-dom-client.production.js:
     }
     return out;
   }
+  /* 元素是否完整出現在頂部導覽下方的可視範圍內 */
+  function inView(el) {
+    var r = el.getBoundingClientRect();
+    var topEdge = mode === 'top' && !document.documentElement.hasAttribute('data-hbtt-band') ? 124 : 0;
+    return r.height > 0 && r.top >= topEdge && r.bottom <= window.innerHeight && r.left >= 0 && r.right <= window.innerWidth;
+  }
   function filterSummary(f) {
     if (f.type === 'select') { var o = f.el.options[f.el.selectedIndex]; return o ? o.text : ''; }
     if (f.type === 'pressed') { var p = f.el.querySelector('button[aria-pressed="true"]'), pn = p && p.querySelector('.wbk-pt-name'); return ((pn || p || {}).innerText || '').replace(/\s+/g, ' ').trim(); }
@@ -23014,11 +23020,16 @@ react-dom/cjs/react-dom-client.production.js:
     cache.search = findSearch(root);
     cache.filters = findFilters(root);
     var A = cache.adds, S = cache.search, F = cache.filters;
+    var hideAdd = false, hideSearch = false;
+    if (mode === 'top') {
+      hideAdd = A.length === 1 && inView(A[0].el);
+      hideSearch = !!S && inView(S);
+    }
     // 桌機按鈕旁邊用小字標出對象：新增什麼、搜尋什麼、目前篩選
-    setAct('add', A.length,
+    setAct('add', A.length && !hideAdd,
       A.length === 1 ? A[0].label.replace(/^(新增|上傳|建立)/, '') : '',
       A.length ? '新增：' + A.map(function (a) { return a.label; }).join('、') : '');
-    setAct('search', !!S,
+    setAct('search', !!S && !hideSearch,
       S ? (S.placeholder || '').replace(/^搜尋/, '').replace(/[…\.]+$/, '') : '',
       S ? (S.placeholder || '搜尋') : '');
     setAct('filter', F.length,
@@ -23225,6 +23236,7 @@ react-dom/cjs/react-dom-client.production.js:
   window.addEventListener('hb:view', schedule);
   window.addEventListener('hb:tool', schedule);
   window.addEventListener('resize', schedule);
+  document.addEventListener('scroll', function () { if (mode === 'top') schedule(); }, true);
   if (mq.addEventListener) mq.addEventListener('change', schedule); else if (mq.addListener) mq.addListener(schedule);
   if (window.MutationObserver) {
     new MutationObserver(function (list) {
