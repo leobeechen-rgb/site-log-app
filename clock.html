@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#2E4A3C">
+<title>赫柏空間設計｜師傅打卡</title>
+<link rel="icon" href="hb-logo-mark.png">
+<link rel="apple-touch-icon" href="apple-touch-icon-180.png">
+<style>
+  :root{--g:#2E4A3C;--g2:#3E5F4E;--paper:#F4EFE6;--card:#FFFDF8;--ink:#17150F;--mute:#7A756A;--line:#DED3C4;--warn:#B3413B;--amber:#8A5A1E}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;background:var(--paper);color:var(--ink);font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;-webkit-font-smoothing:antialiased}
+  main{max-width:460px;margin:0 auto;padding:calc(18px + env(safe-area-inset-top)) 18px calc(28px + env(safe-area-inset-bottom));min-height:100vh;display:flex;flex-direction:column;gap:14px}
+  .brand{display:flex;align-items:baseline;justify-content:space-between;letter-spacing:.32em;font-size:13px;color:var(--g)}
+  .brand small{letter-spacing:.12em;color:var(--mute);font-size:12px}
+  .hello{margin:6px 0 0;font-size:24px;font-weight:500;letter-spacing:.04em}
+  .date{color:var(--mute);font-size:14px;margin-top:2px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
+  .lab{font-size:13px;color:var(--mute);letter-spacing:.06em;margin:0 0 8px}
+  select{width:100%;height:52px;border:1px solid var(--line);border-radius:10px;background:#fff;font:inherit;font-size:17px;padding:0 12px;color:var(--ink);-webkit-appearance:none;appearance:none;background-image:linear-gradient(45deg,transparent 50%,#7A756A 50%),linear-gradient(135deg,#7A756A 50%,transparent 50%);background-position:calc(100% - 20px) 22px,calc(100% - 14px) 22px;background-size:6px 6px;background-repeat:no-repeat}
+  .gps{display:flex;align-items:center;gap:8px;font-size:14px;margin-top:10px;color:var(--mute);line-height:1.5}
+  .gps i{width:10px;height:10px;border-radius:50%;background:#C9C1B6;flex:none}
+  .gps.ok i{background:#4C8B6B}.gps.far i{background:#D9A03A}.gps.bad i{background:var(--warn)}
+  .gps.far{color:var(--amber)}.gps.bad{color:var(--warn)}
+  .big{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;width:100%;min-height:150px;border:0;border-radius:18px;background:var(--g);color:#F4EFE6;font:inherit;font-size:26px;letter-spacing:.12em;cursor:pointer;box-shadow:0 10px 24px rgba(46,74,60,.22)}
+  .big small{font-size:14px;letter-spacing:.06em;opacity:.85}
+  .big.out{background:#8A5A1E;box-shadow:0 10px 24px rgba(138,90,30,.22)}
+  .big:disabled{opacity:.55}
+  .sub{display:block;width:100%;margin-top:10px;height:46px;border:1px solid var(--line);border-radius:12px;background:#fff;font:inherit;font-size:15px;color:var(--g)}
+  .msg{border-radius:12px;padding:12px 14px;font-size:15px;line-height:1.6}
+  .msg.ok{background:#E2EBDD;color:var(--g)}.msg.err{background:#F6E1DF;color:var(--warn)}
+  ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+  li{display:flex;justify-content:space-between;gap:10px;font-size:15px;padding:10px 12px;border:1px solid #EFE7DB;border-radius:10px;background:#fff}
+  li b{font-weight:500}li span{color:var(--mute);white-space:nowrap}
+  .empty{color:var(--mute);font-size:14px;margin:0}
+  .foot{margin-top:auto;text-align:center;color:var(--mute);font-size:12px;line-height:1.7}
+  .center{text-align:center;color:var(--mute);margin-top:30vh;font-size:15px;line-height:1.8}
+</style>
+</head>
+<body>
+<main id="app"><p class="center">載入中…</p></main>
+<script>
+(function(){
+  var URL_ = "https://rqndozhhvuimqjqtmeli.supabase.co";
+  var KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxbmRvemhodnVpbXFqcXRtZWxpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5Njc1ODIsImV4cCI6MjA5OTU0MzU4Mn0.meaGT1veRt9acHCl4Dcrpk9jxjNzrkFKWfs_96C6qLw";
+  var T = new URLSearchParams(location.search).get("t") || "";
+  var app = document.getElementById("app");
+  var st = { info: null, pos: null, gpsErr: "", pick: "", busy: false, msg: null, switching: false };
+  var NEAR = 300;
+
+  function rpc(fn, args){
+    return fetch(URL_ + "/rest/v1/rpc/" + fn, { method: "POST", headers: { apikey: KEY, Authorization: "Bearer " + KEY, "Content-Type": "application/json" }, body: JSON.stringify(args) })
+      .then(function(r){ if(!r.ok) throw new Error("連線失敗（" + r.status + "）"); return r.json(); });
+  }
+  function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  function hm(iso){ if(!iso) return ""; var d = new Date(iso); return d.toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "Asia/Taipei" }); }
+  function dist(a, b, c, d){ var R = 6371000, r = Math.PI / 180, x = Math.sin((c - a) * r / 2), y = Math.sin((d - b) * r / 2); return 2 * R * Math.asin(Math.sqrt(x * x + Math.cos(a * r) * Math.cos(c * r) * y * y)); }
+  function mtxt(m){ return m < 1000 ? Math.round(m) + " 公尺" : (m / 1000).toFixed(1) + " 公里"; }
+  function open(){ var rs = (st.info && st.info.records) || []; for (var i = rs.length - 1; i >= 0; i--) if (!rs[i].out) return rs[i]; return null; }
+  function nearest(){
+    if (!st.pos || !st.info) return null;
+    var best = null;
+    st.info.projects.forEach(function(p){ if (p.lat == null || p.lng == null) return; var m = dist(st.pos.lat, st.pos.lng, p.lat, p.lng); if (!best || m < best.m) best = { p: p, m: m }; });
+    return best;
+  }
+  function locate(){
+    if (!navigator.geolocation){ st.gpsErr = "這支手機不支援定位"; render(); return; }
+    navigator.geolocation.getCurrentPosition(function(p){
+      st.pos = { lat: p.coords.latitude, lng: p.coords.longitude, acc: p.coords.accuracy }; st.gpsErr = "";
+      var n = nearest(); if (!st.pick && n && n.m <= NEAR) st.pick = n.p.id;
+      render();
+    }, function(e){ st.gpsErr = e.code === 1 ? "沒有開啟定位權限。請到手機「設定」允許這個網頁使用位置，或直接選工地打卡。" : "暫時抓不到定位，可以直接選工地打卡。"; render(); },
+    { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 });
+  }
+  function load(){
+    return rpc("hb_clock_info", { p_token: T }).then(function(d){
+      if (!d || !d.ok){ app.innerHTML = '<p class="center">這個打卡連結無效或已停用。<br>請向赫柏空間設計索取新的連結。</p>'; return false; }
+      st.info = d; var o = open(); if (o && !st.pick) st.pick = o.project_id || ""; render(); return true;
+    });
+  }
+  function act(kind){
+    if (st.busy) return;
+    var pos = st.pos || {};
+    if (kind === "in" && !st.pick){ st.msg = { err: true, t: "請先選擇今天的工地" }; render(); return; }
+    st.busy = true; st.msg = null; render();
+    var p = kind === "in"
+      ? rpc("hb_clock_in", { p_token: T, p_project: st.pick, p_lat: pos.lat == null ? null : pos.lat, p_lng: pos.lng == null ? null : pos.lng, p_acc: pos.acc == null ? null : Math.round(pos.acc) })
+      : rpc("hb_clock_out", { p_token: T, p_lat: pos.lat == null ? null : pos.lat, p_lng: pos.lng == null ? null : pos.lng });
+    p.then(function(r){
+      if (!r || !r.ok){ st.msg = { err: true, t: r && r.why === "none" ? "今天還沒有上工紀錄" : "打卡失敗，請再試一次" }; return; }
+      var now = new Date().toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "Asia/Taipei" });
+      st.msg = kind === "in" ? { t: r.already ? "已經在這個工地打過上工了" : "上工打卡完成 " + now + "　" + esc(r.site) } : { t: "下工打卡完成 " + now + "　今天辛苦了！" };
+      st.switching = false;
+      return load();
+    }).catch(function(e){ st.msg = { err: true, t: (e && e.message) || "網路不穩，請再試一次" }; })
+      .then(function(){ st.busy = false; render(); });
+  }
+  function render(){
+    var d = st.info; if (!d) return;
+    var o = open(), n = nearest(), today = new Date(d.today + "T00:00:00");
+    var w = "日一二三四五六"[today.getDay()];
+    var gps;
+    if (st.gpsErr) gps = '<div class="gps bad"><i></i><span>' + esc(st.gpsErr) + '</span></div>';
+    else if (!st.pos) gps = '<div class="gps"><i></i><span>定位中…</span></div>';
+    else {
+      var sel = d.projects.filter(function(p){ return p.id === st.pick; })[0];
+      if (sel && sel.lat != null){ var m = dist(st.pos.lat, st.pos.lng, sel.lat, sel.lng); gps = '<div class="gps ' + (m <= NEAR ? "ok" : "far") + '"><i></i><span>' + (m <= NEAR ? "已在工地附近（" + mtxt(m) + "）" : "離這個工地約 " + mtxt(m) + "，確認一下工地有沒有選對") + '</span></div>'; }
+      else gps = '<div class="gps ok"><i></i><span>已取得定位（誤差約 ' + Math.round(st.pos.acc || 0) + ' 公尺）</span></div>';
+    }
+    var opts = '<option value="">選擇今天的工地…</option>' + d.projects.map(function(p){
+      var extra = st.pos && p.lat != null ? "（" + mtxt(dist(st.pos.lat, st.pos.lng, p.lat, p.lng)) + "）" : "";
+      return '<option value="' + esc(p.id) + '"' + (p.id === st.pick ? " selected" : "") + '>' + esc(p.name) + extra + '</option>'; }).join("");
+    var showPick = !o || st.switching;
+    var html = '<div class="brand"><span>HERFULSINS</span><small>師傅打卡</small></div>' +
+      '<div><p class="hello">' + esc(d.name) + ' 師傅，你好</p><div class="date">' + (today.getMonth() + 1) + " 月 " + today.getDate() + " 日　星期" + w + '</div></div>' +
+      (st.msg ? '<div class="msg ' + (st.msg.err ? "err" : "ok") + '">' + st.msg.t + '</div>' : "");
+    if (showPick){
+      html += '<section class="card"><p class="lab">' + (o ? "換到哪個工地？" : "今天在哪個工地？") + '</p><select id="pick">' + opts + '</select>' + gps + '</section>' +
+        '<button class="big" id="bin"' + (st.busy ? " disabled" : "") + '>' + (st.busy ? "打卡中…" : "上工打卡") + '<small>' + (o ? "會先幫你結束「" + esc(o.site) + "」" : "到工地時按一下") + '</small></button>' +
+        (o ? '<button class="sub" id="bcancel">取消，不換工地</button>' : "");
+    } else {
+      html += '<section class="card"><p class="lab">目前工地</p><div style="font-size:19px;font-weight:500">' + esc(o.site) + '</div><div class="date">' + hm(o.in) + ' 上工</div>' + gps + '</section>' +
+        '<button class="big out" id="bout"' + (st.busy ? " disabled" : "") + '>' + (st.busy ? "打卡中…" : "下工打卡") + '<small>收工離開時按一下</small></button>' +
+        '<button class="sub" id="bswitch">換到別的工地</button>';
+    }
+    var rs = d.records || [];
+    html += '<section class="card"><p class="lab">今天的紀錄</p>' + (rs.length ? '<ul>' + rs.map(function(r){ return '<li><b>' + esc(r.site) + '</b><span>' + hm(r.in) + ' – ' + (r.out ? hm(r.out) : "工作中") + '</span></li>'; }).join("") + '</ul>' : '<p class="empty">今天還沒有打卡</p>') + '</section>' +
+      '<p class="foot">打卡時會記錄時間與手機位置，只用來計算出工天數。<br>按錯了請直接跟設計師說，可以幫你修改。</p>';
+    app.innerHTML = html;
+    var pk = document.getElementById("pick"); if (pk) pk.onchange = function(){ st.pick = pk.value; render(); };
+    var bi = document.getElementById("bin"); if (bi) bi.onclick = function(){ act("in"); };
+    var bo = document.getElementById("bout"); if (bo) bo.onclick = function(){ if (confirm("確定要下工打卡嗎？")) act("out"); };
+    var bs = document.getElementById("bswitch"); if (bs) bs.onclick = function(){ st.switching = true; st.pick = ""; st.msg = null; var n2 = nearest(); if (n2 && n2.m <= NEAR) st.pick = n2.p.id; render(); };
+    var bc = document.getElementById("bcancel"); if (bc) bc.onclick = function(){ st.switching = false; st.msg = null; render(); };
+  }
+  if (!/^[A-Za-z0-9_-]{24,64}$/.test(T)){ app.innerHTML = '<p class="center">打卡連結不完整。<br>請用設計師傳給你的連結打開。</p>'; return; }
+  load().then(function(ok){ if (ok) locate(); }).catch(function(){ app.innerHTML = '<p class="center">網路連線不穩，請稍後重新整理。</p>'; });
+  document.addEventListener("visibilitychange", function(){ if (!document.hidden && st.info){ load(); locate(); } });
+})();
+</script>
+</body>
+</html>

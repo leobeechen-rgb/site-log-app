@@ -11169,6 +11169,24 @@ function HbAttendanceHub({onBack,notify}){
     let{error}=await q.from("sitelog_workers").delete().eq("id",id);
     if(!error)loadWorkers()
   };
+  /* GPS 打卡：每位師傅一條專屬連結（clock.html?t=…），師傅不用登入 */
+  let clockUrl=w=>"https://www.herfulsinsvip.com/clock.html?t="+w.clock_token;
+  let clockLink=async(w,renew)=>{
+    if(renew&&!confirm("重新產生後，「"+w.name+"」舊的打卡連結會失效。確定嗎？"))return;
+    let tok=w.clock_token;
+    if(!tok||renew){let b=new Uint8Array(24);crypto.getRandomValues(b);tok=btoa(String.fromCharCode(...b)).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+      let{error}=await q.from("sitelog_workers").update({clock_token:tok}).eq("id",w.id);if(error){notify("產生連結失敗："+error.message);return}await loadWorkers()}
+    let url="https://www.herfulsinsvip.com/clock.html?t="+tok;
+    try{await navigator.clipboard.writeText(url);notify("已複製「"+w.name+"」的打卡連結，貼到 LINE 傳給師傅")}catch{prompt("複製這個連結傳給師傅",url)}
+  };
+  let shareLine=w=>{let url=clockUrl(w);window.open("https://line.me/R/share?text="+encodeURIComponent(w.name+" 師傅，這是赫柏的打卡連結，到工地按「上工打卡」、收工按「下工打卡」：\n"+url),"_blank")};
+  let setRate=async(w,v)=>{let n=parseFloat(String(v).replace(/[^\d.]/g,""));let{error}=await q.from("sitelog_workers").update({daily_rate:isFinite(n)&&n>0?n:null}).eq("id",w.id);if(!error)loadWorkers()};
+  let[projGeo,setProjGeo]=(0,u.useState)({});
+  (0,u.useEffect)(()=>{q.from("sitelog_projects").select("id,name,lat,lng").then(({data})=>{let m={};(data||[]).forEach(p=>m[p.id]=p);setProjGeo(m)})},[]);
+  let useAsSite=async r=>{let p=projGeo[r.project_id];if(!p)return;if(!confirm("把這次打卡的位置設為「"+p.name+"」的工地座標？之後打卡就能自動判斷有沒有在工地。"))return;
+    let{error}=await q.from("sitelog_projects").update({lat:r.in_lat,lng:r.in_lng}).eq("id",p.id);if(error){notify("設定失敗："+error.message);return}
+    setProjGeo(m=>({...m,[p.id]:{...p,lat:r.in_lat,lng:r.in_lng}}));notify("已設定「"+p.name+"」的工地座標")};
+  let hmT=x=>x?new Date(x).toLocaleTimeString("zh-TW",{hour:"2-digit",minute:"2-digit",hour12:!1,timeZone:"Asia/Taipei"}):"";
   let createOne=async v=>{
     let{error}=await q.from("sitelog_attendance").insert({
       worker_name:v.workerName,site_location:v.siteLocation,work_date:v.dateStr,
@@ -11261,7 +11279,7 @@ function HbAttendanceHub({onBack,notify}){
           u.default.createElement(E,{name:showManage?"chevron-up":"chevron-down",size:18,color:s.inkSoft})
         ),
         showManage&&u.default.createElement("div",{style:{marginTop:14}},
-          u.default.createElement("div",{style:{fontSize:12,color:s.inkSoft,marginBottom:8,lineHeight:1.6}},"在這裡新增師傅姓名後，新增出勤紀錄時就能直接從清單挑選，不用每次自己輸入文字。"),
+          u.default.createElement("div",{style:{fontSize:12,color:s.inkSoft,marginBottom:8,lineHeight:1.6}},"在這裡新增師傅姓名後，新增出勤紀錄時就能直接從清單挑選。按「產生打卡連結」傳給師傅，師傅到工地用手機按「上工打卡／下工打卡」，會自動記錄時間、位置與天數（不到 4.5 小時算半天）。填了日薪，打卡紀錄會自動帶入。"),
           u.default.createElement("div",{style:{display:"flex",gap:8,marginBottom:14}},
             u.default.createElement("input",{value:newWorkerName,onChange:e=>setNewWorkerName(e.target.value),onKeyDown:e=>e.key==="Enter"&&addWorker(),placeholder:"新增師傅姓名，例：阿明師傅",style:{...el,marginBottom:0,flex:1}}),
             u.default.createElement("button",{onClick:addWorker,style:{...Dl,padding:"0 16px",fontSize:14}},"新增")
@@ -11269,8 +11287,14 @@ function HbAttendanceHub({onBack,notify}){
           masterWorkers.length===0?u.default.createElement("div",{style:{fontSize:12.5,color:s.inkSoft,textAlign:"center",padding:"8px 0"}},"尚未新增任何師傅"):
           u.default.createElement("div",{style:{display:"flex",flexDirection:"column",gap:8}},
             masterWorkers.map(w=>u.default.createElement("div",{key:w.id,style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 10px",background:s.paper,borderRadius:2,opacity:w.active?1:.45}},
-              u.default.createElement("div",{style:{fontSize:13.5,fontWeight:500}},w.name),
-              u.default.createElement("div",{style:{display:"flex",gap:6}},
+              u.default.createElement("div",{style:{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap",minWidth:0}},
+                u.default.createElement("div",{style:{fontSize:13.5,fontWeight:500}},w.name),
+                u.default.createElement("label",{style:{display:"flex",alignItems:"center",gap:4,fontSize:11.5,color:s.inkSoft}},"日薪",
+                  u.default.createElement("input",{key:"r"+(w.daily_rate||""),defaultValue:w.daily_rate||"",inputMode:"numeric",placeholder:"—",onBlur:e=>{if(String(e.target.value)!==String(w.daily_rate||""))setRate(w,e.target.value)},style:{width:72,height:28,border:`1px solid ${s.line}`,borderRadius:4,padding:"0 6px",fontSize:12.5,background:"#fff"}}))),
+              u.default.createElement("div",{style:{display:"flex",gap:6,flexWrap:"wrap",justifyContent:"flex-end"}},
+                w.active&&u.default.createElement("button",{onClick:()=>clockLink(w,!1),title:"複製這位師傅的 GPS 打卡連結",style:{...Dl,padding:"5px 10px",fontSize:11.5,minHeight:0}},w.clock_token?"複製打卡連結":"產生打卡連結"),
+                w.active&&w.clock_token&&u.default.createElement("button",{onClick:()=>shareLine(w),style:{...ll,padding:"5px 10px",fontSize:11.5}},"傳到 LINE"),
+                w.active&&w.clock_token&&u.default.createElement("button",{onClick:()=>clockLink(w,!0),title:"舊連結會失效（例如師傅換手機、連結外流）",style:{...ll,padding:"5px 10px",fontSize:11.5}},"重新產生"),
                 u.default.createElement("button",{onClick:()=>toggleWorkerActive(w),style:{...ll,padding:"5px 10px",fontSize:11.5}},w.active?"停用":"啟用"),
                 u.default.createElement("button",{onClick:()=>deleteWorker(w.id),style:{...at,color:s.danger}},u.default.createElement(E,{name:"trash",size:14}))
               )
@@ -11297,7 +11321,13 @@ function HbAttendanceHub({onBack,notify}){
         filtered.map(r=>u.default.createElement("div",{key:r.id,style:{background:"rgba(255,255,255,.55)",border:"1px solid rgba(57,51,47,.12)",borderRadius:2,padding:"12px 14px",display:"flex",justifyContent:"space-between",alignItems:"center",gap:10}},
           u.default.createElement("div",null,
             u.default.createElement("div",{style:{fontSize:14.5,fontWeight:400,color:"#17150F"}},r.worker_name),
-            u.default.createElement("div",{style:{fontSize:12,color:s.inkSoft,marginTop:2}},r.work_date,r.site_location?"　·　"+r.site_location:"",r.period?"　·　"+r.period:"",r.hours?"　·　"+r.hours+"小時":"",r.note?"　·　"+r.note:"")
+            u.default.createElement("div",{style:{fontSize:12,color:s.inkSoft,marginTop:2}},r.work_date,r.site_location?"　·　"+r.site_location:"",r.period?"　·　"+r.period:"",r.hours?"　·　"+r.hours+"小時":"",r.note?"　·　"+r.note:""),
+            r.source==="gps"&&u.default.createElement("div",{style:{fontSize:12,marginTop:5,display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}},
+              u.default.createElement("span",{style:{color:"#2E4A3C"}},"📍 GPS 打卡 ",hmT(r.clock_in),"–",r.clock_out?hmT(r.clock_out):"工作中"),
+              r.in_dist!=null?u.default.createElement("span",{style:{padding:"1px 8px",borderRadius:99,background:r.in_dist<=300?"#E2EBDD":"#F6E8D5",color:r.in_dist<=300?"#2E4A3C":"#8A5A1E"}},r.in_dist<=300?"在工地（"+Math.round(r.in_dist)+" 公尺）":"離工地 "+(r.in_dist<1000?Math.round(r.in_dist)+" 公尺":(r.in_dist/1000).toFixed(1)+" 公里")):
+                r.in_lat!=null?u.default.createElement("span",{style:{padding:"1px 8px",borderRadius:99,background:"#EFE8DE",color:s.inkSoft}},"案件沒有座標，無法比對"):u.default.createElement("span",{style:{padding:"1px 8px",borderRadius:99,background:"#F6E1DF",color:"#B3413B"}},"沒有定位"),
+              r.in_lat!=null&&u.default.createElement("a",{href:"https://www.google.com/maps?q="+r.in_lat+","+r.in_lng,target:"_blank",rel:"noopener noreferrer",style:{color:"#2E4A3C"}},"看地圖"),
+              r.in_lat!=null&&r.project_id&&projGeo[r.project_id]&&projGeo[r.project_id].lat==null&&u.default.createElement("button",{type:"button",onClick:()=>useAsSite(r),style:{...ll,padding:"2px 8px",fontSize:11.5}},"設為工地座標"))
           ),
           u.default.createElement("div",{style:{display:"flex",alignItems:"center",gap:10}},
             u.default.createElement("div",{className:"mono",style:{fontSize:16,color:"#B4573A",fontWeight:400}},r.days,"天"),
