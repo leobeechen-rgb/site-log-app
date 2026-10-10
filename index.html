@@ -22691,6 +22691,16 @@ react-dom/cjs/react-dom-client.production.js:
     '@media (max-width:1060px){.hbtt-main,.hbtt-bar{padding:0 18px;gap:12px;}.hbtt-brand b{font-size:25px;}',
     '  .hbtt-nav{gap:2px;}.hbtt-nav button{padding:0 11px;gap:7px;font-size:14.5px;letter-spacing:.08em;}',
     '  .hbtt-side{gap:10px;padding-left:12px;}.hbtt-act button small{display:none;}}',
+    /* ---- 桌機首頁：五個入口搬進首頁原本的黑色品牌列，綠色導覽整條收起，不出現兩條深色帶 ---- */
+    'html[data-hbtt-band] .hbtt{display:none!important;}',
+    'html[data-hbtt-band] body{padding-top:0!important;}',
+    'html[data-hbtt-band] .hb-shell{height:100vh!important;}',
+    '.hb-topnav .hbtt-nav{flex:1 1 auto;align-self:center;justify-content:center;font-family:' + SERIF + ';margin:0 16px;}',
+    '.hbtt-nav button{font:inherit;margin:0;border:0;background:none;cursor:pointer;-webkit-tap-highlight-color:transparent;}',
+    '.hbtt-nav svg{fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto;}',
+    '.hb-topnav .hbtt-nav button{height:46px;}',
+    /* 黑色列寬度不夠時，先收起問候語，讓入口不被擠壓 */
+    '@media (max-width:1320px){html[data-hbtt-band] .hb-topnav-right > :not(button):not(a){display:none!important;}}',
     /* ---- 桌機工作區整理（只在頂部導覽時生效；手機不變） ---- */
     '.wbk-pts-head{display:none;}',
     'html[data-hbtt] .wbk-pts-head{display:flex;align-items:center;gap:14px;margin:2px 0 12px;}',
@@ -23175,6 +23185,18 @@ react-dom/cjs/react-dom-client.production.js:
   document.addEventListener('focusin', function (e) { if (isField(e.target) && !excluded(e.target)) { typing = true; schedule(); } });
   document.addEventListener('focusout', function () { setTimeout(function () { typing = isField(document.activeElement); schedule(); }, 80); });
 
+  /* 桌機首頁：把五個入口放進首頁的黑色品牌列（.hb-topnav）；其他頁面放回頂部導覽 */
+  var topMain = top.querySelector('.hbtt-main'), topSide = top.querySelector('.hbtt-side');
+  function placeNav() {
+    var band = mode === 'top' && window.__hbView === 'landing' ? document.querySelector('.hb-topnav') : null;
+    setFlag('data-hbtt-band', !!band);
+    if (band) {
+      if (topNav.parentNode !== band) band.insertBefore(topNav, band.querySelector('.hb-topnav-right'));
+    } else if (topNav.parentNode !== topMain || !document.contains(topNav)) {
+      topMain.insertBefore(topNav, topSide);
+    }
+  }
+
   function update() {
     var de = document.documentElement;
     if (window.__hbView) de.setAttribute('data-hb-view', window.__hbView);
@@ -23183,8 +23205,9 @@ react-dom/cjs/react-dom-client.production.js:
     if (next !== mode) { closeSheet(); mode = next; }
     setFlag('data-hbtb', mode === 'bottom');
     setFlag('data-hbtt', mode === 'top');
-    if (!mode) { setFlag('data-hbtb-act', false); setFlag('data-hbtb-kb', false); return; }
+    if (!mode) { setFlag('data-hbtb-act', false); setFlag('data-hbtb-kb', false); placeNav(); return; }
     setFlag('data-hbtb-kb', mode === 'bottom' && typing);
+    placeNav();
     syncActive();
     scanActions();
   }
