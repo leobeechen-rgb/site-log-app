@@ -12959,6 +12959,7 @@ const HB_LIB_CSS=`
       .wbk-casehead h3{margin:0;font-family:'Noto Serif TC',serif;font-weight:500;font-size:26px;letter-spacing:.06em;color:#17150F}
       .wbk-casepill{background:#2E4A3C;color:#f4efe6;font-size:12px;letter-spacing:.08em;padding:4px 12px;border-radius:999px}
       .wbk-casehint{font-size:12.5px;color:#8A8178;padding-left:12px;border-left:1px solid #D9CFC3}
+      .wbk-caseedit{border:1px solid rgba(28,27,24,.22);background:#fff;border-radius:999px;font:inherit;font-size:12.5px;color:#3C362F;cursor:pointer;display:inline-flex;align-items:center;gap:5px;padding:4px 12px;margin-right:6px}.wbk-caseedit:hover{border-color:#3C362F}.wbk-metawrap>div{z-index:9000!important}
       .wbk-caselink,.wbk-casefold{border:0;background:none;font:inherit;font-size:13px;color:#3C362F;cursor:pointer;display:inline-flex;align-items:center;gap:4px;padding:4px 2px}
       .wbk-caselink{color:#7b7466;text-decoration:underline;text-underline-offset:3px}
       .wbk-casefold:not(.is-fold) svg{transform:rotate(180deg)}
@@ -16217,7 +16218,7 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
   /* 篩選單一案件時，工作台下方改放這個案件的照片縮圖（不顯示行程） */
   const [pvPh,setPvPh]=u.useState(null),[pvTab,setPvTab]=u.useState('progress'),[pvData,setPvData]=u.useState({}),[pvFiles,setPvFiles]=u.useState(null),[pvLb,setPvLb]=u.useState(null);
   u.useEffect(()=>{setPvFiles(null);setPvLb(null);setPvData({})},[pv]);   /* 切換案件保留目前分頁 */
-  const [agOpen,setAgOpen]=u.useState(null),[caseFold,setCaseFold]=u.useState(false),caseDirty=u.useRef({});
+  const [agOpen,setAgOpen]=u.useState(null),[caseFold,setCaseFold]=u.useState(false),[caseMeta,setCaseMeta]=u.useState(false),caseDirty=u.useRef({});
   /* 待歸檔：檔案先放在這裡，確認案件與資料夾後才上傳 */
   const [inbox,setInbox]=u.useState([]),[area,setArea]=u.useState('case'),workRef=u.useRef(null),[autoAdd,setAutoAdd]=u.useState(null),mqSel=u.useRef(null);
   const inboxAdd=async(files,lockPid)=>{const list=await HB_inboxMake(files,projects,lockPid||'');if(!list.length)return;setInbox(l=>[...l,...list]);setArea('inbox');
@@ -16519,6 +16520,8 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
           h('h3',null,pvName),h('span',{className:'wbk-casepill'},'目前操作案件'),
           h('span',{className:'wbk-casehint'},'在上方選擇案件，即可在此操作'),
           h('span',{className:'wbc-grow'}),
+          h('button',{type:'button',className:'wbk-caseedit',onClick:()=>setCaseMeta(true),title:'案件狀態、預計完工、客戶資料、LINE 群組'},'編輯專案'),
+          caseMeta&&typeof HbProjectMetaModal==='function'&&HB_portal(h('div',{className:'wbk-metawrap'},h(HbProjectMetaModal,{project:pvP,onCancel:()=>setCaseMeta(false),onSave:mv=>{try{window.HB_projOps&&window.HB_projOps.update(pvP.id,mv)}catch(e){}setCaseMeta(false);caseSay('專案已更新')}}))),
           h('button',{type:'button',className:'wbk-casefold'+(caseFold?' is-fold':''),'aria-expanded':!caseFold,onClick:()=>setCaseFold(!caseFold)},caseFold?'展開':'收合',HB_wbIcon('caret',14))),
         !caseFold&&h('nav',{className:'wbk-casetabs',role:'tablist','aria-label':pvName+' 功能'},CASE_TABS.map(([k,zh])=>h('button',{key:k,type:'button',role:'tab','aria-selected':pvTab===k,className:pvTab===k?'on':'',onClick:()=>setPvTab(k)},zh,
           k==='photos'&&pvP.photoCount?h('b',null,pvP.photoCount):null))),
