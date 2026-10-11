@@ -6,7 +6,7 @@
 //   HB_OA_ACCESS_TOKEN    同一個 Channel → Messaging API → Channel access token（存照片、群組回覆、顯示群組名稱需要）
 // LINE Developers 的 Webhook URL 設為 https://rqndozhhvuimqjqtmeli.supabase.co/functions/v1/hb-line-oa 並開啟 Use webhook。
 import { isPaymentText, parseAmount, isDefectText, bindQuery } from './detect.mjs';
-const VERSION = '2026-10-12.1';
+const VERSION = '2026-10-12.2';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!, SERVICE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const SECRET = (Deno.env.get('HB_OA_CHANNEL_SECRET') || '').trim(), TOKEN = (Deno.env.get('HB_OA_ACCESS_TOKEN') || '').trim();
 const enc = new TextEncoder();
@@ -22,7 +22,8 @@ async function lineGet(path: string) {
   if (!TOKEN) return null;
   try {
     const r = await fetch('https://api.line.me/v2/bot/' + path, { headers: { Authorization: 'Bearer ' + TOKEN }, signal: AbortSignal.timeout(4000) });
-    return r.ok ? await r.json() : null;
+    if (!r.ok) { log('line_get_failed', { p: path.split('/')[0], st: r.status }); return null; }
+    return await r.json();
   } catch { return null; }
 }
 // 群組用群組名稱（例如「大嘉A棟5F-5」），個人用 LINE 名稱
@@ -83,6 +84,16 @@ async function rest(path: string, init: RequestInit = {}) {
 }
 async function runScheduled() {
   if (!TOKEN) return { ok: false, why: 'no_token' };
+  // 補上還沒有名稱的群組名稱（查群組名稱不佔訊息額度）
+  let named = 0;
+  try {
+    // deno-lint-ignore no-explicit-any
+    const nn = (await rest('hb_line_contacts?line_name=is.null&line_user_id=like.C*&select=line_user_id&limit=3')) as any[] || [];
+    for (const c of nn) {
+      const n = await chatName({ type: 'group', groupId: c.line_user_id });
+      if (n) { await rest('hb_line_contacts?line_user_id=eq.' + c.line_user_id, { method: 'PATCH', body: JSON.stringify({ line_name: n }) }); named++; }
+    }
+  } catch { /* 名稱補不到不影響發送 */ }
   const now = new Date().toISOString();
   // deno-lint-ignore no-explicit-any
   const due = (await rest('hb_line_posts?status=eq.pending&send_at=lte.' + encodeURIComponent(now) + '&select=*&order=send_at.asc&limit=20')) as any[] || [];
@@ -108,7 +119,7 @@ async function runScheduled() {
       body: JSON.stringify(err ? { status: 'failed', error: err } : { status: 'sent', sent_at: new Date().toISOString(), error: null }) });
     if (err) { failed++; log('post_failed', { code: err.slice(0, 80) }); } else { sent++; log('post_sent', {}); }
   }
-  return { ok: true, due: due.length, sent, failed };
+  return { ok: true, due: due.length, sent, failed, named };
 }
 
 // deno-lint-ignore no-explicit-any
