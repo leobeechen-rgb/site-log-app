@@ -6,7 +6,7 @@
 //   HB_OA_ACCESS_TOKEN    同一個 Channel → Messaging API → Channel access token（存照片、群組回覆、顯示群組名稱需要）
 // LINE Developers 的 Webhook URL 設為 https://rqndozhhvuimqjqtmeli.supabase.co/functions/v1/hb-line-oa 並開啟 Use webhook。
 import { isPaymentText, parseAmount, isDefectText, bindQuery } from './detect.mjs';
-const VERSION = '2026-10-09.6';
+const VERSION = '2026-10-12.1';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!, SERVICE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const SECRET = (Deno.env.get('HB_OA_CHANNEL_SECRET') || '').trim(), TOKEN = (Deno.env.get('HB_OA_ACCESS_TOKEN') || '').trim();
 const enc = new TextEncoder();
@@ -75,6 +75,42 @@ async function report(args: Record<string, unknown>) {
   if (!r.ok) throw new Error('db_' + r.status);
   return await r.json();
 }
+// ── 排程發送到案件 LINE 群組（pg_cron 每分鐘呼叫 ?run=scheduled）──
+async function rest(path: string, init: RequestInit = {}) {
+  const r = await fetch(SUPABASE_URL + '/rest/v1/' + path, { ...init, headers: { apikey: SERVICE, Authorization: 'Bearer ' + SERVICE, 'Content-Type': 'application/json', Prefer: 'return=representation', ...(init.headers || {}) }, signal: AbortSignal.timeout(8000) });
+  const t = await r.text(); if (!r.ok) throw new Error('rest_' + r.status + ' ' + t.slice(0, 120));
+  return t.trim() ? JSON.parse(t) : null;
+}
+async function runScheduled() {
+  if (!TOKEN) return { ok: false, why: 'no_token' };
+  const now = new Date().toISOString();
+  // deno-lint-ignore no-explicit-any
+  const due = (await rest('hb_line_posts?status=eq.pending&send_at=lte.' + encodeURIComponent(now) + '&select=*&order=send_at.asc&limit=20')) as any[] || [];
+  let sent = 0, failed = 0;
+  for (const p of due) {
+    // 先搶下這一筆，避免同時兩次呼叫重複發送
+    const got = await rest('hb_line_posts?id=eq.' + p.id + '&status=eq.pending', { method: 'PATCH', body: JSON.stringify({ status: 'sending' }) });
+    if (!got || !got.length) continue;
+    // deno-lint-ignore no-explicit-any
+    const msgs: any[] = [];
+    if (String(p.body || '').trim()) msgs.push({ type: 'text', text: String(p.body).slice(0, 4900) });
+    for (const u of (p.photo_urls || []).slice(0, 4)) if (/^https:\/\//.test(u)) msgs.push({ type: 'image', originalContentUrl: u, previewImageUrl: u });
+    let err = '';
+    if (!msgs.length) err = '沒有內容';
+    else {
+      try {
+        const r = await fetch('https://api.line.me/v2/bot/message/push', { method: 'POST', headers: { Authorization: 'Bearer ' + TOKEN, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ to: p.line_key, messages: msgs.slice(0, 5) }), signal: AbortSignal.timeout(10000) });
+        if (!r.ok) { const t = await r.text(); err = 'LINE ' + r.status + ' ' + t.slice(0, 200); }
+      } catch (x) { err = String((x as Error)?.message || x).slice(0, 200); }
+    }
+    await rest('hb_line_posts?id=eq.' + p.id, { method: 'PATCH', headers: { Prefer: 'return=minimal' },
+      body: JSON.stringify(err ? { status: 'failed', error: err } : { status: 'sent', sent_at: new Date().toISOString(), error: null }) });
+    if (err) { failed++; log('post_failed', { code: err.slice(0, 80) }); } else { sent++; log('post_sent', {}); }
+  }
+  return { ok: true, due: due.length, sent, failed };
+}
+
 // deno-lint-ignore no-explicit-any
 async function handle(e: any) {
   const src = e?.source || {};
@@ -121,6 +157,10 @@ async function handle(e: any) {
 
 Deno.serve(async (req: Request) => {
   const headers = { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' };
+  if (req.method === 'GET' && new URL(req.url).searchParams.get('run') === 'scheduled') {
+    try { return new Response(JSON.stringify(await runScheduled()), { headers }); }
+    catch (err) { log('scheduled_failed', { code: String((err as Error)?.message).slice(0, 80) }); return new Response(JSON.stringify({ ok: false }), { status: 500, headers }); }
+  }
   if (req.method === 'GET') return new Response(JSON.stringify({ service: 'hb-line-oa', version: VERSION, configured: !!SECRET, profile_names: !!TOKEN }), { status: SECRET ? 200 : 503, headers });
   if (req.method !== 'POST') return new Response('Method not allowed', { status: 405 });
   if (!SECRET) return new Response('Not configured', { status: 503 });

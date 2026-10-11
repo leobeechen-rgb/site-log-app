@@ -12985,7 +12985,7 @@ const HB_LIB_CSS=`
       .hb-rc-embed .hb-pp-row button:not(.solid){border-color:#DED3C4!important;color:#5E574D!important}
       .hb-rc-embed .hb-pp-row button:not(.solid):hover{border-color:#2E4A3C!important;color:#2E4A3C!important}
       .hbcp{display:block}.hbcp-bar .hbcp-newalb{order:3;margin-left:auto;height:36px;padding:0 14px;font-size:13px}
-      .hbcp-bar{display:flex;align-items:center;gap:12px;margin-bottom:12px}.hbcp-bar h4{margin:0;font-size:15px;font-weight:500;color:#17150F}
+      .hbcp-bar{display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap}.hb-wb .hbcp-bar .hbcp-line{border-color:#06C755!important;color:#05833a!important}.hbcp-bar h4{margin:0;font-size:15px;font-weight:500;color:#17150F}
       .hbcp-sel select,.hbcp-form select,.hbcp-form input:not([type=checkbox]){height:38px;border:1px solid #D9CFC3;border-radius:4px;background:#fff;font:inherit;font-size:13.5px;padding:0 10px;color:#17150F;min-width:0}
       .hbcp-albums{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px}
       .hbcp-album{border:1px solid #E3D3C2;border-radius:4px;background:#fff;overflow:hidden}
@@ -16023,11 +16023,90 @@ function HbInbox({items,setItems,projects,notify,onAdd}){
 /* ===== 工作台案件面板・照片
    沿用 sitelog_albums／sitelog_photos：與「專案資料與圖面・照片」、案件頁、業主端是同一份資料，不另存。
    上傳一律綁定開始上傳當下的案件 ID；切換案件不會把照片傳錯案件。 ===== */
+/* 排程發到案件 LINE 群組：挑照片（最多 4 張）＋文字＋時間；時間到由官方帳號送出（hb-line-oa?run=scheduled） */
+function HbLinePost({project,photos,onClose,notify}){
+  const h=u.default.createElement,pid=project.id;
+  const say=t=>notify?notify(t):alert(t);
+  const pad=n=>String(n).padStart(2,'0');
+  const local=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+'T'+pad(d.getHours())+':'+pad(d.getMinutes());
+  const defTime=()=>{const d=new Date();if(d.getHours()<17){d.setHours(18,0,0,0)}else{d.setDate(d.getDate()+1);d.setHours(9,0,0,0)}return local(d)};
+  const [groups,setGroups]=u.useState(null),[key,setKey]=u.useState('');
+  const [text,setText]=u.useState('【赫柏空間設計｜'+(project.name||'')+' 工程進度】\n今天完成：\n接下來預計：\n\n有任何問題隨時跟我們說，謝謝！');
+  const [picked,setPicked]=u.useState([]),[mode,setMode]=u.useState('later'),[when,setWhen]=u.useState(defTime);
+  const [busy,setBusy]=u.useState(false),[posts,setPosts]=u.useState([]);
+  const loadPosts=()=>q.from('hb_line_posts').select('*').eq('project_id',pid).order('send_at',{ascending:false}).limit(12).then(({data})=>setPosts(data||[]));
+  u.useEffect(()=>{q.from('hb_line_contacts').select('line_user_id,line_name').eq('project_id',pid).then(({data})=>{const g=(data||[]).filter(x=>/^[CR]/.test(x.line_user_id||''));setGroups(g);if(g.length)setKey(g[0].line_user_id)});loadPosts()},[pid]);
+  u.useEffect(()=>{const f=e=>{if(e.key==='Escape')onClose()};window.addEventListener('keydown',f);return()=>window.removeEventListener('keydown',f)},[]);
+  const pool=(photos||[]).slice(0,40);
+  const toggle=url=>setPicked(p=>p.includes(url)?p.filter(x=>x!==url):p.length>=4?(say('一次最多 4 張照片'),p):[...p,url]);
+  const hidden=picked.filter(url=>(pool.find(x=>x.url===url)||{}).visible_to_owner===false).length;
+  const submit=async()=>{
+    if(!key){say('這個案件還沒連結 LINE 群組');return}
+    if(!text.trim()&&!picked.length){say('請寫一段文字或選照片');return}
+    let at=mode==='now'?new Date():new Date(when);
+    if(isNaN(at)){say('請選擇發送時間');return}
+    if(mode==='later'&&at.getTime()<Date.now()-60000){say('排程時間已經過了，請選之後的時間');return}
+    if(hidden&&!confirm('有 '+hidden+' 張照片目前設定「僅公司」，發到群組後業主就會看到。確定要發送嗎？'))return;
+    setBusy(true);
+    const{error}=await q.from('hb_line_posts').insert({project_id:pid,line_key:key,body:text.trim(),photo_urls:picked,send_at:at.toISOString(),created_by:'staff'});
+    if(error){setBusy(false);say('建立失敗：'+error.message);return}
+    if(mode==='now'){try{await fetch('https://rqndozhhvuimqjqtmeli.supabase.co/functions/v1/hb-line-oa?run=scheduled')}catch(e){}}
+    setBusy(false);say(mode==='now'?'已發送到 LINE 群組':'已排程，'+at.toLocaleString('zh-TW',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit',hour12:false})+' 會自動發到 LINE 群組');
+    setPicked([]);setMode('later');setWhen(defTime());loadPosts()};
+  const cancel=async p=>{if(!confirm('取消這則排程？'))return;const{error}=await q.from('hb_line_posts').update({status:'cancelled'}).eq('id',p.id).eq('status','pending');if(error)say('取消失敗：'+error.message);loadPosts()};
+  const ST={pending:['待發送','#8A5A1E','#F6E8D5'],sending:['發送中','#8A5A1E','#F6E8D5'],sent:['已發送','#2E4A3C','#E2EBDD'],failed:['發送失敗','#B3413B','#F6E1DF'],cancelled:['已取消','#7A756A','#EFE8DE']};
+  const fmt=x=>new Date(x).toLocaleString('zh-TW',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit',hour12:false});
+  return HB_portal(h('div',{className:'hblp-scrim',onClick:e=>{if(e.target===e.currentTarget)onClose()}},
+    h('div',{className:'hblp',role:'dialog','aria-label':'發到 LINE 群組'},
+      h('style',null,`.hblp-scrim{position:fixed;inset:0;z-index:9500;background:rgba(23,21,15,.45);display:flex;align-items:center;justify-content:center;padding:16px}
+.hblp{background:#FBF8F2;border-radius:14px;width:100%;max-width:680px;max-height:calc(100vh - 32px);overflow:auto;padding:18px 20px 20px;box-shadow:0 20px 50px rgba(0,0,0,.25);color:#17150F}
+.hblp h3{margin:0;font-size:18px;font-weight:500}.hblp-sub{margin:4px 0 14px;font-size:12.5px;color:#7A756A;line-height:1.6}
+.hblp-lab{display:block;font-size:13px;color:#5E574D;margin:14px 0 6px}
+.hblp select,.hblp textarea,.hblp input[type=datetime-local]{width:100%;box-sizing:border-box;border:1px solid #DED3C4;border-radius:8px;background:#fff;font:inherit;font-size:14px;padding:8px 10px;color:#17150F}
+.hblp textarea{min-height:120px;resize:vertical;line-height:1.6}
+.hblp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(86px,1fr));gap:6px;max-height:220px;overflow:auto;padding:2px}
+.hblp-ph{position:relative;aspect-ratio:1;border:2px solid transparent;border-radius:6px;overflow:hidden;padding:0;background:#EFE8DE;cursor:pointer}
+.hblp-ph img{width:100%;height:100%;object-fit:cover;display:block}.hblp-ph.on{border-color:#2E4A3C}
+.hblp-ph b{position:absolute;top:4px;right:4px;min-width:20px;height:20px;border-radius:99px;background:#2E4A3C;color:#fff;font-size:12px;display:grid;place-items:center}
+.hblp-ph i{position:absolute;left:4px;bottom:4px;font-style:normal;font-size:10px;background:rgba(23,21,15,.65);color:#fff;border-radius:4px;padding:1px 5px}
+.hblp-when{display:flex;gap:16px;flex-wrap:wrap;align-items:center}.hblp-when label{display:flex;align-items:center;gap:6px;font-size:14px;cursor:pointer}
+.hblp-btns{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+.hblp-btns button{border:1px solid #CFC3B3;background:#fff;border-radius:999px;padding:8px 18px;font:inherit;font-size:14px;cursor:pointer;min-height:0!important}
+.hblp-btns button.solid{background:#2E4A3C;border-color:#2E4A3C;color:#f4efe6}.hblp-btns button:disabled{opacity:.5}
+.hblp-warn{margin:12px 0 0;padding:10px 12px;border-radius:8px;background:#F6E8D5;color:#8A5A1E;font-size:13px;line-height:1.6}
+.hblp-list{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
+.hblp-list li{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid #EFE7DB;border-radius:8px;background:#fff;font-size:13px}
+.hblp-list li span.t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#3C362F}
+.hblp-list em{font-style:normal;font-size:11.5px;padding:2px 8px;border-radius:99px;white-space:nowrap}
+.hblp-list button{border:0;background:none;color:#B3413B;font:inherit;font-size:12.5px;cursor:pointer;padding:0;min-height:0!important}`),
+      h('div',{style:{display:'flex',alignItems:'flex-start',gap:12}},h('div',{style:{flex:1}},h('h3',null,'發到 LINE 群組'),
+        h('p',{className:'hblp-sub'},'用官方帳號發到「'+(project.name||'')+'」的案件群組，可以立刻發，也可以排好時間自動發。一次最多 1 段文字＋4 張照片，會用到官方帳號每月的訊息額度。')),
+        h('button',{type:'button',onClick:onClose,'aria-label':'關閉',style:{border:0,background:'none',fontSize:22,cursor:'pointer',color:'#7A756A',minHeight:0}},'×')),
+      groups===null?h('p',{className:'hblp-sub'},'讀取中…'):!groups.length?h('div',{className:'hblp-warn'},'這個案件還沒連結 LINE 群組。請先把官方帳號加進案件群組、在群組裡說一句話，再到「編輯專案」→「LINE 群組」選擇這個群組。')
+      :h(u.default.Fragment,null,
+        groups.length>1?h(u.default.Fragment,null,h('label',{className:'hblp-lab'},'發到哪個群組'),h('select',{value:key,onChange:e=>setKey(e.target.value)},groups.map(g=>h('option',{key:g.line_user_id,value:g.line_user_id},g.line_name||'未命名群組')))):
+          h('p',{className:'hblp-sub',style:{margin:'0 0 4px',color:'#2E4A3C'}},'群組：'+(groups[0].line_name||'已連結的群組')),
+        h('label',{className:'hblp-lab'},'訊息內容'),h('textarea',{value:text,onChange:e=>setText(e.target.value),maxLength:4000}),
+        h('label',{className:'hblp-lab'},'照片（點選，最多 4 張；已選 '+picked.length+' 張）'),
+        pool.length?h('div',{className:'hblp-grid'},pool.map(p=>{const i=picked.indexOf(p.url);return h('button',{key:p.id,type:'button',className:'hblp-ph'+(i>=0?' on':''),onClick:()=>toggle(p.url),'aria-pressed':i>=0},
+          h('img',{src:p.url,alt:'',loading:'lazy',decoding:'async'}),i>=0?h('b',null,i+1):null,p.visible_to_owner===false?h('i',null,'僅公司'):null)})):h('p',{className:'hblp-sub'},'這個案件還沒有照片，可以只發文字。'),
+        h('label',{className:'hblp-lab'},'什麼時候發'),
+        h('div',{className:'hblp-when'},
+          h('label',null,h('input',{type:'radio',checked:mode==='later',onChange:()=>setMode('later')}),'排程'),
+          h('label',null,h('input',{type:'radio',checked:mode==='now',onChange:()=>setMode('now')}),'立即發送')),
+        mode==='later'?h('input',{type:'datetime-local',value:when,onChange:e=>setWhen(e.target.value),style:{marginTop:8,maxWidth:260}}):null,
+        h('div',{className:'hblp-btns'},h('button',{type:'button',onClick:onClose},'關閉'),h('button',{type:'button',className:'solid',disabled:busy,onClick:submit},busy?'處理中…':mode==='now'?'立即發送':'排程發送'))),
+      posts.length?h(u.default.Fragment,null,h('label',{className:'hblp-lab',style:{marginTop:20}},'這個案件的發送紀錄'),
+        h('ul',{className:'hblp-list'},posts.map(p=>{const st=ST[p.status]||ST.pending;return h('li',{key:p.id,title:p.error||''},
+          h('span',{style:{whiteSpace:'nowrap',color:'#7A756A'}},fmt(p.status==='sent'&&p.sent_at?p.sent_at:p.send_at)),
+          h('span',{className:'t'},(p.body||'').split('\n')[0]||'（只有照片）',(p.photo_urls||[]).length?'・'+p.photo_urls.length+' 張照片':''),
+          h('em',{style:{color:st[1],background:st[2]}},st[0]),
+          p.status==='pending'?h('button',{type:'button',onClick:()=>cancel(p)},'取消'):null)}))):null)))}
 function HbCasePhotos({project,notify,onDirty}){
   const h=u.default.createElement,pid=project.id;
   const [albums,setAlbums]=u.useState(null),[photos,setPhotos]=u.useState([]),[sel,setSel]=u.useState('all');
   const [files,setFiles]=u.useState([]),[aid,setAid]=u.useState(''),[note,setNote]=u.useState(''),[vis,setVis]=u.useState(false);
-  const [prog,setProg]=u.useState(null),[msg,setMsg]=u.useState(null),[drag,setDrag]=u.useState(false),[lb,setLb]=u.useState(null);
+  const [prog,setProg]=u.useState(null),[msg,setMsg]=u.useState(null),[drag,setDrag]=u.useState(false),[lb,setLb]=u.useState(null),[linePost,setLinePost]=u.useState(false);
   const inp=u.useRef(null),alive=u.useRef(true);
   const say=t=>notify?notify(t):alert(t);
   const COLS='id,album_id,url,path,note,uploaded_at,visible_to_owner';
@@ -16092,8 +16171,9 @@ function HbCasePhotos({project,notify,onDirty}){
   const shown=sel==='all'?null:photos.filter(x=>x.album_id===sel);
   const lbList=shown||[],lbCur=lb!=null?lbList[lb]:null;
   return h('div',{className:'hbcp'},
+    linePost&&h(HbLinePost,{project,photos,notify:say,onClose:()=>setLinePost(false)}),
     h('div',{className:'hbcp-main'},
-      h('div',{className:'hbcp-bar'},h('h4',null,'相簿與照片'),h('button',{type:'button',className:'hbcp-b2 hbcp-newalb',onClick:newAlbum},'＋ 新增相簿'),
+      h('div',{className:'hbcp-bar'},h('h4',null,'相簿與照片'),h('button',{type:'button',className:'hbcp-b2 hbcp-newalb',onClick:newAlbum},'＋ 新增相簿'),h('button',{type:'button',className:'hbcp-b2 hbcp-line',onClick:()=>setLinePost(true),title:'挑照片、寫進度，立即或排程發到案件 LINE 群組'},'發到 LINE 群組'),
         h('label',{className:'hbcp-sel'},h('span',{className:'wbc-sr'},'顯示相簿'),
           h('select',{value:sel,onChange:e=>setSel(e.target.value)},h('option',{value:'all'},'全部相簿'),(albums||[]).map(a=>h('option',{key:a.id,value:a.id},a.name+'（'+count(a.id)+'）'))))),
       albums===null?h('p',{className:'wbc-empty'},'讀取照片中…')
