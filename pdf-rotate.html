@@ -19,49 +19,59 @@ header b{letter-spacing:.32em;font-weight:400;font-size:17px}
 header span{font-size:13px;letter-spacing:.12em;opacity:.75}
 main{max-width:1180px;margin:0 auto;padding:22px 16px 120px}
 .drop{display:block;border:1.5px dashed var(--line);background:var(--card);padding:38px 18px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s}
-.drop.on{border-color:var(--acc);background:#fff}
+.drop.on,.grid.on{border-color:var(--acc);background:#fff}
 .drop h2{margin:0 0 6px;font-weight:400;font-size:19px;letter-spacing:.08em}
 .drop p{margin:0;color:var(--soft);font-size:13px;line-height:1.8}
 .bar{display:none;position:sticky;top:0;z-index:5;background:rgba(244,241,234,.96);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);padding:12px 0;margin-top:14px;border-bottom:1px solid var(--line);gap:8px;flex-wrap:wrap;align-items:center}
 .bar.show{display:flex}
-.bar .name{flex:1 1 200px;font-size:13px;color:var(--soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar .name{flex:1 1 180px;font-size:13px;color:var(--soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar .sep{width:1px;height:22px;background:var(--line);margin:0 2px}
 button{font:inherit;font-size:13px;border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:999px;padding:8px 14px;cursor:pointer;white-space:nowrap}
 button:hover{border-color:var(--ink)}
 button.solid{background:var(--dark);color:#F1EEE6;border-color:var(--dark)}
-button.solid:disabled{opacity:.5;cursor:default}
+button.add{border-color:var(--acc);color:var(--acc)}
+button:disabled{opacity:.45;cursor:default}
 .hint{font-size:12.5px;color:var(--soft);margin:12px 2px 0;line-height:1.7}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:16px;margin-top:16px}
-.pg{background:var(--card);border:1px solid var(--line);padding:10px;display:flex;flex-direction:column;align-items:center;gap:8px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(208px,1fr));gap:16px;margin-top:16px;border:1.5px dashed transparent;padding:4px;transition:border-color .2s,background .2s}
+.pg{background:var(--card);border:1px solid var(--line);padding:10px 10px 8px;display:flex;flex-direction:column;align-items:center;gap:7px;position:relative}
 .pg.chg{border-color:var(--acc)}
+.pg.new::after{content:"補充";position:absolute;left:8px;top:8px;font-size:11px;color:#fff;background:var(--acc);padding:1px 7px;border-radius:999px}
+.pg.dragging{opacity:.35}
+.pg.over{outline:2px solid var(--acc);outline-offset:2px}
 .thumb{width:150px;height:150px;display:flex;align-items:center;justify-content:center;cursor:pointer}
-.thumb canvas{max-width:150px;max-height:150px;box-shadow:0 1px 4px rgba(0,0,0,.18);background:#fff;transition:transform .25s ease}
-.pg .row{display:flex;gap:6px;align-items:center}
-.pg .row button{padding:5px 11px;font-size:15px;line-height:1}
-.pg small{font-size:12px;color:var(--soft)}
+.thumb canvas,.thumb img{max-width:150px;max-height:150px;box-shadow:0 1px 4px rgba(0,0,0,.18);background:#fff;transition:transform .25s ease}
+.pg .row{display:flex;gap:5px;align-items:center;flex-wrap:wrap;justify-content:center}
+.pg .row button{padding:4px 8px;font-size:13.5px;line-height:1.1}
+.pg .row button.del{color:var(--acc)}
+.pg small{font-size:12px;color:var(--soft);text-align:center}
 .pg small b{color:var(--acc);font-weight:500}
-.msg{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#1E1C19;color:#F1EEE6;padding:10px 18px;border-radius:999px;font-size:13px;opacity:0;transition:opacity .25s;pointer-events:none}
+.msg{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#1E1C19;color:#F1EEE6;padding:10px 18px;border-radius:999px;font-size:13px;opacity:0;transition:opacity .25s;pointer-events:none;max-width:92vw;text-align:center}
 .msg.show{opacity:1}
 </style>
 </head>
 <body>
-<header><b>HERFULSINS</b><span>PDF 轉正小工具</span></header>
+<header><b>HERFULSINS</b><span>PDF 轉正・補充頁面</span></header>
 <main>
   <label class="drop" id="drop">
     <h2>把 PDF 拖到這裡，或點一下選檔</h2>
-    <p>點頁面縮圖就能轉 90 度，轉好按「下載轉正的 PDF」。<br>檔案只在你的電腦上處理，不會上傳。</p>
-    <input type="file" id="file" accept="application/pdf,.pdf" hidden>
+    <p>可以轉正、補充其他 PDF 或照片、調整順序、刪頁，最後存成一份新的 PDF。<br>檔案只在你的電腦上處理，不會上傳。</p>
+    <input type="file" id="file" accept="application/pdf,.pdf,image/jpeg,image/png" multiple hidden>
   </label>
 
   <div class="bar" id="bar">
     <span class="name" id="name"></span>
+    <button type="button" class="add" id="addBtn" title="把其他 PDF 或照片加在後面">＋ 補充 PDF／照片</button>
+    <input type="file" id="addFile" accept="application/pdf,.pdf,image/jpeg,image/png" multiple hidden>
+    <span class="sep"></span>
     <button type="button" id="allL" title="全部頁面逆時針轉 90 度">全部 ↺</button>
     <button type="button" id="allR" title="全部頁面順時針轉 90 度">全部 ↻</button>
     <button type="button" id="toP" title="橫的頁面轉成直的">橫的都轉直</button>
     <button type="button" id="toL" title="直的頁面轉成橫的">直的都轉橫</button>
-    <button type="button" id="reset">還原</button>
-    <button type="button" class="solid" id="save">下載轉正的 PDF</button>
+    <button type="button" id="reset" title="轉向全部還原">還原轉向</button>
+    <button type="button" id="clear" title="清空，重新開始">清空</button>
+    <button type="button" class="solid" id="save">下載 PDF</button>
   </div>
-  <p class="hint" id="hint" style="display:none">點縮圖＝順時針轉 90 度；下面的 ↺ ↻ 可以單頁轉。有轉過的頁面會有紅框。</p>
+  <p class="hint" id="hint" style="display:none">點縮圖＝順時針轉 90°。拖曳縮圖可以調整順序（或用 ← →）。✕ 刪除這頁。補充的頁面左上角有「補充」標記。也可以直接把檔案拖進下面的頁面區。</p>
   <div class="grid" id="grid"></div>
 </main>
 <div class="msg" id="msg"></div>
@@ -71,76 +81,132 @@ button.solid:disabled{opacity:.5;cursor:default}
 <script>
 pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 const $=id=>document.getElementById(id);
-let bytes=null, fname='', pages=[]; // {orig, add, w, h, el, cv}
-function say(t){const m=$('msg');m.textContent=t;m.classList.add('show');clearTimeout(say.t);say.t=setTimeout(()=>m.classList.remove('show'),2200)}
+const DPR=window.devicePixelRatio||1;
+let sources=[];   // {kind:'pdf'|'img', bytes, mime, name}
+let pages=[];     // {src, idx, orig, add, w, h, isNew, el, vis, info}
+let baseName='';
+function say(t){const m=$('msg');m.textContent=t;m.classList.add('show');clearTimeout(say.t);say.t=setTimeout(()=>m.classList.remove('show'),2600)}
 function norm(d){return((d%360)+360)%360}
-function paint(p){
-  p.cv.style.transform='rotate('+p.add+'deg)';
-  const total=norm(p.orig+p.add);
-  p.info.innerHTML='第 '+p.n+' 頁'+(p.add?'　<b>已轉 '+(norm(p.add)===270?'↺ 90°':norm(p.add)===90?'↻ 90°':'180°')+'</b>':'');
-  p.el.classList.toggle('chg',norm(p.add)!==0);
-}
-function turn(p,d){p.add=norm(p.add+d);paint(p)}
-// 目前畫面上看到的是不是橫的（考慮原本的旋轉）
-function isWide(p){const r=norm(p.add);const w=p.w,h=p.h;return (r===90||r===270)?h>w:w>h}
+function isWide(p){const r=norm(p.add);return (r===90||r===270)?p.h>p.w:p.w>p.h}
 
-async function openFile(f){
-  if(!f)return;
-  if(!/pdf$/i.test(f.type)&&!/\.pdf$/i.test(f.name)){say('請選 PDF 檔');return}
-  fname=f.name.replace(/\.pdf$/i,'');
-  bytes=new Uint8Array(await f.arrayBuffer());
-  $('name').textContent=f.name; $('bar').classList.add('show'); $('hint').style.display='';
-  const grid=$('grid'); grid.innerHTML=''; pages=[];
-  const doc=await pdfjsLib.getDocument({data:bytes.slice()}).promise;
-  for(let i=1;i<=doc.numPages;i++){
-    const pg=await doc.getPage(i);
-    const vp1=pg.getViewport({scale:1});           // 已含原本的旋轉
-    const sc=150/Math.max(vp1.width,vp1.height);
-    const vp=pg.getViewport({scale:sc*(window.devicePixelRatio||1)});
-    const cv=document.createElement('canvas'); cv.width=vp.width; cv.height=vp.height;
-    cv.style.width=(vp.width/(window.devicePixelRatio||1))+'px';
-    await pg.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;
-    const el=document.createElement('div'); el.className='pg';
-    const th=document.createElement('div'); th.className='thumb'; th.appendChild(cv);
-    const row=document.createElement('div'); row.className='row';
-    const bl=document.createElement('button'); bl.type='button'; bl.textContent='↺'; bl.title='逆時針 90 度';
-    const br=document.createElement('button'); br.type='button'; br.textContent='↻'; br.title='順時針 90 度';
-    const info=document.createElement('small');
-    row.append(bl,br); el.append(th,row,info); grid.appendChild(el);
-    const p={n:i,orig:pg.rotate||0,add:0,w:vp1.width,h:vp1.height,el,cv,info};
-    th.onclick=()=>turn(p,90); bl.onclick=()=>turn(p,-90); br.onclick=()=>turn(p,90);
-    pages.push(p); paint(p);
-  }
-  say('共 '+doc.numPages+' 頁');
+function paint(p){
+  p.vis.style.transform='rotate('+p.add+'deg)';
+  const r=norm(p.add);
+  const pos=pages.indexOf(p)+1;
+  p.info.innerHTML='第 '+pos+' 頁'+(r?'　<b>'+(r===270?'↺ 90°':r===90?'↻ 90°':'180°')+'</b>':'');
+  p.el.classList.toggle('chg',r!==0);
 }
-$('file').onchange=e=>openFile(e.target.files[0]);
-const drop=$('drop');
+function renumber(){pages.forEach(paint);$('name').textContent=baseName+'　共 '+pages.length+' 頁'}
+function turn(p,d){p.add=norm(p.add+d);paint(p)}
+function layout(){const g=$('grid');pages.forEach(p=>g.appendChild(p.el));renumber()}
+function move(p,d){const i=pages.indexOf(p),j=i+d;if(j<0||j>=pages.length)return;pages.splice(i,1);pages.splice(j,0,p);layout()}
+function remove(p){pages.splice(pages.indexOf(p),1);p.el.remove();renumber();if(!pages.length)clearAll()}
+function clearAll(){sources=[];pages=[];$('grid').innerHTML='';$('bar').classList.remove('show');$('hint').style.display='none';$('drop').style.display='';baseName=''}
+
+let dragP=null;
+function card(p){
+  const el=document.createElement('div');el.className='pg'+(p.isNew?' new':'');el.draggable=true;
+  const th=document.createElement('div');th.className='thumb';th.appendChild(p.vis);
+  const row=document.createElement('div');row.className='row';
+  const mk=(t,title,fn,cls)=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.title=title;if(cls)b.className=cls;b.onclick=e=>{e.stopPropagation();fn()};row.appendChild(b)};
+  mk('←','往前移',()=>move(p,-1));mk('↺','逆時針 90°',()=>turn(p,-90));mk('↻','順時針 90°',()=>turn(p,90));mk('→','往後移',()=>move(p,1));mk('✕','刪除這頁',()=>remove(p),'del');
+  const info=document.createElement('small');
+  el.append(th,row,info);
+  th.onclick=()=>turn(p,90);
+  el.addEventListener('dragstart',e=>{dragP=p;el.classList.add('dragging');e.dataTransfer.effectAllowed='move';try{e.dataTransfer.setData('text/plain','pg')}catch(_){}});
+  el.addEventListener('dragend',()=>{dragP=null;el.classList.remove('dragging');document.querySelectorAll('.pg.over').forEach(x=>x.classList.remove('over'))});
+  el.addEventListener('dragover',e=>{if(!dragP||dragP===p)return;e.preventDefault();el.classList.add('over')});
+  el.addEventListener('dragleave',()=>el.classList.remove('over'));
+  el.addEventListener('drop',e=>{if(!dragP)return;e.preventDefault();e.stopPropagation();el.classList.remove('over');const to=pages.indexOf(p);pages.splice(pages.indexOf(dragP),1);pages.splice(to,0,dragP);layout()});
+  p.el=el;p.info=info;return el;
+}
+
+async function addFiles(files,isNew){
+  files=[...files].filter(f=>/pdf$/i.test(f.type)||/\.pdf$/i.test(f.name)||/^image\/(jpeg|png)$/.test(f.type));
+  if(!files.length){say('請選 PDF 或 JPG／PNG 照片');return}
+  if(!baseName)baseName=files[0].name.replace(/\.(pdf|jpe?g|png)$/i,'');
+  $('drop').style.display='none';$('bar').classList.add('show');$('hint').style.display='';
+  let added=0;
+  for(const f of files){
+    const bytes=new Uint8Array(await f.arrayBuffer());
+    const isPdf=/pdf$/i.test(f.type)||/\.pdf$/i.test(f.name);
+    const src=sources.push({kind:isPdf?'pdf':'img',bytes,mime:f.type,name:f.name})-1;
+    if(isPdf){
+      let doc;
+      try{doc=await pdfjsLib.getDocument({data:bytes.slice()}).promise}catch(e){say('打不開「'+f.name+'」');continue}
+      for(let i=1;i<=doc.numPages;i++){
+        const pg=await doc.getPage(i);
+        const vp1=pg.getViewport({scale:1});
+        const sc=150/Math.max(vp1.width,vp1.height);
+        const vp=pg.getViewport({scale:sc*DPR});
+        const cv=document.createElement('canvas');cv.width=vp.width;cv.height=vp.height;cv.style.width=(vp.width/DPR)+'px';
+        await pg.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;
+        const p={src,idx:i-1,orig:pg.rotate||0,add:0,w:vp1.width,h:vp1.height,isNew,vis:cv};
+        pages.push(p);$('grid').appendChild(card(p));added++;
+      }
+    }else{
+      const url=URL.createObjectURL(new Blob([bytes],{type:f.type}));
+      const img=new Image();img.src=url;await img.decode().catch(()=>{});
+      const p={src,idx:0,orig:0,add:0,w:img.naturalWidth||1,h:img.naturalHeight||1,isNew,vis:img};
+      pages.push(p);$('grid').appendChild(card(p));added++;
+    }
+  }
+  renumber();
+  say(isNew?'補充了 '+added+' 頁，加在最後面（可以拖曳調整位置）':'共 '+pages.length+' 頁');
+}
+
+$('file').onchange=e=>{addFiles(e.target.files,false);e.target.value=''};
+$('addBtn').onclick=()=>$('addFile').click();
+$('addFile').onchange=e=>{addFiles(e.target.files,true);e.target.value=''};
+const drop=$('drop'),grid=$('grid');
 ['dragenter','dragover'].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.add('on')}));
 ['dragleave','drop'].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.remove('on')}));
-drop.addEventListener('drop',e=>openFile(e.dataTransfer.files[0]));
+drop.addEventListener('drop',e=>addFiles(e.dataTransfer.files,false));
+// 頁面區：從桌面拖檔案進來＝補充
+grid.addEventListener('dragover',e=>{if(dragP)return;e.preventDefault();grid.classList.add('on')});
+grid.addEventListener('dragleave',e=>{if(e.target===grid)grid.classList.remove('on')});
+grid.addEventListener('drop',e=>{grid.classList.remove('on');if(dragP||!e.dataTransfer.files.length)return;e.preventDefault();addFiles(e.dataTransfer.files,pages.length>0)});
 document.addEventListener('dragover',e=>e.preventDefault());
-document.addEventListener('drop',e=>{e.preventDefault();if(e.target.closest&&e.target.closest('#drop'))return;openFile(e.dataTransfer.files[0])});
+document.addEventListener('drop',e=>{e.preventDefault();if(dragP||!e.dataTransfer.files.length)return;if(e.target.closest&&(e.target.closest('#drop')||e.target.closest('#grid')))return;addFiles(e.dataTransfer.files,pages.length>0)});
 
 $('allL').onclick=()=>pages.forEach(p=>turn(p,-90));
 $('allR').onclick=()=>pages.forEach(p=>turn(p,90));
-$('toP').onclick=()=>{let n=0;pages.forEach(p=>{if(isWide(p)){turn(p,90);n++}});say(n?'轉了 '+n+' 頁（若上下顛倒，再點那頁轉 180°）':'沒有橫的頁面')};
+$('toP').onclick=()=>{let n=0;pages.forEach(p=>{if(isWide(p)){turn(p,90);n++}});say(n?'轉了 '+n+' 頁（若上下顛倒，再點那頁兩下）':'沒有橫的頁面')};
 $('toL').onclick=()=>{let n=0;pages.forEach(p=>{if(!isWide(p)){turn(p,-90);n++}});say(n?'轉了 '+n+' 頁':'沒有直的頁面')};
 $('reset').onclick=()=>pages.forEach(p=>{p.add=0;paint(p)});
+$('clear').onclick=()=>{if(confirm('清空所有頁面，重新開始？'))clearAll()};
 
 $('save').onclick=async()=>{
-  if(!bytes)return;
-  const btn=$('save'); btn.disabled=true; btn.textContent='處理中…';
+  if(!pages.length)return;
+  const btn=$('save');btn.disabled=true;btn.textContent='處理中…';
   try{
-    const pdf=await PDFLib.PDFDocument.load(bytes,{ignoreEncryption:true});
-    pdf.getPages().forEach((pg,i)=>{const p=pages[i]; if(p&&p.add) pg.setRotation(PDFLib.degrees(norm(p.orig+p.add)))});
-    const out=await pdf.save();
+    const out=await PDFLib.PDFDocument.create();
+    const loaded={};
+    for(const p of pages){
+      const s=sources[p.src];
+      if(s.kind==='pdf'){
+        if(!loaded[p.src])loaded[p.src]=await PDFLib.PDFDocument.load(s.bytes,{ignoreEncryption:true});
+        const [cp]=await out.copyPages(loaded[p.src],[p.idx]);
+        cp.setRotation(PDFLib.degrees(norm(p.orig+p.add)));
+        out.addPage(cp);
+      }else{
+        // 照片：縮放到 A4 內，直橫依照片方向
+        const im=s.mime==='image/png'?await out.embedPng(s.bytes):await out.embedJpg(s.bytes);
+        const land=im.width>im.height, W=land?841.89:595.28, H=land?595.28:841.89, m=24;
+        const k=Math.min((W-2*m)/im.width,(H-2*m)/im.height);
+        const pg=out.addPage([W,H]);
+        pg.drawImage(im,{x:(W-im.width*k)/2,y:(H-im.height*k)/2,width:im.width*k,height:im.height*k});
+        pg.setRotation(PDFLib.degrees(norm(p.add)));
+      }
+    }
+    const bytes=await out.save();
     const a=document.createElement('a');
-    a.href=URL.createObjectURL(new Blob([out],{type:'application/pdf'}));
-    a.download=fname+'_轉正.pdf'; document.body.appendChild(a); a.click(); a.remove();
+    a.href=URL.createObjectURL(new Blob([bytes],{type:'application/pdf'}));
+    a.download=(baseName||'文件')+'_整理.pdf';document.body.appendChild(a);a.click();a.remove();
     setTimeout(()=>URL.revokeObjectURL(a.href),5000);
-    say('已下載：'+fname+'_轉正.pdf');
-  }catch(e){say('無法處理這個 PDF：'+(e.message||e))}
-  btn.disabled=false; btn.textContent='下載轉正的 PDF';
+    say('已下載：'+a.download+'（共 '+pages.length+' 頁）');
+  }catch(e){say('無法處理：'+(e.message||e))}
+  btn.disabled=false;btn.textContent='下載 PDF';
 };
 </script>
 </body>
