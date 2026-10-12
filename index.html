@@ -1543,6 +1543,20 @@
   }
   .hb-entry.has-img{ padding-right: 34%; }
   .hb-entry:hover .hb-entry-photo{ transform: translateY(calc(-50% - 4px)); }
+  /* 標籤列、行動列不換行（Mac Safari 視窗較窄時不會被擠成直排） */
+  .hb-entry-cat, .hb-entry-go{ white-space: nowrap; min-width: 0; }
+  .hb-entry-cat .fr{ flex-shrink: 0; }
+  .hb-entry-cat .cn{ min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .hb-entry-go .fr, .hb-entry-go .cn, .hb-entry-go i{ flex-shrink: 0; }
+  /* 中等寬度（筆電 Safari 約 1000–1280px）：縮小左右留白與材質照，說明只留一行 */
+  @media (min-width: 761px) and (max-width: 1280px){
+    .hb-entry{ padding: 20px 18px 18px 74px; }
+    .hb-entry::before{ left: 16px; font-size: 28px; }
+    .hb-entry::after{ left: 58px; }
+    .hb-entry-t{ font-size: 18.5px; }
+    .hb-entry-d{ -webkit-line-clamp: 1; max-width: none; }
+    .hb-entry-cat .cn{ display: none; }
+  }
 
   /* 下方 05–07：印在紙面上的三個編輯區塊，欄間以細直線分隔 */
   .hb-landing-tri{
@@ -2665,6 +2679,11 @@
     left: auto !important;
     bottom: auto !important;
     z-index: 1;
+  }
+  /* 筆電／Mac Safari 中等寬度：素材縮小，文字區讓出空間 */
+  @media (min-width: 761px) and (max-width: 1280px){
+    .hb-heroRow .hb-landgrid > .hb-entry > .hb-entry-photo{ width: 74px; height: 74px; max-width: 74px; right: 12px !important; }
+    .hb-heroRow .hb-landgrid > .hb-entry.has-img{ padding-right: 94px; }
   }
 
   @media (max-width: 760px){
