@@ -6256,13 +6256,17 @@ function HB_estGrandCost(categories){return(categories||[]).reduce((sum,c)=>sum+
    兩者都沒填時，所有輸出維持與舊版完全一致。 */
 function HB_estTotals(v){
   let sub=HB_estGrandTotal(v&&v.categories);
+  let supRate=HB_num(v&&v.superviseRate);
+  if(!isFinite(supRate)||supRate<0)supRate=0;
+  let sup=Math.round(sub*supRate/100);
+  let gross=sub+sup;
   let discount=Math.max(0,HB_num(v&&v.discount));
-  if(discount>sub)discount=sub;
-  let net=sub-discount;
+  if(discount>gross)discount=gross;
+  let net=gross-discount;
   let rate=HB_num(v&&v.taxRate);
   if(!isFinite(rate)||rate<0)rate=0;
   let tax=Math.round(net*rate/100);
-  return{sub:sub,discount:discount,net:net,rate:rate,tax:tax,total:net+tax,plain:(discount===0&&rate===0)};
+  return{sub:sub,supRate:supRate,sup:sup,discount:discount,net:net,rate:rate,tax:tax,total:net+tax,plain:(discount===0&&rate===0&&sup===0)};
 }
 /* 該列是否隱藏單價（防比價）：隱藏時只給客戶看該項總價，不給單價與數量 */
 function HB_estHidden(it){return!!(it&&it.hidePrice)}
@@ -7093,6 +7097,7 @@ ${rows}
 ${T.plain
   ? `<tr class="grand"><td colspan="6" class="r">總價（未含營業稅 5%）</td><td colspan="2" class="r total-value">NT$ ${HB_money(total)}</td></tr>`
   : `<tr class="sub"><td colspan="6" class="r">合計</td><td class="r">${HB_money(T.sub)}</td><td></td></tr>`
+    +(T.sup>0?`<tr class="sub"><td colspan="6" class="r">監工費 ${e(T.supRate)}%</td><td class="r">${HB_money(T.sup)}</td><td></td></tr>`:``)
     +(T.discount>0?`<tr class="sub"><td colspan="6" class="r">折讓</td><td class="r">-${HB_money(T.discount)}</td><td></td></tr>`:``)
     +(T.rate>0?`<tr class="sub"><td colspan="6" class="r">未稅金額</td><td class="r">${HB_money(T.net)}</td><td></td></tr>`
       +`<tr class="sub"><td colspan="6" class="r">營業稅 ${e(T.rate)}%</td><td class="r">${HB_money(T.tax)}</td><td></td></tr>`:``)
@@ -7289,6 +7294,7 @@ async function HB_generateEstimateExcel(v){
         return rr;
       };
       let netRowNum=null;
+      if(T.sup>0)addSum("監工費 "+T.supRate+"%",T.sup);
       if(T.discount>0)addSum("折讓",-T.discount);
       if(T.rate>0){
         let r1=addSum("未稅金額",T.net);netRowNum=r1.number;
@@ -7340,7 +7346,7 @@ function HerfulsinsEstimateHub({project:l,notify:t,onClose:e}){HB_ctaCss();
     if(m){t("刪除失敗："+m.message);return}
     o(p=>p.filter(z=>z.id!==h)),t("已刪除估價單")
   };
-  let toV=h=>({clientName:h.client_name,contactName:h.contact_name,engName:h.eng_name,siteAddress:h.site_address,quoteDate:h.quote_date,validDays:h.valid_days,depositNote:h.deposit_note,categories:h.categories||[],discount:h.discount??"",taxRate:h.tax_rate??""});
+  let toV=h=>({clientName:h.client_name,contactName:h.contact_name,engName:h.eng_name,siteAddress:h.site_address,quoteDate:h.quote_date,validDays:h.valid_days,depositNote:h.deposit_note,categories:h.categories||[],discount:h.discount??"",taxRate:h.tax_rate??"",superviseRate:h.supervise_rate||""});
   if(n==="edit")return u.default.createElement(HB_EstimateEditor,{project:l,estimate:r,notify:t,onBack:()=>{a("list"),load()}});
   return u.default.createElement("div",{className:"hb-dossier",style:{position:"fixed",inset:0,zIndex:70,overflowY:"auto"},
     onClick:()=>hbSetMenu(null)},
@@ -7574,7 +7580,7 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
     localToastTimerRef.current=setTimeout(()=>setLocalToast(null),3200);
     e&&e(msg)
   };
-  let[a,i]=(0,u.useState)(()=>t?{clientName:t.client_name||"",contactName:t.contact_name||"",engName:t.eng_name||l?.name||"",siteAddress:t.site_address||l?.address||"",quoteDate:t.quote_date||HB_localToday(),validDays:t.valid_days||"5",depositNote:t.deposit_note||"如蒙惠顧請先付訂金3成，或雙方議定金額。",discount:t.discount??"",taxRate:t.tax_rate??"",categories:(t.categories&&t.categories.length?t.categories:[HB_newEstCategory("裝修工程")])}:{clientName:"",contactName:"",engName:l?.name||"",siteAddress:l?.address||"",quoteDate:HB_localToday(),validDays:"5",depositNote:"如蒙惠顧請先付訂金3成，或雙方議定金額。",discount:"",taxRate:"",categories:[HB_newEstCategory("裝修工程")]});
+  let[a,i]=(0,u.useState)(()=>t?{clientName:t.client_name||"",contactName:t.contact_name||"",engName:t.eng_name||l?.name||"",siteAddress:t.site_address||l?.address||"",quoteDate:t.quote_date||HB_localToday(),validDays:t.valid_days||"5",depositNote:t.deposit_note||"如蒙惠顧請先付訂金3成，或雙方議定金額。",discount:t.discount??"",taxRate:t.tax_rate??"",superviseRate:t.supervise_rate||"",categories:(t.categories&&t.categories.length?t.categories:[HB_newEstCategory("裝修工程")])}:{clientName:"",contactName:"",engName:l?.name||"",siteAddress:l?.address||"",quoteDate:HB_localToday(),validDays:"5",depositNote:"如蒙惠顧請先付訂金3成，或雙方議定金額。",discount:"",taxRate:"",categories:[HB_newEstCategory("裝修工程")]});
   let[o,f]=(0,u.useState)(!1);
   let[showBasic,setShowBasic]=(0,u.useState)(!t);
   let[pasteOpen,setPasteOpen]=(0,u.useState)({});
@@ -7924,7 +7930,7 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
   let latestFormRef=(0,u.useRef)(a);latestFormRef.current=a;
   let buildEstPayload=fm=>{
     let base={project_id:l?.id||null,client_name:fm.clientName,contact_name:fm.contactName,eng_name:fm.engName,site_address:fm.siteAddress,quote_date:fm.quoteDate||null,valid_days:fm.validDays,deposit_note:fm.depositNote,categories:fm.categories};
-    return{base,payload:{...base,discount:HB_num(fm.discount)||0,tax_rate:HB_num(fm.taxRate)||0}};
+    return{base,payload:{...base,discount:HB_num(fm.discount)||0,tax_rate:HB_num(fm.taxRate)||0,supervise_rate:HB_num(fm.superviseRate)||0}};
   };
   let lastSavedRef=(0,u.useRef)(JSON.stringify(buildEstPayload(a).payload)); /* 剛打開不算變更；新估價單要等真的動過才建立 */
   let[autoState,setAutoState]=(0,u.useState)({s:"",at:null});
@@ -7941,7 +7947,7 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
         :q.from("sitelog_estimates").insert(pl).select("id").single();
       let res=await run(payload);
       let degraded=!1;
-      if(res.error&&/discount|tax_rate|column|PGRST204|42703/i.test(String(res.error.message||"")+String(res.error.code||""))){
+      if(res.error&&/discount|tax_rate|supervise_rate|column|PGRST204|42703/i.test(String(res.error.message||"")+String(res.error.code||""))){
         /* sitelog_estimates 還沒加 discount / tax_rate 欄位 → 先存其餘內容，並提醒去補跑 SQL */
         res=await run(base);degraded=!0;
       }
@@ -8523,6 +8529,10 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
     u.default.createElement("div",{className:"hb-est-footer"+(hbFootOpen?" is-open":""),style:{position:"sticky",bottom:"var(--hb-overlay-gap, 0px)",flexShrink:0,zIndex:50,background:"rgba(247,250,252,0.96)",backdropFilter:"blur(14px)",WebkitBackdropFilter:"blur(14px)",padding:"6px 16px 8px",borderTop:`1px solid ${sc.line}`,boxShadow:"0 -3px 12px rgba(22,35,43,0.05)"}},
       u.default.createElement("div",{style:{maxWidth:1560,margin:"0 auto",paddingRight:calcDock&&calcOpen?322:0,transition:"padding-right .2s ease"}},
       u.default.createElement("div",{className:"hb-ef-opt hb-ef-rates",style:{display:"flex",alignItems:"center",gap:8,marginBottom:3,flexWrap:"wrap"}},
+        u.default.createElement("span",{style:{color:sc.inkSoft,fontSize:10.5}},"監工費"),
+        u.default.createElement("input",{value:a.superviseRate??"",onChange:v=>set("superviseRate",v.target.value),inputMode:"decimal",placeholder:"0",title:"以工程合計乘上這個 %，加在折讓與營業稅之前",
+          style:{width:52,border:`1px solid ${sc.line}`,background:sc.card,color:sc.ink,borderRadius:99,padding:"5px 8px",fontSize:12,textAlign:"right",fontFamily:"inherit"}}),
+        u.default.createElement("span",{style:{color:sc.inkSoft,fontSize:10.5,marginRight:4}},"%"),
         u.default.createElement("span",{style:{color:sc.inkSoft,fontSize:10.5}},"折讓"),
         u.default.createElement("input",{value:a.discount??"",onChange:v=>set("discount",v.target.value),inputMode:"decimal",placeholder:"0",
           style:{width:86,border:`1px solid ${sc.line}`,background:sc.card,color:sc.ink,borderRadius:99,padding:"5px 8px",fontSize:12,textAlign:"right",fontFamily:"inherit"}}),
@@ -8549,6 +8559,10 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
       !estT.plain&&u.default.createElement("div",{className:"hb-ef-opt",style:{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:1}},
         u.default.createElement("span",{style:{color:sc.inkSoft,fontSize:10.5}},"合計"),
         u.default.createElement("span",{style:{color:sc.inkSoft,fontSize:12}},HB_money(estT.sub))
+      ),
+      estT.sup>0&&u.default.createElement("div",{className:"hb-ef-opt",style:{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:1}},
+        u.default.createElement("span",{style:{color:sc.inkSoft,fontSize:10.5}},"監工費 ",estT.supRate,"%"),
+        u.default.createElement("span",{style:{color:sc.inkSoft,fontSize:12}},HB_money(estT.sup))
       ),
       estT.discount>0&&u.default.createElement("div",{className:"hb-ef-opt",style:{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:1}},
         u.default.createElement("span",{style:{color:sc.inkSoft,fontSize:10.5}},"折讓"),
@@ -17820,7 +17834,7 @@ function HB_estPubMap(r){
     engName:r.eng_name||"",siteAddress:r.site_address||"",
     quoteDate:r.quote_date||"",validDays:r.valid_days||"",
     depositNote:r.deposit_note||"",categories:r.categories||[],
-    discount:r.discount||0,taxRate:r.tax_rate||0};
+    discount:r.discount||0,taxRate:r.tax_rate||0,superviseRate:r.supervise_rate||0};
 }
 function HB_estFmtDate(x){
   if(!x)return"";
