@@ -22554,11 +22554,28 @@ react-dom/cjs/react-dom-client.production.js:
         frame.setAttribute('data-key', tool.key);
       }
       sheet.setAttribute('data-open', '1');
+      fitTop();
       try { sessionStorage.setItem('hbOpenTool', tool.key); } catch (e) {}   // 重新整理後留在這個工具
       document.documentElement.style.overflow = 'hidden';
       syncActive();
       close.focus();
     }
+    /* 面板緊貼在頁首導覽列下方：依實際看得到的導覽列高度計算，不再露出一條底下的頁面 */
+    function fitTop() {
+      var h = 0;
+      ['.hbtt-main', '.hb-topnav'].forEach(function (sel) {
+        var els = document.querySelectorAll(sel);
+        for (var i = 0; i < els.length; i++) {
+          var el = els[i];
+          if (sheet.contains(el)) continue;
+          var r = el.getBoundingClientRect();
+          if (r.height > 0 && r.top < 2 && r.bottom > h && getComputedStyle(el).visibility !== 'hidden') h = r.bottom;
+        }
+      });
+      if (h > 0) sheet.style.setProperty('top', Math.round(h) + 'px', 'important');
+      else sheet.style.removeProperty('top');
+    }
+    window.addEventListener('resize', function () { if (sheet.getAttribute('data-open')) fitTop(); });
     function shut() {
       sheet.removeAttribute('data-open');
       try { sessionStorage.removeItem('hbOpenTool'); } catch (e) {}
