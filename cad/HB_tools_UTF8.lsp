@@ -482,28 +482,76 @@
     (setq hb:*other* (subst (cons nm (1+ (cdr c))) c hb:*other*))
     (setq hb:*other* (cons (cons nm 1) hb:*other*))))
 
+;;; 圖塊在這張圖裡的說明（Comments）
+(defun hb:bdesc (nm / b)
+  (setq b (vl-catch-all-apply 'vla-item (list (vla-get-Blocks (vla-get-ActiveDocument (vlax-get-acad-object))) nm)))
+  (if (vl-catch-all-error-p b) "" (vla-get-Comments b)))
+
+;;; 在圖上把某種圖塊全部亮起來（看看是哪個燈）
+(defun hb:show-blk (nm / ss all i e n)
+  (setq all (ssget "_X" (list '(0 . "INSERT") (cons 410 (getvar "CTAB")))) ss (ssadd) i 0 n 0)
+  (if all
+    (repeat (sslength all)
+      (setq e (ssname all i) i (1+ i))
+      (if (= (hb:ref-name (vlax-ename->vla-object e)) nm) (progn (ssadd e ss) (setq n (1+ n))))))
+  (if (> n 0)
+    (progn (sssetfirst nil ss)
+           (getstring (strcat "\n「" nm "」共 " (itoa n) " 個，已在圖上亮起來（藍色夾點）。看完按 Enter 回到清單…"))
+           (sssetfirst nil nil))
+    (getstring (strcat "\n「" nm "」在別的圖塊裡面，沒辦法單獨亮起來。按 Enter 回到清單…"))))
+
 ;;; 勾選要一起列入的其他圖塊（燈具類預設勾好）
-(defun hb:pick-others (lst / id items sel pre i r)
+(defun hb:pick-others (lst / id items sel pre i r d nm out)
   (setq items (vl-sort lst '(lambda (a b) (< (car a) (car b)))))
-  (setq id (load_dialog (hb:write-dcl)))
-  (if (new_dialog "hb_pick" id)
-    (progn
-      (start_list "lst")
-      (foreach x items (add_list (strcat (car x) "　（" (itoa (cdr x)) " 個）")))
-      (end_list)
-      (setq i 0 pre "")
-      (foreach x items
-        (if (wcmatch (strcase (car x)) "*燈*,*LIGHT*,*LAMP*,*嵌*,*崁*,*筒*,*吸頂*,*吊*,*壁燈*,*DOWN*,*SPOT*")
-          (setq pre (strcat pre (itoa i) " ")))
-        (setq i (1+ i)))
-      (if (/= pre "") (set_tile "lst" (vl-string-right-trim " " pre)))
-      (setq sel pre)
-      (action_tile "lst" "(setq sel $value)")
-      (action_tile "all" "(setq sel (hb:all-idx (length items))) (set_tile \"lst\" sel)")
-      (setq r (start_dialog))))
-  (unload_dialog id)
+  (setq i 0 pre "")
+  (foreach x items
+    (if (wcmatch (strcase (strcat (car x) (hb:bdesc (car x)))) "*燈*,*LIGHT*,*LAMP*,*嵌*,*崁*,*筒*,*吸頂*,*吊*,*DOWN*,*SPOT*")
+      (setq pre (strcat pre (itoa i) " ")))
+    (setq i (1+ i)))
+  (setq sel (vl-string-right-trim " " pre) r 2)
+  (while (= r 2)
+    (setq id (load_dialog (hb:write-dcl)))
+    (if (new_dialog "hb_pick" id)
+      (progn
+        (start_list "lst")
+        (foreach x items
+          (setq d (hb:bdesc (car x)))
+          (add_list (strcat (if (/= d "") (strcat d "　〔" (car x) "〕") (car x)) "　（" (itoa (cdr x)) " 個）")))
+        (end_list)
+        (if (/= sel "") (set_tile "lst" sel))
+        (action_tile "lst" "(setq sel $value)")
+        (action_tile "all" "(setq sel (hb:all-idx (length items))) (set_tile \"lst\" sel)")
+        (action_tile "show" "(setq sel (get_tile \"lst\")) (done_dialog 2)")
+        (setq r (start_dialog)))
+      (setq r 0))
+    (unload_dialog id)
+    (if (= r 2)
+      (if (and sel (/= sel ""))
+        (hb:show-blk (car (nth (car (read (strcat "(" sel ")"))) items)))
+        (alert "先在清單點一個，再按「在圖上看是哪個」。"))))
   (if (and (= r 1) sel (/= sel ""))
-    (mapcar '(lambda (k) (nth k items)) (read (strcat "(" sel ")")))))
+    (progn
+      (foreach k (read (strcat "(" sel ")"))
+        (setq nm (car (nth k items)))
+        ;; 沒有中文名稱的（例如 DBB、FBFD）→ 問一次要叫什麼，記在這張圖裡
+        (if (= (hb:bdesc nm) "")
+          (progn
+            (hb:show-blk-quiet nm)
+            (setq d (getstring T (strcat "\n「" nm "」（已亮起來）在表格要叫什麼？例如 崁燈、吊燈 <" nm ">：")))
+            (sssetfirst nil nil)
+            (if (/= d "")
+              (vl-catch-all-apply 'vla-put-Comments
+                (list (vla-item (vla-get-Blocks (vla-get-ActiveDocument (vlax-get-acad-object))) nm) d)))))
+        (setq out (cons (nth k items) out)))
+      (reverse out))))
+
+(defun hb:show-blk-quiet (nm / ss all i e)
+  (setq all (ssget "_X" (list '(0 . "INSERT") (cons 410 (getvar "CTAB")))) ss (ssadd) i 0)
+  (if all
+    (repeat (sslength all)
+      (setq e (ssname all i) i (1+ i))
+      (if (= (hb:ref-name (vlax-ename->vla-object e)) nm) (ssadd e ss))))
+  (if (> (sslength ss) 0) (sssetfirst nil ss)))
 
 (defun hb:all-idx (n / i s)
   (setq i 0 s "")
@@ -544,7 +592,7 @@
         (setq id (vl-catch-all-apply 'vla-get-ObjectID32 (list bdef)))
         (if (vl-catch-all-error-p (vl-catch-all-apply 'vla-SetBlockTableRecordId32 (list tbl r 0 id :vlax-true)))
           (vl-catch-all-apply 'vla-SetBlockTableRecordId (list tbl r 0 (vla-get-ObjectID bdef) :vlax-true)))))
-    (vla-SetText tbl r 1 (if (and desc (/= desc "")) desc (car x)))
+    (vla-SetText tbl r 1 (cond ((and desc (/= desc "")) desc) ((/= (hb:bdesc (car x)) "") (hb:bdesc (car x))) (T (car x))))
     (if (> (vla-get-Columns tbl) 2) (vla-SetText tbl r 2 (itoa (cdr x))))
     (setq r (1+ r))))
 
@@ -627,7 +675,7 @@
                       (vl-catch-all-apply 'vla-SetBlockTableRecordId32 (list tbl r 0 id :vlax-true)))
                   (vl-catch-all-apply 'vla-SetBlockTableRecordId
                     (list tbl r 0 (vla-get-ObjectID bdef) :vlax-true)))))
-            (vla-SetText tbl r 1 (if (and desc (/= desc "")) desc (car x)))
+            (vla-SetText tbl r 1 (cond ((and desc (/= desc "")) desc) ((/= (hb:bdesc (car x)) "") (hb:bdesc (car x))) (T (car x))))
             (vla-SetText tbl r 2 (itoa (cdr x)))
             (vla-SetCellAlignment tbl r 2 5)
             (setq r (1+ r)))
@@ -1353,9 +1401,10 @@
       " : button { key = \"cancel\"; label = \"關閉\"; is_cancel = true; fixed_width = true; alignment = centered; width = 14; }"
       "}"
       "hb_pick : dialog { label = \"一起列入數量表\";"
-      " : text { label = \"這些圖塊不在圖塊庫裡。勾選要一起列入表格的（可複選，燈具已先勾好）：\"; }"
+      " : text { label = \"這些圖塊不在圖塊庫裡。勾選要一起列入表格的（可複選）。不知道是哪個，點一下再按「在圖上看是哪個」：\"; }"
       " : list_box { key = \"lst\"; width = 60; height = 18; multiple_select = true; }"
       " : row { : button { key = \"all\"; label = \"全選\"; width = 12; }"
+      "         : button { key = \"show\"; label = \"在圖上看是哪個\"; width = 18; }"
       "         : button { key = \"accept\"; label = \"確定\"; is_default = true; width = 12; }"
       "         : button { key = \"cancel\"; label = \"都不要\"; is_cancel = true; width = 12; } }"
       "}"
@@ -1455,5 +1504,5 @@
       ((= act 20) (hb:h-batch) (setq act 0))))
   (princ))
 
-(princ "\n【赫柏】赫柏工具（第 10 版）已載入。輸入 HB 打開面板。（新增：開關符號、安裝高度、填入現有圖例表、自畫燈具也能統計）")
+(princ "\n【赫柏】赫柏工具（第 10 版）已載入。輸入 HB 打開面板。（新增：開關符號、安裝高度、填入現有圖例表）")
 (princ)
