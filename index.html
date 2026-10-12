@@ -13118,6 +13118,7 @@ const HB_LIB_CSS=`
       .wbk-col+.wbk-col{border-left:1px solid var(--wb-line)}
       .wbk .wbc-colhead{margin-bottom:4px;gap:10px;min-height:28px}
       .wbk .wbc-colhead h3{font-size:18px;margin:0!important}
+      .wbk .wbc-colhead{flex-wrap:wrap;row-gap:2px}.wbk .wbc-colhead h3,.wbk .wbc-colhead .wbc-alert,.wbk .wbc-colhead .wbc-closedlink{white-space:nowrap}
       .wbk .wbc-num{min-width:24px;height:24px;font-size:12.5px}
       .wbk-colbody{flex:1;min-height:150px}
       .wbk .wbc-list{flex:none}
@@ -13179,7 +13180,8 @@ const HB_LIB_CSS=`
         .wbk-evbody small{display:none}
         .wbk-gap{margin-left:30px}
       }
-      @container wbk (max-width:860px){
+      /* 四欄每欄至少要約 260px 才放得下標題＋數字＋提醒；不夠寬（Mac 筆電、Windows 放大縮放）就改 2×2 */
+      @container wbk (max-width:1080px){
         .wbk-cols{grid-template-columns:repeat(2,minmax(0,1fr))}
         .wbk-col:nth-child(3){border-left:0;padding-left:6px}
         .wbk-col:nth-child(2){padding-right:6px}
