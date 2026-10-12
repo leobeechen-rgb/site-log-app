@@ -354,10 +354,57 @@
           (vla-Move ref (vlax-3d-point c) (vlax-3d-point pw))
           (setq hb:*offset-fixed* (1+ hb:*offset-fixed*)))))))
 
+;;; ==========================================================
+;;;  安裝高度：符號右邊標「H30」（離地公分）
+;;;  放符號時會問；已經放好的可用面板「加安裝高度」或指令 HBH 補標
+;;; ==========================================================
+(setq hb:*hmap* nil)
+(defun hb:h-default (name / v)
+  (cond ((setq v (cdr (assoc name hb:*hmap*))) v)
+        ((wcmatch name "*開關*") "120")
+        ((wcmatch name "*冷氣*") "210")
+        (T "30")))
+
+(defun hb:h-text (ref h / doc sp mn mx a b th tx)
+  (setq doc (vla-get-ActiveDocument (vlax-get-acad-object)))
+  (if (and (not (vl-catch-all-error-p (vl-catch-all-apply 'vla-GetBoundingBox (list ref 'mn 'mx))))
+           (setq sp (vl-catch-all-apply 'vla-ObjectIDToObject (list doc (vla-get-OwnerID ref))))
+           (not (vl-catch-all-error-p sp)))
+    (progn
+      (setq a (vlax-safearray->list mn) b (vlax-safearray->list mx)
+            th (max 1.0 (* 0.42 (- (cadr b) (cadr a)))))
+      (setq tx (vla-AddText sp (strcat "H" h)
+                 (vlax-3d-point (list (+ (car b) (* 0.25 th)) (- (/ (+ (cadr a) (cadr b)) 2.0) (/ th 2.0)) 0.0)) th))
+      (vla-put-Layer tx (vla-get-Layer ref))
+      tx)))
+
+;;; 問高度：Enter = 預設、0 = 不標；回傳字串或 nil
+(defun hb:h-ask (name / d s)
+  (setq d (hb:h-default name))
+  (setq s (getstring (strcat "\n安裝高度（離地公分，例如 30、110；打 0 不標）<" d ">：")))
+  (if (= s "") (setq s d))
+  (setq hb:*hmap* (cons (cons name s) (vl-remove-if '(lambda (x) (= (car x) name)) hb:*hmap*)))
+  (if (member s '("0" "N" "n")) nil s))
+
+;;; 已經放好的符號：框選後一次補標
+(defun hb:h-batch (/ ss i h n)
+  (princ "\n框選要標安裝高度的插座、開關…")
+  (if (setq ss (ssget '((0 . "INSERT"))))
+    (progn
+      (setq h (getstring "\n安裝高度（離地公分）<30>："))
+      (if (= h "") (setq h "30"))
+      (setq i 0 n 0)
+      (repeat (sslength ss)
+        (if (hb:h-text (vlax-ename->vla-object (ssname ss i)) h) (setq n (1+ n)))
+        (setq i (1+ i)))
+      (hb:say (strcat "已標 " (itoa n) " 個符號：H" h))))
+  (princ))
+(defun c:HBH () (hb:h-batch))
+
 ;;; 放符號的比例（預設 1，可在點位置時打 S 修改，會記住）
 (defun hb:psc () (atof (hb:get "HB_PSCALE" "1")))
 
-(defun hb:place (name / p pw e ref ang sc iu)
+(defun hb:place (name / p pw e ref ang sc iu hh)
   (if (hb:import-block name)
     (progn
       (hb:begin '("ATTREQ" "CMDECHO" "ATTDIA" "INSUNITS" "INSUNITSDEFSOURCE" "INSUNITSDEFTARGET"))
@@ -392,7 +439,8 @@
                 (hb:fix-offset ref pw)
                 (setq ang (getangle p "\n轉角度：移動滑鼠點一下，或直接按 Enter = 0 度"))
                 (if (and ang (/= ang 0.0))
-                  (vla-Rotate ref (vlax-3d-point pw) ang)))))))
+                  (vla-Rotate ref (vlax-3d-point pw) ang))
+                (if (setq hh (hb:h-ask name)) (hb:h-text ref hh)))))))
       (if (> hb:*offset-fixed* 0)
         (hb:say (strcat "「" name "」的基準點離圖形太遠，已自動放到你點的位置。"
                         "（要根治：到圖塊庫用 BEDIT 開這個圖塊，BASE 把基準點設在符號中心）")))
@@ -1167,7 +1215,8 @@
       " }"
       " : boxed_column { label = \"水電\";"
       "   : button { key = \"sym\"; label = \"放水電符號\"; height = 2.2; }"
-      "   : button { key = \"legend\"; label = \"圖例＋數量表\"; height = 2.2; }"
+      "   : row { : button { key = \"legend\"; label = \"圖例＋數量表\"; height = 2.2; }"
+      "           : button { key = \"hgt\"; label = \"加安裝高度\"; height = 2.2; } }"
       "   : row { : button { key = \"tosmart\"; label = \"轉成智能型（▲）\"; }"
       "           : button { key = \"tonormal\"; label = \"轉回一般型\"; } }"
       "   : row { : button { key = \"trk\"; label = \"軌道燈\"; }"
@@ -1264,6 +1313,7 @@
         (action_tile "dP" "(done_dialog 17)")
         (action_tile "dU" "(done_dialog 18)")
         (action_tile "dD" "(done_dialog 19)")
+        (action_tile "hgt" "(done_dialog 20)")
         (setq act (start_dialog))))
     (unload_dialog id)
     (cond
@@ -1284,7 +1334,8 @@
       ((= act 16) (hb:door "R") (setq act 0))
       ((= act 17) (hb:door "P") (setq act 0))
       ((= act 18) (hb:door "U") (setq act 0))
-      ((= act 19) (hb:door "D") (setq act 0))))
+      ((= act 19) (hb:door "D") (setq act 0))
+      ((= act 20) (hb:h-batch) (setq act 0))))
   (princ))
 
 (princ "\n【赫柏】赫柏工具（第 9 版）已載入。輸入 HB 打開面板。（新增：櫃體門片開門線）")
