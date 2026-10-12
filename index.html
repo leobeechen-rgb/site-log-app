@@ -12917,6 +12917,8 @@ const HB_LIB_CSS=`
       .hb-wb .wbk-pts .wbk-pt.on{background:#edf0e8!important;border-color:#2E4A3C!important;box-shadow:inset 0 0 0 1px #2E4A3C}
       .hb-wb .wbk-pts .wbk-pt.drop{background:#edf0e8!important;border:1.5px dashed #2E4A3C!important}
       .wbk-pt-art{display:block;width:40px;height:40px}
+      .wbk-pt-av img{width:40px;height:40px;border-radius:50%;object-fit:cover;display:block;box-shadow:0 1px 3px rgba(42,40,34,.18)}
+      .wbk-caseav-btn>.hb-cav{display:none}
       .wbk-pt-art .hb-art{max-width:40px}
       .wbk-pt-art .hb-art path,.wbk-pt-art .hb-art circle{stroke-width:3}
       .wbk-pt-name{display:block;max-width:100%;margin-top:4px;font-family:"Noto Serif TC",serif;font-size:12.5px;letter-spacing:.06em;line-height:1.35;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -16570,9 +16572,11 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
     const casePanel=h('section',{className:'wbk-case'+(pvReal?'':' is-empty'),'aria-label':'目前操作案件'},
       pvReal?h(u.default.Fragment,null,
         h('div',{className:'wbk-casehead'},
+          h(HbCaseAvatar,{key:'av'+pv,project:pvP,editable:true,size:44,className:'wbk-caseav'}),
           h('h3',null,pvName),h('span',{className:'wbk-casepill'},'目前操作案件'),
           h('span',{className:'wbk-casehint'},'在上方選擇案件，即可在此操作'),
           h('span',{className:'wbc-grow'}),
+          h(HbCaseAvatar,{key:'avb'+pv,project:pvP,editable:true,size:0,className:'wbk-caseav-btn',buttonLabel:'製作圓形貼',buttonClass:'wbk-caseedit'}),
           h('button',{type:'button',className:'wbk-caseedit',onClick:()=>setCaseMeta(true),title:'案件狀態、預計完工、客戶資料、LINE 群組'},'編輯專案'),
           caseMeta&&typeof HbProjectMetaModal==='function'&&HB_portal(h('div',{className:'wbk-metawrap'},h(HbProjectMetaModal,{project:pvP,onCancel:()=>setCaseMeta(false),onSave:mv=>{try{window.HB_projOps&&window.HB_projOps.update(pvP.id,mv)}catch(e){}setCaseMeta(false);caseSay('專案已更新')}}))),
           h('button',{type:'button',className:'wbk-casefold'+(caseFold?' is-fold':''),'aria-expanded':!caseFold,onClick:()=>setCaseFold(!caseFold)},caseFold?'展開':'收合',HB_wbIcon('caret',14))),
@@ -16668,7 +16672,7 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
               onDragOver:e=>{if(!isF(e))return;e.preventDefault();e.dataTransfer.dropEffect='copy';if(dropOn!==p.id)setDropOn(p.id)},
               onDragLeave:e=>{if(!e.currentTarget.contains(e.relatedTarget))setDropOn(d=>d===p.id?null:d)},
               onDrop:e=>{if(!isF(e))return;e.preventDefault();e.stopPropagation();setDropOn(null);const fs=Array.from(e.dataTransfer.files||[]);if(fs.length&&window.HB_inboxAdd)window.HB_inboxAdd(fs,p.id)}},
-            h('span',{className:'wbk-pt-art',dangerouslySetInnerHTML:{__html:window.HB_ART_FOR?window.HB_ART_FOR(p.id||p.name):''}}),
+            h(HbPtArt,{project:p}),
             h('span',{className:'wbk-pt-name'},p.name),
             v!=null?h('span',{className:'wbk-pt-bar','aria-label':'進度 '+v+'%'},h('i',{style:{width:Math.max(3,v)+'%'}})):null,
             h('span',{className:'wbk-pt-sub'},dropOn===p.id?'放開上傳':(v!=null?v+'%':'')))};
@@ -19383,7 +19387,15 @@ function HbAvatarMaker({project,onClose,onApply,onUpload}){
           C("button",{type:"button",className:"hb-avm-btn",onClick:save},C(E,{name:"download",size:15}),"存成圖片"),
           C("button",{type:"button",className:"hb-avm-btn solid",onClick:apply,disabled:busy||!img},busy?C(E,{name:"loader",size:15,className:"animate-spin"}):C(E,{name:"check",size:15}),busy?"套用中…":"套用到專案"))))),document.body);
 }
-function HbCaseAvatar({project,editable=false,className="",size=36}){
+/* 工作台上方案件小卡：有圓形貼就顯示圓形貼，沒有就顯示原本的插圖 */
+function HbPtArt({project}){
+  let[,tick]=(0,u.useState)(0);
+  (0,u.useEffect)(()=>{let f=()=>tick(x=>x+1);window.addEventListener(HB_AVATAR_EVT,f);return()=>window.removeEventListener(HB_AVATAR_EVT,f)},[]);
+  let url=HB_avatarOf(project),C=u.default.createElement;
+  return url?C("span",{className:"wbk-pt-art wbk-pt-av"},C("img",{src:url,alt:"",loading:"lazy"}))
+    :C("span",{className:"wbk-pt-art",dangerouslySetInnerHTML:{__html:window.HB_ART_FOR?window.HB_ART_FOR(project.id||project.name):""}});
+}
+function HbCaseAvatar({project,editable=false,className="",size=36,buttonLabel=null,buttonClass=""}){
   let[,tick]=(0,u.useState)(0),[busy,setBusy]=(0,u.useState)(!1),[menu,setMenu]=(0,u.useState)(!1),[maker,setMaker]=(0,u.useState)(!1),inp=(0,u.useRef)(null);
   (0,u.useEffect)(()=>{let f=()=>tick(x=>x+1);window.addEventListener(HB_AVATAR_EVT,f);return()=>window.removeEventListener(HB_AVATAR_EVT,f)},[]);
   let url=HB_avatarOf(project);
@@ -19410,6 +19422,7 @@ function HbCaseAvatar({project,editable=false,className="",size=36}){
         C("button",{type:"button",role:"menuitem",onClick:make},"重新製作"),
         C("button",{type:"button",role:"menuitem",onClick:pick},"改用照片"),
         C("button",{type:"button",role:"menuitem",className:"del",onClick:remove},"移除"))),
+    editable&&buttonLabel?C("button",{type:"button",className:buttonClass,onClick:make,title:"用案名與業主稱謂製作圓形貼（可存成 LINE 群組照片）"},buttonLabel):null,
     maker&&C(HbAvatarMaker,{project,onClose:()=>setMaker(!1),onApply:applyMade,onUpload:pick}));
 }
 function Ry({project:l,onClick:hbOpen,range:hbR,motionIndex=0,enableMotion=false,wbCount:hbWc=null,onCount:hbOnCount=null,editable=false,onSelect:hbSel=null,selected:hbIsSel=false,dimmed:hbDim=false,onDropFiles:hbDropF=null}){
