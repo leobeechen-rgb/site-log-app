@@ -570,124 +570,145 @@
     (setq hb:*cnt* (subst (cons nm (+ k (cdr c))) c hb:*cnt*))
     (setq hb:*cnt* (cons (cons nm k) hb:*cnt*))))
 
+;;; 表格一列的圖例：圖塊名稱有的話放圖塊圖示，沒有（軌道燈）就寫文字
+(defun hb:cell-sym (tbl r nm doc / bdef id)
+  (if (= nm "*TRACK*")
+    (progn (vla-SetText tbl r 0 "─○─○─") (vla-SetCellAlignment tbl r 0 5))
+    (progn
+      (setq bdef (vl-catch-all-apply 'vla-item (list (vla-get-Blocks doc) nm)))
+      (if (not (vl-catch-all-error-p bdef))
+        (progn
+          (setq id (vl-catch-all-apply 'vla-get-ObjectID32 (list bdef)))
+          (if (vl-catch-all-error-p (vl-catch-all-apply 'vla-SetBlockTableRecordId32 (list tbl r 0 id :vlax-true)))
+            (vl-catch-all-apply 'vla-SetBlockTableRecordId (list tbl r 0 (vla-get-ObjectID bdef) :vlax-true))))))))
+
+;;; rows：((圖塊名 名稱 數量文字) ...)
+(defun hb:put-rows (tbl r0 rows doc / r)
+  (setq r r0)
+  (foreach x rows
+    (hb:cell-sym tbl r (nth 0 x) doc)
+    (vla-SetText tbl r 1 (nth 1 x))
+    (if (> (vla-get-Columns tbl) 2) (progn (vla-SetText tbl r 2 (nth 2 x)) (vla-SetCellAlignment tbl r 2 5)))
+    (setq r (1+ r))))
+
 ;;; 填進現有表格：找到「數量」那一列當表頭，下面的列全部重做
-(defun hb:fill-table (tbl lst libdesc doc / hr nr c r desc bdef id rh)
+(defun hb:fill-table (tbl rows doc / hr nr c r rh)
   (setq nr (vla-get-Rows tbl) r 0)
   (while (and (< r nr) (null hr))
     (setq c 0)
     (repeat (vla-get-Columns tbl)
-      (if (wcmatch (vla-GetText tbl r c) "*數量*") (setq hr r))
+      (if (wcmatch (vla-GetText tbl r c) "*數量*,*名稱*,*圖例*") (setq hr r))
       (setq c (1+ c)))
+    (if (and hr (= (vla-GetText tbl hr 0) "水電圖例")) (setq hr nil))
     (setq r (1+ r)))
   (if (null hr) (setq hr 1))
   (setq rh (vla-GetRowHeight tbl (min (1+ hr) (1- nr))))
   (if (> (- nr hr 1) 0) (vla-DeleteRows tbl (1+ hr) (- nr hr 1)))
-  (if lst (vla-InsertRows tbl (1+ hr) rh (length lst)))
-  (setq r (1+ hr))
-  (foreach x lst
-    (setq desc (cdr (assoc (hb:smart-base (car x)) libdesc)))
-    (setq bdef (vl-catch-all-apply 'vla-item (list (vla-get-Blocks doc) (car x))))
-    (if (not (vl-catch-all-error-p bdef))
-      (progn
-        (setq id (vl-catch-all-apply 'vla-get-ObjectID32 (list bdef)))
-        (if (vl-catch-all-error-p (vl-catch-all-apply 'vla-SetBlockTableRecordId32 (list tbl r 0 id :vlax-true)))
-          (vl-catch-all-apply 'vla-SetBlockTableRecordId (list tbl r 0 (vla-get-ObjectID bdef) :vlax-true)))))
-    (vla-SetText tbl r 1 (cond ((and desc (/= desc "")) desc) ((/= (hb:bdesc (car x)) "") (hb:bdesc (car x))) (T (car x))))
-    (if (> (vla-get-Columns tbl) 2) (vla-SetText tbl r 2 (itoa (cdr x))))
-    (setq r (1+ r))))
+  (if rows (vla-InsertRows tbl (1+ hr) rh (length rows)))
+  (hb:put-rows tbl (1+ hr) rows doc))
 
-(defun hb:legend (/ doc libnames ss i e nm ent cnt lst pt h tbl r space bdef id rows libdesc desc ti trklen trkn trkc tops pk)
+;;; 勾選要放進圖例表的符號（圖面上有的先勾好、帶數量）
+(defun hb:leg-pick (items / id sel r i pre)
+  (setq i 0 pre "")
+  (foreach x items (if (> (nth 3 x) 0) (setq pre (strcat pre (itoa i) " "))) (setq i (1+ i)))
+  (setq sel (vl-string-right-trim " " pre))
+  (setq id (load_dialog (hb:write-dcl)))
+  (if (new_dialog "hb_leg" id)
+    (progn
+      (start_list "lst")
+      (foreach x items
+        (add_list (strcat (nth 1 x) (if (> (nth 3 x) 0) (strcat "　…　" (nth 2 x)) "") (if (nth 4 x) "　〔圖面上其他圖塊〕" ""))))
+      (end_list)
+      (if (/= sel "") (set_tile "lst" sel))
+      (action_tile "lst" "(setq sel $value)")
+      (action_tile "all" "(setq sel (hb:all-idx (length items))) (set_tile \"lst\" sel)")
+      (action_tile "none" "(setq sel \"\") (set_tile \"lst\" \"\")")
+      (setq r (start_dialog))))
+  (unload_dialog id)
+  (if (and (= r 1) sel (/= sel ""))
+    (mapcar '(lambda (k) (nth k items)) (read (strcat "(" sel ")")))
+    (if (= r 1) 'none)))
+
+;;; ==========================================================
+;;;  圖例＋數量表（不用框選）：
+;;;  自動數這一頁 → 清單列出圖塊庫全部符號（圖面上有的已勾、帶數量）→ 勾選 → 做表或填進現有表格
+;;; ==========================================================
+(defun hb:legend (/ doc libdesc libnames ss i e ent ti trklen trkn trkc items c d pk pt h tbl space rows pick)
   (setq doc (vla-get-ActiveDocument (vlax-get-acad-object)))
   (hb:begin '("CMDECHO"))
   (setvar "CMDECHO" 0)
   (if (and (/= (hb:lib) "") (findfile (hb:lib)))
     (setq libdesc (hb:lib-blocks) libnames (mapcar 'car libdesc)))
-  (princ "\n框選要統計的範圍（直接按 Enter = 這個頁面全部）")
-  (setq ss (ssget '((-4 . "<OR") (0 . "INSERT") (0 . "LWPOLYLINE") (-4 . "OR>"))))
-  (if (null ss) (setq ss (ssget "_X" (list '(-4 . "<OR") '(0 . "INSERT") '(0 . "LWPOLYLINE") '(-4 . "OR>")
-                                           (cons 410 (getvar "CTAB"))))))
+  ;; 1. 數這一頁（含圖塊裡面的）
   (setq trklen 0.0 trkn 0 trkc 0 hb:*cnt* nil hb:*other* nil)
+  (setq ss (ssget "_X" (list '(-4 . "<OR") '(0 . "INSERT") '(0 . "LWPOLYLINE") '(-4 . "OR>") (cons 410 (getvar "CTAB")))))
   (if ss
     (progn
       (setq i 0)
       (repeat (sslength ss)
         (setq e (ssname ss i) ent (vlax-ename->vla-object e) i (1+ i))
         (if (/= (vla-get-ObjectName ent) "AcDbBlockReference")
-          ;; 軌道燈：累計長度和盞數
           (if (setq ti (hb:trk-info e))
-            (setq trklen (+ trklen (distance (nth 0 ti) (nth 1 ti)))
-                  trkn (+ trkn (nth 2 ti)) trkc (1+ trkc)))
-        (progn
-          (setq tops (cons (hb:ref-name ent) tops))
+            (setq trklen (+ trklen (distance (nth 0 ti) (nth 1 ti))) trkn (+ trkn (nth 2 ti)) trkc (1+ trkc)))
           (hb:count-ref ent libnames 0)))))
-    (setq lst hb:*cnt*))
-  ;; 範圍裡有不在圖塊庫的圖塊 → 讓使用者勾選要不要一起列入（例如自己畫的燈具）
-  (if (and libnames hb:*other*)
-    (setq lst (append lst (hb:pick-others hb:*other*))))
-  (setq lst (vl-sort lst '(lambda (a b) (< (car a) (car b)))))
-  (if (and (null lst) (= trkc 0))
-    (alert (if libnames
-             (strcat "範圍裡沒有圖塊庫的符號。\n\n框到的圖塊名稱：" (hb:name-list tops)
-                     "\n\n符號要用「放水電符號」放，名稱才對得上圖塊庫。")
-             "範圍裡沒有圖塊。"))
+  ;; 2. 清單項目：(圖塊名 顯示名稱 數量文字 數量 其他?)
+  (foreach b (vl-remove-if '(lambda (x) (wcmatch (car x) "*_智能")) libdesc)
+    (setq c (+ (cond ((cdr (assoc (car b) hb:*cnt*))) (0)) (cond ((cdr (assoc (strcat (car b) "_智能") hb:*cnt*))) (0))))
+    (setq items (cons (list (car b) (hb:label b) (strcat (itoa c) " 個") c nil) items)))
+  (setq items (reverse items))
+  (if (> trkc 0)
+    (setq items (cons (list "*TRACK*" (strcat "軌道燈（" (itoa trkc) " 條，合計 L=" (rtos trklen 2 0) "）") (strcat (itoa trkn) " 盞") trkn nil) items)))
+  (foreach o (vl-sort hb:*other* '(lambda (a b) (< (car a) (car b))))
+    (setq d (hb:bdesc (car o)))
+    (setq items (append items (list (list (car o) (if (/= d "") d (car o)) (strcat (itoa (cdr o)) " 個") 0 T)))))
+  (if (null items)
+    (alert "沒有可以列的符號。\n請先在 HB 面板「指定圖塊庫」。")
     (progn
-      (princ "\n—— 數量統計 ——")
-      (foreach x lst (princ (strcat "\n  " (car x) "：" (itoa (cdr x)))))
-      (if (> trkc 0) (princ (strcat "\n  軌道燈：" (itoa trkc) " 條，合計 L=" (rtos trklen 2 0) "，" (itoa trkn) " 盞")))
-      (initget 6)
-      (setq h (getreal (strcat "\n表格字高 <" (if (= (getvar "CVPORT") 1) "3.5" (if (= (getvar "INSUNITS") 5) "15" "150")) ">：")))
-      (if (null h) (setq h (if (= (getvar "CVPORT") 1) 3.5 (if (= (getvar "INSUNITS") 5) 15.0 150.0))))
-      (initget "T")
-      (setq pt (getpoint "\n點表格要放的位置（左上角），或 [填入現有表格(T)]："))
-      (if (= pt "T")
-        (progn
-          (setq pk (entsel "\n點一下要填的表格（例如圖框裡的「水電圖例」）："))
-          (if (and pk (= (cdr (assoc 0 (entget (car pk)))) "ACAD_TABLE"))
-            (progn
-              (setq tbl (vlax-ename->vla-object (car pk)))
-              (hb:fill-table tbl lst libdesc doc)
-              (hb:say "已填入表格。數量不會自動更新，改圖後再做一次。"))
-            (alert "點到的不是表格。"))
-          (setq pt nil)))
-      (if pt
-        (progn
-          (setq space (if (= (getvar "CVPORT") 1) (vla-get-PaperSpace doc) (vla-get-ModelSpace doc)))
-          (setq rows (+ 2 (length lst) (if (> trkc 0) 1 0)))
-          (setq tbl (vla-AddTable space (vlax-3d-point pt) rows 3 (* h 2.6) (* h 10)))
-          (vl-catch-all-apply 'vla-put-RegenerateTableSuppressed (list tbl :vlax-true))
-          (vla-SetColumnWidth tbl 0 (* h 7))
-          (vla-SetColumnWidth tbl 1 (* h 16))
-          (vla-SetColumnWidth tbl 2 (* h 6))
-          (vla-SetTextHeight tbl 7 h)
-          (vla-SetText tbl 0 0 "水電圖例")
-          (vla-SetText tbl 1 0 "圖例")
-          (vla-SetText tbl 1 1 "名稱")
-          (vla-SetText tbl 1 2 "數量")
-          (setq r 2)
-          (foreach x lst
-            (setq desc (cdr (assoc (hb:smart-base (car x)) libdesc)))
-            (if (and desc (/= desc "") (wcmatch (car x) "*_智能")) (setq desc (strcat desc "（智能）")))
-            (setq bdef (vl-catch-all-apply 'vla-item (list (vla-get-Blocks doc) (car x))))
-            (if (not (vl-catch-all-error-p bdef))
-              (progn
-                (setq id (vl-catch-all-apply 'vla-get-ObjectID32 (list bdef)))
-                (if (vl-catch-all-error-p
-                      (vl-catch-all-apply 'vla-SetBlockTableRecordId32 (list tbl r 0 id :vlax-true)))
-                  (vl-catch-all-apply 'vla-SetBlockTableRecordId
-                    (list tbl r 0 (vla-get-ObjectID bdef) :vlax-true)))))
-            (vla-SetText tbl r 1 (cond ((and desc (/= desc "")) desc) ((/= (hb:bdesc (car x)) "") (hb:bdesc (car x))) (T (car x))))
-            (vla-SetText tbl r 2 (itoa (cdr x)))
-            (vla-SetCellAlignment tbl r 2 5)
-            (setq r (1+ r)))
-          (if (> trkc 0)
-            (progn
-              (vla-SetText tbl r 0 "─○─○─")
-              (vla-SetCellAlignment tbl r 0 5)
-              (vla-SetText tbl r 1 (strcat "軌道燈（" (itoa trkc) " 條，合計 L=" (rtos trklen 2 0) "）"))
-              (vla-SetText tbl r 2 (strcat (itoa trkn) " 盞"))
-              (vla-SetCellAlignment tbl r 2 5)))
-          (vl-catch-all-apply 'vla-put-RegenerateTableSuppressed (list tbl :vlax-false))
-          (hb:say "圖例＋數量表完成。數量不會自動更新，改圖後請刪掉表格再做一次。")))))
+      ;; 3. 勾選
+      (setq pick (hb:leg-pick items))
+      (cond
+        ((null pick) (princ "\n已取消。"))
+        ((= pick 'none) (alert "沒有勾選任何符號。"))
+        (T
+         ;; 圖塊庫的符號匯進這張圖，表格才放得了圖示
+         (foreach x pick (if (and (null (nth 4 x)) (/= (car x) "*TRACK*")) (hb:import-block (car x))))
+         (setq rows (mapcar '(lambda (x / nm)
+                               (list (car x)
+                                     (if (nth 4 x) (nth 1 x)
+                                       (if (= (car x) "*TRACK*") (nth 1 x)
+                                         (cond ((/= (cdr (assoc (car x) libdesc)) "") (cdr (assoc (car x) libdesc))) (T (car x)))))
+                                     (if (nth 4 x) (vl-string-subst "" " 個" (nth 2 x))
+                                       (if (> (nth 3 x) 0) (if (= (car x) "*TRACK*") (nth 2 x) (itoa (nth 3 x))) ""))))
+                            pick))
+         ;; 4. 做表或填進現有表格
+         (initget "T")
+         (setq pt (getpoint "\n點表格要放的位置（左上角），或 [填入現有表格(T)]："))
+         (if (= pt "T")
+           (progn
+             (setq pk (entsel "\n點一下要填的表格（例如圖框裡的「水電圖例」）："))
+             (if (and pk (= (cdr (assoc 0 (entget (car pk)))) "ACAD_TABLE"))
+               (progn (hb:fill-table (vlax-ename->vla-object (car pk)) rows doc)
+                      (hb:say "已填入表格。數量是現在圖面上的數量，改圖後再做一次。"))
+               (alert "點到的不是表格。")))
+           (if pt
+             (progn
+               (initget 6)
+               (setq h (getreal (strcat "\n表格字高 <" (if (= (getvar "CVPORT") 1) "3.5" (if (= (getvar "INSUNITS") 5) "15" "150")) ">：")))
+               (if (null h) (setq h (if (= (getvar "CVPORT") 1) 3.5 (if (= (getvar "INSUNITS") 5) 15.0 150.0))))
+               (setq space (if (= (getvar "CVPORT") 1) (vla-get-PaperSpace doc) (vla-get-ModelSpace doc)))
+               (setq tbl (vla-AddTable space (vlax-3d-point pt) (+ 2 (length rows)) 3 (* h 2.6) (* h 10)))
+               (vl-catch-all-apply 'vla-put-RegenerateTableSuppressed (list tbl :vlax-true))
+               (vla-SetColumnWidth tbl 0 (* h 7))
+               (vla-SetColumnWidth tbl 1 (* h 16))
+               (vla-SetColumnWidth tbl 2 (* h 6))
+               (vla-SetTextHeight tbl 7 h)
+               (vla-SetText tbl 0 0 "水電圖例")
+               (vla-SetText tbl 1 0 "圖例")
+               (vla-SetText tbl 1 1 "名稱")
+               (vla-SetText tbl 1 2 "數量")
+               (hb:put-rows tbl 2 rows doc)
+               (vl-catch-all-apply 'vla-put-RegenerateTableSuppressed (list tbl :vlax-false))
+               (hb:say "圖例表完成。數量是現在圖面上的數量，改圖後再做一次。"))))))))
   (hb:end)
   (princ))
 
@@ -1364,7 +1385,7 @@
   (setq fn (strcat (getvar "TEMPPREFIX") "HB_tools.dcl"))
   (setq f (open fn "w"))
   (foreach s
-    '("hb_main : dialog { label = \"赫柏工具  HERFULSINS（第 10 版）\";"
+    '("hb_main : dialog { label = \"赫柏工具  HERFULSINS（第 11 版）\";"
       " : text { label = \"點按鈕就好，不用記指令。下次只要輸入 HB 打開這裡。\"; }"
       " : spacer { height = 0.5; }"
       " : boxed_column { label = \"出 PDF（A3 橫式、1:1、存到 PDF_OUTPUT）\";"
@@ -1399,6 +1420,14 @@
       " }"
       " : spacer { height = 0.5; }"
       " : button { key = \"cancel\"; label = \"關閉\"; is_cancel = true; fixed_width = true; alignment = centered; width = 14; }"
+      "}"
+      "hb_leg : dialog { label = \"圖例＋數量表\";"
+      " : text { label = \"勾選要放進圖例表的符號（可複選；這一頁有用到的已經勾好，後面是數量）：\"; }"
+      " : list_box { key = \"lst\"; width = 64; height = 22; multiple_select = true; }"
+      " : row { : button { key = \"all\"; label = \"全選\"; width = 12; }"
+      "         : button { key = \"none\"; label = \"全部取消\"; width = 12; }"
+      "         : button { key = \"accept\"; label = \"確定\"; is_default = true; width = 12; }"
+      "         : button { key = \"cancel\"; label = \"取消\"; is_cancel = true; width = 12; } }"
       "}"
       "hb_pick : dialog { label = \"一起列入數量表\";"
       " : text { label = \"這些圖塊不在圖塊庫裡。勾選要一起列入表格的（可複選）。不知道是哪個，點一下再按「在圖上看是哪個」：\"; }"
@@ -1504,5 +1533,5 @@
       ((= act 20) (hb:h-batch) (setq act 0))))
   (princ))
 
-(princ "\n【赫柏】赫柏工具（第 10 版）已載入。輸入 HB 打開面板。（新增：開關符號、安裝高度、填入現有圖例表）")
+(princ "\n【赫柏】赫柏工具（第 11 版）已載入。輸入 HB 打開面板。（新增：開關符號、安裝高度、填入現有圖例表）")
 (princ)
