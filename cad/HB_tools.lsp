@@ -636,13 +636,24 @@
   (setq x0 (car p0) y0 (cadr p0) w1 (* 6 h) w2 (* 14 h) w3 (* 5 h) rh (* 2.4 h)
         n (+ 2 (length rows)) W (+ w1 w2 w3) H (* n rh))
   (defun add-l (a b) (vla-AddLine sp (vlax-3d-point (list (car a) (cadr a) 0.0)) (vlax-3d-point (list (car b) (cadr b) 0.0))))
-  (defun add-t (s x y hh / t1)
-    ;; 用多行文字＋內嵌字高與字型：不受文字樣式的固定字高影響
+  (defun add-t (s x y hh maxw / t1 mn mx bh bw k)
     (setq t1 (vla-AddMText sp (vlax-3d-point (list x y 0.0)) 0.0
-               (strcat "{\\fMingLiU|b0|i0|c136|p49;\\H" (rtos hh 2 3) ";" s "}")))
+               (strcat "{\\fMingLiU|b0|i0|c136|p49;" s "}")))
     (vl-catch-all-apply 'vla-put-Height (list t1 hh))
     (vla-put-AttachmentPoint t1 5)
     (vla-put-InsertionPoint t1 (vlax-3d-point (list x y 0.0)))
+    ;; 不管文字樣式怎麼設，量實際大小再縮放：字高＝hh，寬度不超過格子
+    (if (not (vl-catch-all-error-p (vl-catch-all-apply 'vla-GetBoundingBox (list t1 'mn 'mx))))
+      (progn
+        (setq mn (vlax-safearray->list mn) mx (vlax-safearray->list mx)
+              bh (max 1e-6 (- (cadr mx) (cadr mn))) bw (max 1e-6 (- (car mx) (car mn)))
+              k (min (/ hh bh) (/ (* 0.9 maxw) bw)))
+        (if (> (abs (- k 1.0)) 0.02)
+          (vla-ScaleEntity t1 (vlax-3d-point (list x y 0.0)) k))
+        (vla-GetBoundingBox t1 'mn 'mx)
+        (setq mn (vlax-safearray->list mn) mx (vlax-safearray->list mx))
+        (vla-Move t1 (vlax-3d-point (list (/ (+ (car mn) (car mx)) 2.0) (/ (+ (cadr mn) (cadr mx)) 2.0) 0.0))
+                     (vlax-3d-point (list x y 0.0)))))
     t1)
   ;; 外框與橫線
   (setq r 0)
@@ -655,16 +666,16 @@
   (add-l (list (+ x0 w1) (- y0 rh)) (list (+ x0 w1) (- y0 H)))
   (add-l (list (+ x0 w1 w2) (- y0 rh)) (list (+ x0 w1 w2) (- y0 H)))
   ;; 標題、表頭
-  (add-t "水電圖例" (+ x0 (/ W 2.0)) (- y0 (* 0.5 rh)) (* 1.15 h))
-  (add-t "圖例" (+ x0 (/ w1 2.0)) (- y0 (* 1.5 rh)) h)
-  (add-t "名稱" (+ x0 w1 (/ w2 2.0)) (- y0 (* 1.5 rh)) h)
-  (add-t "數量" (+ x0 w1 w2 (/ w3 2.0)) (- y0 (* 1.5 rh)) h)
+  (add-t "水電圖例" (+ x0 (/ W 2.0)) (- y0 (* 0.5 rh)) (* 1.15 h) W)
+  (add-t "圖例" (+ x0 (/ w1 2.0)) (- y0 (* 1.5 rh)) h w1)
+  (add-t "名稱" (+ x0 w1 (/ w2 2.0)) (- y0 (* 1.5 rh)) h w2)
+  (add-t "數量" (+ x0 w1 w2 (/ w3 2.0)) (- y0 (* 1.5 rh)) h w3)
   ;; 每一列
   (setq r 2)
   (foreach x rows
     (setq c (list (+ x0 (/ w1 2.0)) (- y0 (* (+ r 0.5) rh)) 0.0))
     (if (= (nth 0 x) "*TRACK*")
-      (add-t "─○─○─" (car c) (cadr c) h)
+      (add-t "─○─○─" (car c) (cadr c) h w1)
       (if (tblsearch "BLOCK" (nth 0 x))
         (progn
           ;; 放一個符號，縮放到格子高度的 65%
@@ -679,8 +690,8 @@
               (setq mn (vlax-safearray->list mn) mx (vlax-safearray->list mx))
               (vla-Move ref (vlax-3d-point (list (/ (+ (car mn) (car mx)) 2.0) (/ (+ (cadr mn) (cadr mx)) 2.0) 0.0))
                             (vlax-3d-point c)))))))
-    (add-t (nth 1 x) (+ x0 w1 (/ w2 2.0)) (cadr c) h)
-    (if (/= (nth 2 x) "") (add-t (nth 2 x) (+ x0 w1 w2 (/ w3 2.0)) (cadr c) h))
+    (add-t (nth 1 x) (+ x0 w1 (/ w2 2.0)) (cadr c) h w2)
+    (if (/= (nth 2 x) "") (add-t (nth 2 x) (+ x0 w1 w2 (/ w3 2.0)) (cadr c) h w3))
     (setq r (1+ r)))
   (princ))
 
@@ -1423,7 +1434,7 @@
   (setq fn (strcat (getvar "TEMPPREFIX") "HB_tools.dcl"))
   (setq f (open fn "w"))
   (foreach s
-    '("hb_main : dialog { label = \"赫柏工具  HERFULSINS（第 14 版）\";"
+    '("hb_main : dialog { label = \"赫柏工具  HERFULSINS（第 15 版）\";"
       " : text { label = \"點按鈕就好，不用記指令。下次只要輸入 HB 打開這裡。\"; }"
       " : spacer { height = 0.5; }"
       " : boxed_column { label = \"出 PDF（A3 橫式、1:1、存到 PDF_OUTPUT）\";"
@@ -1571,5 +1582,5 @@
       ((= act 20) (hb:h-batch) (setq act 0))))
   (princ))
 
-(princ "\n【赫柏】赫柏工具（第 14 版）已載入。輸入 HB 打開面板。（新增：開關符號、安裝高度、填入現有圖例表）")
+(princ "\n【赫柏】赫柏工具（第 15 版）已載入。輸入 HB 打開面板。（新增：開關符號、安裝高度、填入現有圖例表）")
 (princ)
