@@ -7582,7 +7582,7 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
   let[selectedItems,setSelectedItems]=(0,u.useState)({});
   let[itemClipboard,setItemClipboard]=(0,u.useState)(null);
   let[sheetMode,setSheetMode]=(0,u.useState)(!1),[hbFootOpen,hbSetFootOpen]=(0,u.useState)(!1);
-  let[showCosts,setShowCosts]=u.useState(false),[collapsed,setCollapsed]=u.useState({});
+  let[showCosts,setShowCosts]=u.useState(true),[collapsed,setCollapsed]=u.useState({});
 
   /* ===== 常用工項單價庫：打字即時建議 / 一鍵帶入 / 存回單價庫 ===== */
   let[pbSug,setPbSug]=(0,u.useState)(null);
