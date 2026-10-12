@@ -472,7 +472,43 @@
      (if (< depth 4) (hb:count-in (vla-get-Name ent) libnames depth)))
     ((or (null libnames) (member (hb:smart-base nm) libnames))
      (hb:add-cnt nm 1))
-    ((< depth 4) (hb:count-in (vla-get-Name ent) libnames depth))))
+    (T
+     ;; 不在圖塊庫的圖塊（例如自己畫的燈具）：記下來讓使用者勾選要不要列入
+     (hb:add-other nm)
+     (if (< depth 4) (hb:count-in (vla-get-Name ent) libnames depth)))))
+
+(defun hb:add-other (nm / c)
+  (if (setq c (assoc nm hb:*other*))
+    (setq hb:*other* (subst (cons nm (1+ (cdr c))) c hb:*other*))
+    (setq hb:*other* (cons (cons nm 1) hb:*other*))))
+
+;;; 勾選要一起列入的其他圖塊（燈具類預設勾好）
+(defun hb:pick-others (lst / id items sel pre i r)
+  (setq items (vl-sort lst '(lambda (a b) (< (car a) (car b)))))
+  (setq id (load_dialog (hb:write-dcl)))
+  (if (new_dialog "hb_pick" id)
+    (progn
+      (start_list "lst")
+      (foreach x items (add_list (strcat (car x) "　（" (itoa (cdr x)) " 個）")))
+      (end_list)
+      (setq i 0 pre "")
+      (foreach x items
+        (if (wcmatch (strcase (car x)) "*燈*,*LIGHT*,*LAMP*,*嵌*,*崁*,*筒*,*吸頂*,*吊*,*壁燈*,*DOWN*,*SPOT*")
+          (setq pre (strcat pre (itoa i) " ")))
+        (setq i (1+ i)))
+      (if (/= pre "") (set_tile "lst" (vl-string-right-trim " " pre)))
+      (setq sel pre)
+      (action_tile "lst" "(setq sel $value)")
+      (action_tile "all" "(setq sel (hb:all-idx (length items))) (set_tile \"lst\" sel)")
+      (setq r (start_dialog))))
+  (unload_dialog id)
+  (if (and (= r 1) sel (/= sel ""))
+    (mapcar '(lambda (k) (nth k items)) (read (strcat "(" sel ")")))))
+
+(defun hb:all-idx (n / i s)
+  (setq i 0 s "")
+  (repeat n (setq s (strcat s (itoa i) " ") i (1+ i)))
+  (vl-string-right-trim " " s))
 
 (defun hb:count-in (bname libnames depth / blk)
   (setq blk (vl-catch-all-apply 'vla-item (list (vla-get-Blocks (vla-get-ActiveDocument (vlax-get-acad-object))) bname)))
@@ -522,7 +558,7 @@
   (setq ss (ssget '((-4 . "<OR") (0 . "INSERT") (0 . "LWPOLYLINE") (-4 . "OR>"))))
   (if (null ss) (setq ss (ssget "_X" (list '(-4 . "<OR") '(0 . "INSERT") '(0 . "LWPOLYLINE") '(-4 . "OR>")
                                            (cons 410 (getvar "CTAB"))))))
-  (setq trklen 0.0 trkn 0 trkc 0 hb:*cnt* nil)
+  (setq trklen 0.0 trkn 0 trkc 0 hb:*cnt* nil hb:*other* nil)
   (if ss
     (progn
       (setq i 0)
@@ -537,6 +573,9 @@
           (setq tops (cons (hb:ref-name ent) tops))
           (hb:count-ref ent libnames 0)))))
     (setq lst hb:*cnt*))
+  ;; 範圍裡有不在圖塊庫的圖塊 → 讓使用者勾選要不要一起列入（例如自己畫的燈具）
+  (if (and libnames hb:*other*)
+    (setq lst (append lst (hb:pick-others hb:*other*))))
   (setq lst (vl-sort lst '(lambda (a b) (< (car a) (car b)))))
   (if (and (null lst) (= trkc 0))
     (alert (if libnames
@@ -1313,6 +1352,13 @@
       " : spacer { height = 0.5; }"
       " : button { key = \"cancel\"; label = \"關閉\"; is_cancel = true; fixed_width = true; alignment = centered; width = 14; }"
       "}"
+      "hb_pick : dialog { label = \"一起列入數量表\";"
+      " : text { label = \"這些圖塊不在圖塊庫裡。勾選要一起列入表格的（可複選，燈具已先勾好）：\"; }"
+      " : list_box { key = \"lst\"; width = 60; height = 18; multiple_select = true; }"
+      " : row { : button { key = \"all\"; label = \"全選\"; width = 12; }"
+      "         : button { key = \"accept\"; label = \"確定\"; is_default = true; width = 12; }"
+      "         : button { key = \"cancel\"; label = \"都不要\"; is_cancel = true; width = 12; } }"
+      "}"
       "hb_sym : dialog { label = \"放水電符號\";"
       " : text { label = \"選一個符號，按「放置」，然後在圖上點位置（可以連續放）。\"; }"
       " : list_box { key = \"lst\"; width = 52; height = 20; }"
@@ -1409,5 +1455,5 @@
       ((= act 20) (hb:h-batch) (setq act 0))))
   (princ))
 
-(princ "\n【赫柏】赫柏工具（第 10 版）已載入。輸入 HB 打開面板。（新增：開關符號、安裝高度、填入現有圖例表）")
+(princ "\n【赫柏】赫柏工具（第 10 版）已載入。輸入 HB 打開面板。（新增：開關符號、安裝高度、填入現有圖例表、自畫燈具也能統計）")
 (princ)
