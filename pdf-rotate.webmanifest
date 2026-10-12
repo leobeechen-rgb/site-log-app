@@ -1,0 +1,13 @@
+{
+  "name": "PDF 轉正｜赫柏空間設計",
+  "short_name": "PDF 轉正",
+  "start_url": "/pdf-rotate.html",
+  "scope": "/pdf-rotate.html",
+  "display": "standalone",
+  "background_color": "#F4F1EA",
+  "theme_color": "#1E1C19",
+  "icons": [
+    {"src": "/pdf-rotate-icon-512.png", "sizes": "512x512", "type": "image/png"},
+    {"src": "/pdf-rotate-icon-180.png", "sizes": "180x180", "type": "image/png"}
+  ]
+}
