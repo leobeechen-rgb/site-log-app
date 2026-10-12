@@ -5,8 +5,8 @@
 //   HB_OA_CHANNEL_SECRET  LINE Developers → 官方帳號的 Messaging API Channel → Basic settings → Channel secret（必填）
 //   HB_OA_ACCESS_TOKEN    同一個 Channel → Messaging API → Channel access token（存照片、群組回覆、顯示群組名稱需要）
 // LINE Developers 的 Webhook URL 設為 https://rqndozhhvuimqjqtmeli.supabase.co/functions/v1/hb-line-oa 並開啟 Use webhook。
-import { isPaymentText, parseAmount, isDefectText, bindQuery } from './detect.mjs';
-const VERSION = '2026-10-12.2';
+import { isPaymentText, parseAmount, isDefectText, bindQuery, parseAppt } from './detect.mjs';
+const VERSION = '2026-10-13.1';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!, SERVICE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const SECRET = (Deno.env.get('HB_OA_CHANNEL_SECRET') || '').trim(), TOKEN = (Deno.env.get('HB_OA_ACCESS_TOKEN') || '').trim();
 const enc = new TextEncoder();
@@ -151,6 +151,18 @@ async function handle(e: any) {
     else if (b?.why === 'many') await reply(e.replyToken, '找到好幾個案件：' + (b.names || []).join('、') + '。請輸入完整案名，例如「綁定 ' + ((b.names || [])[0] || '') + '」。');
     else if (b?.why === 'none') await reply(e.replyToken, '找不到「' + bq + '」這個案件，請確認工地紀錄本裡的案名。');
     return;
+  }
+  // 群組裡提到約定（日期＋時間或行動）→ 加進設計師待辦並通知；不影響後面的匯款／缺失判斷
+  if (src.type !== 'user') {
+    try {
+      const ap = parseAppt(text, new Date(Date.now() + 8 * 3600e3));
+      if (ap) {
+        let who: string | null = null;
+        if (sender && src.type === 'group') who = (await lineGet('group/' + src.groupId + '/member/' + sender))?.displayName || null;
+        const id = await rpc('hb_line_appt_add', { p_event: String(e.webhookEventId), p_key: key, p_sender: sender, p_sender_name: who, p_text: text, p_date: ap.date, p_time: ap.time });
+        log(id ? 'appt' : 'appt_ignored', {});
+      }
+    } catch (err) { log('appt_failed', { code: String((err as Error)?.message).slice(0, 60) }); }
   }
   if (isPaymentText(text)) {
     const r = await report({ p_event: String(e.webhookEventId), p_uid: key, p_name: await chatName(src),

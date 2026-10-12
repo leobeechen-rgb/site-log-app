@@ -15639,7 +15639,13 @@ async function HB_wbLoadAuto(){
   const res=await Promise.allSettled([
     fetchPages('sitelog_schedule_events','id,title,project_id,project_name,start_date,end_date,assignee,note,status,time,all_day'),
     fetchPages('sitelog_defects','id,project_id,description,location,completed'),
-    fetchPages('sitelog_bookings','id,date,time,service_type,name,status')]);
+    fetchPages('sitelog_bookings','id,date,time,service_type,name,status'),
+    fetchPages('hb_line_appts','id,project_id,appt_date,appt_time,body,sender_name,status')]);
+  /* 案件 LINE 群組裡提到的約定（「週六下午 3 點看現場」）：自動列入待辦／今日時間軸 */
+  if(res[3]&&res[3].status==='fulfilled'){const t0=HB_wbAddDays(HB_todoDate(),-1);
+    res[3].value.filter(r=>r.status==='open'&&r.appt_date&&String(r.appt_date).slice(0,10)>=t0)
+      .forEach(r=>rows.push({id:'appt:'+r.id,time:/^\d{2}:\d{2}$/.test(r.appt_time||'')?r.appt_time:'',title:'LINE 約定・'+String(r.body||'').replace(/\s+/g,' ').slice(0,40),projectId:r.project_id||'',assignee:'',due:String(r.appt_date).slice(0,10),
+        note:(r.sender_name?r.sender_name+' 在 LINE 群組說：':'LINE 群組：')+'「'+String(r.body||'').slice(0,300)+'」',category:'約定',source:'auto',sourceId:r.id}))}
   if(res[0].status==='fulfilled')res[0].value.filter(r=>r.status!=='cancelled'&&r.status!=='completed'&&r.start_date).forEach(r=>rows.push({id:'schedule:'+r.id,title:r.title||'工程行程',projectId:r.project_id||'',projectName:r.project_name||'',assignee:r.assignee||'',due:r.start_date.slice(0,10),dueEnd:(r.end_date||'').slice(0,10),time:!r.all_day&&/^\d{1,2}:\d{2}/.test(r.time||'')?String(r.time).slice(0,5):'',note:r.note||'',category:'行程',source:'auto',sourceId:r.id}));else errors.push('工程行程');
   if(res[1].status==='fulfilled')res[1].value.filter(r=>!r.completed).forEach(r=>rows.push({id:'defect:'+r.id,title:r.description||'缺失改善',projectId:r.project_id||'',assignee:'',due:'',note:r.location?'位置：'+r.location:'',category:'缺失',source:'auto',sourceId:r.id}));else errors.push('缺失紀錄');
   if(res[2].status==='fulfilled'){const t0=HB_todoDate(),lim=HB_wbAddDays(t0,7);
