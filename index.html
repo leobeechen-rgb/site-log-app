@@ -1548,14 +1548,35 @@
   .hb-entry-cat .fr{ flex-shrink: 0; }
   .hb-entry-cat .cn{ min-width: 0; overflow: hidden; text-overflow: ellipsis; }
   .hb-entry-go .fr, .hb-entry-go .cn, .hb-entry-go i{ flex-shrink: 0; }
-  /* 中等寬度（筆電 Safari 約 1000–1280px）：縮小左右留白與材質照，說明只留一行 */
-  @media (min-width: 761px) and (max-width: 1280px){
-    .hb-entry{ padding: 20px 18px 18px 74px; }
-    .hb-entry::before{ left: 16px; font-size: 28px; }
-    .hb-entry::after{ left: 58px; }
-    .hb-entry-t{ font-size: 18.5px; }
-    .hb-entry-d{ -webkit-line-clamp: 1; max-width: none; }
-    .hb-entry-cat .cn{ display: none; }
+  /* 卡片排法依「卡片實際可用寬度」決定，不看螢幕或作業系統：
+     Mac 筆電、Windows 125%／150% 縮放、視窗拉窄，只要卡片一樣寬，排出來就一樣。 */
+  .hb-heroRow .hb-landgrid{ container-type: inline-size; container-name: hbgrid; }
+  @media (min-width: 901px){
+    /* 兩欄卡片、每張約 480px 以下：縮小留白，說明只留一行，隱藏中文小標 */
+    @container hbgrid (max-width: 980px){
+      .hb-heroRow .hb-landgrid > .hb-entry{ padding: 20px 18px 18px 74px; }
+      .hb-heroRow .hb-landgrid > .hb-entry::before{ left: 16px; font-size: 28px; }
+      .hb-heroRow .hb-landgrid > .hb-entry::after{ left: 58px; }
+      .hb-heroRow .hb-landgrid > .hb-entry .hb-entry-t{ font-size: 18.5px; }
+      .hb-heroRow .hb-landgrid > .hb-entry .hb-entry-d{ -webkit-line-clamp: 1; max-width: none; }
+      .hb-heroRow .hb-landgrid > .hb-entry .hb-entry-cat .cn{ display: none; }
+      .hb-heroRow .hb-landgrid > .hb-entry > .hb-entry-photo{ width: 74px; height: 74px; max-width: 74px; right: 12px !important; }
+      .hb-heroRow .hb-landgrid > .hb-entry.has-img{ padding-right: 94px; }
+    }
+    /* 每張約 370px 以下：材質照再縮小，行動列中文隱藏 */
+    @container hbgrid (max-width: 760px){
+      .hb-heroRow .hb-landgrid > .hb-entry > .hb-entry-photo{ width: 56px; height: 56px; max-width: 56px; right: 10px !important; }
+      .hb-heroRow .hb-landgrid > .hb-entry.has-img{ padding-right: 72px; }
+      .hb-heroRow .hb-landgrid > .hb-entry .hb-entry-go .cn{ display: none; }
+    }
+  }
+  /* 視窗 901–1100px（Mac 未全螢幕的 Safari、Windows 150% 縮放）：左側大標題移到上方，四張卡片拿到整列寬度 */
+  @media (min-width: 901px) and (max-width: 1100px){
+    .hb-heroRow{ grid-template-columns: 1fr !important; gap: 22px; }
+    .hb-hero{ display: grid; grid-template-columns: auto minmax(0,1fr); column-gap: 22px; align-items: start; }
+    .hb-hero > *{ grid-column: 2; }
+    .hb-hero > .hb-hero-mark{ grid-column: 1; grid-row: 1 / span 20; margin: 0; }
+    .hb-hero-caps, .hb-hero-caps-cn, .hb-hero-dash, .hb-hero-p, .hb-hero-pcn{ display: none; }
   }
 
   /* 下方 05–07：印在紙面上的三個編輯區塊，欄間以細直線分隔 */
@@ -2679,11 +2700,6 @@
     left: auto !important;
     bottom: auto !important;
     z-index: 1;
-  }
-  /* 筆電／Mac Safari 中等寬度：素材縮小，文字區讓出空間 */
-  @media (min-width: 761px) and (max-width: 1280px){
-    .hb-heroRow .hb-landgrid > .hb-entry > .hb-entry-photo{ width: 74px; height: 74px; max-width: 74px; right: 12px !important; }
-    .hb-heroRow .hb-landgrid > .hb-entry.has-img{ padding-right: 94px; }
   }
 
   @media (max-width: 760px){
