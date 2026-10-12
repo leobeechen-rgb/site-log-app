@@ -451,7 +451,68 @@
 ;;; ==========================================================
 ;;;  圖例＋數量表
 ;;; ==========================================================
-(defun hb:legend (/ doc libnames ss i e nm ent cnt lst pt h tbl r space bdef id rows libdesc desc ti trklen trkn trkc)
+;;; 不重複的名稱清單（最多 8 個）
+(defun hb:name-list (lst / u n out)
+  (foreach x lst (if (not (member x u)) (setq u (cons x u))))
+  (setq n 0 out "")
+  (foreach x (vl-sort u '<) (if (< n 8) (setq out (strcat out "\n‧" x) n (1+ n))))
+  (if (= out "") "（沒有）" (if (> (length u) 8) (strcat out "\n…") out)))
+
+;;; 圖塊名稱（動態圖塊用原始名稱）
+(defun hb:ref-name (ent / nm)
+  (setq nm (vl-catch-all-apply 'vla-get-EffectiveName (list ent)))
+  (if (vl-catch-all-error-p nm) (vla-get-Name ent) nm))
+
+;;; 數一個圖塊參考：本身是圖塊庫符號就算 1；不是的話往裡面找（整張平面圖做成圖塊、或用複製貼上的群組）
+(defun hb:count-ref (ent libnames depth / nm blk)
+  (setq nm (hb:ref-name ent))
+  (cond
+    ((wcmatch nm "`**,*|*")
+     ;; 匿名圖塊／外部參考：往裡面找
+     (if (< depth 4) (hb:count-in (vla-get-Name ent) libnames depth)))
+    ((or (null libnames) (member (hb:smart-base nm) libnames))
+     (hb:add-cnt nm 1))
+    ((< depth 4) (hb:count-in (vla-get-Name ent) libnames depth))))
+
+(defun hb:count-in (bname libnames depth / blk)
+  (setq blk (vl-catch-all-apply 'vla-item (list (vla-get-Blocks (vla-get-ActiveDocument (vlax-get-acad-object))) bname)))
+  (if (not (vl-catch-all-error-p blk))
+    (vlax-for o blk
+      (if (= (vla-get-ObjectName o) "AcDbBlockReference")
+        (hb:count-ref o libnames (1+ depth))))))
+
+(defun hb:add-cnt (nm k / c)
+  (if (setq c (assoc nm hb:*cnt*))
+    (setq hb:*cnt* (subst (cons nm (+ k (cdr c))) c hb:*cnt*))
+    (setq hb:*cnt* (cons (cons nm k) hb:*cnt*))))
+
+;;; 填進現有表格：找到「數量」那一列當表頭，下面的列全部重做
+(defun hb:fill-table (tbl lst libdesc doc / hr nr c r desc bdef id rh)
+  (setq nr (vla-get-Rows tbl) r 0)
+  (while (and (< r nr) (null hr))
+    (setq c 0)
+    (repeat (vla-get-Columns tbl)
+      (if (wcmatch (vla-GetText tbl r c) "*數量*") (setq hr r))
+      (setq c (1+ c)))
+    (setq r (1+ r)))
+  (if (null hr) (setq hr 1))
+  (setq rh (vla-GetRowHeight tbl (min (1+ hr) (1- nr))))
+  (if (> (- nr hr 1) 0) (vla-DeleteRows tbl (1+ hr) (- nr hr 1)))
+  (if lst (vla-InsertRows tbl (1+ hr) rh (length lst)))
+  (setq r (1+ hr))
+  (foreach x lst
+    (setq desc (cdr (assoc (hb:smart-base (car x)) libdesc)))
+    (setq bdef (vl-catch-all-apply 'vla-item (list (vla-get-Blocks doc) (car x))))
+    (if (not (vl-catch-all-error-p bdef))
+      (progn
+        (setq id (vl-catch-all-apply 'vla-get-ObjectID32 (list bdef)))
+        (if (vl-catch-all-error-p (vl-catch-all-apply 'vla-SetBlockTableRecordId32 (list tbl r 0 id :vlax-true)))
+          (vl-catch-all-apply 'vla-SetBlockTableRecordId (list tbl r 0 (vla-get-ObjectID bdef) :vlax-true)))))
+    (vla-SetText tbl r 1 (if (and desc (/= desc "")) desc (car x)))
+    (if (> (vla-get-Columns tbl) 2) (vla-SetText tbl r 2 (itoa (cdr x))))
+    (setq r (1+ r))))
+
+(defun hb:legend (/ doc libnames ss i e nm ent cnt lst pt h tbl r space bdef id rows libdesc desc ti trklen trkn trkc tops pk)
   (setq doc (vla-get-ActiveDocument (vlax-get-acad-object)))
   (hb:begin '("CMDECHO"))
   (setvar "CMDECHO" 0)
@@ -461,7 +522,7 @@
   (setq ss (ssget '((-4 . "<OR") (0 . "INSERT") (0 . "LWPOLYLINE") (-4 . "OR>"))))
   (if (null ss) (setq ss (ssget "_X" (list '(-4 . "<OR") '(0 . "INSERT") '(0 . "LWPOLYLINE") '(-4 . "OR>")
                                            (cons 410 (getvar "CTAB"))))))
-  (setq trklen 0.0 trkn 0 trkc 0)
+  (setq trklen 0.0 trkn 0 trkc 0 hb:*cnt* nil)
   (if ss
     (progn
       (setq i 0)
@@ -473,16 +534,15 @@
             (setq trklen (+ trklen (distance (nth 0 ti) (nth 1 ti)))
                   trkn (+ trkn (nth 2 ti)) trkc (1+ trkc)))
         (progn
-        (setq nm (vl-catch-all-apply 'vla-get-EffectiveName (list ent)))
-        (if (vl-catch-all-error-p nm) (setq nm (vla-get-Name ent)))
-        (if (and (not (wcmatch nm "`**,*|*"))
-                 (or (null libnames) (member (hb:smart-base nm) libnames)))
-          (if (setq cnt (assoc nm lst))
-            (setq lst (subst (cons nm (1+ (cdr cnt))) cnt lst))
-            (setq lst (cons (cons nm 1) lst)))))))))
+          (setq tops (cons (hb:ref-name ent) tops))
+          (hb:count-ref ent libnames 0)))))
+    (setq lst hb:*cnt*))
   (setq lst (vl-sort lst '(lambda (a b) (< (car a) (car b)))))
   (if (and (null lst) (= trkc 0))
-    (alert (if libnames "範圍裡沒有圖塊庫的符號。" "範圍裡沒有圖塊。"))
+    (alert (if libnames
+             (strcat "範圍裡沒有圖塊庫的符號。\n\n框到的圖塊名稱：" (hb:name-list tops)
+                     "\n\n符號要用「放水電符號」放，名稱才對得上圖塊庫。")
+             "範圍裡沒有圖塊。"))
     (progn
       (princ "\n—— 數量統計 ——")
       (foreach x lst (princ (strcat "\n  " (car x) "：" (itoa (cdr x)))))
@@ -490,7 +550,18 @@
       (initget 6)
       (setq h (getreal (strcat "\n表格字高 <" (if (= (getvar "CVPORT") 1) "3.5" (if (= (getvar "INSUNITS") 5) "15" "150")) ">：")))
       (if (null h) (setq h (if (= (getvar "CVPORT") 1) 3.5 (if (= (getvar "INSUNITS") 5) 15.0 150.0))))
-      (setq pt (getpoint "\n點表格要放的位置（左上角）："))
+      (initget "T")
+      (setq pt (getpoint "\n點表格要放的位置（左上角），或 [填入現有表格(T)]："))
+      (if (= pt "T")
+        (progn
+          (setq pk (entsel "\n點一下要填的表格（例如圖框裡的「水電圖例」）："))
+          (if (and pk (= (cdr (assoc 0 (entget (car pk)))) "ACAD_TABLE"))
+            (progn
+              (setq tbl (vlax-ename->vla-object (car pk)))
+              (hb:fill-table tbl lst libdesc doc)
+              (hb:say "已填入表格。數量不會自動更新，改圖後再做一次。"))
+            (alert "點到的不是表格。"))
+          (setq pt nil)))
       (if pt
         (progn
           (setq space (if (= (getvar "CVPORT") 1) (vla-get-PaperSpace doc) (vla-get-ModelSpace doc)))
