@@ -17,29 +17,45 @@
   ;; AutoCAD 2021（R24）以後用 UTF-8 版，之前（例如 2016）用 Big5 版
   (if (>= (atof (getvar "ACADVER")) 24.0) "HB_tools_UTF8.lsp" "HB_tools.lsp"))
 
-(defun hbl:download (url out / x st ok r body)
+;;; 檢查下載下來的檔案是不是 LISP（不是網頁錯誤頁）
+(defun hbl:ok-file (f / h l)
+  (if (and f (findfile f) (setq h (open f "r")))
+    (progn (setq l (read-line h)) (close h)
+           (and l (> (vl-file-size f) 20000) (vl-string-search ";;;" l)))))
+
+;;; 方法一：AutoCAD 內建的下載（Utility.GetRemoteFile）
+(defun hbl:dl-acad (url / u r tmp)
+  (setq u (vla-get-Utility (vla-get-ActiveDocument (vlax-get-acad-object))))
+  (setq r (vl-catch-all-apply 'vla-GetRemoteFile (list u url 'tmp :vlax-true)))
+  (if (and (not (vl-catch-all-error-p r)) tmp (hbl:ok-file tmp)) tmp))
+
+;;; 方法二：Windows 的 WinHttp／MSXML
+(defun hbl:dl-http (url out prog / x st r v ok)
   (setq r (vl-catch-all-apply
     (function (lambda ()
-      (setq x (vlax-create-object "MSXML2.ServerXMLHTTP.6.0"))
-      (vlax-invoke x 'setTimeouts 3000 3000 4000 8000)
-      (vlax-invoke x 'open "GET" url :vlax-false)
-      (vlax-invoke x 'send)
-      ;; 確認拿到的是 LISP 檔，不是網頁錯誤頁
-      (if (and (= (vlax-get x 'status) 200)
-               (setq body (vlax-safearray->list (vlax-variant-value (vlax-get x 'responseBody))))
-               (> (length body) 20000)
-               (member (car body) '(59 239)))
+      (setq x (vlax-create-object prog))
+      (vlax-invoke-method x 'Open "GET" url :vlax-false)
+      (vlax-invoke-method x 'Send)
+      (if (= (vlax-get-property x 'Status) 200)
         (progn
+          (setq v (vlax-get-property x 'ResponseBody))
           (setq st (vlax-create-object "ADODB.Stream"))
-          (vlax-put st 'Type 1)
-          (vlax-invoke st 'Open)
-          (vlax-invoke st 'Write (vlax-get x 'responseBody))
-          (vlax-invoke st 'SaveToFile out 2)
-          (vlax-invoke st 'Close)
+          (vlax-put-property st 'Type 1)
+          (vlax-invoke-method st 'Open)
+          (vlax-invoke-method st 'Write v)
+          (vlax-invoke-method st 'SaveToFile out 2)
+          (vlax-invoke-method st 'Close)
           (setq ok T)))))))
   (if st (vl-catch-all-apply 'vlax-release-object (list st)))
   (if x (vl-catch-all-apply 'vlax-release-object (list x)))
-  (and ok (not (vl-catch-all-error-p r))))
+  (if (and ok (hbl:ok-file out)) out))
+
+(defun hbl:download (url out / f)
+  (cond
+    ((setq f (hbl:dl-acad url)) (vl-file-copy f out) (hbl:ok-file out))
+    ((hbl:dl-http url out "WinHttp.WinHttpRequest.5.1") T)
+    ((hbl:dl-http url out "MSXML2.ServerXMLHTTP.6.0") T)
+    ((hbl:dl-http url out "MSXML2.XMLHTTP") T)))
 
 (defun hbl:run (/ dir nm local tmp got)
   (setq dir (hbl:dir) nm (hbl:name) local (strcat dir nm) tmp (strcat dir "_new_" nm))
