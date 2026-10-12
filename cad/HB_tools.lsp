@@ -637,13 +637,12 @@
         n (+ 2 (length rows)) W (+ w1 w2 w3) H (* n rh))
   (defun add-l (a b) (vla-AddLine sp (vlax-3d-point (list (car a) (cadr a) 0.0)) (vlax-3d-point (list (car b) (cadr b) 0.0))))
   (defun add-t (s x y hh / t1)
-    (setq t1 (vla-AddText sp s (vlax-3d-point (list x y 0.0)) hh))
-    (if (tblsearch "STYLE" "赫柏-中文") (vl-catch-all-apply 'vla-put-StyleName (list t1 "赫柏-中文")))
-    ;; 字型樣式如果設了固定字高，會把字放大 → 強制改回指定字高、寬度 1
+    ;; 用多行文字＋內嵌字高與字型：不受文字樣式的固定字高影響
+    (setq t1 (vla-AddMText sp (vlax-3d-point (list x y 0.0)) 0.0
+               (strcat "{\\fMingLiU|b0|i0|c136|p49;\\H" (rtos hh 2 3) ";" s "}")))
     (vl-catch-all-apply 'vla-put-Height (list t1 hh))
-    (vl-catch-all-apply 'vla-put-ScaleFactor (list t1 1.0))
-    (vla-put-Alignment t1 10) ; 正中
-    (vla-put-TextAlignmentPoint t1 (vlax-3d-point (list x y 0.0)))
+    (vla-put-AttachmentPoint t1 5)
+    (vla-put-InsertionPoint t1 (vlax-3d-point (list x y 0.0)))
     t1)
   ;; 外框與橫線
   (setq r 0)
@@ -1424,7 +1423,7 @@
   (setq fn (strcat (getvar "TEMPPREFIX") "HB_tools.dcl"))
   (setq f (open fn "w"))
   (foreach s
-    '("hb_main : dialog { label = \"赫柏工具  HERFULSINS（第 13 版）\";"
+    '("hb_main : dialog { label = \"赫柏工具  HERFULSINS（第 14 版）\";"
       " : text { label = \"點按鈕就好，不用記指令。下次只要輸入 HB 打開這裡。\"; }"
       " : spacer { height = 0.5; }"
       " : boxed_column { label = \"出 PDF（A3 橫式、1:1、存到 PDF_OUTPUT）\";"
@@ -1572,5 +1571,5 @@
       ((= act 20) (hb:h-batch) (setq act 0))))
   (princ))
 
-(princ "\n【赫柏】赫柏工具（第 13 版）已載入。輸入 HB 打開面板。（新增：開關符號、安裝高度、填入現有圖例表）")
+(princ "\n【赫柏】赫柏工具（第 14 版）已載入。輸入 HB 打開面板。（新增：開關符號、安裝高度、填入現有圖例表）")
 (princ)
