@@ -2788,6 +2788,12 @@
         overflow-x: hidden !important;
         -webkit-overflow-scrolling: touch;
         overscroll-behavior: contain;
+        /* 蓋過下方「新增／篩選」列與底部分頁列，最底下的欄位和按鈕才不會被擋住、滑不到 */
+        z-index: 9000 !important;
+      }
+      body [style*="position: fixed"][style*="inset"]:not(.hb-mkt-page):has(input, select, textarea) input[type=date]{
+        display: block; width: 100% !important; max-width: 100% !important; min-width: 0 !important;
+        box-sizing: border-box; -webkit-appearance: none; appearance: none; text-align: left;
       }
       body [style*="position: fixed"][style*="inset"]:not(.hb-mkt-page):has(input, select, textarea) > div{
         width: 100% !important;
