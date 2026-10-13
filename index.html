@@ -9375,7 +9375,7 @@ function HbReceiptForm({onCancel,onCreate,projects,initial,report,suggest}){
     setSiteAddress(proj?proj.address||proj.name||"":"");
   };
   let valid=clientName.trim()&&siteAddress.trim()&&periods.some(p=>p.name.trim()&&p.amount);
-  return u.default.createElement("div",{style:{position:"fixed",inset:0,background:"rgba(43,38,32,0.45)",display:"flex",alignItems:"center",justifyContent:"center",padding:20,zIndex:55}},
+  return HB_portal(u.default.createElement("div",{style:{position:"fixed",inset:0,background:"rgba(43,38,32,0.45)",display:"flex",alignItems:"center",justifyContent:"center",padding:20,zIndex:55}},
     u.default.createElement("div",{className:"fade-in",style:{background:s.card,borderRadius:10,padding:22,width:"100%",maxWidth:400,maxHeight:"85vh",overflowY:"auto"}},
       u.default.createElement("h3",{style:{margin:"0 0 14px",fontSize:17,fontWeight:400,color:s.oceanDark}},report?"匯款收據（確認後建立）":ini&&!ini.isNew?"編輯工程收據":"新增工程收據"),
       report&&u.default.createElement("div",{style:{background:"#FBF6F0",borderLeft:"3px solid #B4573A",borderRadius:6,padding:"10px 12px",margin:"0 0 14px",fontSize:12.5,lineHeight:1.65,color:"#3C362F"}},
@@ -9416,7 +9416,7 @@ function HbReceiptForm({onCancel,onCreate,projects,initial,report,suggest}){
         u.default.createElement("button",{disabled:!valid,onClick:()=>onCreate({clientName:clientName.trim(),siteAddress:siteAddress.trim(),paymentMethod,dateStr,periods:periods.filter(p=>p.name.trim()&&p.amount),projectId:addrPick!==OTHER?addrPick:null}),style:{...Dl,flex:1,opacity:valid?1:.5}},report?"已入帳，建立收據":ini&&!ini.isNew?"儲存變更":"建立")
       )
     )
-  )
+  ))
 }
 
 /* ---------- 廠商領據 UI ---------- */
@@ -9523,7 +9523,7 @@ function HbVendorReceiptForm({onCancel,onCreate,projects,vendorOptions}){
     setSiteLocation(proj?proj.address||proj.name||"":"");
   };
   let valid=vendorName.trim()&&amount;
-  return u.default.createElement("div",{style:{position:"fixed",inset:0,background:"rgba(43,38,32,0.45)",display:"flex",alignItems:"center",justifyContent:"center",padding:20,zIndex:55}},
+  return HB_portal(u.default.createElement("div",{style:{position:"fixed",inset:0,background:"rgba(43,38,32,0.45)",display:"flex",alignItems:"center",justifyContent:"center",padding:20,zIndex:55}},
     u.default.createElement("div",{className:"fade-in",style:{background:s.card,borderRadius:10,padding:22,width:"100%",maxWidth:380,maxHeight:"85vh",overflowY:"auto"}},
       u.default.createElement("h3",{style:{margin:"0 0 14px",fontSize:17,fontWeight:400,color:s.oceanDark}},"新增廠商領據"),
       u.default.createElement("label",{style:{fontSize:12.5,color:s.inkSoft}},"廠商／領款人"),
@@ -9553,7 +9553,7 @@ function HbVendorReceiptForm({onCancel,onCreate,projects,vendorOptions}){
         u.default.createElement("button",{disabled:!valid,onClick:()=>onCreate({vendorName:vendorName.trim(),siteLocation:siteLocation.trim(),amount,idNumber:idNumber.trim(),address:address.trim(),phone:phone.trim(),dateStr}),style:{...Dl,flex:1,opacity:valid?1:.5}},"建立")
       )
     )
-  )
+  ))
 }
 
 /* ===== 廠商通訊錄 ===== */
