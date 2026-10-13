@@ -631,80 +631,70 @@
     (if (= r 1) 'none)))
 
 ;;; 用線和文字畫圖例表：欄寬 圖例 6h｜名稱 14h｜數量 5h，列高 2.4h
-(defun hb:draw-legend (p0 rows h doc / sp st x0 y0 w1 w2 w3 rh n W H y r add-l add-t ref bb mn mx sc c tw)
+;;; 畫圖例表：只有「符號｜名稱」兩欄，不加標題、數量。
+;;; 字是「複製圖面上你點的那個字」再改內容，所以字型、大小一定跟你圖上的一樣。
+(defun hb:draw-legend (p0 rows smp doc / sp x0 y0 h w1 w2 rh n W H r add-l add-t ref bb mn mx sc c mxl typ)
   (setq sp (if (= (getvar "CVPORT") 1) (vla-get-PaperSpace doc) (vla-get-ModelSpace doc)))
-  (setq x0 (car p0) y0 (cadr p0) w1 (* 6 h) w2 (* 14 h) w3 (* 5 h) rh (* 2.4 h)
-        n (+ 2 (length rows)) W (+ w1 w2 w3) H (* n rh))
+  (setq typ (vla-get-ObjectName smp) h (vla-get-Height smp))
+  (setq mxl 4)
+  (foreach x rows (setq mxl (max mxl (strlen (nth 1 x)))))
+  (setq x0 (car p0) y0 (cadr p0) w1 (* 4 h) w2 (* h (+ 2 mxl)) rh (* 2.2 h)
+        n (length rows) W (+ w1 w2) H (* n rh))
   (defun add-l (a b) (vla-AddLine sp (vlax-3d-point (list (car a) (cadr a) 0.0)) (vlax-3d-point (list (car b) (cadr b) 0.0))))
-  ;; 專用文字樣式 HB_LEG：字高 0（由文字自己決定）、寬度 1、細明體；沒有細明體就用 CAD 內建中文字
-  (setq st (vl-catch-all-apply 'vla-Item (list (vla-get-TextStyles doc) "HB_LEG")))
-  (if (vl-catch-all-error-p st) (setq st (vla-Add (vla-get-TextStyles doc) "HB_LEG")))
-  (vla-put-Height st 0.0)
-  (vla-put-Width st 1.0)
-  (vla-put-ObliqueAngle st 0.0)
-  (if (vl-catch-all-error-p (vl-catch-all-apply 'vla-SetFont (list st "MingLiU" :vlax-false :vlax-false 136 49)))
-    (progn (vla-put-fontFile st "txt.shx") (vl-catch-all-apply 'vla-put-BigFontFile (list st "chineset.shx"))))
-  ;; 單行文字（TEXT）：字高固定 hh，太寬才縮小；置中對齊在格子中心
-  (defun add-t (s x y hh maxw / t1 tb tw)
-    (setq t1 (vla-AddText sp s (vlax-3d-point (list x y 0.0)) hh))
-    (vla-put-StyleName t1 "HB_LEG")
-    (vla-put-Height t1 hh)
-    (vla-put-ScaleFactor t1 1.0)
+  (defun add-t (s x y / t1)
+    (setq t1 (vla-Copy smp))
+    (vla-put-TextString t1 s)
     (vla-put-Rotation t1 0.0)
-    (vla-put-ObliqueAngle t1 0.0)
-    (setq tb (textbox (entget (vlax-vla-object->ename t1))))
-    (if tb
-      (progn
-        (setq tw (- (car (cadr tb)) (car (car tb))))
-        (if (> tw (* 0.9 maxw)) (vla-put-Height t1 (* hh (/ (* 0.9 maxw) tw))))))
-    (vla-put-Alignment t1 10)
-    (vla-put-TextAlignmentPoint t1 (vlax-3d-point (list x y 0.0)))
+    (if (= typ "AcDbMText")
+      (progn (vla-put-Width t1 0.0) (vla-put-AttachmentPoint t1 4)
+             (vla-put-InsertionPoint t1 (vlax-3d-point (list x y 0.0))))
+      (progn (vla-put-Alignment t1 9)
+             (vla-put-TextAlignmentPoint t1 (vlax-3d-point (list x y 0.0)))))
     t1)
-  ;; 外框與橫線
+  ;; 框線
   (setq r 0)
   (repeat (1+ n)
     (add-l (list x0 (- y0 (* r rh))) (list (+ x0 W) (- y0 (* r rh))))
     (setq r (1+ r)))
   (add-l (list x0 y0) (list x0 (- y0 H)))
+  (add-l (list (+ x0 w1) y0) (list (+ x0 w1) (- y0 H)))
   (add-l (list (+ x0 W) y0) (list (+ x0 W) (- y0 H)))
-  ;; 直線（標題列不分格）
-  (add-l (list (+ x0 w1) (- y0 rh)) (list (+ x0 w1) (- y0 H)))
-  (add-l (list (+ x0 w1 w2) (- y0 rh)) (list (+ x0 w1 w2) (- y0 H)))
-  ;; 標題、表頭
-  (add-t "水電圖例" (+ x0 (/ W 2.0)) (- y0 (* 0.5 rh)) (* 1.15 h) W)
-  (add-t "圖例" (+ x0 (/ w1 2.0)) (- y0 (* 1.5 rh)) h w1)
-  (add-t "名稱" (+ x0 w1 (/ w2 2.0)) (- y0 (* 1.5 rh)) h w2)
-  (add-t "數量" (+ x0 w1 w2 (/ w3 2.0)) (- y0 (* 1.5 rh)) h w3)
-  ;; 每一列
-  (setq r 2)
+  ;; 每一列：符號（縮到格子高度 65%）＋名稱（靠左）
+  (setq r 0)
   (foreach x rows
     (setq c (list (+ x0 (/ w1 2.0)) (- y0 (* (+ r 0.5) rh)) 0.0))
-    (if (= (nth 0 x) "*TRACK*")
-      (add-t "─○─○─" (car c) (cadr c) h w1)
-      (if (tblsearch "BLOCK" (nth 0 x))
-        (progn
-          ;; 放一個符號，縮放到格子高度的 65%
-          (setq ref (vla-InsertBlock sp (vlax-3d-point c) (nth 0 x) 1.0 1.0 1.0 0.0))
-          (if (not (vl-catch-all-error-p (vl-catch-all-apply 'vla-GetBoundingBox (list ref 'mn 'mx))))
-            (progn
-              (setq mn (vlax-safearray->list mn) mx (vlax-safearray->list mx)
-                    bb (max (- (car mx) (car mn)) (- (cadr mx) (cadr mn)) 1e-6)
-                    sc (/ (* 0.65 rh) bb))
-              (vla-ScaleEntity ref (vlax-3d-point c) sc)
-              (vla-GetBoundingBox ref 'mn 'mx)
-              (setq mn (vlax-safearray->list mn) mx (vlax-safearray->list mx))
-              (vla-Move ref (vlax-3d-point (list (/ (+ (car mn) (car mx)) 2.0) (/ (+ (cadr mn) (cadr mx)) 2.0) 0.0))
-                            (vlax-3d-point c)))))))
-    (add-t (nth 1 x) (+ x0 w1 (/ w2 2.0)) (cadr c) h w2)
-    (if (/= (nth 2 x) "") (add-t (nth 2 x) (+ x0 w1 w2 (/ w3 2.0)) (cadr c) h w3))
+    (if (and (/= (nth 0 x) "*TRACK*") (tblsearch "BLOCK" (nth 0 x)))
+      (progn
+        (setq ref (vla-InsertBlock sp (vlax-3d-point c) (nth 0 x) 1.0 1.0 1.0 0.0))
+        (if (not (vl-catch-all-error-p (vl-catch-all-apply 'vla-GetBoundingBox (list ref 'mn 'mx))))
+          (progn
+            (setq mn (vlax-safearray->list mn) mx (vlax-safearray->list mx)
+                  bb (max (- (car mx) (car mn)) (- (cadr mx) (cadr mn)) 1e-6)
+                  sc (/ (* 0.65 rh) bb))
+            (vla-ScaleEntity ref (vlax-3d-point c) sc)
+            (vla-GetBoundingBox ref 'mn 'mx)
+            (setq mn (vlax-safearray->list mn) mx (vlax-safearray->list mx))
+            (vla-Move ref (vlax-3d-point (list (/ (+ (car mn) (car mx)) 2.0) (/ (+ (cadr mn) (cadr mx)) 2.0) 0.0))
+                          (vlax-3d-point c))))))
+    (add-t (nth 1 x) (+ x0 w1 h) (cadr c))
     (setq r (1+ r)))
   (princ))
+
+;;; 請使用者點一個現有的字當樣本（單行或多行文字都可以）
+(defun hb:pick-sample (/ e o k)
+  (while (null k)
+    (setq e (entsel "\n點一個圖面上「現有的字」當樣本（例如舊圖例表裡的一個名稱）："))
+    (cond
+      ((null e) (setq k 'cancel))
+      ((member (vla-get-ObjectName (setq o (vlax-ename->vla-object (car e)))) '("AcDbText" "AcDbMText")) (setq k o))
+      (T (princ "\n這不是文字（可能是表格或圖塊），請點一個單獨的字。"))))
+  (if (= k 'cancel) nil k))
 
 ;;; ==========================================================
 ;;;  圖例＋數量表（不用框選）：
 ;;;  自動數這一頁 → 清單列出圖塊庫全部符號（圖面上有的已勾、帶數量）→ 勾選 → 做表或填進現有表格
 ;;; ==========================================================
-(defun hb:legend (/ doc libdesc libnames ss i e ent ti trklen trkn trkc items c d pk pt h tbl space rows pick)
+(defun hb:legend (/ smp doc libdesc libnames ss i e ent ti trklen trkn trkc items c d pk pt h tbl space rows pick)
   (setq doc (vla-get-ActiveDocument (vlax-get-acad-object)))
   (hb:begin '("CMDECHO"))
   (setvar "CMDECHO" 0)
@@ -746,7 +736,7 @@
          (setq rows (mapcar '(lambda (x / nm)
                                (list (car x)
                                      (if (nth 4 x) (nth 1 x)
-                                       (if (= (car x) "*TRACK*") (nth 1 x)
+                                       (if (= (car x) "*TRACK*") "軌道燈"
                                          (cond ((/= (cdr (assoc (car x) libdesc)) "") (cdr (assoc (car x) libdesc))) (T (car x)))))
                                      (if (nth 4 x) (vl-string-subst "" " 個" (nth 2 x))
                                        (if (> (nth 3 x) 0) (if (= (car x) "*TRACK*") (nth 2 x) (itoa (nth 3 x))) ""))))
@@ -754,15 +744,12 @@
          ;; 指令列也列出數量，方便核對
          (princ "\n—— 圖例表內容 ——")
          (foreach r rows (princ (strcat "\n  " (nth 1 r) "：" (if (= (nth 2 r) "") "（空白）" (nth 2 r)))))
-         ;; 4. 直接畫出圖例表（線＋文字＋符號，不用 CAD 表格，大小一定看得到）
+         ;; 4. 點位置 → 點一個現有的字當樣本 → 畫表
          (setq pt (getpoint "\n點圖例表要放的位置（左上角）："))
-         (if pt
+         (if (and pt (setq smp (hb:pick-sample)))
            (progn
-             (initget 6)
-             (setq h (getreal (strcat "\n字高 <" (if (= (getvar "CVPORT") 1) "3.5" "12") ">：")))
-             (if (null h) (setq h (if (= (getvar "CVPORT") 1) 3.5 12.0)))
-             (hb:draw-legend (trans pt 1 0) rows h doc)
-             (hb:say "圖例表完成。數量是現在圖面上的數量，改圖後刪掉再做一次。")))))))
+             (hb:draw-legend (trans pt 1 0) rows smp doc)
+             (hb:say "圖例表完成。")))))))
   (hb:end)
   (princ))
 
@@ -1439,7 +1426,7 @@
   (setq fn (strcat (getvar "TEMPPREFIX") "HB_tools.dcl"))
   (setq f (open fn "w"))
   (foreach s
-    '("hb_main : dialog { label = \"赫柏工具  HERFULSINS（第 16 版）\";"
+    '("hb_main : dialog { label = \"赫柏工具  HERFULSINS（第 17 版）\";"
       " : text { label = \"點按鈕就好，不用記指令。下次只要輸入 HB 打開這裡。\"; }"
       " : spacer { height = 0.5; }"
       " : boxed_column { label = \"出 PDF（A3 橫式、1:1、存到 PDF_OUTPUT）\";"
@@ -1587,5 +1574,5 @@
       ((= act 20) (hb:h-batch) (setq act 0))))
   (princ))
 
-(princ "\n【赫柏】赫柏工具（第 16 版）已載入。輸入 HB 打開面板。（新增：開關符號、安裝高度、填入現有圖例表）")
+(princ "\n【赫柏】赫柏工具（第 17 版）已載入。輸入 HB 打開面板。（新增：開關符號、安裝高度、填入現有圖例表）")
 (princ)
