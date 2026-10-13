@@ -631,29 +631,34 @@
     (if (= r 1) 'none)))
 
 ;;; 用線和文字畫圖例表：欄寬 圖例 6h｜名稱 14h｜數量 5h，列高 2.4h
-(defun hb:draw-legend (p0 rows h doc / sp x0 y0 w1 w2 w3 rh n W H y r add-l add-t ref bb mn mx sc c tw)
+(defun hb:draw-legend (p0 rows h doc / sp st x0 y0 w1 w2 w3 rh n W H y r add-l add-t ref bb mn mx sc c tw)
   (setq sp (if (= (getvar "CVPORT") 1) (vla-get-PaperSpace doc) (vla-get-ModelSpace doc)))
   (setq x0 (car p0) y0 (cadr p0) w1 (* 6 h) w2 (* 14 h) w3 (* 5 h) rh (* 2.4 h)
         n (+ 2 (length rows)) W (+ w1 w2 w3) H (* n rh))
   (defun add-l (a b) (vla-AddLine sp (vlax-3d-point (list (car a) (cadr a) 0.0)) (vlax-3d-point (list (car b) (cadr b) 0.0))))
-  (defun add-t (s x y hh maxw / t1 mn mx bh bw k)
-    (setq t1 (vla-AddMText sp (vlax-3d-point (list x y 0.0)) 0.0
-               (strcat "{\\fMingLiU|b0|i0|c136|p49;" s "}")))
-    (vl-catch-all-apply 'vla-put-Height (list t1 hh))
-    (vla-put-AttachmentPoint t1 5)
-    (vla-put-InsertionPoint t1 (vlax-3d-point (list x y 0.0)))
-    ;; 不管文字樣式怎麼設，量實際大小再縮放：字高＝hh，寬度不超過格子
-    (if (not (vl-catch-all-error-p (vl-catch-all-apply 'vla-GetBoundingBox (list t1 'mn 'mx))))
+  ;; 專用文字樣式 HB_LEG：字高 0（由文字自己決定）、寬度 1、細明體；沒有細明體就用 CAD 內建中文字
+  (setq st (vl-catch-all-apply 'vla-Item (list (vla-get-TextStyles doc) "HB_LEG")))
+  (if (vl-catch-all-error-p st) (setq st (vla-Add (vla-get-TextStyles doc) "HB_LEG")))
+  (vla-put-Height st 0.0)
+  (vla-put-Width st 1.0)
+  (vla-put-ObliqueAngle st 0.0)
+  (if (vl-catch-all-error-p (vl-catch-all-apply 'vla-SetFont (list st "MingLiU" :vlax-false :vlax-false 136 49)))
+    (progn (vla-put-fontFile st "txt.shx") (vl-catch-all-apply 'vla-put-BigFontFile (list st "chineset.shx"))))
+  ;; 單行文字（TEXT）：字高固定 hh，太寬才縮小；置中對齊在格子中心
+  (defun add-t (s x y hh maxw / t1 tb tw)
+    (setq t1 (vla-AddText sp s (vlax-3d-point (list x y 0.0)) hh))
+    (vla-put-StyleName t1 "HB_LEG")
+    (vla-put-Height t1 hh)
+    (vla-put-ScaleFactor t1 1.0)
+    (vla-put-Rotation t1 0.0)
+    (vla-put-ObliqueAngle t1 0.0)
+    (setq tb (textbox (entget (vlax-vla-object->ename t1))))
+    (if tb
       (progn
-        (setq mn (vlax-safearray->list mn) mx (vlax-safearray->list mx)
-              bh (max 1e-6 (- (cadr mx) (cadr mn))) bw (max 1e-6 (- (car mx) (car mn)))
-              k (min (/ hh bh) (/ (* 0.9 maxw) bw)))
-        (if (> (abs (- k 1.0)) 0.02)
-          (vla-ScaleEntity t1 (vlax-3d-point (list x y 0.0)) k))
-        (vla-GetBoundingBox t1 'mn 'mx)
-        (setq mn (vlax-safearray->list mn) mx (vlax-safearray->list mx))
-        (vla-Move t1 (vlax-3d-point (list (/ (+ (car mn) (car mx)) 2.0) (/ (+ (cadr mn) (cadr mx)) 2.0) 0.0))
-                     (vlax-3d-point (list x y 0.0)))))
+        (setq tw (- (car (cadr tb)) (car (car tb))))
+        (if (> tw (* 0.9 maxw)) (vla-put-Height t1 (* hh (/ (* 0.9 maxw) tw))))))
+    (vla-put-Alignment t1 10)
+    (vla-put-TextAlignmentPoint t1 (vlax-3d-point (list x y 0.0)))
     t1)
   ;; 外框與橫線
   (setq r 0)
@@ -1434,7 +1439,7 @@
   (setq fn (strcat (getvar "TEMPPREFIX") "HB_tools.dcl"))
   (setq f (open fn "w"))
   (foreach s
-    '("hb_main : dialog { label = \"赫柏工具  HERFULSINS（第 15 版）\";"
+    '("hb_main : dialog { label = \"赫柏工具  HERFULSINS（第 16 版）\";"
       " : text { label = \"點按鈕就好，不用記指令。下次只要輸入 HB 打開這裡。\"; }"
       " : spacer { height = 0.5; }"
       " : boxed_column { label = \"出 PDF（A3 橫式、1:1、存到 PDF_OUTPUT）\";"
@@ -1582,5 +1587,5 @@
       ((= act 20) (hb:h-batch) (setq act 0))))
   (princ))
 
-(princ "\n【赫柏】赫柏工具（第 15 版）已載入。輸入 HB 打開面板。（新增：開關符號、安裝高度、填入現有圖例表）")
+(princ "\n【赫柏】赫柏工具（第 16 版）已載入。輸入 HB 打開面板。（新增：開關符號、安裝高度、填入現有圖例表）")
 (princ)
