@@ -7608,6 +7608,57 @@ var HB_COLD={
   line:"#CFC7B8", danger:"#8B1220",
   action:"#B4573A", actionDeep:"#8E4229"
 };
+/* Excel 匯入：自動找表頭（項目／規格／單位／數量／單價／複價／備註／廠商單價…），照欄名對應，
+   不管欄位順序、前面有沒有標題列都能讀；「一、木作工程」這種列當作分類，小計／合計列略過。
+   找不到表頭才回傳 null（用舊的固定欄位順序）。 */
+function HB_estParseRows(rows,defName){
+  let N=v=>String(v??"").replace(/\s+/g,"").trim();
+  let num=v=>{if(typeof v==="number")return v;let t=String(v??"").replace(/[,，\s]|NT\$?|\$|元/gi,"");return t!==""&&!isNaN(Number(t))?Number(t):null};
+  let pick=h=>{
+    if(/^(項次|序號|編號|NO\.?|#)$/i.test(h))return "idx";
+    if(/廠商|成本|進價|發包/.test(h))return "vendor";
+    if(/淨利|利潤|毛利/.test(h))return "skip";
+    if(/備註|說明備註|附註/.test(h))return "note";
+    if(/單價/.test(h))return "price";
+    if(/複價|金額|總價|合計|小計/.test(h))return "total";
+    if(/數量|^數$|QTY/i.test(h))return "qty";
+    if(/單位/.test(h))return "unit";
+    if(/規格|尺寸|型號|材質/.test(h))return "spec";
+    if(/項目|品名|名稱|品項|內容|工程/.test(h))return "name";
+    return null;
+  };
+  let hi=-1,map=null;
+  for(let r=0;r<Math.min(rows.length,25);r++){
+    let m={};
+    rows[r].forEach((c,ci)=>{let k=pick(N(c));if(k&&m[k]===undefined)m[k]=ci});
+    if(m.name!==undefined&&(m.price!==undefined||m.total!==undefined||m.qty!==undefined)){hi=r;map=m;break}
+  }
+  if(hi<0)return null;
+  let cats=[],cur=null;
+  let newCat=nm=>{cur={name:nm,items:[]};cats.push(cur)};
+  let SUM=/^(小計|合計|總計|總價|含稅總價|未稅總價|營業稅|稅金|稅額|折讓|優惠|監工費|工程總價)/;
+  for(let r=hi+1;r<rows.length;r++){
+    let row=rows[r],g=k=>map[k]===undefined?"":row[map[k]];
+    let cells=row.map(N).filter(Boolean);
+    if(!cells.length)continue;
+    if(cells.some(c=>SUM.test(c)))continue;
+    let name=String(g("name")??"").trim(),q=num(g("qty")),pr=num(g("price")),tt=num(g("total"));
+    if(!name&&q===null&&pr===null&&tt===null){
+      /* 只有一段文字 → 分類名稱（例：「一、木作工程」） */
+      let txt=cells.find(c=>num(c)===null);
+      if(txt&&cells.length<=2&&txt.length<=40)newCat(txt.replace(/^[一二三四五六七八九十]+[、.．]\s*|^\d+[、.．]\s*/,"")||txt);
+      continue;
+    }
+    if(!name)continue;
+    if(q===null&&pr===null&&tt===null&&!String(g("spec")).trim()){newCat(name.replace(/^[一二三四五六七八九十]+[、.．]\s*|^\d+[、.．]\s*/,"")||name);continue}
+    let qty=q!==null&&q!==0?q:1;
+    let price=pr!==null?pr:(tt!==null?Math.round(tt/qty*100)/100:"");
+    let vp=num(g("vendor"));
+    if(!cur)newCat(defName||"裝修工程");
+    cur.items.push({id:HB_estUid(),name,spec:String(g("spec")??"").trim(),unit:String(g("unit")??"").trim()||"式",qty:String(q!==null?q:1),price:price===""?"":String(price),vendorPrice:vp!==null?String(vp):"",note:String(g("note")??"").trim()});
+  }
+  return cats.filter(c=>c.items.length);
+}
 function HB_localToday(){let d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
 function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
   let sc=HB_COLD;
@@ -7976,8 +8027,9 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
       let sheet=wb.Sheets[wb.SheetNames[0]];
       let rows=window.XLSX.utils.sheet_to_json(sheet,{header:1,defval:""});
       rows=rows.filter(r=>Array.isArray(r)&&r.some(c=>String(c??"").trim()!==""));
+      let smart=HB_estParseRows(rows,"");
       if(rows.length&&["項目","品名","name"].includes(String(rows[0][0]).trim()))rows=rows.slice(1);
-      let parsed=rows.map(r=>({id:HB_estUid(),name:String(r[0]??"").trim(),spec:String(r[1]??"").trim(),unit:String(r[2]??"").trim()||"式",qty:String(r[3]??"1").trim()||"1",price:String(r[4]??"").trim(),vendorPrice:String(r[5]??"").trim(),note:String(r[6]??"").trim()}));
+      let parsed=smart?[].concat(...smart.map(c=>c.items)):rows.map(r=>({id:HB_estUid(),name:String(r[0]??"").trim(),spec:String(r[1]??"").trim(),unit:String(r[2]??"").trim()||"式",qty:String(r[3]??"1").trim()||"1",price:String(r[4]??"").trim(),vendorPrice:String(r[5]??"").trim(),note:String(r[6]??"").trim()}));
       if(parsed.length===0){notify("這個檔案裡沒有讀到任何品項資料");return}
       applyParsedRows(cid,parsed);
       notify("已從 Excel 匯入 "+parsed.length+" 項")
@@ -8168,20 +8220,35 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
     try{
       let buf=await file.arrayBuffer();
       let wb=window.XLSX.read(buf,{type:"array"});
-      let newCats=[...a.categories];
+      let newCats=[...a.categories],got=0;
+      /* 原本只有一個空白分類的話，匯入後把它拿掉 */
+      if(newCats.length===1&&!(newCats[0].items||[]).some(x=>x.name||x.price))newCats=[];
       for(let sheetName of wb.SheetNames){
         let sheet=wb.Sheets[sheetName];
         let rows=window.XLSX.utils.sheet_to_json(sheet,{header:1,defval:""});
         rows=rows.filter(r=>Array.isArray(r)&&r.some(c=>String(c??"").trim()!==""));
+        let smart=HB_estParseRows(rows,sheetName);
+        if(smart){
+          for(let sc0 of smart){
+            let nm=smart.length===1&&sc0.name===sheetName?sheetName:sc0.name;
+            let idx=newCats.findIndex(c=>(c.name||"未命名")===nm);
+            if(idx!==-1)newCats[idx]={...newCats[idx],items:sc0.items};
+            else newCats.push({...HB_newEstCategory(nm),items:sc0.items});
+            got+=sc0.items.length;
+          }
+          continue;
+        }
         if(rows.length&&["項目","品名","name"].includes(String(rows[0][0]).trim()))rows=rows.slice(1);
         let items=rows.map(r=>({id:HB_estUid(),name:String(r[0]??"").trim(),spec:String(r[1]??"").trim(),unit:String(r[2]??"").trim()||"式",qty:String(r[3]??"1").trim()||"1",price:String(r[4]??"").trim(),note:String(r[6]??"").trim(),vendorPrice:String(r[7]??"").trim()}));
         if(items.length===0)continue;
+        got+=items.length;
         let idx=newCats.findIndex(c=>(c.name||"未命名")===sheetName);
         if(idx!==-1)newCats[idx]={...newCats[idx],items};
         else newCats.push({...HB_newEstCategory(sheetName),items})
       }
+      if(!got){notify("這個檔案裡沒有讀到任何品項，請確認有「項目」「數量」「單價」這些欄位");return}
       i(p=>({...p,categories:newCats}));
-      notify("已從 Excel 檔案載入")
+      notify("已從 Excel 載入 "+got+" 項")
     }catch(err){notify("載入失敗："+(err.message||err))}
     finally{setLocalImportBusy(!1)}
   };
