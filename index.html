@@ -7402,8 +7402,13 @@ function HerfulsinsEstimateHub({project:l,notify:t,onClose:e}){HB_ctaCss();
     if(res.error&&/discount|tax_rate|supervise_rate|column|PGRST204|42703/i.test(String(res.error.message||"")+String(res.error.code||"")))res=await q.from("sitelog_estimates").insert(base).select("*").single();
     if(res.error||!res.data){t("建立新版本失敗："+((res.error&&res.error.message)||""));return}
     o(p=>[res.data,...p]);
-    t("已建立「"+base.eng_name+"」，在清單最上面");
+    t("已建立「"+base.eng_name+"」，點編輯可以切換各版本");
   };
+  /* 同案件、同名（去掉「（第N版）」）的估價單合成一列，顯示最新一版，旁邊標共幾版 */
+  let gVer=nm=>{let k=/（第(\d+)版）$/.exec(nm||"");return k?Number(k[1]):1};
+  let gBase=nm=>{let k=/（第(\d+)版）$/.exec(nm||"");return k?nm.slice(0,k.index):(nm||"")};
+  let groups=(()=>{let m=new Map(),out=[];i.forEach(h=>{let key=(h.project_id||"")+"|"+gBase(h.eng_name);let g=m.get(key);if(!g){g={key,rows:[]};m.set(key,g);out.push(g)}g.rows.push(h)});
+    out.forEach(g=>{g.rows.sort((x,y)=>gVer(y.eng_name)-gVer(x.eng_name));g.top=g.rows[0]});return out})();
   let toV=h=>({clientName:h.client_name,contactName:h.contact_name,engName:h.eng_name,siteAddress:h.site_address,quoteDate:h.quote_date,validDays:h.valid_days,depositNote:h.deposit_note,categories:h.categories||[],discount:h.discount??"",taxRate:h.tax_rate??"",superviseRate:h.supervise_rate||""});
   if(n==="edit")return u.default.createElement(HB_EstimateEditor,{project:l,estimate:r,notify:t,onBack:()=>{a("list"),load()}});
   return u.default.createElement("div",{className:"hb-dossier",style:{position:"fixed",inset:0,zIndex:70,overflowY:"auto"},
@@ -7420,18 +7425,18 @@ function HerfulsinsEstimateHub({project:l,notify:t,onClose:e}){HB_ctaCss();
 
       u.default.createElement("div",{className:"hb-dosSolo"},
         u.default.createElement("div",{className:"hb-dosBar"},
-          u.default.createElement("div",{className:"hb-dosCount"}, i.length>0? i.length+" 份估價單":"尚無資料"),
+          u.default.createElement("div",{className:"hb-dosCount"}, i.length>0? groups.length+" 份估價單":"尚無資料"),
           u.default.createElement("button",{onClick:()=>{d(null),a("edit")},className:"hb-dosNew"},"新增估價單")),
 
         f?u.default.createElement("div",{style:{textAlign:"center",padding:40}},
             u.default.createElement(E,{name:"loader",className:"animate-spin",size:22,color:"#B4573A"})):
         i.length===0?u.default.createElement(He,{icon:"calculator",text:"尚未建立任何估價單"}):
         u.default.createElement("ul",{className:"hb-dosList"},
-          i.map((h,hi)=>u.default.createElement("li",{key:h.id,className:"hb-dosItem"},
+          groups.map((g,hi)=>{let h=g.top,nv=g.rows.length;return u.default.createElement("li",{key:h.id,className:"hb-dosItem"},
             u.default.createElement("span",{className:"hb-dosNo"},String(hi+1).padStart(2,"0")),
             u.default.createElement("div",{className:"hb-dosBody"},
-              u.default.createElement("div",{className:"hb-dosName"},h.eng_name||"（未命名工程）"),
-              u.default.createElement("div",{className:"hb-dosMeta"},"客戶 "+(h.client_name||"—"))),
+              u.default.createElement("div",{className:"hb-dosName"},(nv>1?gBase(h.eng_name):h.eng_name)||"（未命名工程）"),
+              u.default.createElement("div",{className:"hb-dosMeta"},"客戶 "+(h.client_name||"—")+(nv>1?"　·　目前第 "+gVer(h.eng_name)+" 版（共 "+nv+" 版，點編輯可切換）":""))),
             u.default.createElement("span",{className:"hb-dosAmt"},"NT$ "+HB_money(HB_estGrandTotal(h.categories||[]))),
             u.default.createElement("div",{className:"hb-dosActs"},
               u.default.createElement("button",{onClick:()=>HB_openEstimatePrint(toV(h)),className:"hb-dosAct"},
@@ -7449,8 +7454,8 @@ function HerfulsinsEstimateHub({project:l,notify:t,onClose:e}){HB_ctaCss();
                   u.default.createElement("button",{onClick:()=>{hbSetMenu(null);d(h);a("edit")}},"編輯"),
                   u.default.createElement("button",{className:"del",onClick:()=>{
                     hbSetMenu(null);
-                    if(window.confirm("確定要刪除「"+(h.eng_name||"未命名工程")+"」？此動作無法復原。")) deleteEst(h.id)
-                  }},"刪除")))))))
+                    if(window.confirm("確定要刪除「"+(h.eng_name||"未命名工程")+"」？"+(nv>1?"\n（只刪這一版，其他 "+(nv-1)+" 版會留著）":"")+"此動作無法復原。")) deleteEst(h.id)
+                  }},nv>1?"刪除這一版（第"+gVer(h.eng_name)+"版）":"刪除")))));}))
       ))
   )
 }
