@@ -8038,6 +8038,33 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
     };
   },[]);
   let goBack=async()=>{await flushAutosave();n()};
+  /* 另存新版本：原本這版留著不動，複製一份「（第N版）」繼續改 */
+  let newVersion=async()=>{
+    if(!a.engName){setShowBasic(!0);notify("請先輸入工程名稱");return}
+    if(!window.confirm("把這張估價單複製成新的一版？\n\n原本這版會保留不動（客戶確認連結也還是舊版），之後的修改只會改在新版本。"))return;
+    let r0=await flushAutosave();
+    if(r0&&r0.error){notify("目前這版還沒存好，請稍後再試");return}
+    let mm=/（第(\d+)版）$/.exec(a.engName);
+    let baseName=mm?a.engName.slice(0,mm.index):a.engName;
+    let no=mm?Number(mm[1])+1:2;
+    try{
+      let qq=q.from("sitelog_estimates").select("eng_name");
+      if(l&&l.id)qq=qq.eq("project_id",l.id);
+      let{data:names}=await qq;
+      (names||[]).forEach(x=>{let k=/（第(\d+)版）$/.exec(x.eng_name||"");if(k&&(x.eng_name||"").slice(0,k.index)===baseName)no=Math.max(no,Number(k[1])+1)});
+    }catch(_){}
+    let fm={...a,engName:baseName+"（第"+no+"版）",quoteDate:HB_localToday()};
+    let{base:b0,payload:p0}=buildEstPayload(fm);
+    let res=await q.from("sitelog_estimates").insert(p0).select("id").single();
+    if(res.error&&/discount|tax_rate|supervise_rate|column|PGRST204|42703/i.test(String(res.error.message||"")+String(res.error.code||"")))res=await q.from("sitelog_estimates").insert(b0).select("id").single();
+    if(res.error||!res.data){notify("建立新版本失敗："+((res.error&&res.error.message)||""));return}
+    estIdRef.current=res.data.id;
+    lastSavedRef.current=JSON.stringify(p0);
+    dateManualRef.current=!1;
+    i(fm);
+    setAuto({s:"saved",at:new Date()});
+    notify("已建立「"+fm.engName+"」，現在編輯的是新版本；舊版還在估價單清單裡");
+  };
   let save=async()=>{
     if(!a.engName){setShowBasic(!0);notify("請先輸入工程名稱");return}
     if(autoTimerRef.current){clearTimeout(autoTimerRef.current);autoTimerRef.current=null}
@@ -8412,6 +8439,7 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
         return u.default.createElement("div",{"aria-live":"polite",title:"估價單會在修改後約 2 秒自動存到雲端",onClick:st==="error"?()=>flushAutosave():void 0,style:{display:"flex",alignItems:"center",gap:5,background:bg,color:fg,borderRadius:99,padding:"4px 10px",fontSize:11.5,whiteSpace:"nowrap",flexShrink:0,marginRight:10,cursor:st==="error"?"pointer":"default"}},
           u.default.createElement("span",{style:{width:7,height:7,borderRadius:"50%",background:dot,flex:"none"}}),lab)
       })(),
+      u.default.createElement("button",{onClick:newVersion,title:"另存新版本（原本這版保留）",className:"hb-est-newver",style:{display:"flex",alignItems:"center",gap:4,background:"none",border:"1px solid "+sc.line,borderRadius:99,color:sc.inkSoft,cursor:"pointer",padding:"4px 10px",fontSize:11.5,whiteSpace:"nowrap",flexShrink:0,marginRight:10}},u.default.createElement(E,{name:"copy",size:13}),"另存新版本"),
       u.default.createElement("button",{onClick:()=>setCalcOpen(!0),title:"計算機",style:{background:"none",border:"none",color:sc.inkSoft,cursor:"pointer",display:"flex",alignItems:"center",padding:0}},u.default.createElement(E,{name:"calculator",size:17}))
     ),
     u.default.createElement("div",{className:"hb-est-arc","aria-hidden":"true",style:{flexShrink:0,height:24,marginTop:-1,position:"relative",zIndex:1,lineHeight:0}},
