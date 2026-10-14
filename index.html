@@ -7387,6 +7387,22 @@ function HerfulsinsEstimateHub({project:l,notify:t,onClose:e}){HB_ctaCss();
     if(m){t("刪除失敗："+m.message);return}
     o(p=>p.filter(z=>z.id!==h)),t("已刪除估價單")
   };
+  /* 做新版本：複製一份「（第N版）」，原本那版不動 */
+  let copyVersion=async h=>{
+    let nm0=h.eng_name||"未命名工程";
+    if(!window.confirm("把「"+nm0+"」複製成新的一版？\n原本這版會保留不動。"))return;
+    let mm=/（第(\d+)版）$/.exec(nm0);
+    let baseName=mm?nm0.slice(0,mm.index):nm0;
+    let no=mm?Number(mm[1])+1:2;
+    i.forEach(x=>{let k=/（第(\d+)版）$/.exec(x.eng_name||"");if(k&&(x.eng_name||"").slice(0,k.index)===baseName)no=Math.max(no,Number(k[1])+1)});
+    let base={project_id:h.project_id||null,client_name:h.client_name,contact_name:h.contact_name,eng_name:baseName+"（第"+no+"版）",site_address:h.site_address,quote_date:HB_localToday(),valid_days:h.valid_days,deposit_note:h.deposit_note,categories:h.categories||[]};
+    let full={...base,discount:h.discount||0,tax_rate:h.tax_rate||0,supervise_rate:h.supervise_rate||0};
+    let res=await q.from("sitelog_estimates").insert(full).select("*").single();
+    if(res.error&&/discount|tax_rate|supervise_rate|column|PGRST204|42703/i.test(String(res.error.message||"")+String(res.error.code||"")))res=await q.from("sitelog_estimates").insert(base).select("*").single();
+    if(res.error||!res.data){t("建立新版本失敗："+((res.error&&res.error.message)||""));return}
+    o(p=>[res.data,...p]);
+    t("已建立「"+base.eng_name+"」，在清單最上面");
+  };
   let toV=h=>({clientName:h.client_name,contactName:h.contact_name,engName:h.eng_name,siteAddress:h.site_address,quoteDate:h.quote_date,validDays:h.valid_days,depositNote:h.deposit_note,categories:h.categories||[],discount:h.discount??"",taxRate:h.tax_rate??"",superviseRate:h.supervise_rate||""});
   if(n==="edit")return u.default.createElement(HB_EstimateEditor,{project:l,estimate:r,notify:t,onBack:()=>{a("list"),load()}});
   return u.default.createElement("div",{className:"hb-dossier",style:{position:"fixed",inset:0,zIndex:70,overflowY:"auto"},
@@ -7421,6 +7437,8 @@ function HerfulsinsEstimateHub({project:l,notify:t,onClose:e}){HB_ctaCss();
                 u.default.createElement(E,{name:"printer",size:13}),u.default.createElement("span",null,"PDF")),
               u.default.createElement("button",{onClick:()=>HB_generateEstimateExcel(toV(h)),className:"hb-dosAct"},
                 u.default.createElement(E,{name:"file-output",size:13}),u.default.createElement("span",null,"Excel")),
+              u.default.createElement("button",{onClick:()=>copyVersion(h),className:"hb-dosAct",title:"複製成新的一版，原本這版保留"},
+                u.default.createElement(E,{name:"copy",size:13}),u.default.createElement("span",null,"新版本")),
               u.default.createElement("div",{className:"hb-dosMore"},
                 u.default.createElement("button",{className:"hb-dosAct ico","aria-haspopup":"true",
                   "aria-expanded":hbMenu===h.id?"true":"false",title:"更多",
