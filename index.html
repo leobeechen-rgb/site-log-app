@@ -13190,27 +13190,59 @@ const HB_LIB_CSS=`
         .wbk-card-todo{padding:10px 12px 4px}
         html .hb-wb .wbk-card-proj.wbk-work{padding:12px}
       }
-      /* 桌機待辦卡片固定 200px：逾期／本週工地改成標題列小標籤，週曆與四欄壓低，欄內內容過多就在欄內捲動 */
-      .wbk-hchip{display:none}
+      /* 桌機待辦卡片固定高度：逾期／本週工地為標題列小標籤；寬螢幕（≥1800px）週曆併進標題列，卡片 200px；
+         較窄螢幕週曆保留一排，卡片 236px。「查看全部」移到各欄標題右側，欄內事項多時在欄內捲動 */
+      .wbk-hchip,.wbk-week-in{display:none!important}
       @media (min-width:681px){
-        .wbk-fixed .wbk-hchip{display:inline-flex;align-items:center;gap:6px;min-height:28px!important;padding:2px 12px;border:1px solid #D9CFBD;border-radius:999px;background:transparent;font:inherit;font-size:13px;color:#3C362F;cursor:pointer;white-space:nowrap}
+        .wbk-fixed .wbk-hchip{display:inline-flex!important;align-items:center;gap:6px;min-height:28px!important;padding:2px 12px;border:1px solid #D9CFBD;border-radius:999px;background:transparent;font:inherit;font-size:13px;color:#3C362F;cursor:pointer;white-space:nowrap}
         .wbk-hchip b{font-family:'Noto Serif TC',serif;font-size:15px;font-weight:600}
         .wbk-hchip.is-late{border-color:transparent;background:#F6E3DD;color:#A33A2A}
         .wbk-hchip:hover{border-color:#B9AC95}
         .wbk-fixed .wbk-kpis,.wbk-fixed .wbk-agbar{display:none}
-        .wbk-fixed .wbk-card-todo{height:200px;box-sizing:border-box;display:flex;flex-direction:column;overflow:hidden;padding:6px 20px 4px}
-        .wbk-fixed .wbk-head{flex:none;min-height:40px;padding-bottom:4px}
+        .wbk-fixed .wbk-card-todo{height:236px;box-sizing:border-box;display:flex;flex-direction:column;overflow:hidden;padding:6px 20px 6px}
+        .wbk-fixed .wbk-head{flex:none;min-height:44px;padding-bottom:4px;flex-wrap:nowrap}
         .wbk-fixed .wbc-titlewrap h2.wbc-carnet{font-size:26px}
-        .wbk-fixed .wbk-week{flex:none;height:34px}
-        .hb-wb.wbk-fixed .wbk-day{height:30px}
+        .wbk-fixed .wbk-week{flex:none;height:36px}
+        .hb-wb.wbk-fixed .wbk-day{height:32px}
         .wbk-fixed .wbk-day b{width:26px;height:26px;font-size:17px}
         .wbk-fixed .wbk-cols{flex:1 1 auto;min-height:0;grid-template-rows:minmax(0,1fr)}
-        .wbk-fixed .wbk-col{min-height:0;overflow:hidden;padding-top:6px;padding-bottom:2px}
-        .wbk-fixed .wbk-col .wbc-colhead{flex:none;margin-bottom:2px}
+        .wbk-fixed .wbk-col{position:relative;min-height:0;overflow:hidden;padding-top:8px;padding-bottom:0}
+        .wbk-fixed .wbk-col .wbc-colhead{flex:none;margin-bottom:4px;padding-right:86px;min-height:28px}
         .wbk-fixed .wbk-col .wbc-colhead h3{font-size:17px}
-        .hb-wb.wbk-fixed .wbk-col .wbk-colbody{flex:1 1 0;min-height:0!important;overflow-y:auto;scrollbar-width:thin}
-        .wbk-fixed .wbk-col>.wbc-more{flex:none;margin-top:2px}
-        .wbk-fixed .wbk-c4{overflow-y:auto;scrollbar-width:thin}
+        .wbk-fixed .wbk-col>.wbc-more{position:absolute;top:12px;right:14px;margin:0;font-size:12px}
+        .wbk-fixed .wbk-c4>.wbc-more{display:none}
+        .wbk-fixed .wbk-c4 .wbc-colhead{padding-right:0}
+        .hb-wb.wbk-fixed .wbk-col .wbk-colbody{flex:1 1 0;min-height:0!important;overflow-y:auto;scrollbar-width:none;padding-bottom:10px;-webkit-mask-image:linear-gradient(#000 calc(100% - 14px),transparent);mask-image:linear-gradient(#000 calc(100% - 14px),transparent)}
+        .wbk-fixed .wbk-colbody::-webkit-scrollbar,.wbk-fixed .wbk-c4::-webkit-scrollbar{display:none}
+        .wbk-fixed .wbk-c4{overflow-y:auto;scrollbar-width:none;padding-bottom:8px}
+      }
+      @media (min-width:681px){
+        /* 固定高度時事項改成單行：標題＋案件名同一行，一欄可看到約三筆 */
+        .wbk-fixed .wbk-col .wbc-row{padding:3px 0!important;gap:8px;grid-template-columns:22px minmax(0,1fr) auto 14px}
+        .wbk-fixed .wbk-col .wbc-check{width:20px;height:20px;min-height:0!important}
+        .wbk-fixed .wbk-col .wbc-ficon svg{width:16px;height:16px}
+        .wbk-fixed .wbk-col .wbc-body{display:flex;align-items:baseline;gap:8px;min-width:0;min-height:0!important;padding:2px 0}
+        .wbk-fixed .wbk-col .wbc-body strong{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:0 1 auto;min-width:0}
+        .wbk-fixed .wbk-col .wbc-body small,.wbk-fixed .wbk-col .wbc-body>span{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:0 100 auto;min-width:0;margin:0}
+        .wbk-fixed .wbk-col .wbc-body .wbc-last{display:none}
+        .wbk-fixed .wbk-col .wbc-badge{font-size:11px;padding:2px 7px}
+      }
+      @media (min-width:681px) and (max-width:1599px){
+        .wbk-fixed .wbk-head>*{flex-shrink:0;white-space:nowrap}
+        .wbk-fixed .wbk-head .wbc-fr,.wbk-fixed .wbk-head .wbc-hublink{display:none}
+        .wbk-fixed .wbc-titlewrap h2.wbc-carnet{font-size:22px}
+        .wbk-fixed .wbk-head{gap:8px 10px}
+      }
+      @media (min-width:1800px){
+        .wbk-fixed .wbk-card-todo{height:200px}
+        .wbk-fixed .wbk-week-in{display:flex!important;flex:none;height:auto;gap:0;border:0;margin:0 4px}
+        .wbk-fixed .wbk-card-todo>.wbk-week:not(.wbk-week-in){display:none}
+        .wbk-fixed .wbk-head .wbk-week-in .wbk-wk{width:26px;height:26px}
+        .hb-wb.wbk-fixed .wbk-week-in .wbk-day{flex:none;width:34px;height:40px;flex-direction:column;gap:0}
+        .wbk-fixed .wbk-week-in .wbk-day span{font-size:10px;line-height:1.1}
+        .wbk-fixed .wbk-week-in .wbk-day b{width:24px;height:24px;font-size:15px}
+        .wbk-fixed .wbk-week-in .wbk-day i{bottom:-1px;margin-left:8px;width:4px;height:4px}
+        .wbk-fixed .wbk-head{border-bottom:1px solid var(--wb-line)}
       }
       .wbk-case{margin-top:16px;border:1px solid #D9CFBD;border-radius:4px;background:rgba(255,253,248,.72);padding:16px 18px 6px}
       .wbk-case.is-empty{padding:26px 18px;text-align:center;border-style:dashed}
@@ -16833,6 +16865,10 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
         h('button',{type:'button',className:'wbk-hchip',onClick:()=>setCSide('kWeek'),title:'查看本週工地排程'},h('b',null,kWeekList.length),'本週工地'),
         h(HbNotifBell),
         h('button',{type:'button',className:'wbc-cfbtn'+(cfChangeN?' has-ch':'')+(cfActive?' has':''),onClick:()=>setCfList(true)},'待業主確認',h('b',null,cfActive)),
+        agOn&&h('div',{className:'wbk-week wbk-week-in','aria-label':'本週日期'},h('button',{type:'button',className:'wbk-wk',onClick:()=>shift(-1),'aria-label':'上一週'},HB_wbIcon('left',16)),
+        week.map((x,i)=>{const s=ymd(x);return h('button',{key:s,type:'button',className:'wbk-day'+(s===day?' on':'')+(s===today?' today':''),'aria-pressed':s===day,'aria-label':(x.getMonth()+1)+'月'+x.getDate()+'日',onClick:()=>{setCDay(s);setCGapOpen(null)}},
+          h('span',null,'日一二三四五六'[i]),h('b',null,x.getDate()),h('i',{className:has(s)?'has':''}))}),
+        h('button',{type:'button',className:'wbk-wk',onClick:()=>shift(1),'aria-label':'下一週'},HB_wbIcon('right',16))),
         h('span',{className:'wbc-grow'}),
         agOn&&h('button',{type:'button',className:'wbk-toggle'+(cGaps?' on':''),'aria-pressed':cGaps,onClick:()=>setCGaps(!cGaps)},h('span',null,'空檔時間'),h('i')),
         agOn&&h('label',{className:'wbk-pick',title:'跳到指定日期'},HB_wbIcon('calendar',17),h('span',{className:'wbc-sr'},'選擇日期'),h('input',{type:'date',value:day,'aria-label':'選擇日期',onChange:e=>{if(e.target.value){setCDay(e.target.value);setCGapOpen(null)}},onClick:e=>{try{e.currentTarget.showPicker&&e.currentTarget.showPicker()}catch{}}})),
