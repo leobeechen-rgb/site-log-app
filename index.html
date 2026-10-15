@@ -13174,6 +13174,22 @@ const HB_LIB_CSS=`
       .wbk-agn b{color:#B4573A;font-weight:500;margin-left:2px}.wbk-agpv{color:#A79E8D}
       .wbk-agtog{border:0;background:none;font:inherit;font-size:13px;color:#3C362F;cursor:pointer;display:inline-flex;align-items:center;gap:4px;padding:4px 2px}
       .wbk-agtog svg,.wbk-casefold svg{transition:transform .2s}.wbk-agbar.on .wbk-agtog svg{transform:rotate(180deg)}
+      /* 待辦與專案分成兩張毛玻璃卡片：模糊放在 ::before，避免彈出視窗被卡片困住 */
+      html .hb-wb.wbc.wbk{position:relative;z-index:0;background:transparent!important;border:0!important;box-shadow:none!important;padding:6px 0 4px!important;display:flex;flex-direction:column;gap:18px}
+      html .hb-wb.wbc.wbk::before{content:'';position:absolute;inset:-24px -16px;z-index:-1;pointer-events:none;
+        background:radial-gradient(38% 46% at 12% 18%,rgba(46,74,60,.13),transparent 70%),radial-gradient(34% 40% at 88% 30%,rgba(180,87,58,.10),transparent 70%),radial-gradient(42% 46% at 50% 92%,rgba(138,110,50,.10),transparent 70%)}
+      .wbk-card{position:relative;z-index:0;border-radius:10px;border:1px solid rgba(255,255,255,.72);
+        box-shadow:inset 0 1px 0 rgba(255,255,255,.7),0 1px 2px rgba(42,34,24,.05),0 18px 40px -26px rgba(42,34,24,.35)}
+      .wbk-card::before{content:'';position:absolute;inset:0;z-index:-1;border-radius:inherit;pointer-events:none;
+        background:rgba(255,253,248,.58);-webkit-backdrop-filter:blur(18px) saturate(150%);backdrop-filter:blur(18px) saturate(150%)}
+      .wbk-card-todo{padding:12px 20px 6px}
+      html .hb-wb .wbk-card-proj.wbk-work{margin-top:0!important;padding:16px 20px 18px}
+      @media (max-width:680px){
+        html .hb-wb.wbc.wbk{gap:12px}
+        .wbk-card{border-radius:8px}
+        .wbk-card-todo{padding:10px 12px 4px}
+        html .hb-wb .wbk-card-proj.wbk-work{padding:12px}
+      }
       /* 工作台高度切換（桌機）：收合＝只留摘要列；精簡＝數字改成標題列小標籤、週曆與四欄壓低；完整＝原版 */
       .wbk-hseg,.wbk-hchip{display:none}
       @media (min-width:681px){
@@ -16806,6 +16822,7 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
       :cSide==='kLate'?h('ul',{className:'wbc-list'},kLateList.length?kLateList.map(t=>HB_wbIsFollow(t)?followRow(t):openRow(t)):h('li',{className:'wbc-empty'},'沒有逾期事項'))
       :cSide==='kWeek'?h('ul',{className:'wbc-list'},kWeekList.length?kWeekList.map(weekRow):h('li',{className:'wbc-empty'},'本週沒有工地排程')):null;
     return h('section',{className:'hb-wb wbc is-compact wbk wbk-h-'+wbCur,ref:wbRef,'aria-label':'工作台'},
+      h('div',{className:'wbk-card wbk-card-todo'},
       h('header',{className:'wbk-head'},
         h('div',{className:'wbc-titlewrap'},h('h2',{className:'wbc-carnet'},'Le Carnet du Jour'),h('span',{className:'wbc-fr'},'工作台')),
         h('div',{className:'wbc-date'},(d0.getMonth()+1)+'月'+pad(d0.getDate())+'日　'+HB_wbWeek(day).replace('週','星期'),!isToday&&h('button',{type:'button',className:'wbk-today',onClick:()=>setCDay(today)},'回到今天')),
@@ -16861,8 +16878,8 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
           h('div',{className:'wbk-shophead'},h('button',{type:'button',className:'wbk-shopbtn','aria-expanded':cShop||shop.length>0,onClick:()=>setCShop(!cShop)},h('h3',null,'購物清單'),h('span',{className:'wbc-num'},shop.length)),
             !(cShop||shop.length)&&h('button',{type:'button',className:'wbk-plus','aria-label':'新增購物項目',onClick:()=>setCShop(true)},HB_wbIcon('plus',14))),
           (cShop||shop.length>0)&&h('form',{className:'wbk-quick',onSubmit:e=>quick('shop',e)},h('input',{name:'q',maxLength:200,placeholder:'要買的東西','aria-label':'新增購物項目',autoFocus:cShop&&!shop.length}),h('button',{type:'submit','aria-label':'新增購物項目'},HB_wbIcon('plus',15))),
-          more(later.length+shop.length>1?later.length+shop.length:0,()=>setCSide(later.length||!shop.length?'later':'shop'))))),
-      h('div',{className:'wbk-work',ref:workRef},
+          more(later.length+shop.length>1?later.length+shop.length:0,()=>setCSide(later.length||!shop.length?'later':'shop')))))),
+      h('div',{className:'wbk-work wbk-card wbk-card-proj',ref:workRef},
         /* 專案一覽（精簡版）：放在上方，點一下就在下面操作；可把檔案拖到卡上上傳 */
         (()=>{const pick=id=>{if(id===pv){setArea('case');return}if(window.HB_caseCanLeave&&!window.HB_caseCanLeave())return;setProj&&setProj(id);setArea('case')};
           const act=projects.filter(p=>p.status!==fn[2]&&p.status!==fn[3]&&!/示範/.test(p.name||'')),rest=projects.filter(p=>!act.includes(p));
