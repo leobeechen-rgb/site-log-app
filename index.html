@@ -2758,18 +2758,18 @@
 
     /* 2 · 標籤在上、欄位單欄；只有空間夠才並排 */
     label{ display: block; }
-    div[style*="display: flex"]:has(> input, > select, > textarea,
+    div[style*="display: flex"]:not([style*="flex-direction: column"]):has(> input, > select, > textarea,
                                     > div > input, > div > select, > div > textarea){
       flex-wrap: wrap !important;
       align-items: flex-start !important;
     }
-    div[style*="display: flex"]:has(> input, > select, > textarea) > input,
-    div[style*="display: flex"]:has(> input, > select, > textarea) > select,
-    div[style*="display: flex"]:has(> input, > select, > textarea) > textarea{
+    div[style*="display: flex"]:not([style*="flex-direction: column"]):has(> input, > select, > textarea) > input,
+    div[style*="display: flex"]:not([style*="flex-direction: column"]):has(> input, > select, > textarea) > select,
+    div[style*="display: flex"]:not([style*="flex-direction: column"]):has(> input, > select, > textarea) > textarea{
       flex: 1 1 13rem !important;
       width: auto !important;
     }
-    div[style*="display: flex"]:has(> div > input, > div > select) > div{
+    div[style*="display: flex"]:not([style*="flex-direction: column"]):has(> div > input, > div > select) > div{
       flex: 1 1 13rem !important;
       min-width: 0 !important;
     }
