@@ -16884,7 +16884,7 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
         h('button',{type:'button',className:'wbc-add',onClick:()=>newTask({due:day})},HB_wbIcon('plus',15),'新增事項')),
       error&&h('div',{className:'wb-error',role:'alert'},error,h('button',{type:'button',onClick:tk.reload},'重新整理')),
       /* 工地手機快速模式（只在手機寬度顯示）：選案件 → 拍照／記缺失／材料進場 */
-      (()=>{const act=projects.filter(p=>p.status!==fn[2]&&p.status!==fn[3]);const real=pv&&pv!=='__co'&&projects.some(p=>p.id===pv);
+      (()=>{const act=projects.filter(p=>p.status!==fn[2]&&p.status!==fn[3]&&!/示範/.test(p.name||''));const real=pv&&pv!=='__co'&&projects.some(p=>p.id===pv);
         const need=()=>{caseSay('請先選擇案件');try{mqSel.current&&mqSel.current.focus()}catch{}};
         const go=tab=>{if(!real)return need();setArea('case');setPvTab(tab);setCaseFold(false);setAutoAdd({tab,pid:pv,n:Date.now()});
           setTimeout(()=>{const el=workRef.current;if(el)el.scrollIntoView({behavior:'smooth',block:'start'})},60)};
