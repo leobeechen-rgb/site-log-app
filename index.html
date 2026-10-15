@@ -13174,6 +13174,24 @@ const HB_LIB_CSS=`
       .wbk-agn b{color:#B4573A;font-weight:500;margin-left:2px}.wbk-agpv{color:#A79E8D}
       .wbk-agtog{border:0;background:none;font:inherit;font-size:13px;color:#3C362F;cursor:pointer;display:inline-flex;align-items:center;gap:4px;padding:4px 2px}
       .wbk-agtog svg,.wbk-casefold svg{transition:transform .2s}.wbk-agbar.on .wbk-agtog svg{transform:rotate(180deg)}
+      /* 工作台高度切換（桌機）：收合＝只留摘要列；精簡＝數字改成標題列小標籤、週曆與四欄壓低；完整＝原版 */
+      .wbk-hseg,.wbk-hchip{display:none}
+      @media (min-width:681px){
+        .wbk-hseg{display:inline-flex;gap:2px;padding:2px;border:1px solid #D9CFBD;border-radius:6px;background:#F7F3EB}
+        .hb-wb .wbk-hseg button{min-height:30px!important;border:0;border-radius:4px;background:transparent;padding:4px 12px;font:inherit;font-size:13px;color:#4f4a40;cursor:pointer}
+        .hb-wb .wbk-hseg button:hover{background:rgba(46,74,60,.08)}
+        .hb-wb .wbk-hseg button.on{background:var(--wb-green,#2E4A3C);color:#F2EFE8;font-weight:500}
+        .wbk-h-compact .wbk-hchip,.wbk-h-collapsed .wbk-hchip{display:inline-flex;align-items:center;gap:6px;min-height:30px!important;padding:3px 12px;border:1px solid #D9CFBD;border-radius:999px;background:transparent;font:inherit;font-size:13px;color:#3C362F;cursor:pointer;white-space:nowrap}
+        .wbk-hchip b{font-family:'Noto Serif TC',serif;font-size:15px;font-weight:600}
+        .wbk-hchip.is-late{border-color:transparent;background:#F6E3DD;color:#A33A2A}
+        .wbk-hchip:hover{border-color:#B9AC95}
+        .wbk-h-compact .wbk-kpis,.wbk-h-collapsed .wbk-kpis{display:none}
+        .wbk-h-compact .wbk-agbar{display:none}
+        .wbk-h-compact .wbk-week{height:40px}
+        .hb-wb.wbk-h-compact .wbk-day{height:34px}
+        .wbk-h-compact .wbk-day b{width:28px;height:28px;font-size:18px}
+        .wbk-h-compact .wbk-col{padding-top:8px}
+      }
       .wbk-case{margin-top:16px;border:1px solid #D9CFBD;border-radius:4px;background:rgba(255,253,248,.72);padding:16px 18px 6px}
       .wbk-case.is-empty{padding:26px 18px;text-align:center;border-style:dashed}
       .wbk-caseempty b{display:block;font-family:'Noto Serif TC',serif;font-weight:500;font-size:20px;color:#2E4A3C;letter-spacing:.08em}
@@ -16449,7 +16467,7 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
   /* 篩選單一案件時，工作台下方改放這個案件的照片縮圖（不顯示行程） */
   const [pvPh,setPvPh]=u.useState(null),[pvTab,setPvTab]=u.useState('progress'),[pvData,setPvData]=u.useState({}),[pvFiles,setPvFiles]=u.useState(null),[pvLb,setPvLb]=u.useState(null);
   u.useEffect(()=>{setPvFiles(null);setPvLb(null);setPvData({})},[pv]);   /* 切換案件保留目前分頁 */
-  const [agOpen,setAgOpen]=u.useState(null),[caseFold,setCaseFold]=u.useState(false),[caseMeta,setCaseMeta]=u.useState(false),caseDirty=u.useRef({});
+  const [agOpen,setAgOpen]=u.useState(null),[wbH,setWbHraw]=u.useState(()=>{try{const v=localStorage.getItem('hb_wb_height');return v==='collapsed'||v==='full'?v:'compact'}catch(e){return 'compact'}}),[caseFold,setCaseFold]=u.useState(false),[caseMeta,setCaseMeta]=u.useState(false),caseDirty=u.useRef({});
   /* 待歸檔：檔案先放在這裡，確認案件與資料夾後才上傳 */
   const [inbox,setInbox]=u.useState([]),[area,setArea]=u.useState('case'),workRef=u.useRef(null),[autoAdd,setAutoAdd]=u.useState(null),mqSel=u.useRef(null);
   const inboxAdd=async(files,lockPid)=>{const list=await HB_inboxMake(files,projects,lockPid||'');if(!list.length)return;setInbox(l=>[...l,...list]);setArea('inbox');
@@ -16760,7 +16778,10 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
           k==='photos'&&pvP.photoCount?h('b',null,pvP.photoCount):null))),
         !caseFold&&h('div',{className:'wbk-casebody wbk-pph',role:'tabpanel'},caseBody))
       :h('div',{className:'wbk-caseempty'},h('b',null,'請從上方選擇案件'),h('span',null,'點選上方「專案一覽」的案件卡，就能直接在這裡管理進度、照片、設備、材料、報價單、缺失、會議與收據。')));
-    const agOn=agOpen===null?!pvReal:agOpen;
+    const agOn=agOpen===null?(wbH!=='collapsed'&&!pvReal):agOpen;
+    /* 工作台高度（桌機）：收合／精簡／完整，記在這台電腦 */
+    const setWbH=v=>{setWbHraw(v);try{localStorage.setItem('hb_wb_height',v)}catch(e){}setAgOpen(v!=='collapsed')};
+    const wbCur=!agOn?'collapsed':(wbH==='collapsed'?'compact':wbH);
     const lbCur=pvLb&&pvLb.list[pvLb.i];
     const pvLightbox=lbCur&&h('div',{className:'wbk-lb',role:'dialog','aria-modal':'true','aria-label':'預覽',onClick:()=>setPvLb(null)},
       h('div',{className:'wbk-lbbar',onClick:e=>e.stopPropagation()},
@@ -16784,10 +16805,13 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
       :cSide==='ical'?h('div',{className:'wbk-ical'},h(HbTodayCalLink,null))
       :cSide==='kLate'?h('ul',{className:'wbc-list'},kLateList.length?kLateList.map(t=>HB_wbIsFollow(t)?followRow(t):openRow(t)):h('li',{className:'wbc-empty'},'沒有逾期事項'))
       :cSide==='kWeek'?h('ul',{className:'wbc-list'},kWeekList.length?kWeekList.map(weekRow):h('li',{className:'wbc-empty'},'本週沒有工地排程')):null;
-    return h('section',{className:'hb-wb wbc is-compact wbk',ref:wbRef,'aria-label':'工作台'},
+    return h('section',{className:'hb-wb wbc is-compact wbk wbk-h-'+wbCur,ref:wbRef,'aria-label':'工作台'},
       h('header',{className:'wbk-head'},
         h('div',{className:'wbc-titlewrap'},h('h2',{className:'wbc-carnet'},'Le Carnet du Jour'),h('span',{className:'wbc-fr'},'工作台')),
         h('div',{className:'wbc-date'},(d0.getMonth()+1)+'月'+pad(d0.getDate())+'日　'+HB_wbWeek(day).replace('週','星期'),!isToday&&h('button',{type:'button',className:'wbk-today',onClick:()=>setCDay(today)},'回到今天')),
+        h('div',{className:'wbk-hseg',role:'group','aria-label':'工作台高度'},[['collapsed','收合'],['compact','精簡'],['full','完整']].map(([k,l])=>h('button',{key:k,type:'button',className:wbCur===k?'on':'','aria-pressed':wbCur===k,onClick:()=>setWbH(k)},l))),
+        h('button',{type:'button',className:'wbk-hchip'+(kLateList.length?' is-late':''),onClick:()=>setCSide('kLate'),title:'查看全公司逾期事項'},h('b',null,kLateList.length),'逾期'),
+        h('button',{type:'button',className:'wbk-hchip',onClick:()=>setCSide('kWeek'),title:'查看本週工地排程'},h('b',null,kWeekList.length),'本週工地'),
         h(HbNotifBell),
         h('button',{type:'button',className:'wbc-cfbtn'+(cfChangeN?' has-ch':'')+(cfActive?' has':''),onClick:()=>setCfList(true)},'待業主確認',h('b',null,cfActive)),
         h('span',{className:'wbc-grow'}),
@@ -16819,7 +16843,7 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
         h('span',{className:'wbk-agn'},'待追蹤 ',h('b',null,fList.length)),
         pv&&h('button',{type:'button',className:'wbk-agn wbk-agpv',title:'改看全部案件',onClick:()=>{if(window.HB_caseCanLeave&&!window.HB_caseCanLeave())return;setProj&&setProj('')}},'只看「'+pvName+'」 ✕'),
         h('span',{className:'wbc-grow'}),
-        h('button',{type:'button',className:'wbk-agtog','aria-expanded':agOn,onClick:()=>setAgOpen(!agOn)},agOn?'收合':'展開',HB_wbIcon('caret',14))),
+        h('button',{type:'button',className:'wbk-agtog','aria-expanded':agOn,onClick:()=>agOn?setWbH('collapsed'):setWbH(wbH==='full'?'full':'compact')},agOn?'收合':'展開',HB_wbIcon('caret',14))),
       agOn&&h(u.default.Fragment,null,
       h('div',{className:'wbk-week'},h('button',{type:'button',className:'wbk-wk',onClick:()=>shift(-1),'aria-label':'上一週'},HB_wbIcon('left',16)),
         week.map((x,i)=>{const s=ymd(x);return h('button',{key:s,type:'button',className:'wbk-day'+(s===day?' on':'')+(s===today?' today':''),'aria-pressed':s===day,'aria-label':(x.getMonth()+1)+'月'+x.getDate()+'日',onClick:()=>{setCDay(s);setCGapOpen(null)}},
