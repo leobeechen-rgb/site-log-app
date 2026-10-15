@@ -23971,5 +23971,14 @@ try{var o=document.getElementById("mnOpen");if(o)o.remove()}catch(e){}})();
   html .hb-est-toolbar label{min-height:40px;display:inline-flex;align-items:center;gap:6px}
 }
 </style>
+<style id="hb-contrast-focus">
+/* 只用觸控／滑鼠時不顯示焦點框（例如彈窗打開時 ✕ 的藍框）；用鍵盤時照常顯示 */
+:focus:not(:focus-visible){outline:none}
+/* UI 檢查 E：功能性灰字加深到可讀（對比 ≥ 4.5:1），首頁裝飾文字不動 */
+html .hb-ls-sec h3 span,html .hb-ls-empty,html .hb-ls-hint,html .wbk-caseempty span,html .wbk-pt-plus{color:var(--hbt-ink-2)!important}
+html .wbc-fr{color:#806428!important}
+/* UI 檢查 F：小字用的磚紅稍微加深（主色按鈕與色塊不變） */
+html .hb-docsTab.on,html .hb-dosNavItem.on,html .hb-dosLink{color:#A24B30!important}
+</style>
 </body>
 </html>
