@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-<style id="hb-design-tokens">/* 赫柏工地紀錄本共用設定：顏色、字級、圓角、字體。改這裡會套用全站。 */:root{--hbt-ink:#1C1B18;--hbt-ink-2:#6F675B;--hbt-ink-3:#A79E8D;--hbt-line:#D9CFBD;--hbt-paper:#F2EFE8;--hbt-card:#FBF8F2;--hbt-red:#B4573A;--hbt-red-deep:#8A2C34;--hbt-red-soft:#F6DCDC;--hbt-green:#2E4A3C;--hbt-green-deep:#22392F;--hbt-green-soft:#E3E9E2;--hbt-gold:#B89B6A;--hbt-fs-xs:12px;--hbt-fs-sm:13px;--hbt-fs-md:14px;--hbt-fs-lg:16px;--hbt-fs-xl:20px;--hbt-fs-2xl:24px;--hbt-fs-3xl:32px;--hbt-radius-sm:4px;--hbt-radius:8px;--hbt-radius-pill:999px;--hbt-font-sans:"Noto Sans TC",sans-serif;--hbt-font-serif:"Noto Serif TC",serif;--hbt-font-latin:"Cormorant Garamond","Noto Serif TC",serif;}</style>
+<style id="hb-design-tokens">/* 赫柏工地紀錄本共用設定：顏色、字級、圓角、字體。改這裡會套用全站。 */:root{--hbt-ink:#1C1B18;--hbt-ink-2:#6F675B;--hbt-ink-3:#A79E8D;--hbt-line:#D9CFBD;--hbt-paper:#F2EFE8;--hbt-card:#FBF8F2;--hbt-red:#B4573A;--hbt-red-deep:#8A2C34;--hbt-red-soft:#F6DCDC;--hbt-green:#2E4A3C;--hbt-green-deep:#22392F;--hbt-green-soft:#E3E9E2;--hbt-gold:#B89B6A;--hbt-fs-xs:12px;--hbt-fs-sm:13px;--hbt-fs-md:14px;--hbt-fs-lg:16px;--hbt-fs-xl:20px;--hbt-fs-2xl:24px;--hbt-fs-3xl:32px;--hbt-radius-sm:4px;--hbt-radius:8px;--hbt-radius-pill:999px;--hbt-font-sans:"Noto Sans TC",sans-serif;--hbt-font-serif:"Noto Serif TC",serif;--hbt-font-latin:"Cormorant Garamond","Noto Serif TC",serif;}.hb-est-field{display:flex;flex-direction:column;gap:4px}.hb-est-field-label{font-size:12px;letter-spacing:.04em;color:var(--hbt-ink-2)}</style>
 <style id="hb-owner-gallery-style">
 /* HERFULSINS v29 — always-visible drawing preview with explicit angle controls. */
 .hb-gallery-video{position:fixed;inset:0;z-index:10000;overflow:hidden;background:var(--hbt-paper);color:#514b3f;font-family:'PingFang TC','Microsoft JhengHei',sans-serif;isolation:isolate;overscroll-behavior:contain;touch-action:none;opacity:1;transition:opacity .36s ease}
@@ -8591,13 +8591,19 @@ function HB_EstimateEditor({project:l,estimate:t,notify:e,onBack:n}){
           u.default.createElement("span",null,"基本資料",!showBasic&&a.engName?"　"+a.engName:""),
           u.default.createElement(E,{name:showBasic?"chevron-up":"chevron-down",size:15})
         ),
-        showBasic&&u.default.createElement("div",{style:{padding:"0 13px 13px",display:"flex",flexDirection:"column",gap:7}},
-          u.default.createElement("input",{placeholder:"客戶名稱",value:a.clientName,onChange:v=>set("clientName",v.target.value),style:inputStyle}),
-          u.default.createElement("input",{placeholder:"工程名稱",value:a.engName,onChange:v=>set("engName",v.target.value),style:inputStyle}),
-          u.default.createElement("input",{placeholder:"施工地點",value:a.siteAddress,onChange:v=>set("siteAddress",v.target.value),style:inputStyle}),
-          u.default.createElement("div",{style:{display:"flex",gap:7}},
-            u.default.createElement("input",{type:"date",value:a.quoteDate,title:"修改內容時會自動改成今天；手動選日期後就不再自動更改",onChange:v=>{dateManualRef.current=!0;set("quoteDate",v.target.value)},style:inputStyle}),
-            u.default.createElement("input",{type:"text",inputMode:window.HB_COARSE?"numeric":void 0,placeholder:"有效天數",value:a.validDays,onChange:v=>set("validDays",v.target.value),style:{...inputStyle,width:90}})
+        showBasic&&u.default.createElement("div",{style:{padding:"0 13px 13px",display:"flex",flexDirection:"column",gap:10}},
+          /* 欄位上方常駐標籤：輸入後仍看得到這格是什麼（UI 檢查 B） */
+          ...[["客戶名稱","clientName","例：陳先生"],["工程名稱","engName","例：義教街透天翻修"],["施工地點","siteAddress","地址"]].map(([lb,k,ph])=>
+            u.default.createElement("label",{key:k,className:"hb-est-field"},
+              u.default.createElement("span",{className:"hb-est-field-label"},lb),
+              u.default.createElement("input",{placeholder:ph,value:a[k],onChange:v=>set(k,v.target.value),style:inputStyle}))),
+          u.default.createElement("div",{style:{display:"flex",gap:10}},
+            u.default.createElement("label",{className:"hb-est-field",style:{flex:1,minWidth:0}},
+              u.default.createElement("span",{className:"hb-est-field-label"},"報價日期"),
+              u.default.createElement("input",{type:"date",value:a.quoteDate,title:"修改內容時會自動改成今天；手動選日期後就不再自動更改",onChange:v=>{dateManualRef.current=!0;set("quoteDate",v.target.value)},style:inputStyle})),
+            u.default.createElement("label",{className:"hb-est-field",style:{flex:"0 0 104px"}},
+              u.default.createElement("span",{className:"hb-est-field-label"},"有效天數"),
+              u.default.createElement("input",{type:"text",inputMode:window.HB_COARSE?"numeric":void 0,placeholder:"天",value:a.validDays,onChange:v=>set("validDays",v.target.value),style:inputStyle}))
           )
         )
       ),
@@ -23945,6 +23951,25 @@ try{var o=document.getElementById("mnOpen");if(o)o.remove()}catch(e){}})();
  .hb-project-library .hb-library-card .hb-art .wash{opacity:.34}
 }
 @media print{.hb-project-library *,.hb-project-library *::after{animation:none!important;transition:none!important}}
+</style>
+<style id="hb-touch-targets">
+/* UI 檢查 C、D：手機上把太小的按鈕「可點範圍」放大到約 44px，外觀不變（用透明的 ::after 擴大點擊區） */
+@media (pointer:coarse){
+  .hbn-bell,.wbk-pick,.wbk-plus,.wbk-quick>button,.wbk-wk,.hb-backLink,.hb-est-header>button,
+  .wbc-cfbtn,.wbk-toggle,.wbc-hublink,.wbk-shopbtn,.wbc-more,.wbk-gaphead,.hb-est-collapse{position:relative}
+  .hbn-bell::after,.wbk-pick::after,.wbk-plus::after,.wbk-quick>button::after,.wbk-wk::after,.hb-backLink::after,
+  .hb-est-header>button::after,.hb-est-collapse::after{
+    content:"";position:absolute;left:50%;top:50%;width:max(100%,44px);height:max(100%,44px);transform:translate(-50%,-50%)}
+  .wbc-cfbtn::after,.wbk-toggle::after,.wbc-hublink::after,.wbk-shopbtn::after,.wbc-more::after,.wbk-gaphead::after{
+    content:"";position:absolute;left:0;right:0;top:50%;height:max(100%,44px);transform:translateY(-50%)}
+  /* 週曆日期：高度拉到 44px */
+  html .wbk-week .wbk-day{min-height:44px}
+  /* 估價單大項標題列的小圖示（匯入、剪下、複製、貼上）：每顆加寬到 40px，排不下時換到第二行 */
+  html .hb-unit-editor .hb-est-category-heading{flex-wrap:wrap;row-gap:2px}
+  html .hb-unit-editor .hb-est-category-heading>button:not(.hb-est-collapse){min-width:40px;min-height:40px}
+  /* 「顯示成本與淨利」勾選列 */
+  html .hb-est-toolbar label{min-height:40px;display:inline-flex;align-items:center;gap:6px}
+}
 </style>
 </body>
 </html>
