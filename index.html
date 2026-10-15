@@ -1818,18 +1818,6 @@
     border: 1px solid rgba(255,255,255,0.65) !important;
   }
 
-  /* ===== 捲軸：細、暖金色、軌道透明，滑鼠移上去才加深（取代系統灰色捲軸） ===== */
-  *{scrollbar-width:thin;scrollbar-color:rgba(138,110,50,.30) transparent}
-  *:hover{scrollbar-color:rgba(138,110,50,.55) transparent}
-  ::-webkit-scrollbar{width:8px;height:8px}
-  ::-webkit-scrollbar-track,::-webkit-scrollbar-corner{background:transparent}
-  ::-webkit-scrollbar-thumb{background-color:rgba(138,110,50,.30);border-radius:8px;border:2px solid transparent;background-clip:padding-box}
-  :hover::-webkit-scrollbar-thumb{background-color:rgba(138,110,50,.55)}
-  ::-webkit-scrollbar-button{display:none;width:0;height:0}
-  /* 左側欄：平常不顯示捲軸，滑過才出現 */
-  .hb-lib-side{scrollbar-color:transparent transparent}
-  .hb-lib-side:hover{scrollbar-color:rgba(138,110,50,.45) transparent}
-
   /* ===== 手機：整頁只允許上下捲動，鎖住左右位移與回彈 ===== */
   @media (max-width: 760px){
     html, body{
@@ -12971,8 +12959,15 @@ const HB_LIB_CSS=`
       .hb-lib-wb{grid-area:wb;min-width:0}.hb-lib-side{grid-area:side;min-width:0}.hb-lib-main{grid-area:main;min-width:0}
       @media(min-width:1100px){
         .hb-lib-grid{grid-template-columns:270px minmax(0,1fr);grid-template-areas:"side wb" "side main";column-gap:24px;align-items:start;padding-left:24px!important;padding-right:24px!important}
-        /* 左側欄固定不捲動：高度限制在捲動區（扣掉頂部導覽約 126px）以內，檔案多時在欄內自己捲 */
-        .hb-lib-side{position:sticky;top:12px;max-height:calc(100dvh - 160px);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
+        /* 左側欄固定不捲動：整欄高度固定在畫面內、外層不出捲軸；上傳、待發布固定，只有「檔案」清單在框內捲動 */
+        .hb-lib-side{position:sticky;top:12px;height:calc(100dvh - 180px);overflow:hidden;display:flex;flex-direction:column}
+        .hb-lib-grid{padding-bottom:24px!important}
+        .hb-project-library{min-height:0!important}
+        .hb-lib-side>.hb-libside{flex:1 1 auto;min-height:0;display:flex!important;flex-direction:column}
+        .hb-lib-side>.hb-libside>*{flex:none}
+        .hb-lib-side>.hb-libside>.hb-ls-files{flex:1 1 auto;min-height:0;display:flex;flex-direction:column}
+        .hb-lib-side .hb-ls-files>*{flex:none}
+        .hb-lib-side .hb-ls-files>.hb-ls-scroll{flex:1 1 auto;min-height:0;max-height:none!important;overscroll-behavior:contain}
       }
       .hb-libside{display:flex;flex-direction:column;gap:14px;font-family:'Noto Sans TC',sans-serif;color:#1C1B18}
       .hb-ls-up{display:flex;align-items:center;justify-content:center;gap:8px;height:46px;border:1px solid #2E4A3C;background:#2E4A3C;color:#F2EFE8;font-family:inherit;font-size:14px;letter-spacing:.08em;cursor:pointer}
