@@ -13114,6 +13114,24 @@ const HB_LIB_CSS=`
       .wbk-pt-more select{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%}
       .hb-lib-grid>.hb-lib-main{display:none}
       @media (max-width:680px){.wbk-pts{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}.wbk-pts::-webkit-scrollbar{display:none}.hb-wb .wbk-pts .wbk-pt{flex:0 0 96px;width:96px}}
+      /* 專案一覽：桌機扇形排開（手機維持可滑動的一列） */
+      @property --hbfan{syntax:'<number>';inherits:true;initial-value:1}
+      @media (min-width:681px){
+        .hb-wb .wbk-pts.wbk-fan{flex-wrap:nowrap;justify-content:center;gap:4px;padding:10px 6px calc(var(--dm,0)*var(--dm,0)*1.15px + 16px);margin-bottom:4px}
+        .hb-wb .wbk-pts.wbk-fan>.wbk-pt{flex:0 1 112px;min-width:76px;transform-origin:50% 100%;
+          transform:translateY(calc(var(--d,0)*var(--d,0)*1.15px*var(--hbfan))) rotate(calc(var(--d,0)*1.6deg*var(--hbfan))) translateY(var(--lift,0px));
+          box-shadow:0 8px 16px -10px rgba(42,34,24,.32);transition:transform .28s cubic-bezier(.2,.7,.2,1),border-color .15s,background .15s}
+        .hb-wb .wbk-pts.wbk-fan>.wbk-pt-sm{flex-basis:84px;min-width:68px}
+        .hb-wb .wbk-pts.wbk-fan>.wbk-pt:hover{--lift:-7px;z-index:4}
+        .hb-wb .wbk-pts.wbk-fan>.wbk-pt.on{--lift:-11px;z-index:3;box-shadow:inset 0 0 0 1px #2E4A3C,0 12px 20px -10px rgba(42,34,24,.38)}
+        .hb-wb .wbk-pts.wbk-fan>.wbk-pt:focus-visible{--lift:-7px;z-index:4}
+        .wbk-pts.wbk-fan-intro{animation:hbFanOpen .75s cubic-bezier(.2,.7,.2,1) .1s both}
+        @keyframes hbFanOpen{from{--hbfan:0}to{--hbfan:1}}
+      }
+      @media (min-width:681px) and (prefers-reduced-motion:reduce){
+        .wbk-pts.wbk-fan-intro{animation:none}
+        .hb-wb .wbk-pts.wbk-fan>.wbk-pt{transition:none}
+      }
       .wbk-work{margin-top:16px;scroll-margin-top:12px}
       .wbk-workswitch{display:flex;gap:4px;margin-bottom:-1px;position:relative;z-index:1}
       .wbk-workswitch button{border:1px solid transparent;border-bottom:0;background:none;font:inherit;font-size:14px;color:#6F675B;padding:9px 16px;cursor:pointer;border-radius:4px 4px 0 0;display:inline-flex;align-items:center;gap:7px}
@@ -16844,7 +16862,7 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
           const act=projects.filter(p=>p.status!==fn[2]&&p.status!==fn[3]&&!/示範/.test(p.name||'')),rest=projects.filter(p=>!act.includes(p));
           const pct=p=>{try{if(p.status===fn[2])return 100;if(p.stageProgress&&typeof p.stageProgress==='object'&&HB_STAGE_DEFS.length){const sd=HB_stageMigrate(p.stageProgress),ld=HB_stageLive(sd);return Math.round(ld.filter(x=>sd[x.k]&&sd[x.k].done).length/ld.length*100)}}catch(e){}return null};
           const isF=e=>Array.from((e.dataTransfer&&e.dataTransfer.types)||[]).includes('Files');
-          const tile=p=>{const v=pct(p);return h('button',{key:p.id,type:'button',className:'wbk-pt'+(p.id===pv?' on':'')+(dropOn===p.id?' drop':''),'aria-pressed':p.id===pv,title:(p.address?p.address+'｜':'')+'可把檔案拖到這裡上傳',onClick:()=>pick(p.id),
+          const tile=p=>{const v=pct(p);return h('button',{key:p.id,type:'button',style:fd(),className:'wbk-pt'+(p.id===pv?' on':'')+(dropOn===p.id?' drop':''),'aria-pressed':p.id===pv,title:(p.address?p.address+'｜':'')+'可把檔案拖到這裡上傳',onClick:()=>pick(p.id),
               onDragOver:e=>{if(!isF(e))return;e.preventDefault();e.dataTransfer.dropEffect='copy';if(dropOn!==p.id)setDropOn(p.id)},
               onDragLeave:e=>{if(!e.currentTarget.contains(e.relatedTarget))setDropOn(d=>d===p.id?null:d)},
               onDrop:e=>{if(!isF(e))return;e.preventDefault();e.stopPropagation();setDropOn(null);const fs=Array.from(e.dataTransfer.files||[]);if(fs.length&&window.HB_inboxAdd)window.HB_inboxAdd(fs,p.id)}},
@@ -16853,13 +16871,16 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
             v!=null?h('span',{className:'wbk-pt-bar','aria-label':'進度 '+v+'%'},h('i',{style:{width:Math.max(3,v)+'%'}})):null,
             h('span',{className:'wbk-pt-sub'},dropOn===p.id?'放開上傳':(v!=null?v+'%':'')))};
           const sel=id=>{if(id===pv)return;if(window.HB_caseCanLeave&&!window.HB_caseCanLeave())return;setProj&&setProj(id)};
-          return h(u.default.Fragment,null,h('div',{className:'wbk-pts-head'},h('h3',null,'專案資料與圖面'),h('span',null,'PROJECTS & FILES')),h('nav',{className:'wbk-pts','aria-label':'專案一覽'},
-            h('button',{type:'button',className:'wbk-pt wbk-pt-sm'+(!pv?' on':''),'aria-pressed':!pv,onClick:()=>sel(''),title:'今日待辦看全部案件'},h('span',{className:'wbk-pt-plus'},'◎'),h('span',{className:'wbk-pt-name'},'全部')),
-            h('button',{type:'button',className:'wbk-pt wbk-pt-sm'+(pv==='__co'?' on':''),'aria-pressed':pv==='__co',onClick:()=>sel('__co'),title:'只看公司事務（不屬於任何案件的事項）'},h('span',{className:'wbk-pt-plus'},'▤'),h('span',{className:'wbk-pt-name'},'公司事務')),
+          /* 扇形：每張卡依離中心的距離傾斜；開場展開動畫每次載入頁面只播一次 */
+          const fanN=2+act.length+(rest.length?1:0)+(onNew?1:0),fanC=(fanN-1)/2;let fanK=0;const fd=()=>({'--d':(fanK++)-fanC});
+          const fanIntro=!window.__hbFanShown;window.__hbFanShown=true;
+          return h(u.default.Fragment,null,h('div',{className:'wbk-pts-head'},h('h3',null,'專案資料與圖面'),h('span',null,'PROJECTS & FILES')),h('nav',{className:'wbk-pts wbk-fan'+(fanIntro?' wbk-fan-intro':''),style:{'--dm':fanC},'aria-label':'專案一覽'},
+            h('button',{type:'button',style:fd(),className:'wbk-pt wbk-pt-sm'+(!pv?' on':''),'aria-pressed':!pv,onClick:()=>sel(''),title:'今日待辦看全部案件'},h('span',{className:'wbk-pt-plus'},'◎'),h('span',{className:'wbk-pt-name'},'全部')),
+            h('button',{type:'button',style:fd(),className:'wbk-pt wbk-pt-sm'+(pv==='__co'?' on':''),'aria-pressed':pv==='__co',onClick:()=>sel('__co'),title:'只看公司事務（不屬於任何案件的事項）'},h('span',{className:'wbk-pt-plus'},'▤'),h('span',{className:'wbk-pt-name'},'公司事務')),
             act.map(tile),
-            rest.length?h('label',{className:'wbk-pt wbk-pt-more'+(rest.some(p=>p.id===pv)?' on':'')},h('span',{className:'wbk-pt-plus'},'⋯'),h('span',{className:'wbk-pt-name'},rest.some(p=>p.id===pv)?(rest.find(p=>p.id===pv)||{}).name:'更多'),h('span',{className:'wbk-pt-sub'},'完工・示範 '+rest.length),
+            rest.length?h('label',{style:fd(),className:'wbk-pt wbk-pt-more'+(rest.some(p=>p.id===pv)?' on':'')},h('span',{className:'wbk-pt-plus'},'⋯'),h('span',{className:'wbk-pt-name'},rest.some(p=>p.id===pv)?(rest.find(p=>p.id===pv)||{}).name:'更多'),h('span',{className:'wbk-pt-sub'},'完工・示範 '+rest.length),
               h('select',{value:rest.some(p=>p.id===pv)?pv:'','aria-label':'其他案件',onChange:e=>{if(e.target.value)pick(e.target.value)}},h('option',{value:''},'選擇案件…'),rest.map(p=>h('option',{key:p.id,value:p.id},p.name+(p.status===fn[2]?'（完工）':''))))):null,
-            onNew?h('button',{type:'button',className:'wbk-pt wbk-pt-new',onClick:onNew},h('span',{className:'wbk-pt-plus'},'＋'),h('span',{className:'wbk-pt-name'},'新增案件')):null))})(),
+            onNew?h('button',{type:'button',style:fd(),className:'wbk-pt wbk-pt-new',onClick:onNew},h('span',{className:'wbk-pt-plus'},'＋'),h('span',{className:'wbk-pt-name'},'新增案件')):null))})(),
         h('div',{className:'wbk-workswitch',role:'tablist','aria-label':'上方工作區'},
           h('button',{type:'button',role:'tab','aria-selected':area==='inbox',className:area==='inbox'?'on':'',onClick:()=>setArea('inbox')},'待歸檔',h('b',{className:inbox.length?'has':''},inbox.length)),
           h('button',{type:'button',role:'tab','aria-selected':area!=='inbox',className:area!=='inbox'?'on':'',onClick:()=>setArea('case')},'案件操作',pvReal?h('small',null,pvName):null)),
