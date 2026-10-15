@@ -1818,6 +1818,18 @@
     border: 1px solid rgba(255,255,255,0.65) !important;
   }
 
+  /* ===== 捲軸：細、暖金色、軌道透明，滑鼠移上去才加深（取代系統灰色捲軸） ===== */
+  *{scrollbar-width:thin;scrollbar-color:rgba(138,110,50,.30) transparent}
+  *:hover{scrollbar-color:rgba(138,110,50,.55) transparent}
+  ::-webkit-scrollbar{width:8px;height:8px}
+  ::-webkit-scrollbar-track,::-webkit-scrollbar-corner{background:transparent}
+  ::-webkit-scrollbar-thumb{background-color:rgba(138,110,50,.30);border-radius:8px;border:2px solid transparent;background-clip:padding-box}
+  :hover::-webkit-scrollbar-thumb{background-color:rgba(138,110,50,.55)}
+  ::-webkit-scrollbar-button{display:none;width:0;height:0}
+  /* 左側欄：平常不顯示捲軸，滑過才出現 */
+  .hb-lib-side{scrollbar-color:transparent transparent}
+  .hb-lib-side:hover{scrollbar-color:rgba(138,110,50,.45) transparent}
+
   /* ===== 手機：整頁只允許上下捲動，鎖住左右位移與回彈 ===== */
   @media (max-width: 760px){
     html, body{
