@@ -5681,10 +5681,17 @@ function HB_buildBudgetHTML(v){
   let bRate=HB_num(v.budgetRate)||32;
   let fee=Math.round(total*bRate/100);
   let row=(k,val)=>`<tr><td>${k}</td><td class="r amt">${val}</td></tr>`;
+  /* 本次服務項目：平面圖說、預算報價可勾選（舊資料沒有設定時＝只做預算報價） */
+  let sv=(v.budgetServices&&typeof v.budgetServices==="object")?v.budgetServices:{plan:false,quote:true};
+  let svPlan=!!sv.plan, svQuote=sv.quote!==false;
+  let ck=on=>'<span class="ck'+(on?' on':'')+'">'+(on?'\u2713':'\u00a0')+'</span>';
+  let excl=svPlan?"立面圖、施工圖、3D 渲染圖及其他設計圖說之交付":"設計繪圖、平面配置圖、立面圖、施工圖、3D 渲染圖及任何圖說之交付";
   return `<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>${e(v.designName||"初步預算書")} · 赫柏空間設計工程初步預算書</title><style>
 ${HB_DOC_CSS}
+.ck{display:inline-block;width:13px;height:13px;border:1px solid #2b2621;margin-right:7px;vertical-align:-2px;text-align:center;line-height:12px;font-size:11px;font-weight:700}
+.notes .svc-off{color:#8a8274}
 </style></head>
 <body>
 <div class="toolbar"><button class="back" onclick="window.close()" title="返回">\u2190</button><div class="btns"><button class="print" onclick="window.print()">列印 / 存成 PDF</button></div></div>
@@ -5694,19 +5701,20 @@ ${HB_DOC_CSS}
 <tr><td><strong>提出對象：</strong>業主</td><td class="pv"><span class="blank">${e(v.partyAName)||"　"}</span></td><td>（以下簡稱甲方）</td></tr>
 <tr><td>提出單位</td><td class="pv"><span class="blank us">赫柏空間設計</span></td><td>（以下簡稱乙方）</td></tr>
 </table>
-<p>甲方委託乙方就本案現場進行丈量與尺寸記錄，並據以編製工程初步預算。茲就本次前置作業費用議定如下。</p>
+<p>甲方委託乙方就本案現場進行丈量與尺寸記錄，並依下列勾選項目提供服務。茲就本次前置作業費用議定如下。</p>
 
 <h2>一、案件資料</h2>
 <p>\u2756 設計案名稱：${fb(v.designName,260)}</p>
 <p>\u2756 設計案地點：${fb(v.designLocation,300)}</p>
 <p>\u2756 提出日期：${fb((v.contractYear?("中華民國 "+v.contractYear+" 年 "+v.contractMonth+" 月 "+v.contractDay+" 日"):""),200)}</p>
 
-<h2>二、本次服務內容</h2>
+<h2>二、本次服務內容（勾選者為本次提供項目）</h2>
 <div class="notes">
-<p>1. 現場丈量：實地量測室內各空間尺寸、樑柱位置、窗戶與門洞開口、天花高度並記錄。</p>
-<p>2. 現況記錄：現場拍照存檔，記錄既有管線、設備與結構現況。</p>
-<p>3. 初步預算編製：依丈量結果估算工程項目與概略金額，供甲方評估工程規模。</p>
-<p>4. 本次服務<strong>不包含</strong>設計繪圖、平面配置圖、立面圖、施工圖、3D 渲染圖及任何圖說之交付。</p>
+<p>${ck(true)}現場丈量：實地量測室內各空間尺寸、樑柱位置、窗戶與門洞開口、天花高度並記錄。</p>
+<p>${ck(true)}現況記錄：現場拍照存檔，記錄既有管線、設備與結構現況。</p>
+<p${svPlan?'':' class="svc-off"'}>${ck(svPlan)}平面圖說：依丈量結果繪製平面配置圖，標示空間配置與主要尺寸，供甲方確認空間規劃。</p>
+<p${svQuote?'':' class="svc-off"'}>${ck(svQuote)}預算報價：依丈量${svPlan?'與平面配置':''}結果估算工程項目與概略金額，供甲方評估工程規模。</p>
+<p>※ 本次服務<strong>不包含</strong>${excl}。</p>
 </div>
 
 <h2>三、費用計算</h2>
@@ -5968,10 +5976,12 @@ function HerfulsinsContractForm({category:l,projects:t,accounts:e,defaultProject
   let[c,r]=(0,u.useState)(()=>iv?{
     designName:iv.designName||"",designLocation:iv.designLocation||"",partyAName:iv.partyAName||"",partyARep:iv.partyARep||"",partyAAddress:iv.partyAAddress||"",partyAPhone:iv.partyAPhone||"",partyAId:iv.partyAId||"",
     areaPing:iv.areaPing??"",pricePerPing:iv.pricePerPing??"",discountPing:iv.discountPing??"",discountRate:iv.discountRate??"",budgetRate:iv.budgetRate??"32",totalPrice:iv.totalPrice??"",durationDays:iv.durationDays??"",startDate:iv.startDate||"",contractDate:iv.contractDate||"",accountIds:iv.accountIds||[],
+    svcPlan:!!(iv.budgetServices&&iv.budgetServices.plan),svcQuote:!(iv.budgetServices&&iv.budgetServices.quote===false),
     paymentStages:(iv.paymentStages&&iv.paymentStages.length>0)?iv.paymentStages.map(st=>({name:st.name||"",percent:st.percent??"",condition:st.condition||""})):[{name:"簽約款",percent:"30",condition:"本合約簽署之時付款"},{name:"二期款",percent:"60",condition:""},{name:"三期款",percent:"10",condition:""}]
   }:{
     designName:"",designLocation:"",partyAName:"",partyARep:"",partyAAddress:"",partyAPhone:"",partyAId:"",
     areaPing:"",pricePerPing:"",discountPing:"",discountRate:"",budgetRate:"32",totalPrice:"",durationDays:"",startDate:"",contractDate:"",accountIds:[],
+    svcPlan:false,svcQuote:true,
     paymentStages:[{name:"簽約款",percent:"30",condition:"本合約簽署之時付款"},{name:"二期款",percent:"60",condition:""},{name:"三期款",percent:"10",condition:""}]
   });
   let set=(k,val)=>r(p=>({...p,[k]:val}));
@@ -5997,6 +6007,7 @@ function HerfulsinsContractForm({category:l,projects:t,accounts:e,defaultProject
       discountPing:c.discountPing===""?null:HB_num(c.discountPing),
       discountRate:c.discountRate===""?null:HB_num(c.discountRate),
       budgetRate:c.budgetRate===""?null:HB_num(c.budgetRate),
+      budgetServices:isBudget?{plan:!!c.svcPlan,quote:!!c.svcQuote}:null,
       totalPrice:c.totalPrice===""?null:HB_num(c.totalPrice),
       durationDays:isEng?(c.durationDays||null):null,
       startDate:isEng?(c.startDate||null):null,
@@ -6052,6 +6063,15 @@ function HerfulsinsContractForm({category:l,projects:t,accounts:e,defaultProject
         !isEng&&u.default.createElement("button",{onClick:calcTotal,style:{border:`1px solid ${s.line}`,background:"none",borderRadius:8,padding:"9px 12px",fontSize:12,color:s.oceanDark,cursor:"pointer",marginBottom:12,whiteSpace:"nowrap"}},"自動計算")
       ),
       isEng&&c.totalPrice&&u.default.createElement("p",{style:{fontSize:12,color:s.inkSoft,marginTop:-6,marginBottom:12}},"大寫：",HB_toChineseMoney(c.totalPrice)),
+      isBudget&&u.default.createElement("fieldset",{style:{border:`1px solid ${s.line}`,borderRadius:8,padding:"10px 12px 6px",margin:"0 0 14px"}},
+        u.default.createElement("legend",{style:{fontSize:12,color:s.inkSoft,padding:"0 4px"}},"本次服務內容（勾選要提供的項目）"),
+        u.default.createElement("p",{style:{fontSize:12,color:s.inkSoft,margin:"0 0 6px",lineHeight:1.6}},"現場丈量、現況記錄固定包含。"),
+        [["svcPlan","平面圖說","繪製平面配置圖，標示空間配置與主要尺寸"],["svcQuote","預算報價","估算工程項目與概略金額"]].map(([k,lb,ds])=>
+          u.default.createElement("label",{key:k,style:{display:"flex",alignItems:"flex-start",gap:10,minHeight:44,padding:"6px 0",cursor:"pointer"}},
+            u.default.createElement("input",{type:"checkbox",checked:!!c[k],onChange:v=>set(k,v.target.checked),style:{width:18,height:18,marginTop:2,accentColor:s.oceanDark||"#2E4A3C",flex:"none"}}),
+            u.default.createElement("span",{style:{display:"flex",flexDirection:"column",gap:2}},
+              u.default.createElement("span",{style:{fontSize:14,color:s.ink||"#1C1B18"}},lb),
+              u.default.createElement("span",{style:{fontSize:12,color:s.inkSoft}},ds))))),
       isBudget&&u.default.createElement("div",{style:{display:"flex",gap:10,alignItems:"flex-end"}},
         u.default.createElement("div",{style:{flex:1,minWidth:0}},field("收取比例（%）","budgetRate",{placeholder:"預設 32"}))
       ),
@@ -6115,7 +6135,7 @@ function HerfulsinsContractsHub({onBack:l,notify:t}){
     let{error:g}=await q.from("sitelog_contracts").insert({
       category:e,project_id:v.projectId,design_name:v.designName,design_location:v.designLocation,
       party_a_name:v.partyAName,party_a_rep:v.partyARep,party_a_address:v.partyAAddress,party_a_phone:v.partyAPhone,party_a_id:v.partyAId,
-      area_ping:v.areaPing,price_per_ping:v.pricePerPing,discount_ping:v.discountPing??null,discount_rate:v.discountRate??null,budget_rate:v.budgetRate??null,total_price:v.totalPrice,contract_date:v.contractDate||null,account_ids:v.accountIds,
+      area_ping:v.areaPing,price_per_ping:v.pricePerPing,discount_ping:v.discountPing??null,discount_rate:v.discountRate??null,budget_rate:v.budgetRate??null,budget_services:v.budgetServices??null,total_price:v.totalPrice,contract_date:v.contractDate||null,account_ids:v.accountIds,
       duration_days:v.durationDays||null,start_date:v.startDate||null,payment_stages:v.paymentStages||null
     });
     if(g){t("新增失敗："+g.message);return}
@@ -6125,7 +6145,7 @@ function HerfulsinsContractsHub({onBack:l,notify:t}){
     let{error:g}=await q.from("sitelog_contracts").update({
       project_id:v.projectId,design_name:v.designName,design_location:v.designLocation,
       party_a_name:v.partyAName,party_a_rep:v.partyARep,party_a_address:v.partyAAddress,party_a_phone:v.partyAPhone,party_a_id:v.partyAId,
-      area_ping:v.areaPing,price_per_ping:v.pricePerPing,discount_ping:v.discountPing??null,discount_rate:v.discountRate??null,budget_rate:v.budgetRate??null,total_price:v.totalPrice,contract_date:v.contractDate||null,account_ids:v.accountIds,
+      area_ping:v.areaPing,price_per_ping:v.pricePerPing,discount_ping:v.discountPing??null,discount_rate:v.discountRate??null,budget_rate:v.budgetRate??null,budget_services:v.budgetServices??null,total_price:v.totalPrice,contract_date:v.contractDate||null,account_ids:v.accountIds,
       duration_days:v.durationDays||null,start_date:v.startDate||null,payment_stages:v.paymentStages||null
     }).eq("id",id);
     if(g){t("更新失敗："+g.message);return}
@@ -6134,7 +6154,7 @@ function HerfulsinsContractsHub({onBack:l,notify:t}){
   let toFormValues=row=>({
     designName:row.design_name||"",designLocation:row.design_location||"",partyAName:row.party_a_name||"",partyARep:row.party_a_rep||"",partyAAddress:row.party_a_address||"",partyAPhone:row.party_a_phone||"",partyAId:row.party_a_id||"",
     areaPing:row.area_ping??"",pricePerPing:row.price_per_ping??"",discountPing:row.discount_ping??"",discountRate:row.discount_rate??"",budgetRate:row.budget_rate??"32",totalPrice:row.total_price??"",durationDays:row.duration_days??"",startDate:row.start_date||"",contractDate:row.contract_date||"",
-    accountIds:row.account_ids||[],paymentStages:row.payment_stages||[],projectId:row.project_id||null
+    accountIds:row.account_ids||[],paymentStages:row.payment_stages||[],projectId:row.project_id||null,budgetServices:row.budget_services||null
   });
   let deleteContract=async id=>{
     let{error:g}=await q.from("sitelog_contracts").delete().eq("id",id);
@@ -6154,7 +6174,7 @@ function HerfulsinsContractsHub({onBack:l,notify:t}){
   let toRowValues=row=>({
     designName:row.design_name,designLocation:row.design_location,partyAName:row.party_a_name,partyARep:row.party_a_rep,
     partyAAddress:row.party_a_address,partyAPhone:row.party_a_phone,partyAId:row.party_a_id,areaPing:row.area_ping,
-    pricePerPing:row.price_per_ping,discountPing:row.discount_ping,discountRate:row.discount_rate,budgetRate:row.budget_rate,totalPrice:row.total_price,
+    pricePerPing:row.price_per_ping,discountPing:row.discount_ping,discountRate:row.discount_rate,budgetRate:row.budget_rate,totalPrice:row.total_price,budgetServices:row.budget_services||null,
     engName:row.design_name,engLocation:row.design_location,durationDays:row.duration_days,paymentStages:row.payment_stages||[],
     ...(()=>{let r=HB_toROC(row.start_date);return{startYear:r.y,startMonth:r.m,startDay:r.d}})(),
     accounts:(row.account_ids||[]).map(id=>o.find(acc=>acc.id===id)).filter(Boolean),
