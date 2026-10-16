@@ -1823,6 +1823,18 @@
   /* 首頁／公司頁的中文小標（開啟、查看、工班、嘉義 雲林 台南…）加深到對比 4.5，戶外與工地也讀得到 */
   .hb-entry-cat .cn, .hb-entry-go .cn, .hb-hero-caps-cn, .hb-hero-cities-cn, .hb-hero-pcn{ color:#70685C !important; }
 
+  /* 10 公司資料庫（桌機）：左欄文字在直線前留白，不再被線穿過；外框雙細線在這頁不畫 */
+  @media (min-width: 901px){
+    .hb-company .hb-narr{ padding-right: 32px; box-sizing: border-box; }
+  }
+  .hb-landing-bg.hb-company::after{ background-image: none; }
+  /* 9 公司資料庫（手機）：頂端已顯示 HERFULSINS／公司資料庫，下面不再重複品牌，只留返回 */
+  @media (max-width: 760px){
+    html .hb-company .hb-dbback .hb-dbbrand, html .hb-company .hb-dbback .hb-dbdiv{ display: none !important; }
+    html body .hb-company .hb-dbback{ padding-top: calc(4px + env(safe-area-inset-top)) !important; padding-bottom: 4px !important; }
+    html[data-hbrail="1"] body .hb-company .hb-dbback{ padding-right: 18px !important; }
+  }
+
   /* ===== 手機：整頁只允許上下捲動，鎖住左右位移與回彈 ===== */
   @media (max-width: 760px){
     html, body{
@@ -13257,6 +13269,19 @@ const HB_LIB_CSS=`
         .wbk-fixed .wbk-col .wbc-body small,.wbk-fixed .wbk-col .wbc-body>span{display:none}
         .wbk-fixed .wbk-col .wbc-colhead .wbc-alert,.wbk-fixed .wbk-col .wbc-colhead .wbc-closedlink{display:none}
       }
+      @media (max-width:680px){
+        /* 8 手機專案頁頁首：返回鍵拿掉（底部已有首頁），⋯ 選單那排壓扁；Le Carnet 標題區由四行收成三行 */
+        .hb-project-library div:has(>div>.hb-library-toolbar){padding:0 12px!important}
+        .hb-project-library div:has(>.hb-library-toolbar){margin-bottom:0!important;min-height:0!important;justify-content:flex-end!important}
+        .hb-project-library div:has(>.hb-library-toolbar)>.hb-backLink{display:none!important}
+        .hb-wb.wbk .wbk-head{gap:8px 10px;padding-bottom:10px}
+        .hb-wb.wbk .wbc-date{margin-left:0}
+        .hb-wb.wbk .wbc-add{order:6;margin-left:auto;padding:6px 12px;font-size:14px;gap:5px}
+        .hb-wb.wbk .wbc-add .wbc-add-x{display:none}
+        /* 11 勾選圈外觀不變，可點範圍加大到 44px */
+        .hb-wb .wbc-check{position:relative}
+        .hb-wb .wbc-check::after{content:'';position:absolute;inset:-10px}
+      }
       @media (min-width:1800px){
         .wbk-fixed .wbk-card-todo{height:200px}
         .wbk-fixed .wbk-week-in{display:flex!important;flex:none;height:auto;gap:0;border:0;margin:0 4px}
@@ -16900,7 +16925,7 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
         agOn&&h('button',{type:'button',className:'wbk-toggle'+(cGaps?' on':''),'aria-pressed':cGaps,onClick:()=>setCGaps(!cGaps)},h('span',null,'空檔時間'),h('i')),
         agOn&&h('label',{className:'wbk-pick',title:'跳到指定日期'},HB_wbIcon('calendar',17),h('span',{className:'wbc-sr'},'選擇日期'),h('input',{type:'date',value:day,'aria-label':'選擇日期',onChange:e=>{if(e.target.value){setCDay(e.target.value);setCGapOpen(null)}},onClick:e=>{try{e.currentTarget.showPicker&&e.currentTarget.showPicker()}catch{}}})),
         h('button',{type:'button',className:'wbc-hublink',onClick:()=>setCSide('ical'),title:'讓 iPhone 行事曆訂閱行程'},'iPhone 行事曆'),
-        h('button',{type:'button',className:'wbc-add',onClick:()=>newTask({due:day})},HB_wbIcon('plus',15),'新增事項')),
+        h('button',{type:'button',className:'wbc-add','aria-label':'新增事項',onClick:()=>newTask({due:day})},HB_wbIcon('plus',15),h('span',null,'新增',h('span',{className:'wbc-add-x'},'事項')))),
       error&&h('div',{className:'wb-error',role:'alert'},error,h('button',{type:'button',onClick:tk.reload},'重新整理')),
       /* 工地手機快速模式（只在手機寬度顯示）：選案件 → 拍照／記缺失／材料進場 */
       (()=>{const act=projects.filter(p=>p.status!==fn[2]&&p.status!==fn[3]&&!/示範/.test(p.name||''));const real=pv&&pv!=='__co'&&projects.some(p=>p.id===pv);
