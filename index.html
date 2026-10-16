@@ -115,6 +115,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600&family=Noto+Serif+TC:wght@200;300;400;500;600&family=Cormorant+Garamond:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
+  /* 法文撇號 ’ 用英文字型，避免中文字型把它顯示成全形、前後多一格空白（d’Atelier） */
+  @font-face{font-family:'HB Latin Apos';src:local('Georgia'),local('Times New Roman'),local('Helvetica Neue'),local('Arial'),local('Roboto'),local('DejaVu Sans');unicode-range:U+2018-2019}
   @font-face{
     font-family:'IansuiTitle';
     src:url('data:font/woff2;base64,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') format('woff2');
@@ -1817,6 +1819,9 @@
     backdrop-filter: blur(14px) saturate(160%);
     border: 1px solid rgba(255,255,255,0.65) !important;
   }
+
+  /* 首頁／公司頁的中文小標（開啟、查看、工班、嘉義 雲林 台南…）加深到對比 4.5，戶外與工地也讀得到 */
+  .hb-entry-cat .cn, .hb-entry-go .cn, .hb-hero-caps-cn, .hb-hero-cities-cn, .hb-hero-pcn{ color:#70685C !important; }
 
   /* ===== 手機：整頁只允許上下捲動，鎖住左右位移與回彈 ===== */
   @media (max-width: 760px){
@@ -4255,7 +4260,7 @@ html.hb-fab-away #hbPushBtn,html.hb-fab-away #mnOpen{transform:translateX(calc(1
 <!-- 2026-10-09 公司端字型統一為黑體（業主頁 ?owner 不受影響）；英文標題、案件頭像、SVG 圖示維持原字型 -->
 <script>try{if(!new URLSearchParams(location.search).has('owner'))document.documentElement.classList.add('hb-sans')}catch(e){}</script>
 <style>
-html.hb-sans body *:not(svg):not(svg *):not(.wbc-carnet):not(.hb-motion-title):not(.hb-motion-login *):not(.hb-avm *):not(.hb-avm-prev):not(code):not(pre):not(kbd){font-family:"Noto Sans TC","Noto Sans CJK TC","PingFang TC","Microsoft JhengHei",sans-serif!important}
+html.hb-sans body *:not(svg):not(svg *):not(.wbc-carnet):not(.hb-motion-title):not(.hb-motion-login *):not(.hb-avm *):not(.hb-avm-prev):not(code):not(pre):not(kbd){font-family:"HB Latin Apos","Noto Sans TC","Noto Sans CJK TC","PingFang TC","Microsoft JhengHei",sans-serif!important}
 </style>
 </head>
 <body>
@@ -13215,7 +13220,7 @@ const HB_LIB_CSS=`
         .wbk-fixed .wbk-day b{width:26px;height:26px;font-size:17px}
         .wbk-fixed .wbk-cols{flex:1 1 auto;min-height:0;grid-template-rows:minmax(0,1fr)}
         .wbk-fixed .wbk-col{position:relative;min-height:0;overflow:hidden;padding-top:8px;padding-bottom:0}
-        .wbk-fixed .wbk-col .wbc-colhead{flex:none;margin-bottom:4px;padding-right:86px;min-height:28px}
+        .wbk-fixed .wbk-col .wbc-colhead{flex:none;margin-bottom:4px;padding-right:100px;min-height:28px}
         .wbk-fixed .wbk-col .wbc-colhead h3{font-size:17px}
         .wbk-fixed .wbk-col>.wbc-more{position:absolute;top:12px;right:14px;margin:0;font-size:12px}
         .wbk-fixed .wbk-c4>.wbc-more{display:none}
@@ -13233,13 +13238,24 @@ const HB_LIB_CSS=`
         .wbk-fixed .wbk-col .wbc-body strong{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:0 1 auto;min-width:0}
         .wbk-fixed .wbk-col .wbc-body small,.wbk-fixed .wbk-col .wbc-body>span{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:0 100 auto;min-width:0;margin:0}
         .wbk-fixed .wbk-col .wbc-body .wbc-last{display:none}
-        .wbk-fixed .wbk-col .wbc-badge{font-size:11px;padding:2px 7px}
+        .wbk-fixed .wbk-col .wbc-badge{font-size:12px;padding:2px 7px}
       }
       @media (min-width:681px) and (max-width:1599px){
         .wbk-fixed .wbk-head>*{flex-shrink:0;white-space:nowrap}
         .wbk-fixed .wbk-head .wbc-fr,.wbk-fixed .wbk-head .wbc-hublink{display:none}
         .wbk-fixed .wbc-titlewrap h2.wbc-carnet{font-size:22px}
         .wbk-fixed .wbk-head{gap:8px 10px}
+      }
+      /* 4 案件卡桌機固定一排：卡片隨寬度縮放，名稱過長用省略號
+         5 待辦欄較窄時（卡片 < 1400px）不顯示案件名，避免只剩一個字 */
+      @media (min-width:681px){
+        .hb-wb .wbk-pts{flex-wrap:nowrap}
+        .hb-wb .wbk-pts .wbk-pt{flex:1 1 112px;min-width:0;max-width:112px}
+        .hb-wb .wbk-pts .wbk-pt-sm{flex:1 1 84px;max-width:84px}
+      }
+      @container wbk (max-width:1400px){
+        .wbk-fixed .wbk-col .wbc-body small,.wbk-fixed .wbk-col .wbc-body>span{display:none}
+        .wbk-fixed .wbk-col .wbc-colhead .wbc-alert,.wbk-fixed .wbk-col .wbc-colhead .wbc-closedlink{display:none}
       }
       @media (min-width:1800px){
         .wbk-fixed .wbk-card-todo{height:200px}
@@ -16105,6 +16121,9 @@ function HbTopUserMenu({storage}){
 function HB_wbIcon(name,size){const s=size||16,p={width:s,height:s,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:1.6,strokeLinecap:'round',strokeLinejoin:'round','aria-hidden':'true'},C=u.default.createElement;
   const d={calendar:[['rect',{x:3.5,y:5,width:17,height:15,rx:1.5}],['path',{d:'M3.5 9.5h17M8 3v4M16 3v4M7.5 13h2M11 13h2M14.5 13h2M7.5 16.5h2M11 16.5h2'}]],
     clock:[['circle',{cx:12,cy:12,r:8.5}],['path',{d:'M12 7.5V12l3 2'}]],
+    camera:[['path',{d:'M4 8.5h3l1.6-2.5h6.8L17 8.5h3v10H4z'}],['circle',{cx:12,cy:13.2,r:3.4}]],
+    warn:[['path',{d:'M12 4.5l8.5 15h-17z'}],['path',{d:'M12 10v4.2M12 16.8v.3'}]],
+    box:[['path',{d:'M3.8 8L12 4l8.2 4v8.6L12 20.6l-8.2-4z'}],['path',{d:'M3.8 8L12 12l8.2-4M12 12v8.6'}]],
     chat:[['path',{d:'M20 11.5a8 8 0 0 1-11.8 7L4 20l1.4-3.9A8 8 0 1 1 20 11.5z'}]],
     alert:[['circle',{cx:12,cy:12,r:8.5}],['path',{d:'M12 7.5v5.5M12 16.2v.3'}]],
     left:[['path',{d:'M14.5 6l-6 6 6 6'}]],right:[['path',{d:'M9.5 6l6 6-6 6'}]],
@@ -16892,12 +16911,12 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
           h('label',{className:'wbk-mq-case'},h('span',null,'工地'),h('select',{ref:mqSel,value:real?pv:'',onChange:e=>{const v=e.target.value;if(v===pv)return;if(window.HB_caseCanLeave&&!window.HB_caseCanLeave()){e.target.value=pv||'';return}setProj&&setProj(v)}},
             h('option',{value:''},'選擇案件…'),act.map(p=>h('option',{key:p.id,value:p.id},p.name)))),
           h('div',{className:'wbk-mq-btns'},
-            h('label',{className:'wbk-mq-b'},h('b',null,'📷'),h('span',null,'拍照'),h('input',{type:'file',accept:'image/*',capture:'environment',multiple:true,hidden:true,onChange:e=>{const fs=Array.from(e.target.files||[]);e.target.value='';if(fs.length)inboxAdd(fs,real?pv:'')}})),
-            h('button',{type:'button',className:'wbk-mq-b',onClick:()=>go('defects')},h('b',null,'⚠'),h('span',null,'記缺失')),
-            h('button',{type:'button',className:'wbk-mq-b',onClick:()=>go('materials')},h('b',null,'📦'),h('span',null,'材料進場'))))})(),
+            h('label',{className:'wbk-mq-b'},h('b',null,HB_wbIcon('camera',26)),h('span',null,'拍照'),h('input',{type:'file',accept:'image/*',capture:'environment',multiple:true,hidden:true,onChange:e=>{const fs=Array.from(e.target.files||[]);e.target.value='';if(fs.length)inboxAdd(fs,real?pv:'')}})),
+            h('button',{type:'button',className:'wbk-mq-b',onClick:()=>go('defects')},h('b',null,HB_wbIcon('warn',26)),h('span',null,'記缺失')),
+            h('button',{type:'button',className:'wbk-mq-b',onClick:()=>go('materials')},h('b',null,HB_wbIcon('box',26)),h('span',null,'材料進場'))))})(),
       h('div',{className:'wbk-kpis',role:'group','aria-label':'全公司數字總覽'},
         kpi('逾期事項',kLateList.length,()=>setCSide('kLate'),true,'查看全公司逾期事項'),
-        kpi('本週工地排程',kWeekList.length,()=>setCSide('kWeek'),false,'查看本週工地排程'),
+        kpi('本週工地',kWeekList.length,()=>setCSide('kWeek'),false,'查看本週工地排程'),
 ),
       pvLightbox&&HB_portal(pvLightbox),
       h('div',{className:'wbk-agbar'+(agOn?' on':'')},
@@ -23132,7 +23151,7 @@ react-dom/cjs/react-dom-client.production.js:
     '.wbk-pts-head{display:none;}',
     'html[data-hbtt] .wbk-pts-head{display:flex;align-items:center;gap:14px;margin:2px 0 12px;}',
     'html[data-hbtt] .wbk-pts-head h3{margin:0;font:600 17px ' + SERIF + ';letter-spacing:.14em;color:' + GREEN + ';white-space:nowrap;}',
-    'html[data-hbtt] .wbk-pts-head span{font:500 11px "Cormorant Garamond","EB Garamond",serif;letter-spacing:.32em;color:#8A6E32;white-space:nowrap;}',
+    'html[data-hbtt] .wbk-pts-head span{font:500 12px "Cormorant Garamond","EB Garamond",serif;letter-spacing:.32em;color:#8A6E32;white-space:nowrap;}',
     'html[data-hbtt] .wbk-pts-head::after{content:"";flex:1 1 auto;height:1px;background:rgba(138,110,50,.32);}',
     /* 工作台四欄：空的時候不再撐到 150px（有內容照樣長高，不裁切） */
     'html[data-hbtt] .wbk-colbody{min-height:64px!important;}',
