@@ -16543,17 +16543,20 @@ function HbCasePhotos({project,notify,onDirty}){
     setMsg(fail?{err:true,t:'已上傳 '+ok+' 張，'+fail+' 張失敗，可以再按一次「上傳並儲存」重試失敗的照片'}
       :{t:'已上傳 '+ok+' 張到「'+albumName(album)+'」'+(share?'，業主可見':'，僅公司可見')})};
   const shown=sel==='all'?null:photos.filter(x=>x.album_id===sel);
+  const dlList=(list,name)=>window.HB_downloadPhotos&&window.HB_downloadPhotos((list||[]).map(x=>({...x,uploadedAt:x.uploaded_at})),[project&&project.name,name].filter(Boolean).join('_'));
   const lbList=shown||[],lbCur=lb!=null?lbList[lb]:null;
   return h('div',{className:'hbcp'},
     linePost&&h(HbLinePost,{project,photos,notify:say,onClose:()=>setLinePost(false)}),
     h('div',{className:'hbcp-main'},
       h('div',{className:'hbcp-bar'},h('h4',null,'相簿與照片'),h('button',{type:'button',className:'hbcp-b2 hbcp-newalb',onClick:newAlbum},'＋ 新增相簿'),h('button',{type:'button',className:'hbcp-b2 hbcp-line',onClick:()=>setLinePost(true),title:'挑照片、寫進度，立即或排程發到案件 LINE 群組'},'發到 LINE 群組'),
+        h('button',{type:'button',className:'hbcp-b2 hbcp-dl',title:sel==='all'?'下載這個案件的全部照片':'下載這本相簿的全部照片',onClick:()=>sel==='all'?dlList(photos,'全部照片'):dlList(photos.filter(x=>x.album_id===sel),albumName(sel))},sel==='all'?'下載全部照片':'下載相簿'),
         h('label',{className:'hbcp-sel'},h('span',{className:'wbc-sr'},'顯示相簿'),
           h('select',{value:sel,onChange:e=>setSel(e.target.value)},h('option',{value:'all'},'全部相簿'),(albums||[]).map(a=>h('option',{key:a.id,value:a.id},a.name+'（'+count(a.id)+'）'))))),
       albums===null?h('p',{className:'wbc-empty'},'讀取照片中…')
       :sel==='all'?(albums.length?h('div',{className:'hbcp-albums'},albums.map(a=>h('div',{key:a.id,className:'hbcp-album'},
           h('button',{type:'button',className:'hbcp-cover',onClick:()=>setSel(a.id),'aria-label':'開啟相簿 '+a.name},cover(a.id)?h('img',{src:cover(a.id),alt:'',loading:'lazy',decoding:'async'}):h('span',null,'尚無照片')),
           h('div',{className:'hbcp-meta'},h('div',null,h('b',null,a.name),h('small',null,count(a.id)+' 張')),
+            h('button',{type:'button',className:'hbcp-ic',title:'下載這本相簿','aria-label':'下載相簿 '+a.name,onClick:()=>dlList(photos.filter(x=>x.album_id===a.id),a.name)},'⬇'),
             h('button',{type:'button',className:'hbcp-ic',title:'修改相簿名稱','aria-label':'修改相簿名稱 '+a.name,onClick:()=>renameAlbum(a)},'✎'),
             h('button',{type:'button',className:'hbcp-ic',title:'刪除相簿','aria-label':'刪除相簿 '+a.name,onClick:()=>delAlbum(a)},'✕')))))
         :h('p',{className:'wbc-empty'},'還沒有相簿，按右邊「新增相簿」開始'))
