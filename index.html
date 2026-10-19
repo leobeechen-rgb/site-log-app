@@ -23232,7 +23232,17 @@ react-dom/cjs/react-dom-client.production.js:
     'html[data-hbtt] .hbtt .hbn-panel{top:auto;bottom:0;right:calc(100% + 26px);}',
     'html[data-hbtt] .hbtt .hbn-badge{top:-1px;right:-1px;}',
     'html[data-hbtt] .hbtt-umenu{top:auto;bottom:0;right:calc(100% + 26px);}',
-    '@media (max-height:640px){html[data-hbtt] .hbtt-nav button{height:56px;}html[data-hbtt] .hbtt-brand{display:none;}}',
+    /* 導覽字體：中文 13px 加英文小字（襯線、大寫、拉開字距），與頁面標題的「中文＋英文」風格一致 */
+    'html[data-hbtt] .hbtt-nav button{height:80px;gap:5px;}',
+    'html[data-hbtt] .hbtt-nav button span{font-size:13px;letter-spacing:.1em;padding-left:.1em;}',
+    'html[data-hbtt] .hbtt-nav button::after{display:block;font:600 9.5px/1 \"Cormorant Garamond\",\"EB Garamond\",Garamond,serif;letter-spacing:.14em;padding-left:.14em;text-transform:uppercase;opacity:.68;}',
+    'html[data-hbtt] .hbtt-nav button[data-tab=\"home\"]::after{content:\"Home\";}',
+    'html[data-hbtt] .hbtt-nav button[data-tab=\"company\"]::after{content:\"Company\";}',
+    'html[data-hbtt] .hbtt-nav button[data-tab=\"project\"]::after{content:\"Projects\";}',
+    'html[data-hbtt] .hbtt-nav button[data-tab=\"card\"]::after{content:\"Cards\";}',
+    'html[data-hbtt] .hbtt-nav button[aria-current=\"page\"] span{font-weight:700;}',
+    'html[data-hbtt] .hbtt-nav button[aria-current=\"page\"]::after{opacity:.9;}',
+    '@media (max-height:640px){html[data-hbtt] .hbtt-nav button{height:66px;}html[data-hbtt] .hbtt-nav button::after{display:none;}html[data-hbtt] .hbtt-brand{display:none;}}',
     /* ---- 桌機工作區整理（只在頂部導覽時生效；手機不變） ---- */
     '.wbk-pts-head{display:none;}',
     'html[data-hbtt] .wbk-pts-head{display:flex;align-items:center;gap:14px;margin:2px 0 12px;}',
