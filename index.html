@@ -23195,6 +23195,30 @@ react-dom/cjs/react-dom-client.production.js:
     '.hb-topnav .hbtt-nav button{height:46px;}',
     /* 黑色列寬度不夠時，先收起問候語，讓入口不被擠壓 */
     '@media (max-width:1320px){html[data-hbtt-band] .hb-topnav-right > :not(button):not(a){display:none!important;}}',
+    /* ---- 桌機：主導航改成右側豎向圖標軌（通高、整條、圓角底）；第二層當頁操作列留在左側頂部 ---- */
+    'html[data-hbtt]{--hbtt-h:52px;--hbtt-rail:76px;--hbtt-gap:12px;--hbtt-pad:calc(var(--hbtt-rail) + var(--hbtt-gap) * 2);}',
+    'html[data-hbtt][data-hb-view="landing"]{--hbtt-h:0px;}',
+    'html[data-hbtt][data-hb-view="landing"] .hbtt-bar{display:none;}',
+    'html[data-hbtt] body{padding-right:var(--hbtt-pad)!important;}',
+    'html[data-hbtt] .hbtt{right:var(--hbtt-pad);}',
+    'html[data-hbtt] .hb-tool-sheet{right:var(--hbtt-pad)!important;}',
+    'html[data-hbtt] .hbtt-main{position:fixed;top:var(--hbtt-gap);bottom:var(--hbtt-gap);right:var(--hbtt-gap);left:auto;',
+    '  width:var(--hbtt-rail);height:auto;box-sizing:border-box;flex-direction:column;align-items:center;justify-content:flex-start;',
+    '  gap:12px;padding:16px 0 14px;border-radius:28px;z-index:46;box-shadow:0 16px 38px -20px rgba(14,26,21,.65);}',
+    'html[data-hbtt] .hbtt-brand{flex-direction:column;align-items:center;justify-content:center;gap:0;width:48px;height:48px;',
+    '  border:1px solid rgba(243,237,226,.38);border-radius:50%;}',
+    'html[data-hbtt] .hbtt-brand b,html[data-hbtt] .hbtt-brand span{display:none;}',
+    'html[data-hbtt] .hbtt-brand::before{content:\"H\";font:500 26px \"Cormorant Garamond\",\"EB Garamond\",Garamond,serif;line-height:1;color:' + CREAM + ';}',
+    'html[data-hbtt] .hbtt-nav{flex:1 1 auto;min-height:0;width:100%;flex-direction:column;align-items:center;justify-content:flex-start;gap:6px;margin:8px 0 0;overflow:hidden auto;scrollbar-width:none;}',
+    'html[data-hbtt] .hbtt-nav::-webkit-scrollbar{display:none;}',
+    'html[data-hbtt] .hbtt-nav button{flex-direction:column;justify-content:center;gap:6px;width:60px;height:64px;padding:0;border-radius:18px;flex:0 0 auto;}',
+    'html[data-hbtt] .hbtt-nav button span{font-size:12px;line-height:1;letter-spacing:.06em;font-weight:600;}',
+    'html[data-hbtt] .hbtt-side{flex:0 0 auto;flex-direction:column;align-items:center;gap:10px;width:52px;height:auto;padding:14px 0 0;margin:0;',
+    '  border-left:0;border-top:1px solid rgba(243,237,226,.28);}',
+    'html[data-hbtt] .hbtt .hbn-panel{top:auto;bottom:0;right:calc(100% + 26px);}',
+    'html[data-hbtt] .hbtt .hbn-badge{top:-1px;right:-1px;}',
+    'html[data-hbtt] .hbtt-umenu{top:auto;bottom:0;right:calc(100% + 26px);}',
+    '@media (max-height:640px){html[data-hbtt] .hbtt-nav button{height:56px;}html[data-hbtt] .hbtt-brand{display:none;}}',
     /* ---- 桌機工作區整理（只在頂部導覽時生效；手機不變） ---- */
     '.wbk-pts-head{display:none;}',
     'html[data-hbtt] .wbk-pts-head{display:flex;align-items:center;gap:14px;margin:2px 0 12px;}',
@@ -23475,7 +23499,7 @@ react-dom/cjs/react-dom-client.production.js:
   /* 元素是否完整出現在頂部導覽下方的可視範圍內 */
   function inView(el) {
     var r = el.getBoundingClientRect();
-    var topEdge = mode === 'top' && !document.documentElement.hasAttribute('data-hbtt-band') ? 124 : 0;
+    var topEdge = mode === 'top' && window.__hbView !== 'landing' ? 52 : 0;
     return r.height > 0 && r.top >= topEdge && r.bottom <= window.innerHeight && r.left >= 0 && r.right <= window.innerWidth;
   }
   function filterSummary(f) {
@@ -23693,7 +23717,7 @@ react-dom/cjs/react-dom-client.production.js:
   /* 桌機首頁：把五個入口放進首頁的黑色品牌列（.hb-topnav）；其他頁面放回頂部導覽 */
   var topMain = top.querySelector('.hbtt-main'), topSide = top.querySelector('.hbtt-side');
   function placeNav() {
-    var band = mode === 'top' && window.__hbView === 'landing' ? document.querySelector('.hb-topnav') : null;
+    var band = null;   /* 主導航一律放右側圖標軌，首頁也不再搬進黑色品牌列 */
     setFlag('data-hbtt-band', !!band);
     if (band) {
       if (topNav.parentNode !== band) band.insertBefore(topNav, band.querySelector('.hb-topnav-right'));
