@@ -13351,6 +13351,7 @@ const HB_LIB_CSS=`
       .hbcp-bar{display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap}.hb-wb .hbcp-bar .hbcp-line{border-color:#06C755!important;color:#05833a!important}.hbcp-bar h4{margin:0;font-size:16px;font-weight:500;color:#1C1B18}
       .hbcp-sel select,.hbcp-form select,.hbcp-form input:not([type=checkbox]){height:38px;border:1px solid #D9CFBD;border-radius:4px;background:#fff;font:inherit;font-size:14px;padding:0 10px;color:#1C1B18;min-width:0}
       .hbcp-albums{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px}
+.hbcp-flow{display:grid;gap:22px}.hbcp-sechead{display:flex;align-items:baseline;gap:8px;margin:0 0 10px;padding-bottom:8px;border-bottom:1px solid #D9CFBD}.hbcp-sechead b{font:500 16px 'Noto Serif TC',serif;color:#1C1B18;letter-spacing:.04em}.hbcp-sechead small{font-size:12px;color:#8b8277}
       .hbcp-album{border:1px solid #D9CFBD;border-radius:4px;background:#fff;overflow:hidden}
       .hbcp-cover{display:block;width:100%;aspect-ratio:4/3;border:0;padding:0;background:#F2EFE8;cursor:pointer}
       .hbcp-cover img{width:100%;height:100%;object-fit:cover;display:block}.hbcp-cover span{font-size:12px;color:#8A8178}
@@ -14586,6 +14587,78 @@ function HbProgFill({pct,className,style}){
     el.style.transition=HB_reduceMotion()?"none":"transform .5s cubic-bezier(.22,.8,.24,1)";el.style.transform="scaleX("+v/100+")"},[v]);
   return C("i",{ref,className,style:{display:"block",width:"100%",transformOrigin:"left center",transform:"scaleX("+v/100+")",willChange:"transform",...(style||{})}});
 }
+/* ===== 照片連續瀏覽：所有相簿依序攤開，往下捲就看完；上方標籤可只看某一本；點照片放大後可左右切換整個案件（業主端與公司端共用） ===== */
+function HbAlbumFlow({albums,photos,Viewer,viewerProps,onOpenAlbum,fileName,showEmpty}){
+  const C=u.default.createElement;
+  const[flt,setFlt]=u.useState('all'),[idx,setIdx]=u.useState(null);
+  const groups=(albums||[]).map(a=>({a,ps:(photos||[]).filter(p=>p.albumId===a.id)})).filter(g=>g.ps.length||showEmpty);
+  const cur=flt!=='all'&&groups.some(g=>g.a.id===flt)?flt:'all';
+  const vis=cur==='all'?groups:groups.filter(g=>g.a.id===cur);
+  const flat=vis.flatMap(g=>g.ps);
+  const total=groups.reduce((n,g)=>n+g.ps.length,0);
+  let base=0;
+  const css=`.hbaf-chips{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 16px}
+.hbaf-chip{border:1px solid #D9CFBD;background:#fff;color:#6F675B;padding:6px 14px;font:inherit;font-size:13px;cursor:pointer;border-radius:999px;max-width:100%}
+.hbaf-chip.on{background:#2E4A3C;border-color:#2E4A3C;color:#F2EFE8}
+.hbaf-sec{margin:0 0 26px}
+.hbaf-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:0 0 10px;padding-bottom:8px;border-bottom:1px solid #D9CFBD}
+.hbaf-head h4{margin:0;font:500 17px 'Noto Serif TC',serif;color:#1C1B18;letter-spacing:.04em;overflow-wrap:anywhere}
+.hbaf-head small{font-size:12px;color:#8b8277}
+.hbaf-sp{flex:1}
+.hbaf-lnk{border:0;background:none;color:#B4573A;font:inherit;font-size:13px;cursor:pointer;padding:2px 4px}
+.hbaf-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.hbaf-tile{position:relative;aspect-ratio:1;overflow:hidden;cursor:pointer;border:1px solid rgba(57,51,47,.12);background:#F2EFE8;padding:0}
+.hbaf-tile img{width:100%;height:100%;object-fit:cover;display:block}
+.hbaf-date{position:absolute;bottom:0;left:0;right:0;background:rgba(43,38,32,.72);color:#fff;font-size:12px;padding:2px 4px;text-align:left}
+.hbaf-empty{font-size:13px;color:#8b8277;margin:6px 0}
+@media(max-width:680px){.hbaf-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}}`;
+  return C(u.default.Fragment,null,
+    C('style',null,css),
+    groups.length>1&&C('div',{className:'hbaf-chips'},
+      C('button',{type:'button',className:'hbaf-chip'+(cur==='all'?' on':''),onClick:()=>setFlt('all')},'全部（'+total+'）'),
+      groups.map(g=>C('button',{key:g.a.id,type:'button',className:'hbaf-chip'+(cur===g.a.id?' on':''),onClick:()=>setFlt(g.a.id)},g.a.name+'（'+g.ps.length+'）'))),
+    vis.map(g=>{const b=base;base+=g.ps.length;return C('section',{key:g.a.id,className:'hbaf-sec'},
+      C('div',{className:'hbaf-head'},C('h4',null,g.a.name),C('small',null,g.ps.length+' 張'),C('span',{className:'hbaf-sp'}),
+        g.ps.length>0&&C('button',{type:'button',className:'hbaf-lnk',onClick:()=>HB_downloadPhotos(g.ps,fileName(g.ps[0]))},'下載'),
+        onOpenAlbum&&C('button',{type:'button',className:'hbaf-lnk',onClick:()=>onOpenAlbum(g.a.id)},'管理相簿 ›')),
+      g.ps.length?C('div',{className:'hbaf-grid'},g.ps.map((p,i)=>C('button',{type:'button',key:p.id,className:'hbaf-tile',onClick:()=>setIdx(b+i),'aria-label':'檢視照片'+(p.note?'：'+p.note:'')},
+        C('img',{src:p.url,alt:'',loading:'lazy',decoding:'async'}),
+        C('span',{className:'hbaf-date mono'},Tl(p.uploadedAt)))))
+        :C('p',{className:'hbaf-empty'},'這本相簿還沒有照片'))}),
+    idx!=null&&flat[idx]&&C(Viewer,{...(viewerProps||{}),photos:flat,index:idx,onIndexChange:setIdx,onClose:()=>setIdx(null),onDownload:p=>HB_downloadPhoto(p,fileName(p))}));
+}
+/* 讀照片的拍攝時間：JPEG 讀 EXIF（DateTimeOriginal），讀不到就用檔案修改時間 */
+async function HB_photoDate(file){
+  const fb=()=>{const t=file&&file.lastModified;return t?new Date(t):null};
+  try{
+    if(!file||!/jpe?g$/i.test(file.type||file.name||''))return fb();
+    const b=new DataView(await file.slice(0,262144).arrayBuffer());
+    if(b.getUint16(0)!==0xFFD8)return fb();
+    let o=2;
+    while(o+4<b.byteLength){
+      const m=b.getUint16(o),len=b.getUint16(o+2);
+      if(m===0xFFE1&&b.getUint32(o+4)===0x45786966){
+        const t=o+10,le=b.getUint16(t)===0x4949,g16=x=>b.getUint16(x,le),g32=x=>b.getUint32(x,le);
+        const ifd=(off,cb)=>{const n=g16(t+off);for(let i=0;i<n;i++){const e=t+off+2+i*12;cb(g16(e),e)}};
+        const str=e=>{let r='';const p=t+g32(e+8);for(let k=0;k<19;k++)r+=String.fromCharCode(b.getUint8(p+k));return r};
+        let exifOff=0,dt='';
+        ifd(g32(t+4),(tag,e)=>{if(tag===0x8769)exifOff=g32(e+8);if(tag===0x0132&&!dt)dt=str(e)});
+        if(exifOff)ifd(exifOff,(tag,e)=>{if(tag===0x9003)dt=str(e)});
+        const mt=/^(\d{4}):(\d\d):(\d\d) (\d\d):(\d\d):(\d\d)/.exec(dt);
+        if(mt)return new Date(+mt[1],+mt[2]-1,+mt[3],+mt[4],+mt[5],+mt[6]);
+        return fb();
+      }
+      if((m&0xFF00)!==0xFF00)break;o+=2+len;
+    }
+  }catch(e){}
+  return fb();
+}
+/* 依拍攝日期命名的相簿：今年「10/20 現場」，其他年份「2025/10/20 現場」 */
+function HB_dateAlbumName(d){
+  d=d instanceof Date&&!isNaN(d)?d:new Date();
+  const p=n=>String(n).padStart(2,'0'),md=p(d.getMonth()+1)+'/'+p(d.getDate());
+  return(d.getFullYear()===new Date().getFullYear()?md:d.getFullYear()+'/'+md)+' 現場';
+}
 function HbHubPhotos({project,notify,readOnly=false}){
   let C=u.default.createElement;
   let[albums,setAlbums]=(0,u.useState)([]);
@@ -14695,12 +14768,7 @@ function HbHubPhotos({project,notify,readOnly=false}){
         btn("新增相簿","folder-plus",()=>setNewAlbum(true),"hb-pt-primary"),
         albums.length>0&&btn("管理相簿","trash",()=>setManage(true))),
       albums.length===0?C(He,{icon:"image",text:readOnly?"這個案件還沒有照片":"還沒有相簿，按上方「新增相簿」建立第一本，再上傳照片"})
-      :C("div",{className:"hb-hp-albums"},albums.map((a,i)=>{let ps=photos.filter(p=>p.albumId===a.id);return C("button",{type:"button",key:a.id,className:"hb-hp-album",onClick:()=>setAlbumId(a.id)},
-        C("div",{className:"hb-hp-cover"},ps[0]?C("img",{src:ps[0].url,alt:"",loading:"lazy",decoding:"async"}):C(E,{name:"image",size:26,color:"#A79E8D"})),
-        C("div",{style:{padding:"10px 12px"}},
-          C("div",{className:"hb-plan-folder-index"},String(i+1).padStart(2,"0")+" / ALBUM"),
-          C("div",{style:{fontFamily:"'Noto Serif TC',serif",fontSize:16,color:"#1C1B18",marginTop:4,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},a.name),
-          C("div",{className:"hb-plan-folder-meta"},ps.length+" 張照片")))})))
+      :C(HbAlbumFlow,{albums,photos,Viewer:eh,viewerProps:readOnly?{}:{onDelete:deletePhoto,onSaveNote:saveNote,onAnnotate:annotate},onOpenAlbum:readOnly?null:setAlbumId,showEmpty:!readOnly,fileName:p=>[project.name,((albums.find(a=>a.id===p.albumId))||{}).name].filter(Boolean).join("_")}))
     :C("div",{className:readOnly?"":"hb-drop",ref:el=>{if(!readOnly&&window.HB_UP)window.HB_UP.bindPaste(el)}},
       C("div",{className:"hb-plan-toolbar"},
         btn("返回相簿","arrow-left",()=>setAlbumId(null)),
@@ -14752,6 +14820,7 @@ function HbUnifiedUpload({projects,folders,drawings,versions,notify,uploadFile,o
   HB_useSheetOpen();
   let[rows,setRows]=(0,u.useState)([]);
   let[batchProject,setBatchProject]=(0,u.useState)("");
+  let[batchAlbum,setBatchAlbum]=(0,u.useState)("__date");
   let[note,setNote]=(0,u.useState)("");
   let[noteOpen,setNoteOpen]=(0,u.useState)(false);
   let[running,setRunning]=(0,u.useState)(false);
@@ -14772,7 +14841,7 @@ function HbUnifiedUpload({projects,folders,drawings,versions,notify,uploadFile,o
   let albumCat=c=>c==="效果圖"||c==="施工照片";
   let isAlbumRow=r=>albumCat(r.category)&&r.kind==="IMAGE";
   let badAlbumRow=r=>albumCat(r.category)&&r.kind!=="IMAGE";
-  let albumLabel=r=>{let v=albumOf(r);if(v.startsWith("__new:"))return"新相簿「"+v.slice(6)+"」";let a=albums.find(x=>x.id===v);return a?"相簿「"+a.name+"」":"相簿"};
+  let albumLabel=r=>{let v=albumOf(r);if(v==="__date")return"依拍攝日期自動分相簿";if(v.startsWith("__new:"))return"新相簿「"+v.slice(6)+"」";let a=albums.find(x=>x.id===v);return a?"相簿「"+a.name+"」":"相簿"};
   rowsRef.current=rows;
   (0,u.useEffect)(()=>()=>{rowsRef.current.forEach(r=>{if(r.thumb)try{URL.revokeObjectURL(r.thumb)}catch{}})},[]);
   (0,u.useEffect)(()=>{let k=e=>{if(e.key==="Escape")tryClose()};window.addEventListener("keydown",k);return()=>window.removeEventListener("keydown",k)});
@@ -14799,15 +14868,16 @@ function HbUnifiedUpload({projects,folders,drawings,versions,notify,uploadFile,o
       if(f.size>30*1024*1024){notify(`${f.name} 超過 30MB，已略過`);continue}
       if(!f.size){notify(`${f.name} 是空檔案，已略過`);continue}
       let parsed=HB_parseDrawingFileName(f.name),kind=HB_fileKind({name:f.name,type:f.type});
+      let cat0=HB_unifiedGuessCategory(f,parsed.no);
       next.push({key:"u"+(++seq.current),file:f,kind,thumb:kind==="IMAGE"?URL.createObjectURL(f):"",no:parsed.no||"",name:parsed.name||f.name.replace(/\.[^.]+$/,""),
-        projectId:batchProject||"",category:HB_unifiedGuessCategory(f,parsed.no),album:"",photoId:null,target:"new",publish:false,status:"ready",error:"",drawingId:null,versionId:null,versionNo:null,tagged:false});
+        projectId:batchProject||"",category:cat0,album:(kind==="IMAGE"&&cat0==="施工照片"&&batchAlbum&&(batchAlbum.startsWith("__")||batchProject))?batchAlbum:"",shot:null,photoId:null,target:"new",publish:false,status:"ready",error:"",drawingId:null,versionId:null,versionNo:null,tagged:false});
     }
-    if(next.length){setRows(rs=>[...rs,...next]);setFinished(false)}
+    if(next.length){setRows(rs=>[...rs,...next]);setFinished(false);next.filter(r=>r.kind==="IMAGE").forEach(r=>{HB_photoDate(r.file).then(d=>{if(d)patch(r.key,{shot:d})}).catch(()=>{})})}
   };
   let patch=(key,p)=>setRows(rs=>rs.map(r=>r.key===key?{...r,...(typeof p==="function"?p(r):p)}:r));
   let editable=r=>!running&&r.status!=="done"&&!r.versionId&&!r.drawingId&&!r.photoId;
   let removeRow=key=>setRows(rs=>{let r=rs.find(x=>x.key===key);if(r&&r.thumb)try{URL.revokeObjectURL(r.thumb)}catch{};return rs.filter(x=>x.key!==key)});
-  let applyAll=()=>{if(!batchProject){notify("請先選擇案件");return}setRows(rs=>rs.map(r=>editable(r)&&r.projectId!==batchProject?{...r,projectId:batchProject,target:"new",album:""}:r))};
+  let applyAll=()=>{if(!batchProject){notify("請先選擇案件");return}setRows(rs=>rs.map(r=>editable(r)&&r.projectId!==batchProject?{...r,projectId:batchProject,target:"new",album:/^__/.test(r.album||"")?r.album:""}:r))};
 
   /* ---- 上傳 ---- */
   let ensureRoot=async pid=>{
@@ -14823,7 +14893,7 @@ function HbUnifiedUpload({projects,folders,drawings,versions,notify,uploadFile,o
   };
   let uploader=(()=>{try{return localStorage.getItem(HB_DRAWING_UPLOADER_KEY)||""}catch{return""}})();
   let ensureAlbum=async r=>{
-    let a=albumOf(r);if(!a.startsWith("__new"))return a;
+    let a=albumOf(r);if(a==="__date")a="__new:"+HB_dateAlbumName(r.shot);if(!a.startsWith("__new"))return a;
     let name=(a.slice(6)||HB_RENDER_ALBUM_NAME).trim(),ck=r.projectId+"|"+name;
     if(albumCache.current[ck])return albumCache.current[ck];
     /* 同案件已有同名相簿就沿用，不重複建立 */
@@ -14841,6 +14911,7 @@ function HbUnifiedUpload({projects,folders,drawings,versions,notify,uploadFile,o
     if(isAlbumRow(r)){
       try{
         if(!r.photoId){
+          if(albumOf(r)==="__date"&&!r.shot){try{r.shot=await HB_photoDate(r.file)}catch(e){}}
           let aid=await ensureAlbum(r);
           let blob=await Ru(r.file),path=`${r.projectId}/${aid}/${Be()}.jpg`;
           let url=await r2UploadSitelogFile("sitelog-photos",path,blob,"image/jpeg");
@@ -14924,10 +14995,11 @@ function HbUnifiedUpload({projects,folders,drawings,versions,notify,uploadFile,o
         setRows(rs=>rs.map(x=>x.key===r.key||(editable(x)&&!x.album&&x.projectId===r.projectId&&x.category===r.category)?{...x,album:v}:x))};
       return C("div",null,
         C("select",{className:"hbu-sel",disabled:!editable(r),value:cur,onChange:e=>pick(e.target.value),"aria-label":"放入相簿"},
+          C("option",{value:"__date"},"依拍攝日期自動分相簿"),
           al.length?C("optgroup",{label:"既有相簿"},al.map(a=>C("option",{key:a.id,value:a.id},a.name))):null,
           C("optgroup",{label:"自動建立新相簿"},newNames.map(n=>C("option",{key:n,value:"__new:"+n},"＋ "+n))),
           C("option",{value:"__custom"},"＋ 自訂相簿名稱…")),
-        C("div",{className:"hbu-sub"},cur.startsWith("__new:")?"上傳時自動建立相簿":"放進照片相簿，不分版本"))}
+        C("div",{className:"hbu-sub"},cur==="__date"?"依拍攝日期歸入「"+HB_dateAlbumName(r.shot)+"」（沒有就自動建立）":cur.startsWith("__new:")?"上傳時自動建立相簿":"放進照片相簿，不分版本"))}
     let lock=!editable(r);
     let m=matchesOf(r),ds=caseDrawings(r.projectId),sug=[...m.byNo,...m.byName],rest=ds.filter(d=>!sug.includes(d)).sort(HB_drawingNoCompare);
     let tgt=r.target!=="new"?drawings.find(d=>d.id===r.target):null;
@@ -14957,6 +15029,15 @@ function HbUnifiedUpload({projects,folders,drawings,versions,notify,uploadFile,o
     :r.status==="done"?C("span",{className:"hbu-st hbu-ok",title:"已上傳"},C(E,{name:"check",size:17}))
     :r.status==="error"?C("button",{type:"button",className:"hbu-st hbu-err",title:r.error,disabled:running,onClick:async()=>{setRunning(true);await runRow(rowsRef.current.find(x=>x.key===r.key));setRunning(false);try{await onUploaded()}catch{}}},"重試")
     :C("button",{type:"button",className:"hbu-x",disabled:running,onClick:()=>removeRow(r.key),"aria-label":"移除 "+r.file.name},C(E,{name:"x",size:16}));
+  /* 全部照片一次放進同一本相簿（或依拍攝日期自動分）；既有相簿只套用到同一案件的照片 */
+  let albProj=batchProject||(()=>{let ids=[...new Set(rows.filter(r=>isAlbumRow(r)&&r.projectId).map(r=>r.projectId))];return ids.length===1?ids[0]:""})();
+  let batchAlbums=albProj?albumsOf(albProj).filter(a=>!isRenderAlbum(a)&&!/^示範/.test(a.name||"")):[];
+  let batchPresets=HB_SITE_ALBUM_PRESETS.filter(n=>!batchAlbums.some(a=>String(a.name).trim()===n));
+  let applyAlbumAll=v=>{
+    if(v==="__custom"){let n=(window.prompt("新相簿名稱（例如：木工工程、10/07 現場）","")||"").trim();if(!n)return;v="__new:"+n.slice(0,40)}
+    setBatchAlbum(v);
+    setRows(rs=>rs.map(r=>editable(r)&&isAlbumRow(r)&&r.category!=="效果圖"&&(v===""||v.startsWith("__")||r.projectId===albProj)?{...r,album:v}:r));
+  };
   let albN=pending.filter(isAlbumRow).length,pubN=pending.filter(r=>r.publish&&!isAlbumRow(r)).length,intN=pending.length-pubN-albN;
   let doneRows=rows.filter(r=>r.status==="done"),errRows=rows.filter(r=>r.status==="error");
   let notifyGroups=(()=>{let g={};doneRows.filter(r=>r.publish&&r.drawingId).forEach(r=>{(g[r.projectId]=g[r.projectId]||[]).push(r.drawingId)});return Object.keys(g).map(pid=>({pid,name:(projectOf(pid)||{}).name||"案件",ids:g[pid]}))})();
@@ -14982,6 +15063,13 @@ function HbUnifiedUpload({projects,folders,drawings,versions,notify,uploadFile,o
             C("b",{className:"hbu-batchtitle"},"批次設定"),
             C("label",{className:"hbu-batchcase"},C("span",null,"案件："),C("select",{className:"hbu-sel",value:batchProject,disabled:running,onChange:e=>setBatchProject(e.target.value)},projOptions)),
             C("button",{type:"button",className:"hbu-apply",disabled:running||!batchProject,onClick:applyAll},"套用至全部"),
+            rows.some(r=>isAlbumRow(r)&&r.category!=="效果圖")&&C("label",{className:"hbu-batchcase"},C("span",null,"照片相簿："),C("select",{className:"hbu-sel",value:batchAlbum,disabled:running,"aria-label":"全部照片放入哪一本相簿",onChange:e=>applyAlbumAll(e.target.value)},
+              C("option",{value:""},"各自預設"),
+              C("option",{value:"__date"},"依拍攝日期自動分相簿"),
+              batchAlbums.length?C("optgroup",{label:"既有相簿"},batchAlbums.map(a=>C("option",{key:a.id,value:a.id},a.name))):null,
+              C("optgroup",{label:"新相簿（依工項）"},batchPresets.map(n=>C("option",{key:n,value:"__new:"+n},"＋ "+n))),
+              batchAlbum.startsWith("__new:")&&!batchPresets.includes(batchAlbum.slice(6))?C("option",{value:batchAlbum},"＋ "+batchAlbum.slice(6)):null,
+              C("option",{value:"__custom"},"＋ 自訂相簿名稱…"))),
             C("span",{className:"hbu-count"},`已加入 ${rows.length} 個檔案`)),
           C("div",{className:"hbu-table"},
             C("div",{className:"hbu-tr hbu-th"},["檔案","所屬案件","分類","版本處理","業主可見",""].map((x,i)=>C("div",{key:i},x))),
@@ -14995,8 +15083,8 @@ function HbUnifiedUpload({projects,folders,drawings,versions,notify,uploadFile,o
                     C("input",{className:"hbu-in hbu-no",value:r.no,disabled:!editable(r),placeholder:"圖號",onChange:e=>patch(r.key,{no:e.target.value}),"aria-label":"圖號"}),
                     C("input",{className:"hbu-in",value:r.name,disabled:!editable(r),placeholder:"名稱",onChange:e=>patch(r.key,{name:e.target.value}),"aria-label":"名稱"})),
                   r.status==="error"&&C("div",{className:"hbu-errmsg"},"失敗：",r.error))),
-              C("div",{className:"hbu-cell","data-label":"所屬案件"},C("select",{className:"hbu-sel"+(tried&&!r.projectId?" bad":""),value:r.projectId,disabled:!editable(r)||!!r.drawingId,onChange:e=>patch(r.key,{projectId:e.target.value,target:"new",album:""})},projOptions)),
-              C("div",{className:"hbu-cell","data-label":"分類"},C("select",{className:"hbu-sel",value:r.category,disabled:!editable(r),onChange:e=>patch(r.key,{category:e.target.value,album:""})},HB_UNIFIED_CATEGORIES.map(c=>C("option",{key:c,value:c},c)))),
+              C("div",{className:"hbu-cell","data-label":"所屬案件"},C("select",{className:"hbu-sel"+(tried&&!r.projectId?" bad":""),value:r.projectId,disabled:!editable(r)||!!r.drawingId,onChange:e=>patch(r.key,{projectId:e.target.value,target:"new",album:/^__/.test(r.album||"")?r.album:""})},projOptions)),
+              C("div",{className:"hbu-cell","data-label":"分類"},C("select",{className:"hbu-sel",value:r.category,disabled:!editable(r),onChange:e=>patch(r.key,{category:e.target.value,album:(e.target.value==="施工照片"&&batchAlbum.startsWith("__"))?batchAlbum:""})},HB_UNIFIED_CATEGORIES.map(c=>C("option",{key:c,value:c},c)))),
               C("div",{className:"hbu-cell","data-label":"版本處理"},versionCell(r)),
               C("div",{className:"hbu-cell","data-label":"業主可見"},visCell(r)),
               C("div",{className:"hbu-act"},statusCell(r))))),
@@ -16512,6 +16600,13 @@ function HbCasePhotos({project,notify,onDirty}){
     const{error}=await q.from('sitelog_albums').delete().eq('id',a.id).eq('project_id',pid);if(error){say('刪除相簿失敗：'+error.message);return}
     setAlbums(l=>l.filter(x=>x.id!==a.id));setPhotos(l=>l.filter(x=>x.album_id!==a.id));if(sel===a.id)setSel('all');if(aid===a.id)setAid('');
     window.HB_projOps&&window.HB_projOps.update(pid,{photoCount:Math.max(0,photos.length-gone.length)});say('相簿已刪除')};
+  const bulkVis=async(list,next,label)=>{
+    const ids=(list||[]).filter(x=>(x.visible_to_owner!==false)!==next).map(x=>x.id);
+    if(!ids.length){say('「'+label+'」的照片已經全部是'+(next?'業主可見':'僅公司可見'));return}
+    if(!confirm('「'+label+'」有 '+ids.length+' 張要改為'+(next?'業主可見':'僅公司可見')+'，確定嗎？'))return;
+    const{error}=await q.from('sitelog_photos').update({visible_to_owner:next}).in('id',ids).eq('project_id',pid);
+    if(error){say('設定失敗：'+error.message);return}
+    setPhotos(l=>l.map(x=>ids.includes(x.id)?{...x,visible_to_owner:next}:x));say('已將 '+ids.length+' 張改為'+(next?'業主可見':'僅公司可見'))};
   const toggleVis=async p=>{const next=p.visible_to_owner===false;
     const{error}=await q.from('sitelog_photos').update({visible_to_owner:next}).eq('id',p.id).eq('project_id',pid);
     if(error){say('設定失敗：'+error.message);return}setPhotos(l=>l.map(x=>x.id===p.id?{...x,visible_to_owner:next}:x));say(next?'已分享給業主':'已改為僅公司可見')};
@@ -16544,34 +16639,41 @@ function HbCasePhotos({project,notify,onDirty}){
       :{t:'已上傳 '+ok+' 張到「'+albumName(album)+'」'+(share?'，業主可見':'，僅公司可見')})};
   const shown=sel==='all'?null:photos.filter(x=>x.album_id===sel);
   const dlList=(list,name)=>window.HB_downloadPhotos&&window.HB_downloadPhotos((list||[]).map(x=>({...x,uploadedAt:x.uploaded_at})),[project&&project.name,name].filter(Boolean).join('_'));
-  const lbList=shown||[],lbCur=lb!=null?lbList[lb]:null;
+  const ordered=(albums||[]).flatMap(a=>photos.filter(x=>x.album_id===a.id));
+  const lbList=shown||ordered,lbCur=lb!=null?lbList[lb]:null;
+  const fig=(p,gi)=>h('figure',{key:p.id,className:'hbcp-ph'+(p.visible_to_owner===false?' is-private':'')},
+            h('button',{type:'button',className:'hbcp-phimg',onClick:()=>setLb(gi),'aria-label':'放大 '+(p.note||'照片')},h('img',{src:p.url,alt:p.note||'',loading:'lazy',decoding:'async'})),
+            h('figcaption',null,
+              h('span',{className:'hbcp-note'},p.note||'—'),
+              h('button',{type:'button',className:'hbcp-vis'+(p.visible_to_owner===false?'':' on'),title:p.visible_to_owner===false?'僅公司可見，點一下分享給業主':'業主看得到，點一下改為僅公司',onClick:()=>toggleVis(p)},p.visible_to_owner===false?'僅公司':'業主可見'),
+              h('button',{type:'button',className:'hbcp-ic',title:'編輯說明',onClick:()=>editNote(p)},'✎'),
+              h('button',{type:'button',className:'hbcp-ic',title:'刪除照片',onClick:()=>delPhoto(p)},'✕')));
   return h('div',{className:'hbcp'},
     linePost&&h(HbLinePost,{project,photos,notify:say,onClose:()=>setLinePost(false)}),
     h('div',{className:'hbcp-main'},
       h('div',{className:'hbcp-bar'},h('h4',null,'相簿與照片'),h('button',{type:'button',className:'hbcp-b2 hbcp-newalb',onClick:newAlbum},'＋ 新增相簿'),h('button',{type:'button',className:'hbcp-b2 hbcp-line',onClick:()=>setLinePost(true),title:'挑照片、寫進度，立即或排程發到案件 LINE 群組'},'發到 LINE 群組'),
         h('button',{type:'button',className:'hbcp-b2 hbcp-dl',title:sel==='all'?'下載這個案件的全部照片':'下載這本相簿的全部照片',onClick:()=>sel==='all'?dlList(photos,'全部照片'):dlList(photos.filter(x=>x.album_id===sel),albumName(sel))},sel==='all'?'下載全部照片':'下載相簿'),
+        h('button',{type:'button',className:'hbcp-b2',title:'目前畫面的所有照片一次分享給業主',onClick:()=>bulkVis(sel==='all'?photos:photos.filter(x=>x.album_id===sel),true,sel==='all'?'全部照片':albumName(sel))},'全部給業主看'),
+        h('button',{type:'button',className:'hbcp-b2',title:'目前畫面的所有照片一次改為僅公司可見',onClick:()=>bulkVis(sel==='all'?photos:photos.filter(x=>x.album_id===sel),false,sel==='all'?'全部照片':albumName(sel))},'全部僅公司'),
         h('label',{className:'hbcp-sel'},h('span',{className:'wbc-sr'},'顯示相簿'),
           h('select',{value:sel,onChange:e=>setSel(e.target.value)},h('option',{value:'all'},'全部相簿'),(albums||[]).map(a=>h('option',{key:a.id,value:a.id},a.name+'（'+count(a.id)+'）'))))),
       albums===null?h('p',{className:'wbc-empty'},'讀取照片中…')
-      :sel==='all'?(albums.length?h('div',{className:'hbcp-albums'},albums.map(a=>h('div',{key:a.id,className:'hbcp-album'},
-          h('button',{type:'button',className:'hbcp-cover',onClick:()=>setSel(a.id),'aria-label':'開啟相簿 '+a.name},cover(a.id)?h('img',{src:cover(a.id),alt:'',loading:'lazy',decoding:'async'}):h('span',null,'尚無照片')),
-          h('div',{className:'hbcp-meta'},h('div',null,h('b',null,a.name),h('small',null,count(a.id)+' 張')),
+      :sel==='all'?(albums.length?(()=>{let base=0;return h('div',{className:'hbcp-flow'},albums.map(a=>{const ps=photos.filter(x=>x.album_id===a.id),b=base;base+=ps.length;
+          return h('section',{key:a.id,className:'hbcp-sec'},
+            h('div',{className:'hbcp-sechead'},h('b',null,a.name),h('small',null,ps.length+' 張'),h('span',{style:{flex:1}}),
+            ps.length>0&&h('button',{type:'button',className:'hbcp-ic',title:'這本相簿全部分享給業主',onClick:()=>bulkVis(ps,true,a.name)},'業主可見'),
+            ps.length>0&&h('button',{type:'button',className:'hbcp-ic',title:'這本相簿全部改為僅公司可見',onClick:()=>bulkVis(ps,false,a.name)},'僅公司'),
             h('button',{type:'button',className:'hbcp-ic',title:'下載這本相簿','aria-label':'下載相簿 '+a.name,onClick:()=>dlList(photos.filter(x=>x.album_id===a.id),a.name)},'⬇'),
             h('button',{type:'button',className:'hbcp-ic',title:'修改相簿名稱','aria-label':'修改相簿名稱 '+a.name,onClick:()=>renameAlbum(a)},'✎'),
-            h('button',{type:'button',className:'hbcp-ic',title:'刪除相簿','aria-label':'刪除相簿 '+a.name,onClick:()=>delAlbum(a)},'✕')))))
+            h('button',{type:'button',className:'hbcp-ic',title:'刪除相簿','aria-label':'刪除相簿 '+a.name,onClick:()=>delAlbum(a)},'✕')),
+            ps.length?h('div',{className:'hbcp-photos'},ps.map((p,i)=>fig(p,b+i))):h('p',{className:'wbc-empty'},'這本相簿還沒有照片'))}))})()
         :h('p',{className:'wbc-empty'},'還沒有相簿，按右邊「新增相簿」開始'))
       :h('div',null,
         h('button',{type:'button',className:'hbcp-back',onClick:()=>setSel('all')},'‹ 全部相簿'),
-        shown.length?h('div',{className:'hbcp-photos'},shown.map((p,i)=>h('figure',{key:p.id,className:'hbcp-ph'+(p.visible_to_owner===false?' is-private':'')},
-            h('button',{type:'button',className:'hbcp-phimg',onClick:()=>setLb(i),'aria-label':'放大 '+(p.note||'照片')},h('img',{src:p.url,alt:p.note||'',loading:'lazy',decoding:'async'})),
-            h('figcaption',null,
-              h('span',{className:'hbcp-note'},p.note||'—'),
-              h('button',{type:'button',className:'hbcp-vis'+(p.visible_to_owner===false?'':' on'),title:p.visible_to_owner===false?'僅公司可見，點一下分享給業主':'業主看得到，點一下改為僅公司',onClick:()=>toggleVis(p)},p.visible_to_owner===false?'僅公司':'業主可見'),
-              h('button',{type:'button',className:'hbcp-ic',title:'編輯說明',onClick:()=>editNote(p)},'✎'),
-              h('button',{type:'button',className:'hbcp-ic',title:'刪除照片',onClick:()=>delPhoto(p)},'✕')))))
+        shown.length?h('div',{className:'hbcp-photos'},shown.map((p,i)=>fig(p,i)))
           :h('p',{className:'wbc-empty'},'這本相簿還沒有照片'))),
     lbCur&&HB_portal(h('div',{className:'wbk-lb',role:'dialog','aria-modal':'true','aria-label':'照片預覽',onClick:()=>setLb(null)},
-      h('div',{className:'wbk-lbbar',onClick:e=>e.stopPropagation()},h('span',{className:'wbk-lbname'},lbCur.note||albumName(sel)),
+      h('div',{className:'wbk-lbbar',onClick:e=>e.stopPropagation()},h('span',{className:'wbk-lbname'},lbCur.note||albumName(lbCur.album_id)),
         h('span',{className:'wbk-lbn'},(lb+1)+' / '+lbList.length),h('button',{type:'button',className:'wbk-lbbtn','aria-label':'關閉',onClick:()=>setLb(null)},'✕')),
       h('div',{className:'wbk-lbstage',onClick:e=>e.stopPropagation()},h('img',{src:lbCur.url,alt:lbCur.note||''})),
       lbList.length>1&&h('button',{type:'button',className:'wbk-lbnav prev','aria-label':'上一張',onClick:e=>{e.stopPropagation();setLb((lb-1+lbList.length)%lbList.length)}},'‹'),
@@ -19492,7 +19594,7 @@ function Fy({projectId:l,onLogout:t}){HB_ctaCss();let[e,n]=(0,u.useState)("loadi
     null,
     null
   ),
-  u.default.createElement("div",{className:"hb-body",style:{padding:"18px 26px 112px"}},S!=="overview"?u.default.createElement("button",{onClick:()=>M("overview"),className:"hb-backLink",style:{background:"none",border:"none",color:s.ocean,display:"flex",alignItems:"center",gap:6,cursor:"pointer",padding:0,marginBottom:14,fontSize:13,fontFamily:"inherit"}},u.default.createElement(E,{name:"arrow-left",size:15}),"\u8FD4\u56DE\u7E3D\u89BD"):null,S==="overview"?u.default.createElement(HbOverviewHub,{project:a,stage:FyStage,photos:c,materials:d,appliances:z,files:m,defects:dfL,schedule:schL,owner:!0,onGo:kk=>M(kk)}):S==="meetings"?u.default.createElement(HbMeetings,{projectId:l,readOnly:!0}):S==="progress"?u.default.createElement(HbStageProgress,{projectId:l,readOnly:!0}):S==="materials"?d.length===0?u.default.createElement("p",{style:{textAlign:"center",color:s.inkSoft,marginTop:40,fontSize:14}},"\u76EE\u524D\u9084\u6C92\u6709\u9001\u9054\u7D00\u9304"):u.default.createElement("div",{style:{display:"flex",flexDirection:"column",gap:10}},d.map(N=>u.default.createElement("div",{key:N.id,style:{background:s.card,border:`1px solid ${s.line}`,borderRadius:8,padding:"12px 14px",display:"flex",gap:12}},N.photoUrl?u.default.createElement("img",{src:N.photoUrl,alt:"",onClick:()=>nl(N.photoUrl),style:{width:56,height:56,borderRadius:8,objectFit:"cover",cursor:"pointer",flexShrink:0}}):u.default.createElement("div",{style:{width:56,height:56,borderRadius:8,background:s.cardAlt,flexShrink:0}}),u.default.createElement("div",{style:{flex:1,minWidth:0}},u.default.createElement("div",{style:{fontSize:14,fontWeight:400}},N.itemName),u.default.createElement("div",{style:{fontSize:12,color:s.inkSoft,marginTop:2}},N.quantity!=null?`${N.quantity}${N.unit||""} \xB7 `:"",Tl(N.deliveredAt)),N.note&&u.default.createElement("div",{style:{fontSize:12,marginTop:4}},N.note),N.link&&u.default.createElement("a",{href:N.link,target:"_blank",rel:"noopener noreferrer",onClick:hbEv=>hbEv.stopPropagation(),style:{display:"inline-flex",alignItems:"center",gap:5,marginTop:6,color:s.ocean,fontSize:12,textDecoration:"underline",wordBreak:"break-all"}},u.default.createElement(E,{name:"link",size:12}),"\u958B\u555F\u9023\u7D50"))))):S==="files"?m.length===0?u.default.createElement("p",{style:{textAlign:"center",color:s.inkSoft,marginTop:40,fontSize:14}},"\u76EE\u524D\u9084\u6C92\u6709\u5C08\u6848\u6A94\u6848"):(()=>{let FyImgAll=m.filter(ia),FyGroups=[...FyFolders.map(fd=>({gid:fd.id,gname:fd.name,items:m.filter(fx=>fx.folderId===fd.id)})),{gid:"__hb_uncat__",gname:"\u672A\u5206\u985E",items:m.filter(fx=>!fx.folderId||!FyFolders.some(fd=>fd.id===fx.folderId))}].filter(g=>g.items.length>0);return u.default.createElement("div",{style:{display:"flex",flexDirection:"column",gap:24}},FyGroups.map(g=>{let FyImgs=g.items.filter(ia),FyDocs=g.items.filter(fx=>!ia(fx));return u.default.createElement("div",{key:g.gid},u.default.createElement("div",{style:{display:"flex",alignItems:"center",gap:6,marginBottom:10,paddingBottom:6,borderBottom:`1px solid ${s.line}`}},u.default.createElement(E,{name:"folder",size:15,color:s.ocean}),u.default.createElement("span",{style:{fontSize:14,fontWeight:400,color:s.oceanDark,flex:1,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},g.gname),u.default.createElement("span",{className:"mono",style:{fontSize:12,color:s.inkSoft}},g.items.length)),FyImgs.length>0&&u.default.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(3, 1fr)",gap:10}},FyImgs.map(fx=>u.default.createElement("div",{key:fx.id,role:"button",tabIndex:0,"aria-label":"放大圖片："+fx.name,onKeyDown:ev=>{if(ev.target===ev.currentTarget&&(ev.key==="Enter"||ev.key===" ")){ev.preventDefault();ql(FyImgAll.indexOf(fx))}},onClick:()=>ql(FyImgAll.indexOf(fx)),style:{touchAction:"manipulation",position:"relative",aspectRatio:"1",borderRadius:8,overflow:"hidden",cursor:"pointer",border:`1px solid ${s.line}`}},u.default.createElement("img",{src:fx.url,alt:"",draggable:false,decoding:"async",style:{width:"100%",height:"100%",objectFit:"cover"}}),u.default.createElement("div",{style:{position:"absolute",bottom:0,left:0,right:0,background:"rgba(43,38,32,0.75)",color:"#fff",fontSize:12,padding:"2px 4px"},className:"mono"},Tl(fx.uploadedAt))))),FyDocs.length>0&&u.default.createElement("div",{style:{display:"flex",flexDirection:"column",gap:10,marginTop:FyImgs.length>0?12:0}},FyDocs.map(fx=>{let canView=!fx.isCad&&fx.canPreview!==false;let openIt=()=>{if(canView)FySetPreview(fx)};let dl=ev=>{if(fx.fromDrawingHub){ev.preventDefault();ev.stopPropagation();HB_downloadDrawingVersion({url:fx.url,path:fx.path,mime:fx.mime,versionNo:fx.versionNo},{drawingNo:fx.drawingNo,name:fx.rawName||fx.name})}else ev.stopPropagation()};return u.default.createElement("div",{key:fx.id,role:canView?"button":undefined,tabIndex:canView?0:undefined,"aria-label":canView?"預覽："+fx.name:undefined,onClick:openIt,onKeyDown:ev=>{if(canView&&ev.target===ev.currentTarget&&(ev.key==="Enter"||ev.key===" ")){ev.preventDefault();openIt()}},style:{background:s.card,border:`1px solid ${s.line}`,borderRadius:8,padding:"12px 14px",display:"flex",alignItems:"center",gap:12,cursor:canView?"pointer":"default",touchAction:"manipulation"}},u.default.createElement(E,{name:fx.isCad?"file-output":"file-text",size:20,color:s.ocean}),u.default.createElement("div",{style:{flex:1,minWidth:0}},u.default.createElement("div",{style:{fontSize:14,fontWeight:400,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},fx.name),u.default.createElement("div",{className:"mono",style:{fontSize:12,color:s.inkSoft}},[fx.kind,fx.versionNo?"V"+fx.versionNo:"",Tl(fx.uploadedAt)].filter(Boolean).join(" · "))),canView&&u.default.createElement("button",{type:"button",onClick:ev=>{ev.stopPropagation();openIt()},style:{display:"inline-flex",alignItems:"center",gap:6,minHeight:38,padding:"0 14px",border:"none",borderRadius:8,background:s.ocean,color:"#fff",fontSize:13,fontFamily:"inherit",cursor:"pointer",flexShrink:0}},u.default.createElement(E,{name:"eye",size:15}),"預覽"),u.default.createElement("a",{href:fx.url,target:"_blank",rel:"noopener noreferrer",onClick:dl,style:{display:"inline-flex",alignItems:"center",gap:5,minHeight:38,padding:"0 10px",color:s.ocean,fontSize:13,textDecoration:"none",border:`1px solid ${s.line}`,borderRadius:8,flexShrink:0}},u.default.createElement(E,{name:"download",size:15}),fx.isCad?"下載 CAD":"下載"))})))}))})():S==="appliances"?u.default.createElement(u.default.Fragment,null,u.default.createElement("button",{onClick:()=>{FySetEditApp(null),y(!0)},className:"hb-cta",style:{marginBottom:16}},"\uFF0B \u65B0\u589E\u8A2D\u5099"),z.length===0?u.default.createElement("p",{style:{textAlign:"center",color:s.inkSoft,marginTop:40,fontSize:14}},"\u5C1A\u672A\u65B0\u589E\u4EFB\u4F55\u5BB6\u96FB\u8A2D\u5099"):u.default.createElement("div",{style:{display:"flex",flexDirection:"column",gap:10}},z.map(N=>u.default.createElement("div",{key:N.id,style:{background:s.card,border:`1px solid ${s.line}`,borderRadius:8,padding:"12px 14px",display:"flex",gap:12}},N.photoUrl?u.default.createElement("img",{src:N.photoUrl,alt:"",onClick:()=>nl(N.photoUrl),style:{width:56,height:56,borderRadius:8,objectFit:"cover",cursor:"pointer",flexShrink:0}}):u.default.createElement("div",{style:{width:56,height:56,borderRadius:8,background:s.cardAlt,flexShrink:0}}),u.default.createElement("div",{style:{flex:1,minWidth:0}},u.default.createElement("div",{style:{fontSize:14,fontWeight:400}},N.name),(N.widthCm!=null||N.heightCm!=null||N.depthCm!=null)&&u.default.createElement("div",{style:{fontSize:12,color:s.inkSoft,marginTop:2},className:"mono"},[N.widthCm!=null?`\u5BEC${N.widthCm}`:null,N.heightCm!=null?`\u9AD8${N.heightCm}`:null,N.depthCm!=null?`\u6DF1${N.depthCm}`:null].filter(Boolean).join(" \xD7 ")," cm"),N.link&&u.default.createElement("a",{href:N.link,target:"_blank",rel:"noopener noreferrer",style:{fontSize:12,color:s.ocean,textDecoration:"underline",display:"inline-block",marginTop:2}},"\u53C3\u8003\u9023\u7D50"),N.fileUrl&&u.default.createElement("a",{href:N.fileUrl,target:"_blank",rel:"noopener noreferrer",style:{fontSize:12,color:s.ocean,textDecoration:"underline",display:"block",marginTop:2}},N.fileName||"\u9644\u4EF6\u6A94\u6848"),N.note&&u.default.createElement("div",{style:{fontSize:12,marginTop:4}},N.note),u.default.createElement("div",{style:{fontSize:12,color:s.inkSoft,marginTop:4},className:"mono"},N.createdBy==="owner"?"\u696D\u4E3B\u65B0\u589E":"\u516C\u53F8\u65B0\u589E"," \xB7 ",Tl(N.createdAt))),u.default.createElement("div",{style:{display:"flex",flexDirection:"column",gap:4,alignSelf:"flex-start"}},u.default.createElement("button",{onClick:()=>{FySetEditApp(N),y(!0)},style:{...at,color:s.ocean}},u.default.createElement(E,{name:"pencil",size:16}))))))):S==="defects"?u.default.createElement(u.default.Fragment,null,u.default.createElement("button",{onClick:()=>dfSetForm(!0),className:"hb-cta",style:{marginBottom:16}},"\uFF0B \u65B0\u589E\u7F3A\u5931\u56DE\u5831"),dfL.length===0?u.default.createElement("p",{style:{textAlign:"center",color:s.inkSoft,marginTop:40,fontSize:14}},"\u5C1A\u672A\u6709\u4EFB\u4F55\u7F3A\u5931\u56DE\u5831"):u.default.createElement("div",{style:{display:"flex",flexDirection:"column",gap:10}},dfL.map(N=>u.default.createElement("div",{key:N.id,style:{background:s.card,border:`1px solid ${s.line}`,borderRadius:8,padding:"12px 14px",display:"flex",gap:12}},N.photoUrl?u.default.createElement("img",{src:N.photoUrl,alt:"",onClick:()=>nl(N.photoUrl),style:{width:56,height:56,borderRadius:8,objectFit:"cover",cursor:"pointer",flexShrink:0}}):u.default.createElement("div",{style:{width:56,height:56,borderRadius:8,background:s.cardAlt,flexShrink:0}}),u.default.createElement("div",{style:{flex:1,minWidth:0}},u.default.createElement("div",{style:{fontSize:14,fontWeight:400}},N.location||"\u672A\u6A19\u793A\u4F4D\u7F6E"),u.default.createElement("div",{style:{fontSize:13,marginTop:2,whiteSpace:"pre-wrap"}},N.description),u.default.createElement("div",{style:{fontSize:12,marginTop:4,display:"flex",gap:8,alignItems:"center"},className:"mono"},u.default.createElement("span",{style:{fontWeight:400,color:N.completed?s.tree:s.cane}},N.completed?"\u2713 \u5DF2\u5B8C\u6210":"\u5F85\u8655\u7406"),u.default.createElement("span",{style:{color:s.inkSoft}},N.createdBy==="owner"?"\u696D\u4E3B\u56DE\u5831":"\u516C\u53F8\u56DE\u5831"," \xB7 ",Tl(N.createdAt))),u.default.createElement("button",{onClick:()=>toggleDfCm(N.id),style:{background:"none",border:"none",color:s.ocean,fontSize:12,fontWeight:400,cursor:"pointer",padding:0,marginTop:8,display:"flex",alignItems:"center",gap:4}},u.default.createElement(E,{name:dfCmOpen===N.id?"chevron-up":"chevron-down",size:13}),"\u7559\u8A00",dfCm[N.id]?.length?` (${dfCm[N.id].length})`:""),dfCmOpen===N.id&&u.default.createElement(DfThread,{defectId:N.id,comments:dfCm[N.id],loaded:!!dfCm[N.id],busy:dfCmBusy,onSend:sendDfCm}))))),dfFormOpen&&u.default.createElement(dfModal,{busy:dfBusy,onCancel:()=>dfSetForm(!1),onCreate:Ddf2})):j?u.default.createElement(u.default.Fragment,null,u.default.createElement("button",{onClick:()=>T(null),style:{background:"none",border:"none",color:s.ocean,display:"flex",alignItems:"center",gap:6,cursor:"pointer",marginBottom:14,padding:0,fontSize:14}},u.default.createElement(E,{name:"arrow-left",size:15})),ee.length>0&&u.default.createElement("button",{onClick:()=>HB_downloadPhotos(ee,[a&&a.name,te&&te.name].filter(Boolean).join("_")),style:{display:"flex",alignItems:"center",justifyContent:"center",gap:6,width:"100%",border:`1px solid ${s.line}`,background:"none",borderRadius:8,padding:"10px 0",marginBottom:12,fontSize:13,color:s.oceanDark,cursor:"pointer",fontFamily:"inherit"}},u.default.createElement(E,{name:"download",size:14}),"下載全部照片（",ee.length,"）"),ee.length===0?u.default.createElement("p",{style:{textAlign:"center",color:s.inkSoft,marginTop:40,fontSize:14}},"\u9019\u672C\u76F8\u7C3F\u9084\u6C92\u6709\u7167\u7247"):u.default.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(3, 1fr)",gap:10}},ee.map((N,it)=>u.default.createElement("div",{key:N.id,onClick:()=>H(it),style:{position:"relative",aspectRatio:"1",borderRadius:8,overflow:"hidden",cursor:"pointer",border:`1px solid ${s.line}`}},u.default.createElement("img",{src:N.url,alt:"",style:{width:"100%",height:"100%",objectFit:"cover"}}),u.default.createElement("div",{style:{position:"absolute",bottom:0,left:0,right:0,background:"rgba(43,38,32,0.75)",color:"#fff",fontSize:12,padding:"2px 4px"},className:"mono"},Tl(N.uploadedAt)))))):o.length===0?u.default.createElement("p",{style:{textAlign:"center",color:s.inkSoft,marginTop:40,fontSize:14}},"\u76EE\u524D\u9084\u6C92\u6709\u76F8\u7C3F"):u.default.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(230px,1fr))",gap:16}},o.map(N=>{let it=c.filter(vt=>vt.albumId===N.id).length,gl=c.find(vt=>vt.albumId===N.id);return u.default.createElement("div",{key:N.id,onClick:()=>T(N.id),style:{background:s.card,borderRadius:8,overflow:"hidden",border:`1px solid ${s.line}`,cursor:"pointer"}},u.default.createElement("div",{style:{aspectRatio:"4/3",background:s.cardAlt,display:"flex",alignItems:"center",justifyContent:"center"}},gl?u.default.createElement("img",{src:gl.url,alt:"",style:{width:"100%",height:"100%",objectFit:"cover"}}):u.default.createElement(E,{name:"folder",size:28,color:s.ocean,style:{opacity:.5}})),u.default.createElement("div",{style:{padding:"8px 10px"}},u.default.createElement("div",{style:{fontSize:13,fontWeight:400,color:s.oceanDark}},N.name),u.default.createElement("div",{style:{fontSize:12,color:s.inkSoft,marginTop:2}},it," \u5F35\u7167\u7247")))})))),k!=null&&ee[k]&&u.default.createElement(mm,{photos:ee,index:k,onIndexChange:H,onClose:()=>H(null),onDownload:hbP=>HB_downloadPhoto(hbP,[a&&a.name,te&&te.name].filter(Boolean).join("_"))}),B&&u.default.createElement(mm,{photos:[{url:B}],index:0,onIndexChange:()=>{},onClose:()=>nl(null),onDownload:hbP=>HB_downloadPhoto(hbP)}),hl!=null&&(()=>{let N=m.filter(ia);return N[hl]?u.default.createElement(mm,{photos:N,index:hl,onIndexChange:ql,onClose:()=>ql(null),onDownload:hbP=>HB_downloadPhoto(hbP)}):null})(),D&&u.default.createElement(pm,{busy:g,initial:FyEditApp,onCancel:()=>{y(!1),FySetEditApp(null)},onCreate:FyEditApp?FyUpdateAppliance:je})))}function HBZoomImg({src,onZoomState}){
+  u.default.createElement("div",{className:"hb-body",style:{padding:"18px 26px 112px"}},S!=="overview"?u.default.createElement("button",{onClick:()=>M("overview"),className:"hb-backLink",style:{background:"none",border:"none",color:s.ocean,display:"flex",alignItems:"center",gap:6,cursor:"pointer",padding:0,marginBottom:14,fontSize:13,fontFamily:"inherit"}},u.default.createElement(E,{name:"arrow-left",size:15}),"\u8FD4\u56DE\u7E3D\u89BD"):null,S==="overview"?u.default.createElement(HbOverviewHub,{project:a,stage:FyStage,photos:c,materials:d,appliances:z,files:m,defects:dfL,schedule:schL,owner:!0,onGo:kk=>M(kk)}):S==="meetings"?u.default.createElement(HbMeetings,{projectId:l,readOnly:!0}):S==="progress"?u.default.createElement(HbStageProgress,{projectId:l,readOnly:!0}):S==="materials"?d.length===0?u.default.createElement("p",{style:{textAlign:"center",color:s.inkSoft,marginTop:40,fontSize:14}},"\u76EE\u524D\u9084\u6C92\u6709\u9001\u9054\u7D00\u9304"):u.default.createElement("div",{style:{display:"flex",flexDirection:"column",gap:10}},d.map(N=>u.default.createElement("div",{key:N.id,style:{background:s.card,border:`1px solid ${s.line}`,borderRadius:8,padding:"12px 14px",display:"flex",gap:12}},N.photoUrl?u.default.createElement("img",{src:N.photoUrl,alt:"",onClick:()=>nl(N.photoUrl),style:{width:56,height:56,borderRadius:8,objectFit:"cover",cursor:"pointer",flexShrink:0}}):u.default.createElement("div",{style:{width:56,height:56,borderRadius:8,background:s.cardAlt,flexShrink:0}}),u.default.createElement("div",{style:{flex:1,minWidth:0}},u.default.createElement("div",{style:{fontSize:14,fontWeight:400}},N.itemName),u.default.createElement("div",{style:{fontSize:12,color:s.inkSoft,marginTop:2}},N.quantity!=null?`${N.quantity}${N.unit||""} \xB7 `:"",Tl(N.deliveredAt)),N.note&&u.default.createElement("div",{style:{fontSize:12,marginTop:4}},N.note),N.link&&u.default.createElement("a",{href:N.link,target:"_blank",rel:"noopener noreferrer",onClick:hbEv=>hbEv.stopPropagation(),style:{display:"inline-flex",alignItems:"center",gap:5,marginTop:6,color:s.ocean,fontSize:12,textDecoration:"underline",wordBreak:"break-all"}},u.default.createElement(E,{name:"link",size:12}),"\u958B\u555F\u9023\u7D50"))))):S==="files"?m.length===0?u.default.createElement("p",{style:{textAlign:"center",color:s.inkSoft,marginTop:40,fontSize:14}},"\u76EE\u524D\u9084\u6C92\u6709\u5C08\u6848\u6A94\u6848"):(()=>{let FyImgAll=m.filter(ia),FyGroups=[...FyFolders.map(fd=>({gid:fd.id,gname:fd.name,items:m.filter(fx=>fx.folderId===fd.id)})),{gid:"__hb_uncat__",gname:"\u672A\u5206\u985E",items:m.filter(fx=>!fx.folderId||!FyFolders.some(fd=>fd.id===fx.folderId))}].filter(g=>g.items.length>0);return u.default.createElement("div",{style:{display:"flex",flexDirection:"column",gap:24}},FyGroups.map(g=>{let FyImgs=g.items.filter(ia),FyDocs=g.items.filter(fx=>!ia(fx));return u.default.createElement("div",{key:g.gid},u.default.createElement("div",{style:{display:"flex",alignItems:"center",gap:6,marginBottom:10,paddingBottom:6,borderBottom:`1px solid ${s.line}`}},u.default.createElement(E,{name:"folder",size:15,color:s.ocean}),u.default.createElement("span",{style:{fontSize:14,fontWeight:400,color:s.oceanDark,flex:1,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},g.gname),u.default.createElement("span",{className:"mono",style:{fontSize:12,color:s.inkSoft}},g.items.length)),FyImgs.length>0&&u.default.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(3, 1fr)",gap:10}},FyImgs.map(fx=>u.default.createElement("div",{key:fx.id,role:"button",tabIndex:0,"aria-label":"放大圖片："+fx.name,onKeyDown:ev=>{if(ev.target===ev.currentTarget&&(ev.key==="Enter"||ev.key===" ")){ev.preventDefault();ql(FyImgAll.indexOf(fx))}},onClick:()=>ql(FyImgAll.indexOf(fx)),style:{touchAction:"manipulation",position:"relative",aspectRatio:"1",borderRadius:8,overflow:"hidden",cursor:"pointer",border:`1px solid ${s.line}`}},u.default.createElement("img",{src:fx.url,alt:"",draggable:false,decoding:"async",style:{width:"100%",height:"100%",objectFit:"cover"}}),u.default.createElement("div",{style:{position:"absolute",bottom:0,left:0,right:0,background:"rgba(43,38,32,0.75)",color:"#fff",fontSize:12,padding:"2px 4px"},className:"mono"},Tl(fx.uploadedAt))))),FyDocs.length>0&&u.default.createElement("div",{style:{display:"flex",flexDirection:"column",gap:10,marginTop:FyImgs.length>0?12:0}},FyDocs.map(fx=>{let canView=!fx.isCad&&fx.canPreview!==false;let openIt=()=>{if(canView)FySetPreview(fx)};let dl=ev=>{if(fx.fromDrawingHub){ev.preventDefault();ev.stopPropagation();HB_downloadDrawingVersion({url:fx.url,path:fx.path,mime:fx.mime,versionNo:fx.versionNo},{drawingNo:fx.drawingNo,name:fx.rawName||fx.name})}else ev.stopPropagation()};return u.default.createElement("div",{key:fx.id,role:canView?"button":undefined,tabIndex:canView?0:undefined,"aria-label":canView?"預覽："+fx.name:undefined,onClick:openIt,onKeyDown:ev=>{if(canView&&ev.target===ev.currentTarget&&(ev.key==="Enter"||ev.key===" ")){ev.preventDefault();openIt()}},style:{background:s.card,border:`1px solid ${s.line}`,borderRadius:8,padding:"12px 14px",display:"flex",alignItems:"center",gap:12,cursor:canView?"pointer":"default",touchAction:"manipulation"}},u.default.createElement(E,{name:fx.isCad?"file-output":"file-text",size:20,color:s.ocean}),u.default.createElement("div",{style:{flex:1,minWidth:0}},u.default.createElement("div",{style:{fontSize:14,fontWeight:400,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},fx.name),u.default.createElement("div",{className:"mono",style:{fontSize:12,color:s.inkSoft}},[fx.kind,fx.versionNo?"V"+fx.versionNo:"",Tl(fx.uploadedAt)].filter(Boolean).join(" · "))),canView&&u.default.createElement("button",{type:"button",onClick:ev=>{ev.stopPropagation();openIt()},style:{display:"inline-flex",alignItems:"center",gap:6,minHeight:38,padding:"0 14px",border:"none",borderRadius:8,background:s.ocean,color:"#fff",fontSize:13,fontFamily:"inherit",cursor:"pointer",flexShrink:0}},u.default.createElement(E,{name:"eye",size:15}),"預覽"),u.default.createElement("a",{href:fx.url,target:"_blank",rel:"noopener noreferrer",onClick:dl,style:{display:"inline-flex",alignItems:"center",gap:5,minHeight:38,padding:"0 10px",color:s.ocean,fontSize:13,textDecoration:"none",border:`1px solid ${s.line}`,borderRadius:8,flexShrink:0}},u.default.createElement(E,{name:"download",size:15}),fx.isCad?"下載 CAD":"下載"))})))}))})():S==="appliances"?u.default.createElement(u.default.Fragment,null,u.default.createElement("button",{onClick:()=>{FySetEditApp(null),y(!0)},className:"hb-cta",style:{marginBottom:16}},"\uFF0B \u65B0\u589E\u8A2D\u5099"),z.length===0?u.default.createElement("p",{style:{textAlign:"center",color:s.inkSoft,marginTop:40,fontSize:14}},"\u5C1A\u672A\u65B0\u589E\u4EFB\u4F55\u5BB6\u96FB\u8A2D\u5099"):u.default.createElement("div",{style:{display:"flex",flexDirection:"column",gap:10}},z.map(N=>u.default.createElement("div",{key:N.id,style:{background:s.card,border:`1px solid ${s.line}`,borderRadius:8,padding:"12px 14px",display:"flex",gap:12}},N.photoUrl?u.default.createElement("img",{src:N.photoUrl,alt:"",onClick:()=>nl(N.photoUrl),style:{width:56,height:56,borderRadius:8,objectFit:"cover",cursor:"pointer",flexShrink:0}}):u.default.createElement("div",{style:{width:56,height:56,borderRadius:8,background:s.cardAlt,flexShrink:0}}),u.default.createElement("div",{style:{flex:1,minWidth:0}},u.default.createElement("div",{style:{fontSize:14,fontWeight:400}},N.name),(N.widthCm!=null||N.heightCm!=null||N.depthCm!=null)&&u.default.createElement("div",{style:{fontSize:12,color:s.inkSoft,marginTop:2},className:"mono"},[N.widthCm!=null?`\u5BEC${N.widthCm}`:null,N.heightCm!=null?`\u9AD8${N.heightCm}`:null,N.depthCm!=null?`\u6DF1${N.depthCm}`:null].filter(Boolean).join(" \xD7 ")," cm"),N.link&&u.default.createElement("a",{href:N.link,target:"_blank",rel:"noopener noreferrer",style:{fontSize:12,color:s.ocean,textDecoration:"underline",display:"inline-block",marginTop:2}},"\u53C3\u8003\u9023\u7D50"),N.fileUrl&&u.default.createElement("a",{href:N.fileUrl,target:"_blank",rel:"noopener noreferrer",style:{fontSize:12,color:s.ocean,textDecoration:"underline",display:"block",marginTop:2}},N.fileName||"\u9644\u4EF6\u6A94\u6848"),N.note&&u.default.createElement("div",{style:{fontSize:12,marginTop:4}},N.note),u.default.createElement("div",{style:{fontSize:12,color:s.inkSoft,marginTop:4},className:"mono"},N.createdBy==="owner"?"\u696D\u4E3B\u65B0\u589E":"\u516C\u53F8\u65B0\u589E"," \xB7 ",Tl(N.createdAt))),u.default.createElement("div",{style:{display:"flex",flexDirection:"column",gap:4,alignSelf:"flex-start"}},u.default.createElement("button",{onClick:()=>{FySetEditApp(N),y(!0)},style:{...at,color:s.ocean}},u.default.createElement(E,{name:"pencil",size:16}))))))):S==="defects"?u.default.createElement(u.default.Fragment,null,u.default.createElement("button",{onClick:()=>dfSetForm(!0),className:"hb-cta",style:{marginBottom:16}},"\uFF0B \u65B0\u589E\u7F3A\u5931\u56DE\u5831"),dfL.length===0?u.default.createElement("p",{style:{textAlign:"center",color:s.inkSoft,marginTop:40,fontSize:14}},"\u5C1A\u672A\u6709\u4EFB\u4F55\u7F3A\u5931\u56DE\u5831"):u.default.createElement("div",{style:{display:"flex",flexDirection:"column",gap:10}},dfL.map(N=>u.default.createElement("div",{key:N.id,style:{background:s.card,border:`1px solid ${s.line}`,borderRadius:8,padding:"12px 14px",display:"flex",gap:12}},N.photoUrl?u.default.createElement("img",{src:N.photoUrl,alt:"",onClick:()=>nl(N.photoUrl),style:{width:56,height:56,borderRadius:8,objectFit:"cover",cursor:"pointer",flexShrink:0}}):u.default.createElement("div",{style:{width:56,height:56,borderRadius:8,background:s.cardAlt,flexShrink:0}}),u.default.createElement("div",{style:{flex:1,minWidth:0}},u.default.createElement("div",{style:{fontSize:14,fontWeight:400}},N.location||"\u672A\u6A19\u793A\u4F4D\u7F6E"),u.default.createElement("div",{style:{fontSize:13,marginTop:2,whiteSpace:"pre-wrap"}},N.description),u.default.createElement("div",{style:{fontSize:12,marginTop:4,display:"flex",gap:8,alignItems:"center"},className:"mono"},u.default.createElement("span",{style:{fontWeight:400,color:N.completed?s.tree:s.cane}},N.completed?"\u2713 \u5DF2\u5B8C\u6210":"\u5F85\u8655\u7406"),u.default.createElement("span",{style:{color:s.inkSoft}},N.createdBy==="owner"?"\u696D\u4E3B\u56DE\u5831":"\u516C\u53F8\u56DE\u5831"," \xB7 ",Tl(N.createdAt))),u.default.createElement("button",{onClick:()=>toggleDfCm(N.id),style:{background:"none",border:"none",color:s.ocean,fontSize:12,fontWeight:400,cursor:"pointer",padding:0,marginTop:8,display:"flex",alignItems:"center",gap:4}},u.default.createElement(E,{name:dfCmOpen===N.id?"chevron-up":"chevron-down",size:13}),"\u7559\u8A00",dfCm[N.id]?.length?` (${dfCm[N.id].length})`:""),dfCmOpen===N.id&&u.default.createElement(DfThread,{defectId:N.id,comments:dfCm[N.id],loaded:!!dfCm[N.id],busy:dfCmBusy,onSend:sendDfCm}))))),dfFormOpen&&u.default.createElement(dfModal,{busy:dfBusy,onCancel:()=>dfSetForm(!1),onCreate:Ddf2})):j?u.default.createElement(u.default.Fragment,null,u.default.createElement("button",{onClick:()=>T(null),style:{background:"none",border:"none",color:s.ocean,display:"flex",alignItems:"center",gap:6,cursor:"pointer",marginBottom:14,padding:0,fontSize:14}},u.default.createElement(E,{name:"arrow-left",size:15})),ee.length>0&&u.default.createElement("button",{onClick:()=>HB_downloadPhotos(ee,[a&&a.name,te&&te.name].filter(Boolean).join("_")),style:{display:"flex",alignItems:"center",justifyContent:"center",gap:6,width:"100%",border:`1px solid ${s.line}`,background:"none",borderRadius:8,padding:"10px 0",marginBottom:12,fontSize:13,color:s.oceanDark,cursor:"pointer",fontFamily:"inherit"}},u.default.createElement(E,{name:"download",size:14}),"下載全部照片（",ee.length,"）"),ee.length===0?u.default.createElement("p",{style:{textAlign:"center",color:s.inkSoft,marginTop:40,fontSize:14}},"\u9019\u672C\u76F8\u7C3F\u9084\u6C92\u6709\u7167\u7247"):u.default.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(3, 1fr)",gap:10}},ee.map((N,it)=>u.default.createElement("div",{key:N.id,onClick:()=>H(it),style:{position:"relative",aspectRatio:"1",borderRadius:8,overflow:"hidden",cursor:"pointer",border:`1px solid ${s.line}`}},u.default.createElement("img",{src:N.url,alt:"",style:{width:"100%",height:"100%",objectFit:"cover"}}),u.default.createElement("div",{style:{position:"absolute",bottom:0,left:0,right:0,background:"rgba(43,38,32,0.75)",color:"#fff",fontSize:12,padding:"2px 4px"},className:"mono"},Tl(N.uploadedAt)))))):o.length===0?u.default.createElement("p",{style:{textAlign:"center",color:s.inkSoft,marginTop:40,fontSize:14}},"\u76EE\u524D\u9084\u6C92\u6709\u76F8\u7C3F"):u.default.createElement(HbAlbumFlow,{albums:o,photos:c,Viewer:mm,fileName:hbP=>[a&&a.name,((o.find(x=>x.id===hbP.albumId))||{}).name].filter(Boolean).join("_")}))),k!=null&&ee[k]&&u.default.createElement(mm,{photos:ee,index:k,onIndexChange:H,onClose:()=>H(null),onDownload:hbP=>HB_downloadPhoto(hbP,[a&&a.name,te&&te.name].filter(Boolean).join("_"))}),B&&u.default.createElement(mm,{photos:[{url:B}],index:0,onIndexChange:()=>{},onClose:()=>nl(null),onDownload:hbP=>HB_downloadPhoto(hbP)}),hl!=null&&(()=>{let N=m.filter(ia);return N[hl]?u.default.createElement(mm,{photos:N,index:hl,onIndexChange:ql,onClose:()=>ql(null),onDownload:hbP=>HB_downloadPhoto(hbP)}):null})(),D&&u.default.createElement(pm,{busy:g,initial:FyEditApp,onCancel:()=>{y(!1),FySetEditApp(null)},onCreate:FyEditApp?FyUpdateAppliance:je})))}function HBZoomImg({src,onZoomState}){
 var [loadState,setLoadState]=u.useState('loading'),[retry,setRetry]=u.useState(0);
 u.useLayoutEffect(()=>{setLoadState(imgRef.current?.complete&&imgRef.current.naturalWidth>0?'ready':'loading');var timer=setTimeout(()=>setLoadState(v=>v==='loading'?'slow':v),12000);return()=>clearTimeout(timer)},[src,retry]);
 var wrapRef=(0,u.useRef)(null),imgRef=(0,u.useRef)(null),S=(0,u.useRef)({z:1,x:0,y:0,sd:0,sz:1,sx:0,sy:0,px:0,py:0,mode:0,lastTap:0});
