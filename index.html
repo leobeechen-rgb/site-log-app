@@ -13351,13 +13351,13 @@ const HB_LIB_CSS=`
       .hbcp-bar{display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap}.hb-wb .hbcp-bar .hbcp-line{border-color:#06C755!important;color:#05833a!important}.hbcp-bar h4{margin:0;font-size:16px;font-weight:500;color:#1C1B18}
       .hbcp-sel select,.hbcp-form select,.hbcp-form input:not([type=checkbox]){height:38px;border:1px solid #D9CFBD;border-radius:4px;background:#fff;font:inherit;font-size:14px;padding:0 10px;color:#1C1B18;min-width:0}
       .hbcp-albums{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px}
-.hbcp-flow{display:grid;gap:22px}.hbcp-sechead{display:flex;align-items:baseline;gap:8px;margin:0 0 10px;padding-bottom:8px;border-bottom:1px solid #D9CFBD}.hbcp-sechead b{font:500 16px 'Noto Serif TC',serif;color:#1C1B18;letter-spacing:.04em}.hbcp-sechead small{font-size:12px;color:#8b8277}
+.hbcp-flow{display:grid;gap:22px}.hbcp-sec{content-visibility:auto;contain-intrinsic-size:auto 260px}.hbcp-tg{flex:none;width:auto!important;min-width:0!important;height:28px!important;min-height:0!important;padding:0 10px!important;border:1px solid #D9CFBD!important;border-radius:999px!important;background:#fff!important;font:inherit;font-size:12px!important;line-height:1;white-space:nowrap!important;writing-mode:horizontal-tb!important;color:#3C362F!important;cursor:pointer}.hbcp-tg:hover{border-color:#2E4A3C!important;color:#2E4A3C!important}.hbcp-sechead{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 10px;padding-bottom:8px;border-bottom:1px solid #D9CFBD}.hbcp-sechead b{font:500 16px 'Noto Serif TC',serif;color:#1C1B18;letter-spacing:.04em}.hbcp-sechead small{font-size:12px;color:#8b8277}
       .hbcp-album{border:1px solid #D9CFBD;border-radius:4px;background:#fff;overflow:hidden}
       .hbcp-cover{display:block;width:100%;aspect-ratio:4/3;border:0;padding:0;background:#F2EFE8;cursor:pointer}
       .hbcp-cover img{width:100%;height:100%;object-fit:cover;display:block}.hbcp-cover span{font-size:12px;color:#8A8178}
       .hbcp-meta{display:flex;align-items:center;gap:4px;padding:9px 10px}.hbcp-meta>div{flex:1;min-width:0}
       .hbcp-meta b{display:block;font-weight:500;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.hbcp-meta small{font-size:12px;color:#8A8178}
-      .hbcp-ic{flex:none;width:30px;height:30px;border:0;background:none;border-radius:4px;cursor:pointer;color:#6F675B;font-size:14px}.hbcp-ic:hover{background:#F2EFE8}
+      .hbcp-ic{flex:none;width:30px;height:30px;white-space:nowrap;border:0;background:none;border-radius:4px;cursor:pointer;color:#6F675B;font-size:14px}.hbcp-ic:hover{background:#F2EFE8}
       .hbcp-back{border:0;background:none;font:inherit;font-size:13px;color:#2E4A3C;cursor:pointer;padding:0 0 10px}
       .hbcp-photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
       .hbcp-ph{margin:0;border:1px solid #D9CFBD;border-radius:4px;background:#fff;overflow:hidden}.hbcp-ph.is-private .hbcp-phimg img{opacity:.75}
@@ -16661,8 +16661,8 @@ function HbCasePhotos({project,notify,onDirty}){
       :sel==='all'?(albums.length?(()=>{let base=0;return h('div',{className:'hbcp-flow'},albums.map(a=>{const ps=photos.filter(x=>x.album_id===a.id),b=base;base+=ps.length;
           return h('section',{key:a.id,className:'hbcp-sec'},
             h('div',{className:'hbcp-sechead'},h('b',null,a.name),h('small',null,ps.length+' 張'),h('span',{style:{flex:1}}),
-            ps.length>0&&h('button',{type:'button',className:'hbcp-ic',title:'這本相簿全部分享給業主',onClick:()=>bulkVis(ps,true,a.name)},'業主可見'),
-            ps.length>0&&h('button',{type:'button',className:'hbcp-ic',title:'這本相簿全部改為僅公司可見',onClick:()=>bulkVis(ps,false,a.name)},'僅公司'),
+            ps.length>0&&h('button',{type:'button',className:'hbcp-tg',title:'這本相簿全部分享給業主',onClick:()=>bulkVis(ps,true,a.name)},'業主可見'),
+            ps.length>0&&h('button',{type:'button',className:'hbcp-tg',title:'這本相簿全部改為僅公司可見',onClick:()=>bulkVis(ps,false,a.name)},'僅公司'),
             h('button',{type:'button',className:'hbcp-ic',title:'下載這本相簿','aria-label':'下載相簿 '+a.name,onClick:()=>dlList(photos.filter(x=>x.album_id===a.id),a.name)},'⬇'),
             h('button',{type:'button',className:'hbcp-ic',title:'修改相簿名稱','aria-label':'修改相簿名稱 '+a.name,onClick:()=>renameAlbum(a)},'✎'),
             h('button',{type:'button',className:'hbcp-ic',title:'刪除相簿','aria-label':'刪除相簿 '+a.name,onClick:()=>delAlbum(a)},'✕')),
