@@ -14588,22 +14588,22 @@ function HbProgFill({pct,className,style}){
   return C("i",{ref,className,style:{display:"block",width:"100%",transformOrigin:"left center",transform:"scaleX("+v/100+")",willChange:"transform",...(style||{})}});
 }
 /* ===== 相簿卡片：一本一本整理好；點進去才看照片，業主端與公司端共用 ===== */
-const HB_ALBUM_CARD_CSS=`.hbac-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:18px}
-.hbac-card{display:flex;flex-direction:column;border:1px solid #D9CFBD;border-radius:6px;background:#FFFDF8;overflow:hidden;transition:box-shadow .2s,transform .2s}
-.hbac-card:hover{box-shadow:0 14px 34px rgba(56,45,36,.10);transform:translateY(-2px)}
-.hbac-cover{display:grid;grid-template-columns:3fr 2fr;grid-template-rows:1fr 1fr;gap:3px;aspect-ratio:4/3;background:#F2EFE8;border:0;padding:0;cursor:pointer;width:100%}
+const HB_ALBUM_CARD_CSS=`.hbac-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:12px;align-items:start}
+.hbac-card{display:flex;flex-direction:column;border:1px solid #D9CFBD;border-radius:4px;background:#FFFDF8;overflow:hidden;transition:box-shadow .2s}
+.hbac-card:hover{box-shadow:0 8px 20px rgba(56,45,36,.10)}
+.hbac-cover{display:grid;grid-template-columns:3fr 2fr;grid-template-rows:1fr 1fr;gap:2px;aspect-ratio:3/2;background:#F2EFE8;border:0;padding:0;cursor:pointer;width:100%}
 .hbac-cover img{width:100%;height:100%;object-fit:cover;display:block;min-height:0}
 .hbac-cover .c1{grid-row:1/3}.hbac-cover.n1{grid-template-columns:1fr}.hbac-cover.n1 .c1{grid-row:1/3}.hbac-cover.n2 .c2{grid-row:1/3}
 .hbac-empty{grid-column:1/-1;grid-row:1/3;display:flex;align-items:center;justify-content:center;font-size:13px;color:#8b8277}
-.hbac-body{padding:12px 14px 10px;display:flex;flex-direction:column;gap:6px;flex:1}
-.hbac-name{margin:0;font:500 17px/1.35 'Noto Serif TC',serif;letter-spacing:.05em;color:#1C1B18;overflow-wrap:anywhere}
-.hbac-meta{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:12px;color:#8b8277}
+.hbac-body{padding:8px 10px 6px;display:flex;flex-direction:column;gap:3px}
+.hbac-name{margin:0;font:500 14px/1.35 'Noto Serif TC',serif;letter-spacing:.03em;color:#1C1B18;overflow-wrap:anywhere}
+.hbac-meta{display:flex;flex-wrap:wrap;gap:2px 8px;font-size:12px;color:#8b8277}
 .hbac-pill{display:inline-block;font-size:12px;padding:1px 9px;border-radius:999px;border:1px solid #D9CFBD;color:#6F675B;background:#fff}
 .hbac-pill.on{border-color:#2E4A3C;color:#2E4A3C;background:#E3E9E2}
-.hbac-act{display:flex;flex-wrap:wrap;gap:6px;padding:8px 14px 12px;margin-top:auto;border-top:1px dashed #E7DFCF}
-.hbac-act button{height:28px;padding:0 11px;border:1px solid #D9CFBD;border-radius:999px;background:#fff;font:inherit;font-size:12px;color:#3C362F;cursor:pointer;white-space:nowrap}
+.hbac-act{display:flex;flex-wrap:wrap;gap:4px;padding:6px 10px 8px;border-top:1px dashed #E7DFCF}
+.hbac-act button{height:24px;padding:0 8px;border:1px solid #D9CFBD;border-radius:999px;background:#fff;font:inherit;font-size:12px;color:#3C362F;cursor:pointer;white-space:nowrap}
 .hbac-act button:hover{border-color:#2E4A3C;color:#2E4A3C}
-.hbac-act .sp{flex:1}.hbac-act .danger:hover{border-color:#B4573A;color:#B4573A}
+.hbac-act .sp{flex:1 1 100%;height:0}.hbac-act .danger:hover{border-color:#B4573A;color:#B4573A}
 .hbac-back{border:0;background:none;font:inherit;font-size:14px;color:#2E4A3C;cursor:pointer;padding:0 0 12px;display:inline-flex;gap:6px;align-items:center}
 .hbac-title{display:flex;align-items:baseline;flex-wrap:wrap;gap:10px;margin:0 0 12px;padding-bottom:10px;border-bottom:1px solid #D9CFBD}
 .hbac-title h4{margin:0;font:500 19px 'Noto Serif TC',serif;letter-spacing:.05em;color:#1C1B18}.hbac-title small{font-size:12px;color:#8b8277}.hbac-title .sp{flex:1}
@@ -14613,7 +14613,7 @@ const HB_ALBUM_CARD_CSS=`.hbac-grid{display:grid;grid-template-columns:repeat(au
 .hbaf-tile img{width:100%;height:100%;object-fit:cover;display:block}
 .hbaf-date{position:absolute;bottom:0;left:0;right:0;background:rgba(43,38,32,.72);color:#fff;font-size:12px;padding:2px 4px;text-align:left}
 .hbaf-empty{font-size:13px;color:#8b8277;margin:6px 0}
-@media(max-width:680px){.hbac-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.hbac-name{font-size:15px}.hbac-body{padding:10px 10px 8px}.hbac-act{padding:6px 10px 10px}.hbaf-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}}`;
+@media(max-width:680px){.hbac-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.hbaf-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}}`;
 function HbAlbumCollage(C,ps,onClick,label){
   const n=Math.min(3,ps.length);
   return C('button',{type:'button',className:'hbac-cover n'+n,onClick,'aria-label':label},
