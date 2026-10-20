@@ -13506,6 +13506,12 @@ const HB_LIB_CSS=`
         .wbk-col:nth-child(2){padding-right:6px}
         .wbk-col:nth-child(n+3){border-top:1px solid var(--wb-line);margin-top:4px}
         .wbk-colbody{min-height:0}
+        /* 2×2 時卡片不鎖高度，四欄（今日時間軸、未完成、待追蹤、稍後辦）都完整顯示 */
+        .wbk-fixed .wbk-card-todo{height:auto!important;overflow:visible!important}
+        .wbk-fixed .wbk-cols{grid-template-rows:none!important;grid-auto-rows:auto!important}
+        .wbk-fixed .wbk-col{overflow:visible!important;min-height:120px}
+        .hb-wb.wbk-fixed .wbk-col .wbk-colbody{overflow:visible;-webkit-mask-image:none;mask-image:none}
+        .wbk-fixed .wbk-head{flex-wrap:wrap!important}
       }
       @media(max-width:899px){
         .wbc.is-compact.wbk .wbk-cols{display:grid!important}
