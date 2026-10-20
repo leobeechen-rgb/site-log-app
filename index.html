@@ -13136,7 +13136,7 @@ const HB_LIB_CSS=`
       .wbk-caseav-btn>.hb-cav{display:none}
       .wbk-pt-art .hb-art{max-width:40px}
       .wbk-pt-art .hb-art path,.wbk-pt-art .hb-art circle{stroke-width:3}
-      .wbk-pt-name{display:block;max-width:100%;margin-top:4px;font-family:"Noto Serif TC",serif;font-size:12px;letter-spacing:.06em;line-height:1.35;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+      .wbk-pt-name{display:block;max-width:100%;margin-top:4px;font-family:"Noto Serif TC",serif;font-size:12px;letter-spacing:.04em;line-height:1.35;overflow:hidden;white-space:normal;overflow-wrap:anywhere;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;text-align:center}
       .wbk-pt.on .wbk-pt-name{color:#2E4A3C;font-weight:500}
       .wbk-pt-bar{display:block;width:70%;height:2px;margin-top:5px;background:rgba(42,40,34,.14)}
       .wbk-pt-bar i{display:block;height:100%;background:#2E4A3C}
@@ -14587,45 +14587,66 @@ function HbProgFill({pct,className,style}){
     el.style.transition=HB_reduceMotion()?"none":"transform .5s cubic-bezier(.22,.8,.24,1)";el.style.transform="scaleX("+v/100+")"},[v]);
   return C("i",{ref,className,style:{display:"block",width:"100%",transformOrigin:"left center",transform:"scaleX("+v/100+")",willChange:"transform",...(style||{})}});
 }
-/* ===== 照片連續瀏覽：所有相簿依序攤開，往下捲就看完；上方標籤可只看某一本；點照片放大後可左右切換整個案件（業主端與公司端共用） ===== */
-function HbAlbumFlow({albums,photos,Viewer,viewerProps,onOpenAlbum,fileName,showEmpty}){
-  const C=u.default.createElement;
-  const[flt,setFlt]=u.useState('all'),[idx,setIdx]=u.useState(null);
-  const groups=(albums||[]).map(a=>({a,ps:(photos||[]).filter(p=>p.albumId===a.id)})).filter(g=>g.ps.length||showEmpty);
-  const cur=flt!=='all'&&groups.some(g=>g.a.id===flt)?flt:'all';
-  const vis=cur==='all'?groups:groups.filter(g=>g.a.id===cur);
-  const flat=vis.flatMap(g=>g.ps);
-  const total=groups.reduce((n,g)=>n+g.ps.length,0);
-  let base=0;
-  const css=`.hbaf-chips{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 16px}
-.hbaf-chip{border:1px solid #D9CFBD;background:#fff;color:#6F675B;padding:6px 14px;font:inherit;font-size:13px;cursor:pointer;border-radius:999px;max-width:100%}
-.hbaf-chip.on{background:#2E4A3C;border-color:#2E4A3C;color:#F2EFE8}
-.hbaf-sec{margin:0 0 26px}
-.hbaf-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:0 0 10px;padding-bottom:8px;border-bottom:1px solid #D9CFBD}
-.hbaf-head h4{margin:0;font:500 17px 'Noto Serif TC',serif;color:#1C1B18;letter-spacing:.04em;overflow-wrap:anywhere}
-.hbaf-head small{font-size:12px;color:#8b8277}
-.hbaf-sp{flex:1}
-.hbaf-lnk{border:0;background:none;color:#B4573A;font:inherit;font-size:13px;cursor:pointer;padding:2px 4px}
+/* ===== 相簿卡片：一本一本整理好；點進去才看照片，業主端與公司端共用 ===== */
+const HB_ALBUM_CARD_CSS=`.hbac-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:18px}
+.hbac-card{display:flex;flex-direction:column;border:1px solid #D9CFBD;border-radius:6px;background:#FFFDF8;overflow:hidden;transition:box-shadow .2s,transform .2s}
+.hbac-card:hover{box-shadow:0 14px 34px rgba(56,45,36,.10);transform:translateY(-2px)}
+.hbac-cover{display:grid;grid-template-columns:3fr 2fr;grid-template-rows:1fr 1fr;gap:3px;aspect-ratio:4/3;background:#F2EFE8;border:0;padding:0;cursor:pointer;width:100%}
+.hbac-cover img{width:100%;height:100%;object-fit:cover;display:block;min-height:0}
+.hbac-cover .c1{grid-row:1/3}.hbac-cover.n1{grid-template-columns:1fr}.hbac-cover.n1 .c1{grid-row:1/3}.hbac-cover.n2 .c2{grid-row:1/3}
+.hbac-empty{grid-column:1/-1;grid-row:1/3;display:flex;align-items:center;justify-content:center;font-size:13px;color:#8b8277}
+.hbac-body{padding:12px 14px 10px;display:flex;flex-direction:column;gap:6px;flex:1}
+.hbac-name{margin:0;font:500 17px/1.35 'Noto Serif TC',serif;letter-spacing:.05em;color:#1C1B18;overflow-wrap:anywhere}
+.hbac-meta{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:12px;color:#8b8277}
+.hbac-pill{display:inline-block;font-size:12px;padding:1px 9px;border-radius:999px;border:1px solid #D9CFBD;color:#6F675B;background:#fff}
+.hbac-pill.on{border-color:#2E4A3C;color:#2E4A3C;background:#E3E9E2}
+.hbac-act{display:flex;flex-wrap:wrap;gap:6px;padding:8px 14px 12px;margin-top:auto;border-top:1px dashed #E7DFCF}
+.hbac-act button{height:28px;padding:0 11px;border:1px solid #D9CFBD;border-radius:999px;background:#fff;font:inherit;font-size:12px;color:#3C362F;cursor:pointer;white-space:nowrap}
+.hbac-act button:hover{border-color:#2E4A3C;color:#2E4A3C}
+.hbac-act .sp{flex:1}.hbac-act .danger:hover{border-color:#B4573A;color:#B4573A}
+.hbac-back{border:0;background:none;font:inherit;font-size:14px;color:#2E4A3C;cursor:pointer;padding:0 0 12px;display:inline-flex;gap:6px;align-items:center}
+.hbac-title{display:flex;align-items:baseline;flex-wrap:wrap;gap:10px;margin:0 0 12px;padding-bottom:10px;border-bottom:1px solid #D9CFBD}
+.hbac-title h4{margin:0;font:500 19px 'Noto Serif TC',serif;letter-spacing:.05em;color:#1C1B18}.hbac-title small{font-size:12px;color:#8b8277}.hbac-title .sp{flex:1}
+.hbac-lnk{border:0;background:none;color:#B4573A;font:inherit;font-size:13px;cursor:pointer;padding:2px 4px}
 .hbaf-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
 .hbaf-tile{position:relative;aspect-ratio:1;overflow:hidden;cursor:pointer;border:1px solid rgba(57,51,47,.12);background:#F2EFE8;padding:0}
 .hbaf-tile img{width:100%;height:100%;object-fit:cover;display:block}
 .hbaf-date{position:absolute;bottom:0;left:0;right:0;background:rgba(43,38,32,.72);color:#fff;font-size:12px;padding:2px 4px;text-align:left}
 .hbaf-empty{font-size:13px;color:#8b8277;margin:6px 0}
-@media(max-width:680px){.hbaf-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}}`;
-  return C(u.default.Fragment,null,
-    C('style',null,css),
-    groups.length>1&&C('div',{className:'hbaf-chips'},
-      C('button',{type:'button',className:'hbaf-chip'+(cur==='all'?' on':''),onClick:()=>setFlt('all')},'全部（'+total+'）'),
-      groups.map(g=>C('button',{key:g.a.id,type:'button',className:'hbaf-chip'+(cur===g.a.id?' on':''),onClick:()=>setFlt(g.a.id)},g.a.name+'（'+g.ps.length+'）'))),
-    vis.map(g=>{const b=base;base+=g.ps.length;return C('section',{key:g.a.id,className:'hbaf-sec'},
-      C('div',{className:'hbaf-head'},C('h4',null,g.a.name),C('small',null,g.ps.length+' 張'),C('span',{className:'hbaf-sp'}),
-        g.ps.length>0&&C('button',{type:'button',className:'hbaf-lnk',onClick:()=>HB_downloadPhotos(g.ps,fileName(g.ps[0]))},'下載'),
-        onOpenAlbum&&C('button',{type:'button',className:'hbaf-lnk',onClick:()=>onOpenAlbum(g.a.id)},'管理相簿 ›')),
-      g.ps.length?C('div',{className:'hbaf-grid'},g.ps.map((p,i)=>C('button',{type:'button',key:p.id,className:'hbaf-tile',onClick:()=>setIdx(b+i),'aria-label':'檢視照片'+(p.note?'：'+p.note:'')},
-        C('img',{src:p.url,alt:'',loading:'lazy',decoding:'async'}),
-        C('span',{className:'hbaf-date mono'},Tl(p.uploadedAt)))))
-        :C('p',{className:'hbaf-empty'},'這本相簿還沒有照片'))}),
-    idx!=null&&flat[idx]&&C(Viewer,{...(viewerProps||{}),photos:flat,index:idx,onIndexChange:setIdx,onClose:()=>setIdx(null),onDownload:p=>HB_downloadPhoto(p,fileName(p))}));
+@media(max-width:680px){.hbac-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.hbac-name{font-size:15px}.hbac-body{padding:10px 10px 8px}.hbac-act{padding:6px 10px 10px}.hbaf-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}}`;
+function HbAlbumCollage(C,ps,onClick,label){
+  const n=Math.min(3,ps.length);
+  return C('button',{type:'button',className:'hbac-cover n'+n,onClick,'aria-label':label},
+    n===0?C('span',{className:'hbac-empty'},'尚無照片'):ps.slice(0,3).map((p,i)=>C('img',{key:p.id,className:'c'+(i+1),src:p.url,alt:'',loading:'lazy',decoding:'async'})));
+}
+function HbAlbumRange(ps,key){
+  const t=ps.map(p=>new Date(p[key]||0).getTime()).filter(x=>x>0).sort((x,y)=>x-y);
+  if(!t.length)return'';
+  const f=x=>{const d=new Date(x);return(d.getMonth()+1)+'/'+d.getDate()};
+  return t.length&&f(t[0])===f(t[t.length-1])?f(t[0]):f(t[0])+' – '+f(t[t.length-1]);
+}
+function HbAlbumFlow({albums,photos,Viewer,viewerProps,onOpenAlbum,fileName,showEmpty}){
+  const C=u.default.createElement;
+  const[sel,setSel]=u.useState(null),[idx,setIdx]=u.useState(null);
+  const list=(albums||[]).map(a=>({a,ps:(photos||[]).filter(p=>p.albumId===a.id)})).filter(g=>g.ps.length||showEmpty);
+  const cur=sel&&list.find(g=>g.a.id===sel);
+  const viewer=idx!=null&&cur&&cur.ps[idx]&&C(Viewer,{...(viewerProps||{}),photos:cur.ps,index:idx,onIndexChange:setIdx,onClose:()=>setIdx(null),onDownload:p=>HB_downloadPhoto(p,fileName(p))});
+  if(cur)return C(u.default.Fragment,null,C('style',null,HB_ALBUM_CARD_CSS),
+    C('button',{type:'button',className:'hbac-back',onClick:()=>{setSel(null);setIdx(null)}},'‹ 全部相簿'),
+    C('div',{className:'hbac-title'},C('h4',null,cur.a.name),C('small',null,cur.ps.length+' 張'),C('span',{className:'sp'}),
+      cur.ps.length>0&&C('button',{type:'button',className:'hbac-lnk',onClick:()=>HB_downloadPhotos(cur.ps,fileName(cur.ps[0]))},'下載全部'),
+      onOpenAlbum&&C('button',{type:'button',className:'hbac-lnk',onClick:()=>onOpenAlbum(cur.a.id)},'管理相簿 ›')),
+    cur.ps.length?C('div',{className:'hbaf-grid'},cur.ps.map((p,i)=>C('button',{type:'button',key:p.id,className:'hbaf-tile',onClick:()=>setIdx(i),'aria-label':'檢視照片'+(p.note?'：'+p.note:'')},
+      C('img',{src:p.url,alt:'',loading:'lazy',decoding:'async'}),C('span',{className:'hbaf-date mono'},Tl(p.uploadedAt)))))
+      :C('p',{className:'hbaf-empty'},'這本相簿還沒有照片'),
+    viewer);
+  return C(u.default.Fragment,null,C('style',null,HB_ALBUM_CARD_CSS),
+    C('div',{className:'hbac-grid'},list.map(g=>{const rg=HbAlbumRange(g.ps,'uploadedAt');
+      return C('article',{key:g.a.id,className:'hbac-card'},
+        HbAlbumCollage(C,g.ps,()=>setSel(g.a.id),'開啟相簿 '+g.a.name),
+        C('div',{className:'hbac-body'},C('h4',{className:'hbac-name'},g.a.name),
+          C('div',{className:'hbac-meta'},C('span',null,g.ps.length+' 張'),rg&&C('span',null,rg))),
+        onOpenAlbum&&C('div',{className:'hbac-act'},C('button',{type:'button',onClick:()=>setSel(g.a.id)},'查看'),C('button',{type:'button',onClick:()=>onOpenAlbum(g.a.id)},'管理')))})));
 }
 /* 讀照片的拍攝時間：JPEG 讀 EXIF（DateTimeOriginal），讀不到就用檔案修改時間 */
 async function HB_photoDate(file){
@@ -16658,15 +16679,19 @@ function HbCasePhotos({project,notify,onDirty}){
         h('label',{className:'hbcp-sel'},h('span',{className:'wbc-sr'},'顯示相簿'),
           h('select',{value:sel,onChange:e=>setSel(e.target.value)},h('option',{value:'all'},'全部相簿'),(albums||[]).map(a=>h('option',{key:a.id,value:a.id},a.name+'（'+count(a.id)+'）'))))),
       albums===null?h('p',{className:'wbc-empty'},'讀取照片中…')
-      :sel==='all'?(albums.length?(()=>{let base=0;return h('div',{className:'hbcp-flow'},albums.map(a=>{const ps=photos.filter(x=>x.album_id===a.id),b=base;base+=ps.length;
-          return h('section',{key:a.id,className:'hbcp-sec'},
-            h('div',{className:'hbcp-sechead'},h('b',null,a.name),h('small',null,ps.length+' 張'),h('span',{style:{flex:1}}),
-            ps.length>0&&h('button',{type:'button',className:'hbcp-tg',title:'這本相簿全部分享給業主',onClick:()=>bulkVis(ps,true,a.name)},'業主可見'),
-            ps.length>0&&h('button',{type:'button',className:'hbcp-tg',title:'這本相簿全部改為僅公司可見',onClick:()=>bulkVis(ps,false,a.name)},'僅公司'),
-            h('button',{type:'button',className:'hbcp-ic',title:'下載這本相簿','aria-label':'下載相簿 '+a.name,onClick:()=>dlList(photos.filter(x=>x.album_id===a.id),a.name)},'⬇'),
-            h('button',{type:'button',className:'hbcp-ic',title:'修改相簿名稱','aria-label':'修改相簿名稱 '+a.name,onClick:()=>renameAlbum(a)},'✎'),
-            h('button',{type:'button',className:'hbcp-ic',title:'刪除相簿','aria-label':'刪除相簿 '+a.name,onClick:()=>delAlbum(a)},'✕')),
-            ps.length?h('div',{className:'hbcp-photos'},ps.map((p,i)=>fig(p,b+i))):h('p',{className:'wbc-empty'},'這本相簿還沒有照片'))}))})()
+      :sel==='all'?(albums.length?h('div',{className:'hbac-grid'},h('style',null,HB_ALBUM_CARD_CSS),albums.map(a=>{const ps=photos.filter(x=>x.album_id===a.id),pub=ps.filter(x=>x.visible_to_owner!==false).length,rg=HbAlbumRange(ps,'uploaded_at');
+          return h('article',{key:a.id,className:'hbac-card'},
+            HbAlbumCollage(h,ps.map(x=>({id:x.id,url:x.url})),()=>setSel(a.id),'開啟相簿 '+a.name),
+            h('div',{className:'hbac-body'},h('h4',{className:'hbac-name'},a.name),
+              h('div',{className:'hbac-meta'},h('span',null,ps.length+' 張'),rg&&h('span',null,rg)),
+              ps.length>0&&h('div',{className:'hbac-meta'},h('span',{className:'hbac-pill'+(pub===ps.length?' on':'')},pub===ps.length?'業主全部可見':pub===0?'僅公司可見':'業主可見 '+pub+'／'+ps.length))),
+            h('div',{className:'hbac-act'},
+              ps.length>0&&h('button',{type:'button',title:'這本相簿全部分享給業主',onClick:()=>bulkVis(ps,true,a.name)},'給業主看'),
+              ps.length>0&&h('button',{type:'button',title:'這本相簿全部改為僅公司可見',onClick:()=>bulkVis(ps,false,a.name)},'僅公司'),
+              h('span',{className:'sp'}),
+              h('button',{type:'button',title:'下載這本相簿','aria-label':'下載相簿 '+a.name,onClick:()=>dlList(ps,a.name)},'下載'),
+              h('button',{type:'button',title:'修改相簿名稱','aria-label':'修改相簿名稱 '+a.name,onClick:()=>renameAlbum(a)},'改名'),
+              h('button',{type:'button',className:'danger',title:'刪除相簿','aria-label':'刪除相簿 '+a.name,onClick:()=>delAlbum(a)},'刪除')))}))
         :h('p',{className:'wbc-empty'},'還沒有相簿，按右邊「新增相簿」開始'))
       :h('div',null,
         h('button',{type:'button',className:'hbcp-back',onClick:()=>setSel('all')},'‹ 全部相簿'),
@@ -17100,7 +17125,7 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
           const act=projects.filter(p=>p.status!==fn[2]&&p.status!==fn[3]&&!/示範/.test(p.name||'')),rest=projects.filter(p=>!act.includes(p));
           const pct=p=>{try{if(p.status===fn[2])return 100;if(p.stageProgress&&typeof p.stageProgress==='object'&&HB_STAGE_DEFS.length){const sd=HB_stageMigrate(p.stageProgress),ld=HB_stageLive(sd);return Math.round(ld.filter(x=>sd[x.k]&&sd[x.k].done).length/ld.length*100)}}catch(e){}return null};
           const isF=e=>Array.from((e.dataTransfer&&e.dataTransfer.types)||[]).includes('Files');
-          const tile=p=>{const v=pct(p);return h('button',{key:p.id,type:'button',className:'wbk-pt'+(p.id===pv?' on':'')+(dropOn===p.id?' drop':''),'aria-pressed':p.id===pv,title:(p.address?p.address+'｜':'')+'可把檔案拖到這裡上傳',onClick:()=>pick(p.id),
+          const tile=p=>{const v=pct(p);return h('button',{key:p.id,type:'button',className:'wbk-pt'+(p.id===pv?' on':'')+(dropOn===p.id?' drop':''),'aria-pressed':p.id===pv,title:p.name+(p.address?'｜'+p.address:'')+'｜可把檔案拖到這裡上傳',onClick:()=>pick(p.id),
               onDragOver:e=>{if(!isF(e))return;e.preventDefault();e.dataTransfer.dropEffect='copy';if(dropOn!==p.id)setDropOn(p.id)},
               onDragLeave:e=>{if(!e.currentTarget.contains(e.relatedTarget))setDropOn(d=>d===p.id?null:d)},
               onDrop:e=>{if(!isF(e))return;e.preventDefault();e.stopPropagation();setDropOn(null);const fs=Array.from(e.dataTransfer.files||[]);if(fs.length&&window.HB_inboxAdd)window.HB_inboxAdd(fs,p.id)}},
