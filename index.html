@@ -13356,7 +13356,7 @@ const HB_LIB_CSS=`
 .hbcp-brk{order:3;flex:0 0 100%;height:0}
 .hbcp-bar .hbcp-sm{order:4;height:32px;padding:0 14px;font-size:13px}
 .hbcp-bar .hbcp-dl{margin-left:6px}
-.wbk .wbk-casebody.wbk-pph{overflow:visible!important;overscroll-behavior:auto!important}
+.wbk .wbk-casebody.wbk-pph.is-photos{overflow:visible!important;max-height:none!important;overscroll-behavior:auto!important}
 
 .hbcp-flow{display:grid;gap:22px}.hbcp-sec{content-visibility:auto;contain-intrinsic-size:auto 260px}.hbcp-tg{flex:none;width:auto!important;min-width:0!important;height:28px!important;min-height:0!important;padding:0 10px!important;border:1px solid #D9CFBD!important;border-radius:999px!important;background:#fff!important;font:inherit;font-size:12px!important;line-height:1;white-space:nowrap!important;writing-mode:horizontal-tb!important;color:#3C362F!important;cursor:pointer}.hbcp-tg:hover{border-color:#2E4A3C!important;color:#2E4A3C!important}.hbcp-sechead{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 10px;padding-bottom:8px;border-bottom:1px solid #D9CFBD}.hbcp-sechead b{font:500 16px 'Noto Serif TC',serif;color:#1C1B18;letter-spacing:.04em}.hbcp-sechead small{font-size:12px;color:#8b8277}
       .hbcp-album{border:1px solid #D9CFBD;border-radius:4px;background:#fff;overflow:hidden}
@@ -17037,7 +17037,7 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
           h('button',{type:'button',className:'wbk-casefold'+(caseFold?' is-fold':''),'aria-expanded':!caseFold,onClick:()=>setCaseFold(!caseFold)},caseFold?'展開':'收合',HB_wbIcon('caret',14))),
         !caseFold&&h('nav',{className:'wbk-casetabs',role:'tablist','aria-label':pvName+' 功能'},CASE_TABS.map(([k,zh])=>h('button',{key:k,type:'button',role:'tab','aria-selected':pvTab===k,className:pvTab===k?'on':'',onClick:()=>setPvTab(k)},zh,
           k==='photos'&&pvP.photoCount?h('b',null,pvP.photoCount):null))),
-        !caseFold&&h('div',{className:'wbk-casebody wbk-pph',role:'tabpanel'},caseBody))
+        !caseFold&&h('div',{className:'wbk-casebody wbk-pph'+(pvTab==='photos'?' is-photos':''),role:'tabpanel'},caseBody))
       :h('div',{className:'wbk-caseempty'},h('b',null,'請從上方選擇案件'),h('span',null,'點選上方「專案一覽」的案件卡，就能直接在這裡管理進度、照片、設備、材料、報價單、缺失、會議與收據。')));
     /* 桌機：待辦固定 200px、一律展開；手機維持選了案件自動收起 */
     const wbDesk=(()=>{try{return window.matchMedia('(min-width:681px)').matches}catch(e){return false}})();
@@ -17141,7 +17141,7 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
             v!=null?h('span',{className:'wbk-pt-bar','aria-label':'進度 '+v+'%'},h('i',{style:{width:Math.max(3,v)+'%'}})):null,
             h('span',{className:'wbk-pt-sub'},dropOn===p.id?'放開上傳':(v!=null?v+'%':'')))};
           const sel=id=>{if(id===pv)return;if(window.HB_caseCanLeave&&!window.HB_caseCanLeave())return;setProj&&setProj(id)};
-          return h(u.default.Fragment,null,h('div',{className:'wbk-pts-head'},h('h3',null,'專案資料與圖面'),h('span',null,'PROJECTS & FILES')),h('nav',{className:'wbk-pts','aria-label':'專案一覽'},
+          return h(u.default.Fragment,null,h('div',{className:'wbk-pts-head'},h('h3',null,'專案資料與圖面'),h('span',null,'PROJECTS & FILES'),h('button',{type:'button',className:'wbk-totop',title:'回到上方的今日待辦與行程',onClick:()=>{const el=document.querySelector('.wbk-card-todo');if(el)el.scrollIntoView({behavior:'smooth',block:'start'});else window.scrollTo({top:0,behavior:'smooth'})}},'↑ 今日行程')),h('nav',{className:'wbk-pts','aria-label':'專案一覽'},
             h('button',{type:'button',className:'wbk-pt wbk-pt-sm'+(!pv?' on':''),'aria-pressed':!pv,onClick:()=>sel(''),title:'今日待辦看全部案件'},h('span',{className:'wbk-pt-plus'},'◎'),h('span',{className:'wbk-pt-name'},'全部')),
             h('button',{type:'button',className:'wbk-pt wbk-pt-sm'+(pv==='__co'?' on':''),'aria-pressed':pv==='__co',onClick:()=>sel('__co'),title:'只看公司事務（不屬於任何案件的事項）'},h('span',{className:'wbk-pt-plus'},'▤'),h('span',{className:'wbk-pt-name'},'公司事務')),
             act.map(tile),
@@ -23383,6 +23383,9 @@ react-dom/cjs/react-dom-client.production.js:
     'html[data-hbtt] .wbk-pts-head h3{margin:0;font:600 17px ' + SERIF + ';letter-spacing:.14em;color:' + GREEN + ';white-space:nowrap;}',
     'html[data-hbtt] .wbk-pts-head span{font:500 12px "Cormorant Garamond","EB Garamond",serif;letter-spacing:.32em;color:#8A6E32;white-space:nowrap;}',
     'html[data-hbtt] .wbk-pts-head::after{content:"";flex:1 1 auto;height:1px;background:rgba(138,110,50,.32);}',
+    'html[data-hbtt] .wbk-pts-head::after{order:2}',
+    'html[data-hbtt] .wbk-pts-head .wbk-totop{order:3;flex:none;border:1px solid #D9CFBD;background:#fff;border-radius:999px;height:28px;padding:0 12px;font:inherit;font-size:13px;color:#2E4A3C;cursor:pointer;white-space:nowrap}',
+    'html[data-hbtt] .wbk-pts-head .wbk-totop:hover{border-color:#2E4A3C}',
     /* 工作台四欄：空的時候不再撐到 150px（有內容照樣長高，不裁切） */
     'html[data-hbtt] .wbk-colbody{min-height:64px!important;}',
     'html[data-hbtt] .wbk-work{margin-top:12px!important;}',
