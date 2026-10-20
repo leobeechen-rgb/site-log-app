@@ -23474,6 +23474,9 @@ react-dom/cjs/react-dom-client.production.js:
     '.hbtb-sheet.is-pop .hbtb-opt{min-height:42px;padding:9px 10px;font-size:14.5px;border-radius:4px;border-bottom:0;}',
     '.hbtb-sheet.is-pop .hbtb-opt:hover{background:rgba(14,59,46,.06);}',
     '.hbtb-sheet.is-pop .hbtb-sec{padding:10px 10px 2px;}',
+    /* 2026-10：桌機頁首固定列（工作空間／目前頁＋新增／搜尋／篩選）取消，太擋畫面；右側導覽列保留 */
+    'html[data-hbtt]{--hbtt-h:0px!important;}',
+    'html[data-hbtt] .hbtt-bar{display:none!important;}',
     '@media (prefers-reduced-motion:reduce){.hbtb *,.hbtt *,.hbtb-sheet *{transition:none!important;animation:none!important;}}'
   ].join('\n');
   (document.head || document.documentElement).appendChild(css);
