@@ -16719,6 +16719,13 @@ function HbCasePhotos({project,notify,onDirty}){
       lbList.length>1&&h('button',{type:'button',className:'wbk-lbnav prev','aria-label':'上一張',onClick:e=>{e.stopPropagation();setLb((lb-1+lbList.length)%lbList.length)}},'‹'),
       lbList.length>1&&h('button',{type:'button',className:'wbk-lbnav next','aria-label':'下一張',onClick:e=>{e.stopPropagation();setLb((lb+1)%lbList.length)}},'›'))));
 }
+/* 捲到元素頂端，但扣掉頁首固定列的高度，避免被擋住 */
+function HB_wbScrollTo(el,reduce){if(!el)return;try{
+  let cover=0;document.querySelectorAll('.hbtt, .hbtt *').forEach(x=>{const r=x.getBoundingClientRect();if(r.height>0&&r.height<300&&r.top<=4&&r.bottom>cover)cover=r.bottom});
+  let sp=el.parentElement;while(sp&&sp!==document.body){const st=getComputedStyle(sp);if(/(auto|scroll)/.test(st.overflowY)&&sp.scrollHeight>sp.clientHeight+2)break;sp=sp.parentElement}
+  const spTop=sp&&sp!==document.body?sp.getBoundingClientRect().top:0;
+  el.style.scrollMarginTop=(Math.max(0,cover-spTop)+12)+'px';
+  el.scrollIntoView({behavior:reduce?'auto':'smooth',block:'start'})}catch(e){try{el.scrollIntoView()}catch(_){}}}
 function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setProj,wbRef,compact=false,onNew}){
   const [dropOn,setDropOn]=u.useState(null);
   const h=u.default.createElement,{all,today,ready,error,sync}=tk;
@@ -16763,7 +16770,7 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
     const reduce=(()=>{try{return window.matchMedia('(prefers-reduced-motion: reduce)').matches}catch(e){return false}})();
     const H=v=>v==null?el.style.removeProperty('height'):el.style.setProperty('height',v,'important');
     const end=()=>{el.classList.remove('hb-tdanim','is-folding');H(null);try{window.dispatchEvent(new Event('resize'))}catch(e){}};
-    const go=t=>{try{t&&t.scrollIntoView({behavior:reduce?'auto':'smooth',block:'start'})}catch(e){}};
+    const go=t=>HB_wbScrollTo(t,reduce);
     if(todoHide){if(el.classList.contains('is-hidden'))return;
       if(reduce){el.classList.add('is-hidden');end();go(workRef.current);return}
       const hh=el.offsetHeight;el.classList.add('hb-tdanim');H(hh+'px');void el.offsetHeight;el.classList.add('is-folding');H('0px');
@@ -17104,7 +17111,7 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
       :cSide==='ical'?h('div',{className:'wbk-ical'},h(HbTodayCalLink,null))
       :cSide==='kLate'?h('ul',{className:'wbc-list'},kLateList.length?kLateList.map(t=>HB_wbIsFollow(t)?followRow(t):openRow(t)):h('li',{className:'wbc-empty'},'沒有逾期事項'))
       :cSide==='kWeek'?h('ul',{className:'wbc-list'},kWeekList.length?kWeekList.map(weekRow):h('li',{className:'wbc-empty'},'本週沒有工地排程')):null;
-    return h('section',{className:'hb-wb wbc is-compact wbk wbk-fixed',ref:wbRef,'aria-label':'工作台'},
+    return h('section',{className:'hb-wb wbc is-compact wbk wbk-fixed',ref:wbRef,'aria-label':'工作台','data-hbtb-nofilter':''},
       h('div',{className:'wbk-card wbk-card-todo',ref:todoRef},
       h('header',{className:'wbk-head'},
         h('div',{className:'wbc-titlewrap'},h('h2',{className:'wbc-carnet'},'Le Carnet du Jour'),h('span',{className:'wbc-fr'},'工作台')),
@@ -17180,7 +17187,7 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
             v!=null?h('span',{className:'wbk-pt-bar','aria-label':'進度 '+v+'%'},h('i',{style:{width:Math.max(3,v)+'%'}})):null,
             h('span',{className:'wbk-pt-sub'},dropOn===p.id?'放開上傳':(v!=null?v+'%':'')))};
           const sel=id=>{if(id===pv){if(id&&(!window.HB_caseCanLeave||window.HB_caseCanLeave()))setProj&&setProj('');return}if(window.HB_caseCanLeave&&!window.HB_caseCanLeave())return;setProj&&setProj(id)};
-          return h(u.default.Fragment,null,h('div',{className:'wbk-pts-head'},h('h3',null,'專案資料與圖面'),h('span',null,'PROJECTS & FILES'),(()=>{const tg=!!pv&&pv!=='__co'&&wbDesk;return h('button',{type:'button',className:'wbk-totop'+(tg&&todoHide?' is-off':''),'aria-pressed':tg?!todoHide:undefined,title:tg?(todoHide?'顯示上方的今日待辦與行程（Esc）':'隱藏上方的待辦，騰出空間操作案件'):'回到上方的今日待辦與行程',onClick:()=>{if(tg){setTodoHide(!todoHide);return}const el=document.querySelector('.wbk-card-todo');if(el)el.scrollIntoView({behavior:'smooth',block:'start'});else window.scrollTo({top:0,behavior:'smooth'})}},tg?(todoHide?'↓ 顯示待辦':'↑ 隱藏待辦'):'↑ 今日行程')})()),h('nav',{className:'wbk-pts','aria-label':'專案一覽'},
+          return h(u.default.Fragment,null,h('div',{className:'wbk-pts-head'},h('h3',null,'專案資料與圖面'),h('span',null,'PROJECTS & FILES'),(()=>{const tg=!!pv&&pv!=='__co'&&wbDesk;return h('button',{type:'button',className:'wbk-totop'+(tg&&todoHide?' is-off':''),'aria-pressed':tg?!todoHide:undefined,title:tg?(todoHide?'顯示上方的今日待辦與行程（Esc）':'隱藏上方的待辦，騰出空間操作案件'):'回到上方的今日待辦與行程',onClick:()=>{if(tg){setTodoHide(!todoHide);return}const el=document.querySelector('.wbk-card-todo');if(el)HB_wbScrollTo(el);else window.scrollTo({top:0,behavior:'smooth'})}},tg?(todoHide?'↓ 顯示待辦':'↑ 隱藏待辦'):'↑ 今日行程')})()),h('nav',{className:'wbk-pts','aria-label':'專案一覽'},
             h('button',{type:'button',className:'wbk-pt wbk-pt-sm'+(!pv?' on':''),'aria-pressed':!pv,onClick:()=>sel(''),title:'今日待辦看全部案件'},h('span',{className:'wbk-pt-plus'},'◎'),h('span',{className:'wbk-pt-name'},'全部')),
             h('button',{type:'button',className:'wbk-pt wbk-pt-sm'+(pv==='__co'?' on':''),'aria-pressed':pv==='__co',onClick:()=>sel('__co'),title:'只看公司事務（不屬於任何案件的事項）'},h('span',{className:'wbk-pt-plus'},'▤'),h('span',{className:'wbk-pt-name'},'公司事務')),
             act.map(tile),
@@ -23664,7 +23671,7 @@ react-dom/cjs/react-dom-client.production.js:
     var sels = root.querySelectorAll('select');
     for (var i = 0; i < sels.length; i++) {
       var s = sels[i];
-      if (s.disabled || excluded(s) || !isVisible(s) || !s.options.length) continue;
+      if (s.disabled || excluded(s) || !isVisible(s) || !s.options.length || s.closest('[data-hbtb-nofilter]')) continue;
       var lab = s.closest('label');
       var name = ((s.getAttribute('aria-label') || '') + ' ' + (lab ? lab.textContent : '')).replace(/\s+/g, ' ');
       var first = (s.options[0].text || '').trim();
@@ -23677,7 +23684,7 @@ react-dom/cjs/react-dom-client.production.js:
     var groups = root.querySelectorAll('nav[aria-label], [role="group"][aria-label]');
     for (var g = 0; g < groups.length; g++) {
       var gr = groups[g];
-      if (excluded(gr) || !isVisible(gr)) continue;
+      if (excluded(gr) || !isVisible(gr) || gr.closest('[data-hbtb-nofilter]')) continue;
       if (!/專案|案件|狀態|篩選|分類|類別/.test(gr.getAttribute('aria-label') || '')) continue;
       if (gr.querySelectorAll('button[aria-pressed]').length < 2) continue;
       // 同一件事已經有下拉選單可以選（例如手機的「工地」），就不重複列出
@@ -23694,7 +23701,7 @@ react-dom/cjs/react-dom-client.production.js:
     var tls = root.querySelectorAll('[role="tablist"][aria-label]');
     for (var j = 0; j < tls.length; j++) {
       var tl = tls[j];
-      if (excluded(tl) || !isVisible(tl)) continue;
+      if (excluded(tl) || !isVisible(tl) || tl.closest('[data-hbtb-nofilter]')) continue;
       if (!/狀態|篩選|分類|類別/.test(tl.getAttribute('aria-label') || '')) continue;
       out.push({ type: 'tabs', title: tl.getAttribute('aria-label'), el: tl });
     }
