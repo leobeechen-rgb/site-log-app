@@ -13313,6 +13313,17 @@ const HB_LIB_CSS=`
         .wbk-fixed .wbk-week-in .wbk-day i{bottom:-1px;margin-left:8px;width:4px;height:4px}
         .wbk-fixed .wbk-head{border-bottom:1px solid var(--wb-line)}
       }
+      /* 待辦卡頁首：每個項目的字都不換行、排成一行；寬度不夠時依序收起「工作台」小字 → iPhone 行事曆 → 「事項」二字 */
+      @media (min-width:681px){
+        .hb-wb.wbk-fixed .wbk-head>*{flex-shrink:0}
+        .hb-wb.wbk-fixed .wbk-head,.hb-wb.wbk-fixed .wbk-head *{white-space:nowrap}
+        .hb-wb.wbk-fixed .wbk-head .wbc-titlewrap{flex-wrap:nowrap;align-items:baseline;gap:10px}
+        .hb-wb.wbk-fixed .wbk-head .wbc-fr{letter-spacing:.2em}
+        .hb-wb.wbk-fixed .wbk-head .wbc-grow{flex:1 1 0;min-width:0}
+      }
+      @container wbk (max-width:1640px){.hb-wb.wbk-fixed .wbk-head .wbc-fr{display:none}}
+      @container wbk (max-width:1560px){.hb-wb.wbk-fixed .wbk-head .wbc-hublink{display:none}}
+      @container wbk (max-width:1460px){.hb-wb.wbk-fixed .wbk-head .wbc-add .wbc-add-x{display:none}}
       .wbk-case{margin-top:16px;border:1px solid #D9CFBD;border-radius:4px;background:rgba(255,253,248,.72);padding:16px 18px 14px}
       .wbk-case.is-empty{padding:26px 18px;text-align:center;border-style:dashed}
       .wbk-caseempty b{display:block;font-family:'Noto Serif TC',serif;font-weight:500;font-size:20px;color:#2E4A3C;letter-spacing:.08em}
