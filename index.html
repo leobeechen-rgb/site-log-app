@@ -3069,8 +3069,8 @@ table.rc-table td.amt{font-family:var(--latin);font-size:15px}
 table.partyhead{width:auto;border:0;margin:12px 0 16px;font-size:inherit}
 table.partyhead td{border:0;padding:3px 0;line-height:2.05;vertical-align:top;white-space:nowrap}
 table.partyhead td.ph-lead{padding-right:22px}
-table.partyhead td.ph-v{white-space:normal}
-table.partyhead .blank{min-width:150px}
+table.partyhead td.ph-v{min-width:170px}
+table.partyhead td.ph-v .blank{display:block;min-width:0;width:100%}
 /* 簽章 */
 table.sign td{height:64px;vertical-align:top}
 table.sign tr:first-child td{height:auto;background:var(--wash)}
@@ -5783,8 +5783,8 @@ ${HB_DOC_CSS}
 <div class="brand">HERFULSINS INTERIOR DESIGN｜赫柏空間設計</div>
 <h1>赫柏空間工程承攬合約書</h1>
 <table class="partyhead">
-<tr><td class="ph-lead" rowspan="2"><strong>立合約書人：</strong></td><td class="ph-k">業主名稱：</td><td class="ph-v"><span class="blank">${e(v.partyAName)||"　"}</span>（以下簡稱甲方）</td></tr>
-<tr><td class="ph-k">承攬廠商：</td><td class="ph-v">赫柏空間設計　陳奕蒨（以下簡稱乙方）</td></tr>
+<tr><td class="ph-lead" rowspan="2"><strong>立合約書人：</strong></td><td class="ph-k">業主名稱：</td><td class="ph-v"><span class="blank">${e(v.partyAName)||"　"}</span></td><td class="ph-s">（以下簡稱甲方）</td></tr>
+<tr><td class="ph-k">承攬廠商：</td><td class="ph-v">赫柏空間設計　陳奕蒨</td><td class="ph-s">（以下簡稱乙方）</td></tr>
 </table>
 <p>茲就乙方承攬甲方之室內工程事宜，雙方同意訂定遵守條款如下，以資共同遵守：</p>
 
