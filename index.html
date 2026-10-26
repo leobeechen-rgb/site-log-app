@@ -3101,7 +3101,8 @@ table.sign tr:first-child td{height:auto;background:var(--wash)}
 @media screen{body{padding-bottom:60px}}
 @media print{
   .toolbar{display:none!important}
-  body{background:#fff;padding:0;max-width:none;font-size:12.5px}
+  body{background:#fff;padding:0 3px;max-width:none;font-size:12.5px}
+  /* 左右各留 3px：表格與框線若貼齊列印範圍邊緣，Chrome 在非 100% 比例時會把最右邊那條線裁掉 */
   .paper,.rc,.notes{background:#fff}
   h1{font-size:26px}
   tr,.rc,.signbox,.signrow,table.sign{page-break-inside:avoid}
