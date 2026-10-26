@@ -5840,7 +5840,7 @@ ${stageRows}
 <tr><td>聯絡電話：${e(v.partyAPhone)}</td><td>聯絡電話：0987583978</td></tr>
 </table>
 </div>
-<p>簽署日期：中華民國 ${e(v.contractYear)} 年 ${e(v.contractMonth)} 月 ${e(v.contractDay)} 日</p>
+<p style="margin-top:14px">簽署日期：中華民國　<span class="blank" style="min-width:80px;text-align:center">${e(v.contractYear)||"　"}</span>　年　<span class="blank" style="min-width:60px;text-align:center">${e(v.contractMonth)||"　"}</span>　月　<span class="blank" style="min-width:60px;text-align:center">${e(v.contractDay)||"　"}</span>　日</p>
 
 <h2>赫柏空間設計 指定匯款帳戶</h2>
 <div class="accbox">${accountsHtml}</div>
