@@ -23227,7 +23227,9 @@ react-dom/cjs/react-dom-client.production.js:
     { key: 'project', label: '專案',   dock: '專案資料庫',
       svg: '<path d="M3.5 7A1.5 1.5 0 0 1 5 5.5h4.2l2 2.2H19A1.5 1.5 0 0 1 20.5 9.2v8.8A1.5 1.5 0 0 1 19 19.5H5A1.5 1.5 0 0 1 3.5 18z"/>' },
     { key: 'card',    label: '資訊卡', tool: 'plate',
-      svg: '<rect x="3.5" y="5" width="17" height="14" rx="1.6"/><circle cx="9" cy="11" r="2"/><path d="M5.8 16.2c.6-1.6 1.8-2.4 3.2-2.4s2.6.8 3.2 2.4"/><path d="M14 10h4M14 13.2h3"/>' }
+      svg: '<rect x="3.5" y="5" width="17" height="14" rx="1.6"/><circle cx="9" cy="11" r="2"/><path d="M5.8 16.2c.6-1.6 1.8-2.4 3.2-2.4s2.6.8 3.2 2.4"/><path d="M14 10h4M14 13.2h3"/>' },
+    { key: 'crew',    label: '工班',   tool: 'crew',
+      svg: '<rect x="3.5" y="5" width="17" height="15" rx="1.6"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><path d="M7 13h4M7 16.5h7"/>' }
   ];
   var TAB_LABEL = {};
   TABS.forEach(function (t) { TAB_LABEL[t.key] = t.label; });
@@ -23449,6 +23451,7 @@ react-dom/cjs/react-dom-client.production.js:
     'html[data-hbtt] .hbtt-nav button[data-tab=\"company\"]::after{content:\"Company\";}',
     'html[data-hbtt] .hbtt-nav button[data-tab=\"project\"]::after{content:\"Projects\";}',
     'html[data-hbtt] .hbtt-nav button[data-tab=\"card\"]::after{content:\"Cards\";}',
+    'html[data-hbtt] .hbtt-nav button[data-tab=\"crew\"]::after{content:\"Crews\";}',
     'html[data-hbtt] .hbtt-nav button[aria-current=\"page\"] span{font-weight:700;}',
     'html[data-hbtt] .hbtt-nav button[aria-current=\"page\"]::after{opacity:.9;}',
     '@media (max-height:640px){html[data-hbtt] .hbtt-nav button{height:66px;}html[data-hbtt] .hbtt-nav button::after{display:none;}html[data-hbtt] .hbtt-brand{display:none;}}',
@@ -23913,6 +23916,7 @@ react-dom/cjs/react-dom-client.production.js:
   }
   function currentTab() {
     if (toolOpen() === 'plate') return 'card';
+    if (toolOpen() === 'crew') return 'crew';
     var v = window.__hbView;
     if (v && VIEW_TAB[v]) return VIEW_TAB[v];
     for (var i = 0; i < TABS.length; i++) if (TABS[i].dock && !TABS[i].action && dockActive(TABS[i].dock)) return TABS[i].key;
@@ -23928,6 +23932,7 @@ react-dom/cjs/react-dom-client.production.js:
     var parts = ['工作空間'];
     if (cur) parts.push(TAB_LABEL[cur]);
     if (cur === 'card') parts[1] = '作品資訊卡';
+    else if (cur === 'crew') parts[1] = '工班排程';
     else if (window.__hbView && VIEW_NAME[window.__hbView]) parts.push(VIEW_NAME[window.__hbView]);
     var html = parts.map(function (p) { return '<span>' + p + '</span>'; }).join('<i aria-hidden="true">／</i>');
     if (crumb.innerHTML !== html) crumb.innerHTML = html;
