@@ -5764,8 +5764,8 @@ function HB_openBudgetPrint(v){
 /* ---------- PDF（可列印）工程合約 ---------- */
 function HB_buildEngContractHTML(v){
   let e=HB_esc;
-  let stages=(v.paymentStages||[]).filter(st=>st&&(st.name||st.percent||st.condition));
-  let stageRows=stages.length===0?'<tr><td colspan="3" style="text-align:center;color:#888;">尚未設定付款期數</td></tr>':stages.map(st=>{let amt=st.percent?HB_num(v.totalPrice)*HB_num(st.percent)/100:0;let nameLabel=st.percent?e(st.name)+" "+e(st.percent)+"%":e(st.name);return `<tr><td>${nameLabel}</td><td>${amt?e(HB_toChineseMoney(amt))+"（NT$ "+e(HB_money(amt))+"）":""}</td><td>${e(st.condition)}</td></tr>`}).join("");
+  let stages=(v.paymentStages||[]).filter(st=>st&&(st.name||st.percent));
+  let stageRows=stages.length===0?'<tr><td colspan="3" style="text-align:center;color:#888;">尚未設定付款期數</td></tr>':stages.map(st=>{let amt=st.percent?HB_num(v.totalPrice)*HB_num(st.percent)/100:0;let nameLabel=st.percent?e(st.name)+" "+e(st.percent)+"%":e(st.name);return `<tr><td>${nameLabel}</td><td>${amt?e(HB_toChineseMoney(amt))+"（NT$ "+e(HB_money(amt))+"）":""}</td><td></td></tr>`}).join("");
   let accs=(v.accounts||[]).filter(Boolean);
   let accountsHtml=accs.length===0?'<p style="color:#888;font-size:12.5px;">尚未指定收款帳戶</p>':accs.map(a=>`<p style="margin:4px 0;">\u2756 <strong>${e(a.bank_name)}</strong>｜帳號：${e(a.account_number)}｜戶名：${e(a.account_holder)}</p>`).join("");
   return `<!DOCTYPE html>
@@ -5987,12 +5987,12 @@ function HerfulsinsContractForm({category:l,projects:t,accounts:e,defaultProject
     designName:iv.designName||"",designLocation:iv.designLocation||"",partyAName:iv.partyAName||"",partyARep:iv.partyARep||"",partyAAddress:iv.partyAAddress||"",partyAPhone:iv.partyAPhone||"",partyAId:iv.partyAId||"",
     areaPing:iv.areaPing??"",pricePerPing:iv.pricePerPing??"",discountPing:iv.discountPing??"",discountRate:iv.discountRate??"",budgetRate:iv.budgetRate??"32",totalPrice:iv.totalPrice??"",durationDays:iv.durationDays??"",startDate:iv.startDate||"",contractDate:iv.contractDate||"",accountIds:iv.accountIds||[],
     svcPlan:!!(iv.budgetServices&&iv.budgetServices.plan),svcQuote:!(iv.budgetServices&&iv.budgetServices.quote===false),
-    paymentStages:(iv.paymentStages&&iv.paymentStages.length>0)?iv.paymentStages.map(st=>({name:st.name||"",percent:st.percent??"",condition:st.condition||""})):[{name:"簽約款",percent:"30",condition:"本合約簽署之時付款"},{name:"二期款",percent:"60",condition:""},{name:"三期款",percent:"10",condition:""}]
+    paymentStages:(iv.paymentStages&&iv.paymentStages.length>0)?iv.paymentStages.map(st=>({name:st.name||"",percent:st.percent??"",condition:st.condition||""})):[{name:"簽約款",percent:"30",condition:""},{name:"二期款",percent:"60",condition:""},{name:"三期款",percent:"10",condition:""}]
   }:{
     designName:"",designLocation:"",partyAName:"",partyARep:"",partyAAddress:"",partyAPhone:"",partyAId:"",
     areaPing:"",pricePerPing:"",discountPing:"",discountRate:"",budgetRate:"32",totalPrice:"",durationDays:"",startDate:"",contractDate:"",accountIds:[],
     svcPlan:false,svcQuote:true,
-    paymentStages:[{name:"簽約款",percent:"30",condition:"本合約簽署之時付款"},{name:"二期款",percent:"60",condition:""},{name:"三期款",percent:"10",condition:""}]
+    paymentStages:[{name:"簽約款",percent:"30",condition:""},{name:"二期款",percent:"60",condition:""},{name:"三期款",percent:"10",condition:""}]
   });
   let set=(k,val)=>r(p=>({...p,[k]:val}));
   let[addrOpen,setAddrOpen]=(0,u.useState)(false),[addrOpenA,setAddrOpenA]=(0,u.useState)(false);
@@ -6101,7 +6101,6 @@ function HerfulsinsContractForm({category:l,projects:t,accounts:e,defaultProject
             u.default.createElement("span",{style:{fontSize:13,color:s.inkSoft}},"%"),
             u.default.createElement("button",{onClick:()=>removeStage(idx),style:{border:"none",background:"none",color:s.danger,cursor:"pointer",padding:"0 4px"}},u.default.createElement(E,{name:"x",size:16}))
           ),
-          u.default.createElement("input",{value:st.condition,onChange:v=>setStage(idx,"condition",v.target.value),placeholder:"付款時機說明（如：本合約簽署之時付款）",style:{width:"100%",padding:"7px 8px",borderRadius:8,border:`1px solid ${s.line}`,fontSize:13,boxSizing:"border-box"}}),
           st.percent&&c.totalPrice&&u.default.createElement("p",{style:{fontSize:12,color:s.inkSoft,margin:"4px 0 0"}},"NT$ ",HB_money(HB_num(c.totalPrice)*HB_num(st.percent)/100)," ／大寫：",HB_toChineseMoney(HB_num(c.totalPrice)*HB_num(st.percent)/100))
         )),
         c.paymentStages.length>0&&u.default.createElement("p",{style:{fontSize:12,color:c.paymentStages.reduce((sum,st)=>sum+HB_num(st.percent),0)===100?s.inkSoft:s.cane,margin:"2px 0 8px"}},"合計：",c.paymentStages.reduce((sum,st)=>sum+HB_num(st.percent),0),"%"),
