@@ -3071,6 +3071,7 @@ table.partyhead td{border:0;padding:3px 0;line-height:2.05;vertical-align:top;wh
 table.partyhead td.ph-lead{padding-right:22px}
 table.partyhead td.ph-v{min-width:170px}
 table.partyhead td.ph-v .blank{display:block;min-width:0;width:100%}
+table.pay td.cashsign{height:52px}
 /* 簽章 */
 table.sign td{height:64px;vertical-align:top}
 table.sign tr:first-child td{height:auto;background:var(--wash)}
@@ -5764,8 +5765,8 @@ function HB_openBudgetPrint(v){
 /* ---------- PDF（可列印）工程合約 ---------- */
 function HB_buildEngContractHTML(v){
   let e=HB_esc;
-  let stages=(v.paymentStages||[]).filter(st=>st&&(st.name||st.percent));
-  let stageRows=stages.length===0?'<tr><td colspan="3" style="text-align:center;color:#888;">尚未設定付款期數</td></tr>':stages.map(st=>{let amt=st.percent?HB_num(v.totalPrice)*HB_num(st.percent)/100:0;let nameLabel=st.percent?e(st.name)+" "+e(st.percent)+"%":e(st.name);return `<tr><td>${nameLabel}</td><td>${amt?e(HB_toChineseMoney(amt))+"（NT$ "+e(HB_money(amt))+"）":""}</td><td></td></tr>`}).join("");
+  let stages=(v.paymentStages||[]).filter(st=>st&&(st.name||st.percent||st.condition));
+  let stageRows=stages.length===0?'<tr><td colspan="4" style="text-align:center;color:#888;">尚未設定付款期數</td></tr>':stages.map(st=>{let amt=st.percent?HB_num(v.totalPrice)*HB_num(st.percent)/100:0;let nameLabel=st.percent?e(st.name)+" "+e(st.percent)+"%":e(st.name);return `<tr><td>${nameLabel}</td><td>${amt?e(HB_toChineseMoney(amt))+"（NT$ "+e(HB_money(amt))+"）":""}</td><td>${e(st.condition)}</td><td class="cashsign"></td></tr>`}).join("");
   let accs=(v.accounts||[]).filter(Boolean);
   let accountsHtml=accs.length===0?'<p style="color:#888;font-size:12.5px;">尚未指定收款帳戶</p>':accs.map(a=>`<p style="margin:4px 0;">\u2756 <strong>${e(a.bank_name)}</strong>｜帳號：${e(a.account_number)}｜戶名：${e(a.account_holder)}</p>`).join("");
   return `<!DOCTYPE html>
@@ -5825,7 +5826,7 @@ ${HB_DOC_CSS}
 <p>經甲、乙雙方協議，本工程依下列施工進度方式支付款項：</p>
 <p>\u203B 工程中追加或追減之工程款項需於交屋前結清並付款，不併入尾款計算。</p>
 <table class="pay">
-<tr><th>付款項目</th><th>約定金額（未稅）</th><th>需完成進度 / 付款時間</th></tr>
+<tr><th style="width:16%">付款項目</th><th style="width:30%">約定金額（未稅）</th><th>需完成進度</th><th style="width:20%">現金簽收</th></tr>
 ${stageRows}
 </table>
 
@@ -6101,6 +6102,7 @@ function HerfulsinsContractForm({category:l,projects:t,accounts:e,defaultProject
             u.default.createElement("span",{style:{fontSize:13,color:s.inkSoft}},"%"),
             u.default.createElement("button",{onClick:()=>removeStage(idx),style:{border:"none",background:"none",color:s.danger,cursor:"pointer",padding:"0 4px"}},u.default.createElement(E,{name:"x",size:16}))
           ),
+          u.default.createElement("input",{value:st.condition,onChange:v=>setStage(idx,"condition",v.target.value),placeholder:"需完成進度（如：水電配管完成、木作完成）",style:{width:"100%",padding:"7px 8px",borderRadius:8,border:`1px solid ${s.line}`,fontSize:13,boxSizing:"border-box"}}),
           st.percent&&c.totalPrice&&u.default.createElement("p",{style:{fontSize:12,color:s.inkSoft,margin:"4px 0 0"}},"NT$ ",HB_money(HB_num(c.totalPrice)*HB_num(st.percent)/100)," ／大寫：",HB_toChineseMoney(HB_num(c.totalPrice)*HB_num(st.percent)/100))
         )),
         c.paymentStages.length>0&&u.default.createElement("p",{style:{fontSize:12,color:c.paymentStages.reduce((sum,st)=>sum+HB_num(st.percent),0)===100?s.inkSoft:s.cane,margin:"2px 0 8px"}},"合計：",c.paymentStages.reduce((sum,st)=>sum+HB_num(st.percent),0),"%"),
