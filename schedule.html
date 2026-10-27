@@ -182,7 +182,6 @@ table.log td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
     <div class="brand"><b>工班排程</b><span>HERFULSINS</span></div>
     <nav class="nav" id="nav">
       <button data-v="board" aria-current="page">週排程</button>
-      <button data-v="crew">師傅名冊</button>
       <button data-v="remind">明日提醒</button>
       <button data-v="settings">設定</button>
     </nav>
@@ -218,6 +217,7 @@ const color = t => TRADE_COLOR[t] || TRADE_COLOR['其他'];
 const crewById = id => S.crew.find(c=>c.id===id);
 const projById = id => S.projects.find(p=>p.id===id);
 const jobTrade = j => j.trade || crewById(j.crew_id)?.trade || '施工';
+const crewName = j => j.crew_name || crewById(j.crew_id)?.name || '';
 async function copy(text){
   try{ await navigator.clipboard.writeText(text); toast('已複製'); return true; }catch(e){ return false; }
 }
@@ -271,7 +271,6 @@ $('#nav').onclick = e => { const b=e.target.closest('button'); if(!b) return; S.
 function render(){
   const v = S.view;
   if(v==='board') renderBoard();
-  if(v==='crew') renderCrew();
   if(v==='remind') renderRemind();
   if(v==='settings') renderSettings();
 }
@@ -280,9 +279,10 @@ function render(){
 function clashes(jobs){
   const set = new Set(), map = {};
   for(const j of jobs){
-    if(!j.crew_id || j.status!=='planned') continue;
+    const who = crewName(j);
+    if(!who || j.status!=='planned') continue;
     for(let d=j.start_date; d<=j.end_date; d=addDays(d,1)){
-      const k = j.crew_id+'|'+d; (map[k] ||= []).push(j);
+      const k = who+'|'+d; (map[k] ||= []).push(j);
     }
   }
   for(const k in map){ const arr = map[k]; if(new Set(arr.map(x=>x.project_id)).size>1) arr.forEach(x=>set.add(x.id)); }
@@ -295,7 +295,7 @@ function renderBoard(){
   const cl = clashes(S.jobs);
   const withJobs = new Set(S.jobs.map(j=>j.project_id));
   const active = S.projects.filter(p => withJobs.has(p.id) || (S.showAll && !/完工|結案|done|closed/i.test(p.status||'')));
-  const nClash = [...new Set(S.jobs.filter(j=>cl.has(j.id)).map(j=>j.crew_id))].length;
+  const nClash = [...new Set(S.jobs.filter(j=>cl.has(j.id)).map(crewName))].length;
   const d0=parse(ws), d6=parse(we);
   let html = `<div class="bar">
     <div class="week-head"><span class="range">${d0.getFullYear()}　${md(ws)} – ${md(we)}</span>${nClash?`<span class="pill warn">⚠ ${nClash} 位師傅撞期</span>`:''}</div>
@@ -323,7 +323,7 @@ function renderBoard(){
         const cr = crewById(j.crew_id), tr = jobTrade(j);
         const flags = [cl.has(j.id)?'⚠撞期':'', j.reminded_for===j.start_date?'已提醒':'', j.notify_crew && !S.crewGroups.has(j.project_id)?'群組未綁':''].filter(Boolean).join('・');
         return `<button class="job ${j.status} ${cl.has(j.id)?'clash':''} ${j.start_date<ws?'cont-l':''} ${j.end_date>we?'cont-r':''}" style="grid-column:${c1}/${c2};grid-row:${l+1};background:${color(tr)}" data-job="${j.id}">
-          <span class="t">${esc(tr)}・${esc(cr?.name||'未指定師傅')}</span>
+          <span class="t">${esc(tr)}${crewName(j)?'・'+esc(crewName(j)):''}</span>
           <span class="s">${esc(j.start_time||'')}${j.start_time&&flags?' ・ ':''}${esc(flags)}</span></button>`;
       }).join('')}
     </div>`;
@@ -340,7 +340,7 @@ function renderBoard(){
     return `<div class="day ${d===t?'today':''}"><div class="day-h"><b>${md(d)}（${wd(d)}）</b><button class="btn link small" data-new="|${d}">＋ 新增</button></div>
       ${js.length?js.map(j=>{ const cr=crewById(j.crew_id), tr=jobTrade(j), p=projById(j.project_id);
         return `<div class="djob" data-job="${j.id}" role="button" tabindex="0"><span class="sw" style="background:${color(tr)}"></span><div class="m">
-          <b>${esc(p?.name||'')}</b><span class="muted small">${esc(tr)}・${esc(cr?.name||'未指定師傅')}${j.start_time?'・'+esc(j.start_time):''}${j.start_date===d?'（進場）':''}</span>
+          <b>${esc(p?.name||'')}</b><span class="muted small">${esc(tr)}${crewName(j)?'・'+esc(crewName(j)):''}${j.start_time?'・'+esc(j.start_time):''}${j.start_date===d?'（進場）':''}</span>
           ${cl.has(j.id)?'<div><span class="pill warn">⚠ 撞期</span></div>':''}</div></div>`; }).join('')
         :'<div class="djob muted small" style="cursor:default">沒有排程</div>'}</div>`;
   }).join('')}</div>`;
@@ -382,7 +382,7 @@ function jobForm(j, pre={}){
   <div class="form">
     <div class="field"><label for="fProj">案件</label><select id="fProj"><option value="">— 選擇案件 —</option>${S.projects.map(p=>`<option value="${p.id}" ${p.id===v.project_id?'selected':''}>${esc(p.name)}</option>`).join('')}</select></div>
     <div class="field"><span class="lbl">工項</span><div class="chips" id="fTrades">${TRADES.map(t=>`<button type="button" class="chip" aria-pressed="${t===tr}" data-t="${t}">${t}</button>`).join('')}</div></div>
-    <div class="field"><label for="fCrew">師傅</label><select id="fCrew">${crewOptions(tr, v.crew_id)}</select><p class="hint" id="fCrewHint"></p></div>
+    <div class="field"><label for="fCrew">師傅（選填）</label><input id="fCrew" value="${esc(v.crew_name||crewById(v.crew_id)?.name||'')}" placeholder="例：王師傅"></div>
     <div class="g3">
       <div class="field"><label for="fStart">進場日</label><input id="fStart" type="date" value="${v.start_date}"></div>
       <div class="field"><label for="fEnd">結束日</label><input id="fEnd" type="date" value="${v.end_date}"></div>
@@ -399,20 +399,18 @@ function jobForm(j, pre={}){
   <div class="mfoot">${j?'<button class="btn link left" id="fDel">刪除</button>':''}<button class="btn" id="fCancel">取消</button><button class="btn pri" id="fSave">儲存</button></div>`);
   let trade = tr;
   const upd = () => {
-    const c = crewById($('#fCrew').value), cg = S.crewGroups.get($('#fProj').value);
+    const cg = S.crewGroups.get($('#fProj').value);
     $('#fCrewWay').textContent = !$('#fProj').value ? '' : cg ? `　發到「${cg}」` : '　⚠ 此案件還沒綁定施工群組';
-    $('#fCrewHint').textContent = c?.phone ? '電話 '+c.phone : '';
     $('#fGroupHint').textContent = $('#fProj').value ? (S.groups.has($('#fProj').value) ? '　群組已綁定' : '　⚠ 此案件業主群組尚未綁定，業主收不到') : '';
   };
   $('#fTrades').onclick = e => { const b=e.target.closest('.chip'); if(!b) return; trade = b.getAttribute('aria-pressed')==='true' ? '' : b.dataset.t;
-    document.querySelectorAll('#fTrades .chip').forEach(x=>x.setAttribute('aria-pressed', x.dataset.t===trade)); const cur=$('#fCrew').value; $('#fCrew').innerHTML = crewOptions(trade, cur); upd(); };
-  $('#fCrew').onchange = () => { if(!trade){ const c=crewById($('#fCrew').value); if(c?.trade){ trade=c.trade; document.querySelectorAll('#fTrades .chip').forEach(x=>x.setAttribute('aria-pressed', x.dataset.t===trade)); } } upd(); };
+    document.querySelectorAll('#fTrades .chip').forEach(x=>x.setAttribute('aria-pressed', x.dataset.t===trade)); };
   $('#fProj').onchange = upd;
   $('#fStart').onchange = () => { if($('#fEnd').value < $('#fStart').value) $('#fEnd').value = $('#fStart').value; };
   upd();
   $('#fCancel').onclick = closeModal;
   $('#fSave').onclick = async () => {
-    const row = { project_id:$('#fProj').value, crew_id:$('#fCrew').value||null, trade, start_date:$('#fStart').value, end_date:$('#fEnd').value, start_time:$('#fTime').value||null, note:$('#fNote').value.trim()||null, notify_crew:$('#fNC').checked, notify_owner:$('#fNO').checked, updated_at:new Date().toISOString() };
+    const row = { project_id:$('#fProj').value, crew_name:$('#fCrew').value.trim()||null, trade, start_date:$('#fStart').value, end_date:$('#fEnd').value, start_time:$('#fTime').value||null, note:$('#fNote').value.trim()||null, notify_crew:$('#fNC').checked, notify_owner:$('#fNO').checked, updated_at:new Date().toISOString() };
     if(j) row.status = $('#fStatus').value;
     if(!row.project_id) return $('#fErr').textContent='請選擇案件';
     if(!row.start_date || !row.end_date) return $('#fErr').textContent='請填進場日與結束日';
