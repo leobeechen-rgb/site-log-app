@@ -315,13 +315,13 @@ function renderBoard(){
     const placed = js.map(j=>{ let l=lanes.findIndex(e=>e<j.start_date); if(l<0){ l=lanes.length; lanes.push(j.end_date); } else lanes[l]=j.end_date; return {j,l}; });
     const nl = Math.max(1, lanes.length);
     html += `<div class="prow" style="grid-template-rows:repeat(${nl},minmax(38px,auto))">
-      <div class="plabel" style="grid-row:1/span ${nl}"><b>${esc(p.name)}</b>${S.groups.has(p.id)?'<span class="pill ok small" title="業主 LINE 群組已綁定，業主會收到通知">業主群組 ✓</span>':'<span class="pill dim small" title="業主 LINE 群組尚未綁定，業主不會收到通知">業主群組未綁定</span>'}${S.crewGroups.has(p.id)?'<span class="pill ok small" title="施工群組已綁定，師傅提醒發到群組">施工群組 ✓</span>':''}</div>
+      <div class="plabel" style="grid-row:1/span ${nl}"><b>${esc(p.name)}</b>${S.groups.has(p.id)?'<span class="pill ok small" title="業主 LINE 群組已綁定，業主會收到通知">業主群組 ✓</span>':'<span class="pill dim small" title="業主 LINE 群組尚未綁定，業主不會收到通知">業主群組未綁定</span>'}${S.crewGroups.has(p.id)?'<span class="pill ok small" title="施工群組已綁定，師傅提醒發到群組">施工群組 ✓</span>':'<span class="pill warn small" title="在施工群組打「綁定工班 案名」">施工群組未綁定</span>'}</div>
       ${days.map((d,i)=>`<div class="cell ${d===t?'today':''}" style="grid-column:${i+2};grid-row:1/span ${nl}" data-new="${p.id}|${d}" title="${md(d)} 新增排程"></div>`).join('')}
       ${placed.map(({j,l})=>{
         const s = j.start_date<ws?ws:j.start_date, e = j.end_date>we?we:j.end_date;
         const c1 = days.indexOf(s)+2, c2 = days.indexOf(e)+3;
         const cr = crewById(j.crew_id), tr = jobTrade(j);
-        const flags = [cl.has(j.id)?'⚠撞期':'', j.reminded_for===j.start_date?'已提醒':'', j.notify_crew && cr && !cr.line_user_id && !S.crewGroups.has(j.project_id)?'未綁LINE':''].filter(Boolean).join('・');
+        const flags = [cl.has(j.id)?'⚠撞期':'', j.reminded_for===j.start_date?'已提醒':'', j.notify_crew && !S.crewGroups.has(j.project_id)?'群組未綁':''].filter(Boolean).join('・');
         return `<button class="job ${j.status} ${cl.has(j.id)?'clash':''} ${j.start_date<ws?'cont-l':''} ${j.end_date>we?'cont-r':''}" style="grid-column:${c1}/${c2};grid-row:${l+1};background:${color(tr)}" data-job="${j.id}">
           <span class="t">${esc(tr)}・${esc(cr?.name||'未指定師傅')}</span>
           <span class="s">${esc(j.start_time||'')}${j.start_time&&flags?' ・ ':''}${esc(flags)}</span></button>`;
@@ -372,7 +372,7 @@ addEventListener('keydown', e => { if(e.key==='Escape' && !$('#modal').hidden) c
 function crewOptions(trade, sel){
   const act = S.crew.filter(c=>c.active || c.id===sel);
   const a = act.filter(c=>!trade || c.trade===trade), b = act.filter(c=>trade && c.trade!==trade);
-  const o = c => `<option value="${c.id}" ${c.id===sel?'selected':''}>${esc(c.name)}${c.trade?'（'+esc(c.trade)+'）':''}${c.line_user_id?'':' ・未綁LINE'}</option>`;
+  const o = c => `<option value="${c.id}" ${c.id===sel?'selected':''}>${esc(c.name)}${c.trade?'（'+esc(c.trade)+'）':''}</option>`;
   return `<option value="">— 未指定 —</option>${a.map(o).join('')}${b.length?`<optgroup label="其他工種">${b.map(o).join('')}</optgroup>`:''}`;
 }
 function jobForm(j, pre={}){
@@ -390,7 +390,7 @@ function jobForm(j, pre={}){
     </div>
     <div class="field"><label for="fNote">注意事項（會寫進師傅的提醒）</label><textarea id="fNote" placeholder="例：電梯請先跟管理室登記、垃圾不可放公共走道">${esc(v.note||'')}</textarea></div>
     <div class="field"><span class="lbl">前一天自動提醒</span>
-      <label class="chk"><input type="checkbox" id="fNC" ${v.notify_crew?'checked':''}><span>師傅<span class="small muted" id="fCrewWay">（LINE 一對一）</span></span></label>
+      <label class="chk"><input type="checkbox" id="fNC" ${v.notify_crew?'checked':''}><span>師傅（施工群組）<span class="small muted" id="fCrewWay"></span></span></label>
       <label class="chk"><input type="checkbox" id="fNO" ${v.notify_owner?'checked':''}><span>業主（案件 LINE 群組）<span class="small muted" id="fGroupHint"></span></span></label>
     </div>
     ${j?`<div class="field"><label for="fStatus">狀態</label><select id="fStatus"><option value="planned" ${v.status==='planned'?'selected':''}>預定</option><option value="done" ${v.status==='done'?'selected':''}>已完成</option><option value="cancelled" ${v.status==='cancelled'?'selected':''}>取消</option></select></div>`:''}
@@ -400,8 +400,8 @@ function jobForm(j, pre={}){
   let trade = tr;
   const upd = () => {
     const c = crewById($('#fCrew').value), cg = S.crewGroups.get($('#fProj').value);
-    $('#fCrewWay').textContent = cg ? `（發到施工群組「${cg}」）` : '（LINE 一對一）';
-    $('#fCrewHint').textContent = cg ? (c?.phone ? '電話 '+c.phone : '') : c ? (c.line_user_id ? `LINE 已綁定（${c.line_name||'已綁定'}）${c.phone?'・'+c.phone:''}` : `這位師傅還沒綁定 LINE，提醒不會自動送出，需自行通知。${c.phone?'電話 '+c.phone:''}`) : '';
+    $('#fCrewWay').textContent = !$('#fProj').value ? '' : cg ? `　發到「${cg}」` : '　⚠ 此案件還沒綁定施工群組';
+    $('#fCrewHint').textContent = c?.phone ? '電話 '+c.phone : '';
     $('#fGroupHint').textContent = $('#fProj').value ? (S.groups.has($('#fProj').value) ? '　群組已綁定' : '　⚠ 此案件業主群組尚未綁定，業主收不到') : '';
   };
   $('#fTrades').onclick = e => { const b=e.target.closest('.chip'); if(!b) return; trade = b.getAttribute('aria-pressed')==='true' ? '' : b.dataset.t;
@@ -434,13 +434,13 @@ function jobForm(j, pre={}){
 /* ---------- 師傅名冊 ---------- */
 function renderCrew(){
   const bound = S.crew.filter(c=>c.active && c.line_user_id).length, act = S.crew.filter(c=>c.active).length;
-  $('#main').innerHTML = `<div class="bar"><h1>師傅名冊</h1><span class="pill ${bound===act&&act?'ok':'dim'}">LINE 已綁定 ${bound} / ${act}</span><span class="sp"></span><button class="btn pri" id="addCrew">＋ 新增師傅</button></div>
-  <p class="hint" style="margin:-6px 0 16px">兩種方式擇一：① 案件有施工群組（把官方帳號加進群組，在群組打「綁定工班 案名」），提醒就發到群組，師傅不用個別綁定；② 沒有施工群組的案件，師傅要個別綁定 LINE：按「產生綁定碼」，把訊息傳給師傅照著做即可。</p>
+  $('#main').innerHTML = `<div class="bar"><h1>師傅名冊</h1><span class="sp"></span><button class="btn pri" id="addCrew">＋ 新增師傅</button></div>
+  <p class="hint" style="margin:-6px 0 16px">進場提醒發到各案件的施工群組，師傅不用個別綁定。設定方式：把赫柏官方帳號加進施工群組，在群組打「綁定工班 案名」。</p>
   ${S.crew.length?`<div class="list">${S.crew.map(c=>`<div class="card ${c.active?'':'off'}">
     <div class="card-h"><div><b>${esc(c.name)}</b><div class="muted small">${esc(c.trade||'未設定工種')}${c.phone?'・'+esc(c.phone):''}</div></div>
-      ${c.line_user_id?`<span class="pill ok">LINE ✓ ${esc(c.line_name||'')}</span>`:c.bind_code&&new Date(c.bind_expires)>new Date()?`<span class="pill warn">等待綁定 ${esc(c.bind_code)}</span>`:'<span class="pill dim">未綁定</span>'}</div>
+</div>
     ${c.note?`<div class="small muted">${esc(c.note)}</div>`:''}
-    <div class="row"><button class="btn sm" data-code="${c.id}">${c.line_user_id?'重新綁定':'產生綁定碼'}</button><button class="btn sm" data-edit="${c.id}">編輯</button>${c.active?'':'<span class="pill dim">已停用</span>'}</div>
+    <div class="row"><button class="btn sm" data-edit="${c.id}">編輯</button>${c.active?'':'<span class="pill dim">已停用</span>'}</div>
   </div>`).join('')}</div>`:`<div class="empty">還沒有師傅資料。點「＋ 新增師傅」開始建立名冊。</div>`}`;
   $('#addCrew').onclick = () => crewForm(null);
   document.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>crewForm(crewById(b.dataset.edit)));
@@ -465,7 +465,6 @@ function crewForm(c){
     const r = c ? await SB.from('hb_crew').update(row).eq('id',c.id).select().single() : await SB.from('hb_crew').insert(row).select().single();
     if(r.error) return $('#cErr').textContent='儲存失敗：'+r.error.message;
     closeModal(); toast('已儲存'); await reloadCrew();
-    if(!c) bindCode(r.data);
   };
 }
 async function reloadCrew(){ const { data, error } = await SB.from('hb_crew').select('*').order('active',{ascending:false}).order('trade').order('name'); if(error) return err(error); S.crew=data; render(); }
