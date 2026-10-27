@@ -136,7 +136,8 @@ table.log td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
 .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
 @media (max-width:520px){.g3{grid-template-columns:1fr 1fr}}
 .chk{display:flex;gap:8px;align-items:flex-start;font-size:13.5px;cursor:pointer}
-.chk input{margin-top:3px}
+.chk input{margin-top:3px;width:auto!important;flex:none;padding:0}
+.chk>span{flex:none}
 .chips{display:flex;gap:6px;flex-wrap:wrap}
 .chip{border:1px solid var(--line);background:#fff;border-radius:99px;padding:3px 10px;font-size:12.5px;cursor:pointer}
 .chip[aria-pressed="true"]{background:var(--green);color:var(--paper);border-color:var(--green)}
@@ -389,8 +390,8 @@ function jobForm(j, pre={}){
     </div>
     <div class="field"><label for="fNote">注意事項（會寫進師傅的提醒）</label><textarea id="fNote" placeholder="例：電梯請先跟管理室登記、垃圾不可放公共走道">${esc(v.note||'')}</textarea></div>
     <div class="field"><span class="lbl">前一天自動提醒</span>
-      <label class="chk"><input type="checkbox" id="fNC" ${v.notify_crew?'checked':''}> 師傅<span class="small muted" id="fCrewWay">（LINE 一對一）</span></label>
-      <label class="chk"><input type="checkbox" id="fNO" ${v.notify_owner?'checked':''}> 業主（案件 LINE 群組）<span class="small muted" id="fGroupHint"></span></label>
+      <label class="chk"><input type="checkbox" id="fNC" ${v.notify_crew?'checked':''}><span>師傅<span class="small muted" id="fCrewWay">（LINE 一對一）</span></span></label>
+      <label class="chk"><input type="checkbox" id="fNO" ${v.notify_owner?'checked':''}><span>業主（案件 LINE 群組）<span class="small muted" id="fGroupHint"></span></span></label>
     </div>
     ${j?`<div class="field"><label for="fStatus">狀態</label><select id="fStatus"><option value="planned" ${v.status==='planned'?'selected':''}>預定</option><option value="done" ${v.status==='done'?'selected':''}>已完成</option><option value="cancelled" ${v.status==='cancelled'?'selected':''}>取消</option></select></div>`:''}
     <p class="err" id="fErr"></p>
