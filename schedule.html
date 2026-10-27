@@ -1,0 +1,563 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>工班排程</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%232E4A3C'/%3E%3Ctext x='32' y='43' font-size='30' text-anchor='middle' fill='%23F6F1E8' font-family='serif'%3E排%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;700&family=Noto+Sans+TC:wght@400;500;700&family=Cormorant+Garamond:ital,wght@1,500&display=swap">
+<style>
+/* 版面：頂部墨綠導覽＋週排程板（列＝案件、欄＝日期、橫條＝工班進場期間）；手機改成逐日清單 */
+:root{
+  --paper:#F6F1E8; --paper-2:#EDE5D6; --card:#FFFDF9; --ink:#2A2622; --ink-2:#6E655B; --line:#DDD2C0;
+  --green:#2E4A3C; --green-2:#3F6150; --brick:#B4573A; --brick-soft:#F3E1D9; --ok:#4E7A5E; --warn:#B4573A;
+  --f-display:"Noto Serif TC","Songti TC",serif;
+  --f-body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+  --f-latin:"Cormorant Garamond",Georgia,serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--paper);color:var(--ink);font:14px/1.55 var(--f-body);min-height:100vh}
+button,input,select,textarea{font:inherit;color:inherit}
+[hidden]{display:none!important}
+:focus-visible{outline:2px solid var(--brick);outline-offset:2px}
+
+/* 導覽 */
+.top{background:var(--green);color:var(--paper);position:sticky;top:0;z-index:5}
+.top-in{max-width:1280px;margin:0 auto;display:flex;align-items:center;gap:20px;padding:12px max(16px,env(safe-area-inset-right,0px)) 12px max(16px,env(safe-area-inset-left,0px));flex-wrap:wrap}
+.brand{display:flex;flex-direction:column;line-height:1.15}
+.brand b{font:700 18px var(--f-display);letter-spacing:.08em}
+.brand span{font:italic 12px var(--f-latin);letter-spacing:.2em;opacity:.75}
+.nav{display:flex;gap:4px;flex-wrap:wrap}
+.nav button{background:none;border:0;color:var(--paper);opacity:.72;padding:6px 12px;border-radius:4px;cursor:pointer}
+.nav button[aria-current="page"]{opacity:1;background:var(--paper);color:var(--green);font-weight:700}
+.nav button:hover{opacity:1}
+.who{margin-left:auto;font-size:12px;opacity:.8;display:flex;gap:10px;align-items:center}
+.who button{background:none;border:1px solid rgba(246,241,232,.4);color:var(--paper);border-radius:4px;padding:3px 10px;cursor:pointer;font-size:12px}
+
+main{max-width:1280px;margin:0 auto;padding-block:20px 60px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1{font:700 22px var(--f-display);margin:0;letter-spacing:.06em}
+.bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.bar .sp{flex:1}
+.btn{border:1px solid var(--line);background:var(--card);padding:7px 14px;border-radius:5px;cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--ink-2)}
+.btn.pri{background:var(--brick);border-color:var(--brick);color:#fff}
+.btn.pri:hover{filter:brightness(.95)}
+.btn.green{background:var(--green);border-color:var(--green);color:var(--paper)}
+.btn.sm{padding:4px 10px;font-size:13px}
+.btn.link{border:0;background:none;color:var(--brick);padding:4px 6px}
+.btn:disabled{opacity:.5;cursor:default}
+.muted{color:var(--ink-2)}
+.small{font-size:12px}
+.pill{display:inline-flex;align-items:center;gap:4px;font-size:12px;padding:1px 8px;border-radius:99px;border:1px solid var(--line);background:var(--card);white-space:nowrap}
+.pill.ok{color:var(--ok);border-color:#BCD1C2;background:#EEF4EF}
+.pill.warn{color:var(--warn);border-color:#E6C2B4;background:var(--brick-soft)}
+.pill.dim{color:var(--ink-2)}
+
+/* 週排程板 */
+.week-head{display:flex;align-items:baseline;gap:12px}
+.week-head .range{font:700 18px var(--f-display);letter-spacing:.04em}
+.board{background:var(--card);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.grid{display:grid;grid-template-columns:168px repeat(7,minmax(0,1fr))}
+.hd{padding:8px 8px 6px;border-bottom:1px solid var(--line);font-size:12px;color:var(--ink-2);text-align:center;background:var(--paper)}
+.hd b{display:block;font:600 17px var(--f-display);color:var(--ink);font-variant-numeric:tabular-nums}
+.hd.today{background:var(--brick-soft)}
+.hd.today b{color:var(--brick)}
+.hd.we b{color:var(--ink-2)}
+.prow{display:grid;grid-template-columns:168px repeat(7,minmax(0,1fr));grid-auto-rows:minmax(34px,auto);border-bottom:1px solid var(--line);position:relative}
+.prow:last-child{border-bottom:0}
+.plabel{grid-column:1;padding:8px 10px;border-right:1px solid var(--line);display:flex;flex-direction:column;gap:3px;min-width:0}
+.plabel b{font-weight:700;font-size:13.5px;overflow-wrap:anywhere}
+.cell{border-right:1px solid #EEE6D8;cursor:pointer;min-height:34px}
+.cell:last-child{border-right:0}
+.cell:hover{background:#F8F3EA}
+.cell.today{background:#FBF1EC}
+.job{z-index:1;margin:3px 3px;border-radius:5px;padding:4px 8px;font-size:12.5px;line-height:1.35;cursor:pointer;border:1px solid transparent;color:#fff;overflow:hidden;display:flex;flex-direction:column;justify-content:center;min-width:0;text-align:left}
+.job .t{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.job .s{opacity:.9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.job.clash{outline:2px solid var(--brick);outline-offset:1px}
+.job.done{opacity:.45}
+.job.cancelled{opacity:.35;text-decoration:line-through}
+.job.cont-l{border-top-left-radius:0;border-bottom-left-radius:0;margin-left:0}
+.job.cont-r{border-top-right-radius:0;border-bottom-right-radius:0;margin-right:0}
+.empty{padding:40px 16px;text-align:center;color:var(--ink-2)}
+.legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px;font-size:12px;color:var(--ink-2)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+
+/* 手機逐日清單 */
+.days{display:none}
+.day{background:var(--card);border:1px solid var(--line);border-radius:8px;margin-bottom:10px;overflow:hidden}
+.day-h{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--paper);border-bottom:1px solid var(--line)}
+.day-h b{font:600 15px var(--f-display)}
+.day.today .day-h{background:var(--brick-soft)}
+.djob{display:flex;gap:10px;padding:10px 12px;border-bottom:1px solid #EEE6D8;cursor:pointer;align-items:flex-start}
+.djob:last-child{border-bottom:0}
+.djob .sw{width:4px;align-self:stretch;border-radius:2px;flex:none}
+.djob .m{flex:1;min-width:0}
+.djob .m b{display:block}
+@media (max-width:760px){
+  .board,.legend{display:none}
+  .days{display:block}
+  .who span{display:none}
+}
+
+/* 卡片清單 */
+.list{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.card-h{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.card-h b{font:700 16px var(--f-display);letter-spacing:.04em}
+.card .row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.card.off{opacity:.55}
+
+/* 提醒預覽 */
+.msgs{display:grid;gap:12px}
+.msg{background:var(--card);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.msg-h{display:flex;gap:8px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--line);background:var(--paper);flex-wrap:wrap}
+.msg-h b{font-weight:700}
+.bubble{margin:12px;max-width:420px;background:#E8F3DC;border-radius:4px 14px 14px 14px;padding:10px 12px;white-space:pre-wrap;font-size:13.5px;overflow-wrap:anywhere}
+.msg.bad .bubble{background:#F1ECE4;color:var(--ink-2)}
+table.log{width:100%;border-collapse:collapse;font-size:13px;background:var(--card);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+table.log th,table.log td{padding:7px 10px;border-bottom:1px solid #EEE6D8;text-align:left;vertical-align:top}
+table.log th{background:var(--paper);font-weight:500;color:var(--ink-2);font-size:12px}
+table.log td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+.tbl-wrap{overflow-x:auto}
+.sec{font:700 15px var(--f-display);margin:26px 0 10px;letter-spacing:.06em;color:var(--green)}
+.stat{display:flex;gap:24px;flex-wrap:wrap;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin-bottom:14px}
+.stat div{display:flex;flex-direction:column}
+.stat b{font:600 22px var(--f-display);font-variant-numeric:tabular-nums}
+
+/* 表單 */
+.field{display:grid;gap:4px}
+.field>label,.lbl{font-size:12px;color:var(--ink-2);letter-spacing:.04em}
+.field input,.field select,.field textarea{width:100%;border:1px solid var(--line);background:#fff;border-radius:5px;padding:8px 10px}
+.field textarea{min-height:76px;resize:vertical}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+@media (max-width:520px){.g3{grid-template-columns:1fr 1fr}}
+.chk{display:flex;gap:8px;align-items:flex-start;font-size:13.5px;cursor:pointer}
+.chk input{margin-top:3px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:#fff;border-radius:99px;padding:3px 10px;font-size:12.5px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--green);color:var(--paper);border-color:var(--green)}
+.form{display:grid;gap:14px}
+.settings{max-width:720px}
+.hint{font-size:12px;color:var(--ink-2);margin:0}
+.code{font:600 34px var(--f-display);letter-spacing:.25em;color:var(--brick);text-align:center;font-variant-numeric:tabular-nums;padding:8px 0}
+.copybox{width:100%;min-height:110px;border:1px solid var(--line);border-radius:5px;padding:10px;background:#fff;white-space:pre-wrap}
+
+/* 視窗 */
+.modal{position:fixed;inset:0;background:rgba(42,38,34,.45);display:grid;place-items:center;padding:16px;z-index:30;overflow-y:auto}
+.mcard{background:var(--paper);border-radius:10px;width:min(560px,100%);padding:20px;display:grid;gap:14px;max-height:calc(100vh - 32px);overflow-y:auto}
+.mcard h2{margin:0;font:700 18px var(--f-display);letter-spacing:.04em}
+.mfoot{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.mfoot .left{margin-right:auto}
+
+/* 登入 */
+.login{max-width:380px;margin:12vh auto 0;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:28px;display:grid;gap:14px}
+.login h1{text-align:center}
+.login p{margin:0;text-align:center}
+.err{color:var(--brick);font-size:13px;min-height:1.2em;margin:0}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:9px 18px;border-radius:5px;font-size:13px;z-index:40;opacity:0;transition:opacity .2s;pointer-events:none;max-width:calc(100% - 32px)}
+.toast.show{opacity:1}
+.loading{padding:40px;text-align:center;color:var(--ink-2)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<section id="loginView" class="login" hidden>
+  <h1>工班排程</h1>
+  <p class="muted small">赫柏空間設計｜管理端登入</p>
+  <div class="field"><label for="lgEmail">E-mail</label><input id="lgEmail" type="email" autocomplete="username"></div>
+  <div class="field"><label for="lgPw">密碼</label><input id="lgPw" type="password" autocomplete="current-password"></div>
+  <p class="err" id="lgErr"></p>
+  <button class="btn pri" id="lgBtn">登入</button>
+  <p class="muted small">與工地紀錄本使用同一組帳號</p>
+</section>
+
+<div id="appView" hidden>
+  <header class="top"><div class="top-in">
+    <div class="brand"><b>工班排程</b><span>HERFULSINS</span></div>
+    <nav class="nav" id="nav">
+      <button data-v="board" aria-current="page">週排程</button>
+      <button data-v="crew">師傅名冊</button>
+      <button data-v="remind">明日提醒</button>
+      <button data-v="settings">設定</button>
+    </nav>
+    <div class="who"><span id="whoEmail"></span><button id="logout">登出</button></div>
+  </div></header>
+  <main id="main"><div class="loading">載入中…</div></main>
+</div>
+
+<div class="modal" id="modal" hidden><div class="mcard" id="mcard" role="dialog" aria-modal="true"></div></div>
+<div class="toast" id="toast" role="status"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+const SB = supabase.createClient('https://rqndozhhvuimqjqtmeli.supabase.co', 'sb_publishable_WeuzNOmIP2eh8LgN8XZeTw_gx5Q72VL');
+const TRADES = ['拆除','保護工程','水電','冷氣','泥作','防水','木作','鐵件','油漆','系統櫃','石材','地板','清潔','玻璃','燈具','窗簾','壁紙','其他'];
+const TRADE_COLOR = {拆除:'#6E5F52',保護工程:'#8A8172',水電:'#3E6E8E',冷氣:'#4F8A9A',泥作:'#8C6A4A',防水:'#5B7F95',木作:'#9A6B3F',鐵件:'#4C4F57',油漆:'#B4573A',系統櫃:'#7A5A78',石材:'#7C7468',地板:'#93703D',清潔:'#5E8A6B',玻璃:'#5D8FA8',燈具:'#B08A2E',窗簾:'#A1677A',壁紙:'#8E7F5A',其他:'#6E655B'};
+const WD = ['日','一','二','三','四','五','六'];
+
+let S = { view:'board', weekStart:mondayOf(new Date()), projects:[], groups:new Set(), crewGroups:new Map(), crew:[], jobs:[], settings:null, showAll:false, remindDate:null };
+
+/* ---------- 工具 ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function ymd(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function parse(s){ const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); }
+function addDays(s,n){ const d=parse(s); d.setDate(d.getDate()+n); return ymd(d); }
+function mondayOf(d){ const x=new Date(d.getFullYear(),d.getMonth(),d.getDate()); const w=(x.getDay()+6)%7; x.setDate(x.getDate()-w); return ymd(x); }
+const today = () => ymd(new Date());
+const md = s => { const d=parse(s); return (d.getMonth()+1)+'/'+d.getDate(); };
+const wd = s => WD[parse(s).getDay()];
+function toast(t){ const el=$('#toast'); el.textContent=t; el.classList.add('show'); clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove('show'),2600); }
+const color = t => TRADE_COLOR[t] || TRADE_COLOR['其他'];
+const crewById = id => S.crew.find(c=>c.id===id);
+const projById = id => S.projects.find(p=>p.id===id);
+const jobTrade = j => j.trade || crewById(j.crew_id)?.trade || '施工';
+async function copy(text){
+  try{ await navigator.clipboard.writeText(text); toast('已複製'); return true; }catch(e){ return false; }
+}
+function err(e){ console.error(e); toast('發生錯誤：' + (e?.message || e)); }
+
+/* ---------- 登入 ---------- */
+async function boot(){
+  const { data:{ session } } = await SB.auth.getSession();
+  if(!session){ $('#loginView').hidden=false; $('#appView').hidden=true; return; }
+  $('#loginView').hidden=true; $('#appView').hidden=false;
+  $('#whoEmail').textContent = session.user.email;
+  await loadAll();
+}
+$('#lgBtn').onclick = async () => {
+  $('#lgErr').textContent='';
+  const { error } = await SB.auth.signInWithPassword({ email:$('#lgEmail').value.trim(), password:$('#lgPw').value });
+  if(error){ $('#lgErr').textContent='登入失敗：帳號或密碼不正確'; return; }
+  boot();
+};
+$('#lgPw').onkeydown = e => { if(e.key==='Enter') $('#lgBtn').click(); };
+$('#logout').onclick = async () => { await SB.auth.signOut(); location.reload(); };
+
+/* ---------- 資料 ---------- */
+async function loadAll(){
+  try{
+    const [p,g,c,s,cg] = await Promise.all([
+      SB.from('sitelog_projects').select('id,name,address,status,updated_at').order('updated_at',{ascending:false}),
+      SB.from('hb_line_contacts').select('project_id,line_user_id').like('line_user_id','C%'),
+      SB.from('hb_crew').select('*').order('active',{ascending:false}).order('trade').order('name'),
+      SB.from('hb_crew_settings').select('*').eq('id',1).maybeSingle(),
+      SB.from('hb_crew_groups').select('project_id,line_name')
+    ]);
+    for(const r of [p,g,c,s,cg]) if(r.error) throw r.error;
+    S.crewGroups = new Map(cg.data.map(x=>[x.project_id, x.line_name||'施工群組']));
+    S.projects = p.data; S.groups = new Set(g.data.filter(x=>x.project_id).map(x=>x.project_id)); S.crew = c.data; S.settings = s.data;
+    await loadJobs();
+  }catch(e){
+    if(String(e?.message||'').includes('permission') || e?.code==='42501'){ $('#main').innerHTML='<div class="empty">這個帳號沒有管理權限。</div>'; return; }
+    err(e);
+  }
+}
+async function loadJobs(){
+  const from = S.weekStart, to = addDays(S.weekStart, 6);
+  const { data, error } = await SB.from('hb_crew_jobs').select('*').lte('start_date', to).gte('end_date', from).order('start_date');
+  if(error) return err(error);
+  S.jobs = data; render();
+}
+
+/* ---------- 導覽 ---------- */
+$('#nav').onclick = e => { const b=e.target.closest('button'); if(!b) return; S.view=b.dataset.v; document.querySelectorAll('#nav button').forEach(x=> x===b ? x.setAttribute('aria-current','page') : x.removeAttribute('aria-current')); render(); };
+function render(){
+  const v = S.view;
+  if(v==='board') renderBoard();
+  if(v==='crew') renderCrew();
+  if(v==='remind') renderRemind();
+  if(v==='settings') renderSettings();
+}
+
+/* ---------- 撞期 ---------- */
+function clashes(jobs){
+  const set = new Set(), map = {};
+  for(const j of jobs){
+    if(!j.crew_id || j.status!=='planned') continue;
+    for(let d=j.start_date; d<=j.end_date; d=addDays(d,1)){
+      const k = j.crew_id+'|'+d; (map[k] ||= []).push(j);
+    }
+  }
+  for(const k in map){ const arr = map[k]; if(new Set(arr.map(x=>x.project_id)).size>1) arr.forEach(x=>set.add(x.id)); }
+  return set;
+}
+
+/* ---------- 週排程 ---------- */
+function renderBoard(){
+  const ws = S.weekStart, days = [...Array(7)].map((_,i)=>addDays(ws,i)), we = days[6], t = today();
+  const cl = clashes(S.jobs);
+  const withJobs = new Set(S.jobs.map(j=>j.project_id));
+  const active = S.projects.filter(p => withJobs.has(p.id) || (S.showAll && !/完工|結案|done|closed/i.test(p.status||'')));
+  const nClash = [...new Set(S.jobs.filter(j=>cl.has(j.id)).map(j=>j.crew_id))].length;
+  const d0=parse(ws), d6=parse(we);
+  let html = `<div class="bar">
+    <div class="week-head"><span class="range">${d0.getFullYear()}　${md(ws)} – ${md(we)}</span>${nClash?`<span class="pill warn">⚠ ${nClash} 位師傅撞期</span>`:''}</div>
+    <span class="sp"></span>
+    <button class="btn sm" data-act="prev" aria-label="上一週">‹ 上週</button>
+    <button class="btn sm" data-act="this">本週</button>
+    <button class="btn sm" data-act="next" aria-label="下一週">下週 ›</button>
+    <button class="btn pri" data-act="new">＋ 新增排程</button>
+  </div>`;
+
+  // 桌機：週排程板
+  html += `<div class="board"><div class="grid"><div class="hd" style="text-align:left">案件</div>${days.map(d=>`<div class="hd ${d===t?'today':''} ${[0,6].includes(parse(d).getDay())?'we':''}">${wd(d)}<b>${parse(d).getDate()}</b></div>`).join('')}</div>`;
+  if(!active.length) html += `<div class="empty">這週還沒有排工班。<br>點「＋ 新增排程」，或勾選下方「顯示所有進行中案件」後直接點日期格新增。</div>`;
+  for(const p of active){
+    const js = S.jobs.filter(j=>j.project_id===p.id).sort((a,b)=>a.start_date.localeCompare(b.start_date));
+    const lanes = []; // 每個 lane 記最後結束日
+    const placed = js.map(j=>{ let l=lanes.findIndex(e=>e<j.start_date); if(l<0){ l=lanes.length; lanes.push(j.end_date); } else lanes[l]=j.end_date; return {j,l}; });
+    const nl = Math.max(1, lanes.length);
+    html += `<div class="prow" style="grid-template-rows:repeat(${nl},minmax(38px,auto))">
+      <div class="plabel" style="grid-row:1/span ${nl}"><b>${esc(p.name)}</b>${S.groups.has(p.id)?'<span class="pill ok small" title="業主 LINE 群組已綁定，業主會收到通知">業主群組 ✓</span>':'<span class="pill dim small" title="業主 LINE 群組尚未綁定，業主不會收到通知">業主群組未綁定</span>'}${S.crewGroups.has(p.id)?'<span class="pill ok small" title="施工群組已綁定，師傅提醒發到群組">施工群組 ✓</span>':''}</div>
+      ${days.map((d,i)=>`<div class="cell ${d===t?'today':''}" style="grid-column:${i+2};grid-row:1/span ${nl}" data-new="${p.id}|${d}" title="${md(d)} 新增排程"></div>`).join('')}
+      ${placed.map(({j,l})=>{
+        const s = j.start_date<ws?ws:j.start_date, e = j.end_date>we?we:j.end_date;
+        const c1 = days.indexOf(s)+2, c2 = days.indexOf(e)+3;
+        const cr = crewById(j.crew_id), tr = jobTrade(j);
+        const flags = [cl.has(j.id)?'⚠撞期':'', j.reminded_for===j.start_date?'已提醒':'', j.notify_crew && cr && !cr.line_user_id && !S.crewGroups.has(j.project_id)?'未綁LINE':''].filter(Boolean).join('・');
+        return `<button class="job ${j.status} ${cl.has(j.id)?'clash':''} ${j.start_date<ws?'cont-l':''} ${j.end_date>we?'cont-r':''}" style="grid-column:${c1}/${c2};grid-row:${l+1};background:${color(tr)}" data-job="${j.id}">
+          <span class="t">${esc(tr)}・${esc(cr?.name||'未指定師傅')}</span>
+          <span class="s">${esc(j.start_time||'')}${j.start_time&&flags?' ・ ':''}${esc(flags)}</span></button>`;
+      }).join('')}
+    </div>`;
+  }
+  html += `</div>
+  <div class="legend">
+    <label class="chk" style="margin-right:auto"><input type="checkbox" id="showAll" ${S.showAll?'checked':''}> 顯示所有進行中案件（方便點日期格新增）</label>
+    ${[...new Set(S.jobs.map(jobTrade))].map(t=>`<span><i style="background:${color(t)}"></i>${esc(t)}</span>`).join('')}
+  </div>`;
+
+  // 手機：逐日清單
+  html += `<div class="days">${days.map(d=>{
+    const js = S.jobs.filter(j=>j.start_date<=d && j.end_date>=d).sort((a,b)=>(a.start_time||'99').localeCompare(b.start_time||'99'));
+    return `<div class="day ${d===t?'today':''}"><div class="day-h"><b>${md(d)}（${wd(d)}）</b><button class="btn link small" data-new="|${d}">＋ 新增</button></div>
+      ${js.length?js.map(j=>{ const cr=crewById(j.crew_id), tr=jobTrade(j), p=projById(j.project_id);
+        return `<div class="djob" data-job="${j.id}" role="button" tabindex="0"><span class="sw" style="background:${color(tr)}"></span><div class="m">
+          <b>${esc(p?.name||'')}</b><span class="muted small">${esc(tr)}・${esc(cr?.name||'未指定師傅')}${j.start_time?'・'+esc(j.start_time):''}${j.start_date===d?'（進場）':''}</span>
+          ${cl.has(j.id)?'<div><span class="pill warn">⚠ 撞期</span></div>':''}</div></div>`; }).join('')
+        :'<div class="djob muted small" style="cursor:default">沒有排程</div>'}</div>`;
+  }).join('')}</div>`;
+
+  $('#main').innerHTML = html;
+  const sa = $('#showAll'); if(sa) sa.onchange = () => { S.showAll = sa.checked; renderBoard(); };
+}
+$('#main').addEventListener('click', e => {
+  const a = e.target.closest('[data-act]'), nj = e.target.closest('[data-new]'), jb = e.target.closest('[data-job]');
+  if(a){
+    const k=a.dataset.act;
+    if(k==='prev'){ S.weekStart=addDays(S.weekStart,-7); loadJobs(); }
+    if(k==='next'){ S.weekStart=addDays(S.weekStart,7); loadJobs(); }
+    if(k==='this'){ S.weekStart=mondayOf(new Date()); loadJobs(); }
+    if(k==='new') jobForm(null, {});
+    return;
+  }
+  if(jb){ const j=S.jobs.find(x=>x.id===jb.dataset.job); if(j) jobForm(j); return; }
+  if(nj){ const [pid,d]=nj.dataset.new.split('|'); jobForm(null,{project_id:pid||'', start_date:d}); }
+});
+$('#main').addEventListener('keydown', e => { if(e.key==='Enter' && e.target.matches('.djob[data-job]')) e.target.click(); });
+
+/* ---------- 排程表單 ---------- */
+function openModal(html){ $('#mcard').innerHTML = html; $('#modal').hidden = false; setTimeout(()=>$('#mcard').querySelector('input,select,textarea,button')?.focus(),30); }
+function closeModal(){ $('#modal').hidden = true; }
+$('#modal').addEventListener('mousedown', e => { if(e.target.id==='modal') closeModal(); });
+addEventListener('keydown', e => { if(e.key==='Escape' && !$('#modal').hidden) closeModal(); });
+
+function crewOptions(trade, sel){
+  const act = S.crew.filter(c=>c.active || c.id===sel);
+  const a = act.filter(c=>!trade || c.trade===trade), b = act.filter(c=>trade && c.trade!==trade);
+  const o = c => `<option value="${c.id}" ${c.id===sel?'selected':''}>${esc(c.name)}${c.trade?'（'+esc(c.trade)+'）':''}${c.line_user_id?'':' ・未綁LINE'}</option>`;
+  return `<option value="">— 未指定 —</option>${a.map(o).join('')}${b.length?`<optgroup label="其他工種">${b.map(o).join('')}</optgroup>`:''}`;
+}
+function jobForm(j, pre={}){
+  const v = j || { project_id:pre.project_id||'', crew_id:'', trade:'', start_date:pre.start_date||addDays(today(),1), end_date:pre.start_date||addDays(today(),1), start_time:'08:30', note:'', notify_crew:true, notify_owner:true, status:'planned' };
+  const tr = v.trade || crewById(v.crew_id)?.trade || '';
+  openModal(`<h2>${j?'編輯排程':'新增排程'}</h2>
+  <div class="form">
+    <div class="field"><label for="fProj">案件</label><select id="fProj"><option value="">— 選擇案件 —</option>${S.projects.map(p=>`<option value="${p.id}" ${p.id===v.project_id?'selected':''}>${esc(p.name)}</option>`).join('')}</select></div>
+    <div class="field"><span class="lbl">工項</span><div class="chips" id="fTrades">${TRADES.map(t=>`<button type="button" class="chip" aria-pressed="${t===tr}" data-t="${t}">${t}</button>`).join('')}</div></div>
+    <div class="field"><label for="fCrew">師傅</label><select id="fCrew">${crewOptions(tr, v.crew_id)}</select><p class="hint" id="fCrewHint"></p></div>
+    <div class="g3">
+      <div class="field"><label for="fStart">進場日</label><input id="fStart" type="date" value="${v.start_date}"></div>
+      <div class="field"><label for="fEnd">結束日</label><input id="fEnd" type="date" value="${v.end_date}"></div>
+      <div class="field"><label for="fTime">進場時間</label><input id="fTime" type="time" value="${esc(v.start_time||'')}"></div>
+    </div>
+    <div class="field"><label for="fNote">注意事項（會寫進師傅的提醒）</label><textarea id="fNote" placeholder="例：電梯請先跟管理室登記、垃圾不可放公共走道">${esc(v.note||'')}</textarea></div>
+    <div class="field"><span class="lbl">前一天自動提醒</span>
+      <label class="chk"><input type="checkbox" id="fNC" ${v.notify_crew?'checked':''}> 師傅<span class="small muted" id="fCrewWay">（LINE 一對一）</span></label>
+      <label class="chk"><input type="checkbox" id="fNO" ${v.notify_owner?'checked':''}> 業主（案件 LINE 群組）<span class="small muted" id="fGroupHint"></span></label>
+    </div>
+    ${j?`<div class="field"><label for="fStatus">狀態</label><select id="fStatus"><option value="planned" ${v.status==='planned'?'selected':''}>預定</option><option value="done" ${v.status==='done'?'selected':''}>已完成</option><option value="cancelled" ${v.status==='cancelled'?'selected':''}>取消</option></select></div>`:''}
+    <p class="err" id="fErr"></p>
+  </div>
+  <div class="mfoot">${j?'<button class="btn link left" id="fDel">刪除</button>':''}<button class="btn" id="fCancel">取消</button><button class="btn pri" id="fSave">儲存</button></div>`);
+  let trade = tr;
+  const upd = () => {
+    const c = crewById($('#fCrew').value), cg = S.crewGroups.get($('#fProj').value);
+    $('#fCrewWay').textContent = cg ? `（發到施工群組「${cg}」）` : '（LINE 一對一）';
+    $('#fCrewHint').textContent = cg ? (c?.phone ? '電話 '+c.phone : '') : c ? (c.line_user_id ? `LINE 已綁定（${c.line_name||'已綁定'}）${c.phone?'・'+c.phone:''}` : `這位師傅還沒綁定 LINE，提醒不會自動送出，需自行通知。${c.phone?'電話 '+c.phone:''}`) : '';
+    $('#fGroupHint').textContent = $('#fProj').value ? (S.groups.has($('#fProj').value) ? '　群組已綁定' : '　⚠ 此案件業主群組尚未綁定，業主收不到') : '';
+  };
+  $('#fTrades').onclick = e => { const b=e.target.closest('.chip'); if(!b) return; trade = b.getAttribute('aria-pressed')==='true' ? '' : b.dataset.t;
+    document.querySelectorAll('#fTrades .chip').forEach(x=>x.setAttribute('aria-pressed', x.dataset.t===trade)); const cur=$('#fCrew').value; $('#fCrew').innerHTML = crewOptions(trade, cur); upd(); };
+  $('#fCrew').onchange = () => { if(!trade){ const c=crewById($('#fCrew').value); if(c?.trade){ trade=c.trade; document.querySelectorAll('#fTrades .chip').forEach(x=>x.setAttribute('aria-pressed', x.dataset.t===trade)); } } upd(); };
+  $('#fProj').onchange = upd;
+  $('#fStart').onchange = () => { if($('#fEnd').value < $('#fStart').value) $('#fEnd').value = $('#fStart').value; };
+  upd();
+  $('#fCancel').onclick = closeModal;
+  $('#fSave').onclick = async () => {
+    const row = { project_id:$('#fProj').value, crew_id:$('#fCrew').value||null, trade, start_date:$('#fStart').value, end_date:$('#fEnd').value, start_time:$('#fTime').value||null, note:$('#fNote').value.trim()||null, notify_crew:$('#fNC').checked, notify_owner:$('#fNO').checked, updated_at:new Date().toISOString() };
+    if(j) row.status = $('#fStatus').value;
+    if(!row.project_id) return $('#fErr').textContent='請選擇案件';
+    if(!row.start_date || !row.end_date) return $('#fErr').textContent='請填進場日與結束日';
+    if(row.end_date < row.start_date) return $('#fErr').textContent='結束日不能早於進場日';
+    if(j && (row.start_date!==j.start_date)){ row.reminded_for = null; row.reminded_owner_for = null; }
+    $('#fSave').disabled = true;
+    const r = j ? await SB.from('hb_crew_jobs').update(row).eq('id', j.id) : await SB.from('hb_crew_jobs').insert(row);
+    $('#fSave').disabled = false;
+    if(r.error) return $('#fErr').textContent = '儲存失敗：' + r.error.message;
+    closeModal(); toast(j?'已更新':'已新增排程');
+    if(!j && (row.start_date < S.weekStart || row.start_date > addDays(S.weekStart,6))) S.weekStart = mondayOf(parse(row.start_date));
+    loadJobs();
+  };
+  if(j){ let armed=false; $('#fDel').onclick = async () => {
+    if(!armed){ armed=true; $('#fDel').textContent='再按一次確認刪除'; setTimeout(()=>{ armed=false; const b=$('#fDel'); if(b) b.textContent='刪除'; },3000); return; }
+    const r = await SB.from('hb_crew_jobs').delete().eq('id', j.id); if(r.error) return err(r.error); closeModal(); toast('已刪除'); loadJobs(); }; }
+}
+
+/* ---------- 師傅名冊 ---------- */
+function renderCrew(){
+  const bound = S.crew.filter(c=>c.active && c.line_user_id).length, act = S.crew.filter(c=>c.active).length;
+  $('#main').innerHTML = `<div class="bar"><h1>師傅名冊</h1><span class="pill ${bound===act&&act?'ok':'dim'}">LINE 已綁定 ${bound} / ${act}</span><span class="sp"></span><button class="btn pri" id="addCrew">＋ 新增師傅</button></div>
+  <p class="hint" style="margin:-6px 0 16px">兩種方式擇一：① 案件有施工群組（把官方帳號加進群組，在群組打「綁定工班 案名」），提醒就發到群組，師傅不用個別綁定；② 沒有施工群組的案件，師傅要個別綁定 LINE：按「產生綁定碼」，把訊息傳給師傅照著做即可。</p>
+  ${S.crew.length?`<div class="list">${S.crew.map(c=>`<div class="card ${c.active?'':'off'}">
+    <div class="card-h"><div><b>${esc(c.name)}</b><div class="muted small">${esc(c.trade||'未設定工種')}${c.phone?'・'+esc(c.phone):''}</div></div>
+      ${c.line_user_id?`<span class="pill ok">LINE ✓ ${esc(c.line_name||'')}</span>`:c.bind_code&&new Date(c.bind_expires)>new Date()?`<span class="pill warn">等待綁定 ${esc(c.bind_code)}</span>`:'<span class="pill dim">未綁定</span>'}</div>
+    ${c.note?`<div class="small muted">${esc(c.note)}</div>`:''}
+    <div class="row"><button class="btn sm" data-code="${c.id}">${c.line_user_id?'重新綁定':'產生綁定碼'}</button><button class="btn sm" data-edit="${c.id}">編輯</button>${c.active?'':'<span class="pill dim">已停用</span>'}</div>
+  </div>`).join('')}</div>`:`<div class="empty">還沒有師傅資料。點「＋ 新增師傅」開始建立名冊。</div>`}`;
+  $('#addCrew').onclick = () => crewForm(null);
+  document.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>crewForm(crewById(b.dataset.edit)));
+  document.querySelectorAll('[data-code]').forEach(b=>b.onclick=()=>bindCode(crewById(b.dataset.code)));
+}
+function crewForm(c){
+  const v = c || { name:'', trade:'', phone:'', note:'', active:true };
+  openModal(`<h2>${c?'編輯師傅':'新增師傅'}</h2><div class="form">
+    <div class="g2"><div class="field"><label for="cName">姓名／稱呼</label><input id="cName" value="${esc(v.name)}" placeholder="王師傅"></div>
+    <div class="field"><label for="cTrade">工種</label><select id="cTrade"><option value="">—</option>${TRADES.map(t=>`<option ${t===v.trade?'selected':''}>${t}</option>`).join('')}</select></div></div>
+    <div class="field"><label for="cPhone">電話</label><input id="cPhone" type="tel" value="${esc(v.phone||'')}"></div>
+    <div class="field"><label for="cNote">備註</label><input id="cNote" value="${esc(v.note||'')}" placeholder="例：週日不接、只做嘉義市區"></div>
+    ${c?`<label class="chk"><input type="checkbox" id="cActive" ${v.active?'checked':''}> 合作中（取消勾選＝停用，不再出現在選單）</label>`:''}
+    ${c?.line_user_id?`<label class="chk"><input type="checkbox" id="cUnbind"> 解除 LINE 綁定</label>`:''}
+    <p class="err" id="cErr"></p></div>
+  <div class="mfoot"><button class="btn" id="cCancel">取消</button><button class="btn pri" id="cSave">儲存</button></div>`);
+  $('#cCancel').onclick = closeModal;
+  $('#cSave').onclick = async () => {
+    const row = { name:$('#cName').value.trim(), trade:$('#cTrade').value, phone:$('#cPhone').value.trim()||null, note:$('#cNote').value.trim()||null, updated_at:new Date().toISOString() };
+    if(!row.name) return $('#cErr').textContent='請填姓名';
+    if(c){ row.active = $('#cActive').checked; if($('#cUnbind')?.checked){ row.line_user_id=null; row.line_name=null; } }
+    const r = c ? await SB.from('hb_crew').update(row).eq('id',c.id).select().single() : await SB.from('hb_crew').insert(row).select().single();
+    if(r.error) return $('#cErr').textContent='儲存失敗：'+r.error.message;
+    closeModal(); toast('已儲存'); await reloadCrew();
+    if(!c) bindCode(r.data);
+  };
+}
+async function reloadCrew(){ const { data, error } = await SB.from('hb_crew').select('*').order('active',{ascending:false}).order('trade').order('name'); if(error) return err(error); S.crew=data; render(); }
+async function bindCode(c){
+  const { data:code, error } = await SB.rpc('hb_crew_new_code', { p_crew:c.id });
+  if(error) return err(error);
+  const url = S.settings?.friend_url || '';
+  const text = `${c.name} 您好，我是赫柏空間設計。之後進場時間會用 LINE 前一天提醒您，請幫忙做兩個步驟：\n\n1. 加入赫柏空間設計官方帳號好友：${url}\n2. 在官方帳號傳這段文字：綁定 ${code}\n\n綁定碼 7 天內有效，謝謝！`;
+  openModal(`<h2>${esc(c.name)} 的綁定碼</h2>
+    <div class="code">${code}</div>
+    <p class="hint">把下面這段訊息傳給師傅（LINE 或簡訊都可以）。師傅傳出「綁定 ${code}」後，官方帳號會自動回覆綁定成功，這裡重新整理就會顯示 LINE ✓。</p>
+    <textarea class="copybox" id="bcText" readonly>${esc(text)}</textarea>
+    <div class="mfoot"><button class="btn" id="bcClose">關閉</button><button class="btn pri" id="bcCopy">複製訊息</button></div>`);
+  $('#bcClose').onclick = () => { closeModal(); reloadCrew(); };
+  $('#bcCopy').onclick = async () => { if(!await copy(text)){ const t=$('#bcText'); t.focus(); t.select(); toast('請按 Ctrl+C 複製'); } };
+}
+
+/* ---------- 明日提醒 ---------- */
+async function renderRemind(){
+  const d = S.remindDate || addDays(today(),1);
+  $('#main').innerHTML = `<div class="bar"><h1>提醒預覽</h1><span class="sp"></span>
+    <label class="small muted" for="rDate">日期</label><input type="date" id="rDate" value="${d}" class="btn sm" style="padding:5px 8px">
+    <button class="btn pri" id="rSend">立即發送這天的提醒</button></div>
+    <div id="rStat"></div><div class="msgs" id="rList"><div class="loading">載入中…</div></div>
+    <div class="sec">最近發送紀錄</div><div class="tbl-wrap" id="rLog"><div class="loading">載入中…</div></div>`;
+  $('#rDate').onchange = () => { S.remindDate = $('#rDate').value; renderRemind(); };
+  $('#rSend').onclick = sendNow;
+  const st = S.settings;
+  const [m, log, cnt] = await Promise.all([
+    SB.rpc('hb_crew_messages', { p_date:d }),
+    SB.from('hb_line_posts').select('created_at,sent_at,status,error,body,created_by').like('created_by','crew-remind:%').order('created_at',{ascending:false}).limit(30),
+    SB.from('hb_line_posts').select('id',{count:'exact',head:true}).eq('status','sent').gte('sent_at', today().slice(0,8)+'01')
+  ]);
+  if(m.error) return err(m.error);
+  const msgs = m.data || [];
+  const okN = msgs.filter(x=>x.ok).length;
+  $('#rStat').innerHTML = `<div class="stat">
+    <div><span class="small muted">${md(d)}（${wd(d)}）會發出</span><b>${okN} 則</b></div>
+    <div><span class="small muted">需自行通知</span><b style="color:${msgs.length-okN?'var(--brick)':'inherit'}">${msgs.length-okN} 則</b></div>
+    <div><span class="small muted">本月官方帳號已推播</span><b>${cnt.count ?? '—'} 則</b></div>
+    <div><span class="small muted">自動發送</span><b style="font-size:16px;padding-top:4px">${st?.enabled?`每天 ${st.remind_hour}:00 後`:'已關閉'}</b></div></div>`;
+  const label = {crew:'師傅', crewgroup:'施工群組', owner:'業主群組', self:'我自己'};
+  $('#rList').innerHTML = msgs.length ? msgs.map(x=>`<div class="msg ${x.ok?'':'bad'}">
+    <div class="msg-h"><span class="pill">${label[x.kind]}</span><b>${esc(x.target)}</b>${x.ok?'<span class="pill ok">會自動送出</span>':`<span class="pill warn">${esc(x.why)}</span>`}
+      ${x.ok?'':`<button class="btn sm" data-copy="${esc(x.body)}" style="margin-left:auto">複製訊息自行傳送</button>`}</div>
+    <div class="bubble">${esc(x.body)}</div></div>`).join('') : `<div class="empty">${md(d)} 沒有工班進場，不會發送提醒。</div>`;
+  document.querySelectorAll('[data-copy]').forEach(b=>b.onclick=()=>copy(b.dataset.copy));
+  if(log.error){ $('#rLog').innerHTML=''; return; }
+  const sl = {pending:'等待中', sending:'發送中', sent:'已送出', failed:'失敗'};
+  $('#rLog').innerHTML = log.data.length ? `<table class="log"><thead><tr><th>時間</th><th>對象</th><th>狀態</th><th>內容</th></tr></thead><tbody>${log.data.map(r=>`<tr>
+    <td class="num">${new Date(r.created_at).toLocaleString('zh-TW',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit',hour12:false})}</td>
+    <td>${label[(r.created_by||'').split(':')[1]]||''}</td>
+    <td>${r.status==='sent'?'<span class="pill ok">已送出</span>':r.status==='failed'?`<span class="pill warn" title="${esc(r.error||'')}">失敗</span>`:`<span class="pill dim">${sl[r.status]||r.status}</span>`}</td>
+    <td class="small">${esc((r.body||'').split('\n').slice(0,2).join('｜')).slice(0,80)}</td></tr>`).join('')}</tbody></table>` : '<div class="empty small">還沒有發送紀錄。</div>';
+}
+async function sendNow(){
+  const d = $('#rDate').value, b = $('#rSend');
+  if(b.dataset.armed!=='1'){ b.dataset.armed='1'; b.textContent='確認發送？再按一次'; setTimeout(()=>{ if(b.isConnected){ b.dataset.armed=''; b.textContent='立即發送這天的提醒'; } },3500); return; }
+  b.disabled = true;
+  const { data, error } = await SB.rpc('hb_crew_queue', { p_date:d, p_force:false });
+  b.disabled = false; b.dataset.armed=''; b.textContent='立即發送這天的提醒';
+  if(error) return err(error);
+  toast(data.queued ? `已排入 ${data.queued} 則，約一分鐘內送出` : '沒有新的提醒要送（已送過的不會重複發）');
+  setTimeout(renderRemind, 1500);
+}
+
+/* ---------- 設定 ---------- */
+function renderSettings(){
+  const s = S.settings || {};
+  $('#main').innerHTML = `<div class="settings"><div class="bar"><h1>提醒設定</h1></div><div class="form">
+    <label class="chk"><input type="checkbox" id="sEn" ${s.enabled?'checked':''}> 啟用每日自動提醒</label>
+    <div class="g2"><div class="field"><label for="sHour">每天幾點發送明天的提醒</label><select id="sHour">${[...Array(17)].map((_,i)=>i+6).map(h=>`<option value="${h}" ${h===s.remind_hour?'selected':''}>${h}:00</option>`).join('')}</select></div>
+    <div class="field"><label for="sUrl">官方帳號加好友網址（放在綁定訊息裡）</label><input id="sUrl" value="${esc(s.friend_url||'')}"></div></div>
+    <label class="chk"><input type="checkbox" id="sSelf" ${s.self_summary?'checked':''}> 傳一份「明日工班總覽」給我自己（含撞期與需自行通知的提醒）</label>
+    <div class="field"><label for="sCrew">師傅提醒範本</label><textarea id="sCrew" style="min-height:220px">${esc(s.crew_tpl||'')}</textarea>
+      <p class="hint">可用：{師傅} {日期} {星期} {時間} {案名} {地址} {工項} {注意} {導航}</p></div>
+    <div class="field"><label for="sCG">施工群組提醒範本</label><textarea id="sCG" style="min-height:200px">${esc(s.crewgroup_tpl||'')}</textarea>
+      <p class="hint">可用：{日期} {星期} {案名} {地址} {清單} {導航}（同一案件同一天的工班合併成清單，含師傅名字與注意事項）。綁定方式：把官方帳號加進施工群組，在群組打「綁定工班 案名」。</p></div>
+    <div class="field"><label for="sOwner">業主群組通知範本</label><textarea id="sOwner" style="min-height:140px">${esc(s.owner_tpl||'')}</textarea>
+      <p class="hint">可用：{日期} {星期} {案名} {清單}（同一案件同一天的工班會合併成清單，不含師傅電話）</p></div>
+    <p class="hint">官方帳號免費方案每月推播則數有上限，傳到群組時依群組人數計算。「明日提醒」頁可以看到本月已推播的則數。</p>
+    <div class="mfoot" style="justify-content:flex-start"><button class="btn pri" id="sSave">儲存設定</button></div>
+  </div></div>`;
+  $('#sSave').onclick = async () => {
+    const row = { enabled:$('#sEn').checked, remind_hour:+$('#sHour').value, friend_url:$('#sUrl').value.trim(), self_summary:$('#sSelf').checked, crew_tpl:$('#sCrew').value, crewgroup_tpl:$('#sCG').value, owner_tpl:$('#sOwner').value, updated_at:new Date().toISOString() };
+    const { data, error } = await SB.from('hb_crew_settings').update(row).eq('id',1).select().single();
+    if(error) return err(error);
+    S.settings = data; toast('設定已儲存');
+  };
+}
+
+SB.auth.onAuthStateChange((ev) => { if(ev==='SIGNED_OUT'){ $('#appView').hidden=true; $('#loginView').hidden=false; } });
+boot();
+</script>
+</body>
+</html>
