@@ -23096,7 +23096,7 @@ react-dom/cjs/react-dom-client.production.js:
     /* 面板緊貼在頁首導覽列下方：依實際看得到的導覽列高度計算，不再露出一條底下的頁面 */
     function fitTop() {
       var h = 0;
-      ['.hbtt-main', '.hb-topnav'].forEach(function (sel) {
+      ['.hbtt-main'].forEach(function (sel) {   // 首頁的黑色品牌列（.hb-topnav）不算導覽，工具面板直接蓋過去
         var els = document.querySelectorAll(sel);
         for (var i = 0; i < els.length; i++) {
           var el = els[i];
