@@ -252,7 +252,7 @@ async function loadAll(){
     ]);
     for(const r of [p,g,c,s,cg]) if(r.error) throw r.error;
     S.crewGroups = new Map(cg.data.map(x=>[x.project_id, x.line_name||'施工群組']));
-    S.projects = p.data; S.groups = new Set(g.data.filter(x=>x.project_id).map(x=>x.project_id)); S.crew = c.data; S.settings = s.data;
+    S.projects = p.data.filter(x=>!/^示範案件/.test(x.name||''));  // App 審核用的示範案件不出現在工班排程 S.groups = new Set(g.data.filter(x=>x.project_id).map(x=>x.project_id)); S.crew = c.data; S.settings = s.data;
     await loadJobs();
   }catch(e){
     if(String(e?.message||'').includes('permission') || e?.code==='42501'){ $('#main').innerHTML='<div class="empty">這個帳號沒有管理權限。</div>'; return; }
