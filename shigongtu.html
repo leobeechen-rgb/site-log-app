@@ -417,7 +417,7 @@ function saveNow(){
 }
 function saveBG(){if(!P)return;if(BG){if(!lsSet(LS.bg(P.id),BG))toast('底圖檔案較大，這台裝置存不下，下次開啟需要重新上傳');}else lsDel(LS.bg(P.id));}
 function loadProject(id){const s=lsGet(LS.p(id));if(!s)return false;try{const o=JSON.parse(s);if(!o||!o.walls)return false;P=migrate(o);BG=P.bg?lsGet(LS.bg(P.id)):null;if(P.bg&&!BG)P.bg=null;return true;}catch(e){return false;}}
-function migrate(o){['walls','opens','rooms','syms','lines','dims','texts','cabs','czones'].forEach(k=>{if(!Array.isArray(o[k]))o[k]=[];});o.prefs=Object.assign({loss:10,symK:1.5,dimH:3.2},o.prefs||{});if(!o.prefs.noFrameV){(o.sheets||[]).forEach(s=>{s.frame=false;});o.prefs.noFrameV=1;}o.syms.forEach(s=>{if(!SYM[s.type]&&SYM_ALIAS[s.type])s.type=SYM_ALIAS[s.type];});o.syms=o.syms.filter(s=>SYM[s.type]);return o;}
+function migrate(o){['walls','opens','rooms','syms','lines','dims','texts','cabs','czones','woods'].forEach(k=>{if(!Array.isArray(o[k]))o[k]=[];});o.prefs=Object.assign({loss:10,symK:1.5,dimH:3.2},o.prefs||{});if(!o.prefs.noFrameV){(o.sheets||[]).forEach(s=>{s.frame=false;});o.prefs.noFrameV=1;}o.syms.forEach(s=>{if(!SYM[s.type]&&SYM_ALIAS[s.type])s.type=SYM_ALIAS[s.type];});o.syms=o.syms.filter(s=>SYM[s.type]);return o;}
 function setSaveState(t){const el=$('#savest');if(el)el.textContent=t;}
 
 /* ---------- history ---------- */
@@ -501,7 +501,8 @@ const SHEETKIND={
  ceil:{n:'天花板計畫圖',code:'CL',cats:['lamp','ceildev'],lines:['indirect','track'],czone:1,label:'ceil'},
  light:{n:'燈具迴路圖',code:'LT',cats:['lamp','switch'],lines:['indirect','track','circuit'],czone:0,label:'name'},
  elec:{n:'水電配置圖',code:'EP',cats:['switch','power','weak','plumb'],lines:[],czone:0,label:'name'},
- cab:{n:'櫃體施工圖',code:'CB'}
+ cab:{n:'櫃體施工圖',code:'CB'},
+ wood:{n:'木作施工圖',code:'WD'}
 };
 
 /* floor materials: pat plank (w=board width, l=length) / grid (w,h) / dots / none */
@@ -535,7 +536,7 @@ const CAB_SPEC=[['body','桶身','18mm 木心板，內部貼美耐板'],['back',
    prim: {k:'l'|'p'|'c'|'a'|'t', geometry in world cm, L:layer, w:pen mm, col, fill, dash, h:handle, hit:screen-only hit target}
    The same list feeds the screen (SVG), the PDF (canvas) and the DXF writer. */
 const COL={k:'#141414',g:'#6b7280',lg:'#a3a9ae',r:'#d7191f',m:'#c026d3',b:'#1f5fbf',o:'#d35400',t:'#0d6a87',poche:'#b9bec3',w:'#ffffff'};
-const LAYERS={'0-FRAME':7,'A-WALL':7,'A-WALL-NEW':3,'A-HATCH':8,'A-DOOR':2,'A-GLASS':4,'A-ROOM':7,'F-FLOOR':8,'C-CEIL':5,'C-ZONE':5,'C-CURTAIN':4,'C-ACPIPE':3,'E-LAMP':6,'E-SWITCH':1,'E-CIRCUIT':1,'E-POWER':1,'E-WEAK':1,'P-PLUMB':1,'CAB':30,'CAB-HIDDEN':8,'DIM':2,'TEXT':7,'LEGEND':7};
+const LAYERS={'0-FRAME':7,'A-WALL':7,'A-WALL-NEW':3,'A-HATCH':8,'A-DOOR':2,'A-GLASS':4,'A-ROOM':7,'F-FLOOR':8,'C-CEIL':5,'C-ZONE':5,'C-CURTAIN':4,'C-ACPIPE':3,'E-LAMP':6,'E-SWITCH':1,'E-CIRCUIT':1,'E-POWER':1,'E-WEAK':1,'P-PLUMB':1,'CAB':30,'CAB-HIDDEN':8,'WOOD':40,'WOOD-HIDDEN':8,'WOOD-HATCH':8,'DIM':2,'TEXT':7,'LEGEND':7};
 const CATLAYER={lamp:'E-LAMP',ceildev:'C-CEIL',switch:'E-SWITCH',power:'E-POWER',weak:'E-WEAK',plumb:'P-PLUMB'};
 const CATCOL={lamp:'m',ceildev:'k',switch:'r',power:'r',weak:'r',plumb:'r'};
 
@@ -812,7 +813,7 @@ function drawFrame(b,sh,k,rows){
  /* title strip */
  const y0=263,y1=287;Ln(20,y0,410,y0,.35);
  const info=P.info;const kd=SHEETKIND[sh.kind];const cab=cabOfSheet(sh);
- const title=sh.title||(cab?`${cab.tag} ${cab.name}`:kd.n);
+ const wdd=woodOfSheet(sh);const title=sh.title||(cab?`${cab.tag} ${cab.name}`:wdd?woodTitle(wdd):kd.n);
  const cols=[[20,84],[84,146],[146,222],[222,292],[292,318],[318,356],[356,383],[383,410]];
  cols.slice(1).forEach(([x])=>Ln(x,y0,x,y1,.18));
  /* brand */
@@ -833,7 +834,7 @@ function drawFrame(b,sh,k,rows){
  T(26,257.5,title,4,{anc:'start',bold:1});const tws=tw(title,4*k)/k;Ln(26,259.1,26+tws,259.1,.35);Ln(26,260,26+tws,260,.13);
  T(28+tws,257.5,`S:1/${sh.scale}`,2,{anc:'start',col:'g'});
  /* graphic scale bar (plan only) */
- if(sh.kind!=='cab'){const mpm=100/k;let step=100,n=3;if(mpm*3>70){n=2;}if(mpm<8){step=500;n=2;}const x1=404,x0=x1-step/k*n;
+ if(!isDet(sh)){const mpm=100/k;let step=100,n=3;if(mpm*3>70){n=2;}if(mpm<8){step=500;n=2;}const x1=404,x0=x1-step/k*n;
   for(let i=0;i<n;i++){b.rect(X(x0+i*step/k),Y(257),step/k*k,1.4*k,{...F,w:.18,fill:i%2?'w':'k'});}
   for(let i=0;i<=n;i++)T(x0+i*step/k,255.8,i*step/100+(i===n?' m':''),1.6);}
  if(sh.legend!==false&&rows&&rows.length){const lr=legendFrameRect(sh,rows);drawLegend(b,sh,k,rows,X,Y,[X(lr[0]),Y(lr[1])]);}
@@ -915,11 +916,229 @@ function buildCab(sh,c){
  if(sh.frame!==false){if(!(cfActive()&&drawCustomFrame(b,sh,k,null)))drawFrame(b,sh,k,null);}
  return b.list;
 }
+
+/* ================= 木作施工圖（牆面造型立面／天花剖面大樣／門片門框） =================
+   P.woods = [{id,tag,name,type:'wall'|'ceil'|'door',...}]；每一張圖對應一張 sheet {kind:'wood',wood:id}
+   跟櫃體施工圖一樣輸出 prims，所以螢幕、PDF、DXF 共用。 */
+const WOODTYPE={wall:{n:'牆面造型立面',pre:'WA'},ceil:{n:'天花剖面大樣',pre:'CS'},door:{n:'門片／門框',pre:'DR'}};
+const WOOD_SPEC={
+ wall:[['face','面材','木皮板／美耐板（色號另附）'],['base','底材','角材骨架＋6mm 夾板'],['groove','溝縫','5mm 溝縫，內貼同色'],['edge','收邊','同面材收邊'],['kick','踢腳','同面材，高度依圖'],['note','備註','尺寸以現場丈量為準']],
+ ceil:[['frame','骨架','1.2"×1" 角材，吊筋間距 90cm 內'],['board','面板','9mm 矽酸鈣板'],['light','燈具','LED 燈條（色溫另附）'],['joint','補縫','AB 膠補縫＋批土'],['finish','表面','乳膠漆（色號另附）'],['note','備註','尺寸以現場丈量為準']],
+ door:[['leaf','門片','實木角料骨架＋雙面 6mm 夾板'],['face','表面','木皮／美耐板（色號另附）'],['frame','門框','實木門框'],['hinge','鉸鏈','不鏽鋼鉸鏈 ×3'],['lock','門鎖／把手','—'],['stop','門擋','地鉸式門擋'],['note','備註','尺寸以現場丈量為準']]
+};
+function woodOfSheet(sh){return sh&&sh.kind==='wood'?byId(P.woods||[],sh.wood):null;}
+const isDet=sh=>!!sh&&(sh.kind==='cab'||sh.kind==='wood');
+function woodTitle(w){return `${w.tag} ${w.name}`;}
+function woodDefaults(t){
+ const spec=Object.fromEntries(WOOD_SPEC[t].map(([k,,v])=>[k,v]));
+ if(t==='wall')return{type:t,name:'電視主牆',W:300,H:260,T:3,base:8,groove:.5,divX:'100,100,100',divY:'',ops:[{x:90,y:90,w:120,h:70,label:'電視位'}],spec};
+ if(t==='ceil')return{type:t,name:'間接照明天花',style:'cove',slab:300,ceil:270,low:255,band:45,lip:10,cove:15,bw:18,bd:15,spec};
+ return{type:t,name:'房門',W:90,H:210,T:12,fw:4.5,lt:4,style:'flat',grooves:3,hinge:'L',swing:'in',handle:'水平把手',spec};
+}
+const numList=(s)=>String(s||'').split(/[,，、\s]+/).map(parseFloat).filter(v=>Number.isFinite(v)&&v>0);
+function woodCuts(list,total){/* 依序累加的分割位置；總和不足補最後一段、超過截掉 */
+ const out=[];let acc=0;for(const v of list){if(acc+v>=total-.01)break;acc+=v;out.push(acc);}return out;}
+function woodTable(b,sh,k,rows){
+ const X=m=>sh.ox+m*k,Y=m=>sh.oy+m*k;const tx=316,twd=90;let ty=14;const F={L:'LEGEND',col:'k'};
+ b.rect(X(tx),Y(ty),twd*k,(rows.length+1.3)*7*k,{...F,w:.25,fill:'w'});
+ b.t([X(tx+2.5),Y(ty+5)],'材料說明 SPECIFICATION',2.3,{...F,anc:'start',bl:'alpha',bold:1});ty+=7.3;
+ rows.forEach(([l,v],i)=>{b.l([X(tx),Y(ty)],[X(tx+twd),Y(ty)],{...F,w:.1,col:'lg'});b.t([X(tx+2.5),Y(ty+4.6)],l,1.8,{...F,col:'g',anc:'start',bl:'alpha'});
+  let s=String(v||'—'),sz=1.9;while(tw(s,sz*k)>62*k&&sz>1.3)sz-=.05;b.t([X(tx+twd-2.5),Y(ty+4.6)],s,sz,{...F,anc:'end',bl:'alpha',bold:i===0?1:0});ty+=7;});
+}
+function woodVT(b,k,x,y,title,sub){b.t([x,y],title,3,{L:'TEXT',col:'k',anc:'start',bl:'alpha',bold:1});b.t([x+tw(title,3*k)+2*k,y],sub,1.9,{L:'TEXT',col:'g',anc:'start',bl:'alpha'});b.l([x,y+1.4*k],[x+tw(title,3*k),y+1.4*k],{L:'TEXT',w:.3,col:'k'});}
+function woodHatch(b,pts,k,sp,ang){hatchPoly(pts,ang==null?45:ang,(sp||1.2)*k,[0,0]).forEach(([p,q])=>b.l(p,q,{L:'WOOD-HATCH',w:.08,col:'lg'}));}
+function woodNote(b,k,at,to,str){/* 引出線＋文字 */b.l(at,to,{L:'TEXT',w:.13,col:'g'});b.c(at,.35*k,{L:'TEXT',w:.13,col:'g',fill:'g'});const right=to[0]>=at[0];b.l(to,[to[0]+(right?1:-1)*(tw(str,2*k)+1*k),to[1]],{L:'TEXT',w:.13,col:'g'});b.t([to[0]+(right?.5*k:-.5*k),to[1]-.6*k],str,2,{L:'TEXT',col:'k',anc:right?'start':'end',bl:'alpha'});}
+
+/* ---------- 牆面造型立面 ---------- */
+function buildWoodWall(b,sh,w){
+ const S=sh.scale,k=S/10,W=+w.W||100,H=+w.H||240,T=+w.T||3,base=Math.min(+w.base||0,H-1),g=Math.max(0,+w.groove||0);
+ const st={L:'WOOD',w:.25,col:'k'};
+ b.l([-4*k,0],[W+4*k,0],{...st,w:.5});woodHatch(b,[[-4*k,0],[W+4*k,0],[W+4*k,1.6*k],[-4*k,1.6*k]],k,1);
+ b.rect(0,-H,W,H,{...st,w:.5,fill:'w'});
+ if(base>0){b.l([0,-base],[W,-base],{...st,w:.25});b.t([W/2,-base/2],'踢腳',Math.min(1.8,base*10/S*.6),{L:'TEXT',col:'g',anc:'middle',bl:'mid'});}
+ const xs=woodCuts(numList(w.divX),W),ys=woodCuts(numList(w.divY),H-base).map(v=>v+base);
+ const vline=x=>{if(g>0){b.l([x-g/2,-H],[x-g/2,-base],{...st,w:.18});b.l([x+g/2,-H],[x+g/2,-base],{...st,w:.18});}else b.l([x,-H],[x,-base],{...st,w:.25});};
+ const hline=y=>{if(g>0){b.l([0,-y-g/2],[W,-y-g/2],{...st,w:.18});b.l([0,-y+g/2],[W,-y+g/2],{...st,w:.18});}else b.l([0,-y],[W,-y],{...st,w:.25});};
+ xs.forEach(vline);ys.forEach(hline);
+ (w.ops||[]).forEach(o=>{const ow=+o.w||0,oh=+o.h||0;if(!(ow>0&&oh>0))return;const x0=+o.x||0,y0=-(+o.y||0)-oh;
+  b.rect(x0,y0,ow,oh,{...st,w:.35,fill:'w'});b.rect(x0+1,y0+1,Math.max(0,ow-2),Math.max(0,oh-2),{L:'WOOD-HIDDEN',w:.13,col:'g',dash:'hidden'});
+  const lab=(o.label||'開口')+`  ${ow}×${oh}`;b.t([x0+ow/2,y0+oh/2],lab,Math.min(2.2,ow*10/S/(tw(lab,1)+.5)),{L:'TEXT',col:'g',anc:'middle',bl:'mid'});
+  drawDim(b,[x0,y0],[x0+ow,y0],-3*k,k,null);drawDim(b,[x0+ow,y0+oh],[x0+ow,y0],3*k,k,null);});
+ const dy=5*k,xc=[0,...xs,W];if(xc.length>2)for(let i=0;i+1<xc.length;i++)drawDim(b,[xc[i],0],[xc[i+1],0],dy,k,null);
+ drawDim(b,[0,0],[W,0],dy+(xc.length>2?6*k:0),k,null);
+ const yc=[0,...(base>0?[base]:[]),...ys,H];for(let i=0;i+1<yc.length;i++)drawDim(b,[0,-yc[i]],[0,-yc[i+1]],-5*k,k,null);
+ if(yc.length>2)drawDim(b,[0,0],[0,-H],-11*k,k,null);
+ woodVT(b,k,0,dy+(xc.length>2?26:20)*k,'立面圖','ELEVATION  1/'+S);
+ /* 側剖面：面材＋底材厚度貼在既有牆上 */
+ const X0=W+30*k;b.rect(X0+T,-H-6,8,H+6,{L:'WOOD',w:.45,col:'k'});woodHatch(b,[[X0+T,-H-6],[X0+T+8,-H-6],[X0+T+8,0],[X0+T,0]],k,1.6);
+ b.rect(X0,-H,T,H,{...st,w:.4,fill:'w'});woodHatch(b,[[X0,-H],[X0+T,-H],[X0+T,0],[X0,0]],k,.6,-45);
+ b.l([X0-3*k,0],[X0+T+8+2*k,0],{...st,w:.5});
+ ys.forEach(y=>{b.l([X0,-y],[X0+T*.6,-y],{...st,w:.25});});
+ drawDim(b,[X0,-H],[X0+T,-H],-4*k,k,null);drawDim(b,[X0+T+8,0],[X0+T+8,-H],6*k,k,null);
+ woodNote(b,k,[X0+T/2,-H*.6],[X0+T+8+6*k,-H*.6-8*k],'面材＋底材 '+T+'cm');woodNote(b,k,[X0+T+4,-H*.3],[X0+T+8+6*k,-H*.3],'既有牆');
+ woodVT(b,k,X0,dy+20*k,'側剖面','SECTION  1/'+S);
+ /* 平面：厚度與分割位置 */
+ const Y0=(xc.length>2?52:46)*k;b.rect(0,Y0,W,T,{...st,w:.4,fill:'w'});woodHatch(b,[[0,Y0],[W,Y0],[W,Y0+T],[0,Y0+T]],k,.6,-45);
+ b.rect(0,Y0+T,W,8,{L:'WOOD',w:.45,col:'k'});woodHatch(b,[[0,Y0+T],[W,Y0+T],[W,Y0+T+8],[0,Y0+T+8]],k,1.6);
+ xs.forEach(x=>b.l([x,Y0],[x,Y0+T*.6],{...st,w:.25}));
+ drawDim(b,[0,Y0],[W,Y0],-4*k,k,null);
+ woodVT(b,k,0,Y0+T+8+14*k,'平面圖','PLAN  1/'+S);
+}
+/* ---------- 天花剖面大樣 ---------- */
+function buildWoodCeil(b,sh,w){
+ const S=sh.scale,k=S/10,st={L:'WOOD',w:.3,col:'k'},bd=.9;
+ const slab=+w.slab||300,ceil=Math.min(+w.ceil||270,slab-2),style=w.style||'cove';
+ const low=Math.min(+w.low||255,ceil-1),band=+w.band||45,lip=Math.min(+w.lip||10,ceil-low-2),cove=+w.cove||15;
+ const bw=+w.bw||18,bdp=Math.min(+w.bd||15,slab-ceil-2);
+ const yf=h=>-h;/* 高度（離地 cm）→ y */
+ const featW=style==='curtain'?bw:style==='cove'?band:band;
+ const L=featW+80,bot=(style==='curtain'?ceil:low)-25;
+ /* 樓板＋既有牆 */
+ b.rect(-12,yf(slab)-12,L+12,12,{L:'WOOD',w:.45,col:'k'});woodHatch(b,[[-12,yf(slab)-12],[L,yf(slab)-12],[L,yf(slab)],[-12,yf(slab)]],k,1.6);
+ b.pl([[0,yf(slab)],[0,yf(bot)]],{L:'WOOD',w:.45,col:'k'});b.pl([[-12,yf(slab)],[-12,yf(bot)]],{L:'WOOD',w:.45,col:'k'});
+ woodHatch(b,[[-12,yf(slab)],[0,yf(slab)],[0,yf(bot)],[-12,yf(bot)]],k,1.6);
+ const brk=(x0,x1,y)=>{const m=(x0+x1)/2,a=2*k;b.pl([[x0,y],[m-a,y],[m-a/2,y-a],[m+a/2,y+a],[m+a,y],[x1,y]],{L:'WOOD',w:.18,col:'k'});};
+ brk(-12-2*k,2*k,yf(bot));
+ const board=(x0,x1,h)=>{b.rect(Math.min(x0,x1),yf(h),Math.abs(x1-x0),bd,{...st,w:.35,fill:'w'});};
+ const vboard=(x,h0,h1)=>{b.rect(x-bd/2,yf(Math.max(h0,h1)),bd,Math.abs(h1-h0),{...st,w:.35,fill:'w'});};
+ const joist=(x,h)=>b.rect(x-1.5,yf(h)-2.5,3,2.5,{L:'WOOD',w:.2,col:'k',fill:'poche'});
+ const hanger=(x,h)=>b.l([x,yf(slab)],[x,yf(h)-2.5],{L:'WOOD',w:.18,col:'k',dash:'center'});
+ const runJ=(x0,x1,h)=>{for(let x=x0+6;x<x1-3;x+=30)joist(x,h+bd);};
+ const dimsR=[];/* 右側高度尺寸鏈 */
+ if(style==='cove'){
+  const xi=band-cove;/* 燈槽內側面 */
+  board(0,band,low);vboard(band,low,low+lip);board(xi,band,low+bd);/* 槽底 */
+  vboard(xi,low+bd,ceil);board(xi,L,ceil);
+  runJ(0,xi,low);runJ(xi,L,ceil);hanger(xi/2,low+bd);hanger(xi+45,ceil+bd);hanger(L-15,ceil+bd);
+  b.rect(xi+cove*.25,yf(low+bd+1.4),cove*.35,1.4,{L:'E-LAMP',w:.25,col:'m',fill:'m'});
+  woodNote(b,k,[xi+cove*.4,yf(low+bd+1)],[band+14*k,yf(low+lip)+10*k],'LED 燈條');
+  drawDim(b,[0,yf(low)],[band,yf(low)],6*k,k,null);drawDim(b,[xi,yf(ceil)],[band,yf(ceil)],-4*k,k,null);
+  drawDim(b,[band,yf(low)],[band,yf(low+lip)],5*k,k,null);if(ceil-(low+lip)>.5)drawDim(b,[band,yf(low+lip)],[band,yf(ceil)],5*k,k,null);
+  dimsR.push(low,ceil);
+ }else if(style==='curtain'){
+  board(bw,L,ceil);vboard(bw,ceil,ceil+bdp);board(0,bw,ceil+bdp);
+  runJ(bw,L,ceil);hanger(bw+40,ceil+bd);hanger(L-15,ceil+bd);
+  b.l([bw*.35,yf(ceil+bdp)+bd],[bw*.35,yf(ceil+bdp)+bd+1.5],{...st,w:.5});b.l([bw*.7,yf(ceil+bdp)+bd],[bw*.7,yf(ceil+bdp)+bd+1.5],{...st,w:.5});
+  [bw*.35,bw*.7].forEach(x=>b.pl([[x,yf(ceil+bdp)+bd+1.5],[x+1.2,yf(ceil)+10],[x-1,yf(ceil)+22]],{L:'WOOD-HIDDEN',w:.13,col:'g',dash:'hidden'}));
+  woodNote(b,k,[bw*.5,yf(ceil+bdp)+bd+1],[bw+16*k,yf(ceil+bdp)-6*k],'窗簾軌道');
+  drawDim(b,[0,yf(ceil)],[bw,yf(ceil)],6*k,k,null);drawDim(b,[bw,yf(ceil)],[bw,yf(ceil+bdp)],-5*k,k,null);
+  dimsR.push(ceil);
+ }else{
+  board(0,band,low);vboard(band,low,ceil);board(band,L,ceil);
+  runJ(0,band,low);runJ(band,L,ceil);hanger(band/2,low+bd);hanger(band+40,ceil+bd);hanger(L-15,ceil+bd);
+  drawDim(b,[0,yf(low)],[band,yf(low)],6*k,k,null);drawDim(b,[band,yf(low)],[band,yf(ceil)],5*k,k,null);
+  dimsR.push(low,ceil);
+ }
+ const xr=L;const hs=[...new Set([...dimsR,slab])].sort((a,c)=>a-c);
+ hs.forEach((h,i)=>{if(i>0)drawDim(b,[xr,yf(hs[i-1])],[xr,yf(h)],8*k,k,null);});
+ hs.forEach(h=>{b.t([xr+15*k,yf(h)],`H${h}`,2,{L:'TEXT',col:'k',anc:'start',bl:'mid'});});
+ b.t([xr+15*k,yf(slab)-5*k],'原頂（樓板下緣）',1.8,{L:'TEXT',col:'g',anc:'start',bl:'mid'});
+ woodNote(b,k,[L-25,yf(ceil)+bd/2],[L-25+10*k,yf(ceil)+12*k],'9mm 矽酸鈣板');
+ woodNote(b,k,[L-21,yf(ceil+bd)-1.2],[L-21-6*k,yf(ceil+bd)-12*k],'角材骨架');
+ woodVT(b,k,-12,yf(bot)+16*k,'天花剖面大樣',(style==='cove'?'間接照明':style==='curtain'?'窗簾盒':'高低差')+'  DETAIL  1/'+S);
+}
+/* ---------- 門片／門框 ---------- */
+function buildWoodDoor(b,sh,w){
+ const S=sh.scale,k=S/10,st={L:'WOOD',w:.3,col:'k'};
+ const W=+w.W||90,H=+w.H||210,T=+w.T||12,hid=w.style==='hidden',fw=hid?0:(+w.fw||4.5),lt=+w.lt||4;
+ const lw=W-2*fw,lh=H-fw,L=w.hinge==='R'?'R':'L';
+ /* 立面 */
+ b.l([-30,0],[W+30,0],{...st,w:.5});woodHatch(b,[[-30,0],[W+30,0],[W+30,1.6*k],[-30,1.6*k]],k,1);
+ if(!hid){b.pl([[0,0],[0,-H],[W,-H],[W,0]],{...st,w:.5});b.pl([[fw,0],[fw,-H+fw],[W-fw,-H+fw],[W-fw,0]],{...st,w:.25});}
+ const g=.3;b.rect(fw+g,-lh+g,lw-2*g,lh-g-.8,{...st,w:hid?.25:.3,fill:'w'});
+ if(hid){b.l([0,-H],[0,0],{...st,w:.18,dash:'hidden'});b.l([W,-H],[W,0],{...st,w:.18,dash:'hidden'});b.l([0,-H],[W,-H],{...st,w:.18,dash:'hidden'});}
+ if(w.style==='groove'){const n=Math.max(1,Math.round(+w.grooves||3));for(let i=1;i<=n;i++){const y=-lh+lh*i/(n+1);b.l([fw+3,y-.3],[W-fw-3,y-.3],{...st,w:.15});b.l([fw+3,y+.3],[W-fw-3,y+.3],{...st,w:.15});}}
+ const hx=L==='L'?fw:W-fw,ox=L==='L'?W-fw:fw;/* 鉸鏈側／開啟側 */
+ b.l([ox,-lh],[hx,-lh/2],{...st,w:.13,dash:'dash'});b.l([ox,0],[hx,-lh/2],{...st,w:.13,dash:'dash'});/* 開門符號：尖端指向鉸鏈側 */
+ [0.12,0.5,0.88].forEach(t=>b.rect(hx+(L==='L'?0:-1.2),-lh+lh*t-4,1.2,8,{...st,w:.15,fill:'poche'}));
+ const hdx=L==='L'?W-fw-7:fw+7;b.rect(hdx-(L==='L'?12:0),-100-1,12,2,{...st,w:.25,fill:'w'});b.c([hdx,-100],1.6,{...st,w:.2,fill:'w'});
+ if(w.handle)b.t([hdx+(L==='L'?-6:6),-100-4*k],w.handle,1.8,{L:'TEXT',col:'g',anc:'middle',bl:'alpha'});
+ const dy=5*k;if(!hid){drawDim(b,[0,0],[fw,0],dy,k,null);drawDim(b,[fw,0],[W-fw,0],dy,k,null);drawDim(b,[W-fw,0],[W,0],dy,k,null);}
+ drawDim(b,[0,0],[W,0],dy+(hid?0:6*k),k,null);
+ drawDim(b,[0,0],[0,-lh],-5*k,k,null);if(!hid)drawDim(b,[0,-lh],[0,-H],-5*k,k,null);drawDim(b,[0,0],[0,-H],-11*k,k,null);
+ woodVT(b,k,0,dy+26*k,'門立面圖','ELEVATION  1/'+S);
+ /* 平面剖面 */
+ const X0=W+50,Y0=-H*.55;const wall=(x0,x1)=>{b.rect(x0,Y0,x1-x0,T,{L:'WOOD',w:.45,col:'k'});woodHatch(b,[[x0,Y0],[x1,Y0],[x1,Y0+T],[x0,Y0+T]],k,1.6);};
+ wall(X0-30,X0);wall(X0+W,X0+W+30);
+ if(!hid){b.rect(X0,Y0-.8,fw,T+1.6,{...st,w:.35,fill:'w'});b.rect(X0+W-fw,Y0-.8,fw,T+1.6,{...st,w:.35,fill:'w'});
+  const stopY=w.swing==='out'?Y0+T-lt-1.2:Y0+lt;b.rect(X0+fw,stopY,1.2,1.2,{...st,w:.2,fill:'poche'});b.rect(X0+W-fw-1.2,stopY,1.2,1.2,{...st,w:.2,fill:'poche'});}
+ const inS=w.swing!=='out';const ly=inS?Y0:Y0+T-lt;const hX=L==='L'?X0+fw:X0+W-fw,sgn=L==='L'?1:-1,dir=inS?-1:1;
+ b.rect(Math.min(hX,hX+sgn*lw),ly,lw,lt,{L:'WOOD-HIDDEN',w:.13,col:'g',dash:'hidden'});
+ const pivot=[hX,inS?ly:ly+lt];b.rect(L==='L'?hX:hX-lt,pivot[1]+(inS?-lw:0),lt,lw,{...st,w:.3,fill:'w'});
+ const a0=dir<0?-Math.PI/2:Math.PI/2,a1=L==='L'?0:Math.PI;const A0=Math.min(a0,a1),A1=Math.max(a0,a1);
+ b.a(pivot,lw,(L==='L'&&dir<0)||(L==='R'&&dir>0)?a0:a1,(L==='L'&&dir<0)||(L==='R'&&dir>0)?a1:a0,{L:'WOOD',w:.13,col:'g',dash:'dash'});
+ drawDim(b,[X0,Y0+T],[X0+W,Y0+T],5*k,k,null);drawDim(b,[X0+W+30,Y0+T],[X0+W+30,Y0],5*k,k,null);
+ woodVT(b,k,X0-30,Y0+T+20*k,'平面剖面','PLAN SECTION  1/'+S);
+}
+function buildWoodBare(sh,w){const b=PB(sh.scale/10);if(w.type==='wall')buildWoodWall(b,sh,w);else if(w.type==='ceil')buildWoodCeil(b,sh,w);else buildWoodDoor(b,sh,w);return b;}
+function buildWood(sh,w){
+ const k=sh.scale/10,b=buildWoodBare(sh,w);
+ const rows=[[WOODTYPE[w.type].n,w.type==='wall'?`W${w.W} × H${w.H} × T${w.T}`:w.type==='door'?`門洞 ${w.W} × ${w.H}，牆厚 ${w.T}`:`天花 H${w.ceil}，原頂 H${w.slab}`],
+  ...WOOD_SPEC[w.type].map(([key,lab])=>[lab,(w.spec&&w.spec[key])||'—'])];
+ woodTable(b,sh,k,rows);
+ if(sh.frame!==false){if(!(cfActive()&&drawCustomFrame(b,sh,k,null)))drawFrame(b,sh,k,null);}
+ return b.list;
+}
+function woodBox(w,k){const pr=buildWoodBare({scale:k*10},w).list;const pts=[];
+ for(const p of pr){if(p.k==='l')pts.push(p.p,p.q);else if(p.k==='p')pts.push(...p.pts);else if(p.k==='c'||p.k==='a')pts.push([p.c[0]-p.r,p.c[1]-p.r],[p.c[0]+p.r,p.c[1]+p.r]);
+  else if(p.k==='t'){const tw0=tw(p.str,p.hh);const x0=p.anc==='middle'?p.p[0]-tw0/2:p.anc==='end'?p.p[0]-tw0:p.p[0];pts.push([x0,p.p[1]-p.hh],[x0+tw0,p.p[1]+p.hh*.3]);}}
+ const r=bb(pts);return{x0:r[0],y0:r[1],x1:r[2],y1:r[3]};}
+function woodAutoScale(w){for(const S of [5,10,15,20,25,30,40,50,60]){const k=S/10,bx=woodBox(w,k);if((bx.x1-bx.x0)/k<=282&&(bx.y1-bx.y0)/k<=228)return S;}return 60;}
+function woodFit(sh,w){const k=sh.scale/10,bx=woodBox(w,k);const cx=(bx.x0+bx.x1)/2,cy=(bx.y0+bx.y1)/2;sh.ox=cx-168*k;sh.oy=cy-132*k;}
+function addWood(type){
+ P.woods=P.woods||[];const w={id:uid(),...woodDefaults(type)};
+ let n=P.woods.filter(x=>x.type===type).length+1;while(P.woods.some(x=>x.tag===WOODTYPE[type].pre+n))n++;w.tag=WOODTYPE[type].pre+n;P.woods.push(w);
+ let m=P.sheets.filter(s=>s.kind==='wood').length+1;const code=()=>'WD-'+String(m).padStart(2,'0');while(P.sheets.some(s=>s.code===code()))m++;
+ const sh={id:'wd-'+w.id,kind:'wood',wood:w.id,scale:woodAutoScale(w),ox:0,oy:0,frame:true,code:code()};woodFit(sh,w);P.sheets.push(sh);return sh;}
+function woodPanelHTML(w,tab){
+ tab=tab||'size';if(!w)return '<section class="sec"><p class="mut">找不到這張木作圖。</p></section>';
+ const N=(f,v,l,o={})=>I('wd.'+f,v,{label:l,type:'number',min:0,...o});
+ if(tab==='mat')return `<section class="sec"><h3>材料說明<small>SPEC</small></h3>${WOOD_SPEC[w.type].map(([k,l])=>I('wspec.'+k,(w.spec||{})[k]||'',{label:l})).join('')}<p class="fine" style="margin:0">會標註在施工圖右側的材料說明表。</p></section>`;
+ let h=`<section class="sec"><h3>${esc(WOODTYPE[w.type].n)}<small>WOODWORK</small></h3><div class="r2">${I('wd.tag',w.tag,{label:'編號'})}${I('wd.name',w.name,{label:'名稱'})}</div>`;
+ if(w.type==='wall'){
+  h+=`<div class="r2">${N('W',w.W,'寬 W')}${N('H',w.H,'高 H')}</div><div class="r3">${N('T',w.T,'厚度（面材＋底材）',{step:.1})}${N('base',w.base,'踢腳高')}${N('groove',w.groove,'溝縫寬',{step:.1})}</div>
+   ${I('wd.divX',w.divX||'',{label:'直向分割：由左往右的寬度，用逗號分開（例 100,100,100）'})}${I('wd.divY',w.divY||'',{label:'橫向分割：踢腳以上由下往上的高度（可空白）'})}</section>
+   <section class="sec"><h3>開口／設備位<small>電視、插座盒、層板凹槽</small></h3>`;
+  (w.ops||[]).forEach((o,i)=>{h+=`<div style="border:1px solid var(--rule);border-radius:5px;padding:8px 10px;margin-bottom:8px"><div class="r2">${I('wdo.label',o.label||'',{label:'名稱',ci:i})}${I('wdo.w',o.w,{label:'寬',type:'number',ci:i})}</div><div class="r3">${I('wdo.h',o.h,{label:'高',type:'number',ci:i})}${I('wdo.x',o.x,{label:'距左',type:'number',ci:i})}${I('wdo.y',o.y,{label:'離地',type:'number',ci:i})}</div><button class="btn sm" data-act="wdOpDel" data-ci="${i}">刪除這個開口</button></div>`;});
+  h+=`<button class="btn full" data-act="wdOpAdd">＋ 新增開口</button></section>`;
+ }else if(w.type==='ceil'){
+  h+=`${SEL('wd.style',w.style,[['cove','間接照明（燈槽）'],['curtain','窗簾盒'],['step','高低差']],{label:'大樣種類'})}<div class="r2">${N('slab',w.slab,'原頂高（樓板下緣離地）')}${N('ceil',w.ceil,'天花完成高')}</div>`;
+  if(w.style==='curtain')h+=`<div class="r2">${N('bw',w.bw,'窗簾盒寬')}${N('bd',w.bd,'窗簾盒深（往上）')}</div>`;
+  else h+=`<div class="r2">${N('low',w.low,'降板處完成高')}${N('band',w.band,'降板寬（離牆）')}</div>`;
+  if(w.style==='cove')h+=`<div class="r2">${N('lip',w.lip,'擋光板高')}${N('cove',w.cove,'燈槽深')}</div><p class="fine" style="margin:0">燈槽開口高度自動計算：天花完成高 −（降板高＋擋光板高）＝ ${Math.max(0,(+w.ceil)-(+w.low)-(+w.lip))} cm。</p>`;
+  h+=`</section>`;
+ }else{
+  h+=`${SEL('wd.style',w.style,[['flat','平板門'],['groove','溝縫造型門'],['hidden','隱藏門（無門框）']],{label:'門的樣式'})}<div class="r2">${N('W',w.W,'門洞寬')}${N('H',w.H,'門洞高')}</div>
+   <div class="r3">${N('T',w.T,'牆厚')}${w.style==='hidden'?'':N('fw',w.fw,'門框面寬',{step:.1})}${N('lt',w.lt,'門片厚',{step:.1})}</div>
+   ${w.style==='groove'?N('grooves',w.grooves,'溝縫條數'):''}<div class="r2">${SEL('wd.hinge',w.hinge,[['L','左側鉸鏈'],['R','右側鉸鏈']],{label:'鉸鏈側'})}${SEL('wd.swing',w.swing,[['in','往室內開'],['out','往外開']],{label:'開門方向'})}</div>${I('wd.handle',w.handle||'',{label:'把手標註'})}
+   <p class="fine" style="margin:0">門片寬自動計算：${Math.max(0,(+w.W)-2*(w.style==='hidden'?0:+w.fw))} cm。</p></section>`;
+ }
+ h+=`<section class="sec"><div class="acts" style="margin-bottom:8px"><button class="btn" data-act="woodAuto">自動比例並置中</button></div><button class="btn dng full" data-act="woodDel">刪除這張木作圖</button></section>`;
+ return h;
+}
+function woodField(el,final){
+ const f=el.dataset.f;const sh=sheet(),w=woodOfSheet(sh);if(!w)return false;
+ if(!(f.startsWith('wd.')||f.startsWith('wdo.')||f.startsWith('wspec.')))return false;
+ const v=el.type==='checkbox'?el.checked:el.value,n=parseFloat(v),ok=Number.isFinite(n);let rp=false;
+ if(f.startsWith('wspec.')){w.spec=w.spec||{};w.spec[f.slice(6)]=v;}
+ else if(f.startsWith('wdo.')){const o=(w.ops||[])[+el.dataset.ci];if(o){const key=f.slice(4);if(key==='label')o.label=v;else if(ok&&n>=0)o[key]=n;}}
+ else{const key=f.slice(3);
+  if(key==='tag'){w.tag=v.trim()||w.tag;if(final)renderSheets();}
+  else if(key==='name'){w.name=v;if(final)renderSheets();}
+  else if(['divX','divY','handle'].includes(key))w[key]=v;
+  else if(['style','hinge','swing'].includes(key)){const CN={cove:'間接照明天花',curtain:'窗簾盒',step:'天花高低差'};if(w.type==='ceil'&&key==='style'&&Object.values(CN).includes(w.name)){w.name=CN[v]||w.name;renderSheets();}w[key]=v;rp=true;}
+  else if(ok&&n>=0)w[key]=n;
+ }
+ dirty=true;
+ if(final){if(sh.frame!==false&&!sh.lock&&f.startsWith('wd.')&&!['wd.tag','wd.name','wd.handle'].includes(f)){sh.scale=woodAutoScale(w);woodFit(sh,w);}commit();if(rp)renderPanel();}
+ render();return true;
+}
+
 let bgImgEl=null,bgImgSrc=null;
 function bgImage(){if(!BG)return null;if(bgImgSrc!==BG){bgImgSrc=BG;bgImgEl=new Image();bgImgEl.src=BG;}return bgImgEl;}
 function bgImageReady(){const im=bgImage();if(!im)return Promise.resolve();if(im.complete&&im.naturalWidth)return Promise.resolve();return new Promise(r=>{im.onload=r;im.onerror=r;setTimeout(r,4000);});}
 function bgPrims(){const b=P.bg;if(!b||!BG||b.hidden||b.print===false)return[];const im=bgImage();if(!im)return[];const w=b.w*b.scale,h=b.h*b.scale;return[{k:'i',x:b.x,y:b.y,w,h,rot:b.rot||0,op:b.opacity==null?.55:b.opacity,img:im,bg:1}];}
-function buildSheet(sh,exp){if(sh.kind==='cab'){const c=cabOfSheet(sh);return c?buildCab(sh,c):[];}const pl=buildPlan(sh);return exp?bgPrims().concat(cadPrims(sh,sh.scale/10),pl):pl;}
+function buildSheet(sh,exp){if(sh.kind==='wood'){const w=woodOfSheet(sh);return w?buildWood(sh,w):[];}if(sh.kind==='cab'){const c=cabOfSheet(sh);return c?buildCab(sh,c):[];}const pl=buildPlan(sh);return exp?bgPrims().concat(cadPrims(sh,sh.scale/10),pl):pl;}
 
 /* ================= output: screen SVG, PDF canvas, DXF, zip, file save ================= */
 const DASH={dash:[2.2,1.2],hidden:[1.1,.8],center:[6,1.2,1.2,1.2],dot:[.3,.9]};
@@ -1026,7 +1245,7 @@ let jspdfReady=null;
 function ensureJsPDF(){if(window.jspdf)return Promise.resolve();if(!jspdfReady)jspdfReady=loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js').catch(e=>{jspdfReady=null;throw e;});return jspdfReady;}
 /* frameless plan sheets: fit the printed A3 area around what is actually drawn (keep the chosen scale if it fits) */
 function printSheet(sh){
- if(sh.frame!==false||sh.kind==='cab')return sh;
+ if(sh.frame!==false||isDet(sh))return sh;
  const measure=S=>{const t={...sh,scale:S};const pr=buildSheet(t,true);const pts=[];for(const p of pr){if(p.hit||p.sel)continue;if(p.k==='l'){pts.push(p.p,p.q);}else if(p.k==='p')pts.push(...p.pts);else if(p.k==='c'||p.k==='a'){pts.push([p.c[0]-p.r,p.c[1]-p.r],[p.c[0]+p.r,p.c[1]+p.r]);}else if(p.k==='t')pts.push(p.p);else if(p.k==='i'){const cx=p.x+p.w/2,cy=p.y+p.h/2,a=(p.rot||0)*Math.PI/180;[[-1,-1],[1,-1],[1,1],[-1,1]].forEach(([sx,sy])=>{const x=sx*p.w/2,y=sy*p.h/2;pts.push([cx+x*Math.cos(a)-y*Math.sin(a),cy+x*Math.sin(a)+y*Math.cos(a)]);});}}return pts.length?bb(pts):null;};
  const list=[sh.scale,...SCALES.filter(s=>s>sh.scale)];let pick=sh.scale,box=null;
  for(const S of list){const b=measure(S);if(!b)return sh;const k=S/10;box=b;pick=S;if((b[2]-b[0])/k<=400&&(b[3]-b[1])/k<=277)break;}
@@ -1045,13 +1264,13 @@ async function exportDXF(ids){
  if(files.length===1&&!inArtifact())return saveFile(files[0].name,files[0].data,'application/dxf');
  return saveFile(`${safeName(P.info.name)}-DXF.zip`,zip(files),'application/zip');
 }
-function sheetTitle(sh){const c=cabOfSheet(sh);return sh.title||(c?`${c.tag} ${c.name} 施工圖`:SHEETKIND[sh.kind].n);}
+function sheetTitle(sh){const c=cabOfSheet(sh),w=woodOfSheet(sh);return sh.title||(c?`${c.tag} ${c.name} 施工圖`:w?`${woodTitle(w)} 木作施工圖`:SHEETKIND[sh.kind].n);}
 
 /* ================= projects & sample ================= */
 function newProject(name){
  const p={v:1,id:'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),nid:1,created:Date.now(),
   info:{name:name||'新案件',client:'',address:'',designer:'陳奕菁',date:today()},
-  walls:[],opens:[],rooms:[],syms:[],lines:[],dims:[],texts:[],cabs:[],czones:[],bg:null,prefs:{loss:10,symK:1.5,dimH:3.2,noFrameV:1},
+  walls:[],opens:[],rooms:[],syms:[],lines:[],dims:[],texts:[],cabs:[],woods:[],czones:[],bg:null,prefs:{loss:10,symK:1.5,dimH:3.2,noFrameV:1},
   sheets:['floor','ceil','light','elec'].map(k=>({id:k,kind:k,scale:50,ox:-1100,oy:-700,frame:false,legend:true,showH:true,code:SHEETKIND[k].code+'-01'}))};
  return p;
 }
@@ -1070,7 +1289,7 @@ function sheetContentBounds(sh,S){
  return pts.length?bb(pts):null;}
 /* centre the drawing in the frame's drawing area (title block excluded); only step aside if it would hit the legend */
 function fitPlanFrame(sh,autoScale){
- if(sh.kind==='cab'||sh.lock)return;const A=frameArea();const m=6;const X0=A[0]+m,X1=A[2]-m,Y0=A[1]+m,Y1=A[3]-m;
+ if(isDet(sh)||sh.lock)return;const A=frameArea();const m=6;const X0=A[0]+m,X1=A[2]-m,Y0=A[1]+m,Y1=A[3]-m;
  if(autoScale){for(const S of [30,40,50,60,100,150,200]){const bx=sheetContentBounds(sh,S);if(!bx)return;const k=S/10;if((bx[2]-bx[0])/k<=X1-X0&&(bx[3]-bx[1])/k<=Y1-Y0){sh.scale=S;break;}sh.scale=S;}}
  const b=sheetContentBounds(sh,sh.scale)||planBounds();if(!b)return;const k=sh.scale/10;const wm=(b[2]-b[0])/k,hm=(b[3]-b[1])/k;
  let px=(X0+X1)/2-wm/2,py=(Y0+Y1)/2-hm/2;
@@ -1092,13 +1311,13 @@ function fitPlanFrame(sh,autoScale){
 function legendHitsPlan(sh){if(sh.legend===false)return false;const rows=legendRows(sh);if(!rows.length)return false;const b=sheetContentBounds(sh,sh.scale);if(!b)return false;const k=sh.scale/10;
  const x0=(b[0]-sh.ox)/k,y0=(b[1]-sh.oy)/k,x1=(b[2]-sh.ox)/k,y1=(b[3]-sh.oy)/k;const r=legendFrameRect(sh,rows);return x0<r[2]&&x1>r[0]&&y0<r[3]&&y1>r[1];}
 /* 圖示說明變高壓到圖時：圖不動，改把圖示說明換到空的角落 */
-function legendAutoCorner(){if(!P||!P.sheets)return;P.sheets.forEach(sh=>{if(sh.kind==='cab'||sh.frame===false||sh.legend===false||sh.legendCornerFixed)return;
+function legendAutoCorner(){if(!P||!P.sheets)return;P.sheets.forEach(sh=>{if(isDet(sh)||sh.frame===false||sh.legend===false||sh.legendCornerFixed)return;
  const rows=legendRows(sh);if(!rows.length)return;const b=sheetContentBounds(sh,sh.scale);if(!b)return;const k=sh.scale/10;
  const x0=(b[0]-sh.ox)/k,y0=(b[1]-sh.oy)/k,x1=(b[2]-sh.ox)/k,y1=(b[3]-sh.oy)/k;
  const ov=c=>{const r=legendFrameRect(sh,rows,c);return Math.max(0,Math.min(x1,r[2])-Math.max(x0,r[0]))*Math.max(0,Math.min(y1,r[3])-Math.max(y0,r[1]));};
  const curC=sh.legendCorner||'tr';if(ov(curC)<1)return;let best=curC,bo=ov(curC);for(const c of ['tr','br','tl','bl']){const o=ov(c);if(o<bo-1){best=c;bo=o;}}sh.legendCorner=best;});}
-function refitFramesOnce(){if(!P||P.prefs.fitV3)return;if(P.cad&&!CADG)return;P.sheets.forEach(s=>{if(s.kind!=='cab'&&s.frame!==false&&(!P.prefs.fitV2||legendHitsPlan(s)))fitPlanFrame(s,false);});P.prefs.fitV2=1;P.prefs.fitV3=1;saveSoon();dirty=true;}
-function syncFrames(sh){if(sh.kind==='cab')return;P.sheets.forEach(s=>{if(s!==sh&&s.kind!=='cab'&&s.scale===sh.scale){s.ox=sh.ox;s.oy=sh.oy;}});}
+function refitFramesOnce(){if(!P||P.prefs.fitV3)return;if(P.cad&&!CADG)return;P.sheets.forEach(s=>{if(!isDet(s)&&s.frame!==false&&(!P.prefs.fitV2||legendHitsPlan(s)))fitPlanFrame(s,false);});P.prefs.fitV2=1;P.prefs.fitV3=1;saveSoon();dirty=true;}
+function syncFrames(sh){if(isDet(sh))return;P.sheets.forEach(s=>{if(s!==sh&&!isDet(s)&&s.scale===sh.scale){s.ox=sh.ox;s.oy=sh.oy;}});}
 function addCabSheet(c){let n=P.sheets.filter(s=>s.kind==='cab').length+1;const code=()=>'CB-'+String(n).padStart(2,'0');while(P.sheets.some(s=>s.code===code()))n++;
  const sh={id:'cab-'+c.id,kind:'cab',cab:c.id,scale:cabAutoScale(c),ox:0,oy:0,frame:true,code:code()};cabFit(sh,c);P.sheets.push(sh);return sh;}
 
@@ -1279,8 +1498,8 @@ async function importCAD(f){
  CADG=g;cadIndex=null;cadPathCache=null;
  P.cad={name:f.name,unit,unitAuto:!CAD_UNITS[ins],ox:r1(ox),oy:r1(oy),print:true,ink:'k',layers:lay,core:cb};
  P.sheets.forEach(sh=>{delete sh.cadOff;delete sh.cadHide;});
- saveCAD();cadRectCache=null;relinkCadCabs(true);commit();if(sheet().kind==='cab')gotoSheet('floor');
- P.sheets.filter(s=>s.kind!=='cab').forEach(sh=>fitPlanFrame(sh,true));commit();
+ saveCAD();cadRectCache=null;relinkCadCabs(true);commit();if(isDet(sheet()))gotoSheet('floor');
+ P.sheets.filter(s=>!isDet(s)).forEach(sh=>fitPlanFrame(sh,true));commit();
  cur.tab='sheet';openPanel();renderAll();fitView();
  const nPts=g.pl.reduce((a,o)=>a+o.p.length/2,0);
  toast(`已匯入 ${f.name}：${lay.length} 個圖層${g.trunc?'（檔案太大，只讀入一部分）':''}。請確認單位是否正確`,5000);
@@ -1305,7 +1524,7 @@ function cadW(rx,ry){const c=P.cad,u=c.unit,a=(c.rot||0)*Math.PI/180;const x=rx*
 function cadR(wx,wy){const c=P.cad,u=c.unit,a=-(c.rot||0)*Math.PI/180;const x=wx-c.ox,y=wy-c.oy;return[(x*Math.cos(a)-y*Math.sin(a))/u,(x*Math.sin(a)+y*Math.cos(a))/u];}
 function cadSetRot(deg){const c=P.cad;if(!c)return;const b=c.core||(CADG?CADG.bb:[0,0,0,0]);const cr=[(b[0]+b[2])/2,(b[1]+b[3])/2];const wc=cadW(cr[0],cr[1]);c.rot=((deg%360)+360)%360;if(Math.abs(c.rot-Math.round(c.rot))<1e-6)c.rot=Math.round(c.rot);const now=cadW(cr[0],cr[1]);c.ox=r1(c.ox+wc[0]-now[0]);c.oy=r1(c.oy+wc[1]-now[1]);cadIndex=null;}
 function cadLayerOn(sh,name){if(!P.cad)return false;const off=sh&&sh.cadOff;if(off)return !off.includes(name);const l=P.cad.layers.find(x=>x.n===name);return l?l.on:true;}
-function cadVisible(sh){return !!(P.cad&&CADG&&sh&&sh.kind!=='cab'&&!sh.cadHide);}
+function cadVisible(sh){return !!(P.cad&&CADG&&sh&&!isDet(sh)&&!sh.cadHide);}
 function cadBounds(){if(!P.cad||!CADG)return null;const c=P.cad.core||CADG.bb;return bb([cadW(c[0],c[1]),cadW(c[2],c[1]),cadW(c[2],c[3]),cadW(c[0],c[3])]);}
 /* screen: one path per visible set, cached */
 function cadSVG(sh){
@@ -1432,7 +1651,7 @@ function cfText(b,t,s,X,Y,k){const lines=String(s).split('\n');const ra=(t.r||0)
 function drawCustomFrame(b,sh,k,rows){
  const g=cfGeom();if(!g)return false;const X=m=>sh.ox+m*k,Y=m=>sh.oy+m*k;const P2=p=>[X(p[0]),Y(p[1])];const F={L:'0-FRAME',col:'k'};
  g.pl.forEach(o=>{const r=bb(o.pts);const outer=Math.abs(r[0]-g.F[0])<.5&&Math.abs(r[2]-g.F[2])<.5&&Math.abs(r[1]-g.F[1])<.5&&Math.abs(r[3]-g.F[3])<.5;(o.c?b.pg:b.pl)(o.pts.map(P2),{...F,w:outer?.4:.25});});
- const info=P.info;const cab=cabOfSheet(sh);const kd=SHEETKIND[sh.kind];const title=sh.title||(cab?`${cab.tag} ${cab.name} 施工圖`:kd.n);
+ const info=P.info;const cab=cabOfSheet(sh);const kd=SHEETKIND[sh.kind];const wdd=woodOfSheet(sh);const title=sh.title||(cab?`${cab.tag} ${cab.name} 施工圖`:wdd?`${woodTitle(wdd)} 木作施工圖`:kd.n);
  const fill={'圖名':title,'圖號':sh.code||'','比例':`1/${sh.scale}`,'日期':null};
  g.tx.forEach(t=>{let s=t.s;const flat=s.replace(/\s/g,'');
   if(/比例/.test(flat))s=s.replace(/1\s*[:：\/]\s*\d+(\.\d+)?/,m=>'1'+(m.match(/[:：\/]/)||['：'])[0]+sh.scale);
@@ -1459,7 +1678,7 @@ async function importFrame(f){
  cfSave();cfLoadImg();cfApplyAll();
  toast(`已套用圖框 ${f.name}。`,6000);
 }
-function cfApplyAll(){P.sheets.forEach(sh=>{if(sh.kind!=='cab'){sh.frame=true;fitPlanFrame(sh,false);}});commit();dirty=true;renderAll();if(typeof fitView==='function')fitView();}
+function cfApplyAll(){P.sheets.forEach(sh=>{if(!isDet(sh)){sh.frame=true;fitPlanFrame(sh,false);}});commit();dirty=true;renderAll();if(typeof fitView==='function')fitView();}
 function cfLogoFile(f){const rd=new FileReader();rd.onload=()=>{const im=new Image();im.onload=()=>{const S=Math.min(1,600/Math.max(im.width,im.height));const cv=document.createElement('canvas');cv.width=Math.round(im.width*S);cv.height=Math.round(im.height*S);cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);CF.logo=cv.toDataURL('image/png');cfSave();cfLoadImg();renderPanel();toast('已放上 Logo');};im.onerror=()=>toast('這張圖片讀不出來');im.src=rd.result;};rd.readAsDataURL(f);}
 function cfPanelHTML(){
  if(!CF)return `<section class="sec"><h3>我的圖框<small>FRAME</small></h3><p class="mut">把你 AutoCAD 裡自己的圖框（含圖說欄）匯入，所有案件的圖紙都會改用它。案名、圖名、比例、日期會自動填入。</p><button class="btn full" data-act="cfImport">匯入圖框（DWG／DXF）</button></section>`;
@@ -1675,18 +1894,18 @@ function toWorld(cx,cy){const r=svg.getBoundingClientRect();return{x:view.x+(cx-
 const gridStep=()=>[1,2,5,10,50].find(s=>s*view.z>=5)||50;
 const snapv=(v,s)=>{s=s||gridStep();return Math.round(v/s)*s;};
 const clampZ=z=>Math.min(40,Math.max(.02,z));
-const isPlan=()=>sheet().kind!=='cab';
+const isPlan=()=>!isDet(sheet());
 
 /* ---------- render ---------- */
 const frameChecked=new Set();
 function render(){
  const sh=sheet(),{W,H}=vpSize();svg.setAttribute('viewBox',`${view.x} ${view.y} ${W/view.z} ${H/view.z}`);
  const key=sh.id+'|'+Math.round(Math.log(view.z)*10);
- if(sh.frame!==false&&sh.kind!=='cab'&&!frameChecked.has(sh.id)){frameChecked.add(sh.id);const pb2=planBounds();if(pb2){const k0=sh.scale/10;const FA=frameArea();const inside=pb2[0]>=sh.ox+FA[0]*k0&&pb2[2]<=sh.ox+FA[2]*k0&&pb2[1]>=sh.oy+FA[1]*k0&&pb2[3]<=sh.oy+FA[3]*k0;if(!inside){fitPlanFrame(sh,false);dirty=true;saveSoon();}}}
+ if(sh.frame!==false&&!isDet(sh)&&!frameChecked.has(sh.id)){frameChecked.add(sh.id);const pb2=planBounds();if(pb2){const k0=sh.scale/10;const FA=frameArea();const inside=pb2[0]>=sh.ox+FA[0]*k0&&pb2[2]<=sh.ox+FA[2]*k0&&pb2[1]>=sh.oy+FA[1]*k0&&pb2[3]<=sh.oy+FA[3]*k0;if(!inside){fitPlanFrame(sh,false);dirty=true;saveSoon();}}}
  if(dirty||key!==builtFor){prims=buildSheet(sh);gMain.innerHTML=primsSVG(prims,{k:sh.scale/10,z:view.z});builtFor=key;dirty=false;}
  const k=sh.scale/10;
  gPaper.innerHTML=sh.frame!==false?`<rect x="${sh.ox+2.2*k}" y="${sh.oy+2.2*k}" width="${420*k}" height="${297*k}" fill="rgba(0,0,0,.13)"/><rect data-h="paper" x="${sh.ox}" y="${sh.oy}" width="${420*k}" height="${297*k}" fill="#fff"/>`:`<rect x="${view.x-1e5}" y="${view.y-1e5}" width="2e5" height="2e5" fill="#fff"/>`;
- if(sh.kind!=='cab'&&P.bg&&BG&&!P.bg.hidden){gBg.style.display='';gBg.setAttribute('href',BG);gBg.setAttribute('x',P.bg.x);gBg.setAttribute('y',P.bg.y);gBg.setAttribute('width',P.bg.w*P.bg.scale);gBg.setAttribute('height',P.bg.h*P.bg.scale);gBg.setAttribute('opacity',P.bg.opacity);const bw=P.bg.w*P.bg.scale,bh=P.bg.h*P.bg.scale;gBg.setAttribute('transform',P.bg.rot?`rotate(${P.bg.rot} ${P.bg.x+bw/2} ${P.bg.y+bh/2})`:'');}else gBg.style.display='none';
+ if(!isDet(sh)&&P.bg&&BG&&!P.bg.hidden){gBg.style.display='';gBg.setAttribute('href',BG);gBg.setAttribute('x',P.bg.x);gBg.setAttribute('y',P.bg.y);gBg.setAttribute('width',P.bg.w*P.bg.scale);gBg.setAttribute('height',P.bg.h*P.bg.scale);gBg.setAttribute('opacity',P.bg.opacity);const bw=P.bg.w*P.bg.scale,bh=P.bg.h*P.bg.scale;gBg.setAttribute('transform',P.bg.rot?`rotate(${P.bg.rot} ${P.bg.x+bw/2} ${P.bg.y+bh/2})`:'');}else gBg.style.display='none';
  const cs=cadSVG(sh);if(gCad._k!==cs){gCad.innerHTML=cs;gCad._k=cs;}if(P.cad){gCad.setAttribute('transform',`translate(${P.cad.ox} ${P.cad.oy}) rotate(${P.cad.rot||0})`);gCad.setAttribute('class',P.cad.ink==='k'?'ink-k':'');}
  renderOverlay();
 }
@@ -1699,7 +1918,7 @@ function status(){
  $('#zp').textContent=Math.round(view.z*sh.scale/10/3.78*100)+'%';
 }
 function fitView(){const sh=sheet();const k=sh.scale/10;const{W,H}=vpSize();const pad=isMobile()?.94:.9;let bx;
- if(sh.frame!==false)bx=[sh.ox,sh.oy,sh.ox+420*k,sh.oy+297*k];else{bx=sh.kind==='cab'?[cabBox(cabOfSheet(sh),k).x0,cabBox(cabOfSheet(sh),k).y0,cabBox(cabOfSheet(sh),k).x1,cabBox(cabOfSheet(sh),k).y1]:(planBounds()||[0,0,1000,800]);}
+ if(sh.frame!==false)bx=[sh.ox,sh.oy,sh.ox+420*k,sh.oy+297*k];else{const wb=sh.kind==='wood'&&woodOfSheet(sh)?woodBox(woodOfSheet(sh),k):null;bx=wb?[wb.x0,wb.y0,wb.x1,wb.y1]:sh.kind==='cab'?[cabBox(cabOfSheet(sh),k).x0,cabBox(cabOfSheet(sh),k).y0,cabBox(cabOfSheet(sh),k).x1,cabBox(cabOfSheet(sh),k).y1]:(planBounds()||[0,0,1000,800]);}
  const bw=bx[2]-bx[0],bh=bx[3]-bx[1];view.z=clampZ(Math.min(W/bw,(H-26)/bh)*pad);view.x=(bx[0]+bx[2])/2-W/view.z/2;view.y=(bx[1]+bx[3])/2-(H-26)/view.z/2;render();}
 function zoomBy(f,cx,cy){const{W,H}=vpSize();const r=svg.getBoundingClientRect();cx=cx??r.left+W/2;cy=cy??r.top+H/2;const w=toWorld(cx,cy);view.z=clampZ(view.z*f);view.x=w.x-(cx-r.left)/view.z;view.y=w.y-(cy-r.top)/view.z;render();}
 
@@ -1805,7 +2024,7 @@ const TOOLS={
  setpick:{n:'建立套組',ic:'<circle cx="12" cy="12" r="3"/>'},
  circuit:{n:'迴路線',key:'L',ic:'<path d="M4 18C6 8 14 6 20 6"/><circle cx="4" cy="18" r="1.6" fill="currentColor"/>'},
 };
-function toolList(){const k=sheet().kind;if(k==='cab')return[['select','text']];
+function toolList(){const k=sheet().kind;if(k==='cab'||k==='wood')return[['select','text']];
  const extra={floor:['paint'],ceil:['autolight','sym','autodim','indirect','track','czone','curtain','ac'],light:['autolight','sym','autodim','circuit'],elec:['sym','autodim']}[k];
  return[['select'],['wall','open','room','cabpick'],['dim','text'],extra];}
 function renderTools(){
@@ -1827,7 +2046,7 @@ function setTool(t){
  setHint();renderTools();renderPanel();render();
 }
 const HINTS={cabpick:'在 CAD 平面圖上點一下櫃體的外框裡面，會依外框自動帶入寬、深並建立施工圖；沒有封閉外框時改點兩個對角',autodim:'沿著有插座的那面牆：點牆的起點、再點終點，最後移動滑鼠決定尺寸線在哪一側再點一下',set:'移到牆邊點一下放下整組；按住 Alt 自由擺放',setpick:'點選要放進套組的符號，選好後在右側按「儲存套組」',autolight:'點一下要配燈的空間；還沒畫空間的話，點在 CAD 平面圖的房間裡面會自動偵測範圍',select:'點選物件編輯；拖曳空白處平移畫面，滾輪縮放',wall:'點一下開始，連續點畫出牆，雙擊或 Esc 結束；按住拖曳畫單一道牆',open:'把游標移到牆上，點一下放置；門往游標那一側開',room:'拖曳拉出矩形空間，或逐點點出形狀，點回起點完成',cab:'點一下放置櫃體，會自動建立一張櫃體施工圖',dim:'點兩個點，再移動滑鼠決定尺寸線位置',text:'點一下放置文字，在右側面板輸入內容',paint:'在右側選材質，再點空間套用',sym:'在右側選符號，點一下放置；靠近牆會自動貼齊牆面',line:'逐點畫線，雙擊或 Esc 結束',czone:'拖曳拉出天花分區（包樑、降板），或逐點點出形狀',calib:'在底圖上點一段已知長度的兩端'};
-function setHint(){let t=HINTS[cur.tool]||'';if(cur.tool==='czone'&&cur.czKind==='curtain')t='沿著窗邊拖曳拉出窗簾盒（深度通常 15–20 公分）；放大畫面比較好拉細長條';if(cur.tool==='czone'&&cur.czKind==='ac')t='沿著冷氣管線路徑拖曳拉出包管範圍，或逐點點出 L 形';if(cur.tool==='line')t=cur.lineType==='circuit'?'從開關開始，依序點燈具，雙擊結束；會自動吸附符號中心':'逐點畫出'+LINE[cur.lineType].n+'，雙擊或 Esc 結束';if(sheet().kind==='cab'&&cur.tool==='select')t='點一格可以直接編輯；櫃體尺寸、分格和材料在右側面板';$('#hint').textContent=t;}
+function setHint(){let t=HINTS[cur.tool]||'';if(cur.tool==='czone'&&cur.czKind==='curtain')t='沿著窗邊拖曳拉出窗簾盒（深度通常 15–20 公分）；放大畫面比較好拉細長條';if(cur.tool==='czone'&&cur.czKind==='ac')t='沿著冷氣管線路徑拖曳拉出包管範圍，或逐點點出 L 形';if(cur.tool==='line')t=cur.lineType==='circuit'?'從開關開始，依序點燈具，雙擊結束；會自動吸附符號中心':'逐點畫出'+LINE[cur.lineType].n+'，雙擊或 Esc 結束';if(sheet().kind==='cab'&&cur.tool==='select')t='點一格可以直接編輯；櫃體尺寸、分格和材料在右側面板';if(sheet().kind==='wood'&&cur.tool==='select')t='尺寸、分割和材料在右側面板輸入，圖會跟著更新';$('#hint').textContent=t;}
 
 /* ---------- create ---------- */
 function addWall(a,b){if(dist(a,b)<5)return false;P.walls.push({id:uid(),a:[...a],b:[...b],kind:cur.wallKind,t:WK[cur.wallKind].t,j:cur.wallJ});commit();return true;}
@@ -1906,7 +2125,7 @@ function dimAlignChain(d0){
  const ids=new Set(grp.map(d=>d.id));P.dims=P.dims.filter(d=>!ids.has(d.id)).concat(out);return out.length;}
 /* ---- select all annotations on this sheet (dims + texts) and delete them in one go ---- */
 function annoIds(sh){return[...P.dims.filter(d=>d.sheet==='all'||d.sheet===sh.id).map(d=>'dim:'+d.id),...P.texts.filter(t=>t.sheet==='all'||t.sheet===sh.id).map(t=>'text:'+t.id)];}
-function selectAllAnno(){const sh=sheet();if(sh.kind==='cab')return;cur.multi=annoIds(sh);cur.sel=null;if(cur.tool!=='select')setTool('select');cur.tab='props';openPanel();renderPanel();render();toast(cur.multi.length?`已選取 ${cur.multi.length} 個標註，按 Delete 刪除`:'這張圖沒有尺寸線或文字標註');}
+function selectAllAnno(){const sh=sheet();if(isDet(sh))return;cur.multi=annoIds(sh);cur.sel=null;if(cur.tool!=='select')setTool('select');cur.tab='props';openPanel();renderPanel();render();toast(cur.multi.length?`已選取 ${cur.multi.length} 個標註，按 Delete 刪除`:'這張圖沒有尺寸線或文字標註');}
 function delMulti(){const ids=new Set(cur.multi||[]);if(!ids.size)return;const n=ids.size;P.dims=P.dims.filter(d=>!ids.has('dim:'+d.id));P.texts=P.texts.filter(t=>!ids.has('text:'+t.id));cur.multi=[];commit();renderPanel();render();toast(`已刪除 ${n} 個標註，可按 Ctrl+Z 復原`);}
 function clearMulti(){if(cur.multi&&cur.multi.length){cur.multi=[];renderPanel();renderOverlay();}}
 function multiOverlay(){if(!cur.multi||!cur.multi.length)return'';const k=sheet().scale/10;let s='';cur.multi.forEach(id=>{const[t,i]=id.split(':');
@@ -2066,54 +2285,59 @@ const NAVIC={proj:'<path d="M3.5 11L12 4l8.5 7"/><path d="M5.5 9.5V20h13V9.5"/><
  ceil:'<rect x="3.5" y="3.5" width="17" height="17"/><path d="M3.5 3.5l17 17M20.5 3.5l-17 17"/><rect x="8" y="8" width="8" height="8"/>',
  light:'<path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 00-3.5 10.9c.6.5 1 1.3 1 2.1h5c0-.8.4-1.6 1-2.1A6 6 0 0012 3z"/>',
  elec:'<rect x="3.5" y="3.5" width="17" height="17" rx="2"/><path d="M9 9v2M15 9v2M8.5 15c1 1.3 2.2 2 3.5 2s2.5-.7 3.5-2"/>',
- cab:'<rect x="3.5" y="3.5" width="17" height="17"/><path d="M12 3.5v17M3.5 12h17M9.5 8h.5M14 8h.5"/>'};
+ cab:'<rect x="3.5" y="3.5" width="17" height="17"/><path d="M12 3.5v17M3.5 12h17M9.5 8h.5M14 8h.5"/>',
+ wood:'<rect x="3.5" y="3.5" width="17" height="17"/><path d="M3.5 9h17M3.5 15h17M9 3.5v5.5M15 9v6M10 15v5.5"/>'};
 const HERF_LOGO='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQQAAAFHCAYAAABHxDLIAAAKMWlDQ1BJQ0MgUHJvZmlsZQAAeJydlndUU9kWh8+9N71QkhCKlNBraFICSA29SJEuKjEJEErAkAAiNkRUcERRkaYIMijggKNDkbEiioUBUbHrBBlE1HFwFBuWSWStGd+8ee/Nm98f935rn73P3Wfvfda6AJD8gwXCTFgJgAyhWBTh58WIjYtnYAcBDPAAA2wA4HCzs0IW+EYCmQJ82IxsmRP4F726DiD5+yrTP4zBAP+flLlZIjEAUJiM5/L42VwZF8k4PVecJbdPyZi2NE3OMErOIlmCMlaTc/IsW3z2mWUPOfMyhDwZy3PO4mXw5Nwn4405Er6MkWAZF+cI+LkyviZjg3RJhkDGb+SxGXxONgAoktwu5nNTZGwtY5IoMoIt43kA4EjJX/DSL1jMzxPLD8XOzFouEiSniBkmXFOGjZMTi+HPz03ni8XMMA43jSPiMdiZGVkc4XIAZs/8WRR5bRmyIjvYODk4MG0tbb4o1H9d/JuS93aWXoR/7hlEH/jD9ld+mQ0AsKZltdn6h21pFQBd6wFQu/2HzWAvAIqyvnUOfXEeunxeUsTiLGcrq9zcXEsBn2spL+jv+p8Of0NffM9Svt3v5WF485M4knQxQ143bmZ6pkTEyM7icPkM5p+H+B8H/nUeFhH8JL6IL5RFRMumTCBMlrVbyBOIBZlChkD4n5r4D8P+pNm5lona+BHQllgCpSEaQH4eACgqESAJe2Qr0O99C8ZHA/nNi9GZmJ37z4L+fVe4TP7IFiR/jmNHRDK4ElHO7Jr8WgI0IABFQAPqQBvoAxPABLbAEbgAD+ADAkEoiARxYDHgghSQAUQgFxSAtaAYlIKtYCeoBnWgETSDNnAYdIFj4DQ4By6By2AE3AFSMA6egCnwCsxAEISFyBAVUod0IEPIHLKFWJAb5AMFQxFQHJQIJUNCSAIVQOugUqgcqobqoWboW+godBq6AA1Dt6BRaBL6FXoHIzAJpsFasBFsBbNgTzgIjoQXwcnwMjgfLoK3wJVwA3wQ7oRPw5fgEVgKP4GnEYAQETqiizARFsJGQpF4JAkRIauQEqQCaUDakB6kH7mKSJGnyFsUBkVFMVBMlAvKHxWF4qKWoVahNqOqUQdQnag+1FXUKGoK9RFNRmuizdHO6AB0LDoZnYsuRlegm9Ad6LPoEfQ4+hUGg6FjjDGOGH9MHCYVswKzGbMb0445hRnGjGGmsVisOtYc64oNxXKwYmwxtgp7EHsSewU7jn2DI+J0cLY4X1w8TogrxFXgWnAncFdwE7gZvBLeEO+MD8Xz8MvxZfhGfA9+CD+OnyEoE4wJroRIQiphLaGS0EY4S7hLeEEkEvWITsRwooC4hlhJPEQ8TxwlviVRSGYkNimBJCFtIe0nnSLdIr0gk8lGZA9yPFlM3kJuJp8h3ye/UaAqWCoEKPAUVivUKHQqXFF4pohXNFT0VFysmK9YoXhEcUjxqRJeyUiJrcRRWqVUo3RU6YbStDJV2UY5VDlDebNyi/IF5UcULMWI4kPhUYoo+yhnKGNUhKpPZVO51HXURupZ6jgNQzOmBdBSaaW0b2iDtCkVioqdSrRKnkqNynEVKR2hG9ED6On0Mvph+nX6O1UtVU9Vvuom1TbVK6qv1eaoeajx1UrU2tVG1N6pM9R91NPUt6l3qd/TQGmYaYRr5Grs0Tir8XQObY7LHO6ckjmH59zWhDXNNCM0V2ju0xzQnNbS1vLTytKq0jqj9VSbru2hnaq9Q/uE9qQOVcdNR6CzQ+ekzmOGCsOTkc6oZPQxpnQ1df11Jbr1uoO6M3rGelF6hXrtevf0Cfos/ST9Hfq9+lMGOgYhBgUGrQa3DfGGLMMUw12G/YavjYyNYow2GHUZPTJWMw4wzjduNb5rQjZxN1lm0mByzRRjyjJNM91tetkMNrM3SzGrMRsyh80dzAXmu82HLdAWThZCiwaLG0wS05OZw2xljlrSLYMtCy27LJ9ZGVjFW22z6rf6aG1vnW7daH3HhmITaFNo02Pzq62ZLde2xvbaXPJc37mr53bPfW5nbse322N3055qH2K/wb7X/oODo4PIoc1h0tHAMdGx1vEGi8YKY21mnXdCO3k5rXY65vTW2cFZ7HzY+RcXpkuaS4vLo3nG8/jzGueNueq5clzrXaVuDLdEt71uUnddd457g/sDD30PnkeTx4SnqWeq50HPZ17WXiKvDq/XbGf2SvYpb8Tbz7vEe9CH4hPlU+1z31fPN9m31XfKz95vhd8pf7R/kP82/xsBWgHcgOaAqUDHwJWBfUGkoAVB1UEPgs2CRcE9IXBIYMj2kLvzDecL53eFgtCA0O2h98KMw5aFfR+OCQ8Lrwl/GGETURDRv4C6YMmClgWvIr0iyyLvRJlESaJ6oxWjE6Kbo1/HeMeUx0hjrWJXxl6K04gTxHXHY+Oj45vipxf6LNy5cDzBPqE44foi40V5iy4s1licvvj4EsUlnCVHEtGJMYktie85oZwGzvTSgKW1S6e4bO4u7hOeB28Hb5Lvyi/nTyS5JpUnPUp2Td6ePJninlKR8lTAFlQLnqf6p9alvk4LTduf9ik9Jr09A5eRmHFUSBGmCfsytTPzMoezzLOKs6TLnJftXDYlChI1ZUPZi7K7xTTZz9SAxESyXjKa45ZTk/MmNzr3SJ5ynjBvYLnZ8k3LJ/J9879egVrBXdFboFuwtmB0pefK+lXQqqWrelfrry5aPb7Gb82BtYS1aWt/KLQuLC98uS5mXU+RVtGaorH1futbixWKRcU3NrhsqNuI2ijYOLhp7qaqTR9LeCUXS61LK0rfb+ZuvviVzVeVX33akrRlsMyhbM9WzFbh1uvb3LcdKFcuzy8f2x6yvXMHY0fJjpc7l+y8UGFXUbeLsEuyS1oZXNldZVC1tep9dUr1SI1XTXutZu2m2te7ebuv7PHY01anVVda926vYO/Ner/6zgajhop9mH05+x42Rjf2f836urlJo6m06cN+4X7pgYgDfc2Ozc0tmi1lrXCrpHXyYMLBy994f9Pdxmyrb6e3lx4ChySHHn+b+O31w0GHe4+wjrR9Z/hdbQe1o6QT6lzeOdWV0iXtjusePhp4tLfHpafje8vv9x/TPVZzXOV42QnCiaITn07mn5w+lXXq6enk02O9S3rvnIk9c60vvG/wbNDZ8+d8z53p9+w/ed71/LELzheOXmRd7LrkcKlzwH6g4wf7HzoGHQY7hxyHui87Xe4Znjd84or7ldNXva+euxZw7dLI/JHh61HXb95IuCG9ybv56Fb6ree3c27P3FlzF3235J7SvYr7mvcbfjT9sV3qID0+6j068GDBgztj3LEnP2X/9H686CH5YcWEzkTzI9tHxyZ9Jy8/Xvh4/EnWk5mnxT8r/1z7zOTZd794/DIwFTs1/lz0/NOvm1+ov9j/0u5l73TY9P1XGa9mXpe8UX9z4C3rbf+7mHcTM7nvse8rP5h+6PkY9PHup4xPn34D94Tz+6TMXDkAAGUMSURBVHja7Z13nF1VtcfX3udOSSaFUEPvSC+CqCAqqKBiRUFQBBW7CIIKIkqwoWLDpw8LdhEhNtBnQcEo74lIL6ErgWgIKaTOzC1nr/17f8zaw8rh3Du3nDuZTPb6fO5nkplbzt1n7+9ea+1ViKJs1AIgATBL/m3iiESJEqEwrVqt7hcAEUdk4xUbh2Cjh4E1xgxaazcDcJoxhgGU4shEibLxQsEASJj5bgCny+8iFKJE2Vi1BCIiZr4WI3JKhEKUKBspDOSxKTMvZWYWKLw1QiFKlI0PCD2iHVwEAMycBig4596mnxMlSpTJDYOS/HxhAAEze3mkzMzOuWg+RImyscCgUqnsBWAJAM/M7L0HMzusK2dpX0OUySuR+hspDIwxDsAzvPd/JKItvffeGGMBsLU28d4vIKIrrbVLvffPAnACEf0CgDHGII5ilCiTAwaJaAZ7Avi3+A0cM3sAQTO4DMBM/TrRJHadO3duEiMao0SZRDAAsCczrwMDdbrwEa1JyCO8rm/x4sUDcSSjRNnAZd68edpnUA8G7w7gyGoBUSuIEmUS+Qzk514NNIMYdxAlSoQB4JyLMIgSZWOBQaVS2buBZvCWCIMoUSIMIgyiRNlIYBBOBfau50B0zhUKg+h0jBJlA4MBgK7AIHxurLwUJcoEhEG1Wt1nPGEQZMmSJdOq1eoB8v4xzDlKlIlsJgA4tVswCAAAcIRz7p3RNxElyvqDQTha3JuZ/5PRDNBtGGg/gjzucM6dFaEQJcp6gkG1Wt0nCwP5uco5d9J4LE6lJfxGIPS2CIUoUdaDZgDgP3lmAjOvBLCFNiu6BQN5zACwKPgsALxD/h6LrESJsp5g4MWBeDKA7wBYMTw8vEM3oRAWvHPuIzmVl94ZoRAlyvj4DBbVOU04JTyfma9g5mXdgoK6ngOZeVBXXgKQAvCqHFs0H6JE6ZJmsKjOacKbw44cFn+AAoBCoaBON3Zn5sfkeupVXvqwPDfGKUSJUhQMxIH4eFYz8N7DOfdmrZ6Hngvy758AKAwKdWDgMjB4gpm/DuAsZv65mDGxyEqUKAVpBnVhAODkPLU8CwVmXt4pFFTlpT00DHTlJWa+AsDWmdftDWD3CIUoUTrXDPbNwkDMBK80g1Kd9zDqWPAnAJYPDw/v2A4UFJz2APBonVyJC/Tz5RE+vw/A1Hhno0RpXzNoGwYNoPAkgJagoK7nGVnNQMEgtINLsiHMUSuIEqULMJDThKZhUA8KzLyiWSiolOo9AdSDwTtauZ4oUaK0Zibs16lmUAcK4fThJ8y8olwu79QICrpacwPN4O3tXk+841GiNAGD7NFi0AzqORC7AQVdrbmBZnBaB3AqAdhV/h+zJKNEyVl8XYNBIyhkzYduwkADAMAznHNvbMWfESXKRgODBj6DQmDQpKbQ200YZL83M3/dOXde9EFEiTB4yoFYFwZFaQZjQUFOH4IKv3cDGBQSjhw+O03To+R93xWhECX6DKrV/RtEIJ7czUWSgcKVAJ5I0/TVDRyIheUmhOPJWq12uIAPzrn3RChE2Zg1g/UGgwwUegQKPwsJCKpFfOEw0O/DzJ+Tz6tFKETZGGEQ8g0OAbC4DgzeNF6LQjd1AXAPANftpi7Kb7IPgDXhs0IuhHPuAxEKUSbLgjd1/m3VQjgawIqQJZhJYV4fMNBdobkODHoK+kxrjCEAM5n5nrxMSWZe7Jw7M0IhymQAQrJq1apZGRCMnrM7594r9QKQqSEAAG9czzBw3YaBmCi9AK7NZEqGMblqxYoVM5n5R865j0coRNngZfHixQPiLNtJLYY9xHEHWQBewcADOGl9wCCnJmO2w1MhMJgzZ06AgWHmX4QKS1kY6HgEZv6xc+5jEQpRNniTYe3atVsx8/cB/JGZr2Hm4RytwAFgFZzTMw7XF8KR96pXk7FoGKjKzCZAUcGgFmAwd+7cJJx8hHFk5h8DiFCIsuFDAcA0Zr5BgcB575EpJnLaeE125cPYq55m0I12byG5ipl/Kt+5pjUDAFcGCKgoxtF/R00hymSAQpjYJWa+JrMrBufZV8dRM9CnCePV+9GOBYNgJmgAZGASoPCTqClEmSxQ6GPm38gCqMrPfy5atGhqWDSTFAbhUQ8GWjMwDTSMAIWfRyhEmTRQUM1M2Dl3znhM7GZaxHdTMwgwyHEgjgmDLBQAJMx8PYDzIxSibNBQMMbQQw891MfMvwaAWq32Ah063E0YSIHWf9cJgjq1YBgYAGbu3LlJjgNRw8A2A4McsA4w88POuXMjFKJMBk2hl5n/CuCMbk7o4JeoVqsH5PVx2JBgoN4/ISIql8u7yff4QIRClMkAhZnOuQ8CGOjUf5B9fSg+QkRUq9Wex8xL61RrPqUbMBC1vi4M1NGibfNzSkREzrlTxdx5X4RClPW9sE2nUFiyZMm0crm8c7tOxYULF05ReRFJqHIc/u6cOxHAUDY8ej3C4Kfa0djh54UMzZsECu/t9L5EidLqhC9l+wrI5C61UdI8xCn0AJjSzjXNnTs3GRoa2hbAdpn3nsHMX1ZZi+vkSnQBBlYFE60DAwC1DAxMEeXS1KnJ+Sp1+ixd9j1KlK6o+HmLvc7vWprsRZgKAEppmr6Wmb8G4GQAH2XmR7IRkeo04dRuwEB8BldljhZdDgxMQZ9bAmAEAl4+ZxmAWUV+TpQouYsewGwAb2HmHzLzTcw8n5nvYOY/MPOnARzeCBbdNl2cc+fpZooqYcirlOK3dgMGGc2glg1H1mHLBX7vUEvhv+QrrwbwbG2SRYlSpHkQnH/bM/MlAJ7AGMLMfwZwBNFTiTzjCS7n3DuCzT6STbzOLv3JYKIUrRkAyGoGAQZ/V/4N0417FNKn0zQ9drxhHGUjMRHCv51z7wIwWGfx1+ThwgKUP3lmvlAvmnG67h51zcFcCM68vysfiCkKBvLzqjwHIoAfMvMPulEPUuVjHNFJX4goUZqdaP0AfiUT/RHJtvssM3+Rma8OSUH6KC/sxsFWZ+bLurU7tgCFGgBO0/TlRS2YTG7C3Dow+Kk8dwYz/0kVfOkp8j5J0tjnIwyidGMxBa/1NgDuY+bbAbwUQF/Oc2c6505i5ltVbQNWNntNFsaX1oNPIUDhnbJYly9btmx6ETZ8RjOoB4MrMl2nZzjn/tgKFMbIa7BEROJI/U4zMKhXwSpKlLFgsCczPxpUfr0jZTsZh9cBOFcdrWkopKLOHr8eoBC+z/ucc2UAMztdDDqFuR4MpA280c8NUJDqSGOWhmt0jeF9165du6Vz7nzR5MY0y+bNm1cql8s76bTqOOujjGUm7MfMjwI4Xu2Gueq+jgSU3epIVSw1QIHFn/AfADPH+yhMRfN9wDl3YidQCg5ScSDO1acJCoZX5MUZaCgw87Xap5B5ntYqNl2zZs0W9XZ3APsC2KyVxQ1gkzRNX6NgGaEQJR8GkvizJE3TV7Vi6+ry5ZVKZbSxiXMu+BGCltDVnIUmYPccADPaWQj6aDGUaFdHi7maQT01X6BwnXPu/XkgkP/vXqvVnr9gwYL+ZjIgm/0OYRyY+VsKCvF4MsrTFssezDwIIFT47W13N65Wq/sAWCqaAUt5NM/MN66vXUntqpvOmzev1CkMciod/aSZoKMMFB4A8D0AO+sxdM69zTn35mZ8Au2ATRyRtwL43fz583sjFKJkYbCjNFb9aSuawRh2+4ukrwGrE4c1AGav7wk4Z84cWyQMpIJR0xGIatx3lfcbYubrmflKZv6XOq413YhbECDcKNf+hyVLlkwbb/9OlAkKg+Hh4R1kp9KOv54O3zskGl2YyS4EgIM3lMmXgUE9B+JP2glHVhGGX9NxHc65C/Rnd2kDeJbAOvg9/nflypWbRChEzWA2M98rczGVasjHFqAlBC98HzM/pP0IIbR5ok28nBqGQdPpbVAq/Scd1DMoAbByLBqKzJ7VLR+LdgBLpaUA6vBdbgQwK0Jh44OBtmFvDRNd7eCVgqAQvPvnZIDwrIk06ZYtWzZ9wYIF/WrRJMrfMEs1UcmDgWl3J1fj87GQodgtGGS0tg/rHI+MH+RBAJtHKGx8MJjOzHcpGHAmqKiqYuJ72v0sAKZare6nfAiDALafKE6sAIBKpbJnrVZ7TuZvRwGY3616Bsq5Nx/AnC7DIGg7L5cTYcfM3jnn5cjUA3gvM/9ZysvNjlCY/DAIu95mMqGvl9j+bFZgKBxSrVQqr2gXCurzpqu+B3eMZ7JTK+aNc+40Zv4HM19RZ1wCDH4d2re3+z2UyXaSbtHWjXFRFaMOFaeuz3TKGm2OI4D6AjMvGBoa2i5CYZIDAcC0NE1fV61WD1C/f0FooBLiiZSmUEvT9BXt7F4KCL0hEw/AZ7q5E3YKS6kpoIupZBuv/p9EBXZS9iyMy26qf2XSTRhUq9UDASzJ6ZbFqm1er9Ig38nMDwLYeqJoc1G64EiUMmV9WqUnGo3AuzC7GESVrLYDhfDeixYtmsrM/5b323OiTjBl079VNCRdnt0z82ODg4MdH5kKTDYDcFj2PnTJTDiAmRfnwcA5d1JWA1S+hncx8wMrV67cpKjqTlEmoP8g59+J2iHfAGA4DwoAWoKC2m12DAVCwoQrumpQF6Dwdj0GzOzTNH1pUdpNWGQanOMAA6e0AgZwYr3vE6DAzF9j5ptljiQxzHnjMifCJDoSwMoctbmapukrm10U6v3eJYrHTg2cj6FG40RwNIYd8jQVG3BXtxZvN2Gg8kqcc84Hk1DldJTGmg+i3X1/Ipp6UcZpMtVqtcMArMhCQTSFpqCgcvXvlqMuA+AZAPYR+3mLRglT6xMQKnX6rTIGd6lrK6Kwiuk2DJj5CaUZcIABgDc0ef/Ce71auDju2apRihHTYXpvmAjPZeZcKKjkp9IY7/FaAMPM/GNmflhlBFaZeTkz3wfgagCfAHAsgB3GAIRZD1B4uyyIQ4hGUognumaQgUHwGXjnXFMw0PCT4LL/MPOT4vuI/oQN3WdQJBTEwVYXCipYZ0ACXdYRgUq9WoxrxWa9RGCyfQMTYzwawwYonMHMd4r/Y8ItiIyZkAcDbgUGOVreFfKeF0UtYcPyAwRH1Sad3jhlPjxXmw9ii64DhVtvvbUnxyF1aabmYlV+pvJw6pGG4KUMIFbLkegnxLcxM2/Szps3r2uACN/NOXc2gJ9PNIdoRjNYkgcDACfoe9PqezPzF+SeL2m1/kKU9QeDQPMvA/hXtVrdr1NHkIaC1hQCFMR8eHWYbCFlGsCZaEJUZWSnjsQ4/C77fOfcYgC/BHB6tVo9oF6fiE5NjJziJuH04cOS5DQhoJDRDOrFGbQFg/D+AAwzf0ndhjd1Oq+ijB8MLlJq+RNpmr6wKChIUY0VmQ5IQVN4TXi+c+4UifQ7WVKgXwbgOACnOufOBPBJqR3wgMqfCBqBV4AI0XS5GoS89n5m/h6AUwDsVU+VV2XfSirK0GbKoYXKUKUMXEwOFK4qovtSEb6earV6YLZnpYyN6wQG2uxk5p+rStrfi0DYMGDwuTob8YnZyV0QFEZTmmU3/yqAK2WBNlNAtA/A/s659zDzVcz8WI7JMAqDDCBc1hchqbz3MvOPnHPvBfCcVatWzWp3IaRp+oparfa8saDQjr+mU/NG3Y+6MHDOndDJwlXfearkN4RxXm9FbqKMDYNg431F7tdvnXMfdM69Vzr53C2//3inu5IyH54GBZW89LeM4y9Rj3V26Zz3H6jVas8HMAfADcw81MC88GOZF6GlGTP/nZl/4Jw7zzl3AoDnV6vVfSVgamsAsyWC85kAXgHgy8x8o3PuPfPnz+/N6SgdFuOHJC261MzCy2ZSEhFVKpU9Fi9ePNCmZnCQMhNGS+AXAQP92jRNXytvGnI57olFWie2ZvBN2SVeVud5RzHzXwUQfUVAAcCzlaMxaApVAIuVT6GZBWIbAGIHACdJibGHcxY7NwJE1hzJ0TyGmXkNM692zq1Vf1uYpumLmhkHaWP/FwBbaEjrR3B4Zl5/lHPuAmmw0tNCTcQw/k+DgSRfVQqCwSi8mPkfSgODnLaYCIQJCAMAlwH4P5XDbuvtwpJZ96G1a9du1WGmXtAUnp0JXgoLsKYdjW1MwlLOrtxXq9We45w7TxqerMxZ5N455zJOyvD/WqbDFOf4L1YBuEDVRkiahMIHADwO4DWNnj84OBh6Yt4obeJ3bVMzeKaGgapsrftf9HY4x0aPWxV0ghb2x3bMpCjd1wwuY+afhL/VCZjJFvzYHMAeRTm0ABwaoOCc06cPbUEhx86upz1smabpy5n586L9rECbIh2iL9Kh1c1OdrVw3iNvdwszX+ycO805dzKA9zDzl5n5j1J4BgA+2MbnhPF+ZlYzCMezAG4H8O1OgaCA/yxmLiv/TSr39nPRqThxYBC8vt9m5v/K/n6M1ycFX4/Os3/a6YNEJXYEhTraw9O+65o1a7YA8HwApzPztwFcx8wPMfNSCXYqi4mwUhrQXM/MXwTwsmXLlk3PO1VoYzd9yxjguQ3Avq1+Th4MRhShUQdimqbpcZJm/rM0TV9GNBI/0U5ZNyKicrm8C4CFur+GHGECwPO6MZ+itAmDNE2/zcwXtzOBu9WKvFarHQrgSQ2F4ATsVFNo1bzILO6Zw8PDO5TL5d0A7AJgq7zdsx5oWh0H59ypctxXZeZyOAkR+PS1urOq8T04nCZoGEjSUsgxMMuXL58h4Dk5q1E2MZ4hqWsXqYWgTZJQD+If49m4N0pzmsFn1SQ2E+D6tKbwZE7qdNqso7EgQIw5Lt3Ij8ippwBmXqR9C61AJw8G2eNXlXBUUgs6mC8XKl+TBZDoalXaqRs+s1arHc7MCzMw8ABCzcWjonYQYdCqprBc7WSjUFDmQ2kcx04HHXU9ulBB4d3M/FsA27Vzv+rBwDmXpxmUtLaYpulLZczBzDemaXpU3tjkaFMfDH6OTAHW0LD34giDieVALAQG3U69FU1heSb11ov58JrJ7pDKOWJM2hlHAFkzgevBQH8OgNeEjFKVWToPwPEAZuvSdgB2E4forfo4N9uol5mvaNfH0s05t7HC4EsKBhO6ak2eppCFQlChJzsU2glr1jCQVnjIHJM6AK/PGz9duFUBgZn5h5KcFNb7vcx8CzM/wMyVTGzGaCyH+v23GvWrbBaQAKbGo8rOYXApMz+sYGALeP/Z3SR3HU2BM5rC64t2NE6C+z56lMvMy/JgoMat1MBceWdGQ7hb7sezAPwh5/SjlunLEWSxc+7t2vxq9TvNnTs3QGrbFStWzIx3uTMYfFGF7H5P7zwdvv/sWq32gladXG1O7mflQUHy899SJOg2pHucc0+CQ/CF2QhQFRr+ukaaVU5jnBBZWNYxFlIN61JJLssmjFWZ+Q4A5wPYqpM5p+bA8wG8pJvzbdLDAMAXVBMVhxFX/Xc7hYKyH/fpdhprAyh4tRudr5+fbX4irdB7J8P9XbRo0VSVHj4aUaq+/xsADOWMkxsLBvpvzPx5DQQ58dg9e6Lw0EMP9QHYUzJSjwXwAgC7dOL/yF5LmqZHCmCmR19C6zAwWjMAUNbn+XKTi4BCIjvJ+51z540HFDI+Bc4kRM0dGhraJue1s1atWjVrMkyi4E8YHh7eoVKp7JH52wwAn8/kaITx4WYb8KrN5CrdOk9Mhx3VvEmaCMtOCghtfxYzDzLzvKgdtLdrJ8z83WyZMeX1LQQKAT4LFy6cwswrQyjtOGgKz5EQW2QboAB43Dl3bqVS2aNcLu/snHuTZCSaybKrqFiJ4ySX4VwAXwHwiKoFETIWUzldeEsz90bNoX5m/pdKSYdUOdo0u0OrI1mdkVpUWvazVaDaQ6LpxYCmZr2wAAacc6cz86fFw3wYM18s9l9eO7GOoSDayDxZkO8dDyikaXqU2Kk6mlGnLlcBPKky9uwku9eh/8UZ2exLde4fxuOjzTpewzhJh6bgvA1AuHs8xrFOJmxNwPaubs6vSTVB5s6dm1QqlT0B5KnNz2LmB+o0HG0bCmF3kMlS897DOdcuFFqKyXfOvVE5zfQiSKUk2ys7sV83gHseTLY3yb1Ms3Bk5p8pv4ppYWzfn/U9MfMvuj2eCgaHKM1AO0WfLJfLO0XToYVdI8exFjzPWwC4oSgoBPtQcuqzcl43b5oqwHqJPlYTNbkMoLDuSBP8nocFdEo4dZEF7CWVevNW4hjUydQvdaUp2Z0/3mXtL8QZHKFONqoKcsFXdJOYDiaaDi2CIcdRNMDM4Qy5loFC00eSmQ5Nf5PJN8c5dyKADzPzLc65c5qBgrJbp9W7/nqaiXSEXjTiLhmBQcjS21jUSrWrn6KyQ+Gc+0Ar45Dpsr04c8QLNa5Jt2CQpumLpcfGP0JPiDxfETPP7dRpGUHxFIF7mfk3nUAhU1Z7XjhrzjznjQBOaMITHa5r31qt9uxmNQu1m31DvsvQxgaDHCi8We7jMIBt29EOJIYBqkMTmHlttzo4q+jFHaX0XCjPvqV00X4yz/8F4FsRCuuS3AKYOt5QUJPvfPFyG6LRvPl1UokB7CYVkXrHAIydN29eSZyh2zQzkRWUPitNVF+yMTuclMb2NmZes3r16pb6Hqjx/HSO/+Dv3VTRAQzoCMRMvchnSNOdp5m6AL62UUNBHy1Kf8N2ildYIqL58+ePQiHHp/D9PChoGAC4XKvvDXacTcYyB9RzX8rMP21mYas4/18122dwI9IU3gHgta2o+GHBy+Jfx3/AzF/q5viq0ORsWnXwf00D8KcIhRy7WXmBZ7eyA9TRFHoA/LoJKFi1A53PzAEGds6cObYVf8ZY18TMdzvnTm80mcP7VqvV/dI0fXGEQS5cDwiRfS3Mh53EKQsd9KUa8ybr8ftMrQcFZv76RgWFTG7CDwB8odNFoHbYZqAQborWDGyzDsAWd7fTJcx2t0Y2q0yQbfQOE+VpmuSsZkK2M6cVyFSbXq02n/XVRVtnOv6xERTmzp07uaGQTWGWm/Qa7ekvAgrMXA8KPwJgnXMfD8VYu2FPqpu+HYCa2I09edSXz5/Sroa0kcGhGSAE4F+e4z/4y0QY50ZQUN3AJ7emkElUCk1UGMCHilKTM5rCNZmBDpPiFmb+SiuaQSc7m7JjY2Xe8dMmpqqyZ7qWwQUT5R5oKEgF6qdBAcDkhEJGMwgBODX58g8AmFLU4lRQ6GXmazKaQqDvN7s90MrT/e0QOhsax8SSW1230Q/XuRDKZJhQ1ZEbQUFptf89qaCQqYH4pcyXdpkv3VPUQBtjSMyHazJHkgEKP+ymlqBs2Y+qs/BFg4ODW3faEDXKmGN+gTIXQvzBf1oJGFtP5sO1kxoK+uKl4SmyffcCFJxzZxQNhaApALi6zjHPD7oFhZxY+mH5efX6dGpNciCEjeev2eNGAHMnqnaW0RQmJxSCs27JkiXTAHyKma8HcIWQGhmVLkDhlG5AQRqUjisUQlCTpPSG7zkE4FVRQ+jeohocHNxaohGh5xaAd05kH86kh0LYnSW6b5/w+1WrVs1yzn1UnRGzKmTpnXMndktTYOar6wx04eaDrg4tnzEE4OioHXTdXHhNXnMcAHtN9LEP17Zo0aK6UADw3900dbvq4AGwabYxhvr7YSHpI3TeEeebc84VGq033lAIGsCtt97aw8yPSaJSDDoaByAw81eU/yBkFc7fUHbVZqDAzJducFCQCzVZKuswzmq1ehCAJ7K54nJE2C0o9EiIcNegkPUfRBiMn4nKzDflhCt/c0Maf2U+TJlUUGhSxTuwHhSU+TDeUDAdVF4KGtGezLwqTdOXF2kCRam7+dT1HzjnTpqoDsVWoJCTvLdxQUFadXUNCs65q4uEQgg7XrNmzebMfKfqyhRh0GXzVH6+JMd/UCmXy7uOh/9AJzONFxQATE4oSO27JzLx59xtKDDzr+o4b1qCgrp5mzDzn1WZ8AiDcZpDzrkP5/gP7hqn+omGaKSU+7Jly6YX+L5hXvWrpjJZTeEbk1VTOEAq4q4DBSm9PR5QqOXkPpixjgnVTZvFzH/M6zMYZVwcij9WQAj38DvdNhd0ApbUAjUFH2GPQqGBT2FyQqFarTYDhUKPJOU0oB4UrlDAalQrYRYz/0m3I49LdXx9CMz8NzVvgv/g7d28H2qxbsbMn5WeEqZbnyM1GP9QR6sNUBjfE5VOKh01qSnsn4WCAkPhUJAw51I980GOKkNGYklpDaUIg4kBA9k9FwQfggSDMYCDuqUhZIKJbmHmi8YDPgsWLOgP9UTXOxTCh8ybN68EYDcpN2a6AYU6jkbfDSiEBa6q9Gah8L8Atst57TbiM3h9hMH6A8KaNWu2cM6tUUAAMz/erfyFsDiXLFkyLajxzrnTsu3hugihfmb+fZ3GRd8kGod6CqpCsHXOvQfA5l0abK0p5B1JenWUVDQUEmb+RR36PgbgOAADAKYDOJ6ZH0rT9LURBusNCGGB7Kq6O4ekub92EwZSDu06lbz22277K7KaCYCrg88kDwpd8ylkUph/zMwXdlk90prC4px0Vg2FUhegcLVQ32W7KTHzPwH8W9K3j40wmBBA2FuBoNatgKQ8GEj7ePbeI03TY8ZjPoRiMdVqdf9siXdVT6E7UMjA4KvyYUfp33fZ0XiQ9OerhUYmAFi6K3UFCg899FCfJGTpstleaQu1NE2PIhqp0pynxkYZVyDsqXbH0JDl7KLnhlLX/5BxQge/xWNKc7bdXBflcnk3Zn6Smf+bmX9Wp/LStwqFQgYGX1OVjt42HiRcsGBBPxGRc+5d2SxJBYU3dunGb8rMDwcHlSrUuQbAUY0+M0Jh3J2K26sU81RCxl9dlAqvPmcLaeeu52K2+cr1uuNYl2CwKzOvAhBaDfQy8++6CoUMDL6uWmmDmW9RnXK7WnUoTdNjmLnMzJ9n5kdyjiR9F6Aw+tnaLgUwCOBF9T4LQF9o9hKhMK5AmKa7NAFArVY7tAggqM/YWip+XSK9PP4v25xWaSk/Dp9ddAat+EtWqRiLcPLVn4WCup7OmsHoYBwAl+TVJwTw+SIde3UW5ItF/TtXzIcDxHv8NCgAeGOeCt8BDM2cOXNCA1gw89o0TRvBIJR5P2lDSLedTFDIJDZ5Zq5WKpU9Or0H6oh5arVaPQDATP33NE1fK2ZCXkemwuoXBBiUy+XdAGgYJJm12g/gt3Wc4u1BITxZzud/1KhFdzfaWmdhACDYgn3BkRKgkEmdLhoKoQLPn0T9emEzZgKAHeSmTJ80kWMTGwjBAf3N0BtT1OltitDU5B5O05+X6eq1bdAWcnbmjpuvKM1gNwCrAFyW954ZH8dYmkLz81KIMw3ARaHSUfD0q+o/IU1Zq+s9RcMg6xgKg6OhkMl98M65N3UKKXWzpwC4K03Tpk4T1M37fZqmPynKho0y9pinafp6tXktX7NmzRZFmm55IclqXg4w83VFQ0G9/27MvLoeDPKgUE9TYOZvtwQFsYMPBbB3+N3atWu3BPBZVbQyW9TkhAIWYU8dzaCnziDtVw8KADqCghrYl7TSkl3Zc++Q7/CCCIVx8yPMYualsmkt7VacTINNYGqRbdrCfKtUKrsDWM3MlzXzHhlNoXMorF69ejP1pomezGmavpyZV+REELpOknpU77usZtAzBjn3a6ApnNzO9eh24gB2amVBZ0qBe2a+PURzRtNhXBbl12QurBgaGtquVR9Cpudoy+37JIz5uk6hkNEM1jQLgzahUK+nqcl9U/WisGgPBrC0KCjkaAZnNWOCdBkKFsAAEVGjno8NbsRe4USm6JJwUereLwNgd2auiM9n71aAkDETN+lAqxyFQk6q8pjNV+bNmxfm9e4AWoZBzvX01YMCgO8Ff5vqLqZLHQ40a9M8U0PBOaeh0LT5kKMZnNXK4lHBS4VDoR11M9yE4eHhHcWx5SUPImoI46QlMPMXZLK/qFntTi2eLdI0PbKDill5mkLTUFCazu7MvLZdGNSBQjZOIVzPnyuVyu7Z18qJxsxWHB0HMfOyOuXPxoSCciC+pB0YNAsFcXyerG38Thf+WDdgaGhoO3EChYmwT6vqa5S2nH5WYhKWMvNnmnQEj9azAHDV8PDw9p3MiUylo+ua7fKchQGAb3cCgzpQuLZOs6RVzPwFgeHrnHNzQpPiVr2fzUChp8HrAww+0KETMLzfvlkoqNyHt6mJU9LJWkQjR5VFHFEJXXdi5sHghG0XdlHa9iW8XOISTJMOuAEANzPz/xYBbg2FBo7Grytzp6cbMKijufyvDiNwzoUIXKguVwe0PA4610CZDzwWFJRmcHQRMMi5nn1VQpS+HjDzRXkxCnKKMrNT1T7jQ9ClvH7einMySiFQeL+qeG0b3Kvpaie/pihNLqMp/KlR8xUiokql8owizISxrmfNmjVbMPODmdTpkBB1P4Dt256rmQSkpTpYKKjsGgpZGAA4s8idM1Oj8clsMxgVdv1Gade+r3PuvZI1ZoqKKJNjW70b3KUmSPQljIOTkYioVqs9T+adqQcDAPPkHjlmflJO2UyRUFi0aNHTWr8rKHwZwH4ABrMRiF2E5UHSPIjVdTw4PDy8Y8cbV0ZTqFfp6AT1/KAZnFnPpCgCCgCOAFDOVOHVacwVAGtUdWRb1ICnafoqDQRmXrZixYqZEQjrx7fQQDP4i6rD6DLHgz1FwqkOFFjNxa808nMVvT6Y+VKJ7oVoDJ3DIGcRHpgHBWb2aZq+EsALZdDP6AYM1PX0EBE5507OCbsOqvwggCOJniqhXuA4nJEBwhCAbSMQJgwMpqr09ko2JB/AW7sBhTG6PH+xm9pBEKl2ZtM0DW3v7gewQ+EmbUZTeCKn03NVFuE7uwmDLBSY+ZvqeHQ0hTlN0xcW7ehT9P1aplhHGcDORWkiUTpalAMAbss40piZocv/K82xNA5QcJk+C13PIgZwOoB/d+QzaFFTyPZZ8FJY5FXjBAQLwK5cuXITZl4U1COBwZFFw0DvSMz8x4yGUFYDH4Gw/mCwCTPfBuCPoj2+Wd0rn6nKVQXwinGEwrh0ZJL37WXmr1Sr1X26BoMmoMDqGO7EbizIBjv2ZwUGq7oNAznvfTRT328VgM2iybBeYbC5c26ec+707HOcc+cos2HU5wSgAuCV3YJCE70biz5pMKLF79NqWH5R5sOBqlBq9vSh0OrJja7DOXeuhLMe0S0QhRtdqVT2UiGrwWm0AEB/BMJ6g8EWAK5P0/Q45bgLD0tElKbpcaLJhbnKytR9FVExafUtQOEbXYLCtOXLl88Yd221FSgUNdA515AAsMx8ebip3S4M65w7UWtF8u+/RxiMOwxCr80Ag9fU24BUPs2LVIQpO+e8hJ9Xi54/mdOHP4wXFNbr8XceFHScggz6Sd2AglLh96rVaod3Wz1S5sklOS3FrhoPEynKujAAsDkz/1nVV2wUSh+iBQ9TGb2s/F/VZt6nzcU5pQkoTMqGrovz4hSKrp6sPnvq2rVrtxwP9ahOS7FQAfjjEQjjDoPNmHleK4tY+b+eE6CgqnJ1FQqLFi2aujH2bhxXKISqzeNQJCOQfrZSOX1wKhZZAThKUzDYhJn/lqZpyx21wnNrtdpzMrU/Qpm+KoCuaQpNtGmblF2enxhPTWG8JmKapsdmVE0wc7VcLu8y7k6cjdeBOIOZ7wTw/no+gxbm6rMBrA8oXLsxtn5/ok6X5w0OCsp/8HnlPwgOxfmq6EV0KnYXBtOY+XZm/mW7MMjRFHKhIEFnXYHCwoULR30KWShkNIWxKx1tQOZDXSgA2KCgoByYN2b9B8z8vWgujAsMpkv1YyfZq7aANOYA8kOZeaU+kgyBdgoKRR9J1u3yHNrUhWvMVjpasmTJtA1qvjVq6LqhaQrqBm4nOQvr+A+cc6duiGbQBgbiGSFRCcCVRQI4A4UV2SNJib59zXqAwtUh+lVLpVLZXeIMjDw2OE0ht8uzlD97Y5ED3c3v4Zw7IQO2kMuwW/QfdAcG8pgVin7IZnJuKILThQ3s0GxavZgPaZehcH2d3IelEoX7QufcCc65C8rl8q4brHmaKZS6QUJB+Q++leM/uCM2a+meZiYdm8IOOiwaWVf6jo4FhZHDpK4lRE0H8PdMhyiXSdB6rFqt7rvBbz66JmL2SDKnd+NEhUKPpJGGSRLUukuiudC1MU9EM3uH7jvqnHtnt8Y8Yz48meNT6AYUEiKiwcHBrVWOzDqVjpj53qGhoW0nja8qoyksrlMTccJBQRF8/9DJSldnStP0FdGhOC7j/z3VWezCbkI4E7z0mFRaWgcKAIqGQjjxOEI2G1YwuA/AdpNunmU0hbxCqYW3fi/Qf/D+HP/BijVr1oxL96CN3I8QKi3fK+P+024vjtBn1Dn3kWxreAWF13YDCsx8pap0dP+khEGeppCFgpgPKKJ3Y9Fqq3h8w7WGlOffNWvPKW95BEfj8Unq3QNpIOSY+REAvd0aT5XzcCozXwXgmEzuAytHY2FQCJmZzrlT5bPuUd2pksl88xv2WZDS0esdCpkjr8Vql0hbLb0uBTNienRjs2AKgOljaGpnA4AEE5miF4ouzSfOzFDj4tnMvDwvTqEoKKjveB6Ax4aGhrbZaMzRjKawqA4UTl6fPgW1M71AVeIKx1AMYP9mNIQAAAmmGf889Q0ABmvXrt2yUWVsfczIzDcw8w+L3jBUy7MAg3CvesW+P1RDQccpFGE+yHfsZ+b/BvCMjc43lfEpLMrpOt2wI9M4JDQFYn88e9zonLtf3fymmnNKtNkJqhirjTAgArC11Kic0ahUvurvuAMz3w1gy2ZK6+tF2uC914FBtsCIcvo1A4V2citCpaMDyuXyThvt/GgSCu/J2FmJ0jDs4sWLB7o5YVVNvhCu7HUJrBa1jUOl49BmGzMUMufvdwP4r2Z2WDWOJ6oO4skYr5lZrVafmZlDRjksS41gkJ2rWShk6okep7WNFsdketQg173J+9epvAQJCtoi87ptyuXyLt2oc6/8B7NCgxq5ppDu3JKKqHa3zeW9bl61atWsjU4tpKcVRP2raFzn6sXZ5Hw5bXBwcOsxdv5wH3cAcGIY86w4594r0ZANF2QzUABwXDvmQ2z0kz/QhwAIXZVZ1y0UDeJLzrk3M/OlErDS3+UOOEfoir3y79UAtmrl5qn3e6XEM4CZ/w5go4JC+J5SKftvwTfjnPtjs+OgdvfpSr1upr/jrsz8HQDvlhqMA5VKZXcAl0pk4lZNahxhrj5LQcHpMOcmmyHHhd+ko/FoAGmm50M2jPPr43QtZ2c7/zDzn1tV69Tx5f+qTj6QcNWNAgoKijMB/E3lgjAA140+GjmfvT0zP8jMZWZ+VIVDt5Ro1wgKqvZHCLFO9FyJoe6t3bhw7PP+nI5MoWHlnG4PrFrAP+m0XFqwJ51zp2di1UP++40AZk5mKGTqGdxQp93ZP1vxrbTaqzNTbekOtbk8AqCvjfcLm8YhdaAA59z5GRCMfq/BwcHZ8bSptYH+tQyqU4vnk9ox1MVrMJJYc3s2QrFWqz2/BfU27CTPBVDJ9KFk51xVvtedq1evnpSORgWDbUM+SE7Xr6B9/Wn+/Pm9RdQ6GAMKm6raFr9ud9wzpm4WCsHU/RmAPdRr9nLOnTo8PLx9EQ2INwqnkwzU3gDK4qgBMxcKgyYcUbN0hqb8fKLZpq5q8u3MzP/JJK2MmkDOuccB/Mc5d4NqrmEnyb00RERDQ0PbMPPnAFzEzBcBeFC3WcvUAZirTgC66R+aJceXd3cy5moDO1hDQWJpgvZTlhTnvzHzPwDsHf0IbUwkOaKDc24O0WgjS9MBaEq6Bn6IdtMNPdTPndUkDRrK/zQzedSk2wrAvXlprcz8kHPujbJblQDsJw06N5tk93JqpVJ5Rgjwkd8NADg32PBZM4qZf9BNszDcn7Vr124lC/TgTky2PCg450bhrxzSj8WWf50B4ZFOu+bWC3FtEBEXglT2B4BMGurnxvIfKBhsAeCOOjnuPwOwSZ3Xbx7CnCfBfewNGpXS7kbHTo7vHqpThfh73YRC6AgOYAcJPpvaiQqvzIeDM0eSYQO4c3BwcPbG4EDuis1Zq9UOB3BhhzAYHXiJWTiDmX/GzP9g5rsA3MzMv5Jz8AMzYHgaEAB8sBEQ1M6zZXBchYkuGXKjNRS0+ZNVkSdLfQV9tq7vnw5FBrBliEcYbyio69s+TdNjAPR08jkZTeFJZRbdA2CbCIP2B7a/Vqs9u5PJkCk8cSkzr0UDkUn4hzRNXyqvn8HMazImw1vrLVilGawDA11/UflBbFQZ1xmzKcz8P3VqC36/m2Ome26ocvpFQGFPaQL8QIRBhzdo5cqVm4zl/GvyprwEwEK96MWmq2VjGzJw+Eu5XN6FmX+lq/UAeF3eja0HA60ZqOPKlrWdohuCTkQozJ8/v5eZr2kCCt3QFApLT9daAjP/eVy7ME9m/0EBu86JISrQOZfWCXL6B4BPAjgewFFpmr7SOXeOmBJLmHmB7PDBZHhp9uZqB2IWBkqz+Jg2EVr0f9iixmYibwLBfwPg6jpQ+MF4QKEIGNRqtcOZ+cZKpbJ7hMHEUEGPUYUsgkPPB0AICF48xns9F8A1+ngMwAszn9MIBgFG7cJgdBKlafp6pXbayQ4FVZAmaFm18YBCQZrB4dI/YtcIg4kxobYBsDQc8ysYhDPhL6uTBKMbYWSPIGUxvkqi2ZCm6ZEqlTkXBsystZDz23ESqsk1nZm/HRKiVMk2W+C4GfWdSpnxKOX8zkQoNIaBKpUeYbC+tQNm/kFmp9ZRY+9ViyBpYnLqRX8DgMuD07MODHQDl5ZhoB1nEt14TwhskesvLHW62ezCBhAJkCh0YW5oUFAweJ5oBrtEGEwA7UB+7hYSZlTvh7BAT2tTdQ83vEdg82b5/9YBBhJenQuDVjMiiYicc2dJw9E8h+dNnSREZb31c+bMsQD2BXAiM38CwLeY+Qpm/imA7zPzl51z56Rp+jo5TptVb5yK0iDCQhdH46/q+GW6AoVW3k9pmkcy840Ado4wmFgq2zl17Phz9Q3sADg9krH4PpkAkMzMtmGgHYdDQ0PbiWc6LP7HAdwmZcNuViHQ97VTTyHjDN0HwGckfNehSWHmpcz8N2b+mnPuJAC7j6FBdBJZGjSFX9VxNP6wSCjomo6NxjUTR/FqZr4lniZMTHPhNypcNEzyue1oBjmf0Suf8RntaBT/RNi1PtruZznnTpEFfwuAMwEcko1mXLVq1aw0TV8igHgAwObNTEKtEVQqlT0B/FCZIWG8KupRExNIP5yo7VkpS0fm/0rT9LXB+Zm9P9k04A6g4IqGggoOO9A592YAUzJgs+o5Gqrvk/LwO0QYTBwYGKKRUFTZ7UbteQBLVO092ylwJMjpQV2vQcUZtAQDNcG2ltDZbwI4tNF3zADkIwBuB7B1o8moowWZ+VNoQUKV6VBPUpthukZE5jWrmfk6AB8B8Gydw9CO9pCBwjVdhEIYp6MEPic0eG4fgMuYeUEMOpqgQFi4cOEUZv6XKrwBAOe06thrAIPZzHxnnmagYdDijjQDwMur1eo+OQvG1gn5Hd1p0zQ9ThxZuW2+VMDN3mLqPMnMf2DmrwO4AMCHAZzrnJvDzF9h5isA/JmZ/xk6XecseKcCvEY7WTUAxEPM/F0Abwg7aY72sI6DUj+0hiEaWkhbrnULCtVqdV9J1b7TOffearV6AIBZAGY7545n5ocFBltGGExQIAAoSdsrSH27VZJtaDpIbdVZi3dm8t2DmXBeu9DJBB21pFIrh9ZL5ARku8w1W3kcxMyfBvCq0JGoiffuA7AdgCNFLf6B5H4MNQDE0zSIrIkhkLlBnJcvDDUMW/jOb5CEtyfrpE4XAYXRyk5S5g4Aqsz8ZGjYAuDBNWvWbBFhMMFPGUJbbZkcv88uugJgkHVWntepf6ITYIVqTGmavligsI6mIOniO+Wo4KUGj7p1Isrl8k6Sov0l2anX1gGEU4BopD08zsy/EU3l+eVyeScAm0l6dI+C/YBz7jxm/hGAnaXHxTV5mgKAwqAwb968knymru15e9QMNpBTBim+ESbbF7Q3uAMY3NUtGBR8wvKiPChkTA3TCqS0Ol/neTukafp6Zr4UwF1qUWZ9EC7H/+BzAFFl5pXM/Bgz38/Md8ouvYSZr81+b2b+ZQMomE7NBwWki+V971CVniMMJvopQ61We66qZ9dS7cMNEQYNNIVtlBliChrjdSBR5+/7SFXjn4Uj0syCZwWIIHUBoeSBhQsXTtE+lAB759yv6vgUflTU6YM4cd8ejxY3MLNhzpw5Vpxnvh0NIeNAvDsPBgA+MpFgkNUU0jQ91jl3+3gU4xgDENNqtdrznHMfY+Y/MfOyOk7KAImaeqSqdN0ggP1ytB4LwIha/8s6cQoaCp2cMk36BLNJqyVIGXcw8/Wt+BDU62fnHF+mExkGQebPn9+rTKcHVZhzMg7jb3SZuuzf16xZswWAF8npxm+ZeWEjrUAa5DhdS7OeWg8gqQcFAEVBIYkw2EChwMw/k8mwXTMTQcNAWovl5SZMaBhkFuU0KVB7e7PBS126lqTeeEnJsn3SNH2Vc+4sZv4sM1/CzJ9L0/TVAE6TSM0ZjdR+DQUAv6ijKfy4UwdulA0TCOH8elOpa/eNsfwIOuioHgwAnNtNGBRp54d/M/Ntcu03hzZ469P2zSto20gkw/TiZvxAGU2hHhR+MmfOHDvWOEQtYBL6EsTB+DzvPWq12qENVM6gGWydMRPy8iBK3VoorZg2TS6MnZh5UOUo3DoRoNDISSmPfgDWOXe+XPc+AEwoiNrkdy81gMLVAAYazIcIg0nuTzhZvN2b5TilRmGgNYNM2bNuwyAhIiqXy7sCmN3JpMwk3Pwq23GKmW8NwTTNLLD1AQj5OYuZVwJ4AsDUVsZEQwHAz+ucPtykipfklebffN68eaW4iiYfFEpERM65D0kHpmlK7U+IRhuI5MJAmwndvD4AB9RqtcM67eKj2uDNyWmDV5HfaZ+CnaD36z1yrbe0U+swoynUg8ITAN6YfW2tVjtsaGho29hRafJD4XwA95fL5Z3D34aGhrappxkA+HiXYTAaN+Gc+4Axhjr0gIfv+a5sj8GsJ19Kgu8+0VRk1Ytjnhwb36W0uFaL0jaCgo6YnOece1uapq+V4KpDo+mw8UDhPCnF/koxE+6pY2d+tcsOxNF+gOL462jHDkFJAN4UysZlqkSBmb8P4PkAtgdwjOzC20yUya8yDbcScwGSN7B5u9eYMR/CqVOAgnfOrQPKNE1fNpF8LFHGBwpnKZVxNDlG9eD7PY2EvCbdhEGlUtkbwIrQ1r6DUmbhe50oAOAMDNYCeH2d124T8v4nkM/nUN1LU2JKDNpvsfY0KOiu07IJlNM0PbqbGmGUCQwFAKfVUasXFVE7oYnP3xfAv8Vp+aYO8i3C+71BaQW6KcyyWq12mPab5BT46J1gQHiJ7oPBzFd0umuro+hSiE8JodMA2Dl3fIRB1BROlirMOo35lG5NjPCe1Wp1n6CdAKg5597XzmdmYaA0A6c0oIO0s3GC35cAhKM0rKWu5MEFQqEXwI8AsPiM3hxhEKEQoHBCKGQqVZD6uuFdVg7Ew5l5jdqdwMw3teqvGEszkOO6A9qd6OvDp6B8CAdkG+pIUZr+AkKPg6/lXaKdvTXCIMo6iypN05dKINLV7e5CjRaQmuiHiWPvdQB2rdVqhzHzp5h5mJk/3exOnvUZ5JgJS0LT2ja0jp4FCxb06+sex/sRjhenSbgyMt8rhB632/R3VEMTGLw/wiBKvR3jGAlWmV7kDqkm+b5SfNTmPGc3Zr6lGdNBw0DMHc7kWiytVqvtwsAAMIODg7OL6vvQribFzJfXOf35criuFitLBXNkBjP/W+ekxFUQpZ76fbio4KaF7EhDNJLFlwWJgsHskLqrdrh1Uoal8/FvnHPvrqcpZGGQoxks7cRMCAtNKiy9dX30F1AL97CcwKoAha/rMRlDO9ORmzPkiPdjEQZRmp2IO5XL5Z2b8SOE0Fbn3PGVSmXPejtqpmWcafDZofPx06CgIhDXgYE6Kl3SKQz09ddqtedIUNBW6wEKoRTeT7SWkIHC70L9SAWGRNWQXKc+Q6VS2UMKpp4XYRClVafWQBM9DgIM3uSc++BY6vVYcFGf/TQo1IOBdiBWq9UDipjoun6hLL571q5dO661A1XC0+YA/pUDhaARLXbOvTO01KsHbQDvA7ACwHsiDKIU5hzM7uhpmh4pORDTiugaFKAgrcuuCeaD/O1EOR4t9DQh77vJgjwoNHFh5jvWrl271ThDIZRCPyBUWcqDQjgdksY5RwN4BoA9ALzQOXe+lEkfAvDyCIMoXTMtyuXyrpJa/O4iF0pGU/itBC29Mg8GEmdwQJETPWgjzHyZfEYlFBYdb/MhfE61Wj1Q9dpgVaeCs1Wc5Ti3pv7/D5XVGGEQpSsmxebM/DCA5QCmFB23oLUNacDC6ngxLIDFRZkJWTNIAoNcTr+D28a78lKmpN1P9OLXoccaAiL/cc6dkX2fKFEKNSUA9DHzX2WBfK8bk00tzBMArMwxExZ3QTMIms/OzLxYNBJWiy4Eb/1TNYOx4zT2urjpC5n5x8y8MKf+4hoANwA4Y/Xq1ZvlvT5KlCKdXAMAfhfmn3PuA+3mIIwFA+mo7HOCc7qhGYRdeHtpHqu7IWlb/V5mvlV6Nu7RrM+lyHug/j8dwAFpmr5culEdrk8dolYQpduTMdRovFsB4R1FAiGkMDvnTtIJV+MIg/vrNFH9l5xw9MlzdwRw9KpVqzZtFwqhMnQbNQ6SZlq0x1oGUcbLZJilev19raidSNUzOKlOnEHXYDA8PLxDDgyCZvCLUIcxR32f1ejIb4zP7lcnF7ad+6HiDdpqMx8lSiG2rEDhZkmK2rrTVOl6MFCL8nEA+xM9FQxVoGawDgwyGskXtSmjS5npjswdwHUHAEdG9T7KhgyFsJA2AXA3M9/Qya6tfAZvzMtNEAffuMNAtamzXaoLEXIWvgzgtCI1nyhR1hcUZsnx40Xy/55OYJDnMwgw6ILPoBEMzs5qBd0awzRNXyda0GsiFKJMBihsysz3AnhbKxN6LM0AwOPVarUrMBgeHt4BwP11OlN9YDwWZoCNc+4toVBMmqavi1CIssFDYe3atVsy8y1pmja1y6k4g3GHgdjt98vid+sDBpnruS4UhR2pcRqhEGVyaAqzJarwZY0mtIaBlAfL8xns10Uz4YEJAIMwBq8LMQ9ymuIjFKJMJihsI1GMx+RNaJ0hWQ8G1Wq1azAAUA8GZ463ZlCpVHYHsCyUQg9HnRL74NI0fb1+fpQoGzQU0jR9aWY3HIWB7IR5msG+RS6CPBjkOBDHHQbSKev+BhGRjplT51w4fYjxBVE2eCj8RUGhrw4MRoubdEszkKCjBycKDCRuY35eRCSAlQAukOau+zvnzgTwnCJSy6NEmSjmw7ECgzdnYSCLYaUqMV54ODKAXBgAOEN9phmPMRHNYH6mVmK4nj+H/IjMazcHsFkEQpTJAIVtmfm3AL6qTIPQEMYxczVN06O65TNg5oeCzyC0LpPFtz40g23keDYPBt8KQVdyHDlaBk1+1xPNhiiTBQqbK3u5Jo1Bgsr+ji6ZCTsGGKg4g5qw4az14DPYVsMg4zv5hDzX1KlHGTWDKJMLCitWrJgZEqJUS/ZruqQZ7KjMhHolzPvGWUu6t04Q1LnhuXHhR9mooLBq1apNVZYkp2naUQPTZmAgJkI40vs1My+v1WrP77aG0AAGUDD4sDIRIgyibJTmw2jqdKVS2bOIhrK6fLwyE0JPxHVOE5j5M2KyPLdbUFBmwnYKBlmH5ofGy2yJEmWiQiGkTm/CzPcAeGeni6IZGAAI7cpCQZI5ALzuCD2eMNCaQZwVUSIUnlKlL5by7aZbMNC9C3VlJ+fcHGYehUKox1CQphI1gyhRWoXC4ODg7Gq1elA7QTetwiDz2nC8d0FRUGgGBs65CIMoUcbQFPpadSp2AoMsFJxz60ChzbbxT4NBTq5EhEGUKGMsJNPu4pNS6W3BIEdT+Li8vmUo1NEM0giDKFG6D5CwgHcH8HAdGJzeyuLLQqFWqx3e7Os1DADkwgDAByMMokRpf9H36gWnKguHhXsggMfq2Oint7P4lPkQNIUxoZA5TbgvwiBKlO4AYcrw8PCOdf72akmEKgwGwXRRUPiYJGDVhULGTLivjpkQYRAlShE+BQCzAbwLwDGSKnwIM39b1QrgTJzB+zpdfHWg8Lzs+2bMhPvy+jhoGMQIxChROoNCOH3YkZlvCQ571djUZ3bijmGQgULoD3G+RDQ+Ty3uXBhEzSBKlPGBwkxmvikkRHnvkdmJzy568WWhAAC1Wu2I8PehoaHtGlRr7nrp9ihRIhRGCreGBRhShn/RzZ04Yz4AwGEAtlCNYOvCIN69KFG6C4VNAPyfUtHLAHYrIjGqSZ/Cecy8pEFNxgiDKFHGGwpSjg3M/Dv9t25JqGC0Zs2azQEsrZObcFaEQZQo4yhz585NiIiWL18+A8CdAH4vi7Br5ckz1ZofrBNnEGEQJcp60hTCAt2CmecC2Dqo9t2EgfIZcIRBlCgT0HwYHBzcOk3TF3WjNHkdGGR9BhEGUaJMJCgsWbJkWihNXhQUIgyiRNkwoRAiGnu70eEpwiBKlOifWKcrdM5pwgciDKJE2UhgIH0cHogwiBIlwmDHBhGIEQZRomxEZsKODVrERxhEibIRwCAUW9klBB1lYTCevR+jRInS/UVfr/JSyGTcl5kX1NEMIgyiRJlkQOgfHh7ePu9vaZoew8zLlAMRdWAQU5ijRJkEMAhxCls6594G4MUANq9UKnsB+BwzcwhHztRXOCNqBlGiTG4obM/Mf2fmQedcWVdeysAgmglRokxyKITU6ekA/lav8hIzf1qe1xNHLUqUjQAKy5Ytm87Mf8lWXnLOXRc0g1j2LEqUjUtTmKGKrKTMXK1Wq/vJ35I4UlGibGRQWL58+Qxm/rNA4Tr9tyhRomycmsI0Zr4tAiGKljgJNjIxxngA1hgzODg4eDQRPQlgW/l99B9EibIxawpr167dKk3TF3ej8lKUKFE2QCgsXrx4oOjKS1GiRNkwoWCIiG699dae6EeIEiVKlChRokSJEiVKlChRokSJEiVKlChRokSJEiVKlChRokSJEiVKlChRokSJEiVKlChRokSJEiVKlChRokSJEiVKlChRokSJEiVKlChRokSJEiVKlChRokSJEiVKlChRokSJEiVKlChRokSJEiVKlChRokSJEiVKlChRokSJEiVKlChRokSJEkWLafRHaQ8engNjjG/1AwAk6r/eGINufqFOPw+A6fY1tvm9dKt2TMRrjDLxJLOGyRjDbQNhIx9EKwuP44iMjsmYIAoTMG/cWniPpN0NqFX4y33O3TgaXW94rVwjxvE+NLzmTqXUaJesVCp79vX17SxfeKkx5vZWd1AAz3XOzSQiWyqV7jPGPNqtXVgm0rOJqEcG7W5jzJPNfh4A8+ijj/YZYypE5CfQYuwhol2JyNRqNdvb27vYGLNCgD4ukzEsThlj0+B5rt5iavI9fIAJgKRTIMsCqnetIKLwWTYLIHW9YYMgGW8j37Pua9fXNWfXMIBdiGhPInJElBLR34wxtVYvqERExMyX4im5LlwEAJNRYet+KWa+P7yBc+688P7yHkmRAwhgBjOvDp+XpulrcsyIRq+fxcx3AbgWwOfTND2u0c3p9s0PYwxgO2Zey8w1AA7A+/V9Gg8gAdgBQN9Yz3XOnQrgQzljOwBgHwD9TbzHOQBe1cy960SWL18+wzl3ugB3HbMMgKlUKnsAmJX32kqlsjuA94735rBq1apZzrl3h3GpN3/UGr4wrAdmLgOY3eh1Y02oqtDIEFElQyk0ScZh2W1BRLWn3mKEdEXTVa4Z8mj2fQ0RoVwuz+jr69ubiPYnoqOttdcYY35ZxE7ViPjGGPLe590gIzfOEFGPMaZHfp+E3zcBLFNPhW/BnzLgvf+HtXYQwHzv/fLwHGstvPdkrQURJd77NxFRPzPvaK09j4jKModme+9vIaInANxGRCuJyKjXEhF57/1m1trXe++dc+4txpiftDtHZIEnOVpUIjvm24noS0R0XKVSeZ8x5v4wnsYYMPMPiGg3Zr6diBZaa71cMxPRC4hob2Z+nbX2XCK6owg1XhZyKWgi6tpLcs1nEtEcInoDgA+OpbUDqBERy/waHEujLNXZrQwAK2+SZCYnAdi6Wq3OMsbcp29WZnIaAOS91+pW0Cw8gOnOuWcZY/5csAlh1KMlmTJlykzvPRFR6r1P0zQ9R6mJYbcqxHaTsSoR0ebGmMV13jOohk7GzBtjDBGxqIOuiWtBK/Z7o+EhotlEtBsR3U9EqwQAsNaSHxm4Gdbafu99aq093XufJklytuyo6O3tNdbanYloZ4EDByjI/XICDiYimyTJ5c65LYwxl7QCZTUnt/Xe/81aO8V7DzUnDBF5a+0W8v8j+/r67gPwAmPMDbIonTxvC2vtMd77J733S9R62JWInLX2KO/99bVa7aApU6Y80gm8jDG+Vqs9o1Qq/V3BwKjnUJIk0+S/LySi2wAcZ4z5VYPxMUSUGGNoLK3+aUBQkyUVdYMzth2ICMz8ob6+vrekaXq8LGhrjMkuFMh76N+5MFjOuVOttV91zn3cGHORJnM3NuK8G6VsWQuAiWgza20Yk8v6+/sfAtCrNJlCbNvweufc65Mk+UatVju6p6fnbplsPlxTcB4R0TT5GbS1PgADRNQTYJFDfkNElKbpM3t6evY2xnw7s+u3Kiw7uLPWvtIY86+c77WD936BjOFq59wP67zHv5IkObTO2BxFRNd77533vgJgYbv+DiJaaq39IhFNt9Z6Zh5dXEmSEDNX5d8gIjM8PBy+U3h9b9A0vfdv6unpuXb0izD/nYieQ0Rsrf11f3//gg7nBYiIent7FxLRF8QPBq05juwFVJXv4ZMkSYjo9sw1d+ZUBFAyxjhm/hQRvUHIWJKbtzWA0RvFzPePaIl2DyKiUql0PYA3GGPmAjiJiD7hvXeKokREO4X3MMZ8jJnfKe/xDPn7Z5j5ECI6Xqn6RavlLuNoKRljXPbmAZgqN+Gh+++//yx5bU3bx0mSXGuMeaLdm6+0rB7v/UeJaGaSJP/rva+o3cCJemfkRm9irR1Q7/EFAGeoXWRAJpAWS0SDsqMMMPOzrLVnG2PWtgmFAKmEiKbLLhquz8p1TA/P9d4P9fb2/rPOe5QATBETMnyHAMMBMUVK3vv7enp6ftnqhFee+Jox5r/aMJO8aMhTZTNJSqXSUnWywErrTYjoSZlXpgPgBu150BjzqXZMz6JOGbzcgDuIaAexN0rW2tR7fxgRzQz+DCK6SdTE68XuM0QUqPpPIvq7miBBthDSEhE9RkR3ElGv936e0NUAmK92xlZPFcJgIgOiYGsnRLStqMv/ll3zuQC+6r2/1Vp7KxEtEq3oWLmGv++zzz5HiAMMskD3F3I/AuB0Y8zv21QPE2OMA3C6tXZf7/0KAJckSVIjooSZXZIkexPRqfSUYX01M/81SZISETkAmxHR+dZaI3//GYBb1f1MiKhsjDlWVNpha+3bvfcHA3ghEa3t0EwbDpDVpk25XB7u7e3VQOojoqG8W2eMKdcxj8qZRdIyeLUnfky1h/lz1to+IjpPTpcCoGbIgwA8OTg4+O8ZM2YAYXdbV3o6XZitzCMAx4gv4WxjzAPj5tFk5s+pU4ar23yPW9UpQ1e9sgAMMy9V1/wSuYafMvN8ANMECMegjjCz897X/Zv67yeznulmAQZgX2ZeM/KWfF32eXK6wcxcBeABPFP/fcGCBf3MvBwAA+A0TV+e81l9AO5R13tXmqYvDyc8LWozmzDzChkDz8wLmflBZn5YPR5k5seYOQzeYu2hL5fLu4iXG8xcY+Z/MvND+j0APMDMjzMzy/PuVtdgWrjebQAcCuAQAM/KPmq12rMBPBPAq2WMwcz/qNVqRwTvPIDdw/gz8w3Ze83M/1Bj+98yrr0ApoRTixbHeH8AxwF4NYDX1Hm8FsBr5SQMzLzKOXcmgGlz5syxeacMzrnzAcB7D2Z+EsBWmc9d58SwlJmsVns0RWUK0itf1BpjqmmavqxUKl1vjKkpT3iS9dx777WfYrq8R6+cBhxERJsZY/7Q7E6g1P5tvPeXElFP8HSLuTIzOGAAXMTMZ1trXyo76c+J6KWlUsnLTuq990PW2mOJaJmYMiNHFdUqiIj6+vqs7DZHW2u/5r2vWWtLzPyottWbdBrxqlWrZnnv51prp8vvf6c8y8GheYxcS4/3/glr7b/kOZaI/PDw8OYy1lZ2l03Ue3gi2tx7/2tr7b5EtJaILiGiz/f09AwVxN67iGiZtTZRji/23m9GRNuPZSfLvb8pOO7k/lnvfUpEO4vzsh0JpwdHE9H36z2pp+ep9Rrut7X2UCL6w/Dw8O4AFhPRPtbaXrlH16r3z9vJnTJLzySiR4nomibndEJEjplfnSTJJ5v5kuLErVlrZxLRJWma/v0Tn/jEzS1qUwbA004MS0plYaVmBadiCL6AfOlUvvQuRPQb7/1VAE4joqqoPD5HQ2Dlsa3Je4T3/yQRvQjAiXK814oKPijHQFO9914G6QhZRN4YY8Uz3uO9/5W11gK4OWNjBwDeY4xZM8aC3l3Gqdd7X06S5LeZST7WLgAAm3rv/2qt3UvgVU6S5EoxITwR4d577+3Za6+9jpKbZYjof4wxqwXYqTEGg4ODLjvM8h5WAL2d+Hl+UK1WP9/f3/9AEc7QYMFYa083xjyW8z238d6/Qh0n1gPCkiRJTq4zVs8nor924isiop8T0fw0TddZ/EoDC7+H/D9sgOWpU6cukSPHFwqoKkmSXNnAjwHv/UudcyfLRneB9/5BAL+Wez6Wacbi2LyEiH5Wz9SpVqtGNiiS041+IvKVSqU2ZcqUR9Qabsm0YuYfW2uvNMb8dtQEB3A0gEeY+T5R/e5i5pu0+s3MZfndzaLuht/fIKr6jwD8UwKRHmDmW5j5H1rNZub/MPNNAG5h5gVaHXfOvS3jF2jHPLktqKQSmPTivOelafpidU2rAWwtAVeJ/NSPHvn5OqV6lQHs2qzJEJxNAKYB+Kb62l8J31mpqq8O5omM3QHqOYaIaHBwcDYzr1Rjd2J27NasWbOF1v7aCbCqYzI4Ubd7xCzRP/dT6n6eyTAkf3tEApV6RM3uAdAvP1+l7k1LJkNRZieAgTA/mfmyjLkXAu5uAuCYOc1alnJPzteqe5GyaNGiqc0+1zn3kYzJMEt91zDXhgGcMGoyVKvVf/f19d2gzoKfa63d34/I5US0goheaq19tpw3Xy5OxpK19gFjDJxzt4g6k4oz6Q3iKf4nEf3Oez+TiN5srd3Wez9IRD8XZxeLo/LBZndcrYaro7ltvPd7ZtT46coUYnHopXm7nniWn0Zz5XXOXpdvhcRBqyGidwO43Xv/4XK5fHHQHsKk895faK311trEOXdZkiR3hZ29QVSak+8Z/APGGLNMJsSHaST4RquIncpg3jgCWCvzx9bZ6Vx4GGOy5kvQPoeLWNTqNKDRYjnFGHOGc+7tfX19dwLoNcbUnHOnJEmyk/f+SWvtJ/Q9UmbJ3TQSJg8xT0FECDYngJbms7pvDedVpVLZq6+v71rn3H8nSXKxmM+zxdE/IGawUc7RWWrqzvLe3y2aPxHRTrJmpxDRVc65aSUiov7+/vuJ6C1qoD5IRJ8nohXW2jOMMSuZ+as0EozxcJIkpz7tuKJU+lpmt96fiPa21l5vjDkTwFTv/dFEtCUR/SNJkrd26m1Vi9inabpPqVSaKsAKC6esvNp+vHaZJnwJ3wZw1bRp01aHXcQYkzLzp6y1B4q/46FSqfThEFBU573IGEOlUmmnjMkX/v5iIrrYez+QJMmFoul0CgXrvf8NMw+p40YjE3F6sLuJaNOMf8Vaa2fIP3YHcJfcq9Hbaa1l7/2msrA6ulcC0C1oJBoxq0maJEmM9/4D1trNS6XSLbKjfwXA1t77i2X83m+M+U/G1GL5DhcS0Y5EdLiEdIcxXU5EX+rp6fm5jl1pdj4PDg7OHhgY+GwYWxWHYOWY9kVEtH2SJJ/z3r++UqmcQkSPENGtMnYhViWM517qpJCJ6D5ZF9Z7f4u11ol555Mkuaek6FSS45MaM09TTqtNAKz13vfL73oAzBDHkJfdlWWHCipryXvfI//vmzdvXomIZsn/ExoJrAmfl4b4gzZDmI3coOernTsEOe2sg4loAkg44xa/gA1ai3PuzUT0UXnaE8654/r6+lbn+VUGBgbgvYcEqsB7f4HEcgyp3XkT7/3LZXHNYeZtbrvttvcdfPDBroDI0IeJaLm11obQY5m4noiulcW/mlS4e5qmq3p7e/9LfDzBv7NOZKtEKO5ord2x02GWOVXy3r/DWjtDRyoaY8L1DnrvV1pre733JxHRpUS0hoiu9t6vLpVKP5V5yjpwTsbvcSI6BsC26lgdRLTaGLMybFStXvjAwIAjogOIaFomujLIKomYdEQ0YK2dZoyp6mPqjBb0QWvtF0VLWG2tfU3Oke+YdsfHxbZYDmAHoeo35Xf/lACeRrvgFGZ+QNtgg4ODWzPzEvnd/xZp8xGRYeab5YjIib0Ujr8uBbCpPLe3jg9hq3p2qrIdj8v4EHZu9dixTgwFATgNQLBFHwSwbx7ElD3dz8yPiQ1bbXBM6pm5Iv++KfhICvAh7Njs64MvpoXPfH6RPgT5zj233nprj/goem699dbR/8tzBgrWAsd985HvqR99ABLn3McyPoRtgs8q5zXG6vwEOaftH8M+BhElcv65jXr9qQD+B8Dp8pzg3q0J+daxF1euXLmJc+6tBajfqFQqzyCiA0VNSigYY94vJKL3ENHNaZq+OEQdlkpP8/MEp15JBmr0EX5HTw966ghiolVNFcfid2Q3+wURHWGMmZ93IiC7U2KMqQD4DhEl1tpe0RTyjqeMtbbPe7/EWvuWAhO0Ng0LTU2mnjzfiYS0e30+Xq1W95F/96iJ2SsLaWbBGhkbY9JDDjkkNcakxpj04IMPdoccckgq933n4M9Qzl+bd0ZfT4aHh3cAcHDmxK5bC7/XOXdK2NzC9cn3HH3IyRPnmJvr/D3zGJ3ojplPSpLkS8x8OhGtHkMdqxpjziGi7Y0xHxKb95nW2mPlCPCbohKSVhuVc4NLpVJvkiTfA/AQEd3YjBMob84Tke/r63uVHC+uJaI+iaW3xpjTvffvsda+zFp7rXPu3FKp9MWMGgYiWpaJvMs6wgjAqqJ8CESEWq32PO/9T62123nvFwC4sFQq/UiBrt5YBL/Jp5xzjxtjjiWiqTn3yBBRzVo731r7TVWHooiYdxagQZlBWzHz94joLmvtX4locZqmtqenB0SENE2Tnp6elIje0Nvbe6Zz7kPGmG/onV/es+t1KIK5xMxnGmM+AuAcY8xlIazde/8nAHt671cTkWfmTcbYIHvFeXcljcR83CWOU7S5yfk8DcAYw8z8hiRJfkhEpwE40xhzZ5HJgToOYUs5D32EmXdXXzb7QSVjTI2Zr/bevwPAHCHsljQSinyjTMapskutFYqa/v7+8F7906dPX8rMC4joQ0mSvDY/InRMdZbnzp2bENGJ8lkXee/fLs5PIqKhWq32vt7e3vnW2inM/Aoi+qJzzpRKJRIbbcB7fyWAIXoq8y67uLz3fidjDEnWWMcTEsBK7/0TRHTJmjVrvjtr1qxVKiPRN3FiQaVS6btE9N1OJlqBUrLWHkNExxDROd57lyQJhfFMkgTee2OtLUnW3qXMfBARvbtLjltfLpd36e3tvdxaqzMqtQb1bPnnt5n5FGvtK4wxq51zv6SRAKmTrLWzvfdfqePYNeKUO5GINieiN8njUGPMLa2MeXhupVLZgZn/Kid0oz4E771hZm+t3VZe8nwiuiNN06OJ6LqiUvRL6ovuSkQ0NDR058DAwP7KQRe8qtnjuL8mSfJe59yLiegaItpOTIn7S6XSAEmSCjOvIiKaOnUq1GJLABjv/U3W2uMBbGmMWdoi6SwR+eOPP/4wIjrQe/+wtfa7RHSWes4mU6ZMWcDMlxDRR5n57MyxZHifnb33VeU1zwLBEdGWcm2der+9/LyXiJ6lxrOPnornb/btkszRlk6Z3cEY87Co8n4cSsHBe7/aWjvgvf+PtfY4cTwbNZc29d7/Xo7HYK19RK7XFn0tcnq2xnv/KBFNCbUMRtWskcjWH9NTyXwr5XpHT8ycc48T0UXlcvniadOmPVFXXWI+QT7TyTy8J3NU2co1LyOiH8uGCh3cJY7QimjhnkaqkN0vG4wviqYh0OJOZl4jv/tMCCSSoxti5m/I7xaIbbWX/P9K+ftj4gvaCcAeKmjmjcqp+IS85kYZ8LPlOe8J9mWLqjcB+Jn+HB2wk6bpq+Vat5aoSKrjVBzTqSR5AIU5FbvsYDqJmVcBeE8RcyPHqbh/+O7qPmwfAtaY+YEGzubwPisBTFe2enDeHluUU7EDR2Twjewi1/HDAG3lX+oHUHLOvV2eU5V5+M5W53KX5kBTuQyUo/5DUlF3997fICTaVMhUWbp0afaIwtNI4NGj3vtV1tojAezhvd/Ke7/YWvuYc+5FwXGXJMl/1FFZ9qLvl93yRCL6BjUZ7BNU62q1up/3/jhr7c2f+tSnrgQwQ46uRp8q329JkiQXhLTnnLecIVl2eVRPZOeeUvANexUzb0lPhXXXVwNG8vV9RmuxulzFSGr8iMbjvf+ExLlfCuBoIvoQjZxV0zhVa7Yyp7SGENK09f+n0UiuRVd9BWrOmKzDcf78+b377rtvTZx0qThCU1HhH2Hm6621bwRwkTHmQRUkFjS9d8tOXvLeL0iS5PJgzhZ0WpHND2KVN9Ej/y/WFJTacXDOfUB22auEercrQl8qv/tXyBqUoz4w8+Xy82fy3EDNQQC7ye+2UhrC3+R3+wBIJdR4t2Z3XLUr/dp7j2q1epD8fxYzL1MaQqjLt04Nx/V57Biez8y/R5eEmVNmHlIh5u9p5zisAw3hobxxATA9aHDyflt1S0OQ9zxZNLvt9I6trvkFAG4OWbFaJHaGQig1M1+r5lJJ5tFrdKg8gFPa1Q7UNe3rnDux0dEuM189VuZw2xoCEVFfX99e8uLfye9DHPyiQFmVrDJq80k9gVustRXxM/yPUGwPef3jjz766H8ydi6p3e5x7/1ya+1sZj6SRmoq2EaagiL0CUT0Su/9x/v6+u4IY1XvZaIpTAiNXsbqJCKaVS6X/ZQpUxr5SThN022TJLmORjI7jff+ImvtdyqVSm9/f//TNJ5arZb09/ePFlu58MIL/93t4zB1vUREO3nvQyq0DgZKSGoMUJdbAMj9/nSpVNrRez9ERCul0pDx3hvnHHvvZ1lrBwD8kZkvtdZ+jEZC8omeCkb6vff+Lmvt0c65DxtjvhDyL7z3n6KRZK8e7/3/WWsvl4XNbY6dJ6LnJElymfd+SJzu5cy6mWqt3Y+IXi15LhfQSKZuIb06SrKwjyOiBf39/Q899NBDfQoI/6oHKXG+fMgYMyxhzbDW/lGcS/sIPObvvPPOlRwgBFlNI8VJZidJ8loiuqwFR8yB3vu/lEqlT3ezCGq31FhjzCo1+cbaPcoS3VcSz/aSUOxlorkv5GeZiP4gR28hktRLOv1J9FRkX1dFohC3F0fn9dbam4ioxMyQE5B3e++nSCbsa4nokxmgJGI+fJKIfmGM+axz7lFjzM+cc+clSbKvZK2m1tr3qijUThZmWcyAAQB700jkZyg6lNJIoR723rO19p1E9JAx5kui0bhCgADgPiL6CxHR7rvvvoX3fnu5iXeNMbmHAfR5799II/XeFwOY7r0PgSf/N5bHXWLivff+8VCAdYzXhIV/vlS6IRrHRhkF+hCaKQQbxiOrQvTKWDU1Cbrd8CQHCI8nSfKOOuruq+ipWoXdlhB+D+/9j5Ik+UXmWl4cjvGstRcYY5ZoP5NootYY80tm/qO19mjv/ffFZ3ZO8B0w81nGmHsK2phCODsBeDBJkpdn5s05NJJnZL3391trv1mUz2IUCKVS6fPqd7uKQyolopubmNRTrbWriOgbAEyapvv19PTsQERO1Ny6E0def3Gapmf39vbe1sZOW9lQgRAKU4wxviHox+eYQKEKs5+AX68kfqasU3FWnXLz4zDcZqYqIsMCCa2pNMomNUR0OhHdImvj0+Heee+/WSqVvt7AYd3pOIbQgJD3E+J7jPd+qTFmqMjAJKucQ2FwDpXBupeIHtR1C+uM9Eoi2o+IfmmMgbX2CBmo24lovnIumTo36re9vb23jeex0sYkreYSFKgpuJxHM7tYt+6plwUb0q9dBsi5qr4At2SMeZiZ3y9royxxOSur1ernFFCSLszJRqHIPUV/nlVf2slCPkpuyjUyaP0CBW6A34rsBpQkybE0knt/hbxvj1CuXsuppF27q8AjtFCMNZvskai/2Q0RCCGXYJwSbvSCq+hcBrlX5QwgNATCbtgtX5BVx3hJTju5einmJWNMunz58hni50Lo8+C9nzVlypQbnXPvo5FGOqFfRqnAhWoaNOUpvOnvaPqzMcYPDQ1tQ0TP895XrbWXy4QKiR+bNdiFEhqJsd+LiJ7jvV9VLpevlPetynM2UR7mPJ/A+nSErWhwHSF6sOPzclUevJVJnK1Vuc7kbnB0YomIq9Xq7n19fcYY80CX1NrRz7PWzpJ/7MXMD0k+/qjJ4L3vtdZuLvd9C3oqHdmHDcU5t4OKqShShrM1I1ShkHr3KlTI3tF7fwURHSab5n3W2r2lnsM2SZJ8nYje7py7JEmSn+cUf+kI6HI9XmDTVfO4pJwvPHXq1JfQSB72FcaYfy5cuHDKNtts8+4kSfby3r9STg6SOqo/mPkka22PtfZb06dPXyI+haOstcd57w83xkzRmslE0KiJqI+Z3+qcW5EkiV23N83otdbk+ovwG7QCwACj1ZkdbDivIErea5n5Uu/9QVK38o9ddCSu9t5/TmoLGBqpdfm050qVLAJQNsYMy/c7hIiO897PtNaeIN2gjN4BO90JjTH7AHhWmqalnp4eTtOUiGgTynRHChucjK8D8BLv/XestTsQ0RpmPidJku97779orX3/yBCzT5LkwCRJfkBE5zHzXGvtd40xj3Vo3+f1ebDjAQQvN+s0ay2stZ8XQla897OI6B30VLHVdaLm5IKdRKa91Xu/xlr7laDe1Gq1B/v7+4+31m7JzDXpLTDYZXuxOaNyZOL100hhDBKTZ6znm3YSsYTuOzjndgGQ9vT0NPPdTZqmcM5tJaW5wgfvA+Bw5SBbRyTLkGnkaPZISQX/g3Pu41LMs1yUMzJzjHpeO1rT4ODgwqlTp56iEndSGkntXhX8IJ1cr8T+f4yIPhaKroaf0nZunf6PcrrQR0QfI6KPyUb4JyI6q1Qq3QvAJElyhnNuoTHm80mS9Hjva/L7ZxDRO4nocnWS1A4QHBHt4r1fKYFFhpnhvZ9CI0mEXQFDSQX6PIeIjpDjmbuDegngs977t9FIaWxDRMuNMeVwk5R/4RQi2k5SMpcEm3VgYGCRdMmdK5PHAvifLgKhme5PkEElAdjhRLR0aGjIDgwMZCdeIrvAK5Ik+bbseq2aOaEO30tLpdK3WnlhXtVgInq/PMZ8TZg3Eg/w6Vqt9j99fX13tbHIvHo0Mh2bvaeQXTiZPn36UufcOUT0Q9ltg4P7hx3OE9BI4BB57z9jrb2GiHrTNPU9PT3w3l9urQ2ZsT1ERPfee68F8CLv/destXsR0X+I6JPGmMsy5nFijPkigDuI6L9DJzLv/eo0TY/o7+9/uE2Q6Q13JRF9S0yTBEDVGPMSma/NaguQ6yVqIjWgpCg6h0ZKLH1YNWRNjDFlZr7RWns8ET1prb0g4+zwEovwCSK6MUmSr4dBU7bYtd77Fdbazb33VyRJcpkMVjfs2V41gWyD7x1UgQEietwYs2KMnWyV7FrhNa0QOgDkKiJ6gEbqA5gWwbCOA0xU3rFeozMJDRGt7evru0vbps0qAjRy3GVlZ7J1tIV2/EHhuO967z2SJOn13j9irb3YGPO9UEymzbnQR0+dpN1vjLllnQ9m/jONlCQz1tplRER77rnn8UR0ubV2GTN/NEmSbxljVqgiqKxPFYwx1wN4tvf+HGvtB4noWwKDnjoFfZtZk2GM1yZJcn5mHq6lkSxZBL/LWNNA7huF1nRjfXho5Xaxc64/SZKlevcHYJxzVxLRAmvtdySl1qhahYZGIrXeTkQPZKO15LmDzrmvENETSZJ8T72ucCuARur9zZLIvrU5f6c0Te8vlUpnj1wGakuXLq01OJoLKt89RHS2NK/lJEmWN/JO11GrVxPRDRvgYYUjon8Q0QyJkCvSaTbaq4GZv0xE/7TWzjXGrCngfP1+gbEBUFanDGFRv0trUWIy/pmITl+7du1VM2bMWK5OGrLHlMG0SOS+ng/gV9baJ2QutbrZQZyqy6y1d8ix5kJJYNKt4a8gouvktGOogX8F8n3+TUR3SG2F1SQVzOrJ/wNpaENpV9UQHQAAAABJRU5ErkJggg==';
-const NAVN={floor:'平面配置',ceil:'天花配置',light:'燈具迴路',elec:'水電插座',cab:'櫃體施工圖'};
+const NAVN={floor:'平面配置',ceil:'天花配置',light:'燈具迴路',elec:'水電插座',cab:'櫃體施工圖',wood:'木作施工圖'};
 function renderSheets(){
- const sh=sheet(),plan=P.sheets.filter(s=>s.kind!=='cab'),cabs=P.sheets.filter(s=>s.kind==='cab');
+ const sh=sheet(),plan=P.sheets.filter(s=>!isDet(s)),cabs=P.sheets.filter(s=>s.kind==='cab'),woods=P.sheets.filter(s=>s.kind==='wood');
  const ic=k=>`<svg viewBox="0 0 24 24">${NAVIC[k]}</svg>`;
- const projOn=cur.tab==='proj'&&sh.kind!=='cab';
+ const projOn=cur.tab==='proj'&&!isDet(sh);
  let h=`<button class="nav" data-act="projTab" aria-current="${projOn}">${ic('proj')}<span>案件總覽</span></button>`;
  plan.forEach(s=>{h+=`<button class="nav" data-sheet="${s.id}" aria-current="${s.id===cur.sheet&&!projOn}">${ic(s.kind)}<span>${esc(NAVN[s.kind]||sheetTitle(s))}</span><code>${esc(s.code||'')}</code></button>`;});
  const cabOn=sh.kind==='cab';
  h+=cabs.length?`<button class="nav" data-sheet="${cabOn?sh.id:cabs[0].id}" aria-current="${cabOn}">${ic('cab')}<span>櫃體施工圖</span><code>${cabs.length} 座</code></button>`:`<button class="nav" data-act="newcab" aria-current="false">${ic('cab')}<span>櫃體施工圖</span><code>＋</code></button>`;
+ const woodOn=sh.kind==='wood';
+ h+=woods.length?`<button class="nav" data-sheet="${woodOn?sh.id:woods[0].id}" aria-current="${woodOn}">${ic('wood')}<span>木作施工圖</span><code>${woods.length} 張</code></button>`:`<button class="nav" data-act="newwood" data-wt="wall" aria-current="false">${ic('wood')}<span>木作施工圖</span><code>＋</code></button>`;
  h+=`<div class="sfoot"><hr><img class="slogo" src="${HERF_LOGO}" alt="赫柏空間設計"><b>HERFULSINS</b><small>INTERIOR DESIGN</small></div>`;
  $('#sheets').innerHTML=h;
  /* tab strip */
  let t='';
  if(cabOn){cabs.forEach(s=>{const c=cabOfSheet(s);t+=`<button class="stab" role="tab" data-sheet="${s.id}" aria-current="${s.id===cur.sheet}"><code>${esc(c?c.tag:s.code)}</code>${esc(c?c.name:sheetTitle(s))}</button>`;});t+=`<button class="stab add" data-act="newcab">＋ 新增櫃體</button>`;}
+ else if(woodOn){woods.forEach(s=>{const w=woodOfSheet(s);t+=`<button class="stab" role="tab" data-sheet="${s.id}" aria-current="${s.id===cur.sheet}"><code>${esc(w?w.tag:s.code)}</code>${esc(w?w.name:sheetTitle(s))}</button>`;});t+=`<button class="stab add" data-act="newwood" data-wt="wall">＋ 牆面造型</button><button class="stab add" data-act="newwood" data-wt="ceil">＋ 天花剖面</button><button class="stab add" data-act="newwood" data-wt="door">＋ 門片門框</button>`;}
  else t=`<button class="stab" role="tab" aria-current="true"><code>${esc(sh.code||'')}</code>${esc(sheetTitle(sh))}</button>`;
  $('#stabs').innerHTML=t;
  const cc=$('#crumbCur');if(cc)cc.textContent=sheetTitle(sh);
 }
 function gotoSheet(id){if(!P.sheets.find(s=>s.id===id))return;cur.multi=[];if(cur.tab==='proj')cur.tab='props';cur.sheet=id;cur.sel=null;cur.cell=null;draft=[];dimDraft=null;
- const sh=sheet();if(sh.kind==='cab'){cur.tool='select';const c=cabOfSheet(sh);cur.sel=null;cur.tab='props';}
+ const sh=sheet();if(isDet(sh)){cur.tool='select';cur.sel=null;cur.tab=sh.kind==='wood'?'size':'props';}
  else if(!toolList().flat().includes(activeTool()))cur.tool='select';
  dirty=true;$('#sheets').classList.remove('open');renderAll();fitView();lsSet(LS.ui,JSON.stringify({sheet:cur.sheet}));}
 function renderAll(){renderSheets();renderTools();setHint();renderPanel();$('#pname').value=P.info.name;dirty=true;render();}
 
 /* ---------- panel ---------- */
-function renderSheetsNavOnly(){const sh=sheet();const projOn=cur.tab==='proj'&&sh.kind!=='cab';document.querySelectorAll('#sheets .nav').forEach(n=>{const on=n.dataset.act==='projTab'?projOn:(n.dataset.sheet?(sh.kind==='cab'?P.sheets.find(x=>x.id===n.dataset.sheet)?.kind==='cab':n.dataset.sheet===cur.sheet&&!projOn):false);n.setAttribute('aria-current',String(on));});}
+function renderSheetsNavOnly(){const sh=sheet();const projOn=cur.tab==='proj'&&!isDet(sh);document.querySelectorAll('#sheets .nav').forEach(n=>{const on=n.dataset.act==='projTab'?projOn:(n.dataset.sheet?(isDet(sh)?P.sheets.find(x=>x.id===n.dataset.sheet)?.kind===sh.kind:n.dataset.sheet===cur.sheet&&!projOn):false);n.setAttribute('aria-current',String(on));});}
 function openPanel(){$('#panel').classList.add('open');}
-const CABTABS=[['size','尺寸'],['grid','分格'],['mat','材料'],['sheet','圖面']],PLANTABS=[['props','屬性'],['lib','圖庫'],['sheet','圖面'],['proj','案件']];
+const WOODTABS=[['size','尺寸'],['mat','材料'],['sheet','圖面']],CABTABS=[['size','尺寸'],['grid','分格'],['mat','材料'],['sheet','圖面']],PLANTABS=[['props','屬性'],['lib','圖庫'],['sheet','圖面'],['proj','案件']];
 function panelHead(){const sh=sheet();
+ if(sh.kind==='wood'&&cur.tab!=='proj'){if(!WOODTABS.some(t=>t[0]===cur.tab))cur.tab='size';const w=woodOfSheet(sh);return{title:'木作施工圖',chip:w?w.tag:sh.code,tabs:WOODTABS};}
  if(sh.kind==='cab'&&cur.tab!=='proj'){if(!CABTABS.some(t=>t[0]===cur.tab))cur.tab=cur.cell?'grid':'size';const c=cabOfSheet(sh);return{title:'櫃體設定',chip:c?c.tag:sh.code,tabs:CABTABS};}
  const o=cur.tab==='props'?selObj():null;const TN={wall:'牆',open:'門窗',room:'空間',sym:'符號',line:'線',dim:'尺寸線',text:'文字',cab:'櫃體',czone:(o&&o.kind==='curtain')?'窗簾盒':(o&&o.kind==='ac')?'冷氣包管':'天花分區',legend:'圖示說明'};
  const title=cur.tab==='proj'?'案件總覽':cur.tab==='lib'?'圖庫':cur.tab==='sheet'?'圖面設定':o?(TN[o.t]||'屬性')+'設定':(NAVN[sh.kind]||'屬性');
- return{title,chip:sh.code||'',tabs:sh.kind==='cab'?[]:PLANTABS};}
+ return{title,chip:sh.code||'',tabs:isDet(sh)?[]:PLANTABS};}
 function renderPanel(){
  const hd=panelHead();$('#phead').innerHTML=`<h2>${esc(hd.title)}</h2>${hd.chip?`<span class="chip">${esc(hd.chip)}</span>`:''}`;
  $('#ptabs').innerHTML=hd.tabs.map(([k,n])=>`<button role="tab" data-tab="${k}" aria-selected="${k===cur.tab}">${n}</button>`).join('');$('#ptabs').hidden=!hd.tabs.length;
  renderSheetsNavOnly();
  const f=document.activeElement;const keepF=f&&f.dataset&&f.dataset.f&&pb.contains(f)?{f:f.dataset.f,ci:f.dataset.ci,ri:f.dataset.ri,s:f.selectionStart}:null;
- const shK=sheet().kind;pb.innerHTML=shK==='cab'&&['size','grid','mat'].includes(cur.tab)?cabPanelHTML(cabOfSheet(sheet()),cur.tab):cur.tab==='props'?propsHTML():cur.tab==='lib'?libHTML():cur.tab==='sheet'?sheetHTML():projHTML();
+ const shK=sheet().kind;pb.innerHTML=shK==='wood'&&['size','mat'].includes(cur.tab)?woodPanelHTML(woodOfSheet(sheet()),cur.tab):shK==='cab'&&['size','grid','mat'].includes(cur.tab)?cabPanelHTML(cabOfSheet(sheet()),cur.tab):cur.tab==='props'?propsHTML():cur.tab==='lib'?libHTML():cur.tab==='sheet'?sheetHTML():projHTML();
  if(keepF){const sel=`[data-f="${keepF.f}"]`+(keepF.ci!=null?`[data-ci="${keepF.ci}"]`:'')+(keepF.ri!=null?`[data-ri="${keepF.ri}"]`:'');const el=pb.querySelector(sel);if(el){el.focus();try{if(keepF.s!=null)el.setSelectionRange(keepF.s,keepF.s);}catch(_){}}}
 }
 const I=(f,v,o={})=>`<label class="fld"><span>${o.label}</span><input ${o.type?`type="${o.type}"`:''} data-f="${f}"${o.ci!=null?` data-ci="${o.ci}"`:''}${o.ri!=null?` data-ri="${o.ri}"`:''} value="${esc(v)}"${o.step?` step="${o.step}"`:''}${o.min!=null?` min="${o.min}"`:''}${o.type==='number'?' inputmode="decimal"':''}${o.list?` list="${o.list}"`:''}${o.dis?' disabled':''}></label>`;
 const SEL=(f,v,opts,o={})=>`<label class="fld"><span>${o.label}</span><select data-f="${f}"${o.ci!=null?` data-ci="${o.ci}"`:''}${o.ri!=null?` data-ri="${o.ri}"`:''}>${opts.map(([k,n])=>`<option value="${esc(k)}"${String(k)===String(v)?' selected':''}>${esc(n)}</option>`).join('')}</select></label>`;
 const CHK=(f,v,label)=>`<label class="chk"><input type="checkbox" data-f="${f}"${v?' checked':''}>${label}</label>`;
 function propsHTML(){
- const sh=sheet();if(sh.kind==='cab')return cabPanelHTML(cabOfSheet(sh));
+ const sh=sheet();if(sh.kind==='wood')return woodPanelHTML(woodOfSheet(sh),'size');if(sh.kind==='cab')return cabPanelHTML(cabOfSheet(sh));
  if(cur.tool==='autolight')return autolightHTML();
  if(cur.multi&&cur.multi.length){const nd=cur.multi.filter(x=>x.startsWith('dim:')).length,nt=cur.multi.length-nd;
   return `<section class="sec"><h3>已選取 ${cur.multi.length} 個標註<small>SELECTION</small></h3><p class="mut">尺寸線 ${nd} 條、文字 ${nt} 個</p><div class="acts"><button class="btn dng" data-act="multiDel">全部刪除</button><button class="btn" data-act="multiClear">取消選取</button></div><p class="fine" style="margin-top:8px">設定成「顯示在所有平面圖」的尺寸線和文字，會從所有平面圖一起刪除。刪錯可以按 Ctrl+Z 復原。</p></section>`;}
@@ -2211,7 +2435,7 @@ function libHTML(){
   <p class="fine" style="margin-top:10px">照底圖描牆時選「牆的一面」，厚度會長在一側。畫錯邊可以選取那道牆，把定位線改到另一側。</p></section>`;return h;}
  if(cur.tool==='open'){h+=`<section class="sec"><h3>門窗種類</h3><div class="acts" style="flex-direction:column">${Object.entries(DT).map(([k,v])=>`<button class="btn${k===cur.openType?' pri':''}" data-ot="${k}">${v}（預設 ${DTW[k]} cm）</button>`).join('')}</div><p class="fine" style="margin-top:10px">放好後可以在屬性裡改寬度和開門方向。</p></section>`;return h;}
  if(sh.kind==='floor'){h+=`<section class="sec"><h3>地坪材質</h3><p class="mut">選一種材質，再用「套用材質」點空間。</p><div class="mats">${Object.entries(FM).map(([k,v])=>`<button class="mat" data-mat="${k}" aria-pressed="${k===cur.mat}"><svg viewBox="0 0 44 30">${matSwatch(k)}</svg><span><b>${v.n}</b><small>${v.pat==='grid'?`${v.w}×${v.h} cm`:v.pat==='plank'?`板寬 ${v.w} cm`:v.pat==='dots'?'無縫':'不施作'}</small></span></button>`).join('')}</div></section>`;return h;}
- if(sh.kind==='cab')return `<section class="sec"><p class="mut">櫃體施工圖的內容在「屬性」裡編輯。</p></section>`;
+ if(isDet(sh))return `<section class="sec"><p class="mut">${sh.kind==='wood'?'木作施工圖':'櫃體施工圖'}的內容在右側面板編輯。</p></section>`;
  h+=setsHTML(sh);if(cur.tool==='setpick')return h;
  const vis=Object.entries(SYM).filter(([,v])=>symVisible(v,sh.kind));const cats=[...new Set(vis.map(([,v])=>v.cat))];
  cats.forEach(cat=>{h+=`<section class="sec"><h3>${CAT[cat]}</h3><div class="lib">${vis.filter(([,v])=>v.cat===cat).map(([k,v])=>`<button class="li" data-sym="${k}" aria-pressed="${cur.tool==='sym'&&cur.sym===k}">${symPreviewSVG(k)}<span>${v.n}</span></button>`).join('')}</div></section>`;});
@@ -2230,11 +2454,11 @@ function sheetHTML(){
  const sh=sheet();const cab=cabOfSheet(sh);
  let h=`<section class="sec"><h3>${esc(sh.code)} ${esc(sheetTitle(sh))}<small>SHEET</small></h3>
   ${I('sh.title',sh.title||'',{label:'圖名（空白則自動）'})}<div class="r2">${I('sh.code',sh.code||'',{label:'圖號'})}${SEL('sh.scale',sh.scale,SCALES.map(s=>[s,'1/'+s]),{label:'比例'})}</div>
-  ${CHK('sh.frame',sh.frame!==false,'使用 A3 圖框與圖說欄（預設不用）')}${sh.kind!=='cab'?CHK('sh.legend',sh.legend!==false,'顯示圖示說明'):''}${sh.kind!=='cab'&&sh.kind!=='floor'?CHK('sh.legendCount',!!sh.legendCount,'圖示說明加上數量欄'):''}${sh.kind!=='cab'&&sh.frame!==false&&sh.legend!==false?SEL('sh.legendCorner',sh.legendCornerFixed?(sh.legendCorner||'tr'):'auto',[['auto','自動（避開圖面）'+(sh.legendCornerFixed?'':'・目前'+({tr:'右上',br:'右下',tl:'左上',bl:'左下'}[sh.legendCorner||'tr']))],['tr','右上'],['br','右下'],['tl','左上'],['bl','左下']],{label:'圖示說明位置'}):''}${sh.kind==='elec'||sh.kind==='light'?CHK('sh.showH',sh.showH!==false,'標示離地高度 H'):''}
-  ${sh.kind==='cab'||sh.frame!==false?`${sh.kind!=='cab'?CHK('sh.lock',!!sh.lock,'固定版面（圖框和圖的位置不再自動移動）'):''}${sh.lock?'<p class="lockline">版面已固定</p>':`<div class="acts"><button class="btn" data-act="${sh.kind==='cab'?'cabAuto':'fitFrame'}">${sh.kind==='cab'?'自動比例並置中':'圖框置中到圖面'}</button><button class="btn" data-act="frameTool" aria-pressed="${cur.tool==='frame'}">拖曳移動圖框</button></div>`}`:(sh.legend!==false?'<div class="acts"><button class="btn" data-act="legendReset">圖示說明放回圖的右邊</button></div><p class="fine" style="margin:0 0 6px">圖示說明可以直接用「選取」拖曳到想要的位置。</p>':'')+'<p class="fine" style="margin:0">沒有圖框時，出圖會自動把畫好的內容置中在 A3 上；放不下時會自動改用較小的比例。</p>'}</section>`;
+  ${CHK('sh.frame',sh.frame!==false,'使用 A3 圖框與圖說欄（預設不用）')}${!isDet(sh)?CHK('sh.legend',sh.legend!==false,'顯示圖示說明'):''}${!isDet(sh)&&sh.kind!=='floor'?CHK('sh.legendCount',!!sh.legendCount,'圖示說明加上數量欄'):''}${!isDet(sh)&&sh.frame!==false&&sh.legend!==false?SEL('sh.legendCorner',sh.legendCornerFixed?(sh.legendCorner||'tr'):'auto',[['auto','自動（避開圖面）'+(sh.legendCornerFixed?'':'・目前'+({tr:'右上',br:'右下',tl:'左上',bl:'左下'}[sh.legendCorner||'tr']))],['tr','右上'],['br','右下'],['tl','左上'],['bl','左下']],{label:'圖示說明位置'}):''}${sh.kind==='elec'||sh.kind==='light'?CHK('sh.showH',sh.showH!==false,'標示離地高度 H'):''}
+  ${isDet(sh)||sh.frame!==false?`${!isDet(sh)?CHK('sh.lock',!!sh.lock,'固定版面（圖框和圖的位置不再自動移動）'):''}${sh.lock?'<p class="lockline">版面已固定</p>':`<div class="acts"><button class="btn" data-act="${sh.kind==='cab'?'cabAuto':sh.kind==='wood'?'woodAuto':'fitFrame'}">${isDet(sh)?'自動比例並置中':'圖框置中到圖面'}</button><button class="btn" data-act="frameTool" aria-pressed="${cur.tool==='frame'}">拖曳移動圖框</button></div>`}`:(sh.legend!==false?'<div class="acts"><button class="btn" data-act="legendReset">圖示說明放回圖的右邊</button></div><p class="fine" style="margin:0 0 6px">圖示說明可以直接用「選取」拖曳到想要的位置。</p>':'')+'<p class="fine" style="margin:0">沒有圖框時，出圖會自動把畫好的內容置中在 A3 上；放不下時會自動改用較小的比例。</p>'}</section>`;
  h+=cfPanelHTML();
- if(sh.kind!=='cab')h+=cadPanelHTML(sh);
- if(sh.kind!=='cab'){
+ if(!isDet(sh))h+=cadPanelHTML(sh);
+ if(!isDet(sh)){
   if(!P.bg)h+=`<section class="sec"><h3>底圖</h3><p class="mut">上傳建商平面圖或現場丈量圖（JPG、PNG、PDF），校正比例後可以照著描。</p><button class="btn full" data-act="upload">上傳底圖</button><p class="fine" style="margin-top:8px">出圖時底圖會一起印在 PDF 上（可在上傳後關掉）；DXF 不含底圖。所有平面圖共用同一張底圖。</p></section>`;
   else{h+=`<section class="sec"><h3>底圖</h3>`;
    if(calibPending){const cur2=dist([calibPending.a.x,calibPending.a.y],[calibPending.b.x,calibPending.b.y]);h+=`<div style="border:1px solid var(--warn);background:var(--warn-soft);border-radius:5px;padding:10px 12px;margin-bottom:10px"><p style="margin:0 0 6px;font-weight:600">這段實際是多長？</p><label class="fld"><span>實際長度 cm</span><input type="number" id="calibLen" inputmode="decimal" placeholder="例如 360"></label><div class="acts"><button class="btn pri" data-act="calibApply">套用比例</button><button class="btn" data-act="calibCancel">取消</button></div><p class="fine" style="margin:6px 0 0">目前量起來約 ${Math.round(cur2)} cm</p></div>`;}
@@ -2276,7 +2500,7 @@ function projHTML(){
 
 /* ---------- field edits ---------- */
 function onField(el,final){
- const f=el.dataset.f;if(!f)return;const v=el.type==='checkbox'?el.checked:el.value;const n=parseFloat(v);const ok=Number.isFinite(n);
+ const f=el.dataset.f;if(!f)return;if(woodField(el,final))return;const v=el.type==='checkbox'?el.checked:el.value;const n=parseFloat(v);const ok=Number.isFinite(n);
  const o=selObj();const x=o&&o.o;const sh=sheet();const c=cabOfSheet(sh);const ci=+el.dataset.ci,ri=+el.dataset.ri;
  let rp=false;
  switch(f){
@@ -2287,7 +2511,7 @@ function onField(el,final){
   case 'sh.code':sh.code=v.trim();if(final)renderSheets();break;
   case 'sh.scale':{const k0=sh.scale/10;const cx=sh.ox+210*k0,cy=sh.oy+148.5*k0;sh.scale=+v;const k1=sh.scale/10;sh.ox=cx-210*k1;sh.oy=cy-148.5*k1;rp=true;if(final)setTimeout(fitView);break;}
   case 'sh.lock':sh.lock=!!v;if(sh.lock&&cur.tool==='frame')setTool('select');rp=true;break;
-  case 'cf.use':if(CF){CF.use=!!v;cfSave();P.sheets.forEach(s=>{if(s.kind!=='cab'&&s.frame!==false)fitPlanFrame(s,false);});}break;case 'sh.frame':sh.frame=!!v;rp=true;if(sh.frame&&sh.kind!=='cab'){fitPlanFrame(sh,false);frameChecked.add(sh.id);}break;case 'sh.legend':sh.legend=!!v;break;case 'sh.legendCorner':if(v==='auto'){delete sh.legendCornerFixed;}else{sh.legendCornerFixed=1;sh.legendCorner=v;}fitPlanFrame(sh,false);rp=true;break;case 'sh.legendCount':sh.legendCount=!!v;break;case 'sh.showH':sh.showH=!!v;break;
+  case 'cf.use':if(CF){CF.use=!!v;cfSave();P.sheets.forEach(s=>{if(!isDet(s)&&s.frame!==false)fitPlanFrame(s,false);});}break;case 'sh.frame':sh.frame=!!v;rp=true;if(sh.frame&&!isDet(sh)){fitPlanFrame(sh,false);frameChecked.add(sh.id);}break;case 'sh.legend':sh.legend=!!v;break;case 'sh.legendCorner':if(v==='auto'){delete sh.legendCornerFixed;}else{sh.legendCornerFixed=1;sh.legendCorner=v;}fitPlanFrame(sh,false);rp=true;break;case 'sh.legendCount':sh.legendCount=!!v;break;case 'sh.showH':sh.showH=!!v;break;
   case 'wall.kind':if(x){x.kind=v;x.t=WK[v].t;rp=true;}break;
   case 'wall.t':if(x&&ok&&n>0&&n<=80)x.t=n;break;
   case 'wall.j':if(x)x.j=+v;break;
@@ -2314,7 +2538,7 @@ function onField(el,final){
   case 'czone.label':if(x)x.label=v;break;case 'czone.ch':if(x){if(v===''&&x.kind)x.ch=null;else if(ok)x.ch=n;}break;case 'czone.drop':if(x){if(v==='')x.drop=null;else if(ok)x.drop=n;}break;
   case 'bg.opacity':if(P.bg)P.bg.opacity=+v;break;
   case 'bg.print':if(P.bg)P.bg.print=!!v;break;
-  case 'cad.unit':if(P.cad&&ok){const c=P.cad,b0=c.core||(CADG?CADG.bb:[0,0,0,0]);const w0=cadW(b0[0],b0[1]);c.unit=n;c.unitAuto=false;const w1=cadW(b0[0],b0[1]);c.ox=r1(c.ox+w0[0]-w1[0]);c.oy=r1(c.oy+w0[1]-w1[1]);cadIndex=null;rp=true;if(final)setTimeout(()=>{relinkCadCabs(false);P.sheets.filter(s=>s.kind!=='cab').forEach(s=>fitPlanFrame(s,true));commit();fitView();});}break;
+  case 'cad.unit':if(P.cad&&ok){const c=P.cad,b0=c.core||(CADG?CADG.bb:[0,0,0,0]);const w0=cadW(b0[0],b0[1]);c.unit=n;c.unitAuto=false;const w1=cadW(b0[0],b0[1]);c.ox=r1(c.ox+w0[0]-w1[0]);c.oy=r1(c.oy+w0[1]-w1[1]);cadIndex=null;rp=true;if(final)setTimeout(()=>{relinkCadCabs(false);P.sheets.filter(s=>!isDet(s)).forEach(s=>fitPlanFrame(s,true));commit();fitView();});}break;
   case 'al.fix':al.fix=v;al.lm=AL_FIX[v].lm;alRecalc();rp=true;render();break;
   case 'al.mode':al.mode=v;alRecalc();rp=true;break;
   case 'al.lux':if(ok&&n>0){al.lux=n;alRecalc();rp=final;}break;
@@ -2357,12 +2581,17 @@ async function act(a,el){
   case 'undo':undo();break;case 'redo':redo();break;case 'zin':zoomBy(1.25);break;case 'zout':zoomBy(.8);break;case 'fit':fitView();break;
   case 'export':openExport();break;
   case 'save':saveNow();toast('已儲存在這台裝置');break;
-  case 'projTab':cur.tab='proj';if(sheet().kind==='cab')gotoSheet('floor');cur.tab='proj';openPanel();$('#sheets').classList.remove('open');renderPanel();break;
+  case 'projTab':cur.tab='proj';if(isDet(sheet()))gotoSheet('floor');cur.tab='proj';openPanel();$('#sheets').classList.remove('open');renderPanel();break;
   case 'del':delSel();break;case 'dup':dupSel();break;case 'rot':rotSel();break;
   case 'symH':case 'symHd':if(o&&o.t==='sym'){const v=el.dataset.v;if(a==='symH')o.o.h=v===''?null:+v;else o.o.h=Math.max(0,(o.o.h||0)+(+v));commit();renderPanel();render();}break;
   case 'oside':if(o){o.o.side=-(o.o.side||1);commit();render();}break;
   case 'oflip':if(o){o.o.flip=!o.o.flip;commit();render();}break;
   case 'opencab':if(o)gotoSheet('cab-'+o.o.id);break;
+  case 'newwood':{const t=(el&&el.dataset.wt)||'wall';const ns=addWood(t);commit();gotoSheet(ns.id);cur.tab='size';openPanel();renderPanel();toast('已新增'+WOODTYPE[t].n+'，在右側面板輸入尺寸');break;}
+  case 'woodAuto':{const w=woodOfSheet(sh);if(w){sh.scale=woodAutoScale(w);woodFit(sh,w);commit();renderPanel();fitView();}break;}
+  case 'woodDel':{const w=woodOfSheet(sh);if(w&&await ask(`刪除 ${w.tag} ${w.name} 這張木作圖？`,'刪除',true)){P.woods=P.woods.filter(x=>x!==w);P.sheets=P.sheets.filter(s=>s.wood!==w.id);cur.sheet='floor';commit();renderAll();fitView();}break;}
+  case 'wdOpAdd':{const w=woodOfSheet(sh);if(w){w.ops=w.ops||[];w.ops.push({x:20,y:100,w:40,h:30,label:'開口'});commit();renderPanel();render();}break;}
+  case 'wdOpDel':{const w=woodOfSheet(sh);if(w&&w.ops){w.ops.splice(ci,1);commit();renderPanel();render();}break;}
   case 'newcab':{if(!isPlan())gotoSheet('floor');setTool('cabpick');toast(P.cad?'在 CAD 平面圖上點一下要做施工圖的櫃體':'先到「圖面」匯入 CAD 平面圖；沒有 CAD 也可以點櫃體的兩個對角',4500);break;}
   case 'cabUnlink':if(c&&await ask(`解除 ${c.tag} 跟平面圖的連動？之後重新匯入 CAD 不會再更新這座櫃體的寬深，可以自己輸入。`,'解除連動')){const g=cabPlace(c);Object.assign(c,{x:g.x,y:g.y,rot:g.rot});delete c.src;delete c.link;delete c.lost;commit();renderPanel();render();}break;
   case 'cabResync':relinkCadCabs(true);commit();renderAll();break;
@@ -2388,7 +2617,7 @@ async function act(a,el){
   case 'cfImport':$('#fileFrame').click();break;
   case 'cfLogo':$('#fileLogo').click();break;
   case 'cfRot':if(CF){CF.rot=((CF.rot||0)+90)%360;cfSave();cfApplyAll();}break;
-  case 'cfRemove':if(CF&&await ask('移除自己的圖框？圖紙會改回內建圖框。','移除',true)){CF=null;CF_IMG=null;cfSave();P.sheets.forEach(s=>{if(s.kind!=='cab'&&s.frame!==false)fitPlanFrame(s,false);});commit();dirty=true;renderAll();}break;
+  case 'cfRemove':if(CF&&await ask('移除自己的圖框？圖紙會改回內建圖框。','移除',true)){CF=null;CF_IMG=null;cfSave();P.sheets.forEach(s=>{if(!isDet(s)&&s.frame!==false)fitPlanFrame(s,false);});commit();dirty=true;renderAll();}break;
   case 'bgLock':if(P.bg){P.bg.locked=true;if(['bgmove','align','calib'].includes(cur.tool))setTool('select');commit();cur.tab='sheet';renderPanel();toast('底圖已固定');}break;
   case 'bgUnlock':if(P.bg){P.bg.locked=false;commit();renderPanel();}break;
   case 'cadLock':if(P.cad){P.cad.locked=true;if(['cadmove','align'].includes(cur.tool))setTool('select');commit();cur.tab='sheet';renderPanel();toast('CAD 底圖已固定');}break;
@@ -2401,7 +2630,7 @@ async function act(a,el){
   case 'cadRemove':if(await ask('移除 CAD 底圖？畫好的符號和尺寸會保留。','移除',true)){removeCAD();if(cur.tool==='cadmove')setTool('select');commit();renderPanel();render();}break;
   case 'cadMove':if(cur.tool==='cadmove'){setTool('select');cur.tab='sheet';renderPanel();}else{setTool('cadmove');stage.classList.remove('cross');$('#hint').textContent='拖曳畫面移動 CAD 底圖，按住 Alt 可以微調；完成後按 Esc';cur.tab='sheet';openPanel();renderPanel();}break;
   case 'cadAllOn':case 'cadAllOff':if(P.cad){sh.cadOff=a==='cadAllOn'?[]:P.cad.layers.map(l=>l.n);cadIndex=null;commit();renderPanel();render();}break;
-  case 'cadCopy':if(P.cad){const off=sh.cadOff?[...sh.cadOff]:null;P.sheets.forEach(s=>{if(s.kind!=='cab'){if(off)s.cadOff=[...off];else delete s.cadOff;}});commit();toast('已套用到所有平面圖');}break;
+  case 'cadCopy':if(P.cad){const off=sh.cadOff?[...sh.cadOff]:null;P.sheets.forEach(s=>{if(!isDet(s)){if(off)s.cadOff=[...off];else delete s.cadOff;}});commit();toast('已套用到所有平面圖');}break;
   case 'frameTool':if(sh.lock&&cur.tool!=='frame'){toast('版面已固定，要移動請先取消「固定版面」');break;}setTool(cur.tool==='frame'?'select':'frame');stage.classList.toggle('cross',false);$('#hint').textContent=cur.tool==='frame'?'拖曳畫面移動圖框，完成後按 Esc':'';cur.tab='sheet';renderPanel();break;
   case 'upload':$('#file').click();break;
   case 'calib':calibPending=null;setTool('calib');cur.tab='sheet';renderPanel();if(isMobile())$('#panel').classList.remove('open');break;
@@ -2466,7 +2695,7 @@ stage.addEventListener('dragover',e=>e.preventDefault());stage.addEventListener(
 function handleFile(f){if(/\.(dxf|dwg)$/i.test(f.name)){importCAD(f);return;}if(f.type==='application/pdf'||/\.pdf$/i.test(f.name)){handlePdf(f);return;}if(!/^image\//.test(f.type)){toast('請上傳 JPG、PNG 或 PDF');return;}
  const rd=new FileReader();rd.onload=()=>{const img=new Image();img.onload=()=>{const k=Math.min(1,2600/Math.max(img.width,img.height));const cv=document.createElement('canvas');cv.width=Math.round(img.width*k);cv.height=Math.round(img.height*k);const cx=cv.getContext('2d');cx.fillStyle='#fff';cx.fillRect(0,0,cv.width,cv.height);cx.drawImage(img,0,0,cv.width,cv.height);pdfDoc=null;useBgCanvas(cv,true);};img.onerror=()=>toast('這張圖讀不出來');img.src=rd.result;};rd.readAsDataURL(f);}
 function useBgCanvas(cv,reset){BG=cv.toDataURL('image/jpeg',.86);
- if(reset||!P.bg){const b=planBounds();P.bg={x:b?b[0]:0,y:b?b[1]:0,w:cv.width,h:cv.height,scale:1200/cv.width,opacity:.55,hidden:false,cal:false};saveBG();commit();if(sheet().kind==='cab')gotoSheet('floor');setTool('calib');cur.tab='sheet';openPanel();renderPanel();render();toast('先校正比例：在底圖上點一段已知長度的兩端');}
+ if(reset||!P.bg){const b=planBounds();P.bg={x:b?b[0]:0,y:b?b[1]:0,w:cv.width,h:cv.height,scale:1200/cv.width,opacity:.55,hidden:false,cal:false};saveBG();commit();if(isDet(sheet()))gotoSheet('floor');setTool('calib');cur.tab='sheet';openPanel();renderPanel();render();toast('先校正比例：在底圖上點一段已知長度的兩端');}
  else{const kk=P.bg.w/cv.width;P.bg.scale*=kk;P.bg.w=cv.width;P.bg.h=cv.height;saveBG();commit();render();renderPanel();}}
 function calibClick(w){if(!calibA){calibA=w;render();return;}if(dist([w.x,w.y],[calibA.x,calibA.y])<2)return;calibPending={a:calibA,b:w};calibA=null;cur.tab='sheet';openPanel();renderPanel();render();setTimeout(()=>{const i=$('#calibLen');if(i)i.focus();},50);}
 function applyCalib(){const i=$('#calibLen');const len=i?+i.value:0;if(!calibPending||!(len>0)){toast('請輸入實際長度（cm）');return;}const{a,b}=calibPending;const f=len/dist([a.x,a.y],[b.x,b.y]);
