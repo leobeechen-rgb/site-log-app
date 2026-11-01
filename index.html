@@ -13468,6 +13468,11 @@ const HB_LIB_CSS=`
       .wbk .wbc-empty{padding:14px 0}
       .hb-wb.wbk .wbc-more{padding:6px 0 8px;font-size:14px;margin-top:auto;height:36px;box-sizing:border-box}
       .wbk-tl{list-style:none;margin:0;padding:0 0 0 2px}
+      .wbk-uptog{display:inline-flex;margin-left:auto;border:1px solid var(--wb-line);border-radius:999px;overflow:hidden;flex:none}
+      .hb-wb .wbk-uptog button{border:0;background:transparent;padding:3px 10px;font:inherit;font-size:12px;letter-spacing:.04em;color:var(--wb-soft);cursor:pointer;min-height:0!important;white-space:nowrap}
+      .hb-wb .wbk-uptog button.on{background:var(--wb-green);color:var(--hbt-paper)!important}
+      .wbk-uphd{font-size:12px;letter-spacing:.06em;color:var(--hbt-red-deep,#A33A2A);padding:6px 0 2px;font-weight:500}
+      .wbk-uphd:not(:first-child){border-top:1px dashed var(--wb-line);margin-top:4px}
       .wbk-ev{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:10px;align-items:center;padding:4px 0;position:relative}
       .wbk-ev:before{content:'';position:absolute;left:51px;top:0;bottom:0;width:1px;background:var(--wb-line)}
       .wbk-time{font-size:13px;color:#4f4a40;text-align:right}
@@ -16941,6 +16946,8 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
     h('button',{type:'button',className:'wbc-more',onClick:onMore},moreLabel,HB_wbIcon('arrow',14)));
   const d=new Date(today+'T00:00:00');
   const fullList=full==='open'?openMixed:full==='follow'?follows:full==='closed'?closedFollows:[];
+  const [cUp,setCUpRaw]=u.useState(()=>{try{return localStorage.getItem('hb_tl_up')==='1'}catch{return false}});
+  const setCUp=v=>{setCUpRaw(v);try{localStorage.setItem('hb_tl_up',v?'1':'0')}catch{}};
   const [cDay,setCDay]=u.useState(''),[cGapOpen,setCGapOpen]=u.useState(null),[cShop,setCShop]=u.useState(false),[cSide,setCSide]=u.useState('');
   const [cGaps,setCGaps]=u.useState(()=>{try{return localStorage.getItem('hb_tl_gaps')!=='0'}catch{return true}});
   u.useEffect(()=>{try{localStorage.setItem('hb_tl_gaps',cGaps?'1':'0')}catch{}},[cGaps]);
@@ -16981,13 +16988,28 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
         open&&h('div',{className:'wbk-chips'},cands.length?cands.slice(0,8).map(t=>h('button',{key:t.id,type:'button',draggable:true,className:'wbk-chip',title:'排到 '+fmt(a)+'（也可拖曳）',
           onDragStart:e=>{e.dataTransfer.setData('text/hb-task',t.id);e.dataTransfer.effectAllowed='move'},onClick:()=>schedule(t,a)},'⠿ ',t.title)):h('span',{className:'wbk-none'},'沒有待排的事')))};
     const tlRow=r=>{if(r.now)return h('li',{key:'now',className:'wbk-now'},h('span',null,fmt(nowMin)),h('i'));if(r.gap)return gapRow(r);const t=r.t;
-      return h('li',{key:t.id,className:'wbk-ev'},h('span',{className:'wbk-time wb-mono'},t.time),h('button',{type:'button',className:'wbk-evbody',onClick:()=>t.source==='auto'&&t.projectId&&projects.some(p=>p.id===t.projectId)?onOpenProject(t.projectId):setEditing({...t})},h('strong',null,t.title),h('small',null,t.projectName||'')),
+      return h('li',{key:t.id,className:'wbk-ev'},h('span',{className:'wbk-time wb-mono'},t.time||'整天'),h('button',{type:'button',className:'wbk-evbody',onClick:()=>t.source==='auto'&&t.projectId&&projects.some(p=>p.id===t.projectId)?onOpenProject(t.projectId):setEditing({...t})},h('strong',null,t.title),h('small',null,pnOf(t))),
         t.source!=='auto'&&h('button',{type:'button',className:'wbc-check','aria-label':'完成：'+t.title,onClick:()=>complete(t)},HB_wbIcon('check',12)))};
-    const evN=rows.filter(r=>r.t).length;
+    /* 整天的行程（工程行程、工班、預約沒填時間）：放在時間軸最上面 */
+    const pnOf=t=>t.projectName||(projects.find(p=>p.id===t.projectId)||{}).name||'';
+    const adRows=list.filter(t=>!t.deleted&&!t.done&&!HB_wbIsFollow(t)&&!isShop(t)&&HB_wbIsAgenda(t)&&onDay(t)&&toMin(t.time)==null).sort((a,b)=>a.title.localeCompare(b.title)).map(t=>({t,ad:true}));
+    /* 未來 7 天：方便排下週行程（多天的工作只列在第一天，標示到哪天） */
+    const UPN=7,upRows=[],upSeen=new Set();
+    for(let i=1;i<=UPN;i++){const dd=HB_wbAddDays(day,i);
+      const r=list.filter(t=>!t.deleted&&!t.done&&!HB_wbIsFollow(t)&&!isShop(t)&&!upSeen.has(t.id)&&(HB_wbIsAgenda(t)||t.time||t.category==='約定')&&HB_wbOnDate(t,dd))
+        .sort((a,b)=>(a.time||'99').localeCompare(b.time||'99')||a.title.localeCompare(b.title));
+      if(r.length){upRows.push({hdr:dd});r.forEach(t=>{upSeen.add(t.id);upRows.push({t,dd})})}}
+    const upN=upSeen.size;
+    const upHdr=dd=>{const n=HB_wbDiff(dd,today);return (n===1?'明天・':n===2?'後天・':'')+md(dd)+' '+HB_wbWeek(dd)};
+    const upRow=r=>{if(r.hdr)return h('li',{key:'h'+r.hdr,className:'wbk-uphd'},upHdr(r.hdr));const t=r.t,end=t.dueEnd&&t.dueEnd>r.dd?t.dueEnd:'';
+      return h('li',{key:t.id,className:'wbk-ev'},h('span',{className:'wbk-time wb-mono'},t.time||'整天'),h('button',{type:'button',className:'wbk-evbody',onClick:()=>t.source==='auto'&&t.projectId&&projects.some(p=>p.id===t.projectId)?onOpenProject(t.projectId):setEditing({...t})},
+        h('strong',null,t.title),h('small',null,[pnOf(t),end?'至 '+md(end):''].filter(Boolean).join('・'))))};
+    const upShow=[];{let n=0;for(const r of upRows){if(!r.hdr&&n>=4)break;if(r.hdr&&n>=4)break;upShow.push(r);if(!r.hdr)n++}}
+    const evN=rows.filter(r=>r.t).length+adRows.length;
     const evAll=rows.filter(r=>r.t),evFrom=isToday?Math.max(0,Math.min(evAll.findIndex(r=>r.e>nowMin)<0?evAll.length-2:evAll.findIndex(r=>r.e>nowMin),evAll.length-(firstGap?2:3))):0;
     const evPick=new Set(evAll.slice(evFrom,evFrom+(firstGap?2:3)));
-    const tlShow=rows.filter(r=>r.now||evPick.has(r)||r===firstGap);
-    const allTl=rows;
+    const tlShow=[...adRows.slice(0,2),...rows.filter(r=>r.now||evPick.has(r)||r===firstGap)];
+    const allTl=[...adRows,...rows];
     /* 週曆 */
     const d0=new Date(day+'T00:00:00'),ws=new Date(d0.getFullYear(),d0.getMonth(),d0.getDate()-d0.getDay());
     const week=Array.from({length:7},(_,i)=>new Date(ws.getFullYear(),ws.getMonth(),ws.getDate()+i));
@@ -17131,8 +17153,9 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
         :h('div',{className:'wbk-lbdoc'},h('b',null,extOf(lbCur)),h('p',null,lbCur.name),h('p',null,'這種檔案無法直接預覽'),h('a',{href:lbCur.url,target:'_blank',rel:'noopener',className:'wbk-lbbtn'},'下載檔案'))),
       pvLb.list.length>1&&h('button',{type:'button',className:'wbk-lbnav prev','aria-label':'上一個',onClick:e=>{e.stopPropagation();setPvLb(l=>({...l,i:(l.i-1+l.list.length)%l.list.length}))}},'‹'),
       pvLb.list.length>1&&h('button',{type:'button',className:'wbk-lbnav next','aria-label':'下一個',onClick:e=>{e.stopPropagation();setPvLb(l=>({...l,i:(l.i+1)%l.list.length}))}},'›'));
-    const sideTitle={kLate:'逾期事項（全公司）',kWeek:'本週工地排程（'+md(tws)+'–'+md(twe)+'）',ical:'連結 iPhone 行事曆',tl:(isToday?'今日':md(day)+' ')+'時間軸',open:'未完成',follow:'待追蹤',closed:'已結案追蹤',later:'稍後辦',shop:'購物清單'}[cSide]||'';
-    const sideBody=cSide==='tl'?h('ul',{className:'wbk-tl'},allTl.length?allTl.map(tlRow):h('li',{className:'wbc-empty'},'這天沒有排定時間的行程'))
+    const sideTitle={kLate:'逾期事項（全公司）',kWeek:'本週工地排程（'+md(tws)+'–'+md(twe)+'）',ical:'連結 iPhone 行事曆',tl:(isToday?'今日':md(day)+' ')+'時間軸',up:'未來 7 天行程（'+md(HB_wbAddDays(day,1))+'–'+md(HB_wbAddDays(day,7))+'）',open:'未完成',follow:'待追蹤',closed:'已結案追蹤',later:'稍後辦',shop:'購物清單'}[cSide]||'';
+    const sideBody=cSide==='tl'?h('ul',{className:'wbk-tl'},allTl.length?allTl.map(tlRow):h('li',{className:'wbc-empty'},'這天沒有排定的行程'))
+      :cSide==='up'?h('ul',{className:'wbk-tl wbk-up'},upRows.length?upRows.map(upRow):h('li',{className:'wbc-empty'},'接下來 7 天沒有排定的行程'))
       :cSide==='open'?h('ul',{className:'wbc-list'},openList.length?openList.map(mixRow):h('li',{className:'wbc-empty'},'沒有事項'))
       :cSide==='follow'?h('ul',{className:'wbc-list'},fList.length?fList.map(followRow):h('li',{className:'wbc-empty'},'沒有事項'))
       :cSide==='closed'?h('ul',{className:'wbc-list'},closedFollows.map(closedRow))
@@ -17190,7 +17213,11 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
           h('span',null,'日一二三四五六'[i]),h('b',null,x.getDate()),h('i',{className:has(s)?'has':''}))}),
         h('button',{type:'button',className:'wbk-wk',onClick:()=>shift(1),'aria-label':'下一週'},HB_wbIcon('right',16))),
       h('div',{className:'wbk-cols'},
-        colK(isToday?'今日時間軸':md(day)+' 時間軸',evN,null,tlShow.length?h('ul',{className:'wbk-tl'},tlShow.map(tlRow)):h('p',{className:'wbc-empty'},cGaps?'這天沒有排定時間的行程':'這天沒有排定時間的行程'),more(0,()=>setCSide('tl')),'wbk-c1'),
+        (()=>{const tog=h('div',{className:'wbk-uptog',role:'group','aria-label':'切換時間範圍'},
+            h('button',{type:'button','aria-pressed':!cUp,className:!cUp?'on':'',onClick:()=>setCUp(false)},isToday?'今天':md(day)),
+            h('button',{type:'button','aria-pressed':cUp,className:cUp?'on':'',onClick:()=>setCUp(true)},'未來 7 天'));
+          return cUp?colK('未來 7 天',upN,tog,upShow.length?h('ul',{className:'wbk-tl wbk-up'},upShow.map(upRow)):h('p',{className:'wbc-empty'},'接下來 7 天沒有排定的行程'),more(upN,()=>setCSide('up')),'wbk-c1')
+            :colK(isToday?'今日時間軸':md(day)+' 時間軸',evN,tog,tlShow.length?h('ul',{className:'wbk-tl'},tlShow.map(tlRow)):h('p',{className:'wbc-empty'},'這天沒有排定的行程'),more(0,()=>setCSide('tl')),'wbk-c1')})(),
         colK('未完成',openCount,isToday&&lateOpen?h('span',{className:'wbc-alert'},'逾期 '+lateOpen):null,openList.length?h('ul',{className:'wbc-list'},openList.slice(0,2).map(mixRow)):h('p',{className:'wbc-empty'},isToday?'今天沒有未完成事項':'這天沒有到期事項'),more(openList.length>2?openList.length:0,()=>setCSide('open'))),
         colK('待追蹤',fList.length,h(u.default.Fragment,null,isToday&&dueFollow?h('span',{className:'wbc-alert'},'待處理 '+dueFollow):null,closedFollows.length?h('button',{type:'button',className:'wbc-closedlink push',onClick:()=>setCSide('closed')},'已結案 '+closedFollows.length):null),
           fList.length?h('ul',{className:'wbc-list'},fList.slice(0,2).map(followRow)):h('p',{className:'wbc-empty'},'沒有要追蹤的事'),more(fList.length>2?fList.length:0,()=>setCSide('follow'))),
