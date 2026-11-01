@@ -16095,7 +16095,15 @@ async function HB_wbLoadAuto(){
     fetchPages('sitelog_schedule_events','id,title,project_id,project_name,start_date,end_date,assignee,note,status,time,all_day'),
     fetchPages('sitelog_defects','id,project_id,description,location,completed'),
     fetchPages('sitelog_bookings','id,date,time,service_type,name,status'),
-    fetchPages('hb_line_appts','id,project_id,appt_date,appt_time,body,sender_name,status')]);
+    fetchPages('hb_line_appts','id,project_id,appt_date,appt_time,body,sender_name,status'),
+    fetchPages('hb_crew_jobs','id,project_id,crew_id,crew_name,trade,start_date,end_date,start_time,note,status'),
+    fetchPages('hb_crew','id,name,trade')]);
+  /* 工班排程（schedule.html，官方 LINE 前一天提醒師傅）：預定中的工班自動列入待辦／今日安排 */
+  if(res[4]&&res[4].status==='fulfilled'){const crew={};if(res[5]&&res[5].status==='fulfilled')res[5].value.forEach(c=>{crew[c.id]=c});
+    res[4].value.filter(r=>r.status==='planned'&&r.start_date).forEach(r=>{const c=crew[r.crew_id]||{},trade=r.trade||c.trade||'施工',who=r.crew_name||c.name||'';
+      rows.push({id:'crew:'+r.id,title:'工班・'+trade+(who?'（'+who+'）':''),projectId:r.project_id||'',assignee:who,due:String(r.start_date).slice(0,10),dueEnd:String(r.end_date||'').slice(0,10),
+        time:/^\d{1,2}:\d{2}/.test(r.start_time||'')?String(r.start_time).slice(0,5):'',note:(r.note||'')+(r.note?'\n':'')+'來自工班排程（官方 LINE 會提醒師傅）',category:'工班',source:'auto',sourceId:r.id})})}
+  else if(res[4])errors.push('工班排程');
   /* 案件 LINE 群組裡提到的約定（「週六下午 3 點看現場」）：自動列入待辦／今日時間軸 */
   if(res[3]&&res[3].status==='fulfilled'){const t0=HB_wbAddDays(HB_todoDate(),-1);
     res[3].value.filter(r=>r.status==='open'&&r.appt_date&&String(r.appt_date).slice(0,10)>=t0)
@@ -16162,7 +16170,7 @@ function HB_useToday(projects,enabled=true){
 }
 /* 分類工具：首頁三欄與專案卡片共用 */
 function HB_wbIsFollow(t){return t.kind==='follow'}
-function HB_wbIsAgenda(t){return t.category==='行程'||t.category==='預約'}
+function HB_wbIsAgenda(t){return t.category==='行程'||t.category==='預約'||t.category==='工班'}
 function HB_wbOnDate(t,d){if(!t.due)return false;if(t.due===d)return true;return !!(t.dueEnd&&t.due<=d&&t.dueEnd>=d)}
 function HB_wbOpenTask(t){return !t.done&&!HB_wbIsFollow(t)&&!HB_wbIsAgenda(t)}
 function HB_wbOpenFollow(t){return !t.done&&HB_wbIsFollow(t)}
@@ -16998,7 +17006,7 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
     const kActive=realP.filter(p=>p.status!==fn[2]&&p.status!==fn[3]).length;
     const kLateList=all.filter(t=>!t.deleted&&!t.done&&t.due&&t.due<today&&(HB_wbOpenTask(t)||HB_wbOpenFollow(t))).sort((a,b)=>a.due.localeCompare(b.due));
     const tw0=new Date(today+'T00:00:00'),tws=ymd(new Date(tw0.getFullYear(),tw0.getMonth(),tw0.getDate()-tw0.getDay())),twe=HB_wbAddDays(tws,6);
-    const kWeekList=all.filter(t=>!t.deleted&&!t.done&&String(t.id).indexOf('schedule:')===0&&t.due&&t.due<=twe&&(t.dueEnd||t.due)>=tws).sort((a,b)=>a.due.localeCompare(b.due)||(a.time||'99').localeCompare(b.time||'99'));
+    const kWeekList=all.filter(t=>!t.deleted&&!t.done&&(String(t.id).indexOf('schedule:')===0||String(t.id).indexOf('crew:')===0)&&t.due&&t.due<=twe&&(t.dueEnd||t.due)>=tws).sort((a,b)=>a.due.localeCompare(b.due)||(a.time||'99').localeCompare(b.time||'99'));
     const kCf=cf.list.filter(r=>r.status==='waiting'||r.status==='changes').length;
     const toProjects=()=>{const el=document.querySelector('.wb-projhead');if(el)el.scrollIntoView({behavior:HB_reduceMotion()?'auto':'smooth',block:'start'})};
     const kpi=(label,n,on,late,hint)=>h('button',{type:'button',className:'wbk-kpi'+(late&&n?' is-late':''),onClick:on,title:hint,'aria-label':label+' '+n+'，'+hint},
