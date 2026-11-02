@@ -1461,7 +1461,7 @@
       ;; 箭頭方向與尖端（離邊留一點空隙）
       (setq ang (cdr (assoc e (list (cons "U" (/ pi 2.0)) (cons "D" (* pi 1.5)) (cons "L" pi) (cons "R" 0.0))))
             depth (if (member e '("U" "D")) h w)
-            th (min (max 1.5 (* 0.16 (min w h))) 4.0 (/ depth 4.0))
+            th (min (max 2.5 (* 0.25 (min w h))) 6.0 (/ depth 3.2))
             gap (* 0.35 th) hl (* 0.9 th)
             al (max (* 2.0 hl) (* 0.3 depth)))
       (setq tip (cond ((= e "U") (list cx (- y2 gap))) ((= e "D") (list cx (+ y1 gap)))
@@ -1473,7 +1473,7 @@
         (setq tc (list cx cy)
               st (polar tc ang (* 0.9 th))))
       (hb:pull-line st (polar tip (+ ang pi) (* 0.5 hl)))
-      (hb:pull-head tip ang hl (* 0.55 hl))
+      (hb:pull-head tip ang hl (* 0.6 hl))
       (setq doc (vla-get-ActiveDocument (vlax-get-acad-object))
             sp (if (= (getvar "CVPORT") 1) (vla-get-PaperSpace doc) (vla-get-ModelSpace doc)))
       (setq tx (vla-AddText sp "抽屜" (vlax-3d-point (list (car tc) (cadr tc) 0.0)) th))
@@ -1525,7 +1525,7 @@
   (setq fn (strcat (getvar "TEMPPREFIX") "HB_tools.dcl"))
   (setq f (open fn "w"))
   (foreach s
-    '("hb_main : dialog { label = \"赫柏工具  HERFULSINS（第 20 版）\";"
+    '("hb_main : dialog { label = \"赫柏工具  HERFULSINS（第 21 版）\";"
       " : text { label = \"點按鈕就好，不用記指令。下次只要輸入 HB 打開這裡。\"; }"
       " : spacer { height = 0.5; }"
       " : boxed_column { label = \"出 PDF（A3 橫式、1:1、存到 PDF_OUTPUT）\";"
@@ -1687,5 +1687,5 @@
       ((= act 24) (hb:pull "R") (setq act 0))))
   (princ))
 
-(princ "\n【赫柏】赫柏工具（第 20 版）已載入。輸入 HB 打開面板。（新增：抽屜＋斜把箭頭）")
+(princ "\n【赫柏】赫柏工具（第 21 版）已載入。輸入 HB 打開面板。（調整：抽屜字與箭頭加大）")
 (princ)
