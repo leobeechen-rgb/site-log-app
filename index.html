@@ -13192,8 +13192,14 @@ const HB_LIB_CSS=`
       .hbib-empty{border:1.5px dashed #D9CFBD;border-radius:8px;padding:34px 16px;text-align:center;cursor:pointer;color:#6F675B}
       .hbib-empty b{display:block;font-weight:500;font-size:16px}.hbib-empty span{display:block;margin-top:6px;font-size:12px;color:#8A8178}
       .hbib-table{border-top:1px solid #F2EFE8}
-      .hbib-row{display:grid;grid-template-columns:minmax(0,2.2fr) minmax(0,1.3fr) minmax(0,1.3fr) 110px 74px 64px;align-items:center;gap:12px;padding:8px 6px;border-bottom:1px solid #F2EFE8}
+      .hbib-row{display:grid;grid-template-columns:22px minmax(0,2.2fr) minmax(0,1.3fr) minmax(0,1.3fr) 110px 74px 64px;align-items:center;gap:12px;padding:8px 6px;border-bottom:1px solid #F2EFE8}
       .hbib-th{font-size:12px;color:#6F675B;padding:8px 6px}
+      .hbib-ck,.hbib-th>input{display:flex;align-items:center}.hbib input[type=checkbox]:not([role=switch]){width:16px;height:16px;accent-color:#2E4A3C;cursor:pointer;margin:0}
+      .hbib-batch{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 12px;margin:0 0 10px;background:#F2EFE8;border:1px solid #D9CFBD;border-radius:6px}
+      .hbib-ball{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:#1C1B18;cursor:pointer;white-space:nowrap}
+      .hbib-bwho{font-size:12px;color:#6F675B;margin-right:auto}
+      .hbib-batch select{height:36px;border:1px solid #D9CFBD;border-radius:4px;background:#fff;font:inherit;font-size:13px;padding:0 8px;max-width:220px}
+      .hbib-batch select.warn{border-color:#B4573A}
       .hbib-row.is-need{background:#F2EFE8}.hbib-row.is-err{background:#F2EFE8}.hbib-row.is-bad{opacity:.7}.hbib-row.is-run{opacity:.6}
       .hbib-file{display:flex;align-items:center;gap:12px;min-width:0}.hbib-file>div{min-width:0;flex:1}
       .hbib-file b{display:block;font-weight:400;font-size:14px;color:#1C1B18;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -13219,9 +13225,10 @@ const HB_LIB_CSS=`
       @media (max-width:900px){
         .hbib-th{display:none}
         .hbib-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"f f" "p d" "b v";gap:8px 10px;padding:12px 4px}
-        .hbib-row>[role=cell]:nth-child(1){grid-area:f}.hbib-row>[role=cell]:nth-child(2){grid-area:p}.hbib-row>[role=cell]:nth-child(3){grid-area:d}
-        .hbib-row>[role=cell]:nth-child(4){grid-area:b}.hbib-row>[role=cell]:nth-child(5){grid-area:v;justify-self:end}
-        .hbib-row>[role=cell]:nth-child(6){position:absolute;right:4px;top:8px}.hbib-row{position:relative}.hbib-file{padding-right:40px}
+        .hbib-row>[role=cell]:nth-child(1){position:absolute;left:4px;top:14px}.hbib-row>[role=cell]:nth-child(2){grid-area:f;padding-left:26px}.hbib-row>[role=cell]:nth-child(3){grid-area:p}.hbib-row>[role=cell]:nth-child(4){grid-area:d}
+        .hbib-row>[role=cell]:nth-child(5){grid-area:b}.hbib-row>[role=cell]:nth-child(6){grid-area:v;justify-self:end}
+        .hbib-row>[role=cell]:nth-child(7){position:absolute;right:4px;top:8px}.hbib-row{position:relative}.hbib-file{padding-right:40px}
+        .hbib-batch select{flex:1 1 140px;max-width:none}.hbib-bwho{flex-basis:100%;order:-1}
         .hbib-head h3{font-size:20px}.hbib{padding:12px}
       }
       /* ===== 案件操作面板（下方選案件 → 上方直接操作） ===== */
@@ -16472,8 +16479,10 @@ async function HB_inboxArchiveOne(it,p,o,made){
     return'drawing'}
   throw new Error('還沒選相簿／資料夾')}
 
-function HbInbox({items,setItems,projects,notify,onAdd}){
+function HbInbox({items,setItems,projects,notify,onAdd,defPid}){
   const h=u.default.createElement;
+  /* 批次指定：勾選多個檔案 → 一次選案件／相簿資料夾／業主可見（沒勾選時套用到所有還沒指定案件的檔案） */
+  const[sel,setSel]=u.useState([]),[bPid,setBPid]=u.useState(defPid||''),[bDest,setBDest]=u.useState(''),[bVis,setBVis]=u.useState('');
   const[opts,setOpts]=u.useState({}),[busy,setBusy]=u.useState(false),[res,setRes]=u.useState(null),[drag,setDrag]=u.useState(false),[page,setPage]=u.useState(0);
   const inp=u.useRef(null);
   const P=id=>projects.find(p=>p.id===id);
@@ -16483,6 +16492,21 @@ function HbInbox({items,setItems,projects,notify,onAdd}){
   u.useEffect(()=>{if(!items.some(i=>i.pid&&!i.dest&&opts[i.pid]&&i.kind!=='bad'))return;
     setItems(l=>l.map(i=>i.pid&&!i.dest&&opts[i.pid]&&i.kind!=='bad'?{...i,dest:HB_inboxDefaultDest(i,opts[i.pid])}:i))},[items,opts]);
   const upd=(id,patch)=>setItems(l=>l.map(i=>i.id===id?{...i,...patch}:i));
+  u.useEffect(()=>{if(defPid&&!bPid)setBPid(defPid)},[defPid]);
+  u.useEffect(()=>{setBDest('');if(!bPid||opts[bPid])return;const p=P(bPid);if(p)HB_inboxOpts(p).then(o=>setOpts(m=>({...m,[bPid]:o}))).catch(()=>{})},[bPid]);
+  u.useEffect(()=>{setSel(sv=>sv.filter(id=>items.some(i=>i.id===id)))},[items]);
+  const okItems=items.filter(i=>i.kind!=='bad'&&i.status!=='run');
+  const selSet=new Set(sel),allOn=okItems.length>0&&okItems.every(i=>selSet.has(i.id));
+  const toggleSel=id=>setSel(sv=>sv.includes(id)?sv.filter(x=>x!==id):[...sv,id]);
+  const noPid=okItems.filter(i=>!i.pid);
+  const bTargets=sel.length?okItems.filter(i=>selSet.has(i.id)):noPid;
+  const destFits=(it,d)=>!d?false:d.startsWith('f:')?true:it.kind==='image';
+  const applyBatch=()=>{if(!bTargets.length||(!bPid&&!bDest&&!bVis))return;const ids=new Set(bTargets.map(i=>i.id));
+    setItems(l=>l.map(i=>{if(!ids.has(i.id))return i;const n={...i};
+      if(bPid&&bPid!==i.pid){n.pid=bPid;n.basis='manual';n.ambiguous=false;n.dest='';if(n.status==='error'){n.status='idle';n.err=''}}
+      if(bDest&&n.pid===bPid&&destFits(n,bDest))n.dest=bDest;
+      if(bVis)n.vis=bVis==='on';return n}));
+    notify&&notify('已套用到 '+bTargets.length+' 個檔案'+(bPid?'：'+((P(bPid)||{}).name||''):''));setSel([])};
   const setPid=(it,pid)=>upd(it.id,{pid,dest:'',basis:pid?(pid===it.pid?it.basis:'manual'):null,ambiguous:false,status:it.status==='error'?'idle':it.status,err:it.kind==='bad'?it.err:''});
   const remove=it=>{if(it.thumb)URL.revokeObjectURL(it.thumb);setItems(l=>l.filter(i=>i.id!==it.id))};
   const ready=i=>i.kind!=='bad'&&i.pid&&P(i.pid)&&i.dest&&i.status!=='run';
@@ -16519,6 +16543,18 @@ function HbInbox({items,setItems,projects,notify,onAdd}){
       !it.dest&&h('option',{value:''},'請選擇'),
       al.length?h('optgroup',{label:'照片相簿'},al):null,h('optgroup',{label:'專案資料與圖面'},fo))};
   const pick=fs=>{const a=Array.from(fs||[]);if(a.length)onAdd(a,null)};
+  const bOpt=bPid?opts[bPid]:null;
+  const bDestSel=h('select',{value:bDest,disabled:!bPid||!bOpt,onChange:e=>setBDest(e.target.value),'aria-label':'批次指定相簿或資料夾'},
+    h('option',{value:''},!bPid?'相簿／資料夾（先選案件）':!bOpt?'讀取中…':'相簿／資料夾：自動'),
+    bOpt&&h('optgroup',{label:'照片相簿（只套用到照片）'},[...bOpt.albums.map(a=>h('option',{key:a.id,value:'a:'+a.id},a.name)),...(bOpt.albums.some(a=>a.name==='現況照片')?[]:[h('option',{key:'na',value:'na:現況照片'},'＋ 新相簿「現況照片」')])]),
+    bOpt&&h('optgroup',{label:'專案資料與圖面'},[bOpt.rootId?h('option',{key:'root',value:'f:'+bOpt.rootId},'圖面・案件資料夾'):h('option',{key:'new',value:'f:new'},'圖面・建立案件資料夾'),...bOpt.folders.map(f=>h('option',{key:f.id,value:'f:'+f.id},'圖面・'+f.name))]));
+  const batchBar=items.length>0&&h('div',{className:'hbib-batch',role:'group','aria-label':'批次指定'},
+    h('label',{className:'hbib-ball'},h('input',{type:'checkbox',checked:allOn,onChange:()=>setSel(allOn?[]:okItems.map(i=>i.id))}),allOn?'取消全選':'全選'),
+    h('span',{className:'hbib-bwho'},sel.length?'已勾選 '+sel.length+' 個':noPid.length?'沒勾選時：套用到 '+noPid.length+' 個未指定案件的檔案':'勾選檔案後可批次修改'),
+    h('select',{value:bPid,className:bPid?'':'warn',onChange:e=>setBPid(e.target.value),'aria-label':'批次指定案件'},h('option',{value:''},'選擇案件'),projects.map(p=>h('option',{key:p.id,value:p.id},p.name))),
+    bDestSel,
+    h('select',{value:bVis,onChange:e=>setBVis(e.target.value),'aria-label':'批次設定業主可見'},h('option',{value:''},'業主可見：不變'),h('option',{value:'on'},'業主看得到'),h('option',{value:'off'},'僅公司可見')),
+    h('button',{type:'button',className:'hbib-b1',disabled:busy||!bTargets.length||(!bPid&&!bDest&&!bVis),onClick:applyBatch},'套用'+(bTargets.length?'到 '+bTargets.length+' 個':'')));
   return h('section',{className:'hbib'+(drag?' is-drag':''),'aria-label':'待歸檔',
       onDragOver:e=>{if([...(e.dataTransfer.types||[])].includes('Files')){e.preventDefault();if(!drag)setDrag(true)}},onDragLeave:e=>{if(e.currentTarget===e.target)setDrag(false)},
       onDrop:e=>{e.preventDefault();e.stopPropagation();setDrag(false);pick(e.dataTransfer.files)}},
@@ -16530,13 +16566,15 @@ function HbInbox({items,setItems,projects,notify,onAdd}){
       h('input',{ref:inp,type:'file',multiple:true,hidden:true,accept:'image/*,.heic,.heif,.pdf,.dwg,.dxf',onChange:e=>{pick(e.target.files);e.target.value=''}}),
       items.length>0&&h('span',{className:'hbib-cnt'},todo?'可歸檔 '+readyList.length+'・待確認 '+todo:'可歸檔 '+readyList.length),
       h('button',{type:'button',className:'hbib-b1',disabled:busy||!readyList.length,onClick:()=>archive(readyList)},busy?'歸檔中…':'全部歸檔'+(readyList.length?'（'+readyList.length+'）':''))),
+    batchBar,
     res&&h('p',{className:'hbib-res'+(res.fail?' err':''),role:'status'},res.fail?'已歸檔 '+res.ok+' 個，'+res.fail+' 個失敗（紅字項目可按「重試」）。':'已歸檔 '+res.ok+' 個檔案，已同步到案件與專案資料與圖面。',todo&&!res.fail?'　還有 '+todo+' 個需要指定案件或資料夾。':''),
     items.length===0?h('div',{className:'hbib-empty',onClick:()=>inp.current&&inp.current.click(),role:'button',tabIndex:0},
         h('b',null,'把照片或圖面拖到這裡'),h('span',null,'或按「加入檔案」。也可以直接拖到下方的案件卡，會指定給那個案件。'))
     :h('div',{className:'hbib-table',role:'table','aria-label':'待歸檔檔案'},
-      h('div',{className:'hbib-row hbib-th',role:'row'},['檔案','分到案件','相簿／資料夾','判斷依據','業主可見',''].map((t,i)=>h('span',{key:i,role:'columnheader'},t))),
+      h('div',{className:'hbib-row hbib-th',role:'row'},[h('input',{key:'c',type:'checkbox',checked:allOn,onChange:()=>setSel(allOn?[]:okItems.map(i=>i.id)),'aria-label':'全選'}),...['檔案','分到案件','相簿／資料夾','判斷依據','業主可見',''].map((t,i)=>h('span',{key:i,role:'columnheader'},t))]),
       view.map(it=>{const bad=it.kind==='bad',need=!bad&&(!it.pid||!it.dest);
         return h('div',{key:it.id,role:'row',className:'hbib-row'+(need&&!it.pid?' is-need':'')+(bad?' is-bad':'')+(it.status==='error'?' is-err':'')+(it.status==='run'?' is-run':'')},
+          h('div',{role:'cell',className:'hbib-ck'},bad?null:h('input',{type:'checkbox',checked:selSet.has(it.id),disabled:it.status==='run',onChange:()=>toggleSel(it.id),'aria-label':'勾選 '+it.name})),
           h('div',{className:'hbib-file',role:'cell'},
             h('span',{className:'hbib-thumb'},it.thumb?h('img',{src:it.thumb,alt:''}):h('i',null,it.kind==='pdf'?'PDF':it.kind==='cad'?'CAD':'—')),
             h('div',null,h('b',{title:it.name},it.name),
@@ -17254,7 +17292,7 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
         h('div',{className:'wbk-workswitch',role:'tablist','aria-label':'上方工作區'},
           h('button',{type:'button',role:'tab','aria-selected':area==='inbox',className:area==='inbox'?'on':'',onClick:()=>setArea('inbox')},'待歸檔',h('b',{className:inbox.length?'has':''},inbox.length)),
           h('button',{type:'button',role:'tab','aria-selected':area!=='inbox',className:area!=='inbox'?'on':'',onClick:()=>setArea('case')},'案件操作',pvReal?h('small',null,pvName):null)),
-        area==='inbox'?h(HbInbox,{items:inbox,setItems:setInbox,projects,notify:caseSay,onAdd:inboxAdd}):casePanel),
+        area==='inbox'?h(HbInbox,{items:inbox,setItems:setInbox,projects,notify:caseSay,onAdd:inboxAdd,defPid:pvReal?pv:''}):casePanel),
       undo?h('div',{className:'wb-toast wb-undo',role:'status'},h('span',null,'已完成「'+undo.title+'」'),h('button',{type:'button',onClick:undoDone},'復原')):toast&&h('div',{className:'wb-toast',role:'status'},toast),
       cSide&&h(HbWbSide,{title:sideTitle,sub:kSide?'全公司・不受案件篩選影響':pv?pvName:'全部專案',onClose:()=>setCSide(''),
         tabs:(cSide==='later'||cSide==='shop')?[['later','稍後辦 '+later.length],['shop','購物清單 '+shop.length]]:null,tab:cSide,onTab:setCSide},
