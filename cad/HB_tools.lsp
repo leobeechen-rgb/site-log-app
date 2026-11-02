@@ -12,7 +12,7 @@
 ;;;    5. 設定              指定圖塊庫 DWG、出圖樣式表
 ;;;    6. 軌道燈／拉伸軌道燈  點起點終點畫軌道燈，燈具自動等距；可再拉長縮短
 ;;;    7. 門片開門線        點門片框內部，自動畫開門虛線（左開／右開／對開／上掀／下掀）
-;;;    8. 抽屜斜把          點抽屜面板內部，標出斜把位置（上緣／下緣／左側／右側）
+;;;    8. 抽屜＋斜把        點抽屜面板內部，標「抽屜」＋箭頭指向斜把那一邊
 ;;;
 ;;;  安裝：APPLOAD → 啟動組（Startup Suite）→ 加入這個檔案
 ;;; ==========================================================
@@ -1423,17 +1423,12 @@
 (defun c:HBDOOR () (hb:door nil))
 
 ;;; ==========================================================
-;;;  抽屜斜把：點抽屜面板「內部」一下，在指定邊畫出斜把位置
-;;;  畫法：沿把手邊畫一條內縮線，中間加斜線（像剖面線），旁邊標「斜把」
-;;;  可選 上緣／下緣／左側／右側；斜把寬度預設 3（公分），可改；
-;;;  可指定長度（置中，0＝全寬）。可連續點很多個，按 Enter 結束，U 一次全部退回
+;;;  抽屜＋斜把：點抽屜面板「內部」一下 → 中間標「抽屜」，箭頭指向斜把那一邊
+;;;  可選 上緣／下緣／左側／右側；可連續點很多個，按 Enter 結束，U 一次全部退回
 ;;;  放在 I-櫃體-把手 圖層。也可直接打指令：HBPULL
 ;;; ==========================================================
 (setq hb:*pull-layer* "I-櫃體-把手")
 (if (not hb:*pull-edge*) (setq hb:*pull-edge* "U"))
-(if (not hb:*pull-w*) (setq hb:*pull-w* (atof (hb:get "HB_PULL_W" "3"))))
-(if (not hb:*pull-len*) (setq hb:*pull-len* 0.0))
-(if (null hb:*pull-txt*) (setq hb:*pull-txt* (/= (hb:get "HB_PULL_TXT" "1") "0")))
 
 (defun hb:pull-name (m)
   (cdr (assoc m '(("U" . "上緣") ("D" . "下緣") ("L" . "左側") ("R" . "右側")))))
@@ -1447,53 +1442,49 @@
   (entmake (list '(0 . "LINE") (cons 8 hb:*pull-layer*) '(6 . "Continuous")
                  (list 10 (car a) (cadr a) 0.0) (list 11 (car b) (cadr b) 0.0))))
 
-;;; b＝(x1 y1 x2 y2)；用「沿邊 u、往內 v」換算回圖面座標
-(defun hb:pull-draw (b / x1 y1 x2 y2 e w u1 u2 L um pt th tx sp doc tp k uu ue horiz depth)
-  (setq x1 (nth 0 b) y1 (nth 1 b) x2 (nth 2 b) y2 (nth 3 b) e hb:*pull-edge* w hb:*pull-w*
-        horiz (member e '("U" "D")))
-  (defun pt (u v)
-    (cond ((= e "U") (list u (- y2 v))) ((= e "D") (list u (+ y1 v)))
-          ((= e "L") (list (+ x1 v) u)) (T (list (- x2 v) u))))
-  (setq u1 (if horiz x1 y1) u2 (if horiz x2 y2)
-        depth (if horiz (- y2 y1) (- x2 x1)))
-  (cond
-    ((or (< (- x2 x1) 1e-6) (< (- y2 y1) 1e-6)) (hb:say "範圍太小，略過。"))
-    ((>= w depth) (hb:say "斜把寬度比抽屜還大，請輸入 W 改小一點。"))
-    (T
-      ;; 指定長度：置中
-      (if (and (> hb:*pull-len* 0) (< hb:*pull-len* (- u2 u1)))
-        (setq um (/ (+ u1 u2) 2.0) u1 (- um (/ hb:*pull-len* 2.0)) u2 (+ um (/ hb:*pull-len* 2.0))))
-      (setq L (- u2 u1))
-      ;; 內縮線＋兩端封口（指定長度時）
-      (hb:pull-line (pt u1 w) (pt u2 w))
-      (if (> hb:*pull-len* 0)
-        (progn (hb:pull-line (pt u1 0) (pt u1 w)) (hb:pull-line (pt u2 0) (pt u2 w))))
-      ;; 斜線：間距＝斜把寬度
-      (setq k u1)
-      (while (< k u2)
-        (setq ue (min u2 (+ k w)))
-        (hb:pull-line (pt k w) (pt ue (- w (- ue k))))
-        (setq k (+ k w)))
-      ;; 文字「斜把」
-      (if hb:*pull-txt*
-        (progn
-          (setq doc (vla-get-ActiveDocument (vlax-get-acad-object))
-                sp (if (= (getvar "CVPORT") 1) (vla-get-PaperSpace doc) (vla-get-ModelSpace doc))
-                th (max 1.0 (* 0.8 w))
-                tp (pt (/ (+ u1 u2) 2.0) (+ w (* 1.1 th))))
-          (if (< (+ w (* 2.2 th)) depth)
-            (progn
-              (setq tx (vla-AddText sp (strcat "斜把" (if (> hb:*pull-len* 0) (strcat " L=" (rtos L 2 0)) ""))
-                         (vlax-3d-point (list (car tp) (cadr tp) 0.0)) th))
-              (if (tblsearch "STYLE" "赫柏-中文") (vl-catch-all-apply 'vla-put-StyleName (list tx "赫柏-中文")))
-              (vla-put-Alignment tx 10)
-              (vla-put-TextAlignmentPoint tx (vlax-3d-point (list (car tp) (cadr tp) 0.0)))
-              (if (not horiz) (vla-put-Rotation tx (/ pi 2.0)))
-              (vla-put-Layer tx hb:*pull-layer*)))))
+;;; 實心箭頭（SOLID 三角形），尖端在 tip，方向 ang
+(defun hb:pull-head (tip ang len wid / back l r)
+  (setq back (polar tip (+ ang pi) len)
+        l (polar back (+ ang (/ pi 2.0)) (/ wid 2.0))
+        r (polar back (- ang (/ pi 2.0)) (/ wid 2.0)))
+  (entmake (list '(0 . "SOLID") (cons 8 hb:*pull-layer*)
+                 (list 10 (car tip) (cadr tip) 0.0) (list 11 (car l) (cadr l) 0.0)
+                 (list 12 (car r) (cadr r) 0.0) (list 13 (car r) (cadr r) 0.0))))
+
+;;; b＝(x1 y1 x2 y2)
+(defun hb:pull-draw (b / x1 y1 x2 y2 e cx cy w h depth th ang tip hl al gap tc st doc sp tx)
+  (setq x1 (nth 0 b) y1 (nth 1 b) x2 (nth 2 b) y2 (nth 3 b) e hb:*pull-edge*
+        w (- x2 x1) h (- y2 y1) cx (/ (+ x1 x2) 2.0) cy (/ (+ y1 y2) 2.0))
+  (if (or (< w 1e-6) (< h 1e-6))
+    (progn (hb:say "範圍太小，略過。") nil)
+    (progn
+      ;; 箭頭方向與尖端（離邊留一點空隙）
+      (setq ang (cdr (assoc e (list (cons "U" (/ pi 2.0)) (cons "D" (* pi 1.5)) (cons "L" pi) (cons "R" 0.0))))
+            depth (if (member e '("U" "D")) h w)
+            th (min (max 1.5 (* 0.16 (min w h))) 4.0 (/ depth 4.0))
+            gap (* 0.35 th) hl (* 0.9 th)
+            al (max (* 2.0 hl) (* 0.3 depth)))
+      (setq tip (cond ((= e "U") (list cx (- y2 gap))) ((= e "D") (list cx (+ y1 gap)))
+                      ((= e "L") (list (+ x1 gap) cy)) (T (list (- x2 gap) cy))))
+      ;; 文字中心：在箭頭尾端後面；空間不夠就放面板中心
+      (setq st (polar tip (+ ang pi) al)
+            tc (polar st (+ ang pi) (* 0.9 th)))
+      (if (or (< (car tc) (+ x1 th)) (> (car tc) (- x2 th)) (< (cadr tc) (+ y1 (* 0.6 th))) (> (cadr tc) (- y2 (* 0.6 th))))
+        (setq tc (list cx cy)
+              st (polar tc ang (* 0.9 th))))
+      (hb:pull-line st (polar tip (+ ang pi) (* 0.5 hl)))
+      (hb:pull-head tip ang hl (* 0.55 hl))
+      (setq doc (vla-get-ActiveDocument (vlax-get-acad-object))
+            sp (if (= (getvar "CVPORT") 1) (vla-get-PaperSpace doc) (vla-get-ModelSpace doc)))
+      (setq tx (vla-AddText sp "抽屜" (vlax-3d-point (list (car tc) (cadr tc) 0.0)) th))
+      (if (tblsearch "STYLE" "赫柏-中文") (vl-catch-all-apply 'vla-put-StyleName (list tx "赫柏-中文")))
+      (vla-put-Alignment tx 10)
+      (vla-put-TextAlignmentPoint tx (vlax-3d-point (list (car tc) (cadr tc) 0.0)))
+      (vla-put-Layer tx hb:*pull-layer*)
       T)))
 
 ;;; edge：U／D／L／R（nil＝沿用上次）
-(defun hb:pull (edge / doc pt p1 p2 box done n s)
+(defun hb:pull (edge / doc pt p1 p2 box done n)
   (setq doc (vla-get-ActiveDocument (vlax-get-acad-object)) n 0)
   (hb:begin '("CMDECHO"))
   (if edge (setq hb:*pull-edge* edge))
@@ -1503,26 +1494,11 @@
   (vla-StartUndoMark doc)
   (setq hb:*undo-open* T)
   (while (not done)
-    (initget "U D L R W S T C")
-    (setq pt (getpoint (strcat "\n點抽屜面板內部（" (hb:pull-name hb:*pull-edge*)
-                               "／寬 " (rtos hb:*pull-w* 2 1)
-                               "／" (if (> hb:*pull-len* 0) (strcat "長 " (rtos hb:*pull-len* 2 1)) "全寬")
-                               "／" (if hb:*pull-txt* "標文字" "不標文字")
-                               "）或 [上緣(U)/下緣(D)/左側(L)/右側(R)/寬度(W)/長度(S)/文字開關(T)/兩角框選(C)] <結束>：")))
+    (initget "U D L R C")
+    (setq pt (getpoint (strcat "\n點抽屜面板內部（斜把在：" (hb:pull-name hb:*pull-edge*)
+                               "）或 [上緣(U)/下緣(D)/左側(L)/右側(R)/兩角框選(C)] <結束>：")))
     (cond
       ((null pt) (setq done T))
-      ((= pt "W")
-        (initget 6)
-        (if (setq s (getdist (strcat "\n斜把寬度 <" (rtos hb:*pull-w* 2 1) ">：")))
-          (progn (setq hb:*pull-w* s) (setenv "HB_PULL_W" (rtos s 2 2)))))
-      ((= pt "S")
-        (initget 4)
-        (if (setq s (getdist (strcat "\n斜把長度（0＝全寬，會置中）<" (rtos hb:*pull-len* 2 1) ">：")))
-          (setq hb:*pull-len* s)))
-      ((= pt "T")
-        (setq hb:*pull-txt* (not hb:*pull-txt*))
-        (setenv "HB_PULL_TXT" (if hb:*pull-txt* "1" "0"))
-        (hb:say (if hb:*pull-txt* "會標「斜把」文字。" "不標文字。")))
       ((= pt "C")
         (setq p1 (getpoint "\n抽屜面板第一個角點："))
         (if p1 (setq p2 (getcorner p1 "\n對角點：")))
@@ -1536,7 +1512,7 @@
           (hb:say "找不到封閉範圍：請確認抽屜四邊有封閉、整個抽屜在畫面內；或輸入 C 用兩角框選。")))))
   (vla-EndUndoMark doc)
   (setq hb:*undo-open* nil)
-  (if (> n 0) (hb:say (strcat "斜把完成 " (itoa n) " 個。")))
+  (if (> n 0) (hb:say (strcat "抽屜標示完成 " (itoa n) " 個。")))
   (hb:end)
   (princ))
 
@@ -1549,7 +1525,7 @@
   (setq fn (strcat (getvar "TEMPPREFIX") "HB_tools.dcl"))
   (setq f (open fn "w"))
   (foreach s
-    '("hb_main : dialog { label = \"赫柏工具  HERFULSINS（第 19 版）\";"
+    '("hb_main : dialog { label = \"赫柏工具  HERFULSINS（第 20 版）\";"
       " : text { label = \"點按鈕就好，不用記指令。下次只要輸入 HB 打開這裡。\"; }"
       " : spacer { height = 0.5; }"
       " : boxed_column { label = \"出 PDF（A3 橫式、1:1、存到 PDF_OUTPUT）\";"
@@ -1572,7 +1548,7 @@
       "           : button { key = \"dU\"; label = \"上掀\"; }"
       "           : button { key = \"dD\"; label = \"下掀\"; } }"
       " }"
-      " : boxed_column { label = \"抽屜斜把位置（按完到圖上點抽屜面板內部，可連續點）\";"
+      " : boxed_column { label = \"抽屜＋斜把箭頭（選斜把在哪邊，再點抽屜面板內部，可連續點）\";"
       "   : row { : button { key = \"pU\"; label = \"上緣\"; }"
       "           : button { key = \"pD\"; label = \"下緣\"; }"
       "           : button { key = \"pL\"; label = \"左側\"; }"
@@ -1711,5 +1687,5 @@
       ((= act 24) (hb:pull "R") (setq act 0))))
   (princ))
 
-(princ "\n【赫柏】赫柏工具（第 19 版）已載入。輸入 HB 打開面板。（新增：抽屜斜把位置）")
+(princ "\n【赫柏】赫柏工具（第 20 版）已載入。輸入 HB 打開面板。（新增：抽屜＋斜把箭頭）")
 (princ)
