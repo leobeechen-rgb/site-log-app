@@ -13068,6 +13068,14 @@ const HB_LIB_CSS=`
 
       /* ===== 2026-11：左側欄 Le Carnet du Jour（桌機固定行程卡） ===== */
       .hb-ls-carnet:empty{display:none}
+      .hb-ls-sw{display:none;grid-template-columns:repeat(3,minmax(0,1fr));border:1px solid rgba(57,51,47,.14);background:rgba(255,255,255,.62);padding:3px;gap:3px}
+      .hb-ls-sw button{display:flex;align-items:center;justify-content:center;gap:6px;border:0;background:none;padding:8px 0;font:400 14px 'Noto Serif TC',serif;letter-spacing:.08em;color:#6F675B;cursor:pointer;min-height:0!important}
+      .hb-ls-sw button:hover{color:#2E4A3C;background:#F2EFE8}
+      .hb-ls-sw button.on{background:#2E4A3C;color:#F2EFE8}
+      .hb-ls-sw em{font-style:normal;min-width:18px;height:18px;padding:0 5px;border-radius:8px;background:rgba(57,51,47,.1);color:inherit;font:500 11px 'Noto Sans TC',sans-serif;display:inline-flex;align-items:center;justify-content:center}
+      .hb-ls-sw button.on em{background:rgba(242,239,232,.2)}
+      .hb-ls-sw em.hot{background:#B4573A;color:#fff}
+      .hb-ls-sw button:focus-visible{outline:2px solid #2E4A3C;outline-offset:1px}
       .wbk.has-carnet .wbk-card-todo{display:none!important}
       .wbk-sidetools{display:flex;align-items:center;gap:10px;padding:0 0 8px}
       .hbc{--c-ink:#1C1B18;--c-soft:#6F675B;--c-mute:#A79E8D;--c-line:#D9CFBD;--c-green:#2E4A3C;--c-red:#A33A2A;--c-gold:#B89B6A;
@@ -13148,11 +13156,17 @@ const HB_LIB_CSS=`
         .hb-lib-grid{grid-template-columns:300px minmax(0,1fr)}
         .hb-lib-side>.hb-libside>.hb-ls-carnet{flex:none}
         .hb-libside{gap:12px}
-        /* 加了行程卡後：「檔案」至少保留 260px 可用；欄高不夠時整欄在框內捲動（不顯示外層捲軸） */
-        .hb-lib-side:has(.hbc){overflow-y:auto;scrollbar-width:none;overscroll-behavior:contain}
-        .hb-lib-side:has(.hbc)::-webkit-scrollbar{display:none}
-        .hb-lib-side:has(.hbc)>.hb-libside{flex:1 0 auto}
-        .hb-lib-side:has(.hbc)>.hb-libside>.hb-ls-files{min-height:260px}
+        /* 方案 B：左欄分頁，一次只顯示「行程／待發布／檔案」其中一個，整欄高度都給它 */
+        .hb-libside:has(.hbc)>.hb-ls-sw{display:grid}
+        .hb-libside:has(.hbc)[data-tab=carnet]>.hb-ls-sec{display:none!important}
+        .hb-libside:has(.hbc)[data-tab=pend]>.hb-ls-carnet,.hb-libside:has(.hbc)[data-tab=pend]>.hb-ls-files{display:none!important}
+        .hb-libside:has(.hbc)[data-tab=files]>.hb-ls-carnet,.hb-libside:has(.hbc)[data-tab=files]>.hb-ls-sec:not(.hb-ls-files){display:none!important}
+        .hb-libside:has(.hbc)[data-tab=carnet]>.hb-ls-carnet{flex:1 1 auto;min-height:0;display:flex;flex-direction:column}
+        .hb-ls-carnet>.hbc{flex:1 1 auto;min-height:0}
+        .hb-libside[data-tab=carnet] .hbc-listwrap{flex:1 1 auto;min-height:0;display:flex;flex-direction:column}
+        .hb-libside[data-tab=carnet] .hbc-list{flex:1 1 auto;max-height:none}
+        .hb-libside:has(.hbc)[data-tab=pend]>.hb-ls-sec{flex:1 1 auto;min-height:0;display:flex;flex-direction:column}
+        .hb-libside:has(.hbc)[data-tab=pend]>.hb-ls-sec>.hb-ls-list{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain}
         /* 底色鋪滿整個視窗（內容比視窗短時，下方不會出現另一塊顏色）；左欄延伸到視窗底部 */
         .hb-project-library:has(.hbc){min-height:calc(100dvh - 2px)!important}
         .hb-lib-side:has(.hbc){height:calc(100dvh - 32px)}
@@ -13999,7 +14013,7 @@ function HbDrawingHub({onBack,notify,project=null,embedded=false,initialView="dr
   let[unifiedOpen,setUnifiedOpen]=(0,u.useState)(false);
   /* 進場：主內容淡入一次；案件卡片在資料第一次載入完成時依序浮現，之後搜尋／篩選／同步都不重播 */
   let[introPhase,setIntroPhase]=(0,u.useState)(()=>HB_reduceMotion()?"done":"wait");
-  let[homeView,setHomeView]=(0,u.useState)("cases"),[homeFilter,setHomeFilter]=(0,u.useState)("all"),[homeQuery,setHomeQuery]=(0,u.useState)(""),[homeCase,setHomeCase]=(0,u.useState)(""),[homeOpenGroups,setHomeOpenGroups]=(0,u.useState)({}),[homePill,setHomePill]=(0,u.useState)("all"),[sideQ,setSideQ]=(0,u.useState)(""),[sideF,setSideF]=(0,u.useState)("all"),[sideMenu,setSideMenu]=(0,u.useState)(null),[cfPreset,setCfPreset]=(0,u.useState)(null);
+  let[homeView,setHomeView]=(0,u.useState)("cases"),[homeFilter,setHomeFilter]=(0,u.useState)("all"),[homeQuery,setHomeQuery]=(0,u.useState)(""),[homeCase,setHomeCase]=(0,u.useState)(""),[homeOpenGroups,setHomeOpenGroups]=(0,u.useState)({}),[homePill,setHomePill]=(0,u.useState)("all"),[sideQ,setSideQ]=(0,u.useState)(""),[sideF,setSideF]=(0,u.useState)("all"),[sideTab,setSideTabRaw]=(0,u.useState)(()=>{try{let v=localStorage.getItem("hb_side_tab");return v==="pend"||v==="files"?v:"carnet"}catch{return"carnet"}}),[sideMenu,setSideMenu]=(0,u.useState)(null),[cfPreset,setCfPreset]=(0,u.useState)(null);
   let[hubView,setHubView]=(0,u.useState)(initialView==="photos"?"photos":"drawings");
   let[folders,setFolders]=(0,u.useState)([]);
   let[drawings,setDrawings]=(0,u.useState)([]);
@@ -14490,10 +14504,13 @@ function HbDrawingHub({onBack,notify,project=null,embedded=false,initialView="dr
       loading?C("p",{className:"hb-ls-empty"},"讀取中…"):list.length===0?C("p",{className:"hb-ls-empty"},empty):
       C("ul",{className:"hb-ls-list"},list.slice(0,max).map(d=>row(d,kind))),
       !loading&&list.length>max&&onOpenHub&&C("button",{type:"button",className:"hb-ls-more",onClick:onOpenHub},"還有 "+(list.length-max)+" 筆，開啟資料與圖面"));
-    return C("div",{className:"hb-libside"},
+    let setSideTab=v=>{setSideTabRaw(v);try{localStorage.setItem("hb_side_tab",v)}catch{}};
+    return C("div",{className:"hb-libside","data-tab":sideTab},
       C("style",null,HB_HUB_CSS),
       C("style",null,HB_LIB_CSS),
       /* 上傳一律先進「待歸檔」，在上方確認案件與位置後再歸檔 */C("label",{className:"hb-ls-up",title:"選檔案後先放進上方「待歸檔」，確認案件再歸檔"},C(E,{name:"plus",size:16}),"上傳檔案",C("input",{type:"file",multiple:!0,hidden:!0,accept:"image/*,.heic,.heif,.pdf,.dwg,.dxf",onChange:ev=>{let fs=Array.from(ev.target.files||[]);ev.target.value="";if(!fs.length)return;if(window.HB_inboxAdd)window.HB_inboxAdd(fs);else setUnifiedOpen(true)}})),
+      /* 桌機左欄分頁：行程｜待發布｜檔案，一次顯示一個（只有左欄有行程卡時出現） */
+      C("div",{className:"hb-ls-sw",role:"tablist","aria-label":"左側欄切換"},[["carnet","行程",null],["pend","待發布",pendList.length],["files","檔案",scopedDrawings.length]].map(x=>C("button",{key:x[0],type:"button",role:"tab","aria-selected":sideTab===x[0],className:sideTab===x[0]?"on":"",onClick:()=>setSideTab(x[0])},x[1],x[2]!=null?C("em",{className:x[0]==="pend"&&x[2]>0?"hot":""},x[2]):null))),
       C("div",{className:"hb-ls-carnet",ref:HB_carnetSlotRef}),
       sec("待發布","À PUBLIER",pendList,"pend","沒有待發布的新版本","業主已在看的圖面，有新版還沒發布",30),
       C("section",{className:"hb-ls-sec hb-ls-files"},
