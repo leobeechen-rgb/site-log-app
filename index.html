@@ -13153,6 +13153,9 @@ const HB_LIB_CSS=`
         .hb-lib-side:has(.hbc)::-webkit-scrollbar{display:none}
         .hb-lib-side:has(.hbc)>.hb-libside{flex:1 0 auto}
         .hb-lib-side:has(.hbc)>.hb-libside>.hb-ls-files{min-height:260px}
+        /* 底色鋪滿整個視窗（內容比視窗短時，下方不會出現另一塊顏色）；左欄延伸到視窗底部 */
+        .hb-project-library:has(.hbc){min-height:calc(100dvh - 2px)!important}
+        .hb-lib-side:has(.hbc){height:calc(100dvh - 32px)}
       }
       @media(min-width:1600px){.hb-lib-grid{grid-template-columns:320px minmax(0,1fr)}}
       @media(max-width:1099px){.hb-ls-carnet{grid-column:1/-1}}
