@@ -16859,6 +16859,8 @@ function HbCasePhotos({project,notify,onDirty}){
   const dlList=(list,name)=>window.HB_downloadPhotos&&window.HB_downloadPhotos((list||[]).map(x=>({...x,uploadedAt:x.uploaded_at})),[project&&project.name,name].filter(Boolean).join('_'));
   const ordered=(albums||[]).flatMap(a=>photos.filter(x=>x.album_id===a.id));
   const lbList=shown||ordered,lbCur=lb!=null?lbList[lb]:null;
+  const lbStep=d=>setLb(i=>i==null||lbList.length<2?i:(i+d+lbList.length)%lbList.length);
+  HB_useLbKeys(!!lbCur,lbStep,()=>setLb(null));
   const fig=(p,gi)=>h('figure',{key:p.id,className:'hbcp-ph'+(p.visible_to_owner===false?' is-private':'')},
             h('button',{type:'button',className:'hbcp-phimg',onClick:()=>setLb(gi),'aria-label':'放大 '+(p.note||'照片')},h('img',{src:p.url,alt:p.note||'',loading:'lazy',decoding:'async'})),
             h('figcaption',null,
@@ -16897,10 +16899,20 @@ function HbCasePhotos({project,notify,onDirty}){
     lbCur&&HB_portal(h('div',{className:'wbk-lb',role:'dialog','aria-modal':'true','aria-label':'照片預覽',onClick:()=>setLb(null)},
       h('div',{className:'wbk-lbbar',onClick:e=>e.stopPropagation()},h('span',{className:'wbk-lbname'},lbCur.note||albumName(lbCur.album_id)),
         h('span',{className:'wbk-lbn'},(lb+1)+' / '+lbList.length),h('button',{type:'button',className:'wbk-lbbtn','aria-label':'關閉',onClick:()=>setLb(null)},'✕')),
-      h('div',{className:'wbk-lbstage',onClick:e=>e.stopPropagation()},h('img',{src:lbCur.url,alt:lbCur.note||''})),
-      lbList.length>1&&h('button',{type:'button',className:'wbk-lbnav prev','aria-label':'上一張',onClick:e=>{e.stopPropagation();setLb((lb-1+lbList.length)%lbList.length)}},'‹'),
-      lbList.length>1&&h('button',{type:'button',className:'wbk-lbnav next','aria-label':'下一張',onClick:e=>{e.stopPropagation();setLb((lb+1)%lbList.length)}},'›'))));
+      h('div',{className:'wbk-lbstage',onClick:e=>e.stopPropagation(),...HB_lbSwipe(lbStep)},h('img',{src:lbCur.url,alt:lbCur.note||''})),
+      lbList.length>1&&h('button',{type:'button',className:'wbk-lbnav prev','aria-label':'上一張（←）',title:'上一張（←）',onClick:e=>{e.stopPropagation();lbStep(-1)}},'‹'),
+      lbList.length>1&&h('button',{type:'button',className:'wbk-lbnav next','aria-label':'下一張（→）',title:'下一張（→）',onClick:e=>{e.stopPropagation();lbStep(1)}},'›'))));
 }
+/* 照片／檔案預覽共用：鍵盤 ← → 切換、Esc 關閉；觸控左右滑動切換（輸入框裡打字不觸發） */
+function HB_useLbKeys(open,step,close){
+  const ref=u.useRef({step,close});ref.current={step,close};
+  u.useEffect(()=>{if(!open)return;
+    const f=e=>{const a=document.activeElement;if(a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))return;
+      if(e.key==='ArrowRight'){e.preventDefault();ref.current.step(1)}else if(e.key==='ArrowLeft'){e.preventDefault();ref.current.step(-1)}else if(e.key==='Escape'){e.preventDefault();ref.current.close()}};
+    window.addEventListener('keydown',f);return()=>window.removeEventListener('keydown',f)},[open]);
+}
+function HB_lbSwipe(step){let x0=null,y0=null;return{onTouchStart:e=>{const t=e.touches[0];x0=t.clientX;y0=t.clientY},
+  onTouchEnd:e=>{if(x0==null)return;const t=e.changedTouches[0],dx=t.clientX-x0,dy=t.clientY-y0;x0=null;if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)*1.3)step(dx<0?1:-1)}}}
 /* 捲到元素頂端，但扣掉頁首固定列的高度，避免被擋住 */
 function HB_wbScrollTo(el,reduce){if(!el)return;try{
   let cover=0;document.querySelectorAll('.hbtt, .hbtt *').forEach(x=>{const r=x.getBoundingClientRect();if(r.height>0&&r.height<300&&r.top<=4&&r.bottom>cover)cover=r.bottom});
@@ -16932,6 +16944,7 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
   const tpv=sideOn?'':pv;
   /* 篩選單一案件時，工作台下方改放這個案件的照片縮圖（不顯示行程） */
   const [pvPh,setPvPh]=u.useState(null),[pvTab,setPvTab]=u.useState('progress'),[pvData,setPvData]=u.useState({}),[pvFiles,setPvFiles]=u.useState(null),[pvLb,setPvLb]=u.useState(null);
+  HB_useLbKeys(!!(pvLb&&pvLb.list&&pvLb.list.length),d=>setPvLb(l=>l&&l.list.length>1?{...l,i:(l.i+d+l.list.length)%l.list.length}:l),()=>setPvLb(null));
   u.useEffect(()=>{setPvFiles(null);setPvLb(null);setPvData({})},[pv]);   /* 切換案件保留目前分頁 */
   const [agOpen,setAgOpen]=u.useState(null),[caseFold,setCaseFold]=u.useState(false),[caseMeta,setCaseMeta]=u.useState(false),caseDirty=u.useRef({});
   /* 待歸檔：檔案先放在這裡，確認案件與資料夾後才上傳 */
@@ -17302,7 +17315,7 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
         h('span',{className:'wbk-lbn'},(pvLb.i+1)+' / '+pvLb.list.length),
         h('a',{href:lbCur.url,target:'_blank',rel:'noopener',className:'wbk-lbbtn'},'新分頁開啟'),
         h('button',{type:'button',className:'wbk-lbbtn','aria-label':'關閉',onClick:()=>setPvLb(null)},'✕')),
-      h('div',{className:'wbk-lbstage',onClick:e=>e.stopPropagation()},
+      h('div',{className:'wbk-lbstage',onClick:e=>e.stopPropagation(),...HB_lbSwipe(d=>setPvLb(l=>l&&l.list.length>1?{...l,i:(l.i+d+l.list.length)%l.list.length}:l))},
         isImg(lbCur)?h('img',{src:lbCur.url,alt:lbCur.name||''})
         :isPdf(lbCur)?h('iframe',{src:lbCur.url,title:lbCur.name||'PDF'})
         :h('div',{className:'wbk-lbdoc'},h('b',null,extOf(lbCur)),h('p',null,lbCur.name),h('p',null,'這種檔案無法直接預覽'),h('a',{href:lbCur.url,target:'_blank',rel:'noopener',className:'wbk-lbbtn'},'下載檔案'))),
