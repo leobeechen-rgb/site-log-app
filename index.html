@@ -9018,53 +9018,47 @@ function HB_buildReceiptHTML(v){
   let r=HB_toROC(v.dateStr);
   let dateText=r.y?`${r.y}年${r.m}月${r.d}日`:"";
   let payLabel=v.paymentMethod==="cash"?"現金Cash":v.paymentMethod==="remit"?"匯款Remit":v.paymentMethod==="check"?"支票Check":"";
-  let blocks=periods.map(p=>HB_receiptBlockHTML(e,p,v,dateText,payLabel)).join("");
+  /* 一張 A4 直式均分 3 格（每格 99mm），格與格之間有虛線裁切線；超過 3 張自動換到下一張 A4 */
+  let blocks=periods.map(p=>HB_receiptBlockHTML(e,p,v,dateText,payLabel));
+  let sheets=[];for(let i=0;i<blocks.length;i+=3)sheets.push(blocks.slice(i,i+3));
+  if(!sheets.length)sheets.push([]);
+  let sheetHTML=sheets.map(g=>`<section class="a4">${[0,1,2].map(k=>`<div class="slot">${g[k]||""}</div>`).join("")}<i class="cut c1"><b>✂</b></i><i class="cut c2"><b>✂</b></i></section>`).join("");
   return `<!DOCTYPE html>
 <html lang="zh-Hant"><head><meta charset="UTF-8" /><title>${e(v.clientName||"工程收據")} · 赫柏空間工程收據</title>
 <style>
 ${HB_DOC_CSS}
-/* ===== 工程收據：整份收在一張 A4 =====
-   共用樣式原本每三張就強制分頁（.rc:nth-of-type(3n)），
-   而且每張的內距與字級是照單張排的，四張以上一定溢出到第二頁。
-   這裡改成不強制分頁，並依張數自動縮排版。 */
-.rc:nth-of-type(3n){ page-break-after:auto !important; break-after:auto !important; }
-.stack{ gap:14px; }
-.rc{ page-break-inside:avoid; break-inside:avoid; position:relative; }
-
-.stack.rcn4 .rc,
-.stack.rcn5 .rc,
-.stack.rcn6 .rc{ padding:13px 16px; }
-.stack.rcn4{ gap:10px } .stack.rcn5{ gap:8px } .stack.rcn6{ gap:6px }
-
-.stack.rcn5 .rc-head,
-.stack.rcn6 .rc-head{ padding-bottom:6px; margin-bottom:8px; }
-.stack.rcn5 .rc-info,
-.stack.rcn6 .rc-info{ font-size:9.5px; line-height:1.6; }
-.stack.rcn5 .rc-title,
-.stack.rcn6 .rc-title{ margin:2px 0 6px; }
-
-.stack.rcn4 table.rc-table th,.stack.rcn4 table.rc-table td{ padding:4px 8px; font-size:11.5px; }
-.stack.rcn5 table.rc-table th,.stack.rcn5 table.rc-table td{ padding:3px 8px; font-size:11px; }
-.stack.rcn6 table.rc-table th,.stack.rcn6 table.rc-table td{ padding:2px 7px; font-size:10.5px; }
-.stack.rcn4 table.rc-table td.amt{ font-size:13.5px }
-.stack.rcn5 table.rc-table td.amt{ font-size:13px }
-.stack.rcn6 table.rc-table td.amt{ font-size:12.5px }
-
-.stack.rcn5 .stamp,.stack.rcn6 .stamp{ width:88px }
-
+/* ===== 工程收據：A4 直式三等分（210×99mm ×3），虛線為裁切線 ===== */
+@page{ size:A4 portrait; margin:0; }
+html,body{ margin:0 !important; padding:0 !important; max-width:none !important; }
+body{ background:#E9E4DA !important; }
+.toolbar{ margin:0 0 18px !important; }
+.a4{ position:relative; width:210mm; height:297mm; margin:0 auto 18px; background:#fff; box-shadow:0 2px 14px rgba(0,0,0,.12);
+  display:grid; grid-template-rows:repeat(3,99mm); overflow:hidden; box-sizing:border-box; }
+.slot{ height:99mm; box-sizing:border-box; padding:6mm 9mm 5mm; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+.slot>.rc{ width:100%; margin:0; padding:3.4mm 5mm 3mm; box-sizing:border-box; border:1px solid #D9CFBD; page-break-after:auto !important; break-after:auto !important; }
+.slot .rc-head{ padding-bottom:1.6mm; margin-bottom:2mm; }
+.slot .rc-name{ font-size:12px; }
+.slot .rc-info{ font-size:9.5px; line-height:1.5; }
+.slot .rc-title{ margin:0 0 1.6mm; font-size:10px; line-height:1.4; }
+.slot table.rc-table{ width:100%; }
+.slot table.rc-table th,.slot table.rc-table td{ padding:1.15mm 2.6mm; font-size:11px; line-height:1.35; }
+.slot table.rc-table td.amt{ font-size:13px; }
+.slot .stamp{ width:24mm; right:3mm; bottom:2mm; }
+/* 裁切線：在 99mm、198mm 處，整張寬度的虛線＋剪刀 */
+.cut{ position:absolute; left:0; right:0; height:0; border-top:0.3mm dashed #8f887a; pointer-events:none; }
+.cut.c1{ top:99mm; } .cut.c2{ top:198mm; }
+.cut b{ position:absolute; left:3mm; top:-2.6mm; font-size:9pt; line-height:1; color:#6F675B; background:#fff; padding:0 1mm; font-weight:400; }
 @media print{
-  @page{ size:A4 portrait; margin:10mm 11mm; }
+  html,body{ background:#fff !important; }
   .toolbar{ display:none !important; }
-  body{ padding:0 !important; }
-  .stack{ gap:10px; }
-  .stack.rcn4{ gap:8px } .stack.rcn5{ gap:6px } .stack.rcn6{ gap:5px }
-  /* 整疊視為一個不可分割的區塊，印表機不會從中間切開 */
-  .stack{ page-break-inside:avoid; break-inside:avoid; }
+  .a4{ margin:0; box-shadow:none; page-break-after:always; break-after:page; }
+  .a4:last-child{ page-break-after:auto; break-after:auto; }
+  .cut{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
 }
 </style></head>
 <body>
-<div class="toolbar"><button class="back" onclick="window.close()" title="返回">←</button><button class="print" onclick="window.print()">列印 / 存 PDF</button></div>
-<div class="stack rcn${periods.length}">${blocks}</div>
+<div class="toolbar"><button class="back" onclick="window.close()" title="返回">←</button><button class="print" onclick="window.print()">列印 / 存 PDF（A4 直式・三等分）</button></div>
+${sheetHTML}
 </body></html>`;
 }
 
