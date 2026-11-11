@@ -3811,7 +3811,8 @@ button.wb-proj:hover{background:var(--hbt-green-soft);color:var(--wb-green)}
 .wb-mhead p{margin:0 0 3px;font:italic 12px 'Cormorant Garamond',Georgia,serif;letter-spacing:.18em;color:#9b8a6a}
 .wb-mhead h3{margin:0;font-family:'Noto Serif TC',serif;font-size:20px;font-weight:500;letter-spacing:.06em;overflow-wrap:anywhere}
 .wb-mhead button{border:0;background:none;font-size:24px;line-height:1;color:var(--hbt-ink-2);width:36px;height:36px;flex-shrink:0}
-.wb-form{display:flex;flex-direction:column;gap:12px;padding:16px 20px 18px}
+.wb-autonote{margin:0 0 4px;padding:8px 10px;border-left:2px solid #B89B6A;background:#F7F3EA;font-size:12.5px;line-height:1.6;color:#6F675B}
+      .wb-form{display:flex;flex-direction:column;gap:12px;padding:16px 20px 18px}
 .wb-field{display:flex;flex-direction:column;gap:5px;min-width:0}.wb-field>span{font-size:12px;color:var(--hbt-ink-2)}
 .wb-field input,.wb-field select,.wb-field textarea{width:100%;min-width:0;border:1px solid var(--hbt-line);border-radius:8px;background:#fff;padding:9px 11px;font:inherit;font-size:16px;color:var(--hbt-ink);min-height:42px}
 .wb-field textarea{resize:vertical;line-height:1.55}
@@ -17088,7 +17089,7 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
   const chev=h('span',{className:'wbc-chev','aria-hidden':'true'},HB_wbIcon('right',16));
   const agendaRow=t=>h('li',{key:t.id,className:'wbc-ag'},
     h('span',{className:'wbc-time wb-mono'},t.time||'整天'),h('i',{className:'wbc-dot'}),
-    h('button',{type:'button',className:'wbc-body',onClick:()=>t.source==='auto'&&t.projectId&&projects.some(p=>p.id===t.projectId)?onOpenProject(t.projectId):setEditing({...t})},
+    h('button',{type:'button',className:'wbc-body',onClick:()=>setEditing({...t})},
       h('strong',null,t.title),projName(t)));
   const openRow=t=>{const st=fx[t.id]||'';return h('li',{key:t.id,className:'wbc-row wbc-orow'+(overdue(t)&&!st?' is-late':'')+(st?' is-'+st:'')},
     h('button',{type:'button',className:'wbc-check','aria-label':(st==='error'?'重試完成：':'完成：')+t.title,'aria-pressed':st==='saving'||st==='leaving',disabled:st==='saving'||st==='leaving',title:st==='error'?'儲存失敗，按一下重試':'勾選完成',onClick:()=>complete(t)},HB_wbIcon('check',13)),
@@ -17156,7 +17157,7 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
         open&&h('div',{className:'wbk-chips'},cands.length?cands.slice(0,8).map(t=>h('button',{key:t.id,type:'button',draggable:true,className:'wbk-chip',title:'排到 '+fmt(a)+'（也可拖曳）',
           onDragStart:e=>{e.dataTransfer.setData('text/hb-task',t.id);e.dataTransfer.effectAllowed='move'},onClick:()=>schedule(t,a)},'⠿ ',t.title)):h('span',{className:'wbk-none'},'沒有待排的事')))};
     const tlRow=r=>{if(r.now)return h('li',{key:'now',className:'wbk-now'},h('span',null,fmt(nowMin)),h('i'));if(r.gap)return gapRow(r);const t=r.t;
-      return h('li',{key:t.id,className:'wbk-ev'},h('span',{className:'wbk-time wb-mono'},t.time||'整天'),h(t.source==='auto'?'div':'button',t.source==='auto'?{className:'wbk-evbody is-static'}:{type:'button',className:'wbk-evbody',onClick:()=>setEditing({...t})},h('strong',null,t.title),h('small',null,pnOf(t))),
+      return h('li',{key:t.id,className:'wbk-ev'},h('span',{className:'wbk-time wb-mono'},t.time||'整天'),h('button',{type:'button',className:'wbk-evbody',onClick:()=>setEditing({...t}),title:'編輯'},h('strong',null,t.title),h('small',null,pnOf(t))),
         t.source!=='auto'&&h('button',{type:'button',className:'wbc-check','aria-label':'完成：'+t.title,onClick:()=>complete(t)},HB_wbIcon('check',12)))};
     /* 整天的行程（工程行程、工班、預約沒填時間）：放在時間軸最上面 */
     const pnOf=t=>t.projectName||(projects.find(p=>p.id===t.projectId)||{}).name||'';
@@ -17170,7 +17171,7 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
     const upN=upSeen.size;
     const upHdr=dd=>{const n=HB_wbDiff(dd,today);return (n===1?'明天・':n===2?'後天・':'')+md(dd)+' '+HB_wbWeek(dd)};
     const upRow=r=>{if(r.hdr)return h('li',{key:'h'+r.hdr,className:'wbk-uphd'},upHdr(r.hdr));const t=r.t,end=t.dueEnd&&t.dueEnd>r.dd?t.dueEnd:'';
-      return h('li',{key:t.id,className:'wbk-ev'},h('span',{className:'wbk-time wb-mono'},t.time||'整天'),h(t.source==='auto'?'div':'button',t.source==='auto'?{className:'wbk-evbody is-static'}:{type:'button',className:'wbk-evbody',onClick:()=>setEditing({...t})},
+      return h('li',{key:t.id,className:'wbk-ev'},h('span',{className:'wbk-time wb-mono'},t.time||'整天'),h('button',{type:'button',className:'wbk-evbody',onClick:()=>setEditing({...t}),title:'編輯'},
         h('strong',null,t.title),h('small',null,[pnOf(t),end?'至 '+md(end):''].filter(Boolean).join('・'))))};
     const upShow=[];{let n=0;for(const r of upRows){if(!r.hdr&&n>=4)break;if(r.hdr&&n>=4)break;upShow.push(r);if(!r.hdr)n++}}
     const evN=rows.filter(r=>r.t).length+adRows.length;
@@ -17335,10 +17336,10 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
     /* ===== 左側欄 Le Carnet du Jour（桌機固定卡片）：今天／未來 7 天、週曆、未完成、待追蹤、稍後辦、快速記下 ===== */
     const carnet=sideOn?(()=>{
       const evBody=t=>[h('strong',{key:'t'},t.title),pnOf(t)?h('small',{key:'p'},pnOf(t)):null];
-      const evRow=(t,time,sub)=>{const man=t.source!=='auto',st=fx[t.id]||'';
+      const evRow=(t,time,sub)=>{const man=t.source!=='auto'||t.category==='約定',st=fx[t.id]||'';
         return h('li',{key:t.id,className:'hbc-ev'+(st?' is-'+st:'')},
           h('span',{className:'hbc-time'},time),h('i',{className:'hbc-dot','aria-hidden':'true'}),
-          man?h('button',{type:'button',className:'hbc-body',onClick:()=>setEditing({...t}),title:'編輯'},evBody(t),sub):h('div',{className:'hbc-body is-static'},evBody(t),sub),
+          h('button',{type:'button',className:'hbc-body',onClick:()=>setEditing({...t}),title:'編輯'},evBody(t),sub),
           man?h('button',{type:'button',className:'hbc-ck','aria-label':'完成：'+t.title,title:'勾選完成',disabled:st==='saving'||st==='leaving',onClick:()=>complete(t)},HB_wbIcon('check',11)):null)};
       const todayRows=[...adRows,...rows.filter(r=>r.t||r.now)];
       const todayList=todayRows.map(r=>r.now?h('li',{key:'now',className:'hbc-now','aria-label':'現在 '+fmt(nowMin)},h('span',null,fmt(nowMin)),h('i')):evRow(r.t,r.t.time||'整天',null));
@@ -17800,6 +17801,10 @@ function HbWbEditor({initial,projects,today,onClose,onSave,onDelete}){
       !auto&&h('div',{className:'wb-seg',role:'group','aria-label':'類型'},
         h('button',{type:'button',className:!isFollow?'on':'',onClick:()=>setV(p=>({...p,kind:undefined}))},'待辦'),
         h('button',{type:'button',className:isFollow?'on':'',onClick:()=>setV(p=>({...p,kind:'follow',due:p.due||HB_wbAddDays(today,3)}))},'追蹤（等待回覆）')),
+      auto&&h('p',{className:'wb-autonote'},v.category==='約定'?'這筆是從 LINE 群組自動匯入的約定。在這裡修改只會改待辦，不會改到 LINE 訊息；不需要了可以按「從待辦移除」。'
+        :v.category==='工班'?'這筆來自工班排程。在這裡修改只會改待辦；要改師傅提醒的日期，請到工班排程修改。'
+        :v.category==='行程'?'這筆來自工程行程。在這裡修改只會改待辦；要改行程本身，請到案件的工程行程修改。'
+        :'這筆是系統自動帶入的。在這裡修改只會改待辦，不會改到原本的資料。'),
       field('事項名稱 *',h('input',{value:v.title||'',required:true,maxLength:200,autoFocus:true,onChange:e=>set('title',e.target.value)})),
       h('div',{className:'wb-grid2'},
         field('所屬專案',h('select',{value:v.projectId||'',onChange:e=>set('projectId',e.target.value)},h('option',{value:''},'公司事務'),projects.map(p=>h('option',{key:p.id,value:p.id},p.name)))),
@@ -17809,7 +17814,7 @@ function HbWbEditor({initial,projects,today,onClose,onSave,onDelete}){
         !isFollow&&field('時間（有時間會排進今日安排）',h('input',{type:'time',value:v.time||'',onChange:e=>set('time',e.target.value)}))),
       field('備註',h('textarea',{rows:2,value:v.note||'',maxLength:500,onChange:e=>set('note',e.target.value)})),
       h('div',{className:'wb-mact'},
-        !v.isNew&&!auto&&h('button',{type:'button',className:'wb-btn wb-btn-ghost wb-danger',onClick:()=>onDelete(v)},'刪除'),
+        !v.isNew&&h('button',{type:'button',className:'wb-btn wb-btn-ghost wb-danger',onClick:()=>onDelete(v)},auto?'從待辦移除':'刪除'),
         h('span',{style:{flex:1}}),
         h('button',{type:'button',className:'wb-btn wb-btn-ghost',onClick:onClose},'取消'),
         h('button',{type:'submit',className:'wb-btn wb-btn-solid'},'儲存'))));
