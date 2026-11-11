@@ -13209,6 +13209,14 @@ const HB_LIB_CSS=`
       .wbk-ical .tl-calhelp{margin:14px 0;font-size:14px;color:#4f4a40}.wbk-ical .tl-calhelp summary{cursor:pointer;color:#2E4A3C}
       .wbk-ical .tl-calhelp ol{padding-left:20px;line-height:1.8}
       .wbk-ical .tl-calwarn{font-size:12px;color:#8A2C34;line-height:1.6;background:#FBF8F2;padding:10px 12px;border-radius:4px}
+.tl-calrow{display:grid;grid-template-columns:12px 1fr auto auto;gap:4px 10px;align-items:center;padding:12px 0;border-bottom:1px solid rgba(46,74,60,.12)}
+.tl-calrow:last-of-type{border-bottom:0}
+.tl-caldot{width:12px;height:12px;border-radius:50%}
+.tl-calname{font-size:15px;font-weight:600;color:#1C1B18}
+.tl-calsub{grid-column:2/-1;font-size:12px;color:#6F6A60;line-height:1.5}
+.tl-calsm{display:inline-flex;align-items:center;height:34px;padding:0 12px;border-radius:6px;background:#2E4A3C;color:#fff!important;font-size:13px;text-decoration:none;border:0;font-family:inherit;cursor:pointer;white-space:nowrap}
+.tl-calsm.out{background:#fff;color:#2E4A3C!important;border:1px solid #2E4A3C}
+.tl-calnote{font-size:12.5px;line-height:1.6;color:#4A4640;background:#F3EEE4;padding:10px 12px;border-radius:4px;margin:10px 0}
       .wbk-ical .tl-link{border:0;background:none;color:#2E4A3C;text-decoration:underline;font-family:inherit;font-size:14px;padding:0;cursor:pointer}
       .wbk-ical .tl-empty{color:#6F675B}
       .wbk-toggle{display:inline-flex;align-items:center;gap:8px;border:0;background:none;padding:0;font:inherit;font-size:14px;letter-spacing:.06em;color:#4f4a40;cursor:pointer;min-height:0!important}
@@ -16182,19 +16190,28 @@ function HbDigitalCard({onBack,notify}){
 function HbTodayCalLink(){
  const h=u.default.createElement,[url,setUrl]=u.useState(HB_SCHEDULE_ICS_URL),[msg,setMsg]=u.useState(''),[busy,setBusy]=u.useState(!HB_SCHEDULE_ICS_URL);
  u.useEffect(()=>{let alive=true;HB_loadIcsUrl().then(v=>{if(alive){setUrl(v);setBusy(false)}});return()=>{alive=false}},[]);
- const web=url?url.replace(/^https:/,'webcal:'):'';
- const copy=()=>{if(!url)return;(navigator.clipboard?navigator.clipboard.writeText(url):Promise.reject()).then(()=>setMsg('已複製連結')).catch(()=>{window.prompt('請複製這個連結',url)})};
+  const copy=()=>{if(!url)return;(navigator.clipboard?navigator.clipboard.writeText(url):Promise.reject()).then(()=>setMsg('已複製連結')).catch(()=>{window.prompt('請複製這個連結',url)})};
  const reset=async()=>{if(!confirm('重新產生連結後，舊的連結會立刻失效，已訂閱的裝置要重新訂閱一次。確定嗎？'))return;setBusy(true);try{setUrl(await HB_loadIcsUrl(true));setMsg('已產生新連結，請重新訂閱')}catch{setMsg('無法重新產生，請確認已用管理帳號登入')}setBusy(false)};
+ const CALS=[{k:'work',name:'赫柏・工程',dot:'#2E4A3C',sub:'工程行程＋工班排程，整天顯示、帶工地地址'},{k:'meet',name:'赫柏・約定',dot:'#B4573A',sub:'客戶預約、LINE 群組約定、諮詢，前 1 小時提醒'},{k:'todo',name:'赫柏・待辦',dot:'#8F887A',sub:'你自己排的待辦、採購、追蹤'}];
+ const u2=k=>url?url+'&cal='+k:'';
+ const copyK=(k,n)=>{const v=u2(k);if(!v)return;(navigator.clipboard?navigator.clipboard.writeText(v):Promise.reject()).then(()=>setMsg('已複製「'+n+'」連結')).catch(()=>{window.prompt('請複製這個連結',v)})};
  return h('section',{className:'tl-panel tl-cal'},h('div',{className:'tl-panelhead'},h('h3',null,'連結 iPhone 行事曆')),
-  h('p',{className:'tl-panelnote'},'訂閱後，客戶預約、工程行程和有日期的待辦會出現在 iPhone「行事曆」App，大約每小時自動更新。這是單向同步：在行事曆裡修改不會回到工地紀錄本。'),
+  h('p',{className:'tl-panelnote'},'分成 3 個行事曆，在 iPhone 會是 3 種顏色，可以各自開關。標題都是「案名｜事項」，大約每小時自動更新。這是單向同步：在行事曆裡修改不會回到工地紀錄本。'),
   busy?h('p',{className:'tl-empty'},'正在取得連結…'):!url?h('p',{className:'tl-empty'},'取不到連結，請用管理帳號登入後再試。'):
   h(u.default.Fragment,null,
-   h('a',{className:'tl-calbtn',href:web},'訂閱到 iPhone 行事曆'),
-   h('button',{type:'button',className:'tl-calbtn out',onClick:copy},'複製訂閱連結'),
+   CALS.map(c=>h('div',{key:c.k,className:'tl-calrow'},
+     h('span',{className:'tl-caldot',style:{background:c.dot}}),
+     h('span',{className:'tl-calname'},c.name),
+     h('a',{className:'tl-calsm',href:u2(c.k).replace(/^https:/,'webcal:')},'訂閱'),
+     h('button',{type:'button',className:'tl-calsm out',onClick:()=>copyK(c.k,c.name)},'複製'),
+     h('span',{className:'tl-calsub'},c.sub))),
    msg&&h('p',{className:'tl-calmsg',role:'status'},msg),
+   h('p',{className:'tl-calnote'},'之前訂閱過「赫柏空間設計 行程表」的話，請先把它刪掉，不然同一件事會出現兩次：iPhone「行事曆」App →下方「行事曆」→ 點它旁邊的 ⓘ → 最下面「刪除行事曆」。'),
    h('details',{className:'tl-calhelp'},h('summary',null,'按了沒反應？手動加入的步驟'),
-    h('ol',null,h('li',null,'先按「複製訂閱連結」'),h('li',null,'打開 iPhone「設定」→「App」→「行事曆」→「行事曆帳號」'),h('li',null,'選「加入帳號」→「其他」→「加入已訂閱的行事曆」'),h('li',null,'貼上連結，按「下一步」→「儲存」'))),
-   h('p',{className:'tl-calwarn'},'這個連結含有客戶聯絡資料，請不要分享給別人。如果不小心外流，按下面重新產生，舊連結就會失效。'),
+    h('ol',null,h('li',null,'先按要訂閱那一個的「複製」'),h('li',null,'打開 iPhone「設定」→「App」→「行事曆」→「行事曆帳號」'),h('li',null,'選「加入帳號」→「其他」→「加入已訂閱的行事曆」'),h('li',null,'貼上連結，按「下一步」→「儲存」'),h('li',null,'3 個都做一次'))),
+   h('details',{className:'tl-calhelp'},h('summary',null,'想全部放在同一個行事曆'),
+    h('button',{type:'button',className:'tl-calbtn out',style:{marginTop:8},onClick:copy},'複製「全部」訂閱連結')),
+   h('p',{className:'tl-calwarn'},'這些連結含有客戶聯絡資料，請不要分享給別人。如果不小心外流，按下面重新產生，舊連結就會失效（3 個都要重新訂閱）。'),
    h('button',{type:'button',className:'tl-link',style:{marginLeft:0},onClick:reset},'重新產生連結')));
 }
 /* =====================================================================
