@@ -17438,8 +17438,6 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
       pvLightbox&&HB_portal(pvLightbox),
       h('div',{className:'wbk-agbar'+(agOn?' on':'')},
         h('span',{className:'wbk-agt'},HB_wbIcon('calendar',15),isToday?'今日待辦':md(day)+' 待辦'),
-        h('span',{className:'wbk-agn'},'未完成 ',h('b',null,openCount)),
-        h('span',{className:'wbk-agn'},'待追蹤 ',h('b',null,fList.length)),
         pv&&h('button',{type:'button',className:'wbk-agn wbk-agpv',title:'改看全部案件',onClick:()=>{if(window.HB_caseCanLeave&&!window.HB_caseCanLeave())return;setProj&&setProj('')}},'只看「'+pvName+'」 ✕'),
         h('span',{className:'wbc-grow'}),
         h('button',{type:'button',className:'wbk-agtog','aria-expanded':agOn,onClick:()=>setAgOpen(!agOn)},agOn?'收合':'展開',HB_wbIcon('caret',14))),
@@ -17454,9 +17452,6 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
             h('button',{type:'button','aria-pressed':cUp,className:cUp?'on':'',onClick:()=>setCUp(true)},'未來 7 天'));
           return cUp?colK('未來 7 天',upN,tog,upShow.length?h('ul',{className:'wbk-tl wbk-up'},upShow.map(upRow)):h('p',{className:'wbc-empty'},'接下來 7 天沒有排定的行程'),more(upN,()=>setCSide('up')),'wbk-c1')
             :colK(isToday?'今日時間軸':md(day)+' 時間軸',evN,tog,tlShow.length?h('ul',{className:'wbk-tl'},tlShow.map(tlRow)):h('p',{className:'wbc-empty'},'這天沒有排定的行程'),more(0,()=>setCSide('tl')),'wbk-c1')})(),
-        colK('未完成',openCount,isToday&&lateOpen?h('span',{className:'wbc-alert'},'逾期 '+lateOpen):null,openList.length?h('ul',{className:'wbc-list'},openList.slice(0,2).map(mixRow)):h('p',{className:'wbc-empty'},isToday?'今天沒有未完成事項':'這天沒有到期事項'),more(openList.length>2?openList.length:0,()=>setCSide('open'))),
-        colK('待追蹤',fList.length,h(u.default.Fragment,null,isToday&&dueFollow?h('span',{className:'wbc-alert'},'待處理 '+dueFollow):null,closedFollows.length?h('button',{type:'button',className:'wbc-closedlink push',onClick:()=>setCSide('closed')},'已結案 '+closedFollows.length):null),
-          fList.length?h('ul',{className:'wbc-list'},fList.slice(0,2).map(followRow)):h('p',{className:'wbc-empty'},'沒有要追蹤的事'),more(fList.length>2?fList.length:0,()=>setCSide('follow'))),
         h('article',{className:'wbk-col wbk-c4'},
           h('div',{className:'wbc-colhead'},h('h3',null,'稍後辦'),h('span',{className:'wbc-num'},later.length)),
           h('form',{className:'wbk-quick',onSubmit:e=>quick('later',e)},h('input',{name:'q',maxLength:200,placeholder:'想到要做的事，先記下來','aria-label':'新增稍後辦'}),h('button',{type:'submit','aria-label':'新增稍後辦'},HB_wbIcon('plus',15))),
