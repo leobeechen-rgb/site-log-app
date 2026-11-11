@@ -13090,6 +13090,7 @@ const HB_LIB_CSS=`
       .hbc .hbc-link{border:0;background:none;padding:2px 0;color:var(--c-green);font-size:12px;letter-spacing:.04em;cursor:pointer;display:inline-flex;align-items:center;gap:4px;text-decoration:underline;text-underline-offset:3px;white-space:nowrap}
       .hbc .hbc-link.hbc-soft{color:var(--c-soft)}
       .hbc-chips{display:flex;gap:4px;min-width:0;overflow:hidden}
+      .hbc-foot .hbc-chips{gap:0;flex:1;justify-content:space-between}.hbc-foot .hbc-chips .hbc-chip{padding:2px 3px;gap:3px}.hbc-foot{margin:-2px -4px 0;gap:4px}
       .hbc .hbc-chip{display:inline-flex;align-items:center;gap:4px;border:1px solid transparent;background:none;border-radius:999px;padding:2px 6px;font-size:11.5px;color:var(--c-soft);cursor:pointer;white-space:nowrap}
       .hbc-chip b{font:500 12px 'Noto Sans TC',sans-serif;color:var(--c-ink);font-variant-numeric:tabular-nums}
       .hbc-chip.is-late b{color:var(--c-red)}
@@ -17391,12 +17392,9 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
           h('div',{className:'hbc-chips',role:'group','aria-label':'全公司提醒'},
             h('button',{type:'button',className:'hbc-chip'+(kLateList.length?' is-late':''),onClick:()=>setCSide('kLate'),title:'全公司逾期事項'},'逾期',h('b',null,kLateList.length)),
             h('button',{type:'button',className:'hbc-chip',onClick:()=>setCSide('kWeek'),title:'本週工地排程'},'本週工地',h('b',null,kWeekList.length)),
-            h('button',{type:'button',className:'hbc-chip'+(cfChangeN?' is-late':''),onClick:()=>setCfList(true),title:'待業主確認的估價／圖面'},'待確認',h('b',null,cfActive))),
+            h('button',{type:'button',className:'hbc-chip'+(cfChangeN?' is-late':''),onClick:()=>setCfList(true),title:'待業主確認的估價／圖面'},'待確認',h('b',null,cfActive)),
+            h('button',{type:'button',className:'hbc-chip',onClick:()=>setCSide(later.length||!shop.length?'later':'shop'),title:'稍後辦與購物清單'},'稍後辦',h('b',null,later.length+shop.length))),
           h('button',{type:'button',className:'hbc-link',onClick:()=>setCSide(cUp?'up':'tl'),title:cUp?'完整 7 天行程':'完整時間軸、排空檔、iPhone 行事曆'},'全部',HB_wbIcon('arrow',12))),
-        h('div',{className:'hbc-pills'},
-          pill('未完成',openCount,()=>setCSide('open'),isToday&&(lateOpen>0||cfTodo.length>0),isToday&&lateOpen?'含逾期 '+lateOpen+' 項':'查看未完成事項'),
-          pill('待追蹤',fList.length,()=>setCSide('follow'),isToday&&dueFollow>0,isToday&&dueFollow?'今天要追蹤 '+dueFollow+' 項':'查看待追蹤'),
-          pill('稍後辦',later.length+shop.length,()=>setCSide(later.length||!shop.length?'later':'shop'),false,'稍後辦與購物清單')),
         h('form',{className:'hbc-quick',onSubmit:qk},
           h('span',{className:'hbc-qi','aria-hidden':'true'},'✎'),
           h('input',{name:'q',maxLength:200,placeholder:'想到要做的事，先記下來','aria-label':'快速記下（加入稍後辦）'}),
