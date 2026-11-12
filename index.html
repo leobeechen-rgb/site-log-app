@@ -5767,7 +5767,7 @@ function HB_openBudgetPrint(v){
 function HB_buildEngContractHTML(v){
   let e=HB_esc;
   let stages=(v.paymentStages||[]).filter(st=>st&&(st.name||st.percent||st.condition));
-  let stageRows=stages.length===0?'<tr><td colspan="4" style="text-align:center;color:#888;">尚未設定付款期數</td></tr>':stages.map(st=>{let amt=st.percent?HB_num(v.totalPrice)*HB_num(st.percent)/100:0;let nameLabel=st.percent?e(st.name)+" "+e(st.percent)+"%":e(st.name);return `<tr><td>${nameLabel}</td><td>${amt?e(HB_toChineseMoney(amt))+"（NT$ "+e(HB_money(amt))+"）":""}</td><td>${e(st.condition)}</td><td class="cashsign"></td></tr>`}).join("");
+  let stageRows=stages.length===0?'<tr><td colspan="4" style="text-align:center;color:#888;">尚未設定付款期數</td></tr>':stages.map(st=>{let amt=st.percent?HB_num(v.totalPrice)*HB_num(st.percent)/100:0;let nameLabel=st.percent?e(st.name)+" "+e(st.percent)+"%":e(st.name);return `<tr><td>${nameLabel}</td><td>${amt?'<div class="amt-cell"><span class="amt-cn">'+e(HB_toChineseMoney(amt))+'</span><span class="amt-num">NT$ '+e(HB_money(amt))+'</span></div>':""}</td><td>${e(st.condition)}</td><td class="cashsign"></td></tr>`}).join("");
   let accs=(v.accounts||[]).filter(Boolean);
   let accountsHtml=accs.length===0?'<p style="color:#888;font-size:12.5px;">尚未指定收款帳戶</p>':accs.map(a=>`<p style="margin:4px 0;">\u2756 <strong>${e(a.bank_name)}</strong>｜帳號：${e(a.account_number)}｜戶名：${e(a.account_holder)}</p>`).join("");
   return `<!DOCTYPE html>
@@ -5777,6 +5777,9 @@ function HB_buildEngContractHTML(v){
 <title>${e(v.engName||"工程合約")} · 赫柏空間工程承攬合約書</title>
 <style>
 ${HB_DOC_CSS}
+table.pay .amt-cell{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+table.pay .amt-cn{flex:1;min-width:0}
+table.pay .amt-num{white-space:nowrap;text-align:right;font-variant-numeric:tabular-nums}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"><\/script>
 </head>
@@ -5827,7 +5830,7 @@ ${HB_DOC_CSS}
 <p>經甲、乙雙方協議，本工程依下列施工進度方式支付款項：</p>
 <p>\u203B 工程中追加或追減之工程款項需於交屋前結清並付款，不併入尾款計算。</p>
 <table class="pay">
-<tr><th style="width:16%">付款項目</th><th style="width:30%">約定金額（未稅）</th><th>需完成進度</th><th style="width:20%">現金簽收</th></tr>
+<tr><th style="width:15%">付款項目</th><th style="width:38%">約定金額（未稅）</th><th>需完成進度</th><th style="width:16%">現金簽收</th></tr>
 ${stageRows}
 </table>
 
