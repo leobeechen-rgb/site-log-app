@@ -16297,9 +16297,9 @@ async function HB_wbLoadAuto(){
     fetchPages('hb_crew','id,name,trade')]);
   /* 工班排程（schedule.html，官方 LINE 前一天提醒師傅）：預定中的工班自動列入待辦／今日安排 */
   if(res[4]&&res[4].status==='fulfilled'){const crew={};if(res[5]&&res[5].status==='fulfilled')res[5].value.forEach(c=>{crew[c.id]=c});
-    res[4].value.filter(r=>r.status==='planned'&&r.start_date).forEach(r=>{const c=crew[r.crew_id]||{},trade=r.trade||c.trade||'施工',who=r.crew_name||c.name||'';
+    res[4].value.filter(r=>(r.status==='planned'||r.status==='done')&&r.start_date).forEach(r=>{const c=crew[r.crew_id]||{},trade=r.trade||c.trade||'施工',who=r.crew_name||c.name||'';
       rows.push({id:'crew:'+r.id,title:'工班・'+trade+(who?'（'+who+'）':''),projectId:r.project_id||'',assignee:who,due:String(r.start_date).slice(0,10),dueEnd:String(r.end_date||'').slice(0,10),
-        time:/^\d{1,2}:\d{2}/.test(r.start_time||'')?String(r.start_time).slice(0,5):'',note:(r.note||'')+(r.note?'\n':'')+'來自工班排程（官方 LINE 會提醒師傅）',category:'工班',source:'auto',sourceId:r.id})})}
+        time:/^\d{1,2}:\d{2}/.test(r.start_time||'')?String(r.start_time).slice(0,5):'',note:(r.note||'')+(r.note?'\n':'')+'來自工班排程（官方 LINE 會提醒師傅）',category:'工班',done:r.status==='done',source:'auto',sourceId:r.id})})}
   else if(res[4])errors.push('工班排程');
   /* 案件 LINE 群組裡提到的約定（「週六下午 3 點看現場」）：自動列入待辦／今日時間軸 */
   if(res[3]&&res[3].status==='fulfilled'){const t0=HB_wbAddDays(HB_todoDate(),-1);
@@ -16333,7 +16333,9 @@ function HB_useToday(projects,enabled=true){
     let lastAuto=Date.now();const autoQuiet=async()=>{if(document.hidden||Date.now()-lastAuto<20000)return;lastAuto=Date.now();try{const {rows}=await HB_wbLoadAuto();if(alive.current)setAuto(rows)}catch(e){}};
     const iv=setInterval(()=>pull(false),30000),iv2=setInterval(autoQuiet,60000),focus=()=>{pull(false);autoQuiet()},tick=setInterval(()=>setToday(HB_todoDate()),30000);
     window.addEventListener('focus',focus);document.addEventListener('visibilitychange',focus);
-    return()=>{alive.current=false;clearInterval(iv);clearInterval(iv2);clearInterval(tick);window.removeEventListener('focus',focus);document.removeEventListener('visibilitychange',focus)}},[]);
+    /* 今日待辦裡新增／修改工班後立刻重讀 */
+    const crewCh=async()=>{lastAuto=Date.now();try{const {rows}=await HB_wbLoadAuto();if(alive.current)setAuto(rows)}catch(e){}};window.addEventListener('hb-crew-changed',crewCh);
+    return()=>{alive.current=false;clearInterval(iv);clearInterval(iv2);clearInterval(tick);window.removeEventListener('focus',focus);document.removeEventListener('visibilitychange',focus);window.removeEventListener('hb-crew-changed',crewCh)}},[]);
   /* 修改：先更新畫面，再排隊寫入雲端；若另一部裝置剛更新（409），取回最新版重新套用這次修改再寫一次 */
   const mutate=fn=>{
     if(!ready){setError('雲端資料尚未就緒，暫時不能修改。請確認登入與網路連線。');return false}
@@ -16352,14 +16354,17 @@ function HB_useToday(projects,enabled=true){
   const all=[...payload.manual,...auto.map(t=>({...t,...payload.overrides[t.id]}))]
     .filter(t=>t&&t.id&&!t.deleted&&!(hideDemo&&demoIds.has(t.projectId)))
     .map(t=>({...t,projectName:names.get(t.projectId)||t.projectName||'公司事務'}));
-  const update=(task,patch)=>mutate(p=>task.source==='auto'
+  /* 工班項目打勾＝工班排程「已完成」（不再提醒師傅）；取消打勾＝改回「預定」 */
+  const crewSync=(task,patch)=>{if(String(task&&task.id).indexOf('crew:')===0&&task.sourceId&&patch&&'done' in patch&&!!patch.done!==!!task.done)
+    q.from('hb_crew_jobs').update({status:patch.done?'done':'planned'}).eq('id',task.sourceId).then(r=>{if(r.error){console.warn(r.error);setError('工班排程狀態沒有同步成功：'+r.error.message)}})};
+  const update=(task,patch)=>(crewSync(task,patch),mutate(p=>task.source==='auto'
     ?{...p,overrides:{...p.overrides,[task.id]:{...(p.overrides[task.id]||task),...patch}}}
-    :{...p,manual:p.manual.map(t=>t.id===task.id?{...t,...patch}:t)});
+    :{...p,manual:p.manual.map(t=>t.id===task.id?{...t,...patch}:t)}));
   const add=task=>mutate(p=>({...p,manual:[...p.manual,task]}));
   /* 以雲端最新內容為基礎計算修改（避免另一部裝置剛新增的追蹤紀錄被覆蓋） */
-  const updateWith=(task,f)=>mutate(p=>task.source==='auto'
+  const updateWith=(task,f)=>(crewSync(task,f(task)),mutate(p=>task.source==='auto'
     ?{...p,overrides:{...p.overrides,[task.id]:(c=>({...c,...f(c)}))(p.overrides[task.id]||task)}}
-    :{...p,manual:p.manual.map(t=>t.id===task.id?{...t,...f(t)}:t)});
+    :{...p,manual:p.manual.map(t=>t.id===task.id?{...t,...f(t)}:t)}));
   const replace=task=>mutate(p=>task.source==='auto'
     ?{...p,overrides:{...p.overrides,[task.id]:task}}
     :(p.manual.some(t=>t.id===task.id)?{...p,manual:p.manual.map(t=>t.id===task.id?task:t)}:{...p,manual:[...p.manual,task]}));
@@ -17427,6 +17432,7 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
       return h('section',{className:'hbc','aria-label':'Le Carnet du Jour 今日待辦'},
         h('header',{className:'hbc-head'},
           h('h2',{className:'hbc-title'},'Le Carnet du Jour'),h('span',{className:'hbc-sub'},'今日待辦'),
+          h('button',{type:'button',className:'hbc-crew',title:'排工班（前一天 LINE 自動提醒師傅）',onClick:()=>HB_openCrewSheet({date:day,projectId:pvReal?pv:''})},HB_wbIcon('plus',13),'排工班'),
           h('button',{type:'button',className:'hbc-add','aria-label':'新增事項',title:'新增事項',onClick:()=>newTask({due:day})},HB_wbIcon('plus',15))),
         h('div',{className:'hbc-daterow'},
           h('span',{className:'hbc-date'},(d0.getMonth()+1)+'月'+pad(d0.getDate())+'日',h('span',null,HB_wbWeek(day).replace('週','星期'))),
@@ -17497,6 +17503,7 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
         h('span',{className:'wbk-agt'},HB_wbIcon('calendar',15),isToday?'今日待辦':md(day)+' 待辦'),
         pv&&h('button',{type:'button',className:'wbk-agn wbk-agpv',title:'改看全部案件',onClick:()=>{if(window.HB_caseCanLeave&&!window.HB_caseCanLeave())return;setProj&&setProj('')}},'只看「'+pvName+'」 ✕'),
         h('span',{className:'wbc-grow'}),
+        h('button',{type:'button',className:'wbk-agcrew',title:'排工班（前一天 LINE 自動提醒師傅）',onClick:()=>HB_openCrewSheet({date:day,projectId:pvReal?pv:''})},HB_wbIcon('plus',13),'排工班'),
         h('button',{type:'button',className:'wbk-agtog','aria-expanded':agOn,onClick:()=>setAgOpen(!agOn)},agOn?'收合':'展開',HB_wbIcon('caret',14))),
       agOn&&h(u.default.Fragment,null,
       h('div',{className:'wbk-week'},h('button',{type:'button',className:'wbk-wk',onClick:()=>shift(-1),'aria-label':'上一週'},HB_wbIcon('left',16)),
@@ -17547,7 +17554,7 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
       cSide&&h(HbWbSide,{title:sideTitle,sub:kSide?'全公司・不受案件篩選影響':tpv?pvName:'全部專案',onClose:()=>setCSide(''),
         tabs:(cSide==='later'||cSide==='shop')?[['later','稍後辦 '+later.length],['shop','購物清單 '+shop.length]]:null,tab:cSide,onTab:setCSide},
         h('div',{className:'wbc wbk-sidebody'},(cSide==='later'||cSide==='shop')&&h('form',{className:'wbk-quick',onSubmit:e=>quick(cSide,e)},h('input',{name:'q',maxLength:200,placeholder:cSide==='shop'?'要買的東西':'想到要做的事，先記下來'}),h('button',{type:'submit','aria-label':'新增'},HB_wbIcon('plus',15))),sideBody)),
-      editing&&h(HbWbEditor,{key:editing.id,initial:editing,projects,today,onClose:()=>setEditing(null),
+      editing&&h(HbWbEditorOrCrew,{key:editing.id,initial:editing,projects,today,onClose:()=>setEditing(null),
         onSave:v=>{const {isNew,...task}=v;if(isNew?tk.add(task):tk.replace(task)){setEditing(null);say(isNew?'已新增':'已儲存')}},
         onDelete:v=>{if(confirm('確定刪除「'+v.title+'」？')&&tk.update(v,{deleted:true})){setEditing(null);say('已刪除')}}}),
       cfList&&h(HbConfirmList,{cf,projects,pv:cfList==='all'?'':pv,onClose:()=>setCfList(false),onOpen:id=>setCfOpen({id}),onNew:()=>setCfOpen({id:null,n:Date.now()})}),
@@ -17577,7 +17584,7 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
       h('div',{className:'wbc wbc-full'},fullList.length===0?h('p',{className:'wbc-empty'},'沒有事項'):h('ul',{className:'wbc-list'},fullList.map(full==='open'?mixRow:full==='closed'?closedRow:followRow)),
         h('div',{className:'wb-mact',style:{padding:'12px 0 2px'}},full!=='closed'&&h('button',{type:'button',className:'wb-btn wb-btn-ghost',onClick:()=>newTask(full==='follow'?{kind:'follow',waitingFor:'',due:HB_wbAddDays(today,3)}:{})},HB_wbIcon('plus',14),full==='follow'?'新增追蹤':'新增事項'),
           h('span',{style:{flex:1}}),h('button',{type:'button',className:'wb-btn wb-btn-solid',onClick:()=>setFull('')},'完成')))),
-    editing&&h(HbWbEditor,{key:editing.id,initial:editing,projects,today,onClose:()=>setEditing(null),
+    editing&&h(HbWbEditorOrCrew,{key:editing.id,initial:editing,projects,today,onClose:()=>setEditing(null),
       onSave:v=>{const {isNew,...task}=v;if(isNew?tk.add(task):tk.replace(task)){setEditing(null);say(isNew?'已新增':'已儲存')}},
       onDelete:v=>{if(confirm('確定刪除「'+v.title+'」？')&&tk.update(v,{deleted:true})){setEditing(null);say('已刪除')}}}),
     cfList&&h(HbConfirmList,{cf,projects,pv,onClose:()=>setCfList(false),onOpen:id=>setCfOpen({id}),onNew:()=>setCfOpen({id:null,n:Date.now()})}),
@@ -17857,6 +17864,35 @@ function HbWbModal({title,sub,onClose,children}){const h=u.default.createElement
   u.useEffect(()=>{const el=ref.current;try{el.showModal()}catch{el.setAttribute('open','')}return()=>{try{el.close()}catch{}}},[]);
   return h('dialog',{ref,className:'wb-modal',onCancel:e=>{e.preventDefault();onClose()},onClick:e=>{if(e.target===ref.current)onClose()}},
     h('div',{className:'wb-mhead'},h('div',null,h('p',null,sub),h('h3',null,title)),h('button',{type:'button',onClick:onClose,'aria-label':'關閉'},'×')),children)}
+/* ===== 工班排程表單（schedule.html?sheet=…）直接在今日待辦裡開：新增、修改、完成都不用切頁 ===== */
+function HB_openCrewSheet(opt,onDone){
+  opt=opt||{};const qs=new URLSearchParams();
+  if(opt.jobId){qs.set('sheet','edit');qs.set('job',opt.jobId)}else{qs.set('sheet','new');if(opt.projectId)qs.set('project',opt.projectId);if(opt.date)qs.set('date',opt.date)}
+  const wrap=document.createElement('div');wrap.className='hb-crewsheet';
+  const fr=document.createElement('iframe');fr.src='./schedule.html?'+qs.toString();fr.title='工班排程';fr.setAttribute('allowtransparency','true');
+  const spin=document.createElement('div');spin.className='hb-crewsheet-load';spin.textContent='載入工班表單…';
+  wrap.appendChild(spin);wrap.appendChild(fr);document.body.appendChild(wrap);document.documentElement.classList.add('hb-crewsheet-on');
+  fr.addEventListener('load',()=>{setTimeout(()=>spin.remove(),250)});
+  let closed=false;const close=changed=>{if(closed)return;closed=true;window.removeEventListener('message',onMsg);wrap.remove();document.documentElement.classList.remove('hb-crewsheet-on');
+    if(changed)window.dispatchEvent(new Event('hb-crew-changed'));onDone&&onDone(!!changed)};
+  const onMsg=e=>{if(e.origin!==location.origin||e.source!==fr.contentWindow)return;const d=e.data||{};if(d.type==='hb-crew-sheet')close(d.changed)};
+  window.addEventListener('message',onMsg);
+  wrap.addEventListener('click',e=>{if(e.target===wrap||e.target===spin)close(false)});
+  return()=>close(false);
+}
+window.HB_openCrewSheet=HB_openCrewSheet;
+function HB_isCrewTask(t){return !!t&&t.source==='auto'&&String(t.id).indexOf('crew:')===0&&!!t.sourceId}
+function HbCrewSheet({jobId,onClose}){u.useEffect(()=>{let live=true;const stop=HB_openCrewSheet({jobId},()=>{if(live)onClose()});return()=>{live=false;stop()}},[jobId]);return null}
+function HbWbEditorOrCrew(props){return HB_isCrewTask(props.initial)?u.default.createElement(HbCrewSheet,{jobId:props.initial.sourceId,onClose:props.onClose}):u.default.createElement(HbWbEditor,props)}
+(function(){if(document.getElementById('hb-crewsheet-css'))return;const st=document.createElement('style');st.id='hb-crewsheet-css';st.textContent=`
+.hb-crewsheet{position:fixed;inset:0;z-index:2147483000;background:rgba(42,38,34,.45);overscroll-behavior:contain}
+.hb-crewsheet iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:transparent;color-scheme:normal}
+.hb-crewsheet-load{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#fff;border-radius:8px;padding:10px 16px;font-size:14px;color:#5a544c}
+html.hb-crewsheet-on,html.hb-crewsheet-on body{overflow:hidden}
+.hbc .hbc-crew,.wbk-agcrew{flex:none;display:inline-flex;align-items:center;gap:4px;height:28px;padding:0 10px;border:1px solid var(--c-line,#d9d2c5);background:#fff;border-radius:4px;color:var(--c-green,#24453A);font:inherit;font-size:13px;cursor:pointer;white-space:nowrap}
+.hbc .hbc-crew{margin-left:auto;align-self:center}.hbc .hbc-crew+.hbc-add{margin-left:6px}
+.wbk-agcrew{margin-right:8px}
+`;document.head.appendChild(st)})();
 function HbWbEditor({initial,projects,today,onClose,onSave,onDelete}){
   const h=u.default.createElement,[v,setV]=u.useState({...initial}),set=(k,x)=>setV(p=>({...p,[k]:x}));
   const isFollow=v.kind==='follow',auto=v.source==='auto';

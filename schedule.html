@@ -156,6 +156,12 @@ table.log td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
 .mcard>*{min-width:0}
 /* 視窗開著時鎖住背景，不讓整頁跟著滑 */
 html.modal-open,html.modal-open body{overflow:hidden;overscroll-behavior:none}
+/* 嵌入模式（工地紀錄本「今日待辦」直接開這張表）：只顯示編輯視窗 */
+html.sheet,html.sheet body{background:transparent!important;min-height:0}
+html.sheet #appView>header,html.sheet #main,html.sheet #loginView{display:none!important}
+html.sheet .modal{background:transparent}
+@media (max-width:620px){html.sheet .modal{place-items:end center;padding:0}
+  html.sheet .mcard{width:100%;border-radius:14px 14px 0 0;max-height:92vh;max-height:92dvh;padding-bottom:calc(20px + env(safe-area-inset-bottom))}}
 /* iPhone：輸入框字小於 16px 會自動放大畫面，點了就亂跳 */
 @media (max-width:820px){.mcard input,.mcard select,.mcard textarea{font-size:16px}}
 .mcard h2{margin:0;font:700 18px var(--f-display);letter-spacing:.04em}
@@ -208,6 +214,10 @@ const TRADES = ['拆除','保護工程','水電','冷氣','泥作','防水','木
 const TRADE_COLOR = {拆除:'#6E5F52',保護工程:'#8A8172',水電:'#3E6E8E',冷氣:'#4F8A9A',泥作:'#8C6A4A',防水:'#5B7F95',木作:'#9A6B3F',鐵件:'#4C4F57',油漆:'#B4573A',系統櫃:'#7A5A78',石材:'#7C7468',地板:'#93703D',清潔:'#5E8A6B',玻璃:'#5D8FA8',燈具:'#B08A2E',窗簾:'#A1677A',壁紙:'#8E7F5A',其他:'#6E655B'};
 const WD = ['日','一','二','三','四','五','六'];
 
+const QS = new URLSearchParams(location.search);
+const SHEET = QS.get('sheet');   // 'new' | 'edit'：由工地紀錄本今日待辦開啟
+if(SHEET) document.documentElement.classList.add('sheet');
+function sheetDone(changed){ try{ parent.postMessage({type:'hb-crew-sheet', changed:!!changed}, location.origin); }catch(e){} }
 let S = { view:'board', weekStart:mondayOf(new Date()), projects:[], groups:new Set(), crewGroups:new Map(), crew:[], jobs:[], settings:null, showAll:false, remindDate:null };
 
 /* ---------- 工具 ---------- */
@@ -234,10 +244,21 @@ function err(e){ console.error(e); toast('發生錯誤：' + (e?.message || e));
 /* ---------- 登入 ---------- */
 async function boot(){
   const { data:{ session } } = await SB.auth.getSession();
-  if(!session){ $('#loginView').hidden=false; $('#appView').hidden=true; return; }
+  if(!session){ if(SHEET){ sheetDone(false); return; } $('#loginView').hidden=false; $('#appView').hidden=true; return; }
   $('#loginView').hidden=true; $('#appView').hidden=false;
   $('#whoEmail').textContent = session.user.email;
   await loadAll();
+  if(SHEET) openSheet();
+}
+async function openSheet(){
+  if(SHEET==='edit' && QS.get('job')){
+    const { data, error } = await SB.from('hb_crew_jobs').select('*').eq('id', QS.get('job')).maybeSingle();
+    if(error || !data){ toast('找不到這筆工班排程'); setTimeout(()=>sheetDone(true),1200); return; }
+    jobForm(data);
+  } else {
+    const d = /^\d{4}-\d{2}-\d{2}$/.test(QS.get('date')||'') && QS.get('date') >= today() ? QS.get('date') : null;
+    jobForm(null, { project_id: QS.get('project')||'', start_date: d||undefined });
+  }
 }
 $('#lgBtn').onclick = async () => {
   $('#lgErr').textContent='';
@@ -378,7 +399,7 @@ function openModal(html){
   // 手機不自動聚焦：iPhone 一聚焦就會跳出選單、捲動畫面
   if(!matchMedia('(pointer:coarse)').matches) setTimeout(()=>$('#mcard').querySelector('input,select,textarea,button')?.focus({preventScroll:true}),30);
 }
-function closeModal(){ $('#modal').hidden = true; document.documentElement.classList.remove('modal-open'); }
+function closeModal(){ $('#modal').hidden = true; document.documentElement.classList.remove('modal-open'); if(SHEET) sheetDone(S.changed); }
 $('#modal').addEventListener('mousedown', e => { if(e.target.id==='modal') closeModal(); });
 addEventListener('keydown', e => { if(e.key==='Escape' && !$('#modal').hidden) closeModal(); });
 
@@ -433,13 +454,13 @@ function jobForm(j, pre={}){
     const r = j ? await SB.from('hb_crew_jobs').update(row).eq('id', j.id) : await SB.from('hb_crew_jobs').insert(row);
     $('#fSave').disabled = false;
     if(r.error) return $('#fErr').textContent = '儲存失敗：' + r.error.message;
-    closeModal(); toast(j?'已更新':'已新增排程');
+    S.changed = true; closeModal(); toast(j?'已更新':'已新增排程');
     if(!j && (row.start_date < S.weekStart || row.start_date > addDays(S.weekStart,6))) S.weekStart = mondayOf(parse(row.start_date));
     loadJobs();
   };
   if(j){ let armed=false; $('#fDel').onclick = async () => {
     if(!armed){ armed=true; $('#fDel').textContent='再按一次確認刪除'; setTimeout(()=>{ armed=false; const b=$('#fDel'); if(b) b.textContent='刪除'; },3000); return; }
-    const r = await SB.from('hb_crew_jobs').delete().eq('id', j.id); if(r.error) return err(r.error); closeModal(); toast('已刪除'); loadJobs(); }; }
+    const r = await SB.from('hb_crew_jobs').delete().eq('id', j.id); if(r.error) return err(r.error); S.changed = true; closeModal(); toast('已刪除'); loadJobs(); }; }
 }
 
 /* ---------- 師傅名冊 ---------- */
