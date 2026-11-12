@@ -921,7 +921,9 @@
     background: none; border: none; cursor: pointer; padding: 6px 0 4px;
     font-family: inherit; font-size: 16px; letter-spacing: .04em; color: var(--hbAcc);
     border-bottom: 1px solid transparent; transition: border-color .2s ease;
+    white-space: nowrap; text-align: left;
   }
+  .hb-dosLink.dl{ font-size: 15px; letter-spacing: .02em; }
   .hb-dosLink:hover{ border-bottom-color: var(--hbAcc); }
   .hb-dosLink:focus-visible{ outline: 1px solid var(--hbAcc); outline-offset: 2px; }
 
@@ -2014,6 +2016,7 @@
     /* 6 · 次要功能：範本下載與帳戶管理放清單下方 */
     .hb-contracts .hb-dosSideFoot{ order: 5; margin: 22px 0 0; padding-top: 18px; }
     .hb-dosLink{ min-height: 44px; font-size: 16px; }
+    .hb-dosLink.dl{ font-size: 15px; }
 
     /* 7 · 獨立進入（非文件系統）時的頁首收斂 */
     .hb-dosWrap{ padding: 0 18px; }
@@ -5385,7 +5388,8 @@ function HB_escMultiline(v){return HB_esc(v).replace(/\n/g,"<br>")}
 function HB_toROC(dateStr){if(!dateStr)return{y:"",m:"",d:""};let d=new Date(dateStr+"T00:00:00");if(isNaN(d.getTime()))return{y:"",m:"",d:""};return{y:String(d.getFullYear()-1911),m:String(d.getMonth()+1),d:String(d.getDate())}}
 function HB_num(v){let n=parseFloat(String(v||"").replace(/,/g,""));return isNaN(n)?0:n}
 function HB_money(n){return Math.round(n).toLocaleString("en-US")}
-function HB_accountLine(acc){return acc?`\u2756 ${acc.bank_name}｜${acc.account_number}｜${acc.account_holder}`:""}
+function HB_bankLabel(acc){return acc?((acc.bank_name||"")+(acc.bank_branch?" "+acc.bank_branch:"")):""}
+function HB_accountLine(acc){return acc?`\u2756 ${HB_bankLabel(acc)}｜${acc.account_number}｜${acc.account_holder}`:""}
 function HB_toChineseMoney(n){
   n=Math.round(HB_num(n));
   if(n<=0)return"";
@@ -5480,7 +5484,7 @@ function HB_buildContractHTML(v){
   let total=HB_num(v.totalPrice);
   let stageRow=(no,title,pct)=>`<tr><td class="c">${no}</td><td>${title}</td><td class="c">${pct}%</td><td class="c">${total?HB_money(total*pct/100):""}</td><td></td></tr>`;
   let accs=(v.accounts||[]).filter(Boolean);
-  let accountsHtml=accs.length===0?'<p style="color:#888;font-size:12.5px;">尚未指定收款帳戶</p>':accs.map(a=>`<p style="margin:4px 0;">\u2756 <strong>${e(a.bank_name)}</strong>｜帳號：${e(a.account_number)}｜戶名：${e(a.account_holder)}</p>`).join("");
+  let accountsHtml=accs.length===0?'<p style="color:#888;font-size:12.5px;">尚未指定收款帳戶</p>':accs.map(a=>`<p style="margin:4px 0;">\u2756 <strong>${e(HB_bankLabel(a))}</strong>｜帳號：${e(a.account_number)}｜戶名：${e(a.account_holder)}</p>`).join("");
   return `<!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
@@ -5789,7 +5793,7 @@ function HB_buildEngContractHTML(v){
   let stages=(v.paymentStages||[]).filter(st=>st&&(st.name||st.percent||st.condition));
   let stageRows=stages.length===0?'<tr><td colspan="4" style="text-align:center;color:#888;">尚未設定付款期數</td></tr>':stages.map(st=>{let amt=st.percent?HB_num(v.totalPrice)*HB_num(st.percent)/100:0;let nameLabel=st.percent?e(st.name)+" "+e(st.percent)+"%":e(st.name);return `<tr><td>${nameLabel}</td><td>${amt?'<div class="pay-amt"><span class="pay-cn">'+e(HB_toChineseMoney(amt))+'</span><span class="pay-num">NT$ '+e(HB_money(amt))+'</span></div>':""}</td><td>${e(st.condition)}</td><td class="cashsign"></td></tr>`}).join("");
   let accs=(v.accounts||[]).filter(Boolean);
-  let accountsHtml=accs.length===0?'<p style="color:#888;font-size:12.5px;">尚未指定收款帳戶</p>':accs.map(a=>`<p style="margin:4px 0;">\u2756 <strong>${e(a.bank_name)}</strong>｜帳號：${e(a.account_number)}｜戶名：${e(a.account_holder)}</p>`).join("");
+  let accountsHtml=accs.length===0?'<p style="color:#888;font-size:12.5px;">尚未指定收款帳戶</p>':accs.map(a=>`<p style="margin:4px 0;">\u2756 <strong>${e(HB_bankLabel(a))}</strong>｜帳號：${e(a.account_number)}｜戶名：${e(a.account_holder)}</p>`).join("");
   return `<!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
@@ -5937,11 +5941,11 @@ function HB_openEngContractPrint(v){
 
 /* ===== 帳戶管理小視窗 ===== */
 function HerfulsinsAccountManager({accounts:l,onClose:t,onAdd:e,onDelete:n}){
-  let[a,i]=(0,u.useState)(""),[o,f]=(0,u.useState)(""),[c,r]=(0,u.useState)(""),[d,h]=(0,u.useState)(!1);
+  let[a,i]=(0,u.useState)(""),[br,setBr]=(0,u.useState)(""),[o,f]=(0,u.useState)(""),[c,r]=(0,u.useState)(""),[d,h]=(0,u.useState)(!1);
   let submit=async()=>{
     if(!a.trim()||!o.trim()||!c.trim())return;
     h(!0);
-    try{await e(a.trim(),o.trim(),c.trim()),i(""),f(""),r("")}
+    try{await e(a.trim(),o.trim(),c.trim(),br.trim()),i(""),setBr(""),f(""),r("")}
     finally{h(!1)}
   };
   return u.default.createElement("div",{style:{position:"fixed",inset:0,background:"rgba(43,38,32,0.55)",display:"flex",alignItems:"center",justifyContent:"center",padding:20,zIndex:70}},
@@ -5949,13 +5953,15 @@ function HerfulsinsAccountManager({accounts:l,onClose:t,onAdd:e,onDelete:n}){
       u.default.createElement("h3",{style:{margin:"0 0 14px",fontSize:16,color:s.oceanDark}},"付款帳戶管理"),
       l.length===0?u.default.createElement("p",{style:{fontSize:12,color:s.inkSoft}},"尚未新增任何帳戶"):u.default.createElement("div",{style:{display:"flex",flexDirection:"column",gap:8,marginBottom:16}},
         l.map(v=>u.default.createElement("div",{key:v.id,style:{display:"flex",alignItems:"center",gap:8,background:s.cardAlt,borderRadius:8,padding:"8px 10px"}},
-          u.default.createElement("div",{style:{flex:1,fontSize:12}},u.default.createElement("div",{style:{fontWeight:400}},v.bank_name),u.default.createElement("div",{style:{color:s.inkSoft}},v.account_number,"｜",v.account_holder)),
+          u.default.createElement("div",{style:{flex:1,fontSize:12}},u.default.createElement("div",{style:{fontWeight:400}},HB_bankLabel(v)),u.default.createElement("div",{style:{color:s.inkSoft}},v.account_number,"｜",v.account_holder)),
           u.default.createElement("button",{onClick:()=>n(v.id),style:{background:"none",border:"none",color:s.danger,cursor:"pointer"}},u.default.createElement(E,{name:"trash",size:15}))
         ))
       ),
       u.default.createElement("div",{style:{borderTop:`1px solid ${s.line}`,paddingTop:14}},
         u.default.createElement("label",{style:{fontSize:12,color:s.inkSoft}},"銀行名稱（可含代碼）"),
         u.default.createElement("input",{value:a,onChange:v=>i(v.target.value),style:{width:"100%",padding:"8px 10px",borderRadius:8,border:`1px solid ${s.line}`,fontSize:14,marginBottom:8,boxSizing:"border-box"}}),
+        u.default.createElement("label",{style:{fontSize:12,color:s.inkSoft}},"分行（選填，例：嘉義分行）"),
+        u.default.createElement("input",{value:br,onChange:v=>setBr(v.target.value),placeholder:"嘉義分行",style:{width:"100%",padding:"8px 10px",borderRadius:8,border:`1px solid ${s.line}`,fontSize:14,marginBottom:8,boxSizing:"border-box"}}),
         u.default.createElement("label",{style:{fontSize:12,color:s.inkSoft}},"帳號"),
         u.default.createElement("input",{value:o,onChange:v=>f(v.target.value),style:{width:"100%",padding:"8px 10px",borderRadius:8,border:`1px solid ${s.line}`,fontSize:14,marginBottom:8,boxSizing:"border-box"}}),
         u.default.createElement("label",{style:{fontSize:12,color:s.inkSoft}},"戶名"),
@@ -6139,7 +6145,7 @@ function HerfulsinsContractForm({category:l,projects:t,accounts:e,defaultProject
         e.length===0?u.default.createElement("p",{style:{fontSize:12,color:s.inkSoft}},"尚未設定帳戶，請至帳戶管理新增"):u.default.createElement("div",{style:{display:"flex",flexDirection:"column",gap:6}},
           e.map(v=>u.default.createElement("label",{key:v.id,style:{display:"flex",alignItems:"center",gap:8,fontSize:13,background:s.cardAlt,borderRadius:8,padding:"7px 10px",cursor:"pointer"}},
             u.default.createElement("input",{type:"checkbox",checked:c.accountIds.includes(v.id),onChange:()=>toggleAccount(v.id)}),
-            u.default.createElement("span",null,v.bank_name,"｜",v.account_number,"｜",v.account_holder)
+            u.default.createElement("span",null,HB_bankLabel(v),"｜",v.account_number,"｜",v.account_holder)
           ))
         )
       ),
@@ -6198,8 +6204,8 @@ function HerfulsinsContractsHub({onBack:l,notify:t}){
     if(g){t("刪除失敗："+g.message);return}
     i(b=>b.filter(S=>S.id!==id)),t("已刪除")
   };
-  let addAccount=async(bank,num,holder)=>{
-    let{data:g,error:b}=await q.from("sitelog_bank_accounts").insert({bank_name:bank,account_number:num,account_holder:holder}).select().single();
+  let addAccount=async(bank,num,holder,branch)=>{
+    let{data:g,error:b}=await q.from("sitelog_bank_accounts").insert({bank_name:bank,bank_branch:branch||null,account_number:num,account_holder:holder}).select().single();
     if(b){t("新增帳戶失敗："+b.message);return}
     f(S=>[...S,g])
   };
@@ -6256,7 +6262,7 @@ function HerfulsinsContractsHub({onBack:l,notify:t}){
                 u.default.createElement("option",{value:""},"全部案件"),
                 caseProjects.map(v=>u.default.createElement("option",{key:v.id,value:v.id},v.name))))),
           u.default.createElement("div",{className:"hb-dosSideFoot"},
-            e!=="budget"&&u.default.createElement("button",{onClick:e==="case"?HB_downloadBlankEngContract:HB_downloadBlankContract,className:"hb-dosLink"},
+            e!=="budget"&&u.default.createElement("button",{onClick:e==="case"?HB_downloadBlankEngContract:HB_downloadBlankContract,className:"hb-dosLink dl"},
               u.default.createElement(E,{name:"download",size:13}),
               u.default.createElement("span",null,e==="case"?"下載空白專案工程合約範本":"下載空白室內設計合約範本")),
             u.default.createElement("button",{onClick:()=>y(!0),className:"hb-dosLink"},
