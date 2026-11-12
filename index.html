@@ -7638,15 +7638,18 @@ function HB_SheetOverlay({state,setState,onClose}){
     });
     return()=>g.destroy()
   },[]);
-  return u.default.createElement("div",{style:{position:"fixed",inset:0,zIndex:9000,
-    background:"#FBF8F2",display:"flex",flexDirection:"column",padding:"12px 14px",overflow:"auto"}},
+  /* 掛到 document.body：估價單畫面本身是一層有自己疊放順序的容器，
+     留在裡面的話 position:fixed 會被頁首、底部按鈕列、左側直式標題蓋住（工具列與「完成」鈕看不到） */
+  return Zs().createPortal(u.default.createElement("div",{className:"hb-sheet-overlay",style:{position:"fixed",inset:0,zIndex:10020,
+    background:"#FBF8F2",display:"flex",flexDirection:"column",
+    padding:"calc(12px + env(safe-area-inset-top,0px)) 14px calc(12px + env(safe-area-inset-bottom,0px))",overflow:"auto"}},
     u.default.createElement("div",{style:{display:"flex",justifyContent:"space-between",
       alignItems:"center",marginBottom:10,gap:10}},
       u.default.createElement("div",{style:{fontSize:16,color:"#22392F"}},"試算表模式"),
       u.default.createElement("button",{onClick:onClose,style:{border:"1px solid #D9CFBD",
         background:"#fff",borderRadius:8,padding:"8px 16px",cursor:"pointer",
         fontFamily:"inherit",fontSize:13,color:"#22392F"}},"完成，回到表單")),
-    u.default.createElement("div",{ref:box,style:{flex:1}}))
+    u.default.createElement("div",{ref:box,style:{flex:1}})),document.body)
 }
 
 /* 估價單專用的冷調淺藍色票：鍵名與 s 相同，元件內部改用 sc */
