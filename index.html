@@ -17432,7 +17432,7 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
       return h('section',{className:'hbc','aria-label':'Le Carnet du Jour 今日待辦'},
         h('header',{className:'hbc-head'},
           h('h2',{className:'hbc-title'},'Le Carnet du Jour'),h('span',{className:'hbc-sub'},'今日待辦'),
-          h('button',{type:'button',className:'hbc-crew',title:'排工班（前一天 LINE 自動提醒師傅）',onClick:()=>HB_openCrewSheet({date:day,projectId:pvReal?pv:''})},HB_wbIcon('plus',13),'排工班'),
+          h('button',{type:'button',className:'hbc-crew',title:'排工班（前一天 LINE 自動提醒師傅）',onClick:()=>HB_openCrewSheet({date:day,projectId:pvReal?pv:''})},'排工班'),
           h('button',{type:'button',className:'hbc-add','aria-label':'新增事項',title:'新增事項',onClick:()=>newTask({due:day})},HB_wbIcon('plus',15))),
         h('div',{className:'hbc-daterow'},
           h('span',{className:'hbc-date'},(d0.getMonth()+1)+'月'+pad(d0.getDate())+'日',h('span',null,HB_wbWeek(day).replace('週','星期'))),
@@ -17890,7 +17890,8 @@ function HbWbEditorOrCrew(props){return HB_isCrewTask(props.initial)?u.default.c
 .hb-crewsheet-load{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#fff;border-radius:8px;padding:10px 16px;font-size:14px;color:#5a544c}
 html.hb-crewsheet-on,html.hb-crewsheet-on body{overflow:hidden}
 .hbc .hbc-crew,.wbk-agcrew{flex:none;display:inline-flex;align-items:center;gap:4px;height:28px;padding:0 10px;border:1px solid var(--c-line,#d9d2c5);background:#fff;border-radius:4px;color:var(--c-green,#24453A);font:inherit;font-size:13px;cursor:pointer;white-space:nowrap}
-.hbc .hbc-crew{margin-left:auto;align-self:center}.hbc .hbc-crew+.hbc-add{margin-left:6px}
+.hbc .hbc-crew{margin-left:auto;align-self:center;height:28px;padding:0 8px;font-size:12.5px;letter-spacing:.04em;min-width:0}.hbc .hbc-crew+.hbc-add{margin-left:5px}
+.hbc .hbc-head{flex-wrap:wrap;row-gap:6px}
 .wbk-agcrew{margin-right:8px}
 `;document.head.appendChild(st)})();
 function HbWbEditor({initial,projects,today,onClose,onSave,onDelete}){
