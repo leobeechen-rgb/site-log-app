@@ -9035,7 +9035,7 @@ async function HB_generateVendorDocx(v){
     RECEIPT_NO:v.receiptNo||"",
     VENDOR_NAME:v.vendorName,
     SITE_LOCATION:v.siteLocation,
-    AMOUNT_WORDS:HB_toChineseMoney(v.amount),
+    AMOUNT_WORDS:String(HB_toChineseMoney(v.amount)).replace(/元整$/,""),
     AMOUNT_NUM:HB_money(HB_num(v.amount)),
     ID_NUMBER:v.idNumber,
     ADDRESS:v.address,
@@ -9133,8 +9133,29 @@ function HB_buildVendorHTML(v){
 <html lang="zh-Hant"><head><meta charset="UTF-8" /><title>${e(v.vendorName||"廠商領據")} · 赫柏空間領據</title>
 <style>
 ${HB_DOC_CSS}
-/* 領據依列印視窗選擇紙張與方向，保留共用頁邊距。 */
-@page{size:auto}
+/* 廠商領據：A5 直式（148×210mm），與 Word 版同尺寸，一張印完。 */
+@page{size:A5 portrait;margin:9mm 10mm}
+.paper{max-width:148mm;margin:0 auto;padding:16px 18px}
+.head{margin-bottom:12px;padding-bottom:7px}
+.head-info{font-size:9.5px;line-height:1.6;margin-top:3px}
+h1{font-size:22px;margin:4px 0 12px;letter-spacing:.5em}
+.body-grid{grid-template-columns:1fr;gap:10px}
+.col-right{order:-1;display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 12px;border:1px solid var(--rule);padding:8px 12px;background:var(--wash)}
+.col-right .amt-label{flex:1 0 100%}
+.col-right .amt-num{font-size:22px;text-align:left}
+.col-right .amt-words{font-size:12px}
+table.v{margin:0 0 8px}
+table.v th,table.v td{padding:6px 9px;font-size:12px}
+table.v th{width:30%}
+.col-left p{margin:6px 0;font-size:12.5px;line-height:1.7}
+.signrow{margin-top:12px;display:flex;align-items:flex-end;gap:8px}
+.signrow .funderline{flex:1;min-height:30px}
+.fields{grid-template-columns:1fr 1fr;gap:8px 14px;margin-top:10px}
+.field{margin-bottom:0;font-size:12px}
+.field .funderline{display:block;min-height:20px}
+.date{margin:14px 0 0;font-size:12px;text-align:center;letter-spacing:.08em}
+.stamp{width:84px;right:14px;bottom:30px}
+@media print{body{padding:0}.paper{border:0;padding:0;max-width:none}}
 </style></head>
 <body>
 <div class="toolbar"><button class="back" onclick="window.close()" title="返回">←</button><button class="print" onclick="window.print()">列印 / 存 PDF</button></div>
@@ -9151,7 +9172,7 @@ ${HB_DOC_CSS}
         <tr><th>工程地點</th><td>${e(v.siteLocation)}</td></tr>
       </table>
       <p>茲收到赫柏空間設計陳奕蒨，工程款。</p>
-      <p>新台幣<span class="funderline">${e(HB_toChineseMoney(v.amount))}</span>元整（NT$ ${e(HB_money(HB_num(v.amount)))}）。</p>
+      <p>新台幣<span class="funderline">${e(String(HB_toChineseMoney(v.amount)).replace(/元整$/,""))}</span>元整（NT$ ${e(HB_money(HB_num(v.amount)))}）。</p>
       <div class="signrow"><span class="flabel">領款人簽章</span><span class="funderline"></span><span class="fnote">（請親筆簽名）</span></div>
       <div class="fields">
         <div class="field"><span class="flabel">身分證號碼</span><span class="funderline">${e(v.idNumber)}</span></div>
@@ -9162,7 +9183,7 @@ ${HB_DOC_CSS}
     <div class="col-right">
       <div class="amt-label">領款金額 AMOUNT</div>
       <div class="amt-num">NT$ ${e(HB_money(HB_num(v.amount)))}</div>
-      <div class="amt-words">（${e(HB_toChineseMoney(v.amount))}元整）</div>
+      <div class="amt-words">（${e(String(HB_toChineseMoney(v.amount)).replace(/元整$/,""))}元整）</div>
     </div>
   </div>
   <p class="date">中　華　民　國　${e(r.y)}　年　${e(r.m)}　月　${e(r.d)}　日</p>
