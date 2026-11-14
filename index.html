@@ -17289,7 +17289,7 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
     /* 未來 7 天：方便排下週行程（多天的工作只列在第一天，標示到哪天） */
     const UPN=7,upRows=[],upSeen=new Set();
     for(let i=1;i<=UPN;i++){const dd=HB_wbAddDays(day,i);
-      const r=list.filter(t=>!t.deleted&&!t.done&&!HB_wbIsFollow(t)&&!isShop(t)&&!upSeen.has(t.id)&&(HB_wbIsAgenda(t)||t.time||t.category==='約定')&&HB_wbOnDate(t,dd))
+      const r=list.filter(t=>!t.deleted&&!t.done&&!HB_wbIsFollow(t)&&!isShop(t)&&!upSeen.has(t.id)&&HB_wbOnDate(t,dd))
         .sort((a,b)=>(a.time||'99').localeCompare(b.time||'99')||a.title.localeCompare(b.title));
       if(r.length){upRows.push({hdr:dd});r.forEach(t=>{upSeen.add(t.id);upRows.push({t,dd})})}}
     const upN=upSeen.size;
@@ -17460,16 +17460,22 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
     /* ===== 左側欄 Le Carnet du Jour（桌機固定卡片）：今天／未來 7 天、週曆、未完成、待追蹤、稍後辦、快速記下 ===== */
     const carnet=sideOn?(()=>{
       const evBody=t=>[h('strong',{key:'t'},t.title),pnOf(t)?h('small',{key:'p'},pnOf(t)):null];
-      const evRow=(t,time,sub)=>{const man=t.source!=='auto'||t.category==='約定',st=fx[t.id]||'';
+      const evRow=(t,time,sub)=>{const man=t.source!=='auto'||t.category==='約定'||HB_isCrewTask(t),st=fx[t.id]||'';
         return h('li',{key:t.id,className:'hbc-ev'+(st?' is-'+st:'')},
           h('span',{className:'hbc-time'},time),h('i',{className:'hbc-dot','aria-hidden':'true'}),
           h('button',{type:'button',className:'hbc-body',onClick:()=>setEditing({...t}),title:'編輯'},evBody(t),sub),
           man?h('button',{type:'button',className:'hbc-ck','aria-label':'完成：'+t.title,title:'勾選完成',disabled:st==='saving'||st==='leaving',onClick:()=>complete(t)},HB_wbIcon('check',11)):null)};
       const todayRows=[...adRows,...rows.filter(r=>r.t||r.now)];
-      const todayList=todayRows.map(r=>r.now?h('li',{key:'now',className:'hbc-now','aria-label':'現在 '+fmt(nowMin)},h('span',null,fmt(nowMin)),h('i')):evRow(r.t,r.t.time||'整天',null));
+      /* 當天沒填時間的待辦（今天另含逾期未完成）：列在時間軸下面，可直接打勾 */
+      const shownIds=new Set(todayRows.filter(r=>r.t).map(r=>r.t.id));
+      const todoRows=dayOpen.filter(t=>!t._cf&&!shownIds.has(t.id)&&!HB_wbIsAgenda(t));
+      const lateOf=t=>isToday&&t.due&&(t.dueEnd||t.due)<today;
+      const todayList=[...todayRows.map(r=>r.now?h('li',{key:'now',className:'hbc-now','aria-label':'現在 '+fmt(nowMin)},h('span',null,fmt(nowMin)),h('i')):evRow(r.t,r.t.time||'整天',null)),
+        ...(todoRows.length?[h('li',{key:'todohd',className:'hbc-uphd'},'待辦・'+todoRows.length+' 件')]:[]),
+        ...todoRows.map(t=>evRow(t,lateOf(t)?'逾期':'待辦',lateOf(t)?h('small',{className:'hbc-to'},'原訂 '+md(t.due)):null))];
       const upList=upRows.map(r=>{if(r.hdr)return h('li',{key:'h'+r.hdr,className:'hbc-uphd'},upHdr(r.hdr));const t=r.t,end=t.dueEnd&&t.dueEnd>r.dd?t.dueEnd:'';
         return evRow(t,t.time||'整天',end?h('small',{className:'hbc-to'},'至 '+md(end)):null)});
-      const listEmpty=cUp?!upRows.length:!todayRows.some(r=>r.t);
+      const listEmpty=cUp?!upRows.length:(!todayRows.some(r=>r.t)&&!todoRows.length);
       const pill=(label,n,on,late,title)=>h('button',{type:'button',className:'hbc-pill'+(late?' is-late':''),onClick:on,title},h('span',null,label),h('b',null,n));
       const qk=e=>{e.preventDefault();const el=e.currentTarget.elements.q,v=el.value.trim();if(!v)return;
         if(tk.add({id:crypto.randomUUID(),title:v,projectId:'',assignee:'',due:'',time:'',category:'一般',note:'',urgent:false,source:'manual'})){el.value='';say('已加入稍後辦')}};
