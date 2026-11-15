@@ -9370,6 +9370,15 @@ function HbReceiptsHub({onBack,notify,projects,embedProject=null}){
   let[dfForm,setDfForm]=(0,u.useState)(null);
   let[noStamp,setNoStamp]=(0,u.useState)(()=>new Set());
   let toggleStamp=id=>setNoStamp(ns=>{let n=new Set(ns);n.has(id)?n.delete(id):n.add(id);return n});
+  /* 依案件分類（公司資料庫的總表才顯示；工作台案件面板已經只看單一案件） */
+  let[rcPf,setRcPf]=(0,u.useState)("all");
+  let rcProj=id=>(projects||[]).find(p=>p.id===id);
+  let rcHit=b=>EP||rcPf==="all"?true:rcPf==="__none"?!(b.project_id&&rcProj(b.project_id)):b.project_id===rcPf;
+  let rcTotal=b=>{let ps=b.periods||[];return HB_isDesignBatch(b)?ps.filter(pp=>pp&&pp.paid!==false).reduce((a,pp)=>a+(HB_num(pp.amount)||0),0):ps.reduce((a,pp)=>a+(HB_num(pp.amount)||0),0)};
+  let rcSetProject=async(b,pid)=>{
+    let{error}=await q.from("sitelog_receipts").update({project_id:pid||null}).eq("id",b.id);
+    if(error){notify("更新案件失敗："+error.message);return}
+    setBatches(ls=>ls.map(x=>x.id===b.id?{...x,project_id:pid||null}:x));notify(pid?"已歸到「"+((rcProj(pid)||{}).name||"案件")+"」":"已改為未分類")};
   let load=async()=>{
     setLoading(true);
     let{data,error}=await q.from("sitelog_receipts").select("*").order("created_at",{ascending:!1});
@@ -9536,7 +9545,7 @@ function HbReceiptsHub({onBack,notify,projects,embedProject=null}){
 
       u.default.createElement("div",{className:"hb-dosSolo"},
         u.default.createElement("div",{className:"hb-dosBar"},
-          u.default.createElement("div",{className:"hb-dosCount"}, batches.filter(epHit).length>0? batches.filter(epHit).length+" 筆收據":"尚無資料"),
+          u.default.createElement("div",{className:"hb-dosCount"}, batches.filter(epHit).length>0? batches.filter(epHit).filter(rcHit).length+" 筆收據"+(!EP&&rcPf!=="all"?"・合計 NT$ "+HB_money(batches.filter(rcHit).reduce((a,b)=>a+rcTotal(b),0)):""):"尚無資料"),
           u.default.createElement("button",{onClick:()=>setPickType(!0),className:"hb-dosNew"},"新增收據")),
         EP&&epContracts&&(()=>{
           let sg=HB_receiptSuggest(EP,epContracts,batches,null),L=sg.list;
@@ -9608,11 +9617,17 @@ function HbReceiptsHub({onBack,notify,projects,embedProject=null}){
               u.default.createElement("button",{type:"button",className:"hb-dosNew",onClick:()=>startFromReport(rp,pickOf(rp))},"開收據"),
               u.default.createElement("button",{type:"button",className:"hb-payrp-x",onClick:()=>dismissReport(rp)},"忽略"))))),
 
+        !EP&&batches.length>0&&(()=>{let C=u.default.createElement,seen=new Map();
+          batches.forEach(b=>{let p=b.project_id&&rcProj(b.project_id);if(p)seen.set(p.id,(seen.get(p.id)||0)+1)});
+          let chips=[{id:"all",label:"全部",n:batches.length},...(projects||[]).filter(p=>seen.has(p.id)).map(p=>({id:p.id,label:p.name,n:seen.get(p.id)}))];
+          let none=batches.filter(b=>!(b.project_id&&rcProj(b.project_id))).length;if(none)chips.push({id:"__none",label:"未分類",n:none});
+          return C("div",{className:"hb-vrChips",role:"group","aria-label":"依案件篩選"},chips.map(c=>C("button",{key:c.id,type:"button",className:"hb-vrChip"+(rcPf===c.id?" on":""),"aria-pressed":rcPf===c.id,onClick:()=>setRcPf(c.id)},c.label,C("b",null,c.n))))})(),
         loading?u.default.createElement("div",{style:{textAlign:"center",padding:40}},
             u.default.createElement(E,{name:"loader",className:"animate-spin",size:22,color:"#B4573A"})):
+        !EP&&batches.length>0&&batches.filter(rcHit).length===0?u.default.createElement("p",{className:"hb-dosEmpty"},"這個分類沒有收據"):
         batches.filter(epHit).length===0?u.default.createElement("p",{className:"hb-dosEmpty"},EP?"這個案件還沒有收據":"尚未有工程收據紀錄"):
         u.default.createElement("ul",{className:"hb-dosList"},
-          batches.filter(epHit).map((b,bi)=>{
+          batches.filter(epHit).filter(rcHit).map((b,bi)=>{
             let periods=b.periods||[];
             let isD=HB_isDesignBatch(b);
             let allTotal=periods.reduce((sum,pp)=>sum+(HB_num(pp.amount)||0),0);
@@ -9624,6 +9639,11 @@ function HbReceiptsHub({onBack,notify,projects,embedProject=null}){
                 u.default.createElement("div",{className:"hb-dosName"},b.client_name,periods.some(pp=>/設計費/.test(pp.name||""))&&u.default.createElement("span",{style:{marginLeft:10,fontSize:12,fontWeight:400,color:"#B4573A",border:"1px solid #D9B8A6",borderRadius:999,padding:"1px 8px",verticalAlign:"middle"}},"設計費")),
                 u.default.createElement("div",{className:"hb-dosMeta"},
                   (b.site_address||"—")+"　·　"+(isD?"已收 "+paidList.length+"／"+periods.length+" 期　·　總額 NT$ "+HB_money(allTotal):periods.length+" 筆款項")),
+                !EP&&u.default.createElement("label",{className:"hb-vrProj",title:"這筆收據屬於哪個案件"},
+                  u.default.createElement("span",null,"案件"),
+                  u.default.createElement("select",{value:b.project_id||"",onChange:e=>rcSetProject(b,e.target.value)},
+                    u.default.createElement("option",{value:""},"未分類"),
+                    (projects||[]).map(p=>u.default.createElement("option",{key:p.id,value:p.id},p.name)))),
                 isD&&u.default.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:6,margin:"8px 0 6px"}},
                   periods.map((pp,pi)=>{let pd=pp.paid!==false,short=(pp.name||"第"+(pi+1)+"期").replace("設計費","");
                     return u.default.createElement("button",{key:pi,type:"button",title:pd?"列印這一期收據":"登記這一期收款",
@@ -9698,7 +9718,7 @@ function HbReceiptForm({onCancel,onCreate,projects,initial,report,suggest}){
             sg.name+(sg.amount!=null?"　NT$"+HB_money(sg.amount):"")+(sg.paid?"（已開）":""))))),
       u.default.createElement("label",{style:{fontSize:12,color:s.inkSoft}},"茲收到（客戶名稱）"),
       u.default.createElement("input",{value:clientName,onChange:e=>setClientName(e.target.value),placeholder:"例：陽光四季-陳怡君",style:el}),
-      u.default.createElement("label",{style:{fontSize:12,color:s.inkSoft}},"工程地址"),
+      u.default.createElement("label",{style:{fontSize:12,color:s.inkSoft}},"案件／工程地址"),
       projList.length>0&&u.default.createElement("select",{value:addrPick,onChange:e=>onAddrPick(e.target.value),style:el},
         u.default.createElement("option",{value:OTHER},"— 其他（自行輸入）—"),
         projList.map(p=>u.default.createElement("option",{key:p.id,value:p.id},p.name+(p.address?"　"+p.address:"")))
