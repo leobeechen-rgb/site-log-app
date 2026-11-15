@@ -9728,12 +9728,27 @@ function HbReceiptForm({onCancel,onCreate,projects,initial,report,suggest}){
 }
 
 /* ---------- 廠商領據 UI ---------- */
+(function(){if(document.getElementById('hb-vr-css'))return;const st=document.createElement('style');st.id='hb-vr-css';st.textContent=`
+.hb-vrChips{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 18px}
+.hb-vrChip{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border:1px solid #d9d2c5;background:#fff;border-radius:999px;font:inherit;font-size:14px;color:#3a352e;cursor:pointer}
+.hb-vrChip b{font-weight:500;font-size:12px;color:#8a8275}
+.hb-vrChip.on{background:#1C1B18;border-color:#1C1B18;color:#fff}.hb-vrChip.on b{color:#e9e2d5}
+.hb-vrProj{display:inline-flex;align-items:center;gap:6px;margin:6px 16px 0 0;font-size:13px;color:#6f675b}
+.hb-vrProj select{font:inherit;font-size:13px;padding:3px 6px;border:1px solid #d9d2c5;border-radius:4px;background:#fff;color:#1C1B18;max-width:220px}
+`;document.head.appendChild(st)})();
 function HbVendorReceiptsHub({onBack,notify,projects}){
   let[list,setList]=(0,u.useState)([]);
   let[hbMenu,hbSetMenu]=(0,u.useState)(null);
   let[loading,setLoading]=(0,u.useState)(true);
   let[creating,setCreating]=(0,u.useState)(false);
   let[noStamp,setNoStamp]=(0,u.useState)(()=>new Set());
+  let[pf,setPf]=(0,u.useState)("all");   // 案件篩選：all／__none／專案 id
+  let projOf=id=>(projects||[]).find(p=>p.id===id);
+  let setProject=async(row,pid)=>{
+    let{error}=await q.from("sitelog_vendor_receipts").update({project_id:pid||null}).eq("id",row.id);
+    if(error){notify("更新案件失敗："+error.message);return}
+    setList(ls=>ls.map(x=>x.id===row.id?{...x,project_id:pid||null}:x));notify(pid?"已歸到「"+((projOf(pid)||{}).name||"案件")+"」":"已改為未分類")
+  };
   let toggleStamp=id=>setNoStamp(ns=>{let n=new Set(ns);n.has(id)?n.delete(id):n.add(id);return n});
   let load=async()=>{
     setLoading(true);
@@ -9744,7 +9759,7 @@ function HbVendorReceiptsHub({onBack,notify,projects}){
   (0,u.useEffect)(()=>{load()},[]);
   let createOne=async v=>{
     let{error}=await q.from("sitelog_vendor_receipts").insert({
-      vendor_name:v.vendorName,site_location:v.siteLocation,amount:v.amount,
+      vendor_name:v.vendorName,site_location:v.siteLocation,amount:v.amount,project_id:v.projectId||null,
       id_number:v.idNumber,address:v.address,phone:v.phone,receipt_date:v.dateStr||null,receipt_no:v.receiptNo||null
     });
     if(error){notify("新增失敗："+error.message);return}
@@ -9758,6 +9773,12 @@ function HbVendorReceiptsHub({onBack,notify,projects}){
   let toVals=row=>({vendorName:row.vendor_name,siteLocation:row.site_location,amount:row.amount,idNumber:row.id_number,address:row.address,phone:row.phone,dateStr:row.receipt_date,receiptNo:row.receipt_no,showStamp:!noStamp.has(row.id)});
   let genWord=row=>HB_generateVendorDocx(toVals(row)).catch(err=>notify("產生失敗："+(err?.message||err)));
   let genPdf=row=>{let ok=HB_openVendorPrint(toVals(row));if(!ok)notify("請允許瀏覽器彈出視窗以產生 PDF")};
+  let shown=pf==="all"?list:pf==="__none"?list.filter(x=>!x.project_id||!projOf(x.project_id)):list.filter(x=>x.project_id===pf);
+  let chips=[{id:"all",label:"全部",n:list.length}];
+  {let seen=new Map();list.forEach(x=>{let p=x.project_id&&projOf(x.project_id);if(p)seen.set(p.id,(seen.get(p.id)||0)+1)});
+   (projects||[]).filter(p=>seen.has(p.id)).forEach(p=>chips.push({id:p.id,label:p.name,n:seen.get(p.id)}));
+   let none=list.filter(x=>!x.project_id||!projOf(x.project_id)).length;if(none)chips.push({id:"__none",label:"未分類",n:none})}
+  (0,u.useEffect)(()=>{if(pf!=="all"&&!chips.some(c=>c.id===pf))setPf("all")});
   return u.default.createElement("div",{className:"hb-archive hb-dossier",style:{minHeight:"100dvh",fontFamily:"'Noto Sans TC', sans-serif",color:"#1C1B18"},
     onClick:()=>hbSetMenu(null)},
     u.default.createElement("div",{className:"hb-dosWrap"},
@@ -9768,22 +9789,30 @@ function HbVendorReceiptsHub({onBack,notify,projects}){
           u.default.createElement("span",null,"返回公司資料庫")),
         u.default.createElement("div",{className:"hb-dosLabel"},"Reçus Fournisseurs"),
         u.default.createElement("h1",{className:"hb-dosTitle"},"廠商領據"),
-        u.default.createElement("p",{className:"hb-dosLede"},"廠商工程款領據產生，A5 橫向格式一張一筆。可選擇列印時是否蓋上發票章。")),
+        u.default.createElement("p",{className:"hb-dosLede"},"廠商工程款領據產生，A5 直式一張一筆，可依案件分類。可選擇列印時是否蓋上發票章。")),
 
       u.default.createElement("div",{className:"hb-dosSolo"},
         u.default.createElement("div",{className:"hb-dosBar"},
-          u.default.createElement("div",{className:"hb-dosCount"}, list.length>0? list.length+" 筆領據":"尚無資料"),
+          u.default.createElement("div",{className:"hb-dosCount"}, list.length>0? shown.length+" 筆領據"+(pf!=="all"?"・合計 NT$ "+HB_money(shown.reduce((a,x)=>a+HB_num(x.amount),0)):""):"尚無資料"),
           u.default.createElement("button",{onClick:()=>setCreating(!0),className:"hb-dosNew"},"新增廠商領據")),
 
+        list.length>0&&u.default.createElement("div",{className:"hb-vrChips",role:"group","aria-label":"依案件篩選"},
+          chips.map(c=>u.default.createElement("button",{key:c.id,type:"button",className:"hb-vrChip"+(pf===c.id?" on":""),"aria-pressed":pf===c.id,onClick:()=>setPf(c.id)},c.label,u.default.createElement("b",null,c.n)))),
         loading?u.default.createElement("div",{style:{textAlign:"center",padding:40}},
             u.default.createElement(E,{name:"loader",className:"animate-spin",size:22,color:"#B4573A"})):
         list.length===0?u.default.createElement("p",{className:"hb-dosEmpty"},"尚未有廠商領據紀錄"):
+        shown.length===0?u.default.createElement("p",{className:"hb-dosEmpty"},"這個分類沒有領據"):
         u.default.createElement("ul",{className:"hb-dosList"},
-          list.map((v,vi)=>u.default.createElement("li",{key:v.id,className:"hb-dosItem"},
+          shown.map((v,vi)=>u.default.createElement("li",{key:v.id,className:"hb-dosItem"},
             u.default.createElement("span",{className:"hb-dosNo"},String(vi+1).padStart(2,"0")),
             u.default.createElement("div",{className:"hb-dosBody"},
               u.default.createElement("div",{className:"hb-dosName"},v.vendor_name),
               u.default.createElement("div",{className:"hb-dosMeta"},v.site_location||"—"),
+              u.default.createElement("label",{className:"hb-vrProj",title:"這筆領據屬於哪個案件"},
+                u.default.createElement("span",null,"案件"),
+                u.default.createElement("select",{value:v.project_id||"",onChange:e=>setProject(v,e.target.value)},
+                  u.default.createElement("option",{value:""},"未分類"),
+                  (projects||[]).map(p=>u.default.createElement("option",{key:p.id,value:p.id},p.name)))),
               u.default.createElement("label",{className:"hb-dosCheck"},
                 u.default.createElement("input",{type:"checkbox",checked:!noStamp.has(v.id),onChange:()=>toggleStamp(v.id)}),
                 u.default.createElement("span",null,"列印時蓋發票章"))),
@@ -9817,6 +9846,7 @@ function HbVendorReceiptForm({onCancel,onCreate,projects,vendorOptions}){
   let[vendorPick,setVendorPick]=(0,u.useState)(vendOpts.length?OTHER:OTHER);
   let[vendorName,setVendorName]=(0,u.useState)("");
   let[sitePick,setSitePick]=(0,u.useState)(OTHER);
+  let[projectId,setProjectId]=(0,u.useState)("");
   let[siteLocation,setSiteLocation]=(0,u.useState)("");
   let[amount,setAmount]=(0,u.useState)("");
   let[idNumber,setIdNumber]=(0,u.useState)("");
@@ -9826,7 +9856,8 @@ function HbVendorReceiptForm({onCancel,onCreate,projects,vendorOptions}){
   let onVendorPick=val=>{setVendorPick(val);setVendorName(val===OTHER?"":val)};
   let onSitePick=val=>{
     setSitePick(val);
-    if(val===OTHER){setSiteLocation("");return}
+    if(val===OTHER){setSiteLocation("");setProjectId("");return}
+    setProjectId(val);
     let proj=projList.find(p=>p.id===val);
     setSiteLocation(proj?proj.address||proj.name||"":"");
   };
@@ -9840,9 +9871,9 @@ function HbVendorReceiptForm({onCancel,onCreate,projects,vendorOptions}){
         vendOpts.map(nm=>u.default.createElement("option",{key:nm,value:nm},nm))
       ),
       (vendOpts.length===0||vendorPick===OTHER)&&u.default.createElement("input",{value:vendorName,onChange:e=>setVendorName(e.target.value),placeholder:"例：未來樹窗簾",style:el}),
-      u.default.createElement("label",{style:{fontSize:12,color:s.inkSoft}},"工程地點"),
+      u.default.createElement("label",{style:{fontSize:12,color:s.inkSoft}},"案件（選了會帶入工程地點）"),
       projList.length>0&&u.default.createElement("select",{value:sitePick,onChange:e=>onSitePick(e.target.value),style:el},
-        u.default.createElement("option",{value:OTHER},"— 其他（自行輸入）—"),
+        u.default.createElement("option",{value:OTHER},"— 不屬於案件（自行輸入地點）—"),
         projList.map(p=>u.default.createElement("option",{key:p.id,value:p.id},p.name+(p.address?"　"+p.address:"")))
       ),
       (projList.length===0||sitePick===OTHER)&&u.default.createElement("input",{value:siteLocation,onChange:e=>setSiteLocation(e.target.value),placeholder:"工程地點地址",style:el}),
@@ -9858,7 +9889,7 @@ function HbVendorReceiptForm({onCancel,onCreate,projects,vendorOptions}){
       u.default.createElement("input",{type:"date",value:dateStr,onChange:e=>setDateStr(e.target.value),style:el}),
       u.default.createElement("div",{style:{display:"flex",gap:10,marginTop:6}},
         u.default.createElement("button",{onClick:onCancel,style:{...ll,flex:1}},"取消"),
-        u.default.createElement("button",{disabled:!valid,onClick:()=>onCreate({vendorName:vendorName.trim(),siteLocation:siteLocation.trim(),amount,idNumber:idNumber.trim(),address:address.trim(),phone:phone.trim(),dateStr}),style:{...Dl,flex:1,opacity:valid?1:.5}},"建立")
+        u.default.createElement("button",{disabled:!valid,onClick:()=>onCreate({vendorName:vendorName.trim(),siteLocation:siteLocation.trim(),projectId,amount,idNumber:idNumber.trim(),address:address.trim(),phone:phone.trim(),dateStr}),style:{...Dl,flex:1,opacity:valid?1:.5}},"建立")
       )
     )
   ))
