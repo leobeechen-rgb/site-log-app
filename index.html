@@ -13429,6 +13429,17 @@ const HB_LIB_CSS=`
         .wbk-mq-btns{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
         .hb-wb .wbk-mq .wbk-mq-b{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:76px!important;border:1px solid #2E4A3C!important;border-radius:8px!important;background:#2E4A3C!important;color:#F2EFE8!important;font:inherit;font-size:14px;cursor:pointer;padding:6px!important}
         .wbk-mq-b b{font-size:24px;font-weight:400;line-height:1}
+        .wbk-shots{margin-top:10px;padding:10px;border:1px solid #D9CFBD;border-radius:8px;background:#fff}
+        .wbk-shots-head{display:flex;align-items:baseline;gap:8px;margin-bottom:8px}.wbk-shots-head strong{font-size:15px;color:#1C1B18}.wbk-shots-head small{font-size:12px;color:#6F675B;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+        .wbk-shots-list{list-style:none;margin:0 0 10px;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+        .wbk-shots-list li{position:relative;aspect-ratio:1;border-radius:6px;overflow:hidden;background:#EFE9DE}
+        .wbk-shots-list img{width:100%;height:100%;object-fit:cover;display:block}
+        .hb-wb .wbk-shots-list button{position:absolute;top:3px;right:3px;width:24px;height:24px;min-height:0!important;padding:0;border:0;border-radius:50%;background:rgba(28,27,24,.6);color:#fff;font-size:16px;line-height:24px;cursor:pointer}
+        .wbk-shots-act{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+        .hb-wb .wbk-shots-act>*{display:flex;align-items:center;justify-content:center;gap:6px;min-height:44px!important;border-radius:8px;font:inherit;font-size:15px;cursor:pointer;padding:0 8px}
+        .wbk-shots-more{border:1px solid #2E4A3C;color:#2E4A3C;background:#fff}
+        .hb-wb .wbk-shots-cancel{border:1px solid #D9CFBD;background:#fff;color:#6F675B}
+        .hb-wb .wbk-shots-go{border:1px solid #2E4A3C;background:#2E4A3C;color:#F2EFE8;font-weight:600}
       }
       .hb-wb .wbk-agpv{border:0;background:none;padding:0;min-height:0!important;font:inherit;color:#2E4A3C;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
       .wbk-pt-more select{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%}
@@ -17125,6 +17136,12 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
   const [agOpen,setAgOpen]=u.useState(null),[caseFold,setCaseFold]=u.useState(false),[caseMeta,setCaseMeta]=u.useState(false),caseDirty=u.useRef({});
   /* 待歸檔：檔案先放在這裡，確認案件與資料夾後才上傳 */
   const [inbox,setInbox]=u.useState([]),[area,setArea]=u.useState('case'),workRef=u.useRef(null),[autoAdd,setAutoAdd]=u.useState(null),mqSel=u.useRef(null);
+  /* 工地連續拍照：拍完先放在托盤，可再拍、刪掉，最後一次上傳 */
+  const [shots,setShots]=u.useState([]);
+  const shotAdd=fl=>{const fs=Array.from(fl||[]).filter(f=>/^image\//.test(f.type)||/\.(heic|heif|jpe?g|png)$/i.test(f.name||''));if(!fs.length)return;
+    setShots(l=>[...l,...fs.map(f=>({id:crypto.randomUUID(),f,url:URL.createObjectURL(f)}))])};
+  const shotDel=id=>setShots(l=>{const x=l.find(y=>y.id===id);if(x)URL.revokeObjectURL(x.url);return l.filter(y=>y.id!==id)});
+  const shotClear=()=>setShots(l=>{l.forEach(x=>URL.revokeObjectURL(x.url));return []});
   const inboxAdd=async(files,lockPid)=>{const list=await HB_inboxMake(files,projects,lockPid||'');if(!list.length)return;setInbox(l=>[...l,...list]);setArea('inbox');
     setTimeout(()=>{const el=workRef.current;if(el){const r=el.getBoundingClientRect();if(r.top<0||r.top>window.innerHeight*0.6)el.scrollIntoView({behavior:'smooth',block:'start'})}},40)};
   u.useEffect(()=>{if(!compact)return;window.HB_inboxAdd=inboxAdd;return()=>{if(window.HB_inboxAdd===inboxAdd)delete window.HB_inboxAdd}});
@@ -17592,9 +17609,17 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
           h('label',{className:'wbk-mq-case'},h('span',null,'工地'),h('select',{ref:mqSel,value:real?pv:'',onChange:e=>{const v=e.target.value;if(v===pv)return;if(window.HB_caseCanLeave&&!window.HB_caseCanLeave()){e.target.value=pv||'';return}setProj&&setProj(v)}},
             h('option',{value:''},'選擇案件…'),act.map(p=>h('option',{key:p.id,value:p.id},p.name)))),
           h('div',{className:'wbk-mq-btns'},
-            h('label',{className:'wbk-mq-b'},h('b',null,HB_wbIcon('camera',26)),h('span',null,'拍照'),h('input',{type:'file',accept:'image/*',capture:'environment',multiple:true,hidden:true,onChange:e=>{const fs=Array.from(e.target.files||[]);e.target.value='';if(fs.length)inboxAdd(fs,real?pv:'')}})),
+            h('label',{className:'wbk-mq-b'},h('b',null,HB_wbIcon('camera',26)),h('span',null,shots.length?'拍照（'+shots.length+'）':'拍照'),h('input',{type:'file',accept:'image/*',capture:'environment',multiple:true,hidden:true,onChange:e=>{const fl=e.target.files;shotAdd(fl);e.target.value=''}})),
             h('button',{type:'button',className:'wbk-mq-b',onClick:()=>go('defects')},h('b',null,HB_wbIcon('warn',26)),h('span',null,'記缺失')),
-            h('button',{type:'button',className:'wbk-mq-b',onClick:()=>go('materials')},h('b',null,HB_wbIcon('box',26)),h('span',null,'材料進場'))))})(),
+            h('button',{type:'button',className:'wbk-mq-b',onClick:()=>go('materials')},h('b',null,HB_wbIcon('box',26)),h('span',null,'材料進場'))),
+          shots.length>0&&h('div',{className:'wbk-shots',role:'region','aria-label':'待上傳照片'},
+            h('div',{className:'wbk-shots-head'},h('strong',null,'已拍 '+shots.length+' 張'),h('small',null,real?'上傳到「'+((projects.find(p=>p.id===pv)||{}).name||'')+'」':'未選案件，上傳後再歸檔')),
+            h('ul',{className:'wbk-shots-list'},shots.map(x=>h('li',{key:x.id},h('img',{src:x.url,alt:''}),h('button',{type:'button','aria-label':'刪除這張',onClick:()=>shotDel(x.id)},'×')))),
+            h('div',{className:'wbk-shots-act'},
+              h('label',{className:'wbk-shots-more'},HB_wbIcon('camera',18),h('span',null,'再拍一張'),h('input',{type:'file',accept:'image/*',capture:'environment',hidden:true,onChange:e=>{const fl=e.target.files;shotAdd(fl);e.target.value=''}})),
+              h('label',{className:'wbk-shots-more'},HB_wbIcon('plus',16),h('span',null,'從相簿加'),h('input',{type:'file',accept:'image/*',multiple:true,hidden:true,onChange:e=>{const fl=e.target.files;shotAdd(fl);e.target.value=''}})),
+              h('button',{type:'button',className:'wbk-shots-cancel',onClick:()=>{if(confirm('放棄這 '+shots.length+' 張照片？'))shotClear()}},'取消'),
+              h('button',{type:'button',className:'wbk-shots-go',onClick:()=>{const fs=shots.map(x=>x.f);shotClear();inboxAdd(fs,real?pv:'')}},'上傳 '+shots.length+' 張'))))})(),
       h('div',{className:'wbk-kpis',role:'group','aria-label':'全公司數字總覽'},
         kpi('逾期事項',kLateList.length,()=>setCSide('kLate'),true,'查看全公司逾期事項'),
         kpi('本週工地',kWeekList.length,()=>setCSide('kWeek'),false,'查看本週工地排程'),
