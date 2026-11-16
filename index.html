@@ -16414,11 +16414,11 @@ function HB_useToday(projects,enabled=true){
   const [payload,setPayload]=u.useState(()=>{try{return HB_todoRead()}catch{return HB_WB_EMPTY()}});
   const [ready,setReady]=u.useState(false),[auto,setAuto]=u.useState([]),[loading,setLoading]=u.useState(true);
   const [error,setError]=u.useState(''),[sync,setSync]=u.useState('正在連接雲端…'),[today,setToday]=u.useState(HB_todoDate);
-  const rev=u.useRef(0),payRef=u.useRef(payload),queue=u.useRef(Promise.resolve()),busy=u.useRef(false),pending=u.useRef(0),alive=u.useRef(true);
+  const rev=u.useRef(0),gen=u.useRef(0),payRef=u.useRef(payload),queue=u.useRef(Promise.resolve()),busy=u.useRef(false),pending=u.useRef(0),alive=u.useRef(true);
   const apply=p=>{payRef.current=p;if(alive.current)setPayload(p);try{localStorage.setItem(HB_todoKey(),JSON.stringify(p))}catch{}};
   const pull=async force=>{
     if(busy.current||pending.current>0||(!force&&document.hidden))return;busy.current=true;
-    try{const c=await HB_workspaceRequest('/today');if(pending.current>0)return;rev.current=Number(c.revision)||0;apply(HB_wbValid(c.payload)?c.payload:HB_WB_EMPTY());
+    const g0=gen.current;try{const c=await HB_workspaceRequest('/today');if(pending.current>0||gen.current!==g0)return;rev.current=Number(c.revision)||0;apply(HB_wbValid(c.payload)?c.payload:HB_WB_EMPTY());
       if(alive.current){setReady(true);setSync('已跨裝置同步');setError('')}}
     catch(e){if(alive.current){setSync('未連線（僅供檢視）');setError(e.message||'無法連接雲端')}}
     finally{busy.current=false}};
@@ -16434,7 +16434,7 @@ function HB_useToday(projects,enabled=true){
   /* 修改：先更新畫面，再排隊寫入雲端；若另一部裝置剛更新（409），取回最新版重新套用這次修改再寫一次 */
   const mutate=fn=>{
     if(!ready){setError('雲端資料尚未就緒，暫時不能修改。請確認登入與網路連線。');return false}
-    apply(fn(payRef.current));pending.current++;setSync('正在同步…');
+    gen.current++;apply(fn(payRef.current));pending.current++;setSync('正在同步…');
     let settle;const result=new Promise(r=>{settle=r});
     queue.current=queue.current.then(async()=>{
       const put=body=>HB_workspaceRequest('/today',{method:'PUT',body:JSON.stringify({revision:rev.current,payload:body})});
@@ -17292,7 +17292,7 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
   const fullList=full==='open'?openMixed:full==='follow'?follows:full==='closed'?closedFollows:[];
   const [cUp,setCUpRaw]=u.useState(()=>{try{return localStorage.getItem('hb_tl_up')==='1'}catch{return false}});
   const setCUp=v=>{setCUpRaw(v);try{localStorage.setItem('hb_tl_up',v?'1':'0')}catch{}};
-  const [cDay,setCDay]=u.useState(''),[cGapOpen,setCGapOpen]=u.useState(null),[cShop,setCShop]=u.useState(false),[cSide,setCSide]=u.useState('');
+  const [cDay,setCDay]=u.useState(''),[cNew,setCNew]=u.useState(''),[cGapOpen,setCGapOpen]=u.useState(null),[cShop,setCShop]=u.useState(false),[cSide,setCSide]=u.useState('');
   const [cGaps,setCGaps]=u.useState(()=>{try{return localStorage.getItem('hb_tl_gaps')!=='0'}catch{return true}});
   u.useEffect(()=>{try{localStorage.setItem('hb_tl_gaps',cGaps?'1':'0')}catch{}},[cGaps]);
   const nowOf=()=>{const n=new Date();return n.getHours()*60+n.getMinutes()},[nowMin,setNowMin]=u.useState(nowOf);
@@ -17336,7 +17336,7 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
         t.source!=='auto'&&h('button',{type:'button',className:'wbc-check','aria-label':'完成：'+t.title,onClick:()=>complete(t)},HB_wbIcon('check',12)))};
     /* 整天的行程（工程行程、工班、預約沒填時間）：放在時間軸最上面 */
     const pnOf=t=>t.projectName||(projects.find(p=>p.id===t.projectId)||{}).name||'';
-    const adRows=list.filter(t=>!t.deleted&&!t.done&&!HB_wbIsFollow(t)&&!isShop(t)&&HB_wbIsAgenda(t)&&onDay(t)&&toMin(t.time)==null).sort((a,b)=>a.title.localeCompare(b.title)).map(t=>({t,ad:true}));
+    const adRows=list.filter(t=>!t.deleted&&!t.done&&!HB_wbIsFollow(t)&&!isShop(t)&&onDay(t)&&toMin(t.time)==null).sort((a,b)=>Number(HB_wbIsAgenda(b))-Number(HB_wbIsAgenda(a))||a.title.localeCompare(b.title)).map(t=>({t,ad:true}));
     /* 未來 7 天：方便排下週行程（多天的工作只列在第一天，標示到哪天） */
     const UPN=7,upRows=[],upSeen=new Set();
     for(let i=1;i<=UPN;i++){const dd=HB_wbAddDays(day,i);
@@ -17352,8 +17352,8 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
     const evN=rows.filter(r=>r.t).length+adRows.length;
     const evAll=rows.filter(r=>r.t),evFrom=isToday?Math.max(0,Math.min(evAll.findIndex(r=>r.e>nowMin)<0?evAll.length-2:evAll.findIndex(r=>r.e>nowMin),evAll.length-(firstGap?2:3))):0;
     const evPick=new Set(evAll.slice(evFrom,evFrom+(firstGap?2:3)));
-    const tlShow=[...adRows.slice(0,2),...rows.filter(r=>r.now||evPick.has(r)||r===firstGap)];
-    const allTl=[...adRows,...rows];
+    const allTl=[...adRows,...rows],isNew_=r=>!!(r.t&&cNew&&r.t.id===cNew);
+    const tlShow=evN<=5?allTl:[...adRows.filter((r,i)=>i<2||isNew_(r)),...rows.filter(r=>r.now||evPick.has(r)||r===firstGap||isNew_(r))];
     /* 週曆 */
     const d0=new Date(day+'T00:00:00'),ws=new Date(d0.getFullYear(),d0.getMonth(),d0.getDate()-d0.getDay());
     const week=Array.from({length:7},(_,i)=>new Date(ws.getFullYear(),ws.getMonth(),ws.getDate()+i));
@@ -17620,7 +17620,7 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
         h('article',{className:'wbk-col wbk-c4'},
           h('div',{className:'wbc-colhead'},h('h3',null,'稍後辦'),h('span',{className:'wbc-num'},later.length)),
           h('form',{className:'wbk-quick',onSubmit:e=>quick('later',e)},h('input',{name:'q',maxLength:200,placeholder:'想到要做的事，先記下來','aria-label':'新增稍後辦'}),h('button',{type:'submit','aria-label':'新增稍後辦'},HB_wbIcon('plus',15))),
-          later.length?h('ul',{className:'wbk-slist'},later.slice(0,1).map(t=>sideRow(t,'later'))):null,
+          later.length?h('ul',{className:'wbk-slist'},[later.find(t=>t.id===cNew)||later[0]].map(t=>sideRow(t,'later'))):null,
           h('div',{className:'wbk-shophead'},h('button',{type:'button',className:'wbk-shopbtn','aria-expanded':cShop||shop.length>0,onClick:()=>setCShop(!cShop)},h('h3',null,'購物清單'),h('span',{className:'wbc-num'},shop.length)),
             !(cShop||shop.length)&&h('button',{type:'button',className:'wbk-plus','aria-label':'新增購物項目',onClick:()=>setCShop(true)},HB_wbIcon('plus',14))),
           (cShop||shop.length>0)&&h('form',{className:'wbk-quick',onSubmit:e=>quick('shop',e)},h('input',{name:'q',maxLength:200,placeholder:'要買的東西','aria-label':'新增購物項目',autoFocus:cShop&&!shop.length}),h('button',{type:'submit','aria-label':'新增購物項目'},HB_wbIcon('plus',15))),
@@ -17656,7 +17656,7 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
         tabs:(cSide==='later'||cSide==='shop')?[['later','稍後辦 '+later.length],['shop','購物清單 '+shop.length]]:null,tab:cSide,onTab:setCSide},
         h('div',{className:'wbc wbk-sidebody'},(cSide==='later'||cSide==='shop')&&h('form',{className:'wbk-quick',onSubmit:e=>quick(cSide,e)},h('input',{name:'q',maxLength:200,placeholder:cSide==='shop'?'要買的東西':'想到要做的事，先記下來'}),h('button',{type:'submit','aria-label':'新增'},HB_wbIcon('plus',15))),sideBody)),
       editing&&h(HbWbEditorOrCrew,{key:editing.id,initial:editing,projects,today,onClose:()=>setEditing(null),
-        onSave:v=>{const {isNew,...task}=v;if(isNew?tk.add(task):tk.replace(task)){setEditing(null);say(isNew?'已新增':'已儲存')}},
+        onSave:v=>{const {isNew,...task}=v;if(isNew?tk.add(task):tk.replace(task)){setEditing(null);let msg=isNew?'已新增':'已儲存';if(isNew&&compact){setCNew(task.id);if(task.due&&!HB_wbIsFollow(task)){if(task.due!==(cDay||today)){setCDay(task.due);msg+='，已切到 '+(+task.due.slice(5,7))+'/'+(+task.due.slice(8,10))}setCUp(false)}}say(msg)}},
         onDelete:v=>{if(confirm('確定刪除「'+v.title+'」？')&&tk.update(v,{deleted:true})){setEditing(null);say('已刪除')}}}),
       cfList&&h(HbConfirmList,{cf,projects,pv:cfList==='all'?'':pv,onClose:()=>setCfList(false),onOpen:id=>setCfOpen({id}),onNew:()=>setCfOpen({id:null,n:Date.now()})}),
       cfOpen&&h(HbConfirmDrawer,{key:(cfOpen.id||'new')+(cfOpen.n||''),id:cfOpen.id,projects,pv,say,onOpenProject,onChanged:cf.reload,onClose:()=>{setCfOpen(null);cf.reload()}}),
@@ -17686,7 +17686,7 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
         h('div',{className:'wb-mact',style:{padding:'12px 0 2px'}},full!=='closed'&&h('button',{type:'button',className:'wb-btn wb-btn-ghost',onClick:()=>newTask(full==='follow'?{kind:'follow',waitingFor:'',due:HB_wbAddDays(today,3)}:{})},HB_wbIcon('plus',14),full==='follow'?'新增追蹤':'新增事項'),
           h('span',{style:{flex:1}}),h('button',{type:'button',className:'wb-btn wb-btn-solid',onClick:()=>setFull('')},'完成')))),
     editing&&h(HbWbEditorOrCrew,{key:editing.id,initial:editing,projects,today,onClose:()=>setEditing(null),
-      onSave:v=>{const {isNew,...task}=v;if(isNew?tk.add(task):tk.replace(task)){setEditing(null);say(isNew?'已新增':'已儲存')}},
+      onSave:v=>{const {isNew,...task}=v;if(isNew?tk.add(task):tk.replace(task)){setEditing(null);let msg=isNew?'已新增':'已儲存';if(isNew&&compact){setCNew(task.id);if(task.due&&!HB_wbIsFollow(task)){if(task.due!==(cDay||today)){setCDay(task.due);msg+='，已切到 '+(+task.due.slice(5,7))+'/'+(+task.due.slice(8,10))}setCUp(false)}}say(msg)}},
       onDelete:v=>{if(confirm('確定刪除「'+v.title+'」？')&&tk.update(v,{deleted:true})){setEditing(null);say('已刪除')}}}),
     cfList&&h(HbConfirmList,{cf,projects,pv,onClose:()=>setCfList(false),onOpen:id=>setCfOpen({id}),onNew:()=>setCfOpen({id:null,n:Date.now()})}),
     cfOpen&&h(HbConfirmDrawer,{key:(cfOpen.id||'new')+(cfOpen.n||''),id:cfOpen.id,projects,pv,say,onOpenProject,onChanged:cf.reload,onClose:()=>{setCfOpen(null);cf.reload()}}),
