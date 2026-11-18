@@ -277,11 +277,13 @@ function blankCase(){
 const careOf=c=>(S.care&&S.care[c]!=null)?S.care[c]:(CARE_DEFAULT[c]||"");
 let tab="info";
 let saveT;
-function save(){ clearTimeout(saveT); saveT=setTimeout(()=>{ try{localStorage.setItem(KEY,JSON.stringify(S)); savedMark();
+function save(){ S._t=Date.now(); clearTimeout(saveT); cloudSave(); saveT=setTimeout(()=>{ try{localStorage.setItem(KEY,JSON.stringify(S)); savedMark();
   if(KEY!==BASE_KEY){ let b={};try{b=JSON.parse(localStorage.getItem(BASE_KEY))||{};}catch(e){} b.company=S.company;b.care=S.care;b.warranty=S.warranty; if(!b.info){b.info=structuredClone(SAMPLE.info);b.materials=[];b.photos=[];b.contacts=[];} localStorage.setItem(BASE_KEY,JSON.stringify(b)); }
 }catch(e){toast("瀏覽器空間不足，照片太多時請先匯出 JSON");} },300); }
-function savedMark(){ const el=document.getElementById("savedAt"); if(el){ const d=new Date(); el.textContent="已自動儲存 "+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0"); } }
-addEventListener("pagehide",()=>{ clearTimeout(saveT); try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){} });
+const hm=()=>{const d=new Date();return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0");};
+let CLOUD=false;
+function savedMark(msg){ const el=document.getElementById("savedAt"); if(el) el.textContent=msg||(CLOUD?el.textContent:"已存在這台電腦 "+hm()); }
+addEventListener("pagehide",()=>{ clearTimeout(saveT); try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){} try{ cloudFlush(); }catch(e){} });
 function toast(m){const t=document.getElementById("toast");t.textContent=m;t.classList.add("show");clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("show"),2200);}
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const lines=s=>String(s||"").split("\n").map(x=>x.trim()).filter(Boolean);
@@ -592,6 +594,48 @@ const YEARS={"系統櫃":5,"超耐磨木地板":10,"實木／海島型地板":5,
 const WARN_SAMPLE=()=>/^範例/.test(S.info.caseName||"");
 let PROJS=[];
 
+/* ---- 雲端儲存：存在工地紀錄本資料庫（sitelog_settings，key＝handbook:案件ID），換電腦、App 都能接著改 ---- */
+let cloudT=null, cloudBusy=Promise.resolve();
+const cloudKey=id=>"handbook:"+id;
+function cloudSave(){
+  if(!CLOUD||!PROJECT) return; clearTimeout(cloudT); savedMark("儲存中…");
+  const pid=PROJECT;
+  cloudT=setTimeout(()=>{ cloudBusy=cloudBusy.then(async()=>{
+    const {error}=await SB.from("sitelog_settings").upsert([{key:cloudKey(pid),value:JSON.stringify(S)},{key:"handbook:_shared",value:JSON.stringify({company:S.company,care:S.care,_t:Date.now()})}],{onConflict:"key"});
+    savedMark(error?"雲端儲存失敗（已先存在這台電腦）":"已存到雲端 "+hm());
+    if(error) console.warn(error);
+  }); },1200);
+}
+function cloudFlush(){ if(cloudT){ clearTimeout(cloudT); cloudT=null; if(CLOUD&&PROJECT){ const pid=PROJECT; return SB.from("sitelog_settings").upsert([{key:cloudKey(pid),value:JSON.stringify(S)}],{onConflict:"key"}); } } return Promise.resolve(); }
+async function cloudLoad(id){
+  const {data,error}=await SB.from("sitelog_settings").select("key,value").in("key",[cloudKey(id),"handbook:_shared"]);
+  if(error) throw error;
+  const row=(data||[]).find(r=>r.key===cloudKey(id)), sh=(data||[]).find(r=>r.key==="handbook:_shared");
+  let c=null, shared=null; try{ c=row?JSON.parse(row.value):null; }catch(e){} try{ shared=sh?JSON.parse(sh.value):null; }catch(e){}
+  return {c,shared};
+}
+async function openCase(id,localData){
+  // 雲端與本機比較，用較新的那份；都沒有才從工地紀錄本自動帶入
+  let use=localData, fromCloud=false;
+  if(CLOUD&&id){
+    try{ const {c,shared}=await cloudLoad(id);
+      if(c&&(!localData||(c._t||0)>=(localData._t||0))){ use=c; fromCloud=true; }
+      if(shared&&!c&&!localData){ S.company=shared.company||S.company; S.care=shared.care||S.care; }
+      if(shared&&use&&(shared._t||0)>(use._t||0)){ use.company=shared.company||use.company; use.care=shared.care||use.care; }
+    }catch(e){ savedMark("讀取雲端失敗，先用這台電腦的資料"); }
+  }
+  if(use){ S=use; try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){} renderPanel(); renderPages();
+    savedMark(fromCloud?"已從雲端載入":"已載入");
+    if(CLOUD&&!fromCloud) cloudSave(); // 本機較新：補存一份到雲端
+  } else if(id){ await syncFromSite(true); }
+  markSaved();
+}
+async function markSaved(){
+  if(!CLOUD) return;
+  const {data}=await SB.from("sitelog_settings").select("key").like("key","handbook:%");
+  const has=new Set((data||[]).map(r=>r.key.slice(9)));
+  document.querySelectorAll("#projSel option").forEach(o=>{ if(!o.value) return; const n=o.dataset.n||(o.dataset.n=o.textContent); o.textContent=has.has(o.value)?n+"　✓ 已有手冊":n; });
+}
 async function initLink(){
   if(EMBED) document.getElementById("btnClose").hidden=false;
   if(!SB) return;
@@ -603,20 +647,21 @@ async function initLink(){
   const sel=document.getElementById("projSel");
   sel.innerHTML=`<option value="">— 選擇案件 —</option>`+PROJS.map(p=>`<option value="${p.id}" ${p.id===PROJECT?"selected":""}>${esc(p.name)}</option>`).join("");
   document.getElementById("projField").hidden=false;
-  document.getElementById("edSub").textContent="選案件後會自動帶入工地紀錄本裡的業主、地址、材料與工班；照片可從工地相簿挑。每個案件的手冊分開存在這台電腦。";
+  CLOUD=true;
+  document.getElementById("edSub").textContent="選案件後會自動帶入工地紀錄本裡的業主、地址、材料與工班；照片可從工地相簿挑。每個案件的手冊會自動存到雲端，換電腦或用 App 都能回來接著改。";
   sel.onchange=()=>switchProject(sel.value);
   updateLinkBtns();
-  if(PROJECT && FRESH) syncFromSite(true);
+  if(PROJECT) await openCase(PROJECT, FRESH?null:S); else markSaved();
 }
 function updateLinkBtns(){ document.getElementById("btnSync").hidden=!PROJECT; document.getElementById("btnPick").hidden=!PROJECT; }
-function switchProject(id){
-  clearTimeout(saveT); try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}
+async function switchProject(id){
+  clearTimeout(saveT); try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){} await cloudFlush();
   PROJECT=id; KEY=id?BASE_KEY+":"+id:BASE_KEY; try{localStorage.setItem(LAST_KEY,id);}catch(e){}
   let d=null; try{d=JSON.parse(localStorage.getItem(KEY));}catch(e){}
   S=d||(id?blankCase():structuredClone(SAMPLE));
   const u=new URL(location.href); id?u.searchParams.set("project",id):u.searchParams.delete("project"); history.replaceState(null,"",u);
   updateLinkBtns(); renderPanel(); renderPages();
-  if(id && !d) syncFromSite(true);
+  if(id) await openCase(id,d);
 }
 
 async function syncFromSite(first){
@@ -654,7 +699,7 @@ async function syncFromSite(first){
   btn.disabled=false; btn.textContent="從工地紀錄本帶入";
 }
 document.getElementById("btnSync").onclick=()=>syncFromSite(false);
-document.getElementById("btnClose").onclick=()=>{ clearTimeout(saveT); try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){} try{parent.postMessage({type:"hb-handbook"},location.origin);}catch(e){} };
+document.getElementById("btnClose").onclick=async()=>{ clearTimeout(saveT); try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){} savedMark("儲存中…"); try{ await cloudFlush(); await cloudBusy; }catch(e){} try{parent.postMessage({type:"hb-handbook"},location.origin);}catch(e){} };
 
 /* ---- 從工地相簿挑管線照片 ---- */
 const PK=document.getElementById("pick"); let pkPhotos=[], pkAlbum="", pkSel=new Set();
