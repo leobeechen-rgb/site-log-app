@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>業主施工日程表｜赫柏空間設計</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600&family=Noto+Sans+TC:wght@400;500&family=Cormorant+Garamond:wght@500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<style>
+  :root{
+    --ink:#2b2a27; --sub:#7a756c; --line:#e4ddd1; --paper:#faf7f2; --card:#fffdf9;
+    --accent:#8a6f4e; --done:#b7b0a4; --today:#f3ebde;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#efebe4;color:var(--ink);font-family:"Noto Sans TC",system-ui,sans-serif;font-size:15px}
+  button,select,input{font:inherit}
+
+  /* 控制列（不會出現在匯出圖上） */
+  .ctrl{position:sticky;top:0;z-index:5;background:#2b2a27;color:#eee;padding:10px 14px;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
+  .ctrl label{display:flex;align-items:center;gap:6px;font-size:13px;white-space:nowrap}
+  .ctrl select,.ctrl input[type=date]{background:#3a3833;color:#fff;border:1px solid #555;border-radius:6px;padding:5px 8px}
+  .ctrl .sp{flex:1}
+  .btn{background:#c9b28f;color:#2b2a27;border:0;border-radius:6px;padding:7px 14px;font-weight:500;cursor:pointer}
+  .btn.ghost{background:transparent;color:#ddd;border:1px solid #666}
+  .hint{font-size:12px;color:#9a958c;padding:8px 14px 0;max-width:820px;margin:0 auto}
+
+
+  /* 日程表本體 */
+  .wrap{padding:18px 12px 60px}
+  #sheet{width:760px;max-width:100%;margin:0 auto;background:var(--paper);padding:48px 52px 36px;box-shadow:0 2px 16px rgba(0,0,0,.08)}
+  .brand{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:1px solid var(--ink);padding-bottom:10px}
+  .brand .en{font-family:"Cormorant Garamond",serif;letter-spacing:.32em;font-size:20px}
+  .brand .zh{font-size:12px;color:var(--sub);letter-spacing:.2em;margin-top:2px}
+  .brand .doc{font-size:12px;color:var(--sub);text-align:right;letter-spacing:.1em}
+  h1{font-family:"Noto Serif TC",serif;font-weight:600;font-size:28px;margin:30px 0 6px;letter-spacing:.06em}
+  .meta{color:var(--sub);font-size:13px;display:flex;flex-wrap:wrap;gap:4px 22px}
+  .meta b{color:var(--ink);font-weight:500}
+
+  .month{margin-top:30px}
+  .month h3{font-family:"Cormorant Garamond",serif;font-weight:500;font-size:15px;letter-spacing:.25em;color:var(--accent);margin:0 0 8px;border-bottom:1px solid var(--line);padding-bottom:6px}
+  .row{display:grid;grid-template-columns:150px 1fr;gap:14px;align-items:baseline;padding:11px 0;border-bottom:1px dashed var(--line)}
+  .row.today{background:var(--today);margin:0 -10px;padding-left:10px;padding-right:10px}
+  .row .d{font-size:14px}
+  .row .d small{display:block;color:var(--sub);font-size:11px;margin-top:2px}
+  .row .t{font-size:16px;font-family:"Noto Serif TC",serif}
+  .row .t .x{display:block;font-family:"Noto Sans TC",sans-serif;font-size:12px;color:var(--sub);margin-top:3px}
+  .row .tm{font-size:12px;color:var(--sub);text-align:right}
+  .row.done .t,.row.done .d{color:var(--done)}
+  .row.done .t::after{content:" ✓ 已完成";font-size:11px;font-family:"Noto Sans TC";color:var(--done)}
+  [contenteditable]:focus{outline:1px dashed var(--accent);outline-offset:2px}
+  .empty{color:var(--sub);text-align:center;padding:50px 0}
+
+  .note{margin-top:30px;font-size:12px;color:var(--sub);line-height:1.8;border-left:2px solid var(--line);padding-left:12px}
+  .foot{margin-top:34px;padding-top:12px;border-top:1px solid var(--line);display:flex;justify-content:space-between;font-size:11px;color:var(--sub);letter-spacing:.05em}
+
+  #shot{position:fixed;inset:0;z-index:20;background:rgba(30,28,25,.82);display:flex;align-items:center;justify-content:center;padding:16px}
+  #shot[hidden]{display:none}
+  .shot-box{max-width:520px;width:100%;max-height:100%;overflow:auto;text-align:center;color:#eee;font-size:13px}
+  .shot-box img{width:100%;display:block;margin:8px 0 12px;border-radius:4px;-webkit-touch-callout:default}
+  .shot-btns{display:flex;gap:10px;justify-content:center}
+  .shot-btns a{text-decoration:none}
+  /* 列印成 PDF */
+  @page{size:A4;margin:12mm}
+  @media print{
+    body{background:#fff}
+    .ctrl,.hint,#shot{display:none!important}
+    .wrap{padding:0}
+    #sheet{box-shadow:none;width:auto;padding:0;background:#fff}
+    .row{break-inside:avoid}
+    .row.today{background:none}
+  }
+  @media (max-width:600px){
+    #sheet{padding:30px 20px}
+    .row{grid-template-columns:92px 1fr;}
+    .row .tm{grid-column:2;text-align:left}
+  }
+</style>
+</head>
+<body>
+
+<div id="nologin" hidden class="empty" style="padding:80px 20px">請先登入工地紀錄本，再從今日待辦開啟「業主日程」。</div>
+<div id="shot" hidden><div class="shot-box"><p>長按圖片即可儲存或分享到 LINE</p><img id="shotImg" alt="施工日程表"><div class="shot-btns"><a class="btn" id="shotDl" download>下載圖片</a><button class="btn ghost" id="shotClose">完成</button></div></div></div>
+
+<div id="app" hidden>
+  <div class="ctrl">
+    <label>案件 <select id="proj"></select></label>
+    <label>從 <input type="date" id="from"></label>
+    <label>到 <input type="date" id="to"></label>
+    <label><input type="checkbox" id="showDone" checked> 顯示已完成</label>
+    <span class="sp"></span>
+    <button class="btn ghost" id="pdf">存成 PDF</button>
+    <button class="btn" id="png">傳給業主（圖片）</button>
+    <button class="btn ghost" id="close" hidden>關閉</button>
+  </div>
+  <div class="hint">表上的文字可以直接點開修改（例如把「系統櫃」改成「系統櫃安裝」），改完再傳；這裡的修改不會動到工班排程。圖上不顯示進場時間與師傅姓名。</div>
+  <div class="wrap">
+    <div id="sheet">
+      <div class="brand">
+        <div><div class="en">HERFULSINS</div><div class="zh">赫柏空間設計</div></div>
+        <div class="doc">施工日程表<br>CONSTRUCTION SCHEDULE</div>
+      </div>
+      <h1 id="title" contenteditable></h1>
+      <div class="meta" id="meta"></div>
+      <div id="list"></div>
+      <div class="note" contenteditable id="foot-note">以上為預定施工日期，實際施工可能因天候、材料到貨或現場狀況微調，如有變動將另行通知。施工期間如需到現場，歡迎事先與設計師聯繫。</div>
+      <div class="foot"><span>赫柏空間設計 HERFULSINS｜嘉義市西區新民路168號</span><span id="stamp"></span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SB_URL = 'https://rqndozhhvuimqjqtmeli.supabase.co';
+const SB_KEY = 'sb_publishable_WeuzNOmIP2eh8LgN8XZeTw_gx5Q72VL';
+const sb = supabase.createClient(SB_URL, SB_KEY);
+
+const $ = id => document.getElementById(id);
+const WK = ['日','一','二','三','四','五','六'];
+let projects = [], jobs = [];
+
+const pd = s => { const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); };
+const iso = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const md = d => `${d.getMonth()+1}/${d.getDate()}`;
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const todayIso = iso(new Date());
+
+const QS = new URLSearchParams(location.search);
+const EMBED = window.parent !== window;
+function closeMe(){ if (EMBED) { try { parent.postMessage({ type:'hb-owner-sched' }, location.origin); } catch(e){} } else history.back(); }
+
+async function boot(){
+  const { data:{ session } } = await sb.auth.getSession();
+  if (!session) { $('nologin').hidden = false; return; }
+  $('app').hidden = false;
+  if (EMBED) $('close').hidden = false;
+  await load();
+}
+$('close').onclick = closeMe;
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && EMBED && $('shot').hidden) closeMe(); });
+
+async function load(){
+  const [{ data:pj, error:e1 }, { data:jb, error:e2 }] = await Promise.all([
+    sb.from('sitelog_projects').select('id,name,address,expected_end').order('updated_at', { ascending:false }),
+    sb.from('hb_crew_jobs').select('id,project_id,trade,start_date,end_date,note,status').in('status',['planned','done']).order('start_date')
+  ]);
+  if (e1 || e2) { $('list').innerHTML = `<div class="empty">讀取失敗：${esc((e1||e2).message)}<br>請確認是用管理者帳號登入。</div>`; return; }
+  jobs = jb || [];
+  const has = new Set(jobs.map(j => j.project_id));
+  projects = (pj || []).filter(p => has.has(p.id) && !/^示範案件/.test(p.name || ''));
+  $('proj').innerHTML = projects.length
+    ? projects.map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join('')
+    : '<option>（還沒有排工班的案件）</option>';
+  const want = QS.get('project');
+  if (want && projects.some(p => p.id === want)) $('proj').value = want;
+  setRange(); render();
+}
+
+function projJobs(){ return jobs.filter(j => j.project_id === $('proj').value); }
+
+function setRange(){
+  const js = projJobs();
+  if (!js.length) { $('from').value = $('to').value = ''; return; }
+  const max = js.reduce((m,j) => (j.end_date || j.start_date) > m ? (j.end_date || j.start_date) : m, '');
+  const min = js[0].start_date;
+  // 預設：從本週一開始（若案子還沒開始就從第一筆），到最後一筆
+  const mon = new Date(); mon.setDate(mon.getDate() - ((mon.getDay()+6)%7));
+  const from = iso(mon) > min ? iso(mon) : min;
+  $('from').value = from > max ? min : from;
+  $('to').value = max;
+}
+
+function render(){
+  const p = projects.find(x => x.id === $('proj').value);
+  if (!p) { $('title').textContent = ''; $('list').innerHTML = '<div class="empty">目前沒有可匯出的排程</div>'; return; }
+  const from = $('from').value, to = $('to').value;
+  const showDone = $('showDone').checked;
+
+  $('title').textContent = p.name;
+  const rows = projJobs().filter(j => {
+    const e = j.end_date || j.start_date;
+    if (from && e < from) return false;
+    if (to && j.start_date > to) return false;
+    if (!showDone && j.status === 'done') return false;
+    return true;
+  });
+
+  const meta = [];
+  if (p.address) meta.push(`地址 <b>${esc(p.address)}</b>`);
+  if (p.expected_end) meta.push(`預計完工 <b>${md(pd(p.expected_end))}</b>`);
+  $('meta').innerHTML = meta.join('');
+
+  if (rows.length) {
+    const a = rows[0].start_date, b = rows.reduce((m,j) => (j.end_date||j.start_date) > m ? (j.end_date||j.start_date) : m, '');
+    meta.push(`期間 <b>${md(pd(a))} – ${md(pd(b))}</b>`);
+    $('meta').innerHTML = meta.join('');
+  }
+  if (!rows.length) { $('list').innerHTML = '<div class="empty">這段期間沒有排工班</div>'; stamp(); return; }
+
+  const byMonth = {};
+  rows.forEach(j => { const k = j.start_date.slice(0,7); (byMonth[k] = byMonth[k] || []).push(j); });
+  const MONTH = ['JANUARY','FEBRUARY','MARCH','APRIL','MAY','JUNE','JULY','AUGUST','SEPTEMBER','OCTOBER','NOVEMBER','DECEMBER'];
+
+  $('list').innerHTML = Object.keys(byMonth).sort().map(k => {
+    const [y,m] = k.split('-').map(Number);
+    return `<div class="month"><h3>${MONTH[m-1]} ${y}　${m}月</h3>` + byMonth[k].map(j => {
+      const s = pd(j.start_date), e = pd(j.end_date || j.start_date);
+      const days = Math.round((e - s) / 864e5) + 1;
+      const range = days > 1 ? `${md(s)}（${WK[s.getDay()]}）<br>至 ${md(e)}（${WK[e.getDay()]}）` : `${md(s)}（${WK[s.getDay()]}）`;
+      const title = j.trade || j.note || '施工';
+      return `<div class="row ${j.status==='done'?'done':''}">
+        <div class="d" contenteditable>${range}${days>1?`<small>共 ${days} 天</small>`:''}</div>
+        <div class="t" contenteditable>${esc(title)}</div>
+      </div>`;
+    }).join('') + '</div>';
+  }).join('');
+  stamp();
+}
+
+function stamp(){ const n = new Date(); $('stamp').textContent = `更新於 ${n.getFullYear()}/${n.getMonth()+1}/${n.getDate()}`; }
+
+$('proj').onchange = () => { setRange(); render(); };
+['from','to','showDone'].forEach(id => $(id).onchange = render);
+
+$('pdf').onclick = () => {
+  const old = document.title;
+  document.title = `${$('title').textContent}_施工日程表`;
+  window.print();
+  setTimeout(() => document.title = old, 500);
+};
+
+let shotUrl = '';
+function showShot(blob, name){
+  if (shotUrl) URL.revokeObjectURL(shotUrl);
+  shotUrl = URL.createObjectURL(blob);
+  $('shotImg').src = shotUrl; $('shotDl').href = shotUrl; $('shotDl').download = name;
+  $('shot').hidden = false;
+}
+$('shotClose').onclick = () => { $('shot').hidden = true; };
+$('png').onclick = async () => {
+  const btn = $('png'), label = btn.textContent; btn.textContent = '產生中…'; btn.disabled = true;
+  try {
+    document.activeElement && document.activeElement.blur();
+    if (document.fonts) await document.fonts.ready;
+    const canvas = await html2canvas($('sheet'), { scale: 2, backgroundColor: '#faf7f2', useCORS: true });
+    const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+    const name = `${$('title').textContent.trim()}_施工日程表.png`;
+    const file = new File([blob], name, { type: 'image/png' });
+    const mobile = /iPhone|iPad|Android|Mobi/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Mac/.test(navigator.platform));
+    let shared = false;
+    if (mobile && navigator.canShare && navigator.canShare({ files:[file] })) {
+      try { await navigator.share({ files:[file] }); shared = true; }
+      catch (e) { if (e.name === 'AbortError') shared = true; }
+    }
+    // 不支援分享（或電腦）：顯示圖片，可長按儲存／分享，或按下載
+    if (!shared) showShot(blob, name);
+  } catch (e) { alert('產生圖片失敗：' + e.message); }
+  btn.textContent = label; btn.disabled = false;
+};
+
+document.fonts && document.fonts.ready;
+boot();
+</script>
+</body>
+</html>
