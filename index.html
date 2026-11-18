@@ -12708,6 +12708,7 @@ function HbMaterialReportHub({onBack:onBack,notify:notify,projects:projects}){
         u.default.createElement("main",null,
           u.default.createElement("div",{className:"hb-dosBar"},
             u.default.createElement("span",{className:"hb-dosCount"},loading?"載入中…":filtered.length>0?filtered.length+" 份報告書":"尚無資料"),
+            u.default.createElement("button",{className:"hb-dosNew",style:{marginRight:8,background:"transparent",color:"inherit",border:"1px solid currentColor"},title:"用這個案件的材料、工班與照片產生交屋保養手冊",onClick:()=>HB_openHandbook(cat!=="all"&&cat!=="none"?cat:"")},"交屋保養手冊"),
             u.default.createElement("button",{className:"hb-dosNew",onClick:()=>setCreating(!0)},"＋ 新增材質報告書")),
           !loading&&filtered.length===0&&u.default.createElement("p",{className:"hb-dosEmpty"},"尚未建立任何材質報告書"),
           filtered.length>0&&u.default.createElement("ul",{className:"hb-dosList"},
@@ -17630,6 +17631,7 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
         h('span',{className:'wbk-agt'},HB_wbIcon('calendar',15),isToday?'今日待辦':md(day)+' 待辦'),
         pv&&h('button',{type:'button',className:'wbk-agn wbk-agpv',title:'改看全部案件',onClick:()=>{if(window.HB_caseCanLeave&&!window.HB_caseCanLeave())return;setProj&&setProj('')}},'只看「'+pvName+'」 ✕'),
         h('span',{className:'wbc-grow'}),
+        pvReal&&h('button',{type:'button',className:'wbk-agcrew',title:'產生這個案件的交屋保養手冊（自動帶入材料、工班）',onClick:()=>HB_openHandbook(pv)},'交屋手冊'),
         h('button',{type:'button',className:'wbk-agcrew',title:'產生業主看的工班日程圖，傳 LINE 給業主',onClick:()=>HB_openOwnerSchedule(pvReal?pv:'')},'業主日程'),
         h('button',{type:'button',className:'wbk-agcrew',title:'排工班（前一天 LINE 自動提醒師傅）',onClick:()=>HB_openCrewSheet({date:day,projectId:pvReal?pv:''})},HB_wbIcon('plus',13),'排工班'),
         h('button',{type:'button',className:'wbk-agtog','aria-expanded':agOn,onClick:()=>setAgOpen(!agOn)},agOn?'收合':'展開',HB_wbIcon('caret',14))),
@@ -18022,6 +18024,19 @@ function HB_openOwnerSchedule(projectId){
   return close;
 }
 window.HB_openOwnerSchedule=HB_openOwnerSchedule;
+/* ===== 交屋保養手冊（handbook.html）：選案件自動帶入業主、地址、材料、工班，相簿挑管線照片 ===== */
+function HB_openHandbook(projectId){
+  const wrap=document.createElement('div');wrap.className='hb-crewsheet hb-handbook';
+  const fr=document.createElement('iframe');fr.src='./handbook.html'+(projectId?'?project='+encodeURIComponent(projectId):'');fr.title='交屋保養手冊';
+  const spin=document.createElement('div');spin.className='hb-crewsheet-load';spin.textContent='載入交屋保養手冊…';
+  wrap.appendChild(spin);wrap.appendChild(fr);document.body.appendChild(wrap);document.documentElement.classList.add('hb-crewsheet-on');
+  fr.addEventListener('load',()=>{setTimeout(()=>spin.remove(),250)});
+  let closed=false;const close=()=>{if(closed)return;closed=true;window.removeEventListener('message',onMsg);wrap.remove();document.documentElement.classList.remove('hb-crewsheet-on')};
+  const onMsg=e=>{if(e.origin!==location.origin||e.source!==fr.contentWindow)return;if((e.data||{}).type==='hb-handbook')close()};
+  window.addEventListener('message',onMsg);
+  return close;
+}
+window.HB_openHandbook=HB_openHandbook;
 function HB_isCrewTask(t){return !!t&&t.source==='auto'&&String(t.id).indexOf('crew:')===0&&!!t.sourceId}
 function HbCrewSheet({jobId,onClose}){u.useEffect(()=>{let live=true;const stop=HB_openCrewSheet({jobId},()=>{if(live)onClose()});return()=>{live=false;stop()}},[jobId]);return null}
 function HbWbEditorOrCrew(props){return HB_isCrewTask(props.initial)?u.default.createElement(HbCrewSheet,{jobId:props.initial.sourceId,onClose:props.onClose}):u.default.createElement(HbWbEditor,props)}
@@ -18036,6 +18051,7 @@ html.hb-crewsheet-on,html.hb-crewsheet-on body{overflow:hidden}
 .wbk-agcrew{margin-right:8px}
 .hbc .hbc-owner{margin-left:5px}
 .hb-ownersched iframe{background:#efebe4}
+.hb-handbook iframe{background:#EDE5D6}
 `;document.head.appendChild(st)})();
 function HbWbEditor({initial,projects,today,onClose,onSave,onDelete}){
   const h=u.default.createElement,[v,setV]=u.useState({...initial}),set=(k,x)=>setV(p=>({...p,[k]:x}));

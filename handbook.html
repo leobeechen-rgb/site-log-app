@@ -1,0 +1,659 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>交屋保養手冊</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;700&family=Noto+Sans+TC:wght@400;500;700&family=Cormorant+Garamond:ital,wght@0,500;1,500&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<style>
+/* Layout: 左側編輯欄＋右側 A4 預覽；列印時只輸出 A4 頁 */
+:root{
+  --paper:#F6F1E8; --paper-2:#EDE5D6; --ink:#2A2622; --ink-2:#6E655B; --line:#D8CDBB;
+  --brick:#B4573A; --green:#2E4A3C; --white:#FFFDF9;
+  --f-display:"Noto Serif TC","Songti TC",serif;
+  --f-body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+  --f-latin:"Cormorant Garamond",Georgia,serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--paper-2);color:var(--ink);font:14px/1.6 var(--f-body)}
+button,input,select,textarea{font:inherit;color:inherit}
+.app{display:grid;grid-template-columns:420px 1fr;height:100%}
+@media (max-width:900px){.app{grid-template-columns:1fr;height:auto}.preview-wrap{height:auto}}
+
+/* ---------- 編輯欄 ---------- */
+.editor{background:var(--paper);border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+.ed-head{padding:18px 20px 12px;border-bottom:1px solid var(--line)}
+.ed-head h1{margin:0;font:700 19px/1.3 var(--f-display);letter-spacing:.04em}
+.ed-head p{margin:2px 0 0;color:var(--ink-2);font-size:12px}
+.ed-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.btn{border:1px solid var(--line);background:var(--white);padding:6px 12px;border-radius:4px;cursor:pointer;font-size:13px}
+.btn:hover{border-color:var(--ink-2)}
+.btn.primary{background:var(--brick);border-color:var(--brick);color:#fff}
+.btn.primary:hover{filter:brightness(.95)}
+.btn.ghost{background:transparent}
+.btn:focus-visible,.tab:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--brick);outline-offset:1px}
+.tabs{display:flex;border-bottom:1px solid var(--line);overflow-x:auto}
+.tab{flex:1;border:0;background:none;padding:10px 6px;cursor:pointer;font-size:13px;color:var(--ink-2);border-bottom:2px solid transparent;white-space:nowrap}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--brick);font-weight:700}
+.panel{padding:16px 20px 40px;overflow-y:auto;flex:1}
+.field{display:grid;gap:4px;margin-bottom:12px}
+.field label,.lbl{font-size:12px;color:var(--ink-2);letter-spacing:.04em}
+.field input,.field select,.field textarea,.row input,.row select,.row textarea{width:100%;border:1px solid var(--line);background:var(--white);padding:7px 9px;border-radius:4px}
+.field textarea{min-height:80px;resize:vertical}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sec-title{font:700 13px var(--f-display);margin:18px 0 8px;letter-spacing:.06em;color:var(--green)}
+.row{border:1px solid var(--line);background:var(--white);border-radius:6px;padding:10px;margin-bottom:10px;display:grid;gap:8px}
+.row .grid2 input,.row .grid2 select{padding:6px 8px}
+.row-top{display:flex;gap:8px;align-items:center}
+.row-top .idx{font:12px var(--f-latin);color:var(--brick);min-width:22px}
+.row-top select{flex:1}
+.icon-btn{border:0;background:none;color:var(--ink-2);cursor:pointer;padding:4px 6px;border-radius:4px;font-size:13px}
+.icon-btn:hover{background:var(--paper-2);color:var(--brick)}
+.hint{font-size:12px;color:var(--ink-2);margin:0 0 12px}
+.photo-row{display:grid;grid-template-columns:84px 1fr;gap:10px;align-items:start}
+.photo-row img{width:84px;height:84px;object-fit:cover;border-radius:4px;border:1px solid var(--line)}
+.drop{border:1.5px dashed var(--line);border-radius:6px;padding:18px;text-align:center;color:var(--ink-2);cursor:pointer;background:var(--white);margin-bottom:12px}
+.drop.over{border-color:var(--brick);color:var(--brick)}
+.care-item{margin-bottom:10px}
+.care-item summary{cursor:pointer;font-weight:500;padding:4px 0}
+.care-item textarea{width:100%;min-height:110px;border:1px solid var(--line);border-radius:4px;padding:8px;background:var(--white);margin-top:4px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:8px 16px;border-radius:4px;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.show{opacity:1}
+[hidden],.modal[hidden]{display:none!important}
+.modal{position:fixed;inset:0;background:rgba(42,38,34,.45);display:grid;place-items:center;padding:16px;z-index:20}
+.modal-card{background:var(--paper);border-radius:8px;padding:20px;width:min(560px,100%);display:grid;gap:10px}
+.modal-card h2{margin:0;font:700 17px var(--f-display)}
+.modal-card .hint{margin:0}
+.modal-card textarea{width:100%;height:220px;border:1px solid var(--line);border-radius:4px;padding:8px;font:12px/1.4 ui-monospace,Menlo,monospace;background:var(--white);word-break:break-all}
+
+.pk-albums{display:flex;flex-wrap:wrap;gap:6px}
+.pk-albums button{border:1px solid var(--line);background:var(--white);border-radius:999px;padding:4px 12px;font-size:12px;cursor:pointer}
+.pk-albums button[aria-pressed="true"]{background:var(--green);border-color:var(--green);color:var(--paper)}
+.pk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;overflow:auto;min-height:160px}
+.pk-grid label{position:relative;cursor:pointer;display:block}
+.pk-grid img{width:100%;aspect-ratio:1;object-fit:cover;display:block;border-radius:4px;border:2px solid transparent}
+.pk-grid input{position:absolute;top:6px;left:6px;width:18px;height:18px;accent-color:var(--brick)}
+.pk-grid input:checked+img{border-color:var(--brick)}
+.pk-grid .empty{grid-column:1/-1}
+/* ---------- 預覽 ---------- */
+.preview-wrap{overflow:auto;height:100%;padding:28px 16px 60px}
+.pages{display:flex;flex-direction:column;align-items:center;gap:24px}
+.page{width:210mm;min-height:297mm;background:var(--white);box-shadow:0 2px 14px rgba(60,40,20,.12);padding:20mm 18mm 18mm;position:relative;display:flex;flex-direction:column}
+@media (max-width:900px){.page{transform-origin:top center}}
+.pg-head{display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid var(--ink);padding-bottom:6px;margin-bottom:14px}
+.pg-head .t{font:700 17px var(--f-display);letter-spacing:.08em}
+.pg-head .e{font:italic 13px var(--f-latin);color:var(--ink-2);letter-spacing:.05em}
+.pg-foot{margin-top:auto;padding-top:10px;display:flex;justify-content:space-between;font-size:9pt;color:var(--ink-2);border-top:1px solid var(--line)}
+.pg-foot .n{font-family:var(--f-latin);font-size:11pt}
+
+/* 封面 */
+.cover{padding:0;overflow:hidden}
+.cover-band{background:var(--green);color:var(--paper);padding:22mm 18mm 16mm}
+.cover-band .brand{font:500 11pt var(--f-latin);letter-spacing:.32em}
+.cover-band .brand-zh{font-size:9pt;letter-spacing:.3em;opacity:.8;margin-top:2px}
+.cover-main{padding:26mm 18mm 0;flex:1;display:flex;flex-direction:column}
+.cover-eyebrow{font:italic 15pt var(--f-latin);color:var(--brick);letter-spacing:.04em}
+.cover-title{font:700 34pt/1.25 var(--f-display);letter-spacing:.1em;margin:6px 0 4px;text-wrap:balance}
+.cover-sub{font:700 15pt var(--f-display);letter-spacing:.2em;color:var(--ink-2)}
+.cover-rule{width:44px;height:3px;background:var(--brick);margin:22px 0}
+.cover-meta{display:grid;grid-template-columns:auto 1fr;gap:6px 18px;font-size:11pt}
+.cover-meta dt{color:var(--ink-2);letter-spacing:.1em}
+.cover-meta dd{margin:0}
+.cover-bottom{margin-top:auto;padding:0 18mm 16mm;display:flex;justify-content:space-between;align-items:flex-end;font-size:9pt;color:var(--ink-2)}
+.cover-bottom .no{font:500 26pt var(--f-latin);color:var(--brick);line-height:1}
+
+/* 內頁內容 */
+.lead{font-size:10.5pt;color:var(--ink-2);margin:0 0 12px}
+table.t{width:100%;border-collapse:collapse;font-size:9.5pt}
+table.t th{text-align:left;font-weight:700;color:var(--green);border-bottom:1.5px solid var(--green);padding:5px 6px;font-size:9pt;letter-spacing:.06em;white-space:nowrap}
+table.t td{border-bottom:1px solid var(--line);padding:6px;vertical-align:top}
+table.t td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+.zone-row td{background:var(--paper);font-weight:700;font-size:9pt;letter-spacing:.1em;color:var(--brick)}
+.tag{display:inline-block;font-size:8pt;padding:0 6px;border:1px solid var(--line);border-radius:3px;color:var(--ink-2)}
+.exp-soon{color:var(--brick);font-weight:700}
+.care{margin-bottom:12px;break-inside:avoid}
+.care h3{font:700 11.5pt var(--f-display);margin:0 0 4px;display:flex;gap:8px;align-items:baseline}
+.care h3 small{font:400 8.5pt var(--f-body);color:var(--ink-2)}
+.care ul{margin:0;padding-left:1.2em;font-size:9.8pt}
+.care li{margin:1px 0}
+.care li.no{color:var(--brick)}
+.photos{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.ph{break-inside:avoid}
+.ph img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block;border:1px solid var(--line);max-width:100%}
+.ph .cap{font-size:9pt;margin-top:4px;display:flex;gap:6px}
+.ph .cap b{color:var(--brick);font-family:var(--f-latin);font-size:11pt;font-weight:500}
+.contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}
+.contact{border:1px solid var(--line);padding:8px 10px;font-size:9.5pt}
+.contact .who{font-weight:700}
+.contact .what{color:var(--ink-2);font-size:8.5pt}
+.box{background:var(--paper);padding:10px 12px;font-size:9.8pt;white-space:pre-wrap;margin-bottom:12px}
+.steps{counter-reset:s;list-style:none;padding:0;margin:0 0 14px;font-size:10pt}
+.steps li{counter-increment:s;padding-left:28px;position:relative;margin-bottom:5px}
+.steps li::before{content:counter(s);position:absolute;left:0;top:0;width:19px;height:19px;border-radius:50%;background:var(--brick);color:#fff;font-size:9pt;display:grid;place-items:center}
+.sign{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:18px;font-size:9.5pt}
+.sign div{border-top:1px solid var(--ink);padding-top:4px;color:var(--ink-2)}
+.empty{color:var(--ink-2);font-size:10pt;border:1px dashed var(--line);padding:16px;text-align:center}
+
+@page{size:A4;margin:0}
+@media print{
+  body{background:#fff}
+  .editor,.toast{display:none!important}
+  .app{display:block;height:auto}
+  .preview-wrap{overflow:visible;height:auto;padding:0}
+  .pages{gap:0}
+  .page{box-shadow:none;width:210mm;height:297mm;min-height:0;break-after:page;transform:none!important;overflow:hidden}
+  .page:last-child{break-after:auto}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="editor">
+    <div class="ed-head">
+      <h1>交屋保養手冊產生器</h1>
+      <p id="edSub">填好資料後按「列印／存 PDF」交給業主。資料會自動存在這台電腦的瀏覽器。</p>
+      <label class="field" id="projField" hidden style="margin:10px 0 0"><span class="lbl">案件</span><select id="projSel"></select></label>
+      <div class="ed-actions">
+        <button class="btn primary" id="btnPrint">列印／存 PDF</button>
+        <button class="btn" id="btnSync" hidden>從工地紀錄本帶入</button>
+        <button class="btn" id="btnPick" hidden>選工地照片</button>
+        <button class="btn ghost" id="btnClose" hidden>關閉</button>
+        <button class="btn" id="btnExport">匯出 JSON</button>
+        <button class="btn" id="btnImport">匯入 JSON</button>
+        <button class="btn" id="btnCopy">複製資料碼</button>
+        <button class="btn" id="btnPaste">貼上資料碼</button>
+        <button class="btn ghost" id="btnNew">新案件</button>
+        <input type="file" id="fileImport" accept=".json,application/json" hidden>
+      </div>
+    </div>
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" data-tab="info" aria-selected="true">基本資料</button>
+      <button class="tab" role="tab" data-tab="mat" aria-selected="false">材料設備</button>
+      <button class="tab" role="tab" data-tab="photo" aria-selected="false">管線照片</button>
+      <button class="tab" role="tab" data-tab="contact" aria-selected="false">保固聯絡</button>
+      <button class="tab" role="tab" data-tab="care" aria-selected="false">保養範本</button>
+    </div>
+    <div class="panel" id="panel"></div>
+  </aside>
+  <main class="preview-wrap"><div class="pages" id="pages"></div></main>
+</div>
+<div class="toast" id="toast" role="status"></div>
+<div class="modal" id="pick" hidden>
+  <div class="modal-card" role="dialog" aria-labelledby="pkTitle" style="width:min(820px,100%);max-height:92vh;grid-template-rows:auto auto auto 1fr auto">
+    <h2 id="pkTitle">選工地照片放進手冊</h2>
+    <p class="hint">選拆封板、貼磚前拍的水電、冷氣、排水管線照片。勾好後按「加入手冊」，位置與說明之後在「管線照片」分頁填。</p>
+    <div class="pk-albums" id="pkAlbums"></div>
+    <div class="pk-grid" id="pkGrid"></div>
+    <div class="ed-actions" style="justify-content:flex-end"><span class="lbl" id="pkCount" style="margin-right:auto;align-self:center"></span>
+      <button class="btn ghost" id="pkClose">取消</button><button class="btn primary" id="pkOk">加入手冊</button></div>
+  </div>
+</div>
+<div class="modal" id="modal" hidden>
+  <div class="modal-card" role="dialog" aria-labelledby="mTitle">
+    <h2 id="mTitle"></h2>
+    <p class="hint" id="mHint"></p>
+    <textarea id="mText" spellcheck="false"></textarea>
+    <div class="ed-actions" style="justify-content:flex-end">
+      <button class="btn ghost" id="mClose">關閉</button>
+      <button class="btn primary" id="mOk"></button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ================= 保養範本庫（可在「保養範本」分頁修改） ================= */
+const CARE_DEFAULT = {
+  "系統櫃":"日常以擰乾的軟布擦拭，避免直接用水沖洗\n板材接縫與封邊處勿長時間浸水\n鉸鍊、滑軌若有異音可滴少量縫紉機油\n避免放置超過層板承重的重物（一般約 25 kg／層）\n!勿使用含酸鹼、去漬油的清潔劑",
+  "木作櫃／實木皮":"以乾布或微濕布順著木紋擦拭\n避免陽光長時間直射，以免褪色\n室內濕度保持 50–65%，梅雨季開除濕機\n!勿放置高溫鍋具或直接貼放熱源",
+  "超耐磨木地板":"以吸塵器或靜電拖把清潔，拖地用擰乾的拖把\n家具腳加裝防刮墊，避免拖拉重物\n門口放置地墊，減少砂石刮傷\n!勿使用蒸氣拖把，勿讓水長時間積留",
+  "實木／海島型地板":"以擰乾拖把清潔，打翻液體立即擦乾\n室內保持通風，梅雨季開除濕機\n每 1–2 年可做一次木地板保養油\n!勿使用蒸氣拖把及強鹼清潔劑",
+  "磁磚":"以中性清潔劑加溫水擦拭\n填縫劑發黑可用小刷子加稀釋漂白水處理\n浴室使用後開抽風機或保持通風\n!勿使用鹽酸類清潔劑，會侵蝕填縫劑",
+  "大理石／天然石材":"以中性清潔劑清潔，打翻醋、果汁、咖啡應立即擦拭\n建議每 1–2 年做一次石材防護\n!勿使用酸性清潔劑（含檸檬酸、醋、鹽酸）",
+  "石英石／人造石檯面":"以中性清潔劑與軟布清潔\n熱鍋請放隔熱墊，切菜請使用砧板\n!勿用鋼刷、菜瓜布硬面刷洗",
+  "乳膠漆牆面":"一般污漬以微濕軟布輕擦\n掛畫請使用專用掛勾或請師傅鑽孔\n小面積補漆請聯繫設計師提供色號\n!勿用力刷洗或使用溶劑類清潔劑",
+  "特殊塗料（礦物塗料、樂土等）":"以乾布或撣子除塵\n局部污漬以微濕布輕拍，勿來回擦\n!避免碰撞與尖銳物刮擦",
+  "鋁窗／氣密窗":"軌道每月以吸塵器清除灰塵與砂粒\n膠條勿使用溶劑，以清水擦拭\n颱風前確認窗戶上鎖、排水孔暢通",
+  "衛浴設備／五金":"使用後以軟布擦乾，減少水垢\n水龍頭起泡器每 3–6 個月拆下清洗\n馬桶水箱零件若漏水請聯繫保固\n!勿使用菜瓜布、強酸鹼清潔劑",
+  "廚具／廚房設備":"排油煙機濾網每 1–2 個月清洗\n水槽下方定期檢查有無滲水\n爐具清潔前確認已關閉電源與瓦斯",
+  "燈具／電氣":"清潔燈具前請先關閉電源\n跳電請先檢查漏電斷路器，查不出原因請聯繫水電師傅\n!勿自行拆裝配電箱",
+  "其他":"依原廠說明書保養"
+};
+
+/* ================= 範例資料 ================= */
+const SAMPLE = {
+  info:{
+    caseName:"範例｜民族路陳公館", owner:"陳先生", address:"嘉義市東區民族路 ○○ 號 ○ 樓",
+    handover:"2026-10-31", area:"38", type:"電梯大樓・三房兩廳", caseNo:"HS-2026-014",
+    intro:"感謝您將家交給我們。這本手冊記錄了家中使用的材料、設備與隱藏管線位置，請妥善保存，日後保養、維修或再次裝修時都會用得到。"
+  },
+  company:{name:"赫柏空間設計",en:"HERFULSINS",address:"嘉義市西區新民路168號",phone:"",line:"",email:"",designer:"陳奕菁"},
+  materials:[
+    {zone:"客廳",cat:"乳膠漆牆面",item:"主牆面",brand:"得利 竹炭健康乳膠漆",spec:"色號 ○○○○",vendor:"",years:1},
+    {zone:"客廳",cat:"超耐磨木地板",item:"全室地坪",brand:"○○ 超耐磨木地板",spec:"型號 ○○ / 8mm",vendor:"",years:10},
+    {zone:"客廳",cat:"木作櫃／實木皮",item:"電視櫃",brand:"木作訂製",spec:"橡木實木皮",vendor:"",years:1},
+    {zone:"廚房",cat:"石英石／人造石檯面",item:"廚具檯面",brand:"○○ 石英石",spec:"白色細紋",vendor:"",years:5},
+    {zone:"廚房",cat:"廚具／廚房設備",item:"排油煙機",brand:"○○ 排油煙機",spec:"型號 ○○○",vendor:"",years:2},
+    {zone:"主臥",cat:"系統櫃",item:"衣櫃",brand:"○○ 系統板材",spec:"E1 / 18mm",vendor:"",years:5},
+    {zone:"主浴",cat:"磁磚",item:"壁磚／地磚",brand:"○○ 磁磚",spec:"30×60 霧面",vendor:"",years:1},
+    {zone:"主浴",cat:"衛浴設備／五金",item:"馬桶",brand:"○○ 衛浴",spec:"型號 ○○○",vendor:"",years:5}
+  ],
+  photos:[],
+  contacts:[
+    {role:"水電",name:"",phone:"",note:"漏水、跳電、插座"},
+    {role:"木作",name:"",phone:"",note:"櫃體、門片調整"}
+  ],
+  warranty:{
+    general:"本案工程自交屋日起保固一年（結構性防水依合約約定）。\n設備類依原廠保固年限，請保留發票與保固卡。\n人為損壞、天災、自行改裝不在保固範圍。",
+    howto:"拍照或錄影問題位置\n傳 LINE 給設計師，說明發生時間與狀況\n設計師安排師傅到場檢查\n保固內免費修繕；保固外會先報價再施工"
+  },
+  care:{}
+};
+
+/* ================= 狀態 ================= */
+const QS=new URLSearchParams(location.search);
+const EMBED=window.parent!==window;
+let PROJECT=QS.get("project")||"";
+const BASE_KEY="herfulsins-handbook-v1";
+let KEY=PROJECT?BASE_KEY+":"+PROJECT:BASE_KEY;
+let S;
+try{ S=JSON.parse(localStorage.getItem(KEY)); }catch(e){}
+const FRESH=!S;
+if(!S) S=PROJECT?blankCase():structuredClone(SAMPLE);
+function blankCase(){
+  let prev={};try{prev=JSON.parse(localStorage.getItem(BASE_KEY))||{};}catch(e){}
+  return {info:{caseName:"",owner:"",address:"",handover:new Date().toISOString().slice(0,10),area:"",type:"",caseNo:"",intro:SAMPLE.info.intro},
+    company:prev.company||structuredClone(SAMPLE.company),materials:[],photos:[],
+    contacts:[],warranty:prev.warranty||structuredClone(SAMPLE.warranty),care:prev.care||{}};
+}
+const careOf=c=>(S.care&&S.care[c]!=null)?S.care[c]:(CARE_DEFAULT[c]||"");
+let tab="info";
+let saveT;
+function save(){ clearTimeout(saveT); saveT=setTimeout(()=>{ try{localStorage.setItem(KEY,JSON.stringify(S));
+  if(KEY!==BASE_KEY){ let b={};try{b=JSON.parse(localStorage.getItem(BASE_KEY))||{};}catch(e){} b.company=S.company;b.care=S.care;b.warranty=S.warranty; if(!b.info){b.info=structuredClone(SAMPLE.info);b.materials=[];b.photos=[];b.contacts=[];} localStorage.setItem(BASE_KEY,JSON.stringify(b)); }
+}catch(e){toast("瀏覽器空間不足，照片太多時請先匯出 JSON");} },300); }
+function toast(m){const t=document.getElementById("toast");t.textContent=m;t.classList.add("show");clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("show"),2200);}
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const lines=s=>String(s||"").split("\n").map(x=>x.trim()).filter(Boolean);
+
+function addYears(d,y){ if(!d||!y) return ""; const t=new Date(d+"T00:00:00"); if(isNaN(t)) return ""; t.setFullYear(t.getFullYear()+Number(y)); return t.toISOString().slice(0,10); }
+function fmt(d){ if(!d) return "—"; const [y,m,dd]=d.split("-"); return `${y}.${m}.${dd}`; }
+
+/* ================= 編輯欄 ================= */
+const P=document.getElementById("panel");
+function f(label,path,opt={}){
+  const v=get(path)??"";
+  const id="f_"+path.replace(/\W/g,"_");
+  const inp=opt.area?`<textarea id="${id}" data-p="${path}">${esc(v)}</textarea>`
+    :`<input id="${id}" data-p="${path}" type="${opt.type||"text"}" value="${esc(v)}" placeholder="${esc(opt.ph||"")}">`;
+  return `<div class="field"><label for="${id}">${label}</label>${inp}</div>`;
+}
+function get(p){return p.split(".").reduce((o,k)=>o?.[k],S);}
+function set(p,v){const ks=p.split(".");let o=S;ks.slice(0,-1).forEach(k=>o=o[k]);o[ks.at(-1)]=v;}
+const catOpts=sel=>Object.keys(CARE_DEFAULT).map(c=>`<option ${c===sel?"selected":""}>${c}</option>`).join("");
+
+function renderPanel(){
+  if(tab==="info"){
+    P.innerHTML=`
+      <div class="sec-title">案件</div>
+      ${f("案名","info.caseName")}
+      <div class="grid2">${f("業主稱謂","info.owner")}${f("案件編號","info.caseNo")}</div>
+      ${f("地址","info.address")}
+      <div class="grid2">${f("交屋日期","info.handover",{type:"date"})}${f("坪數","info.area",{ph:"例如 38"})}</div>
+      ${f("房型","info.type",{ph:"透天三層／電梯大樓三房"})}
+      ${f("給業主的一段話","info.intro",{area:1})}
+      <div class="sec-title">公司</div>
+      <div class="grid2">${f("公司名稱","company.name")}${f("英文名","company.en")}</div>
+      ${f("地址","company.address")}
+      <div class="grid2">${f("設計師","company.designer")}${f("電話","company.phone")}</div>
+      <div class="grid2">${f("LINE ID","company.line")}${f("E-mail","company.email")}</div>`;
+  }
+  if(tab==="mat"){
+    P.innerHTML=`<p class="hint">選擇材料類別後，保養方式會自動帶入手冊。保固到期日依交屋日期計算。</p>`+
+      S.materials.map((m,i)=>`
+      <div class="row" data-i="${i}">
+        <div class="row-top"><span class="idx">${String(i+1).padStart(2,"0")}</span>
+          <select data-m="cat" aria-label="類別">${catOpts(m.cat)}</select>
+          <button class="icon-btn" data-act="up" title="上移">↑</button>
+          <button class="icon-btn" data-act="del" title="刪除">刪除</button></div>
+        <div class="grid2"><input data-m="zone" value="${esc(m.zone)}" placeholder="區域（客廳）" aria-label="區域"><input data-m="item" value="${esc(m.item)}" placeholder="項目（電視櫃）" aria-label="項目"></div>
+        <input data-m="brand" value="${esc(m.brand)}" placeholder="品牌／產品名" aria-label="品牌">
+        <div class="grid2"><input data-m="spec" value="${esc(m.spec)}" placeholder="型號／色號／規格" aria-label="型號"><input data-m="vendor" value="${esc(m.vendor)}" placeholder="廠商／電話" aria-label="廠商"></div>
+        <div class="grid2"><select data-m="years" aria-label="保固年限">${[0,1,2,3,5,10,15,20].map(y=>`<option value="${y}" ${Number(m.years)===y?"selected":""}>${y?`保固 ${y} 年`:"無保固"}</option>`).join("")}</select>
+          <span class="lbl" style="align-self:center">到期 ${fmt(addYears(S.info.handover,m.years))}</span></div>
+      </div>`).join("")+`<button class="btn" id="addMat">＋ 新增材料／設備</button>`;
+  }
+  if(tab==="photo"){
+    P.innerHTML=`<p class="hint">放拆封板前拍的水電管線、冷氣管、排水位置照片。日後鑽孔或漏水檢修時用得到。</p>
+      <div class="drop" id="drop" tabindex="0">拖曳照片到這裡，或點一下選擇照片<input type="file" id="phFile" accept="image/*" multiple hidden></div>`+
+      (S.photos.length?S.photos.map((p,i)=>`
+      <div class="row photo-row" data-i="${i}"><img src="${p.src}" alt="">
+        <div style="display:grid;gap:6px">
+          <input data-ph="title" value="${esc(p.title)}" placeholder="位置（例：客廳電視牆）" aria-label="位置">
+          <textarea data-ph="note" placeholder="說明（例：插座管線離地 30cm 橫走，勿於 20–40cm 高度鑽孔）" aria-label="說明" style="min-height:56px">${esc(p.note)}</textarea>
+          <div><button class="icon-btn" data-act="up">↑ 上移</button><button class="icon-btn" data-act="del">刪除</button></div>
+        </div></div>`).join(""):`<p class="hint">還沒有照片。</p>`);
+    const drop=document.getElementById("drop"),fi=document.getElementById("phFile");
+    drop.onclick=()=>fi.click(); drop.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();fi.click();}};
+    fi.onchange=()=>addPhotos(fi.files);
+    drop.ondragover=e=>{e.preventDefault();drop.classList.add("over");};
+    drop.ondragleave=()=>drop.classList.remove("over");
+    drop.ondrop=e=>{e.preventDefault();drop.classList.remove("over");addPhotos(e.dataTransfer.files);};
+  }
+  if(tab==="contact"){
+    P.innerHTML=`<div class="sec-title">保固說明</div>${f("保固條款（一行一條）","warranty.general",{area:1})}
+      ${f("報修流程（一行一步）","warranty.howto",{area:1})}
+      <div class="sec-title">師傅／廠商聯絡</div>`+
+      S.contacts.map((c,i)=>`<div class="row" data-i="${i}">
+        <div class="grid2"><input data-c="role" value="${esc(c.role)}" placeholder="工種（水電）" aria-label="工種"><input data-c="name" value="${esc(c.name)}" placeholder="姓名／公司" aria-label="姓名"></div>
+        <div class="grid2"><input data-c="phone" value="${esc(c.phone)}" placeholder="電話" aria-label="電話"><input data-c="note" value="${esc(c.note)}" placeholder="負責項目" aria-label="負責項目"></div>
+        <div><button class="icon-btn" data-act="del">刪除</button></div></div>`).join("")+
+      `<button class="btn" id="addCon">＋ 新增聯絡人</button>`;
+  }
+  if(tab==="care"){
+    P.innerHTML=`<p class="hint">每行一條保養重點；以「!」開頭的會標成紅色注意事項。修改會套用到所有案件（存在這台電腦）。</p>`+
+      Object.keys(CARE_DEFAULT).map(c=>`<details class="care-item"><summary>${c}</summary>
+        <textarea data-care="${esc(c)}" aria-label="${esc(c)}">${esc(careOf(c))}</textarea>
+        <button class="icon-btn" data-reset="${esc(c)}">恢復預設</button></details>`).join("");
+  }
+}
+
+P.addEventListener("input",e=>{
+  const t=e.target, row=t.closest(".row"), i=row?.dataset.i;
+  if(t.dataset.p){ set(t.dataset.p,t.value); }
+  else if(t.dataset.m){ S.materials[i][t.dataset.m]=t.value; if(t.dataset.m==="years") renderPanel(); }
+  else if(t.dataset.ph){ S.photos[i][t.dataset.ph]=t.value; }
+  else if(t.dataset.c){ S.contacts[i][t.dataset.c]=t.value; }
+  else if(t.dataset.care){ S.care=S.care||{}; S.care[t.dataset.care]=t.value; }
+  else return;
+  if(t.dataset.p==="info.handover" && tab==="mat") renderPanel();
+  save(); renderPages();
+});
+P.addEventListener("change",e=>{ if(e.target.dataset.m==="cat"||e.target.dataset.m==="years"){ P.dispatchEvent(new Event("input")); } });
+P.addEventListener("click",e=>{
+  const b=e.target.closest("button"); if(!b) return;
+  if(b.id==="addMat"){ const last=S.materials.at(-1); S.materials.push({zone:last?.zone||"",cat:"其他",item:"",brand:"",spec:"",vendor:"",years:1}); }
+  else if(b.id==="addCon"){ S.contacts.push({role:"",name:"",phone:"",note:""}); }
+  else if(b.dataset.reset){ if(S.care) delete S.care[b.dataset.reset]; }
+  else if(b.dataset.act){
+    const i=+b.closest(".row").dataset.i;
+    const arr=tab==="mat"?S.materials:tab==="photo"?S.photos:S.contacts;
+    if(b.dataset.act==="del") arr.splice(i,1);
+    if(b.dataset.act==="up"&&i>0) [arr[i-1],arr[i]]=[arr[i],arr[i-1]];
+  } else return;
+  save(); renderPanel(); renderPages();
+});
+
+function addPhotos(files){
+  [...files].filter(f=>f.type.startsWith("image/")).forEach(file=>{
+    const r=new FileReader();
+    r.onload=()=>{ const img=new Image(); img.onload=()=>{
+      const max=1400, k=Math.min(1,max/Math.max(img.width,img.height));
+      const c=document.createElement("canvas"); c.width=img.width*k; c.height=img.height*k;
+      c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+      S.photos.push({src:c.toDataURL("image/jpeg",.78),title:file.name.replace(/\.[^.]+$/,""),note:""});
+      save(); renderPanel(); renderPages();
+    }; img.src=r.result; };
+    r.readAsDataURL(file);
+  });
+}
+
+document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
+  tab=t.dataset.tab; document.querySelectorAll(".tab").forEach(x=>x.setAttribute("aria-selected",x===t)); renderPanel();
+});
+
+/* ================= 手冊頁面 ================= */
+function head(t,e){return `<div class="pg-head"><span class="t">${t}</span><span class="e">${e}</span></div>`;}
+function foot(n){return `<div class="pg-foot"><span>${esc(S.company.name)}　${esc(S.info.caseName)}</span><span class="n">${n}</span></div>`;}
+function chunk(a,n){const r=[];for(let i=0;i<a.length;i+=n)r.push(a.slice(i,i+n));return r;}
+
+function renderPages(){
+  const I=S.info,C=S.company, pages=[];
+  // 封面
+  pages.push(`<section class="page cover">
+    <div class="cover-band"><div class="brand">${esc(C.en)}</div><div class="brand-zh">${esc(C.name)}</div></div>
+    <div class="cover-main">
+      <div class="cover-eyebrow">Home Care Handbook</div>
+      <div class="cover-title">${esc(I.caseName||"未命名案件")}</div>
+      <div class="cover-sub">交屋保養手冊</div>
+      <div class="cover-rule"></div>
+      <dl class="cover-meta">
+        <dt>業主</dt><dd>${esc(I.owner)||"—"}</dd>
+        <dt>地址</dt><dd>${esc(I.address)||"—"}</dd>
+        <dt>房型</dt><dd>${esc(I.type)||"—"}${I.area?`　${esc(I.area)} 坪`:""}</dd>
+        <dt>交屋日期</dt><dd>${fmt(I.handover)}</dd>
+      </dl>
+      ${I.intro?`<p class="lead" style="margin-top:22px;max-width:36em">${esc(I.intro)}</p>`:""}
+    </div>
+    <div class="cover-bottom"><div>${esc(C.address)}<br>設計師 ${esc(C.designer)}${C.phone?`　${esc(C.phone)}`:""}</div><div class="no">${esc(I.caseNo)}</div></div>
+  </section>`);
+
+  // 材料設備清單（依區域分組）
+  const rows=[]; let z=null;
+  S.materials.forEach(m=>{ if(m.zone!==z){z=m.zone;rows.push({zone:z});} rows.push(m); });
+  const matChunks=chunk(rows,22);
+  (matChunks.length?matChunks:[[]]).forEach((ch,k)=>{
+    pages.push(`<section class="page">${head("材料與設備清單","Materials")}
+      ${k===0?`<p class="lead">日後補料、修繕或購買相同產品時，請依下表的品牌與型號洽詢。</p>`:""}
+      ${ch.length?`<table class="t"><thead><tr><th>項目</th><th>類別</th><th>品牌／產品</th><th>型號／色號</th><th>廠商</th></tr></thead><tbody>
+      ${ch.map(r=>r.zone!==undefined&&!r.cat?`<tr class="zone-row"><td colspan="5">${esc(r.zone||"未分區")}</td></tr>`
+        :`<tr><td>${esc(r.item)}</td><td><span class="tag">${esc(r.cat)}</span></td><td>${esc(r.brand)}</td><td>${esc(r.spec)}</td><td>${esc(r.vendor)}</td></tr>`).join("")}
+      </tbody></table>`:`<div class="empty">尚未填寫材料</div>`}
+      ${foot("")}</section>`);
+  });
+
+  // 保養方式（只列本案用到的類別）
+  const used=[...new Set(S.materials.map(m=>m.cat))].filter(c=>lines(careOf(c)).length);
+  const careBlocks=used.map(c=>{
+    const where=[...new Set(S.materials.filter(m=>m.cat===c).map(m=>[m.zone,m.item].filter(Boolean).join(" ")))].join("、");
+    return `<div class="care"><h3>${esc(c)}<small>${esc(where)}</small></h3><ul>${lines(careOf(c)).map(l=>l.startsWith("!")?`<li class="no">注意：${esc(l.slice(1))}</li>`:`<li>${esc(l)}</li>`).join("")}</ul></div>`;
+  });
+  chunk(careBlocks,6).forEach((ch,k)=>pages.push(`<section class="page">${head("日常保養方式","Care Guide")}
+    ${k===0?`<p class="lead">依本案實際使用的材料整理。不確定的清潔方式，先在不明顯處試用，或傳訊息問設計師。</p>`:""}
+    ${ch.join("")}${foot("")}</section>`));
+
+  // 管線照片
+  if(S.photos.length){
+    chunk(S.photos,4).forEach((ch,k)=>pages.push(`<section class="page">${head("隱藏管線位置","Concealed Services")}
+      ${k===0?`<p class="lead">以下照片拍攝於封板、貼磚前。鑽孔、掛重物或檢修漏水前請先對照。</p>`:""}
+      <div class="photos">${ch.map((p,j)=>`<figure class="ph" style="margin:0"><img src="${p.src}" alt="${esc(p.title)}">
+        <figcaption class="cap"><b>${String(k*4+j+1).padStart(2,"0")}</b><span><strong>${esc(p.title)}</strong><br>${esc(p.note)}</span></figcaption></figure>`).join("")}</div>
+      ${foot("")}</section>`));
+  }
+
+  // 保固一覽＋報修
+  const wl=S.materials.filter(m=>Number(m.years)>0);
+  const today=new Date().toISOString().slice(0,10);
+  pages.push(`<section class="page">${head("保固與報修","Warranty")}
+    <div class="box">${esc(S.warranty.general)}</div>
+    ${wl.length?`<table class="t" style="margin-bottom:16px"><thead><tr><th>區域</th><th>項目</th><th>品牌／型號</th><th>保固</th><th>到期日</th></tr></thead><tbody>
+      ${wl.map(m=>{const ex=addYears(I.handover,m.years);return `<tr><td>${esc(m.zone)}</td><td>${esc(m.item)}</td><td>${esc(m.brand)} ${esc(m.spec)}</td><td class="num">${m.years} 年</td><td class="num ${ex&&ex<today?"exp-soon":""}">${fmt(ex)}</td></tr>`;}).join("")}
+    </tbody></table>`:""}
+    <div class="sec-title" style="margin-top:4px">報修流程</div>
+    <ol class="steps">${lines(S.warranty.howto).map(l=>`<li>${esc(l)}</li>`).join("")}</ol>
+    <div class="sec-title">聯絡方式</div>
+    <div class="contact-grid">
+      <div class="contact"><div class="who">${esc(C.name)}　${esc(C.designer)}</div><div>${[C.phone,C.line&&("LINE "+C.line),C.email].filter(Boolean).map(esc).join("　")||"—"}</div><div class="what">設計與保固總窗口，有問題請先聯繫</div></div>
+      ${S.contacts.filter(c=>c.role||c.name).map(c=>`<div class="contact"><div class="who">${esc(c.role)}　${esc(c.name)}</div><div>${esc(c.phone)||"—"}</div><div class="what">${esc(c.note)}</div></div>`).join("")}
+    </div>
+    <div class="sign"><div>業主簽收</div><div>交屋日期　${fmt(I.handover)}</div></div>
+    ${foot("")}</section>`);
+
+  const el=document.getElementById("pages");
+  el.innerHTML=pages.join("");
+  [...el.querySelectorAll(".page:not(.cover) .pg-foot .n")].forEach((n,i)=>n.textContent=String(i+2).padStart(2,"0"));
+  fitPreview();
+}
+function fitPreview(){
+  const w=document.querySelector(".preview-wrap").clientWidth-32, pw=794;
+  document.querySelectorAll(".page").forEach(p=>{ const k=Math.min(1,w/pw); p.style.transform=k<1?`scale(${k})`:""; p.style.marginBottom=k<1?`${-(1-k)*p.offsetHeight}px`:""; p.style.transformOrigin="top center"; });
+}
+addEventListener("resize",fitPreview);
+
+/* ================= 工具列 ================= */
+let printed=false;
+addEventListener("beforeprint",()=>printed=true);
+document.getElementById("btnPrint").onclick=()=>{
+  printed=false;
+  try{ window.print(); }catch(e){}
+  setTimeout(()=>{ if(!printed) openModal("copy",
+    "這個視窗不能列印",
+    "目前是在預覽視窗裡，列印和下載都被擋住了。請先按「複製」把資料帶走，再下載 handbook.html 用 Chrome 打開，按「貼上資料碼」貼上後就能列印。"); },600);
+};
+/* ---- 資料碼：不靠下載也能搬資料 ---- */
+const M=document.getElementById("modal"), mText=document.getElementById("mText"), mOk=document.getElementById("mOk");
+let mMode="";
+function openModal(mode,title,hint){
+  mMode=mode;
+  document.getElementById("mTitle").textContent=title;
+  document.getElementById("mHint").textContent=hint;
+  if(mode==="copy"){ mText.value=JSON.stringify(S); mText.readOnly=true; mOk.textContent="複製"; }
+  else { mText.value=""; mText.readOnly=false; mOk.textContent="匯入"; }
+  M.hidden=false; setTimeout(()=>{ mText.focus(); if(mode==="copy") mText.select(); },30);
+}
+document.getElementById("mClose").onclick=()=>M.hidden=true;
+mOk.onclick=()=>{
+  if(mMode==="copy"){
+    const done=()=>{ toast("已複製，到另一個視窗按「貼上資料碼」"); };
+    const fallback=()=>{ mText.focus(); mText.select(); try{ document.execCommand("copy") ? done() : toast("請按 Ctrl+C（Mac 按 ⌘+C）複製反白的文字"); }catch(e){ toast("請按 Ctrl+C（Mac 按 ⌘+C）複製反白的文字"); } };
+    if(navigator.clipboard?.writeText) navigator.clipboard.writeText(mText.value).then(done,fallback); else fallback();
+  } else {
+    try{ const d=JSON.parse(mText.value.trim()); if(!d.info||!d.materials) throw 0;
+      S=d; save(); renderPanel(); renderPages(); M.hidden=true; toast("已匯入"); }
+    catch(e){ toast("資料碼不完整，請確認整段都有貼上"); }
+  }
+};
+document.getElementById("btnCopy").onclick=()=>openModal("copy","複製資料碼","整段文字就是這份手冊的所有資料（含照片）。複製後可以貼到另一台電腦或另一個視窗，也可以貼到 LINE 記事本備份。");
+document.getElementById("btnPaste").onclick=()=>openModal("paste","貼上資料碼","把之前複製的整段資料碼貼在下面，按「匯入」。目前畫面上的資料會被取代。");
+document.getElementById("btnExport").onclick=()=>{
+  const b=new Blob([JSON.stringify(S)],{type:"application/json"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(b);
+  a.download=`保養手冊_${(S.info.caseName||"案件").replace(/[\\/:*?"<>|｜]/g,"_")}.json`; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000); toast("已匯出");
+};
+const fi=document.getElementById("fileImport");
+document.getElementById("btnImport").onclick=()=>fi.click();
+fi.onchange=()=>{ const f=fi.files[0]; if(!f) return; f.text().then(t=>{ try{ S=JSON.parse(t); save(); renderPanel(); renderPages(); toast("已匯入"); }catch(e){ toast("檔案格式不對，請選擇這個工具匯出的 JSON"); } }); fi.value=""; };
+let newArm=0;
+document.getElementById("btnNew").onclick=e=>{
+  if(Date.now()-newArm>3000){ newArm=Date.now(); e.target.textContent="再按一次清空"; setTimeout(()=>e.target.textContent="新案件",3000); return; }
+  const care=S.care, company=S.company;
+  S={info:{caseName:"",owner:"",address:"",handover:new Date().toISOString().slice(0,10),area:"",type:"",caseNo:"",intro:SAMPLE.info.intro},
+     company, materials:[], photos:[], contacts:structuredClone(SAMPLE.contacts).map(c=>({...c,name:"",phone:""})), warranty:structuredClone(SAMPLE.warranty), care};
+  e.target.textContent="新案件"; newArm=0; save(); renderPanel(); renderPages(); toast("已開新案件（公司資料與保養範本保留）");
+};
+
+/* ================= 工地紀錄本串接 ================= */
+const SB=window.supabase?supabase.createClient("https://rqndozhhvuimqjqtmeli.supabase.co","sb_publishable_WeuzNOmIP2eh8LgN8XZeTw_gx5Q72VL"):null;
+const CAT_RULES=[["系統櫃",/系統/],["石英石／人造石檯面",/石英|人造石|檯面|台面/],["大理石／天然石材",/大理石|石材|岩板/],["超耐磨木地板",/超耐磨|木地板|SPC|地板/],
+  ["實木／海島型地板",/海島|實木地板/],["磁磚",/磁磚|壁磚|地磚|拋光石英磚/],["鋁窗／氣密窗",/鋁窗|氣密窗|窗/],["衛浴設備／五金",/馬桶|面盆|臉盆|龍頭|淋浴|浴櫃|衛浴|五金|把手|鉸鍊/],
+  ["廚具／廚房設備",/廚具|排油煙|瓦斯爐|爐|烘碗|洗碗|淨水/],["燈具／電氣",/燈|開關|插座|電/],["特殊塗料（礦物塗料、樂土等）",/礦物|樂土|特殊塗料|藝術漆|微水泥/],
+  ["乳膠漆牆面",/漆|乳膠/],["木作櫃／實木皮",/木作|木皮|櫃/]];
+const guessCat=t=>{for(const [c,re] of CAT_RULES) if(re.test(t||"")) return c; return "其他";};
+const YEARS={"系統櫃":5,"超耐磨木地板":10,"實木／海島型地板":5,"石英石／人造石檯面":5,"廚具／廚房設備":2,"衛浴設備／五金":5,"鋁窗／氣密窗":5};
+const WARN_SAMPLE=()=>/^範例/.test(S.info.caseName||"");
+let PROJS=[];
+
+async function initLink(){
+  if(EMBED) document.getElementById("btnClose").hidden=false;
+  if(!SB) return;
+  const {data:{session}}=await SB.auth.getSession();
+  if(!session) return;
+  const {data,error}=await SB.from("sitelog_projects").select("id,name").order("updated_at",{ascending:false});
+  if(error) return;
+  PROJS=(data||[]).filter(p=>!/^示範案件/.test(p.name||""));
+  const sel=document.getElementById("projSel");
+  sel.innerHTML=`<option value="">— 選擇案件 —</option>`+PROJS.map(p=>`<option value="${p.id}" ${p.id===PROJECT?"selected":""}>${esc(p.name)}</option>`).join("");
+  document.getElementById("projField").hidden=false;
+  document.getElementById("edSub").textContent="選案件後會自動帶入工地紀錄本裡的業主、地址、材料與工班；照片可從工地相簿挑。每個案件的手冊分開存在這台電腦。";
+  sel.onchange=()=>switchProject(sel.value);
+  updateLinkBtns();
+  if(PROJECT && FRESH) syncFromSite(true);
+}
+function updateLinkBtns(){ document.getElementById("btnSync").hidden=!PROJECT; document.getElementById("btnPick").hidden=!PROJECT; }
+function switchProject(id){
+  clearTimeout(saveT); try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}
+  PROJECT=id; KEY=id?BASE_KEY+":"+id:BASE_KEY;
+  let d=null; try{d=JSON.parse(localStorage.getItem(KEY));}catch(e){}
+  S=d||(id?blankCase():structuredClone(SAMPLE));
+  const u=new URL(location.href); id?u.searchParams.set("project",id):u.searchParams.delete("project"); history.replaceState(null,"",u);
+  updateLinkBtns(); renderPanel(); renderPages();
+  if(id && !d) syncFromSite(true);
+}
+
+async function syncFromSite(first){
+  if(!SB||!PROJECT) return;
+  const btn=document.getElementById("btnSync"); btn.disabled=true; btn.textContent="帶入中…";
+  try{
+    const [p,mt,rp,jb]=await Promise.all([
+      SB.from("sitelog_projects").select("name,address,floor_area,space_type,service_type,client_info,expected_end").eq("id",PROJECT).maybeSingle(),
+      SB.from("sitelog_materials").select("item_name,brand,spec_color,note").eq("project_id",PROJECT).order("created_at"),
+      SB.from("sitelog_material_reports").select("items,report_date").eq("project_id",PROJECT).order("report_date"),
+      SB.from("hb_crew_jobs").select("trade,crew_name,status").eq("project_id",PROJECT)]);
+    if(p.error) throw p.error;
+    const pr=p.data||{}, ci=pr.client_info||{};
+    const I=S.info, setIf=(k,v)=>{ if(v!=null&&v!==""&&(first||!I[k])) I[k]=String(v); };
+    setIf("caseName",pr.name); setIf("address",pr.address); setIf("area",pr.floor_area);
+    if(ci.name) setIf("owner",ci.name);
+    if(pr.space_type&&(first||!I.type)) I.type=pr.space_type;
+    if(first&&pr.expected_end) I.handover=String(pr.expected_end).slice(0,10);
+    // 材料：材質報告書（有空間）＋材料登錄
+    const have=new Set(S.materials.map(m=>(m.zone+"|"+m.item+"|"+m.brand).trim()));
+    let added=0;
+    const push=m=>{ const k=(m.zone+"|"+m.item+"|"+m.brand).trim(); if(!m.item&&!m.brand) return; if(have.has(k)) return; have.add(k); S.materials.push(m); added++; };
+    (rp.data||[]).forEach(r=>(r.items||[]).forEach(x=>{ const cat=guessCat([x.item,x.brand,x.spec].join(" ")); push({zone:x.space||"",cat,item:x.item||"",brand:x.brand||"",spec:x.spec||"",vendor:"",years:YEARS[cat]||1}); }));
+    (mt.data||[]).filter(x=>!/示範資料/.test(x.note||"")).forEach(x=>{ const cat=guessCat([x.item_name,x.note].join(" ")); push({zone:"",cat,item:x.item_name||"",brand:x.brand||"",spec:x.spec_color||"",vendor:"",years:YEARS[cat]||1}); });
+    // 依區域排序（同區域放一起）
+    const order=[]; S.materials.forEach(m=>{ if(!order.includes(m.zone)) order.push(m.zone); });
+    S.materials.sort((a,b)=>order.indexOf(a.zone)-order.indexOf(b.zone));
+    // 工班 → 保固聯絡（工種＋師傅）
+    let cAdded=0;
+    const roles=new Set(S.contacts.map(c=>c.role+"|"+c.name));
+    (jb.data||[]).filter(j=>j.status!=="cancelled"&&j.trade).forEach(j=>{ const k=j.trade+"|"+(j.crew_name||""); if(roles.has(k)) return; roles.add(k); S.contacts.push({role:j.trade,name:j.crew_name||"",phone:"",note:""}); cAdded++; });
+    save(); renderPanel(); renderPages();
+    toast(first?`已帶入「${pr.name||"案件"}」：材料 ${added} 筆、工班 ${cAdded} 位`:`已更新：新增材料 ${added} 筆、工班 ${cAdded} 位`);
+  }catch(e){ toast("帶入失敗："+(e.message||e)); }
+  btn.disabled=false; btn.textContent="從工地紀錄本帶入";
+}
+document.getElementById("btnSync").onclick=()=>syncFromSite(false);
+document.getElementById("btnClose").onclick=()=>{ clearTimeout(saveT); try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){} try{parent.postMessage({type:"hb-handbook"},location.origin);}catch(e){} };
+
+/* ---- 從工地相簿挑管線照片 ---- */
+const PK=document.getElementById("pick"); let pkPhotos=[], pkAlbum="", pkSel=new Set();
+document.getElementById("btnPick").onclick=async()=>{
+  if(!SB||!PROJECT) return;
+  PK.hidden=false; pkSel=new Set(); document.getElementById("pkGrid").innerHTML=`<div class="empty">讀取照片中…</div>`; document.getElementById("pkAlbums").innerHTML="";
+  const [a,p]=await Promise.all([SB.from("sitelog_albums").select("id,name").eq("project_id",PROJECT).order("created_at"),
+    SB.from("sitelog_photos").select("id,album_id,url,note").eq("project_id",PROJECT).order("uploaded_at",{ascending:false}).limit(1000)]);
+  if(a.error||p.error){ document.getElementById("pkGrid").innerHTML=`<div class="empty">讀取失敗：${esc((a.error||p.error).message)}</div>`; return; }
+  pkPhotos=p.data||[];
+  const albums=(a.data||[]).filter(x=>pkPhotos.some(ph=>ph.album_id===x.id)&&!/渲染|效果圖|LINE/.test(x.name));
+  const pref=albums.find(x=>/水電|管線|冷氣|配管/.test(x.name))||albums[0];
+  pkAlbum=pref?pref.id:"";
+  const box=document.getElementById("pkAlbums");
+  box.innerHTML=albums.map(x=>`<button type="button" data-a="${x.id}" aria-pressed="${x.id===pkAlbum}">${esc(x.name)}（${pkPhotos.filter(ph=>ph.album_id===x.id).length}）</button>`).join("")||"";
+  box.onclick=e=>{const b=e.target.closest("button");if(!b)return;pkAlbum=b.dataset.a;box.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x===b));pkGrid();};
+  pkGrid();
+};
+function pkGrid(){
+  const list=pkPhotos.filter(p=>p.album_id===pkAlbum), g=document.getElementById("pkGrid");
+  g.innerHTML=list.length?list.map(p=>`<label><input type="checkbox" value="${p.id}" ${pkSel.has(p.id)?"checked":""}><img src="${esc(p.url)}" alt="" loading="lazy"></label>`).join(""):`<div class="empty">這個案件還沒有工地照片</div>`;
+  g.onchange=e=>{ e.target.checked?pkSel.add(e.target.value):pkSel.delete(e.target.value); pkCount(); }; pkCount();
+}
+function pkCount(){ document.getElementById("pkCount").textContent=pkSel.size?`已選 ${pkSel.size} 張`:""; }
+document.getElementById("pkClose").onclick=()=>PK.hidden=true;
+document.getElementById("pkOk").onclick=()=>{
+  const have=new Set(S.photos.map(p=>p.src));
+  pkPhotos.filter(p=>pkSel.has(p.id)&&!have.has(p.url)).forEach(p=>S.photos.push({src:p.url,title:"",note:p.note||""}));
+  PK.hidden=true; tab="photo"; document.querySelectorAll(".tab").forEach(x=>x.setAttribute("aria-selected",x.dataset.tab==="photo"));
+  save(); renderPanel(); renderPages(); toast(`已加入 ${pkSel.size} 張，請在左側填位置與說明`);
+};
+
+renderPanel(); renderPages(); initLink();
+</script>
+</body>
+</html>
