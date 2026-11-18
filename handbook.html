@@ -163,6 +163,7 @@ table.t td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
         <button class="btn" id="btnSync" hidden>從工地紀錄本帶入</button>
         <button class="btn" id="btnPick" hidden>選工地照片</button>
         <button class="btn ghost" id="btnClose" hidden>關閉</button>
+        <span class="lbl" id="savedAt" style="align-self:center"></span>
         <button class="btn" id="btnExport">匯出 JSON</button>
         <button class="btn" id="btnImport">匯入 JSON</button>
         <button class="btn" id="btnCopy">複製資料碼</button>
@@ -257,7 +258,9 @@ const SAMPLE = {
 /* ================= 狀態 ================= */
 const QS=new URLSearchParams(location.search);
 const EMBED=window.parent!==window;
+const LAST_KEY="herfulsins-handbook-last";
 let PROJECT=QS.get("project")||"";
+try{ if(!PROJECT) PROJECT=localStorage.getItem(LAST_KEY)||""; else localStorage.setItem(LAST_KEY,PROJECT); }catch(e){}
 const BASE_KEY="herfulsins-handbook-v1";
 let KEY=PROJECT?BASE_KEY+":"+PROJECT:BASE_KEY;
 let S;
@@ -273,9 +276,11 @@ function blankCase(){
 const careOf=c=>(S.care&&S.care[c]!=null)?S.care[c]:(CARE_DEFAULT[c]||"");
 let tab="info";
 let saveT;
-function save(){ clearTimeout(saveT); saveT=setTimeout(()=>{ try{localStorage.setItem(KEY,JSON.stringify(S));
+function save(){ clearTimeout(saveT); saveT=setTimeout(()=>{ try{localStorage.setItem(KEY,JSON.stringify(S)); savedMark();
   if(KEY!==BASE_KEY){ let b={};try{b=JSON.parse(localStorage.getItem(BASE_KEY))||{};}catch(e){} b.company=S.company;b.care=S.care;b.warranty=S.warranty; if(!b.info){b.info=structuredClone(SAMPLE.info);b.materials=[];b.photos=[];b.contacts=[];} localStorage.setItem(BASE_KEY,JSON.stringify(b)); }
 }catch(e){toast("瀏覽器空間不足，照片太多時請先匯出 JSON");} },300); }
+function savedMark(){ const el=document.getElementById("savedAt"); if(el){ const d=new Date(); el.textContent="已自動儲存 "+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0"); } }
+addEventListener("pagehide",()=>{ clearTimeout(saveT); try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){} });
 function toast(m){const t=document.getElementById("toast");t.textContent=m;t.classList.add("show");clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("show"),2200);}
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const lines=s=>String(s||"").split("\n").map(x=>x.trim()).filter(Boolean);
@@ -500,10 +505,38 @@ addEventListener("beforeprint",()=>printed=true);
 document.getElementById("btnPrint").onclick=()=>{
   printed=false;
   try{ window.print(); }catch(e){}
-  setTimeout(()=>{ if(!printed) openModal("copy",
-    "這個視窗不能列印",
-    "目前是在預覽視窗裡，列印和下載都被擋住了。請先按「複製」把資料帶走，再下載 handbook.html 用 Chrome 打開，按「貼上資料碼」貼上後就能列印。"); },600);
+  setTimeout(()=>{ if(!printed) makePdf(); },700);
 };
+/* App／預覽視窗不能列印時：直接產生 PDF 檔（手機跳分享面板，可存到檔案或傳 LINE） */
+function loadJs(src){ return new Promise((ok,no)=>{ const t=document.createElement("script"); t.src=src; t.onload=ok; t.onerror=()=>no(new Error("載入失敗："+src)); document.head.appendChild(t); }); }
+async function makePdf(){
+  const btn=document.getElementById("btnPrint"), label=btn.textContent; btn.disabled=true; btn.textContent="產生 PDF 中…";
+  try{
+    if(!window.html2canvas) await loadJs("https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js");
+    if(!window.jspdf) await loadJs("https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js");
+    if(document.fonts) await document.fonts.ready;
+    const pages=[...document.querySelectorAll(".page")];
+    const pdf=new jspdf.jsPDF({unit:"mm",format:"a4",orientation:"portrait"});
+    for(let i=0;i<pages.length;i++){
+      const p=pages[i], tf=p.style.transform, mb=p.style.marginBottom; p.style.transform=""; p.style.marginBottom="";
+      btn.textContent=`產生 PDF 中… ${i+1}/${pages.length}`;
+      const c=await html2canvas(p,{scale:2,useCORS:true,backgroundColor:"#FFFDF9",width:p.offsetWidth,height:p.offsetHeight,windowWidth:1200});
+      p.style.transform=tf; p.style.marginBottom=mb;
+      if(i) pdf.addPage();
+      pdf.addImage(c.toDataURL("image/jpeg",.9),"JPEG",0,0,210,297);
+    }
+    const name=`交屋保養手冊_${(S.info.caseName||"案件").replace(/[\\/:*?"<>|｜]/g,"_")}.pdf`;
+    const blob=pdf.output("blob"), file=new File([blob],name,{type:"application/pdf"});
+    const mobile=/iPhone|iPad|Android|Mobi/i.test(navigator.userAgent)||(navigator.maxTouchPoints>1&&/Mac/.test(navigator.platform));
+    if(mobile&&navigator.canShare&&navigator.canShare({files:[file]})){
+      try{ await navigator.share({files:[file]}); }catch(e){ if(e.name!=="AbortError") throw e; }
+    } else {
+      const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(()=>URL.revokeObjectURL(a.href),4000); toast("已下載 PDF");
+    }
+  }catch(e){ toast("PDF 產生失敗："+(e.message||e)); }
+  btn.disabled=false; btn.textContent=label;
+}
 /* ---- 資料碼：不靠下載也能搬資料 ---- */
 const M=document.getElementById("modal"), mText=document.getElementById("mText"), mOk=document.getElementById("mOk");
 let mMode="";
@@ -577,7 +610,7 @@ async function initLink(){
 function updateLinkBtns(){ document.getElementById("btnSync").hidden=!PROJECT; document.getElementById("btnPick").hidden=!PROJECT; }
 function switchProject(id){
   clearTimeout(saveT); try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}
-  PROJECT=id; KEY=id?BASE_KEY+":"+id:BASE_KEY;
+  PROJECT=id; KEY=id?BASE_KEY+":"+id:BASE_KEY; try{localStorage.setItem(LAST_KEY,id);}catch(e){}
   let d=null; try{d=JSON.parse(localStorage.getItem(KEY));}catch(e){}
   S=d||(id?blankCase():structuredClone(SAMPLE));
   const u=new URL(location.href); id?u.searchParams.set("project",id):u.searchParams.delete("project"); history.replaceState(null,"",u);
