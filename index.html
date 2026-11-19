@@ -12843,14 +12843,13 @@ function HB_poToday(){var d=new Date();d.setMinutes(d.getMinutes()-d.getTimezone
 function HB_poDate(iso){if(!iso)return"";var r=HB_toROC(String(iso).slice(0,10));return r.y?(r.y+"年"+r.m+"月"+r.d+"日"):""}
 
 function HB_buildPurchaseOrderHTML(v,projectName){
-  var e=HB_esc,T=HB_poTotals(v),no=0,rows="";
+  var e=HB_esc,no=0,rows="";
   (v.items||[]).forEach(function(it){
-    if(!String(it.name||"").trim()&&!HB_num(it.price))return;
+    if(!String(it.name||"").trim())return;
     no++;
     rows+='<tr><td class="c">'+no+'</td><td>'+HB_escMultiline(it.name)+'</td><td>'+HB_escMultiline(it.spec)+'</td>'
       +'<td class="c">'+e(it.qty)+'</td><td class="c">'+e(it.unit)+'</td>'
-      +'<td class="r">'+(HB_num(it.price)?HB_money(HB_num(it.price)):"")+'</td>'
-      +'<td class="r">'+(HB_poItemAmount(it)?HB_money(HB_poItemAmount(it)):"")+'</td><td>'+HB_escMultiline(it.note)+'</td></tr>';
+      +'<td>'+HB_escMultiline(it.note)+'</td></tr>';
   });
   var stamp=HB_STAMP_B64?'<img class="stamp" src="data:image/png;base64,'+HB_STAMP_B64+'" />':"";
   var n=0,terms=[];
@@ -12874,13 +12873,8 @@ function HB_buildPurchaseOrderHTML(v,projectName){
   +'<tr><th>送貨地址</th><td colspan="3">'+e(v.deliveryAddress)+'</td></tr>'
   +'</table>'
   +'<table class="items"><thead><tr><th class="c">項次</th><th>品名</th><th>規格／型號／色號</th>'
-  +'<th class="c">數量</th><th class="c">單位</th><th class="r">單價</th><th class="r">金額</th><th>備註</th></tr></thead><tbody>'
-  +(rows||'<tr><td colspan="8" class="c">（無項目）</td></tr>')+'</tbody></table>'
-  +'<table class="sum">'
-  +'<tr><td class="k">小計</td><td class="v">'+HB_money(T.subtotal)+'</td></tr>'
-  +(T.rate?'<tr><td class="k">營業稅 '+e(T.rate)+'%</td><td class="v">'+HB_money(T.tax)+'</td></tr>':'')
-  +'<tr class="grand"><td class="k" style="background:#1C1B18;color:#F1EEE6">訂購總額</td><td class="v">NT$ '+HB_money(T.total)+'</td></tr>'
-  +'</table>'
+  +'<th class="c">數量</th><th class="c">單位</th><th>備註</th></tr></thead><tbody>'
+  +(rows||'<tr><td colspan="6" class="c">（無項目）</td></tr>')+'</tbody></table>'
   +'<div class="terms">'+terms.map(function(t){n++;return '<p>'+n+'. '+HB_escMultiline(t)+'</p>'}).join("")+'</div>'
   +'<div class="signrow">'
   +'<div class="signbox"><div class="lbl">訂購方</div><div style="font-size:11.5px;margin-top:6px">赫柏空間設計</div>'+stamp+'</div>'
@@ -12932,7 +12926,7 @@ function HbPurchaseOrderForm({initial,projects,vendors,notify,onCancel,onSaved})
     if(!String(v.vendorName||"").trim()){notify("請填寫廠商");return null}
     setBusy(!0);
     let TT=HB_poTotals(v);
-    let items=v.items.filter(it=>String(it.name||"").trim()||HB_num(it.price));
+    let items=v.items.filter(it=>String(it.name||"").trim());
     let payload={no:HB_pbClean(v.no),project_id:v.projectId||null,vendor_id:v.vendorId||null,vendor_name:HB_pbClean(v.vendorName),
       vendor_contact:v.vendorContact||"",vendor_phone:v.vendorPhone||"",order_date:v.orderDate||HB_poToday(),
       delivery_date:v.deliveryDate||null,delivery_address:v.deliveryAddress||"",receiver:v.receiver||"",
@@ -13003,21 +12997,14 @@ function HbPurchaseOrderForm({initial,projects,vendors,notify,onCancel,onSaved})
         h("input",{value:it.spec,onChange:e=>setItem(it.id,"spec",e.target.value),placeholder:"規格／型號／色號",style:{...cell,marginBottom:6}}),
         h("div",{style:{display:"flex",gap:6,marginBottom:6}},
           h("input",{value:it.qty,onChange:e=>setItem(it.id,"qty",e.target.value),inputMode:"decimal",placeholder:"數量",style:{...cell,flex:"0 0 72px"}}),
-          h("input",{value:it.unit,onChange:e=>setItem(it.id,"unit",e.target.value),placeholder:"單位",style:{...cell,flex:"0 0 64px"}}),
-          h("input",{value:it.price,onChange:e=>setItem(it.id,"price",e.target.value),inputMode:"decimal",placeholder:"單價",style:{...cell,flex:1}}),
-          h("div",{style:{flex:"0 0 96px",textAlign:"right",alignSelf:"center",fontSize:14,color:s.ink}},HB_poItemAmount(it)?HB_money(HB_poItemAmount(it)):"")),
+          h("input",{value:it.unit,onChange:e=>setItem(it.id,"unit",e.target.value),placeholder:"單位",style:{...cell,flex:"0 0 90px"}})),
         h("input",{value:it.note,onChange:e=>setItem(it.id,"note",e.target.value),placeholder:"備註（選填）",style:{...cell,marginBottom:6}}))),
       h("button",{onClick:addItem,style:{border:`1px dashed ${s.ocean}`,background:"none",color:s.oceanDark,borderRadius:8,padding:"9px 0",width:"100%",fontSize:14,cursor:"pointer",fontFamily:"inherit",marginBottom:14}},"＋ 新增品項"),
 
-      h("div",{style:{display:"flex",gap:10,flexWrap:"wrap"}},
-        fld("營業稅 %",h("input",{value:v.taxRate,onChange:e=>set("taxRate",e.target.value),inputMode:"decimal",placeholder:"不含稅留空，含 5% 填 5",style:fs}),"1 1 160px"),
-        fld("付款方式",h("input",{value:v.paymentTerms,onChange:e=>set("paymentTerms",e.target.value),placeholder:"例：貨到付款／月結 30 天",style:fs}),"2 1 220px")),
+      fld("付款方式（選填）",h("input",{value:v.paymentTerms,onChange:e=>set("paymentTerms",e.target.value),placeholder:"例：貨到付款／月結 30 天",style:fs})),
       fld("備註（會印在訂購單上）",h("textarea",{value:v.note,onChange:e=>set("note",e.target.value),rows:3,style:{...fs,resize:"vertical"}})),
 
-      h("div",{style:{textAlign:"right",fontSize:14,margin:"4px 0 16px",lineHeight:1.9}},
-        h("div",null,"小計　",HB_money(T.subtotal)),
-        T.rate?h("div",null,"營業稅 "+T.rate+"%　",HB_money(T.tax)):null,
-        h("div",{style:{fontSize:17,color:s.oceanDark}},"訂購總額　NT$ ",HB_money(T.total))),
+      h("div",{style:{height:8}}),
 
       h("div",{style:{display:"flex",gap:9,flexWrap:"wrap"}},
         h("button",{onClick:save,disabled:busy,style:btn(!0)},busy?"儲存中…":"儲存"),
@@ -13092,7 +13079,6 @@ function HbPurchaseOrderHub({onBack,notify,projects}){
               h("div",{className:"hb-dosMeta"},
                 projName(r.projectId)+"　·　訂 "+String(r.orderDate||"").slice(5).replace("-","/")+(r.deliveryDate?"　交貨 "+String(r.deliveryDate).slice(5).replace("-","/"):""),
                 h("span",{className:"hb-dosChip"+(r.status==="received"||r.status==="confirmed"?" on":"")},HB_poStatusLabel(r.status)))),
-            h("span",{className:"hb-dosAmt"},r.total?HB_money(r.total):""),
             h("div",{className:"hb-dosActs"},
               h("button",{onClick:()=>setEditing(r),className:"hb-dosAct"},h(E,{name:"pencil",size:13}),h("span",null,"編輯")),
               h("button",{onClick:()=>{if(!HB_openPrintableHTML(HB_buildPurchaseOrderHTML(r,projName(r.projectId))))notify("請允許彈出視窗")},className:"hb-dosAct"},
