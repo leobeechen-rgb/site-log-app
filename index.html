@@ -12873,7 +12873,373 @@ function HbDocsHub({onBack:onBack,notify:notify,projects:projects}){
     C("div",{key:tab,className:"hb-docsBody"},body));
 }
 
-function HbCompanyHub({onBack:l,onContracts:t,onQuotes:e,onReceipts:rc,onVendorReceipts:vr,onQuickQuote:qq,onGoHome:hbGoHome,onVendorQuotes:vq,onProposal:pg,onMarketingPhotos:mp,onBookings:bk,onOpenBooking:ob,onDrawings:dw,onAttendance:atd,onPriceBook:pb,onSurvey:sv,onChangeOrders:co,onPdfRotate:pr,onDocs:docs}){
+/* ===== 公司資料庫 → 材料庫存（工地剩料／常備材料）=====
+   資料表：sitelog_inventory_items、sitelog_inventory_logs；進出庫走 RPC sitelog_inventory_move（同時記紀錄＋改數量）
+   照片：R2 sitelog-photos/inventory/ */
+var HB_INV_CATS=["板材","木作耗材","五金","矽利康／膠類","油漆塗料","磁磚石材","地板","水電材料","燈具","玻璃鏡面","壁紙布料","其他"];
+var HB_INV_UNITS=["片","支","桶","包","箱","捲","才","坪","組","個","公尺"];
+function HbInventoryHub({onBack,notify,projects}){
+  const h=u.default.createElement, S=u.useState, EF=u.useEffect, MM=u.useMemo;
+  let[items,setItems]=(0,S)([]);
+  let[logs,setLogs]=(0,S)([]);
+  let[loading,setLoading]=(0,S)(true);
+  let[view,setView]=(0,S)("items");
+  let[flt,setFlt]=(0,S)("all");
+  let[qs,setQs]=(0,S)("");
+  let[cat,setCat]=(0,S)("");
+  let[loc,setLoc]=(0,S)("");
+  let[sort,setSort]=(0,S)("upd");
+  let[lq,setLq]=(0,S)("");
+  let[lt,setLt]=(0,S)("");
+  let[edit,setEdit]=(0,S)(null);     // 編輯中的材料（{} 為新增）
+  let[move,setMove]=(0,S)(null);     // {item,type}
+  let[sheet,setSheet]=(0,S)(null);   // "order" | "more" | {confirm}
+  let[busy,setBusy]=(0,S)(false);
+  let projs=(projects||[]).filter(p=>!/示範/.test(p.name||""));
+  let projByName=n=>{let p=projs.find(x=>x.name===n);return p?p.id:null};
+  let projName=id=>{let p=(projects||[]).find(x=>x.id===id);return p?p.name:""};
+  let num=v=>{let n=parseFloat(v);return isFinite(n)?n:0};
+  let fmt=n=>Math.round(n*100)/100;
+  let today=()=>new Date(Date.now()+8*36e5).toISOString().slice(0,10);
+  let isLow=i=>num(i.min_qty)>0&&num(i.qty)<num(i.min_qty);
+  let caseOf=r=>r.case_name||projName(r.project_id)||"";
+
+  let load=async()=>{
+    let[a,b]=await Promise.all([
+      q.from("sitelog_inventory_items").select("*").order("updated_at",{ascending:!1}),
+      q.from("sitelog_inventory_logs").select("*").order("move_date",{ascending:!1}).order("created_at",{ascending:!1}).limit(500)
+    ]);
+    if(a.error)notify("讀取庫存失敗："+a.error.message);else setItems(a.data||[]);
+    if(!b.error)setLogs(b.data||[]);
+    setLoading(!1);
+  };
+  (0,EF)(()=>{load()},[]);
+
+  let locs=MM(()=>[...new Set(items.map(i=>i.location).filter(Boolean))].sort(),[items]);
+  let vendors=MM(()=>[...new Set(items.map(i=>i.vendor).filter(Boolean))].sort(),[items]);
+  let caseNames=MM(()=>[...new Set([...projs.map(p=>p.name),...items.map(i=>i.case_name),...logs.map(l=>l.case_name)].filter(Boolean))],[items,logs,projects]);
+
+  let list=items.filter(i=>{
+    if(flt==="low"&&!isLow(i))return!1;
+    if(flt==="left"&&i.source!=="left")return!1;
+    if(cat&&i.category!==cat)return!1;
+    if(loc&&i.location!==loc)return!1;
+    if(qs){let t=[i.name,i.spec,caseOf(i),i.note,i.location,i.vendor].join(" ").toLowerCase();if(!t.includes(qs.trim().toLowerCase()))return!1}
+    return!0;
+  }).sort((a,b)=>sort==="name"?String(a.name).localeCompare(b.name,"zh-Hant"):
+    sort==="cat"?(HB_INV_CATS.indexOf(a.category)-HB_INV_CATS.indexOf(b.category))||String(a.name).localeCompare(b.name,"zh-Hant"):
+    sort==="low"?(isLow(b)-isLow(a))||String(b.updated_at).localeCompare(a.updated_at):
+    String(b.updated_at).localeCompare(a.updated_at));
+  let unitOf=id=>(items.find(i=>i.id===id)||{}).unit||"";
+  let logList=logs.filter(g=>(!lt||g.move_type===lt)&&(!lq||[g.item_name,caseOf(g),g.note].join(" ").toLowerCase().includes(lq.trim().toLowerCase())));
+  let value=items.reduce((s,i)=>s+num(i.qty)*num(i.unit_price),0);
+
+  /* ---- 儲存材料 ---- */
+  let saveItem=async(f,photoBlob)=>{
+    if(!f.name||!f.name.trim()){notify("請填材料名稱");return}
+    setBusy(!0);
+    try{
+      let row={name:f.name.trim(),category:f.category||"其他",source:f.source||"buy",spec:f.spec||null,unit:f.unit||null,
+        min_qty:f.min_qty===""||f.min_qty==null?null:num(f.min_qty),unit_price:f.unit_price===""||f.unit_price==null?null:num(f.unit_price),
+        location:f.location||null,vendor:f.vendor||null,note:f.note||null,
+        case_name:f.case_name||null,project_id:projByName(f.case_name),updated_at:new Date().toISOString()};
+      if(photoBlob){
+        let path="inventory/"+Date.now()+"-"+Math.random().toString(36).slice(2,8)+".jpg";
+        row.photo_url=await r2UploadSitelogFile("sitelog-photos",path,photoBlob,"image/jpeg");
+      }else if(f.photo_url===null)row.photo_url=null;
+      let qty=num(f.qty);
+      if(f.id){
+        let old=items.find(i=>i.id===f.id);
+        let{error}=await q.from("sitelog_inventory_items").update(row).eq("id",f.id);
+        if(error)throw error;
+        let diff=fmt(qty-num(old.qty));
+        if(diff)await q.rpc("sitelog_inventory_move",{p_item:f.id,p_type:diff>0?"in":"out",p_qty:Math.abs(diff),p_date:today(),p_project:null,p_case:"",p_note:"手動調整數量"});
+      }else{
+        let{data,error}=await q.from("sitelog_inventory_items").insert({...row,qty:0}).select("id").single();
+        if(error)throw error;
+        if(qty>0){let r=await q.rpc("sitelog_inventory_move",{p_item:data.id,p_type:"in",p_qty:qty,p_date:today(),p_project:row.project_id,p_case:row.case_name||"",p_note:row.source==="left"?"工地剩料入庫":"建立品項"});if(r.error)throw r.error}
+      }
+      setEdit(null);notify("已儲存");load();
+    }catch(e){notify("儲存失敗："+(e.message||e))}
+    setBusy(!1);
+  };
+  let delItem=async it=>{
+    let{error}=await q.from("sitelog_inventory_items").delete().eq("id",it.id);
+    if(error){notify("刪除失敗："+error.message);return}
+    setEdit(null);setSheet(null);notify("已刪除「"+it.name+"」");load();
+  };
+  let doMove=async(m,f)=>{
+    let qty=num(f.qty);if(qty<=0){notify("數量要大於 0");return}
+    setBusy(!0);
+    let{data,error}=await q.rpc("sitelog_inventory_move",{p_item:m.item.id,p_type:m.type,p_qty:qty,p_date:f.date||today(),p_project:projByName(f.case_name),p_case:f.case_name||"",p_note:f.note||""});
+    setBusy(!1);
+    if(error){notify(error.message.includes("超過")?"出庫數量超過現有庫存":"失敗："+error.message);return}
+    setMove(null);
+    let low=num(m.item.min_qty)>0&&num(data)<num(m.item.min_qty);
+    notify((m.type==="in"?"已入庫":"已出庫")+(low?"，「"+m.item.name+"」低於安全量":""));
+    load();
+  };
+
+  /* ---- 叫料 / 匯出 ---- */
+  let orderText=()=>{
+    let low=items.filter(isLow);if(!low.length)return"";
+    let g={};low.forEach(i=>{(g[i.vendor||"未指定供應商"]=g[i.vendor||"未指定供應商"]||[]).push(i)});
+    return"赫柏空間設計 叫料 "+today()+"\n\n"+Object.entries(g).map(([v,arr])=>"【"+v+"】\n"+arr.map(i=>"・"+i.name+(i.spec?"（"+i.spec+"）":"")+"　"+fmt(num(i.min_qty)*2-num(i.qty))+" "+(i.unit||"")).join("\n")).join("\n\n")+"\n\n麻煩報價／確認到貨時間，謝謝！";
+  };
+  let copyText=async t=>{try{await navigator.clipboard.writeText(t);notify("已複製，可以貼到 LINE")}catch{notify("請長按文字選取後複製")}};
+  let dl=(name,content,type)=>{let a=document.createElement("a");a.href=URL.createObjectURL(new Blob([content],{type}));a.download=name;document.body.appendChild(a);a.click();a.remove()};
+  let exportCSV=()=>{
+    let head=["名稱","分類","來源","規格","數量","單位","安全庫存","單價","估值","位置","來源案件","供應商","備註"];
+    let rows=items.map(i=>[i.name,i.category,i.source==="left"?"工地剩料":"常備",i.spec,i.qty,i.unit,i.min_qty,i.unit_price,fmt(num(i.qty)*num(i.unit_price)),i.location,caseOf(i),i.vendor,i.note]);
+    dl("材料庫存_"+today()+".csv","﻿"+[head,...rows].map(r=>r.map(v=>'"'+String(v??"").replace(/"/g,'""')+'"').join(",")).join("\n"),"text/csv");
+  };
+  let importOld=e=>{
+    let file=e.target.files[0];e.target.value="";if(!file)return;
+    let rd=new FileReader();rd.onload=async()=>{
+      try{
+        let d=JSON.parse(rd.result);if(!Array.isArray(d.items))throw 0;
+        setBusy(!0);let n=0;
+        for(let i of d.items){
+          let photo=null;
+          if(i.photo&&/^data:image/.test(i.photo)){try{let b=await (await fetch(i.photo)).blob();photo=await r2UploadSitelogFile("sitelog-photos","inventory/"+Date.now()+"-"+n+".jpg",b,"image/jpeg")}catch{}}
+          let{data,error}=await q.from("sitelog_inventory_items").insert({name:i.name,category:HB_INV_CATS.includes(i.cat)?i.cat:"其他",source:i.src==="left"?"left":"buy",spec:i.spec||null,unit:i.unit||null,
+            min_qty:i.min?num(i.min):null,unit_price:i.price?num(i.price):null,location:i.loc||null,vendor:i.vendor||null,note:i.note||null,case_name:i.case||null,project_id:projByName(i.case),photo_url:photo,qty:0}).select("id").single();
+          if(error)continue;
+          if(num(i.qty)>0)await q.rpc("sitelog_inventory_move",{p_item:data.id,p_type:"in",p_qty:num(i.qty),p_date:today(),p_project:null,p_case:"",p_note:"由單機版匯入"});
+          n++;
+        }
+        setBusy(!1);setSheet(null);notify("已匯入 "+n+" 項材料");load();
+      }catch{setBusy(!1);notify("檔案格式不正確（需為單機版匯出的備份 .json）")}
+    };rd.readAsText(file);
+  };
+
+  /* ---- 畫面 ---- */
+  let Stat=(k,n,label,low)=>h("button",{type:"button",className:"hb-inv-stat"+(low?" low":"")+(flt===k&&k!=="all"?" on":""),onClick:()=>setFlt(flt===k?"all":k)},h("b",null,n),h("span",null,label));
+  let Card=i=>h("div",{key:i.id,className:"hb-inv-card"+(isLow(i)?" low":"")},
+    h("button",{type:"button",className:"hb-inv-thumb",onClick:()=>setEdit({...i}),style:i.photo_url?{backgroundImage:"url("+i.photo_url+")"}:null},i.photo_url?null:String(i.category||"").slice(0,2)),
+    h("div",{className:"hb-inv-info"},
+      h("button",{type:"button",className:"hb-inv-name",onClick:()=>setEdit({...i})},i.name),
+      h("div",{className:"hb-inv-meta"},[i.spec,i.location].filter(Boolean).join(" · ")||" "),
+      h("div",{className:"hb-inv-tags"},
+        h("span",{className:"hb-inv-tag"},i.category),
+        i.source==="left"&&h("span",{className:"hb-inv-tag"},"剩料"+(caseOf(i)?"｜"+caseOf(i):"")),
+        isLow(i)&&h("span",{className:"hb-inv-tag warn"},"需補貨")),
+      h("div",{className:"hb-inv-qrow"},
+        h("div",{className:"hb-inv-qty"},fmt(num(i.qty)),h("small",null,i.unit||"")),
+        h("div",{className:"hb-inv-min"},num(i.min_qty)>0?"安全量 "+fmt(num(i.min_qty)):""),
+        h("button",{type:"button",className:"hb-inv-qb out",title:"出庫",onClick:()=>setMove({item:i,type:"out"})},"−"),
+        h("button",{type:"button",className:"hb-inv-qb in",title:"入庫",onClick:()=>setMove({item:i,type:"in"})},"＋"))));
+
+  return h("div",{className:"hb-archive hb-dossier hb-inv",style:{minHeight:"100dvh",fontFamily:"'Noto Sans TC', sans-serif",color:s.ink}},
+    h("style",null,HB_INV_CSS),
+    h("datalist",{id:"hbInvUnits"},HB_INV_UNITS.map(x=>h("option",{key:x,value:x}))),
+    h("datalist",{id:"hbInvLocs"},locs.map(x=>h("option",{key:x,value:x}))),
+    h("datalist",{id:"hbInvVendors"},vendors.map(x=>h("option",{key:x,value:x}))),
+    h("datalist",{id:"hbInvCases"},caseNames.map(x=>h("option",{key:x,value:x}))),
+    h("div",{style:{maxWidth:1320,margin:"0 auto",padding:"0 clamp(20px,4vw,58px)",position:"relative"}},
+      h("button",{onClick:onBack,className:"hb-arcBack"},h(E,{name:"arrow-left",size:15}),h("span",null,"返回公司資料庫")),
+      h("header",{className:"hb-dosHead"},h("div",{className:"hb-dosLabel"},"Inventaire des Matériaux"),h("h1",{className:"hb-dosTitle"},"材料庫存"),h("p",{className:"hb-dosLede"},"工地退場剩料與常備材料：數量、存放位置、用到哪一案，低於安全量自動提醒、一鍵整理叫料清單。"))),
+    h("div",{className:"hb-inv-body"},
+      h("div",{className:"hb-inv-stats"},
+        Stat("all",items.length,"品項"),
+        Stat("low",items.filter(isLow).length,"低於安全量",!0),
+        Stat("left",items.filter(i=>i.source==="left"&&num(i.qty)>0).length,"工地剩料"),
+        Stat("all",Math.round(value).toLocaleString(),"庫存估值（元）")),
+      h("div",{className:"hb-inv-bar"},
+        h("div",{className:"hb-inv-tabs"},
+          h("button",{type:"button",className:view==="items"?"on":"",onClick:()=>setView("items")},"庫存"),
+          h("button",{type:"button",className:view==="log"?"on":"",onClick:()=>setView("log")},"進出紀錄")),
+        h("div",{className:"hb-inv-acts"},
+          h("button",{type:"button",className:"hb-inv-btn",onClick:()=>setSheet("order")},"叫料清單"),
+          h("button",{type:"button",className:"hb-inv-btn",onClick:()=>setSheet("more")},"匯出"),
+          h("button",{type:"button",className:"hb-inv-btn pri",onClick:()=>setEdit({category:"其他",source:"buy",location:"工作室"})},h(E,{name:"plus",size:15})," 新增材料"))),
+      view==="items"?h(u.default.Fragment,null,
+        h("div",{className:"hb-inv-tools"},
+          h("input",{value:qs,onChange:e=>setQs(e.target.value),placeholder:"搜尋名稱、型號、色號、案名…",className:"grow"}),
+          h("select",{value:cat,onChange:e=>setCat(e.target.value)},h("option",{value:""},"全部分類"),HB_INV_CATS.map(c=>h("option",{key:c},c))),
+          h("select",{value:loc,onChange:e=>setLoc(e.target.value)},h("option",{value:""},"全部位置"),locs.map(c=>h("option",{key:c},c))),
+          h("select",{value:sort,onChange:e=>setSort(e.target.value)},h("option",{value:"upd"},"最近異動"),h("option",{value:"name"},"名稱"),h("option",{value:"low"},"缺貨優先"),h("option",{value:"cat"},"分類"))),
+        loading?h("div",{className:"hb-inv-empty"},"讀取中…"):
+        list.length?h("div",{className:"hb-inv-grid"},list.map(Card)):
+        h("div",{className:"hb-inv-empty"},items.length?"沒有符合條件的材料":"還沒有材料。按「＋ 新增材料」開始建立，工地退場的剩料也可以拍照記下來。")
+      ):h(u.default.Fragment,null,
+        h("div",{className:"hb-inv-tools"},
+          h("input",{value:lq,onChange:e=>setLq(e.target.value),placeholder:"搜尋材料、案件、備註…",className:"grow"}),
+          h("select",{value:lt,onChange:e=>setLt(e.target.value)},h("option",{value:""},"全部"),h("option",{value:"in"},"入庫"),h("option",{value:"out"},"出庫"))),
+        logList.length?h("div",{className:"hb-inv-log"},logList.map(g=>h("div",{key:g.id,className:"hb-inv-lrow"},
+          h("div",{className:"d"},String(g.move_date).slice(5).replace("-","/"),h("br",null),String(g.move_date).slice(0,4)),
+          h("div",{style:{minWidth:0}},h("div",{className:"nm"},g.item_name||"（已刪除）"),h("div",{className:"sub"},[caseOf(g),g.note].filter(Boolean).join("｜")||"—")),
+          h("div",{className:"n "+g.move_type},(g.move_type==="in"?"+":"−")+fmt(num(g.qty))+" "+unitOf(g.item_id))))):
+        h("div",{className:"hb-inv-empty"},"還沒有進出紀錄"))),
+    edit&&h(HbInvEditor,{item:edit,busy,onClose:()=>setEdit(null),onSave:saveItem,onDelete:it=>setSheet({confirm:it}),logs:logs.filter(g=>g.item_id===edit.id).slice(0,8),caseOf,fmt,num}),
+    move&&h(HbInvMove,{m:move,busy,onClose:()=>setMove(null),onSave:doMove,today:today(),fmt,num}),
+    sheet&&h("div",{className:"hb-inv-mask",onClick:e=>{if(e.target===e.currentTarget)setSheet(null)}},
+      h("div",{className:"hb-inv-modal"},
+        sheet==="order"?h(u.default.Fragment,null,
+          h("h2",null,"叫料清單"),
+          orderText()?h(u.default.Fragment,null,
+            h("p",{className:"hb-inv-hint"},"建議數量＝補到安全量的 2 倍，複製後可再自行修改。"),
+            h("pre",{className:"hb-inv-pre"},orderText()),
+            h("div",{className:"hb-inv-mact"},h("button",{className:"hb-inv-btn",onClick:()=>setSheet(null)},"關閉"),h("button",{className:"hb-inv-btn pri",onClick:()=>copyText(orderText())},"複製（貼到 LINE）"))):
+          h(u.default.Fragment,null,h("div",{className:"hb-inv-empty"},"目前沒有低於安全量的材料。"),h("div",{className:"hb-inv-mact"},h("button",{className:"hb-inv-btn",onClick:()=>setSheet(null)},"關閉")))):
+        sheet==="more"?h(u.default.Fragment,null,
+          h("h2",null,"匯出與匯入"),
+          h("p",{className:"hb-inv-hint"},"資料存在公司雲端，手機與電腦同步。匯出 CSV 可用 Excel 打開；如果之前用過單機版 inventory.html，可以把它的備份 .json 匯入。"),
+          h("div",{className:"hb-inv-mact"},
+            h("button",{className:"hb-inv-btn",onClick:()=>setSheet(null)},"關閉"),
+            h("label",{className:"hb-inv-btn"},busy?"匯入中…":"匯入單機版備份",h("input",{type:"file",accept:".json",hidden:!0,onChange:importOld,disabled:busy})),
+            h("button",{className:"hb-inv-btn pri",onClick:exportCSV},"匯出 CSV"))):
+        h(u.default.Fragment,null,
+          h("h2",null,"刪除材料"),
+          h("p",null,"確定刪除「"+sheet.confirm.name+"」？進出紀錄會保留。"),
+          h("div",{className:"hb-inv-mact"},h("button",{className:"hb-inv-btn",onClick:()=>setSheet(null)},"取消"),h("button",{className:"hb-inv-btn danger",onClick:()=>delItem(sheet.confirm)},"刪除")))))
+  );
+}
+
+function HbInvEditor({item,busy,onClose,onSave,onDelete,logs,caseOf,fmt,num}){
+  const h=u.default.createElement;
+  let[f,setF]=(0,u.useState)(()=>({...item,qty:item.id?item.qty:"",case_name:item.id?caseOf(item):(item.case_name||"")}));
+  let[blob,setBlob]=(0,u.useState)(null);
+  let[prev,setPrev]=(0,u.useState)(item.photo_url||"");
+  let fileRef=(0,u.useRef)(null);
+  let set=(k,v)=>setF(o=>({...o,[k]:v}));
+  let pick=e=>{
+    let file=e.target.files[0];e.target.value="";if(!file)return;
+    let img=new Image();img.onload=()=>{
+      let sc=Math.min(1,1200/Math.max(img.width,img.height)),cv=document.createElement("canvas");
+      cv.width=Math.round(img.width*sc);cv.height=Math.round(img.height*sc);cv.getContext("2d").drawImage(img,0,0,cv.width,cv.height);
+      cv.toBlob(b=>{setBlob(b);setPrev(URL.createObjectURL(b))},"image/jpeg",.8);URL.revokeObjectURL(img.src);
+    };img.src=URL.createObjectURL(file);
+  };
+  let L=(label,child,full)=>h("label",{className:full?"full":""},label,child);
+  let I=(k,p)=>h("input",{value:f[k]??"",onChange:e=>set(k,e.target.value),...p});
+  return h("div",{className:"hb-inv-mask",onClick:e=>{if(e.target===e.currentTarget&&!busy)onClose()}},
+    h("div",{className:"hb-inv-modal"},
+      h("h2",null,item.id?"編輯材料":"新增材料"),
+      h("div",{className:"hb-inv-form"},
+        L("名稱",I("name",{placeholder:"例：F1 木心板 4×8",autoFocus:!item.id}),!0),
+        L("分類",h("select",{value:f.category,onChange:e=>set("category",e.target.value)},HB_INV_CATS.map(c=>h("option",{key:c},c)))),
+        L("來源",h("select",{value:f.source,onChange:e=>set("source",e.target.value)},h("option",{value:"buy"},"常備採購"),h("option",{value:"left"},"工地剩料"))),
+        L("規格／型號／色號",I("spec",{placeholder:"例：18mm、矽利康 中性 白"}),!0),
+        L("目前數量",I("qty",{type:"number",step:"any",inputMode:"decimal"})),
+        L("單位",I("unit",{list:"hbInvUnits",placeholder:"片／支／桶"})),
+        L("安全庫存（低於提醒）",I("min_qty",{type:"number",step:"any",inputMode:"decimal",placeholder:"剩料可不填"})),
+        L("單價（估值用）",I("unit_price",{type:"number",step:"any",inputMode:"decimal"})),
+        L("存放位置",I("location",{list:"hbInvLocs",placeholder:"工作室／倉庫／車上"})),
+        L("來源案件",I("case_name",{list:"hbInvCases",placeholder:"剩料是哪一案退的"})),
+        L("供應商（叫料用）",I("vendor",{list:"hbInvVendors",placeholder:"例：嘉義○○建材"}),!0),
+        h("div",{className:"full"},h("span",{className:"hb-inv-lab"},"照片"),
+          h("button",{type:"button",className:"hb-inv-photo",onClick:()=>fileRef.current&&fileRef.current.click(),style:prev?{backgroundImage:"url("+prev+")"}:null},prev?null:h(u.default.Fragment,null,h(E,{name:"camera",size:20})," 拍照／選照片")),
+          prev&&h("button",{type:"button",className:"hb-inv-link",onClick:()=>{setBlob(null);setPrev("");set("photo_url",null)}},"移除照片"),
+          h("input",{ref:fileRef,type:"file",accept:"image/*",capture:"environment",hidden:!0,onChange:pick})),
+        L("備註",h("textarea",{value:f.note??"",onChange:e=>set("note",e.target.value),rows:2}),!0)),
+      logs.length>0&&h("div",{className:"hb-inv-hist"},h("span",{className:"hb-inv-lab"},"最近進出"),
+        logs.map(g=>h("div",{key:g.id},h("span",null,g.move_date+" "+(caseOf(g)||g.note||"")),h("b",{className:"n "+g.move_type},(g.move_type==="in"?"+":"−")+fmt(num(g.qty)))))),
+      h("div",{className:"hb-inv-mact"},
+        item.id&&h("button",{className:"hb-inv-btn danger left",onClick:()=>onDelete(item),disabled:busy},"刪除"),
+        h("button",{className:"hb-inv-btn",onClick:onClose,disabled:busy},"取消"),
+        h("button",{className:"hb-inv-btn pri",onClick:()=>onSave(f,blob),disabled:busy},busy?"儲存中…":"儲存"))));
+}
+
+function HbInvMove({m,busy,onClose,onSave,today,fmt,num}){
+  const h=u.default.createElement;
+  let[type,setType]=(0,u.useState)(m.type);
+  let[f,setF]=(0,u.useState)({qty:"1",date:today,case_name:"",note:""});
+  let set=(k,v)=>setF(o=>({...o,[k]:v}));
+  return h("div",{className:"hb-inv-mask",onClick:e=>{if(e.target===e.currentTarget&&!busy)onClose()}},
+    h("div",{className:"hb-inv-modal"},
+      h("h2",null,m.item.name,h("small",null,"　現有 "+fmt(num(m.item.qty))+" "+(m.item.unit||""))),
+      h("div",{className:"hb-inv-seg"},
+        h("button",{type:"button",className:"in"+(type==="in"?" on":""),onClick:()=>setType("in")},"＋ 入庫"),
+        h("button",{type:"button",className:"out"+(type==="out"?" on":""),onClick:()=>setType("out")},"− 出庫（用到案場）")),
+      h("div",{className:"hb-inv-form"},
+        h("label",null,"數量",h("input",{type:"number",step:"any",inputMode:"decimal",value:f.qty,onChange:e=>set("qty",e.target.value),autoFocus:!0,onFocus:e=>e.target.select()})),
+        h("label",null,"日期",h("input",{type:"date",value:f.date,onChange:e=>set("date",e.target.value)})),
+        h("label",{className:"full"},"案件",h("input",{list:"hbInvCases",value:f.case_name,onChange:e=>set("case_name",e.target.value),placeholder:"用到哪一案／從哪一案退回"})),
+        h("label",{className:"full"},"備註",h("input",{value:f.note,onChange:e=>set("note",e.target.value),placeholder:"例：退場剩料、補料"}))),
+      h("div",{className:"hb-inv-mact"},
+        h("button",{className:"hb-inv-btn",onClick:onClose,disabled:busy},"取消"),
+        h("button",{className:"hb-inv-btn pri",onClick:()=>onSave({...m,type},f),disabled:busy},busy?"處理中…":"確定"))));
+}
+
+var HB_INV_CSS=`
+.hb-inv{--iv-brick:#B4573A;--iv-line:rgba(57,51,47,.14);--iv-warn:#A33A2A;--iv-ok:#4F7A5B;--iv-mute:#857B70}
+.hb-inv-body{max-width:1320px;margin:0 auto;padding:0 clamp(16px,4vw,58px) 120px}
+.hb-inv-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:14px}
+.hb-inv-stat{text-align:left;background:rgba(255,255,255,.6);border:1px solid var(--iv-line);border-radius:6px;padding:12px 14px;cursor:pointer;font:inherit;color:inherit}
+.hb-inv-stat b{display:block;font-size:22px;font-weight:600}
+.hb-inv-stat span{font-size:12px;color:var(--iv-mute)}
+.hb-inv-stat.low b{color:var(--iv-warn)}
+.hb-inv-stat.on{outline:2px solid var(--iv-brick)}
+.hb-inv-bar{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px;align-items:center}
+.hb-inv-tabs{display:flex;border:1px solid var(--iv-line);border-radius:6px;overflow:hidden}
+.hb-inv-tabs button{padding:8px 18px;border:0;background:rgba(255,255,255,.6);cursor:pointer;font:inherit;color:inherit}
+.hb-inv-tabs button.on{background:var(--iv-brick);color:#fff}
+.hb-inv-acts,.hb-inv-mact{display:flex;gap:8px;flex-wrap:wrap}
+.hb-inv-btn{display:inline-flex;align-items:center;gap:4px;padding:9px 14px;border-radius:6px;border:1px solid var(--iv-line);background:#fff;cursor:pointer;font:inherit;font-size:14px;color:inherit}
+.hb-inv-btn.pri{background:var(--iv-brick);border-color:var(--iv-brick);color:#fff}
+.hb-inv-btn.danger{color:var(--iv-warn)}
+.hb-inv-btn.left{margin-right:auto}
+.hb-inv-btn:disabled{opacity:.5}
+.hb-inv-tools{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.hb-inv-tools input,.hb-inv-tools select{padding:9px 11px;border:1px solid var(--iv-line);border-radius:6px;background:#fff;font:inherit;font-size:14px;min-width:0;flex:1 1 120px}
+.hb-inv-tools .grow{flex:2 1 220px}
+.hb-inv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px}
+.hb-inv-card{display:flex;gap:12px;background:rgba(255,255,255,.7);border:1px solid var(--iv-line);border-radius:8px;padding:12px;min-width:0}
+.hb-inv-card.low{border-color:#D9A79A;background:#FBF1EC}
+.hb-inv-thumb{width:64px;height:64px;flex:none;border-radius:6px;border:0;background:#EDE4D6 center/cover;color:var(--iv-mute);font-size:11px;cursor:pointer}
+.hb-inv-info{flex:1;min-width:0}
+.hb-inv-name{display:block;max-width:100%;border:0;background:none;padding:0;font:inherit;font-size:15px;font-weight:600;color:inherit;text-align:left;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hb-inv-meta{font-size:12px;color:var(--iv-mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hb-inv-tags{margin-top:3px;display:flex;flex-wrap:wrap;gap:4px}
+.hb-inv-tag{font-size:11px;padding:1px 7px;border-radius:20px;background:#EDE4D6;color:#93432B}
+.hb-inv-tag.warn{background:var(--iv-warn);color:#fff}
+.hb-inv-qrow{display:flex;align-items:center;gap:6px;margin-top:8px}
+.hb-inv-qty{font-size:20px;font-weight:600;min-width:44px}
+.hb-inv-qty small{font-size:12px;font-weight:400;color:var(--iv-mute);margin-left:2px}
+.hb-inv-min{flex:1;font-size:12px;color:var(--iv-mute)}
+.hb-inv-qb{width:36px;height:36px;border-radius:6px;border:1px solid var(--iv-line);background:#fff;cursor:pointer;font-size:18px;line-height:1}
+.hb-inv-qb.in{color:var(--iv-ok)}.hb-inv-qb.out{color:var(--iv-warn)}
+.hb-inv-empty{text-align:center;color:var(--iv-mute);padding:40px 10px;font-size:14px}
+.hb-inv-log{background:rgba(255,255,255,.7);border:1px solid var(--iv-line);border-radius:8px;overflow:hidden}
+.hb-inv-lrow{display:grid;grid-template-columns:76px 1fr auto;gap:10px;padding:10px 14px;border-bottom:1px solid var(--iv-line);font-size:14px;align-items:center}
+.hb-inv-lrow:last-child{border-bottom:0}
+.hb-inv-lrow .d{font-size:12px;color:var(--iv-mute)}
+.hb-inv-lrow .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hb-inv-lrow .sub{font-size:12px;color:var(--iv-mute)}
+.hb-inv .n{font-weight:600;white-space:nowrap}
+.hb-inv .n.in{color:var(--iv-ok)}.hb-inv .n.out{color:var(--iv-warn)}
+.hb-inv-mask{position:fixed;inset:0;z-index:9000;background:rgba(30,26,22,.45);display:flex;align-items:flex-end;justify-content:center}
+.hb-inv-modal{background:#FBF8F2;width:100%;max-width:560px;max-height:92dvh;overflow:auto;border-radius:14px 14px 0 0;padding:18px 18px calc(18px + env(safe-area-inset-bottom))}
+@media(min-width:700px){.hb-inv-mask{align-items:center}.hb-inv-modal{border-radius:14px}}
+.hb-inv-modal h2{font-size:18px;font-weight:600;margin:0 0 12px}
+.hb-inv-modal h2 small{font-size:13px;font-weight:400;color:var(--iv-mute)}
+.hb-inv-form{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.hb-inv-form .full{grid-column:1/-1}
+.hb-inv input[hidden]{display:none!important}
+.hb-inv-form label,.hb-inv-lab{font-size:12px;color:var(--iv-mute);display:block}
+.hb-inv-form input,.hb-inv-form select,.hb-inv-form textarea{display:block;width:100%;box-sizing:border-box;margin-top:3px;padding:9px 10px;border:1px solid var(--iv-line);border-radius:6px;background:#fff;font:inherit;font-size:15px;color:#1C1B18}
+.hb-inv-photo{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;height:150px;margin-top:4px;border:1px dashed var(--iv-line);border-radius:8px;background:#EDE4D6 center/contain no-repeat;color:var(--iv-mute);font:inherit;cursor:pointer}
+.hb-inv-link{border:0;background:none;color:var(--iv-warn);font-size:12px;padding:4px 0;cursor:pointer}
+.hb-inv-seg{display:flex;gap:6px;margin-bottom:12px}
+.hb-inv-seg button{flex:1;padding:10px;border-radius:6px;border:1px solid var(--iv-line);background:#fff;cursor:pointer;font:inherit}
+.hb-inv-seg button.in.on{background:var(--iv-ok);border-color:var(--iv-ok);color:#fff}
+.hb-inv-seg button.out.on{background:var(--iv-warn);border-color:var(--iv-warn);color:#fff}
+.hb-inv-hist{margin-top:14px;font-size:13px}
+.hb-inv-hist div{display:flex;justify-content:space-between;gap:8px;border-top:1px dashed var(--iv-line);padding:6px 0}
+.hb-inv-mact{justify-content:flex-end;margin-top:16px}
+.hb-inv-hint{font-size:12px;color:var(--iv-mute);margin:0 0 8px;line-height:1.7}
+.hb-inv-pre{white-space:pre-wrap;background:#fff;border:1px solid var(--iv-line);border-radius:6px;padding:12px;font:inherit;font-size:14px;max-height:50dvh;overflow:auto;user-select:text;-webkit-user-select:text}
+@media(max-width:640px){
+  .hb-inv-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .hb-inv-grid{grid-template-columns:1fr}
+  .hb-inv-bar{flex-direction:column;align-items:stretch}
+  .hb-inv-acts .hb-inv-btn{flex:1;justify-content:center}
+  .hb-inv-lrow{grid-template-columns:62px 1fr auto}
+}
+`;
+
+function HbCompanyHub({onBack:l,onContracts:t,onQuotes:e,onReceipts:rc,onVendorReceipts:vr,onQuickQuote:qq,onGoHome:hbGoHome,onVendorQuotes:vq,onProposal:pg,onMarketingPhotos:mp,onBookings:bk,onOpenBooking:ob,onDrawings:dw,onAttendance:atd,onPriceBook:pb,onSurvey:sv,onChangeOrders:co,onPdfRotate:pr,onDocs:docs,onInventory:inv}){
   /* 這一頁也要滿版：暫時解除外層容器的寬度限制與底色 */
   (0,u.useEffect)(()=>{
     let els=[document.getElementById("root")].concat(Array.prototype.slice.call(document.querySelectorAll(".hb-shell"))).filter(Boolean);
@@ -12919,6 +13285,7 @@ function HbCompanyHub({onBack:l,onContracts:t,onQuotes:e,onReceipts:rc,onVendorR
     u.default.createElement("div",{className:"hb-landgrid",style:{display:"grid",gridTemplateColumns:"repeat(2,minmax(0,1fr))",gap:20,gridAutoRows:"210px",alignContent:"start"}},
       /* 文件系統已移到首頁「估價與單據」 */
       u.default.createElement(HbCompanyGridCard,{icon:"users",title:"師傅出勤紀錄",desc:"記錄工班師傅每日出工天數，依師傅／月份統計應付工資",onClick:atd}),
+      u.default.createElement(HbCompanyGridCard,{icon:"package",title:"材料庫存",desc:"工地剩料與常備材料的數量、位置與進出紀錄，低於安全量提醒，一鍵整理叫料清單",onClick:inv}),
       u.default.createElement(HbCompanyGridCard,{icon:"bookmark",title:"常用工項單價庫",desc:"常用工項的售價與廠商成本，報價時打字即時建議、一鍵帶入，並記錄價格歷史與漲價提醒",onClick:pb}),
       u.default.createElement(HbCompanyGridCard,{icon:"refresh",title:"圖面轉正",desc:"CAD 匯出的 PDF 方向不對時丟進來，自動判斷角度轉回正的，可多檔批次。只改旋轉屬性，線條尺寸不動",onClick:pr}),
       u.default.createElement(HbCompanyGridCard,{icon:"clipboard-list",title:"設計需求問卷",desc:"產生專屬連結傳給業主，填完的需求直接回到這裡，初次接洽省掉很多來回",onClick:sv}),
@@ -18156,7 +18523,7 @@ function Gy(){let[l,t]=(0,u.useState)(!0),[e,n]=(0,u.useState)(!1),[a,i]=(0,u.us
         }
         .fade-in { animation: hbFadeIn .2s var(--hb-ease-out) both; }
         @media (prefers-reduced-motion: reduce){ .fade-in { animation-name: hbFadeInSoft; } }
-      `),u.default.createElement("div",{key:o,className:"hb-pagein",style:{height:"100%",overflowY:o==="landing"?"hidden":"auto",WebkitOverflowScrolling:"touch",paddingBottom:o==="landing"?0:92}},l?u.default.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100dvh"}},u.default.createElement(E,{name:"loader",className:"animate-spin",size:28,color:s.ocean})):o==="landing"?u.default.createElement(HbLanding,{onToday:()=>f("home"),onCase:()=>f("home"),onCompany:()=>f("companyHub"),onManageStaff:()=>f("staff"),onQuickQuote:()=>f("estimateHub"),onProposal:()=>HB_openProposalSystem(),onMarketingPhotos:()=>f("marketingPhotos"),onBookings:()=>f("home"),onOpenBooking:()=>HB_openBookingSystem(),onDrawings:()=>f("drawings"),onDocs:()=>{window.__hbDocsFrom="landing";f("docsHub")},onLogout:()=>{HB_staffLogout()}}):o==="companyHub"?u.default.createElement(HbCompanyHub,{onBack:()=>f("landing"),onContracts:()=>f("contracts"),onQuotes:()=>f("estimateHub"),onReceipts:()=>f("receipts"),onVendorReceipts:()=>f("vendorReceipts"),onQuickQuote:()=>f("estimateHub"),onGoHome:()=>f("home"),onVendorQuotes:()=>f("vendorQuotes"),onProposal:()=>HB_openProposalSystem(),onMarketingPhotos:()=>f("marketingPhotos"),onBookings:()=>f("home"),onOpenBooking:()=>HB_openBookingSystem(),onDrawings:()=>f("drawings"),onAttendance:()=>f("attendance"),onPriceBook:()=>f("priceBook"),onSurvey:()=>f("survey"),onChangeOrders:()=>f("changeOrders"),onPdfRotate:()=>f("pdfRotate"),onDocs:()=>{window.__hbDocsFrom="companyHub";f("docsHub")}}):o==="docsHub"?u.default.createElement(HbDocsHub,{onBack:()=>f(window.__hbDocsFrom||"landing"),notify:g,projects:a}):o==="changeOrders"?u.default.createElement(HbChangeOrderHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="survey"?u.default.createElement(HbSurveyHub,{onBack:()=>f("companyHub"),notify:g,projects:a,onProjectCreated:pj=>i(v=>[cm(pj),...v])}):o==="priceBook"?u.default.createElement(HbPriceBookHub,{onBack:()=>f("companyHub"),notify:g}):o==="attendance"?u.default.createElement(HbAttendanceHub,{onBack:()=>f("companyHub"),notify:g}):o==="marketingPhotos"?u.default.createElement(HbMarketingPhotoHub,{onBack:()=>f("landing"),notify:g}):o==="vendorQuotes"?u.default.createElement(HbVendorQuoteHub,{onBack:()=>f("companyHub"),notify:g}):o==="drawings"?u.default.createElement(HbDrawingHub,{onBack:()=>f("landing"),notify:g,projects:a,onOpenProject:(id,tab)=>{if(a.some(p=>p.id===id)){r(id);hbSetOpenTab(tab||"overview");f("detail")}else g("找不到這個案場，請重新整理")},onNewCase:()=>{f("home");h(!0)},workbench:u.default.createElement(HbHubWorkbench,{projects:a,onCalendar:()=>f("home"),onTodayHub:()=>f("home"),onOpenProject:id=>{if(a.some(p=>p.id===id)){r(id);hbSetOpenTab("overview");f("detail")}else g("找不到這個案場，請重新整理")}})}):o==="receipts"?u.default.createElement(HbReceiptsHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="vendorReceipts"?u.default.createElement(HbVendorReceiptsHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="quoteImportPick"?u.default.createElement(Iy,{projects:a,onOpen:hbImportQuote,onNew:()=>h(!0),onRefresh:()=>{D(!0),y()},refreshing:e,storageUsedBytes:z,onManageStaff:()=>f("staff"),pickerMode:!0,progressRanges:hbProg,onBack:()=>f("companyHub")}):o==="estimateHub"?u.default.createElement(HerfulsinsEstimateHub,{project:null,notify:g,onClose:()=>f("companyHub")}):o==="home"?u.default.createElement(Iy,{projects:a,notify:g,onOpen:T=>{r(T),hbSetOpenTab("photos"),f("detail")},onWbOpen:T=>{r(T),hbSetOpenTab("overview"),f("detail")},onCalendar:()=>f("home"),onTodayHub:()=>f("home"),onNew:()=>h(!0),onRefresh:()=>{D(!0),y()},refreshing:e,storageUsedBytes:z,onManageStaff:()=>f("staff"),progressRanges:hbProg,onBack:()=>f("landing"),onGoCompany:()=>f("companyHub")}):o==="staff"?u.default.createElement(Ky,{onBack:()=>f("landing")}):o==="pdfRotate"?u.default.createElement(HbPdfRotate,{onBack:()=>f("companyHub"),notify:g}):o==="contracts"?u.default.createElement(HerfulsinsContractsHub,{onBack:()=>f("landing"),notify:g}):o==="digitalCard"?u.default.createElement(HbDigitalCard,{onBack:()=>f("landing"),notify:g}):u.default.createElement(lh,{key:(j&&j.id)+":"+hbNavN,project:j,onBack:()=>f("home"),onUpdateMeta:S,onDelete:M,notify:g,initialTab:hbNavN?hbOpenTab:"overview"})),d&&u.default.createElement(Py,{onCancel:()=>h(!1),onCreate:b}),m&&u.default.createElement("div",{className:"hb-toast",style:{position:"fixed",bottom:20,left:"50%",background:s.ink,color:s.card,padding:"10px 18px",borderRadius:8,fontSize:13,boxShadow:"0 4px 14px rgba(0,0,0,0.25)",zIndex:60}},m),u.default.createElement(HbTopNavPortals,{storage:z}),u.default.createElement(HbBottomNav,{active:o,onNavigate:T=>f(T)}))}
+      `),u.default.createElement("div",{key:o,className:"hb-pagein",style:{height:"100%",overflowY:o==="landing"?"hidden":"auto",WebkitOverflowScrolling:"touch",paddingBottom:o==="landing"?0:92}},l?u.default.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100dvh"}},u.default.createElement(E,{name:"loader",className:"animate-spin",size:28,color:s.ocean})):o==="landing"?u.default.createElement(HbLanding,{onToday:()=>f("home"),onCase:()=>f("home"),onCompany:()=>f("companyHub"),onManageStaff:()=>f("staff"),onQuickQuote:()=>f("estimateHub"),onProposal:()=>HB_openProposalSystem(),onMarketingPhotos:()=>f("marketingPhotos"),onBookings:()=>f("home"),onOpenBooking:()=>HB_openBookingSystem(),onDrawings:()=>f("drawings"),onDocs:()=>{window.__hbDocsFrom="landing";f("docsHub")},onLogout:()=>{HB_staffLogout()}}):o==="companyHub"?u.default.createElement(HbCompanyHub,{onBack:()=>f("landing"),onContracts:()=>f("contracts"),onQuotes:()=>f("estimateHub"),onReceipts:()=>f("receipts"),onVendorReceipts:()=>f("vendorReceipts"),onQuickQuote:()=>f("estimateHub"),onGoHome:()=>f("home"),onVendorQuotes:()=>f("vendorQuotes"),onProposal:()=>HB_openProposalSystem(),onMarketingPhotos:()=>f("marketingPhotos"),onBookings:()=>f("home"),onOpenBooking:()=>HB_openBookingSystem(),onDrawings:()=>f("drawings"),onAttendance:()=>f("attendance"),onInventory:()=>f("inventory"),onPriceBook:()=>f("priceBook"),onSurvey:()=>f("survey"),onChangeOrders:()=>f("changeOrders"),onPdfRotate:()=>f("pdfRotate"),onDocs:()=>{window.__hbDocsFrom="companyHub";f("docsHub")}}):o==="docsHub"?u.default.createElement(HbDocsHub,{onBack:()=>f(window.__hbDocsFrom||"landing"),notify:g,projects:a}):o==="changeOrders"?u.default.createElement(HbChangeOrderHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="survey"?u.default.createElement(HbSurveyHub,{onBack:()=>f("companyHub"),notify:g,projects:a,onProjectCreated:pj=>i(v=>[cm(pj),...v])}):o==="priceBook"?u.default.createElement(HbPriceBookHub,{onBack:()=>f("companyHub"),notify:g}):o==="inventory"?u.default.createElement(HbInventoryHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="attendance"?u.default.createElement(HbAttendanceHub,{onBack:()=>f("companyHub"),notify:g}):o==="marketingPhotos"?u.default.createElement(HbMarketingPhotoHub,{onBack:()=>f("landing"),notify:g}):o==="vendorQuotes"?u.default.createElement(HbVendorQuoteHub,{onBack:()=>f("companyHub"),notify:g}):o==="drawings"?u.default.createElement(HbDrawingHub,{onBack:()=>f("landing"),notify:g,projects:a,onOpenProject:(id,tab)=>{if(a.some(p=>p.id===id)){r(id);hbSetOpenTab(tab||"overview");f("detail")}else g("找不到這個案場，請重新整理")},onNewCase:()=>{f("home");h(!0)},workbench:u.default.createElement(HbHubWorkbench,{projects:a,onCalendar:()=>f("home"),onTodayHub:()=>f("home"),onOpenProject:id=>{if(a.some(p=>p.id===id)){r(id);hbSetOpenTab("overview");f("detail")}else g("找不到這個案場，請重新整理")}})}):o==="receipts"?u.default.createElement(HbReceiptsHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="vendorReceipts"?u.default.createElement(HbVendorReceiptsHub,{onBack:()=>f("companyHub"),notify:g,projects:a}):o==="quoteImportPick"?u.default.createElement(Iy,{projects:a,onOpen:hbImportQuote,onNew:()=>h(!0),onRefresh:()=>{D(!0),y()},refreshing:e,storageUsedBytes:z,onManageStaff:()=>f("staff"),pickerMode:!0,progressRanges:hbProg,onBack:()=>f("companyHub")}):o==="estimateHub"?u.default.createElement(HerfulsinsEstimateHub,{project:null,notify:g,onClose:()=>f("companyHub")}):o==="home"?u.default.createElement(Iy,{projects:a,notify:g,onOpen:T=>{r(T),hbSetOpenTab("photos"),f("detail")},onWbOpen:T=>{r(T),hbSetOpenTab("overview"),f("detail")},onCalendar:()=>f("home"),onTodayHub:()=>f("home"),onNew:()=>h(!0),onRefresh:()=>{D(!0),y()},refreshing:e,storageUsedBytes:z,onManageStaff:()=>f("staff"),progressRanges:hbProg,onBack:()=>f("landing"),onGoCompany:()=>f("companyHub")}):o==="staff"?u.default.createElement(Ky,{onBack:()=>f("landing")}):o==="pdfRotate"?u.default.createElement(HbPdfRotate,{onBack:()=>f("companyHub"),notify:g}):o==="contracts"?u.default.createElement(HerfulsinsContractsHub,{onBack:()=>f("landing"),notify:g}):o==="digitalCard"?u.default.createElement(HbDigitalCard,{onBack:()=>f("landing"),notify:g}):u.default.createElement(lh,{key:(j&&j.id)+":"+hbNavN,project:j,onBack:()=>f("home"),onUpdateMeta:S,onDelete:M,notify:g,initialTab:hbNavN?hbOpenTab:"overview"})),d&&u.default.createElement(Py,{onCancel:()=>h(!1),onCreate:b}),m&&u.default.createElement("div",{className:"hb-toast",style:{position:"fixed",bottom:20,left:"50%",background:s.ink,color:s.card,padding:"10px 18px",borderRadius:8,fontSize:13,boxShadow:"0 4px 14px rgba(0,0,0,0.25)",zIndex:60}},m),u.default.createElement(HbTopNavPortals,{storage:z}),u.default.createElement(HbBottomNav,{active:o,onNavigate:T=>f(T)}))}
 
 /* ===================================================================
    設計需求問卷：公司端建立連結 → 業主線上填 → 答案回到案件
