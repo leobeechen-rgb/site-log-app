@@ -12815,6 +12815,11 @@ function HbSheet({title:title,onClose:onClose,children:children,footNote:footNot
       footNote?C("div",{className:"hb-sheetNote"},footNote):null,
       C("button",{type:"button",className:"hb-sheetCancel",onClick:onClose},"\u53D6\u6D88")));
 }
+/* 交屋保養手冊：直接嵌在文件系統分頁裡（取代原本的材質報告書） */
+function HbHandbookHub(){
+  return u.default.createElement("div",{className:"hb-hbookWrap"},
+    u.default.createElement("iframe",{src:"./handbook.html?inline=1",title:"交屋保養手冊",className:"hb-hbookFrame",allow:"web-share; clipboard-write"}));
+}
 function HbDocsHub({onBack:onBack,notify:notify,projects:projects}){
   let C=u.default.createElement;
   let DOCTABS=[
@@ -12824,7 +12829,7 @@ function HbDocsHub({onBack:onBack,notify:notify,projects:projects}){
     ["vendorReceipts","廠商領據","Reçus Fournisseurs","廠商領據"],
     ["changeOrders","追加減帳","Avenants au Contrat","追加減帳"],
     ["vendorQuotes","廠商報價","Devis Fournisseurs","廠商報價"],
-    ["materials","材質報告","Rapports de Matériaux","材質報告書"]];
+    ["materials","交屋手冊","Livret de la Maison","交屋保養手冊"]];
   let [tab,setTab]=(0,u.useState)(function(){
     try{ let v=sessionStorage.getItem("hb_docs_tab"); return v&&DOCTABS.some(x=>x[0]===v)?v:"contracts"; }catch(e){ return "contracts"; }
   });
@@ -12846,7 +12851,7 @@ function HbDocsHub({onBack:onBack,notify:notify,projects:projects}){
     : tab==="receipts"       ? C(HbReceiptsHub,{onBack:onBack,notify:notify,projects:projects})
     : tab==="vendorReceipts" ? C(HbVendorReceiptsHub,{onBack:onBack,notify:notify,projects:projects})
     : tab==="changeOrders"   ? C(HbChangeOrderHub,{onBack:onBack,notify:notify,projects:projects})
-    : tab==="materials"      ? C(HbMaterialReportHub,{onBack:onBack,notify:notify,projects:projects})
+    : tab==="materials"      ? C(HbHandbookHub,null)
     :                          C(HbVendorQuoteHub,{onBack:onBack,notify:notify});
   return C("div",{className:"hb-docsHub"},
     C("header",{className:"hb-docsHead"},
@@ -18053,6 +18058,8 @@ html.hb-crewsheet-on,html.hb-crewsheet-on body{overflow:hidden}
 .hbc .hbc-owner{margin-left:5px}
 .hb-ownersched iframe{background:#efebe4}
 .hb-handbook iframe{background:#EDE5D6}
+.hb-hbookWrap{padding:18px 0 40px}
+.hb-hbookFrame{display:block;width:100%;height:calc(100dvh - 120px);min-height:640px;border:1px solid rgba(42,38,34,.12);background:#EDE5D6}
 `;document.head.appendChild(st)})();
 function HbWbEditor({initial,projects,today,onClose,onSave,onDelete}){
   const h=u.default.createElement,[v,setV]=u.useState({...initial}),set=(k,x)=>setV(p=>({...p,[k]:x}));

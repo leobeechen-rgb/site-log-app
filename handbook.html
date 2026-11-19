@@ -258,7 +258,7 @@ const SAMPLE = {
 
 /* ================= 狀態 ================= */
 const QS=new URLSearchParams(location.search);
-const EMBED=window.parent!==window;
+const EMBED=window.parent!==window && !QS.has("inline");
 const LAST_KEY="herfulsins-handbook-last";
 let PROJECT=QS.get("project")||"";
 try{ if(!PROJECT) PROJECT=localStorage.getItem(LAST_KEY)||""; else localStorage.setItem(LAST_KEY,PROJECT); }catch(e){}
