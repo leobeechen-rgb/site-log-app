@@ -12815,6 +12815,298 @@ function HbSheet({title:title,onClose:onClose,children:children,footNote:footNot
       footNote?C("div",{className:"hb-sheetNote"},footNote):null,
       C("button",{type:"button",className:"hb-sheetCancel",onClick:onClose},"\u53D6\u6D88")));
 }
+/* ===================================================================
+   產品訂購單（向廠商下訂）：sitelog_purchase_orders
+   =================================================================== */
+var HB_PO_STATUS=[["draft","草稿"],["sent","已下訂"],["confirmed","廠商已確認"],["received","已到貨"],["cancelled","已取消"]];
+function HB_poStatusLabel(k){var x=HB_PO_STATUS.find(function(y){return y[0]===k});return x?x[1]:"草稿"}
+function HB_poNewItem(){return{id:"i"+Math.random().toString(36).slice(2,9),name:"",spec:"",qty:"1",unit:"",price:"",note:""}}
+function HB_poItemAmount(it){return Math.round(HB_num(it.qty)*HB_num(it.price))}
+function HB_poTotals(v){
+  var sub=(v.items||[]).reduce(function(n,it){return n+HB_poItemAmount(it)},0);
+  var rate=HB_num(v.taxRate)||0, tax=Math.round(sub*rate/100);
+  return{subtotal:sub,rate:rate,tax:tax,total:sub+tax};
+}
+function HB_poMap(r){
+  return{id:r.id,no:r.no||"",projectId:r.project_id||"",vendorId:r.vendor_id||"",vendorName:r.vendor_name||"",
+    vendorContact:r.vendor_contact||"",vendorPhone:r.vendor_phone||"",orderDate:r.order_date||"",deliveryDate:r.delivery_date||"",
+    deliveryAddress:r.delivery_address||"",receiver:r.receiver||"",items:Array.isArray(r.items)&&r.items.length?r.items:[HB_poNewItem()],
+    taxRate:r.tax_rate?String(r.tax_rate):"",subtotal:Number(r.subtotal)||0,total:Number(r.total)||0,
+    paymentTerms:r.payment_terms||"",note:r.note||"",status:r.status||"draft",createdAt:r.created_at};
+}
+function HB_poNextNo(list){
+  var d=new Date(),ym=String(d.getFullYear())+String(d.getMonth()+1).padStart(2,"0"),max=0;
+  (list||[]).forEach(function(x){var m=new RegExp("^PO-"+ym+"-(\\d+)$").exec(String(x.no||""));if(m)max=Math.max(max,parseInt(m[1],10))});
+  return "PO-"+ym+"-"+String(max+1).padStart(2,"0");
+}
+function HB_poToday(){var d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,10)}
+function HB_poDate(iso){if(!iso)return"";var r=HB_toROC(String(iso).slice(0,10));return r.y?(r.y+"年"+r.m+"月"+r.d+"日"):""}
+
+function HB_buildPurchaseOrderHTML(v,projectName){
+  var e=HB_esc,T=HB_poTotals(v),no=0,rows="";
+  (v.items||[]).forEach(function(it){
+    if(!String(it.name||"").trim()&&!HB_num(it.price))return;
+    no++;
+    rows+='<tr><td class="c">'+no+'</td><td>'+HB_escMultiline(it.name)+'</td><td>'+HB_escMultiline(it.spec)+'</td>'
+      +'<td class="c">'+e(it.qty)+'</td><td class="c">'+e(it.unit)+'</td>'
+      +'<td class="r">'+(HB_num(it.price)?HB_money(HB_num(it.price)):"")+'</td>'
+      +'<td class="r">'+(HB_poItemAmount(it)?HB_money(HB_poItemAmount(it)):"")+'</td><td>'+HB_escMultiline(it.note)+'</td></tr>';
+  });
+  var stamp=HB_STAMP_B64?'<img class="stamp" src="data:image/png;base64,'+HB_STAMP_B64+'" />':"";
+  var n=0,terms=[];
+  terms.push("請依上列品名、規格、數量備貨，如有缺貨、停產或規格變更，請先聯繫本公司確認，未經同意不得替換。");
+  terms.push("交貨時請附出貨單，現場點收後簽收；運送途中之損壞由出貨方負責。");
+  if(v.paymentTerms)terms.push("付款方式："+v.paymentTerms);
+  if(v.note)terms.push(v.note);
+  return '<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8" />'
+  +'<title>'+e(v.no||"產品訂購單")+' · '+e(v.vendorName||"")+'</title><style>'+HB_DOC_CSS
+  +'.items td{vertical-align:top}</style></head><body>'
+  +'<div class="toolbar"><button class="back" onclick="window.close()">←</button>'
+  +'<button class="print" onclick="window.print()">列印 / 存 PDF</button></div>'
+  +'<div class="head"><div class="head-name">赫柏空間設計</div>'
+  +'<div class="head-info">地址:600 嘉義市西區湖內里新民路168號　電話:0987583978　統一編號：00351070</div></div>'
+  +'<h1>產品訂購單</h1><div class="sub">PURCHASE ORDER</div>'
+  +'<table class="meta">'
+  +'<tr><th>訂購單號</th><td>'+e(v.no)+'</td><th>訂購日期</th><td>'+e(HB_poDate(v.orderDate))+'</td></tr>'
+  +'<tr><th>廠商</th><td>'+e(v.vendorName)+'</td><th>聯絡人／電話</th><td>'+e([v.vendorContact,v.vendorPhone].filter(Boolean).join("　"))+'</td></tr>'
+  +'<tr><th>工程名稱</th><td colspan="3">'+e(projectName||"")+'</td></tr>'
+  +'<tr><th>交貨日期</th><td>'+e(HB_poDate(v.deliveryDate)||"另行通知")+'</td><th>現場收貨人</th><td>'+e(v.receiver)+'</td></tr>'
+  +'<tr><th>送貨地址</th><td colspan="3">'+e(v.deliveryAddress)+'</td></tr>'
+  +'</table>'
+  +'<table class="items"><thead><tr><th class="c">項次</th><th>品名</th><th>規格／型號／色號</th>'
+  +'<th class="c">數量</th><th class="c">單位</th><th class="r">單價</th><th class="r">金額</th><th>備註</th></tr></thead><tbody>'
+  +(rows||'<tr><td colspan="8" class="c">（無項目）</td></tr>')+'</tbody></table>'
+  +'<table class="sum">'
+  +'<tr><td class="k">小計</td><td class="v">'+HB_money(T.subtotal)+'</td></tr>'
+  +(T.rate?'<tr><td class="k">營業稅 '+e(T.rate)+'%</td><td class="v">'+HB_money(T.tax)+'</td></tr>':'')
+  +'<tr class="grand"><td class="k" style="background:#1C1B18;color:#F1EEE6">訂購總額</td><td class="v">NT$ '+HB_money(T.total)+'</td></tr>'
+  +'</table>'
+  +'<div class="terms">'+terms.map(function(t){n++;return '<p>'+n+'. '+HB_escMultiline(t)+'</p>'}).join("")+'</div>'
+  +'<div class="signrow">'
+  +'<div class="signbox"><div class="lbl">訂購方</div><div style="font-size:11.5px;margin-top:6px">赫柏空間設計</div>'+stamp+'</div>'
+  +'<div class="signbox"><div class="lbl">廠商確認回簽</div><div style="font-size:10px;color:#8C877D;margin-top:6px">確認可依上列內容出貨後，請簽名或蓋章回傳</div></div>'
+  +'</div><p class="footer">本文件由赫柏空間設計工地紀錄本產生</p></body></html>';
+}
+function HB_poLineText(v,projectName){
+  var lines=["【赫柏空間設計｜產品訂購單 "+(v.no||"")+"】"];
+  if(v.vendorName)lines.push("廠商："+v.vendorName);
+  if(projectName)lines.push("工程："+projectName);
+  var k=0;(v.items||[]).forEach(function(it){if(!String(it.name||"").trim())return;k++;
+    lines.push(k+". "+it.name+(it.spec?"（"+it.spec+"）":"")+" × "+(it.qty||"")+(it.unit||""))});
+  lines.push("交貨日期："+(HB_poDate(v.deliveryDate)||"另行通知"));
+  if(v.deliveryAddress)lines.push("送貨地址："+v.deliveryAddress);
+  if(v.receiver)lines.push("現場收貨人："+v.receiver);
+  if(v.note)lines.push("備註："+v.note);
+  lines.push("麻煩確認可出貨後回覆，謝謝！");
+  return lines.join("\n");
+}
+
+function HbPurchaseOrderForm({initial,projects,vendors,notify,onCancel,onSaved}){
+  let h=u.default.createElement;
+  let[v,setV]=(0,u.useState)(()=>({no:"",projectId:"",vendorId:"",vendorName:"",vendorContact:"",vendorPhone:"",
+    orderDate:HB_poToday(),deliveryDate:"",deliveryAddress:"",receiver:"",items:[HB_poNewItem()],taxRate:"",
+    paymentTerms:"",note:"",status:"draft",...(initial||{})}));
+  let[busy,setBusy]=(0,u.useState)(!1);
+  let set=(k,val)=>setV(p=>({...p,[k]:val}));
+  let setItem=(id,k,val)=>setV(p=>({...p,items:p.items.map(x=>x.id===id?{...x,[k]:val}:x)}));
+  let addItem=()=>setV(p=>({...p,items:[...p.items,HB_poNewItem()]}));
+  let delItem=id=>setV(p=>({...p,items:p.items.length>1?p.items.filter(x=>x.id!==id):p.items}));
+  let T=HB_poTotals(v);
+  let projName=id=>{let x=(projects||[]).find(y=>y.id===id);return x?x.name:""};
+
+  let pickProject=async id=>{
+    set("projectId",id);
+    if(!id||String(v.deliveryAddress||"").trim())return;
+    let x=(projects||[]).find(y=>y.id===id), addr=x&&x.address;
+    if(!addr){let r=await q.from("sitelog_projects").select("address").eq("id",id).maybeSingle();addr=r.data&&r.data.address}
+    if(addr)setV(p=>p.deliveryAddress?p:{...p,deliveryAddress:addr});
+  };
+  let pickVendor=id=>{
+    let x=(vendors||[]).find(y=>y.id===id);
+    setV(p=>({...p,vendorId:id,vendorName:x?x.name:p.vendorName,
+      vendorContact:x?(x.contact_person||""):p.vendorContact,vendorPhone:x?(x.phone||""):p.vendorPhone,
+      paymentTerms:p.paymentTerms||(x&&x.payment_terms)||""}));
+  };
+
+  let save=async()=>{
+    if(!String(v.vendorName||"").trim()){notify("請填寫廠商");return null}
+    setBusy(!0);
+    let TT=HB_poTotals(v);
+    let items=v.items.filter(it=>String(it.name||"").trim()||HB_num(it.price));
+    let payload={no:HB_pbClean(v.no),project_id:v.projectId||null,vendor_id:v.vendorId||null,vendor_name:HB_pbClean(v.vendorName),
+      vendor_contact:v.vendorContact||"",vendor_phone:v.vendorPhone||"",order_date:v.orderDate||HB_poToday(),
+      delivery_date:v.deliveryDate||null,delivery_address:v.deliveryAddress||"",receiver:v.receiver||"",
+      items:items,tax_rate:HB_num(v.taxRate)||0,subtotal:TT.subtotal,total:TT.total,
+      payment_terms:v.paymentTerms||"",note:v.note||"",status:v.status||"draft",updated_at:new Date().toISOString()};
+    let res=v.id
+      ? await q.from("sitelog_purchase_orders").update(payload).eq("id",v.id).select().single()
+      : await q.from("sitelog_purchase_orders").insert(payload).select().single();
+    setBusy(!1);
+    if(res.error){notify("儲存失敗："+res.error.message);return null}
+    let row=HB_poMap(res.data);
+    setV(p=>({...p,...row}));onSaved(row);notify("已儲存訂購單");
+    return row;
+  };
+  let pdf=async()=>{let row=await save();if(!row)return;if(!HB_openPrintableHTML(HB_buildPurchaseOrderHTML(row,projName(row.projectId))))notify("請允許彈出視窗")};
+  let copyLine=async()=>{
+    let t=HB_poLineText(v,projName(v.projectId));
+    try{await navigator.clipboard.writeText(t);notify("已複製，可直接貼到 LINE 給廠商")}
+    catch(e){window.prompt("複製下面的文字貼到 LINE",t)}
+  };
+
+  let fs={width:"100%",boxSizing:"border-box",border:`1px solid ${s.line}`,borderRadius:8,padding:"9px 11px",
+    fontSize:14,marginTop:4,marginBottom:11,background:"#fff",color:s.ink,fontFamily:"inherit"};
+  let lb={fontSize:12,color:s.inkSoft};
+  let cell={width:"100%",boxSizing:"border-box",border:`1px solid ${s.line}`,borderRadius:8,padding:"7px 9px",
+    fontSize:14,background:"#fff",color:s.ink,fontFamily:"inherit"};
+  let fld=(label,el,w)=>h("div",{style:{flex:w||1,minWidth:0}},h("label",{style:lb},label),el);
+  let btn=(primary)=>({flex:1,minWidth:110,background:primary?s.oceanDark:"transparent",color:primary?"#fff":s.oceanDark,
+    border:`1px solid ${s.oceanDark}`,borderRadius:8,padding:"11px 0",fontSize:14,cursor:"pointer",fontFamily:"inherit"});
+
+  return h("div",{style:{position:"fixed",inset:0,background:s.paper,zIndex:72,overflowY:"auto",fontFamily:"'Noto Sans TC', sans-serif"}},
+    h("div",{style:{maxWidth:760,margin:"0 auto",padding:"18px 16px 48px"}},
+      h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}},
+        h("button",{onClick:onCancel,style:{background:"none",border:"none",color:s.inkSoft,cursor:"pointer",fontSize:12,display:"flex",alignItems:"center",gap:4,padding:0,fontFamily:"inherit"}},h(E,{name:"arrow-left",size:14}),"返回")),
+      h("h1",{style:{fontSize:20,fontWeight:300,margin:"0 0 14px",letterSpacing:"0.05em"}},v.id?"編輯產品訂購單":"新增產品訂購單"),
+
+      h("div",{style:{display:"flex",gap:10,flexWrap:"wrap"}},
+        fld("訂購單號",h("input",{value:v.no,onChange:e=>set("no",e.target.value),style:fs}),"0 0 150px"),
+        fld("狀態",h("select",{value:v.status,onChange:e=>set("status",e.target.value),style:fs},
+          HB_PO_STATUS.map(x=>h("option",{key:x[0],value:x[0]},x[1]))),"0 0 150px"),
+        fld("案件",h("select",{value:v.projectId,onChange:e=>pickProject(e.target.value),style:fs},
+          h("option",{value:""},"（不指定／公司備料）"),
+          (projects||[]).map(p=>h("option",{key:p.id,value:p.id},p.name))),"1 1 200px")),
+
+      h("div",{style:{fontSize:13,color:s.oceanDark,margin:"6px 0 6px",letterSpacing:"0.06em"}},"廠商"),
+      h("div",{style:{display:"flex",gap:10,flexWrap:"wrap"}},
+        (vendors||[]).length?fld("從廠商名冊選",h("select",{value:v.vendorId,onChange:e=>pickVendor(e.target.value),style:fs},
+          h("option",{value:""},"手動填寫"),
+          (vendors||[]).map(x=>h("option",{key:x.id,value:x.id},x.name))),"1 1 180px"):null,
+        fld("廠商名稱",h("input",{value:v.vendorName,onChange:e=>set("vendorName",e.target.value),placeholder:"例如：○○建材行",style:fs}),"1 1 180px")),
+      h("div",{style:{display:"flex",gap:10,flexWrap:"wrap"}},
+        fld("聯絡人",h("input",{value:v.vendorContact,onChange:e=>set("vendorContact",e.target.value),style:fs}),"1 1 140px"),
+        fld("電話",h("input",{value:v.vendorPhone,onChange:e=>set("vendorPhone",e.target.value),inputMode:"tel",style:fs}),"1 1 140px")),
+
+      h("div",{style:{fontSize:13,color:s.oceanDark,margin:"6px 0 6px",letterSpacing:"0.06em"}},"交貨"),
+      h("div",{style:{display:"flex",gap:10,flexWrap:"wrap"}},
+        fld("訂購日期",h("input",{type:"date",value:v.orderDate,onChange:e=>set("orderDate",e.target.value),style:fs}),"1 1 150px"),
+        fld("交貨日期",h("input",{type:"date",value:v.deliveryDate,onChange:e=>set("deliveryDate",e.target.value),style:fs}),"1 1 150px"),
+        fld("現場收貨人",h("input",{value:v.receiver,onChange:e=>set("receiver",e.target.value),placeholder:"姓名／電話",style:fs}),"1 1 150px")),
+      fld("送貨地址",h("input",{value:v.deliveryAddress,onChange:e=>set("deliveryAddress",e.target.value),placeholder:"選案件會自動帶入工地地址",style:fs})),
+
+      h("div",{style:{fontSize:13,color:s.oceanDark,margin:"6px 0 8px",letterSpacing:"0.06em"}},"訂購品項"),
+      v.items.map((it,i)=>h("div",{key:it.id,style:{border:`1px solid ${s.line}`,borderRadius:10,padding:"10px 10px 4px",marginBottom:10,background:"#FFFDF9"}},
+        h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:6}},
+          h("span",{style:{fontSize:12,color:s.inkSoft,width:22}},String(i+1).padStart(2,"0")),
+          h("input",{value:it.name,onChange:e=>setItem(it.id,"name",e.target.value),placeholder:"品名（例：超耐磨木地板、崁燈）",style:{...cell,flex:1}}),
+          h("button",{onClick:()=>delItem(it.id),title:"刪除這項",style:{border:"none",background:"none",color:s.inkSoft,cursor:"pointer",padding:6}},h(E,{name:"x",size:15}))),
+        h("input",{value:it.spec,onChange:e=>setItem(it.id,"spec",e.target.value),placeholder:"規格／型號／色號",style:{...cell,marginBottom:6}}),
+        h("div",{style:{display:"flex",gap:6,marginBottom:6}},
+          h("input",{value:it.qty,onChange:e=>setItem(it.id,"qty",e.target.value),inputMode:"decimal",placeholder:"數量",style:{...cell,flex:"0 0 72px"}}),
+          h("input",{value:it.unit,onChange:e=>setItem(it.id,"unit",e.target.value),placeholder:"單位",style:{...cell,flex:"0 0 64px"}}),
+          h("input",{value:it.price,onChange:e=>setItem(it.id,"price",e.target.value),inputMode:"decimal",placeholder:"單價",style:{...cell,flex:1}}),
+          h("div",{style:{flex:"0 0 96px",textAlign:"right",alignSelf:"center",fontSize:14,color:s.ink}},HB_poItemAmount(it)?HB_money(HB_poItemAmount(it)):"")),
+        h("input",{value:it.note,onChange:e=>setItem(it.id,"note",e.target.value),placeholder:"備註（選填）",style:{...cell,marginBottom:6}}))),
+      h("button",{onClick:addItem,style:{border:`1px dashed ${s.ocean}`,background:"none",color:s.oceanDark,borderRadius:8,padding:"9px 0",width:"100%",fontSize:14,cursor:"pointer",fontFamily:"inherit",marginBottom:14}},"＋ 新增品項"),
+
+      h("div",{style:{display:"flex",gap:10,flexWrap:"wrap"}},
+        fld("營業稅 %",h("input",{value:v.taxRate,onChange:e=>set("taxRate",e.target.value),inputMode:"decimal",placeholder:"不含稅留空，含 5% 填 5",style:fs}),"1 1 160px"),
+        fld("付款方式",h("input",{value:v.paymentTerms,onChange:e=>set("paymentTerms",e.target.value),placeholder:"例：貨到付款／月結 30 天",style:fs}),"2 1 220px")),
+      fld("備註（會印在訂購單上）",h("textarea",{value:v.note,onChange:e=>set("note",e.target.value),rows:3,style:{...fs,resize:"vertical"}})),
+
+      h("div",{style:{textAlign:"right",fontSize:14,margin:"4px 0 16px",lineHeight:1.9}},
+        h("div",null,"小計　",HB_money(T.subtotal)),
+        T.rate?h("div",null,"營業稅 "+T.rate+"%　",HB_money(T.tax)):null,
+        h("div",{style:{fontSize:17,color:s.oceanDark}},"訂購總額　NT$ ",HB_money(T.total))),
+
+      h("div",{style:{display:"flex",gap:9,flexWrap:"wrap"}},
+        h("button",{onClick:save,disabled:busy,style:btn(!0)},busy?"儲存中…":"儲存"),
+        h("button",{onClick:pdf,disabled:busy,style:btn(!1)},"存檔並開 PDF"),
+        h("button",{onClick:copyLine,disabled:busy,style:btn(!1)},"複製 LINE 訊息"))));
+}
+
+function HbPurchaseOrderHub({onBack,notify,projects}){
+  let h=u.default.createElement;
+  let[list,setList]=(0,u.useState)([]);
+  let[vendors,setVendors]=(0,u.useState)([]);
+  let[loading,setLoading]=(0,u.useState)(!0);
+  let[err,setErr]=(0,u.useState)(null);
+  let[editing,setEditing]=(0,u.useState)(null);
+  let[proj,setProj]=(0,u.useState)("");
+  let[hbMenu,hbSetMenu]=(0,u.useState)(null);
+  let load=async()=>{
+    setLoading(!0);setErr(null);
+    let[a,b]=await Promise.all([
+      q.from("sitelog_purchase_orders").select("*").order("created_at",{ascending:!1}).limit(500),
+      q.from("sitelog_vendors").select("id,name,contact_person,phone,payment_terms").order("name")]);
+    if(a.error)setErr(a.error.message);else setList((a.data||[]).map(HB_poMap));
+    setVendors(b.data||[]);setLoading(!1);
+  };
+  (0,u.useEffect)(()=>{load()},[]);
+  let projName=id=>{let x=(projects||[]).find(y=>y.id===id);return x?x.name:"公司備料"};
+  let filtered=proj?list.filter(x=>x.projectId===proj):list;
+  let onSaved=row=>setList(v=>{let i=v.findIndex(x=>x.id===row.id);return i>=0?v.map(x=>x.id===row.id?row:x):[row,...v]});
+  let remove=async r=>{
+    let{error}=await q.from("sitelog_purchase_orders").delete().eq("id",r.id);
+    if(error){notify("刪除失敗："+error.message);return}
+    setList(v=>v.filter(x=>x.id!==r.id));notify("已刪除");
+  };
+  let dup=r=>setEditing({...r,id:undefined,no:HB_poNextNo(list),status:"draft",orderDate:HB_poToday(),deliveryDate:"",
+    items:r.items.map(x=>({...x,id:HB_poNewItem().id}))});
+  let setStatus=async(r,st)=>{
+    let{data,error}=await q.from("sitelog_purchase_orders").update({status:st,updated_at:new Date().toISOString()}).eq("id",r.id).select().single();
+    if(error){notify("更新失敗："+error.message);return}
+    onSaved(HB_poMap(data));
+  };
+
+  if(editing)return h(HbPurchaseOrderForm,{initial:editing,projects,vendors,notify,
+    onCancel:()=>setEditing(null),onSaved:onSaved});
+
+  return h("div",{className:"hb-archive hb-dossier",style:{minHeight:"100dvh",fontFamily:"'Noto Sans TC', sans-serif",color:"#1C1B18"},
+    onClick:()=>hbSetMenu(null)},
+    h("div",{style:{maxWidth:1320,margin:"0 auto",padding:"0 clamp(20px,4vw,58px) 112px"}},
+      h("button",{onClick:onBack,className:"hb-arcBack"},h(E,{name:"arrow-left",size:15}),h("span",null,"返回公司資料庫")),
+      h("div",{className:"hb-dosLabel"},"Bons de Commande"),
+      h("h1",{className:"hb-dosTitle"},"產品訂購單"),
+      h("p",{className:"hb-dosLede"},"向廠商下訂家電、燈具、衛浴、建材等產品。選案件自動帶入送貨地址，可開 PDF 或複製文字直接傳 LINE 給廠商。"),
+      h("div",{className:"hb-dosSolo"},
+        h("div",{className:"hb-dosBar"},
+          h("div",{className:"hb-dosCount"},filtered.length>0?filtered.length+" 張訂購單":"尚無資料"),
+          h("button",{onClick:()=>setEditing({no:HB_poNextNo(list),projectId:proj||"",items:[HB_poNewItem()],status:"draft",orderDate:HB_poToday()}),
+            className:"hb-dosNew"},"新增訂購單")),
+        (projects||[]).length>0?h("div",{className:"hb-dosFilter"},
+          h(HbPickField,{label:"案件",value:proj,
+            options:[{k:"",label:"全部案件"}].concat((projects||[]).map(p=>({k:p.id,label:p.name}))),
+            onChange:function(k){setProj(k)},title:"選擇案件"},
+            h("select",{value:proj,onChange:e=>setProj(e.target.value),className:"hb-dosSelect",style:{maxWidth:320}},
+              h("option",{value:""},"全部案件"),
+              (projects||[]).map(p=>h("option",{key:p.id,value:p.id},p.name))))):null,
+        err?h("p",{className:"hb-dosEmpty",style:{color:"#B4573A"}},"讀取失敗："+err):null,
+        loading?h("div",{style:{textAlign:"center",padding:40}},h(E,{name:"loader",size:22,className:"animate-spin",color:"#B4573A"})):
+        filtered.length===0?h(He,{icon:"file-text",text:"還沒有任何訂購單"}):
+        h("ul",{className:"hb-dosList"},
+          filtered.map((r,ri)=>h("li",{key:r.id,className:"hb-dosItem"},
+            h("span",{className:"hb-dosNo"},r.no||String(ri+1).padStart(2,"0")),
+            h("div",{className:"hb-dosBody"},
+              h("div",{className:"hb-dosName"},(r.vendorName||"（未填廠商）")+"　"+r.items.filter(x=>x.name).map(x=>x.name).slice(0,3).join("、")+(r.items.filter(x=>x.name).length>3?"…":"")),
+              h("div",{className:"hb-dosMeta"},
+                projName(r.projectId)+"　·　訂 "+String(r.orderDate||"").slice(5).replace("-","/")+(r.deliveryDate?"　交貨 "+String(r.deliveryDate).slice(5).replace("-","/"):""),
+                h("span",{className:"hb-dosChip"+(r.status==="received"||r.status==="confirmed"?" on":"")},HB_poStatusLabel(r.status)))),
+            h("span",{className:"hb-dosAmt"},r.total?HB_money(r.total):""),
+            h("div",{className:"hb-dosActs"},
+              h("button",{onClick:()=>setEditing(r),className:"hb-dosAct"},h(E,{name:"pencil",size:13}),h("span",null,"編輯")),
+              h("button",{onClick:()=>{if(!HB_openPrintableHTML(HB_buildPurchaseOrderHTML(r,projName(r.projectId))))notify("請允許彈出視窗")},className:"hb-dosAct"},
+                h(E,{name:"printer",size:13}),h("span",null,"PDF")),
+              h("div",{className:"hb-dosMore"},
+                h("button",{className:"hb-dosAct ico",title:"更多",onClick:ev=>{ev.stopPropagation();hbSetMenu(hbMenu===r.id?null:r.id)}},
+                  h(E,{name:"more-vertical",size:15})),
+                hbMenu===r.id?h(HbMoreMenu,{title:HbMoreTitle({title:r.no||r.vendorName}),onClose:()=>hbSetMenu(null)},
+                  HB_PO_STATUS.filter(x=>x[0]!==r.status).map(x=>h("button",{key:x[0],onClick:()=>{hbSetMenu(null);setStatus(r,x[0])}},"標為「"+x[1]+"」")),
+                  h("button",{onClick:()=>{hbSetMenu(null);dup(r)}},"複製成新訂購單"),
+                  h("button",{className:"del",onClick:()=>{hbSetMenu(null);if(window.confirm("確定要刪除訂購單「"+(r.no||r.vendorName)+"」？此動作無法復原。"))remove(r)}},"刪除")):null)))))
+      )));
+}
+
 /* 交屋保養手冊：直接嵌在文件系統分頁裡（取代原本的材質報告書） */
 function HbHandbookHub(){
   return u.default.createElement("div",{className:"hb-hbookWrap"},
@@ -12829,6 +13121,7 @@ function HbDocsHub({onBack:onBack,notify:notify,projects:projects}){
     ["vendorReceipts","廠商領據","Reçus Fournisseurs","廠商領據"],
     ["changeOrders","追加減帳","Avenants au Contrat","追加減帳"],
     ["vendorQuotes","廠商報價","Devis Fournisseurs","廠商報價"],
+    ["purchaseOrders","訂購單","Bons de Commande","產品訂購單"],
     ["materials","交屋手冊","Livret de la Maison","交屋保養手冊"]];
   let [tab,setTab]=(0,u.useState)(function(){
     try{ let v=sessionStorage.getItem("hb_docs_tab"); return v&&DOCTABS.some(x=>x[0]===v)?v:"contracts"; }catch(e){ return "contracts"; }
@@ -12852,6 +13145,7 @@ function HbDocsHub({onBack:onBack,notify:notify,projects:projects}){
     : tab==="vendorReceipts" ? C(HbVendorReceiptsHub,{onBack:onBack,notify:notify,projects:projects})
     : tab==="changeOrders"   ? C(HbChangeOrderHub,{onBack:onBack,notify:notify,projects:projects})
     : tab==="materials"      ? C(HbHandbookHub,null)
+    : tab==="purchaseOrders" ? C(HbPurchaseOrderHub,{onBack:onBack,notify:notify,projects:projects})
     :                          C(HbVendorQuoteHub,{onBack:onBack,notify:notify});
   return C("div",{className:"hb-docsHub"},
     C("header",{className:"hb-docsHead"},
