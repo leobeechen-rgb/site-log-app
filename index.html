@@ -18284,7 +18284,7 @@ function HbWorkbench({tk,projects,onOpenProject,onCalendar,onTodayHub,proj,setPr
         h('span',{className:'wbk-agt'},HB_wbIcon('calendar',15),isToday?'今日待辦':md(day)+' 待辦'),
         pv&&h('button',{type:'button',className:'wbk-agn wbk-agpv',title:'改看全部案件',onClick:()=>{if(window.HB_caseCanLeave&&!window.HB_caseCanLeave())return;setProj&&setProj('')}},'只看「'+pvName+'」 ✕'),
         h('span',{className:'wbc-grow'}),
-        h('button',{type:'button',className:'wbk-agcrew',title:'產生交屋保養手冊（自動帶入材料、工班）',onClick:()=>HB_openHandbook(pvReal?pv:'')},'交屋手冊'),
+        h('button',{type:'button',className:'wbk-agcrew wbk-agbook',title:'產生交屋保養手冊（自動帶入材料、工班）',onClick:()=>HB_openHandbook(pvReal?pv:'')},'交屋手冊'),
         h('button',{type:'button',className:'wbk-agcrew',title:'產生業主看的工班日程圖，傳 LINE 給業主',onClick:()=>HB_openOwnerSchedule(pvReal?pv:'')},'業主日程'),
         h('button',{type:'button',className:'wbk-agcrew',title:'排工班（前一天 LINE 自動提醒師傅）',onClick:()=>HB_openCrewSheet({date:day,projectId:pvReal?pv:''})},HB_wbIcon('plus',13),'排工班'),
         h('button',{type:'button',className:'wbk-agtog','aria-expanded':agOn,onClick:()=>setAgOpen(!agOn)},agOn?'收合':'展開',HB_wbIcon('caret',14))),
@@ -18702,6 +18702,7 @@ html.hb-crewsheet-on,html.hb-crewsheet-on body{overflow:hidden}
 .hbc .hbc-crew{margin-left:auto;align-self:center;height:28px;padding:0 8px;font-size:12.5px;letter-spacing:.04em;min-width:0}.hbc .hbc-crew+.hbc-add{margin-left:5px}
 .hbc .hbc-head{flex-wrap:wrap;row-gap:6px}
 .wbk-agcrew{margin-right:8px}
+@media (max-width:680px){.wbk-agbar{gap:8px}.wbk-agbar .wbk-agbook{display:none!important}.wbk-agbar .wbc-grow{flex:1 1 0;min-width:0}.wbk-agbar .wbk-agtog{order:2}.wbk-agbar .wbk-agcrew{order:3;flex:1 1 calc(50% - 4px);justify-content:center;height:34px;margin-right:0;box-sizing:border-box;font-size:14px}}
 .hbc .hbc-owner{margin-left:5px}
 .hb-ownersched iframe{background:#efebe4}
 .hb-handbook iframe{background:#EDE5D6}
